@@ -1,0 +1,314 @@
+<html lang="en" vid="0"><head vid="1">
+    <meta charset="UTF-8" vid="2">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" vid="3">
+    <title vid="4">Summon the Witch | The Algorithm Witch</title>
+    <script src="https://cdn.tailwindcss.com/3.4.17" vid="5"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com" vid="6">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="" vid="7">
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@400;700;900&amp;family=Inter:wght@300;400;500;600&amp;family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&amp;display=swap" rel="stylesheet" vid="8">
+    <script src="https://unpkg.com/@phosphor-icons/web" vid="9"></script>
+    <style vid="10">
+        :root {
+            --color-bg: #030014;
+            --color-card: rgba(20, 15, 45, 0.6);
+            --color-accent: #a855f7;
+            --color-gold: #fde047;
+        }
+
+        body {
+            background-color: var(--color-bg);
+            color: #e2e8f0;
+            font-family: 'Inter', sans-serif;
+            margin: 0;
+            padding: 0;
+            overflow-x: hidden;
+            scroll-behavior: smooth;
+        }
+
+        .font-magical { font-family: 'Cinzel Decorative', cursive; }
+        .font-serif-heading { font-family: 'Playfair Display', serif; }
+
+        .stars {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            pointer-events: none; z-index: 0;
+        }
+
+        .star {
+            position: absolute;
+            background: white;
+            border-radius: 50%;
+            opacity: 0;
+            animation: twinkle var(--duration) ease-in-out infinite;
+            animation-delay: var(--delay);
+        }
+
+        @keyframes twinkle {
+            0% { opacity: 0; transform: scale(0.5); }
+            50% { opacity: var(--opacity); transform: scale(1.2); box-shadow: 0 0 4px rgba(255, 255, 255, 0.8); }
+            100% { opacity: 0; transform: scale(0.5); }
+        }
+
+        .glass-panel {
+            background: rgba(13, 12, 34, 0.6);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(139, 92, 246, 0.15);
+        }
+
+        .glass-card {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(10px);
+        }
+
+        .input-field {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(139, 92, 246, 0.2);
+            color: white;
+            transition: all 0.3s ease;
+        }
+
+        .input-field:focus {
+            outline: none;
+            border-color: #a855f7;
+            background: rgba(139, 92, 246, 0.05);
+            box-shadow: 0 0 15px -5px rgba(168, 85, 247, 0.4);
+        }
+
+        .text-gradient-gold {
+            background: linear-gradient(to right, #fef9c3, #fbbf24, #fef9c3);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-size: 200% auto;
+            animation: shine 8s linear infinite;
+        }
+
+        @keyframes shine { to { background-position: 200% center; } }
+
+        .calendar-day {
+            aspect-ratio: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            border-radius: 0.5rem;
+            transition: all 0.2s;
+        }
+
+        .calendar-day:hover:not(.disabled) {
+            background: rgba(168, 85, 247, 0.2);
+            border: 1px solid rgba(168, 85, 247, 0.4);
+        }
+
+        .calendar-day.active {
+            background: #a855f7;
+            color: white;
+            box-shadow: 0 0 15px rgba(168, 85, 247, 0.5);
+        }
+
+        .calendar-day.disabled {
+            opacity: 0.2;
+            cursor: not-allowed;
+        }
+
+        .nav-link { position: relative; }
+        .nav-link::after {
+            content: ''; position: absolute; bottom: -4px; left: 0; width: 0%; height: 1px;
+            background-color: #a855f7; transition: width 0.3s ease;
+        }
+        .nav-link:hover::after { width: 100%; }
+    </style>
+</head>
+<body class="selection:bg-purple-600 selection:text-white antialiased min-h-screen flex flex-col" vid="11">
+
+    <div id="star-container" class="stars" vid="12"></div>
+    
+    
+    <nav id="navbar" class="fixed top-0 w-full z-50 px-6 py-6 transition-all duration-300" vid="13">
+        <div class="max-w-7xl mx-auto glass-panel rounded-full px-8 py-4 flex justify-between items-center" vid="14">
+            <a href="/" class="flex items-center gap-3 group" vid="15">
+                <div class="relative" vid="16">
+                    <i class="ph-fill ph-sparkle text-purple-400 text-2xl group-hover:scale-110 transition-transform" vid="17"></i>
+                    <i class="ph-fill ph-star-four text-yellow-300 text-xs absolute -top-1 -right-2 animate-pulse" vid="18"></i>
+                </div>
+                <span class="font-magical text-xl text-white tracking-widest group-hover:text-purple-200" vid="19">Algorithm Witch</span>
+            </a>
+            <div class="hidden md:flex items-center gap-8 text-xs uppercase tracking-[0.2em] text-gray-300 font-medium" vid="20">
+                <a href="/#origins" class="nav-link hover:text-white transition-colors" vid="21">Origins</a>
+                <a href="/#grimoire" class="nav-link hover:text-white transition-colors" vid="22">Grimoire</a>
+                <a href="/#focus" class="nav-link hover:text-white transition-colors" vid="23">Focus</a>
+            </div>
+            <a href="#" class="hidden md:inline-flex items-center justify-center px-6 py-2 bg-purple-500/20 border border-purple-400 rounded-full text-xs uppercase tracking-widest text-white" vid="24">
+                Summon Me
+            </a>
+        </div>
+    </nav>
+
+    <main class="relative z-10 w-full max-w-7xl mx-auto px-6 pt-40 pb-20 flex-grow" vid="25">
+        
+        <div class="text-center mb-16" vid="26">
+            <h1 class="font-magical text-4xl md:text-6xl text-white mb-4" vid="27">Request a <span class="text-gradient-gold" vid="28">Consultation</span></h1>
+            <p class="font-serif-heading text-xl text-purple-200/70 italic" vid="29">Begin the ritual of digital transformation.</p>
+        </div>
+
+        <div class="grid lg:grid-cols-2 gap-12" vid="30">
+            
+            <div class="glass-panel p-8 md:p-10 rounded-3xl border-t-2 border-t-purple-500/30" vid="31">
+                <div class="flex items-center gap-3 mb-8" vid="32">
+                    <i class="ph-duotone ph-scroll text-3xl text-purple-400" vid="33"></i>
+                    <h2 class="font-magical text-2xl text-white" vid="34">Project Details</h2>
+                </div>
+                
+                <form class="space-y-6" vid="35">
+                    <div class="grid md:grid-cols-2 gap-6" vid="36">
+                        <div class="space-y-2" vid="37">
+                            <label class="text-xs uppercase tracking-widest text-gray-400 font-bold ml-1" vid="38">Your Name</label>
+                            <input type="text" placeholder="E.g. Morgan Le Fay" class="w-full px-4 py-3 rounded-xl input-field text-sm" vid="39">
+                        </div>
+                        <div class="space-y-2" vid="40">
+                            <label class="text-xs uppercase tracking-widest text-gray-400 font-bold ml-1" vid="41">Email Address</label>
+                            <input type="email" placeholder="morgan@coven.org" class="w-full px-4 py-3 rounded-xl input-field text-sm" vid="42">
+                        </div>
+                    </div>
+
+                    <div class="grid md:grid-cols-2 gap-6" vid="43">
+                        <div class="space-y-2" vid="44">
+                            <label class="text-xs uppercase tracking-widest text-gray-400 font-bold ml-1" vid="45">Organization</label>
+                            <input type="text" placeholder="The Avalon Collective" class="w-full px-4 py-3 rounded-xl input-field text-sm" vid="46">
+                        </div>
+                        <div class="space-y-2" vid="47">
+                            <label class="text-xs uppercase tracking-widest text-gray-400 font-bold ml-1" vid="48">Ritual Type</label>
+                            <select class="w-full px-4 py-3 rounded-xl input-field text-sm appearance-none" vid="49">
+                                <option class="bg-[#0a0520]" vid="50">System Analysis</option>
+                                <option class="bg-[#0a0520]" vid="51">Narrative Alchemy</option>
+                                <option class="bg-[#0a0520]" vid="52">Amplification Strategy</option>
+                                <option class="bg-[#0a0520]" vid="53">Full Digital Transformation</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="space-y-2" vid="54">
+                        <label class="text-xs uppercase tracking-widest text-gray-400 font-bold ml-1" vid="55">Your Intentions</label>
+                        <textarea rows="4" placeholder="Describe the problem you're looking to solve through digital alchemy..." class="w-full px-4 py-3 rounded-xl input-field text-sm resize-none" vid="56"></textarea>
+                    </div>
+
+                    <div class="pt-4" vid="57">
+                        <p class="text-[10px] text-gray-500 uppercase tracking-widest mb-4" vid="58">Select a time on the right to complete the summons</p>
+                        <button disabled="" class="w-full py-4 bg-purple-600/20 border border-purple-500/30 text-purple-300 rounded-xl font-bold tracking-widest uppercase text-xs cursor-not-allowed" vid="59">
+                            Select a Date to Continue
+                        </button>
+                    </div>
+                </form>
+            </div>
+
+            
+            <div class="glass-panel p-8 md:p-10 rounded-3xl border-t-2 border-t-amber-500/30" vid="60">
+                <div class="flex items-center justify-between mb-8" vid="61">
+                    <div class="flex items-center gap-3" vid="62">
+                        <i class="ph-duotone ph-calendar-blank text-3xl text-amber-400" vid="63"></i>
+                        <h2 class="font-magical text-2xl text-white" vid="64">Schedule</h2>
+                    </div>
+                    <div class="text-xs text-amber-200/60 uppercase tracking-widest font-bold" vid="65">October 2024</div>
+                </div>
+
+                
+                <div class="grid grid-cols-7 gap-2 mb-8 text-center text-[10px] uppercase tracking-widest text-gray-500 font-bold" vid="66">
+                    <div vid="67">Sun</div><div vid="68">Mon</div><div vid="69">Tue</div><div vid="70">Wed</div><div vid="71">Thu</div><div vid="72">Fri</div><div vid="73">Sat</div>
+                </div>
+                
+                <div class="grid grid-cols-7 gap-2" vid="74">
+                    
+                    <div class="calendar-day disabled" vid="75">29</div>
+                    <div class="calendar-day disabled" vid="76">30</div>
+                    <div class="calendar-day text-sm" vid="77">1</div>
+                    <div class="calendar-day text-sm" vid="78">2</div>
+                    <div class="calendar-day text-sm" vid="79">3</div>
+                    <div class="calendar-day text-sm active font-bold" vid="80">4</div>
+                    <div class="calendar-day text-sm" vid="81">5</div>
+                    <div class="calendar-day text-sm" vid="82">6</div>
+                    <div class="calendar-day text-sm" vid="83">7</div>
+                    <div class="calendar-day text-sm" vid="84">8</div>
+                    <div class="calendar-day text-sm" vid="85">9</div>
+                    <div class="calendar-day text-sm" vid="86">10</div>
+                    <div class="calendar-day text-sm" vid="87">11</div>
+                    <div class="calendar-day text-sm" vid="88">12</div>
+                    <div class="calendar-day text-sm" vid="89">13</div>
+                    <div class="calendar-day text-sm" vid="90">14</div>
+                    <div class="calendar-day text-sm" vid="91">15</div>
+                    <div class="calendar-day text-sm" vid="92">16</div>
+                    <div class="calendar-day text-sm" vid="93">17</div>
+                    <div class="calendar-day text-sm" vid="94">18</div>
+                    <div class="calendar-day text-sm" vid="95">19</div>
+                    <div class="calendar-day text-sm" vid="96">20</div>
+                    <div class="calendar-day text-sm" vid="97">21</div>
+                    <div class="calendar-day text-sm" vid="98">22</div>
+                    <div class="calendar-day text-sm" vid="99">23</div>
+                    <div class="calendar-day text-sm" vid="100">24</div>
+                    <div class="calendar-day text-sm" vid="101">25</div>
+                    <div class="calendar-day text-sm" vid="102">26</div>
+                </div>
+
+                <div class="mt-10 pt-8 border-t border-white/5" vid="103">
+                    <h3 class="text-xs uppercase tracking-widest text-amber-400 font-bold mb-4" vid="104">Available Slots (Oct 4)</h3>
+                    <div class="grid grid-cols-2 gap-3" vid="105">
+                        <button class="px-4 py-3 rounded-xl glass-card text-xs text-white hover:bg-amber-500/20 border-amber-500/20 transition-all" vid="106">10:00 AM EST</button>
+                        <button class="px-4 py-3 rounded-xl glass-card text-xs text-white hover:bg-amber-500/20 border-amber-500/20 transition-all" vid="107">11:30 AM EST</button>
+                        <button class="px-4 py-3 rounded-xl glass-card text-xs text-white hover:bg-amber-500/20 border-amber-500/20 transition-all" vid="108">02:00 PM EST</button>
+                        <button class="px-4 py-3 rounded-xl glass-card text-xs text-white hover:bg-amber-500/20 border-amber-500/20 transition-all" vid="109">04:30 PM EST</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    
+    <footer class="w-full max-w-7xl mx-auto px-6 py-12 border-t border-white/5 relative z-10" vid="110">
+        <div class="flex flex-col md:flex-row justify-between items-center gap-6" vid="111">
+            <div class="text-slate-500 text-sm font-magical" vid="112">
+                © 2024 The Algorithm Witch
+            </div>
+            <div class="flex gap-6" vid="113">
+                <a href="#" class="text-slate-400 hover:text-white transition-colors" vid="114"><i class="ph-fill ph-linkedin-logo text-xl" vid="115"></i></a>
+                <a href="#" class="text-slate-400 hover:text-white transition-colors" vid="116"><i class="ph-fill ph-twitter-logo text-xl" vid="117"></i></a>
+                <a href="#" class="text-slate-400 hover:text-white transition-colors" vid="118"><i class="ph-fill ph-instagram-logo text-xl" vid="119"></i></a>
+            </div>
+            <div class="text-slate-600 text-xs uppercase tracking-widest" vid="120">
+                Crafted in the Ether
+            </div>
+        </div>
+    </footer>
+
+    <script vid="121">
+        const starContainer = document.getElementById('star-container');
+        for (let i = 0; i < 150; i++) {
+            const star = document.createElement('div');
+            star.classList.add('star');
+            const x = Math.random() * 100;
+            const y = Math.random() * 100;
+            const duration = 2 + Math.random() * 4;
+            const delay = Math.random() * 5;
+            const size = Math.random() < 0.1 ? 2 : 1;
+            const opacity = 0.2 + Math.random() * 0.6;
+            star.style.left = `${x}%`;
+            star.style.top = `${y}%`;
+            star.style.width = `${size}px`;
+            star.style.height = `${size}px`;
+            star.style.setProperty('--duration', `${duration}s`);
+            star.style.setProperty('--delay', `${delay}s`);
+            star.style.setProperty('--opacity', opacity);
+            starContainer.appendChild(star);
+        }
+
+        window.addEventListener('scroll', () => {
+            const nav = document.getElementById('navbar');
+            if (window.scrollY > 50) {
+                nav.classList.add('py-2');
+                nav.querySelector('.glass-panel').classList.add('bg-[#0a0520]/80');
+            } else {
+                nav.classList.remove('py-2');
+                nav.querySelector('.glass-panel').classList.remove('bg-[#0a0520]/80');
+            }
+        });
+    </script>
+</body></html>

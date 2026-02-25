@@ -193,12 +193,12 @@
             </div>
             <div class="space-y-2" vid="47">
               <label class="text-xs uppercase tracking-widest text-gray-400 font-bold ml-1" vid="48">Ritual Type</label>
-             <select id="ritualInput" name="ritualType" class="w-full px-4 py-3 rounded-xl input-field text-sm appearance-none">
-  <option value="System Analysis" class="bg-[#0a0520]">System Analysis</option>
-  <option value="Narrative Alchemy" class="bg-[#0a0520]">Narrative Alchemy</option>
-  <option value="Amplification Strategy" class="bg-[#0a0520]">Amplification Strategy</option>
-  <option value="Full Digital Transformation" class="bg-[#0a0520]">Full Digital Transformation</option>
-</select>
+              <select id="ritualInput" name="ritualType" class="w-full px-4 py-3 rounded-xl input-field text-sm appearance-none">
+                <option value="System Analysis" class="bg-[#0a0520]">System Analysis</option>
+                <option value="Narrative Alchemy" class="bg-[#0a0520]">Narrative Alchemy</option>
+                <option value="Amplification Strategy" class="bg-[#0a0520]">Amplification Strategy</option>
+                <option value="Full Digital Transformation" class="bg-[#0a0520]">Full Digital Transformation</option>
+              </select>
             </div>
           </div>
 
@@ -319,47 +319,44 @@
     const intentionsInput = document.getElementById("intentionsInput");
     const calendlyMount = document.getElementById("calendly-embed-element");
 
-  <script>
-  function encodeQueryValue(v) {
-    // encodeURIComponent gives %20 for spaces, not +
-    return encodeURIComponent(String(v)).replace(/[!'()*]/g, c =>
-      '%' + c.charCodeAt(0).toString(16).toUpperCase()
-    );
-  }
+    function encodeQueryValue(v) {
+      // encodeURIComponent gives %20 for spaces, not +
+      return encodeURIComponent(String(v)).replace(/[!'()*]/g, (c) =>
+        '%' + c.charCodeAt(0).toString(16).toUpperCase()
+      );
+    }
 
-  function buildCalendlyUrl() {
-    const parts = [];
+    function buildCalendlyUrl() {
+      const parts = [];
 
-    // Style params
-    parts.push(`hide_gdpr_banner=1`);
-    parts.push(`background_color=030014`);
-    parts.push(`text_color=e2e8f0`);
-    parts.push(`primary_color=a855f7`);
+      // Style params
+      parts.push(`hide_gdpr_banner=1`);
+      parts.push(`background_color=030014`);
+      parts.push(`text_color=e2e8f0`);
+      parts.push(`primary_color=a855f7`);
 
-    // Prefill
-    const name = (nameInput.value || "").trim();
-    const email = (emailInput.value || "").trim();
-    if (name) parts.push(`name=${encodeQueryValue(name)}`);
-    if (email) parts.push(`email=${encodeQueryValue(email)}`);
+      // Prefill
+      const name = (nameInput.value || "").trim();
+      const email = (emailInput.value || "").trim();
+      if (name) parts.push(`name=${encodeQueryValue(name)}`);
+      if (email) parts.push(`email=${encodeQueryValue(email)}`);
 
-    // Custom question answers (a1/a2/a3)
-    const org = (orgInput.value || "").trim();
-    const ritual = (ritualInput.value || "").trim();
-    const intentions = (intentionsInput.value || "").trim();
-    if (org) parts.push(`a1=${encodeQueryValue(org)}`);
-    if (ritual) parts.push(`a2=${encodeQueryValue(ritual)}`);
-    if (intentions) parts.push(`a3=${encodeQueryValue(intentions)}`);
+      // Custom question answers (a1/a2/a3)
+      const org = (orgInput.value || "").trim();
+      const ritual = (ritualInput.value || "").trim();
+      const intentions = (intentionsInput.value || "").trim();
+      if (org) parts.push(`a1=${encodeQueryValue(org)}`);
+      if (ritual) parts.push(`a2=${encodeQueryValue(ritual)}`);
+      if (intentions) parts.push(`a3=${encodeQueryValue(intentions)}`);
 
-    return `${CALENDLY_BASE_URL}?${parts.join("&")}`;
-  }
-</script> 
-  
+      return `${CALENDLY_BASE_URL}?${parts.join("&")}`;
+    }
+
     let embedInitialized = false;
 
     function renderCalendly() {
       if (!window.Calendly || !calendlyMount) return;
 
-      // Re-render on changes so prefill updates
       calendlyMount.innerHTML = "";
       window.Calendly.initInlineWidget({
         url: buildCalendlyUrl(),
@@ -369,14 +366,30 @@
       embedInitialized = true;
     }
 
-    // Initial render
-    renderCalendly();
+    function waitForCalendlyAndRender() {
+      let tries = 0;
+      const maxTries = 60; // ~6 seconds
+      const interval = setInterval(() => {
+        tries++;
+        if (window.Calendly && calendlyMount) {
+          clearInterval(interval);
+          renderCalendly();
+        } else if (tries >= maxTries) {
+          clearInterval(interval);
+        }
+      }, 100);
+    }
+
+    // Initial render once Calendly is available
+    waitForCalendlyAndRender();
 
     // Update embed as the user types (debounced)
     let t;
     function scheduleRerender() {
       clearTimeout(t);
-      t = setTimeout(() => renderCalendly(), 350);
+      t = setTimeout(() => {
+        if (window.Calendly) renderCalendly();
+      }, 350);
     }
 
     [nameInput, emailInput, orgInput, ritualInput, intentionsInput].forEach((el) => {
@@ -417,8 +430,6 @@
       showStatus("Sending…");
 
       try {
-        // Apps Script web apps do not reliably support CORS headers.
-        // mode:"no-cors" still delivers the request so the Sheet + email works.
         await fetch(APPS_SCRIPT_WEBAPP_URL, {
           method: "POST",
           mode: "no-cors",
@@ -427,8 +438,7 @@
         });
 
         showStatus("Sent. Now pick a time on the calendar.");
-        // Re-render Calendly one more time to ensure latest prefill is in
-        if (embedInitialized) renderCalendly();
+        if (embedInitialized && window.Calendly) renderCalendly();
       } catch (err) {
         showStatus("Something blocked the send. If it keeps happening, tell me what browser you’re testing in.");
       } finally {

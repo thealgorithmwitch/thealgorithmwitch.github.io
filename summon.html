@@ -193,12 +193,12 @@
             </div>
             <div class="space-y-2" vid="47">
               <label class="text-xs uppercase tracking-widest text-gray-400 font-bold ml-1" vid="48">Ritual Type</label>
-              <select id="ritualInput" name="ritualType" class="w-full px-4 py-3 rounded-xl input-field text-sm appearance-none" vid="49">
-                <option class="bg-[#0a0520]" vid="50">System Analysis</option>
-                <option class="bg-[#0a0520]" vid="51">Narrative Alchemy</option>
-                <option class="bg-[#0a0520]" vid="52">Amplification Strategy</option>
-                <option class="bg-[#0a0520]" vid="53">Full Digital Transformation</option>
-              </select>
+             <select id="ritualInput" name="ritualType" class="w-full px-4 py-3 rounded-xl input-field text-sm appearance-none">
+  <option value="System Analysis" class="bg-[#0a0520]">System Analysis</option>
+  <option value="Narrative Alchemy" class="bg-[#0a0520]">Narrative Alchemy</option>
+  <option value="Amplification Strategy" class="bg-[#0a0520]">Amplification Strategy</option>
+  <option value="Full Digital Transformation" class="bg-[#0a0520]">Full Digital Transformation</option>
+</select>
             </div>
           </div>
 
@@ -319,32 +319,41 @@
     const intentionsInput = document.getElementById("intentionsInput");
     const calendlyMount = document.getElementById("calendly-embed-element");
 
-    function buildCalendlyUrl() {
-      const params = new URLSearchParams();
+  <script>
+  function encodeQueryValue(v) {
+    // encodeURIComponent gives %20 for spaces, not +
+    return encodeURIComponent(String(v)).replace(/[!'()*]/g, c =>
+      '%' + c.charCodeAt(0).toString(16).toUpperCase()
+    );
+  }
 
-      // Style params you already used
-      params.set("hide_gdpr_banner", "1");
-      params.set("background_color", "030014");
-      params.set("text_color", "e2e8f0");
-      params.set("primary_color", "a855f7");
+  function buildCalendlyUrl() {
+    const parts = [];
 
-      // Prefill for Calendly booking form
-      const name = (nameInput.value || "").trim();
-      const email = (emailInput.value || "").trim();
-      if (name) params.set("name", name);
-      if (email) params.set("email", email);
+    // Style params
+    parts.push(`hide_gdpr_banner=1`);
+    parts.push(`background_color=030014`);
+    parts.push(`text_color=e2e8f0`);
+    parts.push(`primary_color=a855f7`);
 
-      // Custom question answers (requires 3 custom questions in this order)
-      const org = (orgInput.value || "").trim();
-      const ritual = (ritualInput.value || "").trim();
-      const intentions = (intentionsInput.value || "").trim();
-      if (org) params.set("a1", org);
-      if (ritual) params.set("a2", ritual);
-      if (intentions) params.set("a3", intentions);
+    // Prefill
+    const name = (nameInput.value || "").trim();
+    const email = (emailInput.value || "").trim();
+    if (name) parts.push(`name=${encodeQueryValue(name)}`);
+    if (email) parts.push(`email=${encodeQueryValue(email)}`);
 
-      return `${CALENDLY_BASE_URL}?${params.toString()}`;
-    }
+    // Custom question answers (a1/a2/a3)
+    const org = (orgInput.value || "").trim();
+    const ritual = (ritualInput.value || "").trim();
+    const intentions = (intentionsInput.value || "").trim();
+    if (org) parts.push(`a1=${encodeQueryValue(org)}`);
+    if (ritual) parts.push(`a2=${encodeQueryValue(ritual)}`);
+    if (intentions) parts.push(`a3=${encodeQueryValue(intentions)}`);
 
+    return `${CALENDLY_BASE_URL}?${parts.join("&")}`;
+  }
+</script> 
+  
     let embedInitialized = false;
 
     function renderCalendly() {

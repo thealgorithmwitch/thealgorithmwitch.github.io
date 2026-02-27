@@ -1,0 +1,298 @@
+<html lang="en" vid="0"><head vid="1">
+    <meta charset="UTF-8" vid="2">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" vid="3">
+    <title vid="4">Website Revamp | The Algorithm Witch</title>
+    <script src="https://cdn.tailwindcss.com/3.4.17" vid="5"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com" vid="6">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="" vid="7">
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@400;700;900&amp;family=Inter:wght@300;400;500;600&amp;family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&amp;display=swap" rel="stylesheet" vid="8">
+    <script src="https://unpkg.com/@phosphor-icons/web" vid="9"></script>
+    <style vid="10">
+        :root {
+            --color-bg: #030014;
+            --color-card: rgba(20, 15, 45, 0.6);
+            --color-accent: #06b6d4;
+            --color-gold: #fde047;
+        }
+
+        body {
+            background-color: var(--color-bg);
+            color: #e2e8f0;
+            font-family: 'Inter', sans-serif;
+            margin: 0;
+            padding: 0;
+            overflow-x: hidden;
+            scroll-behavior: smooth;
+        }
+
+        .font-magical { font-family: 'Cinzel Decorative', cursive; }
+        .font-serif-heading { font-family: 'Playfair Display', serif; }
+
+        .stars {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .star {
+            position: absolute;
+            background: white;
+            border-radius: 50%;
+            opacity: 0;
+            animation: twinkle var(--duration) ease-in-out infinite;
+            animation-delay: var(--delay);
+        }
+
+        @keyframes twinkle {
+            0% { opacity: 0; transform: scale(0.5); }
+            50% { opacity: var(--opacity); transform: scale(1.2); box-shadow: 0 0 4px rgba(255, 255, 255, 0.8); }
+            100% { opacity: 0; transform: scale(0.5); }
+        }
+
+        .glass-panel {
+            background: rgba(13, 12, 34, 0.6);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(6, 182, 212, 0.15);
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+        }
+
+        .glass-card {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(10px);
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .glass-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(600px circle at var(--mouse-x) var(--mouse-y), rgba(6, 182, 212, 0.08), transparent 40%);
+            opacity: 0;
+            transition: opacity 0.5s;
+            pointer-events: none;
+        }
+
+        .glass-card:hover::before { opacity: 1; }
+
+        .glass-card:hover {
+            border-color: rgba(6, 182, 212, 0.3);
+            transform: translateY(-5px);
+            box-shadow: 0 15px 40px -10px rgba(6, 182, 212, 0.2);
+        }
+
+        .cyan-glow {
+            box-shadow: 0 0 40px -10px rgba(6, 182, 212, 0.5);
+        }
+
+        .section-fade-up {
+            opacity: 0;
+            transform: translateY(30px);
+            transition: opacity 0.8s ease-out, transform 0.8s ease-out;
+        }
+        
+        .section-fade-up.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .timeline-line {
+            background: linear-gradient(to bottom, transparent, #06b6d4, transparent);
+        }
+
+        .nav-link { position: relative; }
+        .nav-link::after {
+            content: '';
+            position: absolute;
+            bottom: -4px;
+            left: 0;
+            width: 0%;
+            height: 1px;
+            background-color: #06b6d4;
+            transition: width 0.3s ease;
+        }
+        .nav-link:hover::after { width: 100%; }
+    </style>
+</head>
+<body class="selection:bg-cyan-600 selection:text-white antialiased" vid="11">
+
+    <div id="star-container" class="stars" vid="12"></div>
+    
+    <nav id="navbar" class="fixed top-0 w-full z-50 px-6 py-6" vid="13">
+        <div class="max-w-7xl mx-auto glass-panel rounded-full px-8 py-4 flex justify-between items-center" vid="14">
+            <a href="/" class="flex items-center gap-3 group" vid="15">
+                <i class="ph-fill ph-sparkle text-cyan-400 text-2xl group-hover:rotate-12 transition-transform" vid="16"></i>
+                <span class="font-magical text-xl text-white tracking-widest" vid="17">Algorithm Witch</span>
+            </a>
+            
+            <div class="hidden md:flex items-center gap-8 text-xs uppercase tracking-[0.2em] text-gray-300 font-medium" vid="18">
+                <a href="/services" class="flex items-center gap-2 hover:text-cyan-300 transition-colors" vid="19">
+                    <i class="ph ph-arrow-left" vid="20"></i> Back to Services
+                </a>
+            </div>
+
+            <a href="#contact" class="hidden md:inline-flex items-center justify-center px-6 py-2 bg-cyan-500/10 hover:bg-cyan-500/20 border border-cyan-500/30 rounded-full text-xs uppercase tracking-widest text-white transition-all hover:scale-105" vid="21">
+                Summon Me
+            </a>
+        </div>
+    </nav>
+
+    <main class="relative z-10 w-full max-w-6xl mx-auto px-6 pt-40 pb-32" vid="22">
+        
+        <header class="text-center mb-24 section-fade-up visible" vid="23">
+            <div class="w-24 h-24 mx-auto mb-8 rounded-3xl bg-cyan-950/40 border border-cyan-500/30 flex items-center justify-center cyan-glow" vid="24">
+                <i class="ph-duotone ph-layout text-5xl text-cyan-300" vid="25"></i>
+            </div>
+            <h1 class="font-magical text-5xl md:text-7xl text-white mb-6" vid="26">Website <span class="text-cyan-400" vid="27">Revamp</span></h1>
+            <p class="font-serif-heading text-xl md:text-2xl text-cyan-100/70 italic max-w-2xl mx-auto" vid="28">
+                "A digital hearth for your mission to dwell."
+            </p>
+        </header>
+
+        
+        <section class="mb-32 section-fade-up visible" vid="29">
+            <h2 class="font-magical text-2xl text-white mb-12 text-center uppercase tracking-widest" vid="30">The Deliverables</h2>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6" vid="31">
+                <div class="glass-card p-8 rounded-3xl border-t border-t-cyan-500/20" vid="32">
+                    <i class="ph-duotone ph-magnifying-glass text-3xl text-cyan-400 mb-4" vid="33"></i>
+                    <h3 class="font-magical text-lg text-white mb-2" vid="34">UX Audit</h3>
+                    <p class="text-sm text-gray-400 leading-relaxed" vid="35">Deep analysis of current user paths to identify where engagement is lost and opportunities reside.</p>
+                </div>
+                <div class="glass-card p-8 rounded-3xl border-t border-t-cyan-500/20" vid="36">
+                    <i class="ph-duotone ph-tree-structure text-3xl text-cyan-400 mb-4" vid="37"></i>
+                    <h3 class="font-magical text-lg text-white mb-2" vid="38">Sitemap Alchemy</h3>
+                    <p class="text-sm text-gray-400 leading-relaxed" vid="39">Strategic reorganization of your site architecture for intuitive navigation and clarity.</p>
+                </div>
+                <div class="glass-card p-8 rounded-3xl border-t border-t-cyan-500/20" vid="40">
+                    <i class="ph-duotone ph-feather text-3xl text-cyan-400 mb-4" vid="41"></i>
+                    <h3 class="font-magical text-lg text-white mb-2" vid="42">Copy Editing</h3>
+                    <p class="text-sm text-gray-400 leading-relaxed" vid="43">Refining your voice to resonate with your audience while maintaining authority and warmth.</p>
+                </div>
+                <div class="glass-card p-8 rounded-3xl border-t border-t-cyan-500/20" vid="44">
+                    <i class="ph-duotone ph-palette text-3xl text-cyan-400 mb-4" vid="45"></i>
+                    <h3 class="font-magical text-lg text-white mb-2" vid="46">Visual Redesign</h3>
+                    <p class="text-sm text-gray-400 leading-relaxed" vid="47">A complete aesthetic transformation tailored to your brand's unique digital signature.</p>
+                </div>
+                <div class="glass-card p-8 rounded-3xl border-t border-t-cyan-500/20" vid="48">
+                    <i class="ph-duotone ph-code text-3xl text-cyan-400 mb-4" vid="49"></i>
+                    <h3 class="font-magical text-lg text-white mb-2" vid="50">CMS Setup</h3>
+                    <p class="text-sm text-gray-400 leading-relaxed" vid="51">Robust backend configuration allowing your team to update content without needing a developer.</p>
+                </div>
+                <div class="glass-card p-8 rounded-3xl border-t border-t-cyan-500/20" vid="52">
+                    <i class="ph-duotone ph-rocket-launch text-3xl text-cyan-400 mb-4" vid="53"></i>
+                    <h3 class="font-magical text-lg text-white mb-2" vid="54">Launch Support</h3>
+                    <p class="text-sm text-gray-400 leading-relaxed" vid="55">Hands-on guidance through the migration process and technical verification for a seamless reveal.</p>
+                </div>
+            </div>
+        </section>
+
+        
+        <section class="mb-32 section-fade-up visible" vid="56">
+            <h2 class="font-magical text-2xl text-white mb-16 text-center uppercase tracking-widest" vid="57">The Evolution Process</h2>
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-8 relative" vid="58">
+                <div class="flex flex-col items-center text-center group" vid="59">
+                    <div class="w-12 h-12 rounded-full border border-cyan-500/50 flex items-center justify-center font-magical text-cyan-400 mb-6 group-hover:bg-cyan-500/20 transition-all" vid="60">01</div>
+                    <h3 class="font-magical text-white mb-3" vid="61">Discovery</h3>
+                    <p class="text-xs text-gray-500" vid="62">Scrying session to uncover goals, audience, and technical needs.</p>
+                </div>
+                <div class="flex flex-col items-center text-center group" vid="63">
+                    <div class="w-12 h-12 rounded-full border border-cyan-500/50 flex items-center justify-center font-magical text-cyan-400 mb-6 group-hover:bg-cyan-500/20 transition-all" vid="64">02</div>
+                    <h3 class="font-magical text-white mb-3" vid="65">Design</h3>
+                    <p class="text-xs text-gray-500" vid="66">Crafting the visual grimoire and user journey wireframes.</p>
+                </div>
+                <div class="flex flex-col items-center text-center group" vid="67">
+                    <div class="w-12 h-12 rounded-full border border-cyan-500/50 flex items-center justify-center font-magical text-cyan-400 mb-6 group-hover:bg-cyan-500/20 transition-all" vid="68">03</div>
+                    <h3 class="font-magical text-white mb-3" vid="69">Build</h3>
+                    <p class="text-xs text-gray-500" vid="70">Transmuting designs into a fast, accessible digital reality.</p>
+                </div>
+                <div class="flex flex-col items-center text-center group" vid="71">
+                    <div class="w-12 h-12 rounded-full border border-cyan-500/50 flex items-center justify-center font-magical text-cyan-400 mb-6 group-hover:bg-cyan-500/20 transition-all" vid="72">04</div>
+                    <h3 class="font-magical text-white mb-3" vid="73">Launch</h3>
+                    <p class="text-xs text-gray-500" vid="74">The final ritual—deployment and performance optimization.</p>
+                </div>
+            </div>
+        </section>
+
+        
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-12 mb-32 section-fade-up visible" vid="75">
+            <div class="glass-card p-12 rounded-[2.5rem] border-l-4 border-l-cyan-500" vid="76">
+                <h2 class="font-magical text-2xl text-white mb-6" vid="77">Who It's For</h2>
+                <ul class="space-y-4 text-gray-300" vid="78">
+                    <li class="flex items-start gap-3" vid="79"><i class="ph ph-check-circle text-cyan-400 mt-1" vid="80"></i> Non-profits with outdated digital presences</li>
+                    <li class="flex items-start gap-3" vid="81"><i class="ph ph-check-circle text-cyan-400 mt-1" vid="82"></i> Organizations whose mission has evolved</li>
+                    <li class="flex items-start gap-3" vid="83"><i class="ph ph-check-circle text-cyan-400 mt-1" vid="84"></i> Advocacy groups needing high-conversion hubs</li>
+                    <li class="flex items-start gap-3" vid="85"><i class="ph ph-check-circle text-cyan-400 mt-1" vid="86"></i> Leaders who value design as a tool for impact</li>
+                </ul>
+            </div>
+            <div class="flex flex-col gap-6" vid="87">
+                <div class="glass-card p-8 rounded-3xl" vid="88">
+                    <div class="flex justify-between items-center mb-4" vid="89">
+                        <span class="font-magical text-cyan-400 uppercase text-xs tracking-widest" vid="90">The Single Vision</span>
+                        <span class="font-magical text-white" vid="91">$4,500+</span>
+                    </div>
+                    <p class="text-sm text-gray-400" vid="92">A focused revamp for high-impact landing pages or 5-page microsites.</p>
+                </div>
+                <div class="glass-card p-8 rounded-3xl border border-cyan-500/40 cyan-glow" vid="93">
+                    <div class="flex justify-between items-center mb-4" vid="94">
+                        <span class="font-magical text-cyan-400 uppercase text-xs tracking-widest" vid="95">The Great Ritual</span>
+                        <span class="font-magical text-white" vid="96">$12,000+</span>
+                    </div>
+                    <p class="text-sm text-gray-400" vid="97">Full-scale organizational website overhaul with deep UX and content strategy.</p>
+                </div>
+            </div>
+        </div>
+
+        
+        <footer id="contact" class="max-w-4xl mx-auto text-center pt-20 relative section-fade-up visible" vid="98">
+            <div class="flex items-center justify-center gap-4 mb-12 opacity-40" vid="99">
+                <div class="h-px bg-cyan-500 w-16" vid="100"></div>
+                <i class="ph-fill ph-sparkle text-cyan-400 text-2xl animate-pulse" vid="101"></i>
+                <div class="h-px bg-cyan-500 w-16" vid="102"></div>
+            </div>
+            <h2 class="font-magical text-4xl text-white mb-8" vid="103">Ready to Renovate Your Hearth?</h2>
+            <a href="mailto:hello@algorithmwitch.com" class="inline-flex items-center justify-center px-10 py-5 bg-white text-cyan-900 rounded-full font-bold tracking-widest uppercase text-sm hover:scale-105 transition-transform shadow-[0_0_50px_-10px_rgba(6,182,212,0.4)] group" vid="104">
+                Summon Me <i class="ph-bold ph-arrow-right ml-2 group-hover:translate-x-1 transition-transform" vid="105"></i>
+            </a>
+        </footer>
+    </main>
+
+    <script vid="106">
+        const starContainer = document.getElementById('star-container');
+        for (let i = 0; i < 200; i++) {
+            const star = document.createElement('div');
+            star.classList.add('star');
+            star.style.left = `${Math.random() * 100}%`;
+            star.style.top = `${Math.random() * 100}%`;
+            star.style.width = star.style.height = `${Math.random() < 0.1 ? 3 : 1}px`;
+            star.style.setProperty('--duration', `${2 + Math.random() * 4}s`);
+            star.style.setProperty('--delay', `${Math.random() * 5}s`);
+            star.style.setProperty('--opacity', 0.2 + Math.random() * 0.6);
+            starContainer.appendChild(star);
+        }
+
+        document.addEventListener('mousemove', e => {
+            document.querySelectorAll('.glass-card').forEach(card => {
+                const rect = card.getBoundingClientRect();
+                card.style.setProperty('--mouse-x', `${e.clientX - rect.left}px`);
+                card.style.setProperty('--mouse-y', `${e.clientY - rect.top}px`);
+            });
+        });
+
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) entry.target.classList.add('visible');
+            });
+        }, { threshold: 0.1 });
+        document.querySelectorAll('.section-fade-up').forEach(el => observer.observe(el));
+    </script>
+</body></html>

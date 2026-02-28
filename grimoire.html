@@ -1,6 +1,11 @@
 <!DOCTYPE html>
 <html lang="en" vid="0">
 <head>
+  <!-- JS flag FIRST so iOS never hides content until tap -->
+  <script>
+    document.documentElement.classList.add('js');
+  </script>
+
   <!-- Google tag (gtag.js) -->
   <script async src="https://www.googletagmanager.com/gtag/js?id=G-3CBRL5V6FD"></script>
   <script>
@@ -55,9 +60,6 @@
   <meta name="twitter:title" content="Grimoire | The Algorithm Witch" />
   <meta name="twitter:description" content="High-performing examples and digital strategy practices from The Algorithm Witch across climate, policy, advocacy, and mission-driven work." />
   <meta name="twitter:image" content="https://thealgorithmwitch.github.io/og.jpg?v=3" />
-  <!-- Optional: add if you have an X handle -->
-  <!-- <meta name="twitter:site" content="@YOURHANDLE" /> -->
-  <!-- <meta name="twitter:creator" content="@YOURHANDLE" /> -->
 
   <!-- Performance: preload OG image -->
   <link rel="preload" as="image" href="https://thealgorithmwitch.github.io/og.jpg?v=3" />
@@ -237,14 +239,21 @@
     }
     .nav-link:hover::after { width: 100%; }
 
+    /* FIX: content visible by default (prevents iOS "tap to show") */
     .section-fade-up {
+      opacity: 1;
+      transform: none;
+    }
+
+    /* Only animate when JS is active */
+    html.js .section-fade-up {
       opacity: 0;
       transform: translateY(30px);
       transition: opacity 0.8s ease-out, transform 0.8s ease-out;
       will-change: transform, opacity;
     }
 
-    .section-fade-up.visible {
+    html.js .section-fade-up.visible {
       opacity: 1;
       transform: translateY(0);
     }
@@ -445,7 +454,7 @@
             <span class="text-[10px] uppercase tracking-[0.2em] text-purple-400 font-bold" vid="40">YouTube • Strategy</span>
             <h3 class="text-white font-medium mt-1 mb-4 group-hover:text-purple-200 transition-colors" vid="41">Community Solar Explained</h3>
 
-          <div class="grid grid-cols-3 gap-2 pt-3 border-t border-white/5">
+            <div class="grid grid-cols-3 gap-2 pt-3 border-t border-white/5">
               <div class="text-center">
                 <div class="font-magical text-sm text-white">800+</div>
                 <div class="text-[9px] uppercase tracking-wider text-gray-500 mt-0.5">YT Views</div>
@@ -813,19 +822,33 @@
       }, { passive: true });
     }
 
-    // Section reveal: keep, but respect reduced motion
-    const observer = new IntersectionObserver((entries) => {
-      entries.forEach(entry => {
-        if (entry.isIntersecting) entry.target.classList.add('visible');
+    // Section reveal: robust for iOS Safari + fallback (prevents "tap to show")
+    const sections = Array.from(document.querySelectorAll('.section-fade-up'));
+
+    if (prefersReducedMotion) {
+      sections.forEach(el => el.classList.add('visible'));
+    } else {
+      const io = new IntersectionObserver((entries) => {
+        for (const entry of entries) {
+          if (entry.isIntersecting) entry.target.classList.add('visible');
+        }
+      }, {
+        threshold: 0.01,
+        rootMargin: '0px 0px -10% 0px'
       });
-    }, { threshold: 0.1 });
 
-    document.querySelectorAll('.section-fade-up').forEach(el => {
-      if (prefersReducedMotion) el.classList.add('visible');
-      else observer.observe(el);
-    });
+      requestAnimationFrame(() => {
+        sections.forEach(el => io.observe(el));
+      });
 
-    // Mobile menu dropdown (new)
+      window.addEventListener('load', () => {
+        setTimeout(() => {
+          sections.forEach(el => el.classList.add('visible'));
+        }, 700);
+      }, { once: true });
+    }
+
+    // Mobile menu dropdown
     const menuBtn = document.getElementById('menuButton');
     const mobileMenu = document.getElementById('mobileMenu');
 

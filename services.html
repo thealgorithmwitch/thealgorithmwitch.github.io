@@ -251,27 +251,52 @@
 <body class="selection:bg-purple-600 selection:text-white antialiased">
   <div id="star-container" class="stars"></div>
 
-  <nav id="navbar" class="fixed top-0 w-full z-50 px-6 py-6 transition-all duration-300">
-    <div class="max-w-7xl mx-auto glass-panel rounded-full px-8 py-4 flex justify-between items-center">
-      <a href="/" class="flex items-center gap-3 group">
-        <div class="relative">
-          <i class="ph-fill ph-sparkle text-purple-400 text-2xl group-hover:scale-110 transition-transform duration-300"></i>
-          <i class="ph-fill ph-star-four text-yellow-300 text-xs absolute -top-1 -right-2 animate-pulse"></i>
-        </div>
-        <span class="font-magical text-xl text-white tracking-widest group-hover:text-purple-200 transition-colors">Algorithm Witch</span>
-      </a>
-
-      <div class="hidden md:flex items-center gap-8 text-xs uppercase tracking-[0.2em] text-gray-300 font-medium">
-        <a href="/#origins" class="nav-link hover:text-white transition-colors">Origins</a>
-        <a href="/#grimoire" class="nav-link hover:text-white transition-colors">Grimoire</a>
-        <a href="services.html" class="text-white nav-link">Offerings</a>
+<!-- 1) REPLACE your <nav id="navbar"> ... </nav> with this -->
+<nav id="navbar" class="fixed top-0 w-full z-50 px-6 py-6 transition-all duration-300">
+  <div class="max-w-7xl mx-auto glass-panel rounded-full px-8 py-4 flex justify-between items-center">
+    <a href="/" class="flex items-center gap-3 group">
+      <div class="relative">
+        <i class="ph-fill ph-sparkle text-purple-400 text-2xl group-hover:scale-110 transition-transform duration-300"></i>
+        <i class="ph-fill ph-star-four text-yellow-300 text-xs absolute -top-1 -right-2 animate-pulse"></i>
       </div>
+      <span class="font-magical text-xl text-white tracking-widest group-hover:text-purple-200 transition-colors">Algorithm Witch</span>
+    </a>
 
-      <a href="summon.html" class="hidden md:inline-flex items-center justify-center px-6 py-2 bg-purple-500/10 hover:bg-purple-500/20 border border-purple-500/30 rounded-full text-xs uppercase tracking-widest text-white transition-all hover:scale-105 hover:border-purple-400">
-        Summon Me
+    <!-- Desktop nav -->
+    <div class="hidden md:flex items-center gap-8 text-xs uppercase tracking-[0.2em] text-gray-300 font-medium">
+      <a href="/#origins" class="nav-link hover:text-white transition-colors">Origins</a>
+      <a href="/#grimoire" class="nav-link hover:text-white transition-colors">Grimoire</a>
+      <a href="services.html" class="text-white nav-link">Offerings</a>
+    </div>
+
+    <!-- Desktop CTA -->
+    <a href="summon.html"
+       class="hidden md:inline-flex items-center justify-center px-6 py-2 bg-purple-500/10 hover:bg-purple-500/20 border border-purple-500/30 rounded-full text-xs uppercase tracking-widest text-white transition-all hover:scale-105 hover:border-purple-400">
+      Summon Me
+    </a>
+
+    <!-- Mobile toggle -->
+    <button id="menuButton"
+            class="md:hidden text-white text-2xl"
+            aria-expanded="false"
+            aria-controls="mobileMenu">
+      <i class="ph ph-list"></i>
+    </button>
+  </div>
+
+  <!-- Mobile dropdown (shows same links as desktop + CTA) -->
+  <div id="mobileMenu" class="md:hidden hidden mt-3 mx-auto max-w-7xl glass-panel rounded-2xl px-6 py-4">
+    <div class="flex flex-col gap-4 text-xs uppercase tracking-[0.2em] text-gray-300 font-medium">
+      <a href="/#origins" class="nav-link hover:text-white transition-colors">Origins</a>
+      <a href="/#grimoire" class="nav-link hover:text-white transition-colors">Grimoire</a>
+      <a href="services.html" class="nav-link text-white">Offerings</a>
+
+      <a href="summon.html"
+         class="mt-2 inline-flex items-center justify-center px-6 py-3 bg-purple-500/10 hover:bg-purple-500/20 border border-purple-500/30 rounded-full text-xs uppercase tracking-widest text-white transition-all">
+        Summon Me <i class="ph-bold ph-arrow-right ml-2"></i>
       </a>
     </div>
-  </nav>
+  </div
 
   <main class="relative z-10 w-full max-w-5xl mx-auto px-6 pt-40 pb-32 flex flex-col gap-12">
     <header class="text-center mb-16 section-fade-up visible">
@@ -415,6 +440,25 @@
     }, { threshold: 0.1 });
 
     document.querySelectorAll('.section-fade-up').forEach((el) => observer.observe(el));
+    // Mobile menu toggle
+    const menuBtn = document.getElementById('menuButton');
+    const mobileMenu = document.getElementById('mobileMenu');
+  
+    if (menuBtn && mobileMenu) {
+      menuBtn.addEventListener('click', () => {
+        mobileMenu.classList.toggle('hidden');
+        const expanded = menuBtn.getAttribute('aria-expanded') === 'true';
+        menuBtn.setAttribute('aria-expanded', String(!expanded));
+      });
+  
+      // Close on link tap
+      mobileMenu.querySelectorAll('a').forEach((link) => {
+        link.addEventListener('click', () => {
+          mobileMenu.classList.add('hidden');
+          menuBtn.setAttribute('aria-expanded', 'false');
+        });
+    });
+  }
   </script>
 </body>
 </html>

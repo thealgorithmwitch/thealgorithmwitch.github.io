@@ -7,11 +7,7 @@
     window.dataLayer = window.dataLayer || [];
     function gtag(){dataLayer.push(arguments);}
     gtag('js', new Date());
-
-    gtag('config', 'G-3CBRL5V6FD', {
-      anonymize_ip: true,
-      send_page_view: true
-    });
+    gtag('config', 'G-3CBRL5V6FD', { anonymize_ip: true, send_page_view: true });
   </script>
 
   <meta charset="UTF-8" />
@@ -28,7 +24,6 @@
   <meta name="theme-color" content="#030014" />
 
   <meta name="referrer" content="strict-origin-when-cross-origin" />
-
   <link rel="canonical" href="https://thealgorithmwitch.github.io/summon.html" />
 
   <meta name="description" content="Book a consultation with The Algorithm Witch. Digital strategy for climate, policy, advocacy, and mission-driven teams." />
@@ -66,7 +61,6 @@
   <style>
     :root {
       --color-bg: #030014;
-      --color-card: rgba(20, 15, 45, 0.6);
       --color-accent: #a855f7;
       --color-gold: #fde047;
     }
@@ -133,7 +127,6 @@
       background-size: 200% auto;
       animation: shine 8s linear infinite;
     }
-
     @keyframes shine { to { background-position: 200% center; } }
 
     .nav-link { position: relative; }
@@ -153,12 +146,7 @@
       backdrop-filter: blur(10px);
       position: relative;
     }
-
-    /* ✅ CRITICAL FIX: stop browser forcing an opaque light background on the iframe */
-    #calendly-embed-element iframe {
-      color-scheme: light;
-      background: transparent !important;
-    }
+    /* IMPORTANT: no iframe styling here */
   </style>
 </head>
 
@@ -275,10 +263,7 @@
 
   <footer class="w-full max-w-7xl mx-auto px-6 py-12 border-t border-white/5 relative z-10">
     <div class="flex flex-col md:flex-row justify-between items-center gap-6">
-      <div class="text-slate-500 text-sm font-magical">
-        © 2026 The Algorithm Witch
-      </div>
-
+      <div class="text-slate-500 text-sm font-magical">© 2026 The Algorithm Witch</div>
       <div class="flex gap-6">
         <a href="https://www.linkedin.com/in/cassandrearkema/" target="_blank" rel="noopener noreferrer" aria-label="LinkedIn" class="text-slate-400 hover:text-white transition-colors">
           <i class="ph-fill ph-linkedin-logo text-xl"></i>
@@ -293,10 +278,7 @@
           <i class="ph-fill ph-envelope-simple text-xl"></i>
         </a>
       </div>
-
-      <div class="text-slate-600 text-xs uppercase tracking-widest">
-        Crafted in the Ether
-      </div>
+      <div class="text-slate-600 text-xs uppercase tracking-widest">Crafted in the Ether</div>
     </div>
   </footer>
 
@@ -312,32 +294,14 @@
     for (let i = 0; i < 150; i++) {
       const star = document.createElement('div');
       star.classList.add('star');
-      const x = Math.random() * 100;
-      const y = Math.random() * 100;
-      const duration = 2 + Math.random() * 4;
-      const delay = Math.random() * 5;
-      const size = Math.random() < 0.1 ? 2 : 1;
-      const opacity = 0.2 + Math.random() * 0.6;
-      star.style.left = `${x}%`;
-      star.style.top = `${y}%`;
-      star.style.width = `${size}px`;
-      star.style.height = `${size}px`;
-      star.style.setProperty('--duration', `${duration}s`);
-      star.style.setProperty('--delay', `${delay}s`);
-      star.style.setProperty('--opacity', opacity);
+      star.style.left = `${Math.random() * 100}%`;
+      star.style.top = `${Math.random() * 100}%`;
+      star.style.width = star.style.height = `${Math.random() < 0.1 ? 2 : 1}px`;
+      star.style.setProperty('--duration', `${2 + Math.random() * 4}s`);
+      star.style.setProperty('--delay', `${Math.random() * 5}s`);
+      star.style.setProperty('--opacity', 0.2 + Math.random() * 0.6);
       starContainer.appendChild(star);
     }
-
-    window.addEventListener('scroll', () => {
-      const nav = document.getElementById('navbar');
-      if (window.scrollY > 50) {
-        nav.classList.add('py-2');
-        nav.querySelector('.glass-panel').classList.add('bg-[#0a0520]/80');
-      } else {
-        nav.classList.remove('py-2');
-        nav.querySelector('.glass-panel').classList.remove('bg-[#0a0520]/80');
-      }
-    });
 
     // ====== CALENDLY PREFILL + EMBED ======
     const nameInput = document.getElementById("nameInput");
@@ -353,31 +317,14 @@
       );
     }
 
-    function buildIntentionsFromParams(params) {
+    function applyPrefillFromUrlOnce() {
+      const params = new URLSearchParams(window.location.search);
+
       const ritual = (params.get("ritual") || "").trim();
       const tier = (params.get("tier") || "").trim();
       const addon = (params.get("addon") || "").trim();
       const notes = (params.get("notes") || "").trim();
 
-      const lines = [];
-
-      if (ritual) lines.push(`Ritual: ${ritual}`);
-      if (tier) lines.push(`Tier: ${tier}`);
-      if (addon) lines.push(`Add-on: ${addon}`);
-
-      if (notes) {
-        lines.push("");
-        lines.push(notes);
-      }
-
-      return lines.join("\n");
-    }
-
-    function applyPrefillFromUrl() {
-      const params = new URLSearchParams(window.location.search);
-
-      // explicit fields
-      const ritual = (params.get("ritual") || "").trim();
       const org = (params.get("org") || "").trim();
       const email = (params.get("email") || "").trim();
       const name = (params.get("name") || "").trim();
@@ -391,35 +338,43 @@
         if (options.includes(ritual)) ritualInput.value = ritual;
       }
 
-      // intentions: if provided directly, use it. Otherwise build from ritual/tier/etc
-      const intentions = (params.get("intentions") || "").trim();
-      if (intentions) {
-        intentionsInput.value = intentions;
-      } else {
-        const built = buildIntentionsFromParams(params);
-        if (built) intentionsInput.value = built;
+      const explicitIntentions = (params.get("intentions") || "").trim();
+      if (explicitIntentions) {
+        intentionsInput.value = explicitIntentions;
+        return;
       }
+
+      const lines = [];
+      if (ritual) lines.push(`Ritual: ${ritual}`);
+      if (tier) lines.push(`Tier: ${tier}`);
+      if (addon) lines.push(`Add-on: ${addon}`);
+      if (notes) {
+        lines.push("");
+        lines.push(notes);
+      }
+      if (lines.length) intentionsInput.value = lines.join("\n");
     }
 
     function buildCalendlyUrl() {
       const parts = [];
 
-      // ✅ Theme (kept first, always present)
+      // Theme params (these are what keep the calendar purple)
       parts.push(`hide_gdpr_banner=1`);
       parts.push(`background_color=030014`);
       parts.push(`text_color=e2e8f0`);
       parts.push(`primary_color=a855f7`);
 
-      // Prefill into calendly’s name/email fields
+      // Calendly built-in fields
       const name = (nameInput.value || "").trim();
       const email = (emailInput.value || "").trim();
       if (name) parts.push(`name=${encodeQueryValue(name)}`);
       if (email) parts.push(`email=${encodeQueryValue(email)}`);
 
-      // Custom answers (a1/a2/a3)
+      // Custom answers (must match your Calendly questions order)
       const org = (orgInput.value || "").trim();
       const ritual = (ritualInput.value || "").trim();
       const intentions = (intentionsInput.value || "").trim();
+
       if (org) parts.push(`a1=${encodeQueryValue(org)}`);
       if (ritual) parts.push(`a2=${encodeQueryValue(ritual)}`);
       if (intentions) parts.push(`a3=${encodeQueryValue(intentions)}`);
@@ -427,54 +382,14 @@
       return `${CALENDLY_BASE_URL}?${parts.join("&")}`;
     }
 
-    let embedInitialized = false;
-
     function renderCalendly() {
       if (!window.Calendly || !calendlyMount) return;
-
       calendlyMount.innerHTML = "";
       window.Calendly.initInlineWidget({
         url: buildCalendlyUrl(),
         parentElement: calendlyMount
       });
-      embedInitialized = true;
-
-      // Extra hardening: once iframe exists, ensure it stays transparent-friendly
-      setTimeout(() => {
-        const iframe = calendlyMount.querySelector("iframe");
-        if (iframe) {
-          iframe.style.background = "transparent";
-          iframe.style.colorScheme = "light";
-        }
-      }, 300);
     }
-    // ====== OPTIONAL URL PREFILL (SAFE) ======
-    (function applyPrefillFromUrl() {
-      const params = new URLSearchParams(window.location.search);
-    
-      const ritual = params.get("ritual");
-      const tier = params.get("tier");
-      const notes = params.get("notes");
-    
-      if (ritual) {
-        const options = Array.from(ritualInput.options).map(o => o.value);
-        if (options.includes(ritual)) {
-          ritualInput.value = ritual;
-        }
-      }
-    
-      const lines = [];
-      if (ritual) lines.push(`Ritual: ${ritual}`);
-      if (tier) lines.push(`Tier: ${tier}`);
-      if (notes) {
-        lines.push("");
-        lines.push(notes);
-      }
-    
-      if (lines.length) {
-        intentionsInput.value = lines.join("\n");
-      }
-    })();
 
     function waitForCalendlyAndRender() {
       let tries = 0;
@@ -490,10 +405,11 @@
       }, 100);
     }
 
-    // ✅ Apply URL prefill BEFORE first render
-    applyPrefillFromUrl();
+    // Prefill first, then first render
+    applyPrefillFromUrlOnce();
     waitForCalendlyAndRender();
 
+    // Re-render when fields change (keeps theme params, no iframe meddling)
     let t;
     function scheduleRerender() {
       clearTimeout(t);
@@ -501,7 +417,6 @@
         if (window.Calendly) renderCalendly();
       }, 350);
     }
-
     [nameInput, emailInput, orgInput, ritualInput, intentionsInput].forEach((el) => {
       el.addEventListener("input", scheduleRerender);
       el.addEventListener("change", scheduleRerender);
@@ -548,7 +463,7 @@
         });
 
         showStatus("Sent. Now pick a time on the calendar.");
-        if (embedInitialized && window.Calendly) renderCalendly();
+        if (window.Calendly) renderCalendly();
       } catch (err) {
         showStatus("Something blocked the send. If it keeps happening, tell me what browser you’re testing in.");
       } finally {

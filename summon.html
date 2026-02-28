@@ -57,9 +57,6 @@
   <meta name="twitter:title" content="Summon the Witch | The Algorithm Witch" />
   <meta name="twitter:description" content="Book a consultation with The Algorithm Witch. Digital strategy for climate, policy, advocacy, and mission-driven teams." />
   <meta name="twitter:image" content="https://thealgorithmwitch.github.io/og.jpg?v=3" />
-  <!-- Optional: add if you have an X handle -->
-  <!-- <meta name="twitter:site" content="@YOURHANDLE" /> -->
-  <!-- <meta name="twitter:creator" content="@YOURHANDLE" /> -->
 
   <!-- Performance: preload OG image -->
   <link rel="preload" as="image" href="https://thealgorithmwitch.github.io/og.jpg?v=3" />
@@ -406,6 +403,99 @@
     const intentionsInput = document.getElementById("intentionsInput");
     const calendlyMount = document.getElementById("calendly-embed-element");
 
+    // ---- Presets from subpages / URL params ----
+    // Supported query params (use whichever is easiest from subpages):
+    //   ?ritual=Website%20Revamp
+    //   ?ritualType=Website%20Revamp
+    //   ?service=website-revamp  (slug form)
+    //   ?organization=ACME
+    //   ?intentions=... (or ?a3=...)
+    //   ?name=...&email=... (optional)
+    function normalizeRitualValue(raw) {
+      if (!raw) return "";
+      const v = String(raw).trim();
+
+      // slug -> label mapping (optional convenience for subpages)
+      const map = {
+        "monthly-content-engine": "Monthly Content Engine",
+        "content-engine": "Monthly Content Engine",
+        "website-revamp": "Website Revamp",
+        "digital-metrics-intensive": "Digital Metrics Intensive",
+        "metrics-intensive": "Digital Metrics Intensive",
+        "brand-kit-revamp": "Brand Kit Revamp",
+        "fractional-communications-director": "Fractional Communications Director",
+        "fractional-comms-director": "Fractional Communications Director"
+      };
+
+      const slug = v.toLowerCase().replace(/\s+/g, "-");
+      return map[slug] || v;
+    }
+
+    function setSelectIfOptionExists(selectEl, value) {
+      const val = String(value || "").trim();
+      if (!val) return false;
+
+      // Direct match
+      for (const opt of Array.from(selectEl.options)) {
+        if (opt.value === val) {
+          selectEl.value = val;
+          return true;
+        }
+      }
+
+      // Try normalized (slug -> label)
+      const normalized = normalizeRitualValue(val);
+      for (const opt of Array.from(selectEl.options)) {
+        if (opt.value === normalized) {
+          selectEl.value = normalized;
+          return true;
+        }
+      }
+
+      return false;
+    }
+
+    function applyPresetsFromQuery() {
+      const params = new URLSearchParams(window.location.search);
+
+      // If you link from subpages like summon.html?service=website-revamp
+      const ritualFromQuery =
+        params.get("ritual") ||
+        params.get("ritualType") ||
+        params.get("service") ||
+        params.get("offer") ||
+        "";
+
+      const orgFromQuery =
+        params.get("organization") ||
+        params.get("org") ||
+        params.get("a1") ||
+        "";
+
+      const intentionsFromQuery =
+        params.get("intentions") ||
+        params.get("intention") ||
+        params.get("message") ||
+        params.get("notes") ||
+        params.get("a3") ||
+        "";
+
+      const nameFromQuery = params.get("name") || "";
+      const emailFromQuery = params.get("email") || "";
+
+      // Only fill if blank so you can still type over it without fighting the URL
+      if (nameFromQuery && !nameInput.value.trim()) nameInput.value = nameFromQuery;
+      if (emailFromQuery && !emailInput.value.trim()) emailInput.value = emailFromQuery;
+      if (orgFromQuery && !orgInput.value.trim()) orgInput.value = orgFromQuery;
+      if (intentionsFromQuery && !intentionsInput.value.trim()) intentionsInput.value = intentionsFromQuery;
+
+      if (ritualFromQuery) {
+        // If you WANT query to override even when user already selected, remove this guard:
+        // if (!ritualInput.value.trim()) setSelectIfOptionExists(...)
+        setSelectIfOptionExists(ritualInput, ritualFromQuery);
+      }
+    }
+
     function encodeQueryValue(v) {
       return encodeURIComponent(String(v)).replace(/[!'()*]/g, (c) =>
         '%' + c.charCodeAt(0).toString(16).toUpperCase()
@@ -414,6 +504,7 @@
 
     function buildCalendlyUrl() {
       const parts = [];
+      // Keep your existing embed look params (no Calendly design changes)
       parts.push(`hide_gdpr_banner=1`);
       parts.push(`background_color=030014`);
       parts.push(`text_color=e2e8f0`);
@@ -424,6 +515,7 @@
       if (name) parts.push(`name=${encodeQueryValue(name)}`);
       if (email) parts.push(`email=${encodeQueryValue(email)}`);
 
+      // Keep your existing custom answers keys
       const org = (orgInput.value || "").trim();
       const ritual = (ritualInput.value || "").trim();
       const intentions = (intentionsInput.value || "").trim();
@@ -460,6 +552,8 @@
       }, 100);
     }
 
+    // Apply presets BEFORE first render so the initial embed already has them
+    applyPresetsFromQuery();
     waitForCalendlyAndRender();
 
     let t;

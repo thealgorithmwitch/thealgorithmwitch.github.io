@@ -167,6 +167,7 @@
       opacity: 0;
       animation: twinkle var(--duration) ease-in-out infinite;
       animation-delay: var(--delay);
+      will-change: transform, opacity;
     }
 
     @keyframes twinkle {
@@ -187,9 +188,11 @@
       background: rgba(255, 255, 255, 0.03);
       border: 1px solid rgba(255, 255, 255, 0.05);
       backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
       transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
       position: relative;
       overflow: hidden;
+      contain: layout paint;
     }
 
     .glass-card::before {
@@ -227,7 +230,7 @@
 
     @keyframes shine { to { background-position: 200% center; } }
 
-    .float { animation: float 6s ease-in-out infinite; }
+    .float { animation: float 6s ease-in-out infinite; will-change: transform; }
 
     @keyframes float {
       0%, 100% { transform: translateY(0); }
@@ -259,10 +262,33 @@
       opacity: 0;
       transform: translateY(30px);
       transition: opacity 0.8s ease-out, transform 0.8s ease-out;
+      will-change: transform, opacity;
     }
     .section-fade-up.visible {
       opacity: 1;
       transform: translateY(0);
+    }
+
+    /* MOBILE PERFORMANCE: keep desktop identical; only reduce expensive effects on small screens */
+    @media (max-width: 768px) {
+      /* Backdrop blur is a major mobile GPU cost. Keep the look, reduce the blur strength. */
+      .glass-panel { backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); }
+      .glass-card  { backdrop-filter: blur(6px);  -webkit-backdrop-filter: blur(6px); }
+
+      /* The big blurred orbs are expensive to composite while scrolling. Keep them but lighter. */
+      .mobile-soften-fx { filter: blur(90px) !important; opacity: 0.18 !important; }
+
+      /* Reduce continuous motion for people/devices that request it */
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      html { scroll-behavior: auto; }
+      .float, .animate-bounce, .animate-pulse,
+      .animate-\[spin_60s_linear_infinite\],
+      .animate-\[spin_40s_linear_infinite_reverse\] {
+        animation: none !important;
+      }
+      .star { animation: none !important; opacity: 0.35; }
     }
   </style>
 </head>
@@ -271,8 +297,8 @@
   <div id="star-container" class="stars"></div>
 
   <div class="fixed inset-0 overflow-hidden pointer-events-none z-0">
-    <div class="absolute top-[-20%] left-[-10%] w-[800px] h-[800px] bg-purple-900/20 rounded-full blur-[120px] mix-blend-screen animate-pulse" style="animation-duration: 10s"></div>
-    <div class="absolute bottom-[-10%] right-[-10%] w-[600px] h-[600px] bg-indigo-900/20 rounded-full blur-[100px] mix-blend-screen"></div>
+    <div class="absolute top-[-20%] left-[-10%] w-[800px] h-[800px] bg-purple-900/20 rounded-full blur-[120px] mix-blend-screen animate-pulse mobile-soften-fx" style="animation-duration: 10s"></div>
+    <div class="absolute bottom-[-10%] right-[-10%] w-[600px] h-[600px] bg-indigo-900/20 rounded-full blur-[100px] mix-blend-screen mobile-soften-fx"></div>
     <div class="absolute top-[40%] left-[50%] transform -translate-x-1/2 -translate-y-1/2 w-[900px] h-[900px] border border-white/5 rounded-full animate-[spin_60s_linear_infinite]"></div>
     <div class="absolute top-[40%] left-[50%] transform -translate-x-1/2 -translate-y-1/2 w-[700px] h-[700px] border border-purple-500/10 rounded-full animate-[spin_40s_linear_infinite_reverse]"></div>
   </div>
@@ -460,7 +486,7 @@
           </p>
 
           <p class="text-gray-300 leading-relaxed text-sm mb-8 flex-grow">
-            Transforming policy and technical work into narrative momentum. I shape complex advocacy and policy work into content that travels. This means structuring messaging so it moves across platforms effectively while staying aligned with mission.
+            Transforming policy and technical work into narrative momentum. I shape complex advocacy and policy work into content that travels. This means structuring messaging so it travels across platforms effectively while staying aligned with mission.
           </p>
 
           <ul class="space-y-3 pt-6 border-t border-white/5 text-sm text-gray-400">
@@ -517,7 +543,7 @@
     <section id="focus" class="py-12 section-fade-up">
       <div class="glass-panel p-12 md:p-20 rounded-[3rem] relative overflow-hidden">
         <div class="absolute inset-0 bg-gradient-to-br from-emerald-900/20 via-transparent to-transparent pointer-events-none"></div>
-        <div class="absolute -bottom-40 -left-40 w-[600px] h-[600px] bg-emerald-600/5 blur-[120px] rounded-full"></div>
+        <div class="absolute -bottom-40 -left-40 w-[600px] h-[600px] bg-emerald-600/5 blur-[120px] rounded-full mobile-soften-fx"></div>
 
         <div class="relative z-10 flex flex-col lg:flex-row gap-20 items-center">
           <div class="lg:w-1/2">
@@ -615,65 +641,104 @@
   </main>
 
   <script>
+    // PERF FLAGS
+    const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const isSmallScreen = window.matchMedia('(max-width: 768px)').matches;
+    const canHover = window.matchMedia('(hover: hover) and (pointer: fine)').matches;
+
+    // Stars: heavy on mobile. Keep desktop identical, reduce only on mobile or reduced motion.
     const starContainer = document.getElementById('star-container');
-    const starCount = 200;
+    const starCount = prefersReducedMotion ? 0 : (isSmallScreen ? 70 : 200);
 
-    for (let i = 0; i < starCount; i++) {
-      const star = document.createElement('div');
-      star.classList.add('star');
+    if (starContainer && starCount > 0) {
+      const frag = document.createDocumentFragment();
+      for (let i = 0; i < starCount; i++) {
+        const star = document.createElement('div');
+        star.classList.add('star');
 
-      const x = Math.random() * 100;
-      const y = Math.random() * 100;
-      const duration = 2 + Math.random() * 4;
-      const delay = Math.random() * 5;
-      const size = Math.random() < 0.1 ? 3 : (Math.random() < 0.4 ? 2 : 1);
-      const opacity = 0.2 + Math.random() * 0.6;
+        const x = Math.random() * 100;
+        const y = Math.random() * 100;
+        const duration = 2 + Math.random() * 4;
+        const delay = Math.random() * 5;
+        const size = Math.random() < 0.1 ? 3 : (Math.random() < 0.4 ? 2 : 1);
+        const opacity = 0.2 + Math.random() * 0.6;
 
-      star.style.left = `${x}%`;
-      star.style.top = `${y}%`;
-      star.style.width = `${size}px`;
-      star.style.height = `${size}px`;
-      star.style.setProperty('--duration', `${duration}s`);
-      star.style.setProperty('--delay', `${delay}s`);
-      star.style.setProperty('--opacity', opacity);
+        star.style.left = `${x}%`;
+        star.style.top = `${y}%`;
+        star.style.width = `${size}px`;
+        star.style.height = `${size}px`;
+        star.style.setProperty('--duration', `${duration}s`);
+        star.style.setProperty('--delay', `${delay}s`);
+        star.style.setProperty('--opacity', opacity);
 
-      starContainer.appendChild(star);
+        frag.appendChild(star);
+      }
+      starContainer.appendChild(frag);
     }
 
-    window.addEventListener('scroll', () => {
+    // Navbar scroll: throttle with rAF (same behavior, less work)
+    (function () {
       const nav = document.getElementById('navbar');
+      if (!nav) return;
       const glassPanel = nav.querySelector('.glass-panel');
-      if (window.scrollY > 50) {
-        nav.classList.add('py-2');
-        nav.classList.remove('py-6');
-        glassPanel.classList.add('bg-[#0a0520]/80');
-      } else {
-        nav.classList.add('py-6');
-        nav.classList.remove('py-2');
-        glassPanel.classList.remove('bg-[#0a0520]/80');
+      let ticking = false;
+
+      function onScroll() {
+        if (ticking) return;
+        ticking = true;
+        requestAnimationFrame(() => {
+          const scrolled = window.scrollY > 50;
+          nav.classList.toggle('py-2', scrolled);
+          nav.classList.toggle('py-6', !scrolled);
+          if (glassPanel) glassPanel.classList.toggle('bg-[#0a0520]/80', scrolled);
+          ticking = false;
+        });
       }
-    });
 
-    document.addEventListener('mousemove', e => {
-      document.querySelectorAll('.glass-card').forEach(card => {
-        const rect = card.getBoundingClientRect();
-        const x = e.clientX - rect.left;
-        const y = e.clientY - rect.top;
-        card.style.setProperty('--mouse-x', `${x}px`);
-        card.style.setProperty('--mouse-y', `${y}px`);
-      });
-    });
+      window.addEventListener('scroll', onScroll, { passive: true });
+      onScroll();
+    })();
 
+    // Mouse glow: only run on devices that actually hover (desktop). Zero desktop change; big mobile win.
+    if (canHover) {
+      const cards = Array.from(document.querySelectorAll('.glass-card'));
+      let rafPending = false;
+      let lastX = 0, lastY = 0;
+
+      document.addEventListener('mousemove', (e) => {
+        lastX = e.clientX;
+        lastY = e.clientY;
+        if (rafPending) return;
+        rafPending = true;
+
+        requestAnimationFrame(() => {
+          for (const card of cards) {
+            const rect = card.getBoundingClientRect();
+            card.style.setProperty('--mouse-x', `${lastX - rect.left}px`);
+            card.style.setProperty('--mouse-y', `${lastY - rect.top}px`);
+          }
+          rafPending = false;
+        });
+      }, { passive: true });
+    }
+
+    // IntersectionObserver: keep; it’s efficient. Respect reduced motion.
     const observerOptions = { threshold: 0.1, rootMargin: "0px 0px -50px 0px" };
-
     const observer = new IntersectionObserver((entries) => {
       entries.forEach(entry => {
         if (entry.isIntersecting) entry.target.classList.add('visible');
       });
     }, observerOptions);
 
-    document.querySelectorAll('.section-fade-up').forEach(el => observer.observe(el));
+    document.querySelectorAll('.section-fade-up').forEach(el => {
+      if (prefersReducedMotion) {
+        el.classList.add('visible');
+      } else {
+        observer.observe(el);
+      }
+    });
 
+    // Mobile menu: same behavior
     const menuBtn = document.getElementById('menuButton');
     const mobileMenu = document.getElementById('mobileMenu');
 

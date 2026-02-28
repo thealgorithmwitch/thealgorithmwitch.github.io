@@ -57,9 +57,6 @@
   <meta name="twitter:title" content="Summon the Witch | The Algorithm Witch" />
   <meta name="twitter:description" content="Book a consultation with The Algorithm Witch. Digital strategy for climate, policy, advocacy, and mission-driven teams." />
   <meta name="twitter:image" content="https://thealgorithmwitch.github.io/og.jpg?v=3" />
-  <!-- Optional: add if you have an X handle -->
-  <!-- <meta name="twitter:site" content="@YOURHANDLE" /> -->
-  <!-- <meta name="twitter:creator" content="@YOURHANDLE" /> -->
 
   <!-- Performance: preload OG image -->
   <link rel="preload" as="image" href="https://thealgorithmwitch.github.io/og.jpg?v=3" />
@@ -294,7 +291,7 @@
 
           <div class="space-y-2">
             <label class="text-xs uppercase tracking-widest text-gray-400 font-bold ml-1">Your Intentions</label>
-            <textarea id="intentionsInput" name="intentions" rows="4" placeholder="Describe the problem you're looking to solve through digital alchemy..." class="w-full px-4 py-3 rounded-xl input-field text-sm resize-none"></textarea>
+            <textarea id="intentionsInput" name="intentions" rows="6" placeholder="Describe the problem you're looking to solve through digital alchemy..." class="w-full px-4 py-3 rounded-xl input-field text-sm resize-none"></textarea>
           </div>
 
           <div class="pt-4">
@@ -398,7 +395,7 @@
       }
     });
 
-    // ====== CALENDLY PREFILL + EMBED ======
+    // ====== FORM ELEMENTS ======
     const nameInput = document.getElementById("nameInput");
     const emailInput = document.getElementById("emailInput");
     const orgInput = document.getElementById("orgInput");
@@ -406,12 +403,178 @@
     const intentionsInput = document.getElementById("intentionsInput");
     const calendlyMount = document.getElementById("calendly-embed-element");
 
+    // ====== INTENTIONS PRESETS (used by subpages) ======
+    // Fill-ins like {org} and {name} will get swapped if those fields exist.
+    const INTENT_PRESETS = {
+      // Digital Metrics Intensive
+      "metrics-standard": `Subject: Digital Metrics Intensive: The Standard
+
+Hello Cassandre,
+
+I would like to book a Digital Metrics Intensive: The Standard.
+
+Organization: {org}
+Primary platforms:
+Current tracking:
+What success looks like:
+
+If helpful, I can share recent performance screenshots or access to analytics before our call.
+
+Thank you,
+{name}`,
+
+      "metrics-sovereign": `Subject: Digital Metrics Intensive: The Sovereign
+
+Hello Cassandre,
+
+I would like to book a Digital Metrics Intensive: The Sovereign.
+
+Organization: {org}
+Primary platforms:
+Current tracking:
+Key constraint:
+Decisions this analysis needs to support:
+
+I want the output to be actionable and easy to reuse for monthly reporting and planning.
+
+Thank you,
+{name}`,
+
+      // Website Revamp
+      "web-single-vision": `Subject: Website Revamp: The Single Vision
+
+Hello Cassandre,
+
+I would like to book a Website Revamp: The Single Vision.
+
+Organization: {org}
+Website URL:
+Primary goal:
+Top pages that matter:
+Any deadline:
+
+I want a site that reads clearly, loads fast, and converts without friction.
+
+Thank you,
+{name}`,
+
+      "web-great-ritual": `Subject: Website Revamp: The Great Ritual
+
+Hello Cassandre,
+
+I would like to book a Website Revamp: The Great Ritual.
+
+Organization: {org}
+Website URL:
+Primary goal:
+Key audiences:
+Required integrations:
+
+I want a full rebuild plan with structure, copy direction, and launch readiness.
+
+Thank you,
+{name}`,
+
+      // Monthly Content Engine
+      "content-spark": `Subject: Monthly Content Engine: The Spark
+
+Hello Cassandre,
+
+I would like to book Monthly Content Engine: The Spark.
+
+Organization: {org}
+Channels:
+Publishing cadence goal:
+What we have now:
+What we need most:
+
+I want a simple system that I can keep running consistently.
+
+Thank you,
+{name}`,
+
+      "content-flame": `Subject: Monthly Content Engine: The Flame
+
+Hello Cassandre,
+
+I would like to book Monthly Content Engine: The Flame.
+
+Organization: {org}
+Channels:
+Publishing cadence goal:
+Team involvement:
+Approval workflow:
+
+I want a content engine that produces reliably and supports specific outcomes.
+
+Thank you,
+{name}`,
+
+      "content-full-coven": `Subject: Monthly Content Engine: Full Coven
+
+Hello Cassandre,
+
+I would like to book Monthly Content Engine: Full Coven.
+
+Organization: {org}
+Channels:
+Publishing cadence goal:
+Core narrative:
+Primary KPI:
+
+I want a full operational system with roles, templates, and measurement baked in.
+
+Thank you,
+{name}`
+    };
+
     function encodeQueryValue(v) {
       return encodeURIComponent(String(v)).replace(/[!'()*]/g, (c) =>
         '%' + c.charCodeAt(0).toString(16).toUpperCase()
       );
     }
 
+    function fillTemplate(t) {
+      const name = (nameInput.value || "").trim();
+      const org = (orgInput.value || "").trim();
+      return String(t)
+        .replaceAll("{name}", name || "{name}")
+        .replaceAll("{org}", org || "{org}");
+    }
+
+    // ====== URL PARAMS: ritual + preset (or intent) ======
+    // summon.html?ritual=Website%20Revamp&preset=web-great-ritual
+    // summon.html?ritual=Website%20Revamp&intent=Your%20custom%20text
+    function applyUrlParamsOnce() {
+      const params = new URLSearchParams(window.location.search);
+
+      const ritualParam = (params.get("ritual") || "").trim();
+      const presetParam = (params.get("preset") || "").trim();
+      const intentParam = (params.get("intent") || "").trim();
+
+      // Preselect ritual if valid
+      if (ritualParam) {
+        const opts = Array.from(ritualInput.options).map(o => o.value);
+        const match = opts.find(v => v.toLowerCase() === ritualParam.toLowerCase());
+        if (match) ritualInput.value = match;
+      }
+
+      // Only auto-fill intentions if it's currently blank
+      const existingIntentions = (intentionsInput.value || "").trim();
+
+      if (!existingIntentions) {
+        if (intentParam) {
+          intentionsInput.value = decodeURIComponent(intentParam);
+        } else if (presetParam && INTENT_PRESETS[presetParam]) {
+          intentionsInput.value = fillTemplate(INTENT_PRESETS[presetParam]);
+        }
+      }
+    }
+
+    // If user types name/org after preset fills, you can rehydrate placeholders manually if you want,
+    // but we keep it simple: do not overwrite what they typed.
+
+    // ====== CALENDLY PREFILL + EMBED ======
     function buildCalendlyUrl() {
       const parts = [];
       parts.push(`hide_gdpr_banner=1`);
@@ -460,8 +623,6 @@
       }, 100);
     }
 
-    waitForCalendlyAndRender();
-
     let t;
     function scheduleRerender() {
       clearTimeout(t);
@@ -469,6 +630,11 @@
         if (window.Calendly) renderCalendly();
       }, 350);
     }
+
+    // ====== INIT ======
+    applyUrlParamsOnce();
+    waitForCalendlyAndRender();
+    scheduleRerender();
 
     [nameInput, emailInput, orgInput, ritualInput, intentionsInput].forEach((el) => {
       el.addEventListener("input", scheduleRerender);

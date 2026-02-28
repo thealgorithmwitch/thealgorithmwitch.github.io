@@ -211,7 +211,7 @@
       position: relative;
     }
 
-    /* === FIX: force Calendly iframe to render "dark" even if Calendly ignores color params === */
+    /* Force Calendly iframe to render dark even if Calendly ignores theme params */
     .calendly-wrap iframe {
       width: 100% !important;
       height: 100% !important;
@@ -438,6 +438,7 @@
         parentElement: calendlyMount
       });
       embedInitialized = true;
+      keepCalendlyDark(); // ensures filter still applies after iframe swap
     }
 
     function waitForCalendlyAndRender() {
@@ -466,6 +467,111 @@
       el.addEventListener("input", scheduleRerender);
       el.addEventListener("change", scheduleRerender);
     });
+
+    // ====== SUBPAGE PRESETS (via ?preset=...) ======
+    const PRESETS = {
+      monthly: {
+        ritualType: "Monthly Content Engine",
+        intentions:
+`I’m looking for a monthly system that keeps content shipping without chaos.
+
+Goals:
+- A repeatable workflow across web, email, and social
+- A content calendar and lightweight approval process
+- Clear metrics that tell us what to double down on
+
+Share anything I should review: website, channels, recent campaigns, or analytics access.`
+      },
+      website: {
+        ritualType: "Website Revamp",
+        intentions:
+`I want the website to function as infrastructure, not a brochure.
+
+Goals:
+- Clear positioning and services
+- Strong information architecture and conversion paths
+- SEO fundamentals (indexing, metadata, pages that answer real searches)
+
+If possible, I’d love a quick audit of the current site and priority fixes.`
+      },
+      metrics: {
+        ritualType: "Digital Metrics Intensive",
+        intentions:
+`I want a metrics reset that’s actually actionable.
+
+Goals:
+- Identify what content is driving discovery vs. dead ends
+- Define the few metrics that matter for our goals
+- Build a simple reporting rhythm we can sustain
+
+I can share channel links and any screenshots or exports you prefer.`
+      },
+      brand: {
+        ritualType: "Brand Kit Revamp",
+        intentions:
+`I want a brand kit that makes content faster to produce and easier to recognize.
+
+Goals:
+- Visual system that works across platforms
+- Templates for web, email, and social
+- Clear voice guidance so writing stays consistent
+
+Share what you need from me and I’ll send examples + references.`
+      },
+      fractional: {
+        ritualType: "Fractional Communications Director",
+        intentions:
+`I’m exploring fractional communications leadership to stabilize our strategy and output.
+
+Goals:
+- Align leadership on narrative and priorities
+- Build a comms calendar and operating system
+- Ensure consistent execution across channels
+
+Please share what you’d want to know about org size, timeline, and scope before a call.`
+      }
+    };
+
+    function applyPresetFromUrl() {
+      const params = new URLSearchParams(window.location.search);
+      const key = (params.get("preset") || "").trim().toLowerCase();
+      if (!key || !PRESETS[key]) return;
+
+      const p = PRESETS[key];
+
+      if (p.ritualType) ritualInput.value = p.ritualType;
+      if (p.intentions) intentionsInput.value = p.intentions;
+
+      // Trigger listeners + calendly rerender
+      ritualInput.dispatchEvent(new Event("change", { bubbles: true }));
+      intentionsInput.dispatchEvent(new Event("input", { bubbles: true }));
+    }
+
+    // ====== Keep Calendly dark even if it re-injects iframe ======
+    function keepCalendlyDark() {
+      const wrap = document.querySelector(".calendly-wrap");
+      if (!wrap) return;
+
+      const apply = () => {
+        const iframe = wrap.querySelector("iframe");
+        if (!iframe) return false;
+        iframe.style.filter = "invert(1) hue-rotate(180deg) saturate(1.1) contrast(1.05)";
+        iframe.style.border = "0";
+        return true;
+      };
+
+      if (apply()) return;
+
+      let tries = 0;
+      const maxTries = 30;
+      const interval = setInterval(() => {
+        tries++;
+        if (apply() || tries >= maxTries) clearInterval(interval);
+      }, 200);
+    }
+
+    // Run presets once on load
+    applyPresetFromUrl();
 
     // ====== FORM -> GOOGLE APPS SCRIPT ======
     const form = document.getElementById("summonForm");

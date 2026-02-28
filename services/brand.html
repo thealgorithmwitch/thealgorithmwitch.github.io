@@ -144,7 +144,6 @@
     :root {
       --color-bg: #030014;
       --color-card: rgba(20, 15, 45, 0.6);
-      /* UPDATED: blue -> pink */
       --color-accent: #d946ef; /* fuchsia-500 */
       --color-gold: #fde047;
     }
@@ -191,7 +190,6 @@
       background: rgba(13, 12, 34, 0.6);
       backdrop-filter: blur(16px);
       -webkit-backdrop-filter: blur(16px);
-      /* UPDATED */
       border: 1px solid rgba(217, 70, 239, 0.15);
       box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
     }
@@ -205,6 +203,11 @@
       overflow: hidden;
     }
 
+    /* Use this on cards that need badges or elements outside */
+    .glass-card.no-clip {
+      overflow: visible;
+    }
+
     .glass-card::before {
       content: '';
       position: absolute;
@@ -212,7 +215,6 @@
       left: 0;
       width: 100%;
       height: 100%;
-      /* UPDATED */
       background: radial-gradient(600px circle at var(--mouse-x) var(--mouse-y), rgba(217, 70, 239, 0.08), transparent 40%);
       opacity: 0;
       transition: opacity 0.5s;
@@ -222,7 +224,6 @@
     .glass-card:hover::before { opacity: 1; }
 
     .glass-card:hover {
-      /* UPDATED */
       border-color: rgba(217, 70, 239, 0.3);
       transform: translateY(-5px);
       box-shadow: 0 15px 40px -10px rgba(217, 70, 239, 0.2);
@@ -237,7 +238,6 @@
       background: radial-gradient(600px circle at var(--mouse-x) var(--mouse-y), rgba(253, 224, 71, 0.08), transparent 40%);
     }
 
-    /* UPDATED */
     .cyan-glow {
       box-shadow: 0 0 40px -10px rgba(217, 70, 239, 0.5);
     }
@@ -261,7 +261,6 @@
       left: 0;
       width: 0%;
       height: 1px;
-      /* UPDATED */
       background-color: #d946ef;
       transition: width 0.3s ease;
     }
@@ -269,15 +268,12 @@
   </style>
 </head>
 
-<!-- UPDATED selection color -->
 <body class="selection:bg-fuchsia-600 selection:text-white antialiased" vid="11">
-
   <div id="star-container" class="stars" vid="12"></div>
 
   <nav id="navbar" class="fixed top-0 w-full z-50 px-6 py-6" vid="13">
     <div class="max-w-7xl mx-auto glass-panel rounded-full px-8 py-4 flex justify-between items-center" vid="14">
       <a href="/" class="flex items-center gap-3 group" vid="15">
-        <!-- UPDATED icon color -->
         <i class="ph-fill ph-sparkle text-fuchsia-400 text-2xl group-hover:rotate-12 transition-transform" vid="16"></i>
         <span class="font-magical text-xl text-white tracking-widest" vid="17">Algorithm Witch</span>
       </a>
@@ -296,7 +292,6 @@
   </nav>
 
   <main class="relative z-10 w-full max-w-6xl mx-auto px-6 pt-40 pb-32" vid="22">
-
     <header class="text-center mb-12 section-fade-up visible" vid="23">
       <div class="w-24 h-24 mx-auto mb-8 rounded-3xl bg-fuchsia-950/40 border border-fuchsia-500/30 flex items-center justify-center cyan-glow" vid="24">
         <i class="ph-duotone ph-swatches text-5xl text-fuchsia-300" vid="25"></i>
@@ -313,10 +308,12 @@
     <section class="mb-32 section-fade-up visible" vid="31">
       <div class="grid grid-cols-1 md:grid-cols-2 gap-8" vid="32">
 
+        <!-- Core Foundation -->
         <div class="glass-card p-10 rounded-3xl border-t border-t-fuchsia-500/30 h-full" vid="33">
           <div class="flex items-center gap-4 mb-8" vid="34">
+            <!-- FIX: ensure this block is not empty and uses the pink star -->
             <div class="w-12 h-12 rounded-xl bg-fuchsia-500/10 flex items-center justify-center" vid="35">
-              <i class="ph-duotone ph-cubes text-2xl text-fuchsia-400" vid="36"></i>
+              <i class="ph-fill ph-sparkle text-2xl text-fuchsia-400" vid="36"></i>
             </div>
             <h3 class="font-magical text-2xl text-white" vid="37">Core Foundation</h3>
           </div>
@@ -367,49 +364,54 @@
           </ul>
         </div>
 
+        <!-- Optional Add-Ons -->
         <div class="glass-card gold-hover p-10 rounded-3xl border-t border-t-[#fde047]/30 h-full" vid="69">
           <div class="flex items-center gap-4 mb-8" vid="70">
-            <div class="w-12 h-12 rounded-xl bg-[#fde047]/10 flex items-center justify-center" vid="71">
-              <i class="ph-duotone ph-sparkle text-2xl text-[#fde047]" vid="72"></i>
+            <!-- FIX: add the same pink star treatment here too -->
+            <div class="w-12 h-12 rounded-xl bg-fuchsia-500/10 flex items-center justify-center" vid="71">
+              <i class="ph-fill ph-sparkle text-2xl text-fuchsia-400" vid="72"></i>
             </div>
-            <h3 class="font-magical text-2xl text-white" vid="73">Optional Add-Ons</h3>
+            <div class="flex items-center gap-3" vid="73">
+              <h3 class="font-magical text-2xl text-white" vid="74">Optional Add-Ons</h3>
+              <i class="ph-fill ph-star-four text-fuchsia-400 text-sm opacity-90" vid="75"></i>
+            </div>
           </div>
 
-          <ul class="space-y-6" vid="74">
-            <li class="flex items-start gap-4 group" vid="75">
-              <div class="w-6 h-6 rounded-full border border-[#fde047]/40 flex items-center justify-center shrink-0 mt-1 group-hover:bg-[#fde047]/10 transition-colors" vid="76">
-                <i class="ph-bold ph-plus text-[#fde047] text-xs" vid="77"></i>
+          <ul class="space-y-6" vid="76">
+            <li class="flex items-start gap-4 group" vid="77">
+              <div class="w-6 h-6 rounded-full border border-[#fde047]/40 flex items-center justify-center shrink-0 mt-1 group-hover:bg-[#fde047]/10 transition-colors" vid="78">
+                <i class="ph-bold ph-plus text-[#fde047] text-xs" vid="79"></i>
               </div>
-              <div vid="78">
-                <span class="text-white font-medium block mb-1" vid="79">Visual Direction Guidance</span>
-                <span class="text-sm text-gray-400" vid="80">Extended consultation on implementing your new look.</span>
-              </div>
-            </li>
-            <li class="flex items-start gap-4 group" vid="81">
-              <div class="w-6 h-6 rounded-full border border-[#fde047]/40 flex items-center justify-center shrink-0 mt-1 group-hover:bg-[#fde047]/10 transition-colors" vid="82">
-                <i class="ph-bold ph-plus text-[#fde047] text-xs" vid="83"></i>
-              </div>
-              <div vid="84">
-                <span class="text-white font-medium block mb-1" vid="85">Bio &amp; Boilerplate Rewrites</span>
-                <span class="text-sm text-gray-400" vid="86">Professional bios adapted for different platforms.</span>
+              <div vid="80">
+                <span class="text-white font-medium block mb-1" vid="81">Visual Direction Guidance</span>
+                <span class="text-sm text-gray-400" vid="82">Extended consultation on implementing your new look.</span>
               </div>
             </li>
-            <li class="flex items-start gap-4 group" vid="87">
-              <div class="w-6 h-6 rounded-full border border-[#fde047]/40 flex items-center justify-center shrink-0 mt-1 group-hover:bg-[#fde047]/10 transition-colors" vid="88">
-                <i class="ph-bold ph-plus text-[#fde047] text-xs" vid="89"></i>
+            <li class="flex items-start gap-4 group" vid="83">
+              <div class="w-6 h-6 rounded-full border border-[#fde047]/40 flex items-center justify-center shrink-0 mt-1 group-hover:bg-[#fde047]/10 transition-colors" vid="84">
+                <i class="ph-bold ph-plus text-[#fde047] text-xs" vid="85"></i>
               </div>
-              <div vid="90">
-                <span class="text-white font-medium block mb-1" vid="91">LinkedIn Profile Optimization</span>
-                <span class="text-sm text-gray-400" vid="92">Strategic updates to leadership profiles.</span>
+              <div vid="86">
+                <span class="text-white font-medium block mb-1" vid="87">Bio &amp; Boilerplate Rewrites</span>
+                <span class="text-sm text-gray-400" vid="88">Professional bios adapted for different platforms.</span>
               </div>
             </li>
-            <li class="flex items-start gap-4 group" vid="93">
-              <div class="w-6 h-6 rounded-full border border-[#fde047]/40 flex items-center justify-center shrink-0 mt-1 group-hover:bg-[#fde047]/10 transition-colors" vid="94">
-                <i class="ph-bold ph-plus text-[#fde047] text-xs" vid="95"></i>
+            <li class="flex items-start gap-4 group" vid="89">
+              <div class="w-6 h-6 rounded-full border border-[#fde047]/40 flex items-center justify-center shrink-0 mt-1 group-hover:bg-[#fde047]/10 transition-colors" vid="90">
+                <i class="ph-bold ph-plus text-[#fde047] text-xs" vid="91"></i>
               </div>
-              <div vid="96">
-                <span class="text-white font-medium block mb-1" vid="97">Tagline Development</span>
-                <span class="text-sm text-gray-400" vid="98">Catchy, memorable phrases that stick.</span>
+              <div vid="92">
+                <span class="text-white font-medium block mb-1" vid="93">LinkedIn Profile Optimization</span>
+                <span class="text-sm text-gray-400" vid="94">Strategic updates to leadership profiles.</span>
+              </div>
+            </li>
+            <li class="flex items-start gap-4 group" vid="95">
+              <div class="w-6 h-6 rounded-full border border-[#fde047]/40 flex items-center justify-center shrink-0 mt-1 group-hover:bg-[#fde047]/10 transition-colors" vid="96">
+                <i class="ph-bold ph-plus text-[#fde047] text-xs" vid="97"></i>
+              </div>
+              <div vid="98">
+                <span class="text-white font-medium block mb-1" vid="99">Tagline Development</span>
+                <span class="text-sm text-gray-400" vid="100">Catchy, memorable phrases that stick.</span>
               </div>
             </li>
           </ul>
@@ -418,105 +420,107 @@
       </div>
     </section>
 
-    <section class="mb-32 section-fade-up visible" vid="99">
-      <h2 class="font-magical text-2xl text-white mb-16 text-center uppercase tracking-widest" vid="100">The Evolution Process</h2>
-      <div class="grid grid-cols-1 md:grid-cols-4 gap-8 relative" vid="101">
-        <div class="flex flex-col items-center text-center group" vid="102">
-          <div class="w-12 h-12 rounded-full border border-fuchsia-500/50 flex items-center justify-center font-magical text-fuchsia-400 mb-6 group-hover:bg-fuchsia-500/20 transition-all relative z-10 bg-[#030014]" vid="103">01</div>
-          <h3 class="font-magical text-white mb-3 text-lg" vid="104">Audit</h3>
-          <p class="text-xs text-gray-500 leading-relaxed px-4" vid="105">Review of current brand assets and identifying positioning gaps.</p>
+    <section class="mb-32 section-fade-up visible" vid="101">
+      <h2 class="font-magical text-2xl text-white mb-16 text-center uppercase tracking-widest" vid="102">The Evolution Process</h2>
+      <div class="grid grid-cols-1 md:grid-cols-4 gap-8 relative" vid="103">
+        <div class="flex flex-col items-center text-center group" vid="104">
+          <div class="w-12 h-12 rounded-full border border-fuchsia-500/50 flex items-center justify-center font-magical text-fuchsia-400 mb-6 group-hover:bg-fuchsia-500/20 transition-all relative z-10 bg-[#030014]" vid="105">01</div>
+          <h3 class="font-magical text-white mb-3 text-lg" vid="106">Audit</h3>
+          <p class="text-xs text-gray-500 leading-relaxed px-4" vid="107">Review of current brand assets and identifying positioning gaps.</p>
         </div>
-        <div class="flex flex-col items-center text-center group" vid="106">
-          <div class="w-12 h-12 rounded-full border border-fuchsia-500/50 flex items-center justify-center font-magical text-fuchsia-400 mb-6 group-hover:bg-fuchsia-500/20 transition-all relative z-10 bg-[#030014]" vid="107">02</div>
-          <h3 class="font-magical text-white mb-3 text-lg" vid="108">Define</h3>
-          <p class="text-xs text-gray-500 leading-relaxed px-4" vid="109">Establishing core narrative, values, and distinct voice.</p>
+        <div class="flex flex-col items-center text-center group" vid="108">
+          <div class="w-12 h-12 rounded-full border border-fuchsia-500/50 flex items-center justify-center font-magical text-fuchsia-400 mb-6 group-hover:bg-fuchsia-500/20 transition-all relative z-10 bg-[#030014]" vid="109">02</div>
+          <h3 class="font-magical text-white mb-3 text-lg" vid="110">Define</h3>
+          <p class="text-xs text-gray-500 leading-relaxed px-4" vid="111">Establishing core narrative, values, and distinct voice.</p>
         </div>
-        <div class="flex flex-col items-center text-center group" vid="110">
-          <div class="w-12 h-12 rounded-full border border-fuchsia-500/50 flex items-center justify-center font-magical text-fuchsia-400 mb-6 group-hover:bg-fuchsia-500/20 transition-all relative z-10 bg-[#030014]" vid="111">03</div>
-          <h3 class="font-magical text-white mb-3 text-lg" vid="112">Design</h3>
-          <p class="text-xs text-gray-500 leading-relaxed px-4" vid="113">Crafting visual identity, logos, and aesthetic direction.</p>
+        <div class="flex flex-col items-center text-center group" vid="112">
+          <div class="w-12 h-12 rounded-full border border-fuchsia-500/50 flex items-center justify-center font-magical text-fuchsia-400 mb-6 group-hover:bg-fuchsia-500/20 transition-all relative z-10 bg-[#030014]" vid="113">03</div>
+          <h3 class="font-magical text-white mb-3 text-lg" vid="114">Design</h3>
+          <p class="text-xs text-gray-500 leading-relaxed px-4" vid="115">Crafting visual identity, logos, and aesthetic direction.</p>
         </div>
-        <div class="flex flex-col items-center text-center group" vid="114">
-          <div class="w-12 h-12 rounded-full border border-fuchsia-500/50 flex items-center justify-center font-magical text-fuchsia-400 mb-6 group-hover:bg-fuchsia-500/20 transition-all relative z-10 bg-[#030014]" vid="115">04</div>
-          <h3 class="font-magical text-white mb-3 text-lg" vid="116">Launch</h3>
-          <p class="text-xs text-gray-500 leading-relaxed px-4" vid="117">Delivering the complete kit and digital toolkit for rollout.</p>
+        <div class="flex flex-col items-center text-center group" vid="116">
+          <div class="w-12 h-12 rounded-full border border-fuchsia-500/50 flex items-center justify-center font-magical text-fuchsia-400 mb-6 group-hover:bg-fuchsia-500/20 transition-all relative z-10 bg-[#030014]" vid="117">04</div>
+          <h3 class="font-magical text-white mb-3 text-lg" vid="118">Launch</h3>
+          <p class="text-xs text-gray-500 leading-relaxed px-4" vid="119">Delivering the complete kit and digital toolkit for rollout.</p>
         </div>
 
-        <div class="hidden md:block absolute top-6 left-0 w-full h-px bg-gradient-to-r from-transparent via-fuchsia-900 to-transparent z-0" vid="118"></div>
+        <div class="hidden md:block absolute top-6 left-0 w-full h-px bg-gradient-to-r from-transparent via-fuchsia-900 to-transparent z-0" vid="120"></div>
       </div>
     </section>
 
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-12 mb-32 section-fade-up visible" vid="119">
-      <div class="glass-card p-12 rounded-[2.5rem] border-l-4 border-l-fuchsia-500 h-full" vid="120">
-        <h2 class="font-magical text-2xl text-white mb-8" vid="121">Who It's For</h2>
-        <ul class="space-y-6 text-gray-300" vid="122">
-          <li class="flex items-start gap-4" vid="123">
-            <i class="ph-fill ph-diamond text-fuchsia-400 mt-1 text-xl" vid="124"></i>
-            <span vid="125">Organizations at a brand crossroads needing clarity.</span>
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-12 mb-32 section-fade-up visible" vid="121">
+      <div class="glass-card p-12 rounded-[2.5rem] border-l-4 border-l-fuchsia-500 h-full" vid="122">
+        <h2 class="font-magical text-2xl text-white mb-8" vid="123">Who It's For</h2>
+        <ul class="space-y-6 text-gray-300" vid="124">
+          <li class="flex items-start gap-4" vid="125">
+            <i class="ph-fill ph-diamond text-fuchsia-400 mt-1 text-xl" vid="126"></i>
+            <span vid="127">Organizations at a brand crossroads needing clarity.</span>
           </li>
-          <li class="flex items-start gap-4" vid="126">
-            <i class="ph-fill ph-diamond text-fuchsia-400 mt-1 text-xl" vid="127"></i>
-            <span vid="128">Leaders whose identity has outgrown their visuals.</span>
+          <li class="flex items-start gap-4" vid="128">
+            <i class="ph-fill ph-diamond text-fuchsia-400 mt-1 text-xl" vid="129"></i>
+            <span vid="130">Leaders whose identity has outgrown their visuals.</span>
           </li>
-          <li class="flex items-start gap-4" vid="129">
-            <i class="ph-fill ph-diamond text-fuchsia-400 mt-1 text-xl" vid="130"></i>
-            <span vid="131">Nonprofits launching new campaigns or pivoting focus.</span>
+          <li class="flex items-start gap-4" vid="131">
+            <i class="ph-fill ph-diamond text-fuchsia-400 mt-1 text-xl" vid="132"></i>
+            <span vid="133">Nonprofits launching new campaigns or pivoting focus.</span>
           </li>
-          <li class="flex items-start gap-4" vid="132">
-            <i class="ph-fill ph-diamond text-fuchsia-400 mt-1 text-xl" vid="133"></i>
-            <span vid="134">Founders ready to show up with full authority.</span>
+          <li class="flex items-start gap-4" vid="134">
+            <i class="ph-fill ph-diamond text-fuchsia-400 mt-1 text-xl" vid="135"></i>
+            <span vid="136">Founders ready to show up with full authority.</span>
           </li>
         </ul>
       </div>
 
-      <div class="flex flex-col gap-6 h-full justify-center" vid="135">
-        <div class="glass-card p-8 rounded-3xl border border-white/5 hover:border-fuchsia-500/20" vid="136">
-          <div class="flex justify-between items-center mb-4" vid="137">
-            <span class="font-magical text-fuchsia-400 uppercase text-xs tracking-widest" vid="138">The Naming</span>
-            <span class="font-magical text-white text-xl" vid="139">$3,200+</span>
+      <div class="flex flex-col gap-8 h-full justify-center" vid="137">
+        <!-- Bigger box -->
+        <div class="glass-card no-clip p-10 rounded-3xl border border-white/5 hover:border-fuchsia-500/20" vid="138">
+          <div class="flex justify-between items-center mb-4" vid="139">
+            <span class="font-magical text-fuchsia-400 uppercase text-xs tracking-widest" vid="140">The Naming</span>
+            <span class="font-magical text-white text-xl" vid="141">$3,200+</span>
           </div>
-          <p class="text-sm text-gray-400" vid="140">Messaging and positioning foundation only. No visual direction included.</p>
+          <p class="text-sm text-gray-400" vid="142">Messaging and positioning foundation only. No visual direction included.</p>
         </div>
 
-        <div class="glass-card p-8 rounded-3xl border border-fuchsia-500/40 cyan-glow relative" vid="141">
-          <div class="absolute -top-3 right-6 bg-fuchsia-500 text-[#030014] text-[10px] font-bold uppercase tracking-wider px-3 py-1 rounded-full" vid="142">Recommended</div>
-          <div class="flex justify-between items-center mb-4" vid="143">
-            <span class="font-magical text-fuchsia-400 uppercase text-xs tracking-widest" vid="144">The Full Transmutation</span>
-            <span class="font-magical text-white text-xl" vid="145">$6,500+</span>
+        <!-- Bigger box + badge not cropped -->
+        <div class="glass-card no-clip p-10 rounded-3xl border border-fuchsia-500/40 cyan-glow relative" vid="143">
+          <div class="absolute top-4 right-6 bg-fuchsia-500 text-[#030014] text-[10px] font-bold uppercase tracking-wider px-3 py-1 rounded-full" vid="144">
+            Recommended
           </div>
-          <p class="text-sm text-gray-400" vid="146">Complete brand kit with all core deliverables, visuals, and launch assets.</p>
+          <div class="flex justify-between items-center mb-4" vid="145">
+            <span class="font-magical text-fuchsia-400 uppercase text-xs tracking-widest" vid="146">The Full Transmutation</span>
+            <span class="font-magical text-white text-xl" vid="147">$6,500+</span>
+          </div>
+          <p class="text-sm text-gray-400" vid="148">Complete brand kit with all core deliverables, visuals, and launch assets.</p>
         </div>
       </div>
     </div>
 
-    <!-- UPDATED FOOTER: pink sparkle + yellow accent flicker -->
-    <footer id="contact" class="max-w-4xl mx-auto text-center pt-20 relative section-fade-up visible" vid="147">
-      <div class="flex items-center justify-center gap-4 mb-12 opacity-40" vid="148">
-        <div class="h-px bg-fuchsia-500 w-16" vid="149"></div>
+    <!-- Footer: ONLY pink star (no yellow star) -->
+    <footer id="contact" class="max-w-4xl mx-auto text-center pt-20 relative section-fade-up visible" vid="149">
+      <div class="flex items-center justify-center gap-4 mb-12 opacity-40" vid="150">
+        <div class="h-px bg-fuchsia-500 w-16" vid="151"></div>
 
-        <span class="relative inline-flex items-center justify-center" vid="150">
+        <span class="relative inline-flex items-center justify-center" vid="152">
           <i class="ph-fill ph-sparkle text-fuchsia-400 text-2xl animate-pulse"></i>
-          <i class="ph-fill ph-star-four text-yellow-300 text-[10px] absolute -top-1 -right-2 animate-pulse"
-             style="animation-duration: 1.6s"></i>
         </span>
 
-        <div class="h-px bg-fuchsia-500 w-16" vid="151"></div>
+        <div class="h-px bg-fuchsia-500 w-16" vid="153"></div>
       </div>
 
-      <h2 class="font-magical text-4xl text-white mb-8" vid="152">Ready to Reclaim Your Name?</h2>
+      <h2 class="font-magical text-4xl text-white mb-8" vid="154">Ready to Reclaim Your Name?</h2>
 
       <a href="summon.html"
-         class="inline-flex items-center justify-center px-10 py-5 bg-white text-fuchsia-900 rounded-full font-bold tracking-widest uppercase text-sm hover:scale-105 transition-transform shadow-[0_0_50px_-10px_rgba(217,70,239,0.4)] group" vid="153">
-        Summon Me <i class="ph-bold ph-arrow-right ml-2 group-hover:translate-x-1 transition-transform" vid="154"></i>
+         class="inline-flex items-center justify-center px-10 py-5 bg-white text-fuchsia-900 rounded-full font-bold tracking-widest uppercase text-sm hover:scale-105 transition-transform shadow-[0_0_50px_-10px_rgba(217,70,239,0.4)] group" vid="155">
+        Summon Me <i class="ph-bold ph-arrow-right ml-2 group-hover:translate-x-1 transition-transform" vid="156"></i>
       </a>
 
-      <div class="mt-20 pb-8 text-xs text-gray-600 uppercase tracking-widest" vid="155">
+      <div class="mt-20 pb-8 text-xs text-gray-600 uppercase tracking-widest" vid="157">
         © The Algorithm Witch
       </div>
     </footer>
   </main>
 
-  <script vid="156">
+  <script vid="158">
     const starContainer = document.getElementById('star-container');
     for (let i = 0; i < 200; i++) {
       const star = document.createElement('div');
@@ -545,6 +549,5 @@
     }, { threshold: 0.1 });
     document.querySelectorAll('.section-fade-up').forEach(el => observer.observe(el));
   </script>
-
 </body>
 </html>

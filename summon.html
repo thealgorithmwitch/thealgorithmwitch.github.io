@@ -438,7 +438,7 @@
         parentElement: calendlyMount
       });
       embedInitialized = true;
-      keepCalendlyDark(); // ensures filter still applies after iframe swap
+      keepCalendlyDark();
     }
 
     function waitForCalendlyAndRender() {
@@ -469,7 +469,152 @@
     });
 
     // ====== SUBPAGE PRESETS (via ?preset=...) ======
+    // Supports:
+    // - preset=brand-naming | brand-full-transmutation
+    // - preset=metrics-standard | metrics-sovereign
+    // - preset=website-single-vision | website-great-ritual
+    // - preset=monthly-spark | monthly-flame | monthly-full-coven
+    // Back-compat:
+    // - preset=brand | metrics | website | monthly | fractional
+    // Also supports optional:
+    // - ritual=Brand%20Kit%20Revamp (overrides Ritual Type dropdown)
     const PRESETS = {
+      // ===== Brand Kit Revamp tiers =====
+      "brand-naming": {
+        ritualType: "Brand Kit Revamp",
+        intentions:
+`Tier: The Naming
+
+I want messaging and positioning clarity before any visual rebuild.
+
+What I need:
+- Core narrative positioning and messaging pillars
+- Voice and tone guidance I can use across channels
+- A simple set of language rules that prevents drift
+
+Links I can share: current site, recent posts, any existing deck, and 2–3 examples of brands we admire.`
+      },
+      "brand-full-transmutation": {
+        ritualType: "Brand Kit Revamp",
+        intentions:
+`Tier: The Full Transmutation
+
+I want a complete brand reset that covers language and visuals, with rollout assets.
+
+What I need:
+- Core narrative positioning, messaging pillars, voice and tone, and policy positioning
+- Visual direction (logo, palette, typography, graphics) with guidance on applying it
+- Launch toolkit, plus optional add-ons baked in (bio and boilerplate rewrites, LinkedIn optimization, tagline development)
+
+Links I can share: current site, channels, any existing brand kit, and examples of what feels right.`
+      },
+
+      // ===== Digital Metrics Intensive tiers =====
+      "metrics-standard": {
+        ritualType: "Digital Metrics Intensive",
+        intentions:
+`Tier: The Standard
+
+I want a metrics reset that tells us what is working and what is wasting time.
+
+What I need:
+- Baseline tracking sanity check (what is captured, what is missing)
+- A clear KPI framework tied to our goals
+- A short list of priority fixes and a reporting rhythm we can keep
+
+I can share: GA access or screenshots, channel links, and any paid media context.`
+      },
+      "metrics-sovereign": {
+        ritualType: "Digital Metrics Intensive",
+        intentions:
+`Tier: The Sovereign
+
+I want a full systems view and a dashboard that leadership can actually use.
+
+What I need:
+- Tracking and conversion events planned end to end
+- Custom dashboard reporting for decision making
+- Competitive benchmarks and a tighter KPI framework
+- A repeatable process for ongoing optimization and accountability
+
+I can share: analytics access, campaign history, and any existing dashboards or reports.`
+      },
+
+      // ===== Website Revamp tiers =====
+      "website-single-vision": {
+        ritualType: "Website Revamp",
+        intentions:
+`Tier: The Single Vision
+
+I want the website to convert and to be readable by search systems.
+
+What I need:
+- Clear information architecture and conversion paths
+- Homepage plus a small set of core pages
+- SEO and analytics baseline so we can measure what matters
+
+I can share: current site, target audiences, top actions we want visitors to take, and any copy constraints.`
+      },
+      "website-great-ritual": {
+        ritualType: "Website Revamp",
+        intentions:
+`Tier: The Great Ritual
+
+I want a deeper rebuild with accessibility, performance, and infrastructure done properly.
+
+What I need:
+- Sitemap and conversion flow restructure
+- Strong performance work and accessibility audit
+- Deeper implementation support (front end and back end as needed) plus a design kit for consistency
+
+I can share: current site, any existing design files, and access to analytics plus hosting details.`
+      },
+
+      // ===== Monthly Content Engine tiers =====
+      "monthly-spark": {
+        ritualType: "Monthly Content Engine",
+        intentions:
+`Tier: The Spark
+
+I want a short sprint that increases consistency and cleans up execution.
+
+What I need:
+- One high volume content bundle for the month
+- Light performance review so we know what to repeat
+- Formatting and caption optimization that matches each platform
+
+I can share: channels, 3–5 examples that already perform well, and any deadlines.`
+      },
+      "monthly-flame": {
+        ritualType: "Monthly Content Engine",
+        intentions:
+`Tier: The Flame
+
+I want consistent output plus a stronger editorial spine so the work compounds.
+
+What I need:
+- A monthly content bundle with narrative alignment
+- Editorial strategy and a simple calendar that makes approvals easy
+- A clearer feedback loop from performance into next month’s plan
+
+I can share: channels, priority topics, and any internal reviewers involved.`
+      },
+      "monthly-full-coven": {
+        ritualType: "Monthly Content Engine",
+        intentions:
+`Tier: Full Coven
+
+I want an operating system for content that runs cross platform without chaos.
+
+What I need:
+- Cross channel planning and distribution cadence
+- A monthly content engine that can support multiple formats
+- Stronger measurement and iteration so we can double down on what performs
+
+I can share: channel links, analytics access, current workflow, and team roles.`
+      },
+
+      // ===== Backward compatible presets (keep) =====
       monthly: {
         ritualType: "Monthly Content Engine",
         intentions:
@@ -534,6 +679,12 @@ Please share what you’d want to know about org size, timeline, and scope befor
 
     function applyPresetFromUrl() {
       const params = new URLSearchParams(window.location.search);
+
+      // Optional ritual override (lets service pages force the dropdown value)
+      const ritualParam = (params.get("ritual") || "").trim();
+      if (ritualParam) ritualInput.value = ritualParam;
+
+      // Primary: preset key
       const key = (params.get("preset") || "").trim().toLowerCase();
       if (!key || !PRESETS[key]) return;
 
@@ -542,7 +693,6 @@ Please share what you’d want to know about org size, timeline, and scope befor
       if (p.ritualType) ritualInput.value = p.ritualType;
       if (p.intentions) intentionsInput.value = p.intentions;
 
-      // Trigger listeners + calendly rerender
       ritualInput.dispatchEvent(new Event("change", { bubbles: true }));
       intentionsInput.dispatchEvent(new Event("input", { bubbles: true }));
     }

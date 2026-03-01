@@ -372,28 +372,89 @@
         </div>
 
         
+        <!-- Hidden iframe keeps submission on-page -->
+        <iframe name="aw_hidden_iframe" style="display:none;"></iframe>
+        
         <div class="max-w-3xl mx-auto glass-panel p-12 rounded-[3rem] section-fade-up visible" vid="87">
-            <h2 class="font-magical text-3xl text-white text-center mb-10" vid="88">Apply for the <span class="text-emerald-400" vid="89">Council</span></h2>
-            <form class="space-y-6" vid="90">
-                <div class="grid md:grid-cols-2 gap-6" vid="91">
-                    <div vid="92">
-                        <label class="block text-[10px] uppercase tracking-widest text-emerald-300 mb-2 ml-1" vid="93">Organization Name</label>
-                        <input type="text" class="w-full px-5 py-3 rounded-xl" placeholder="The Arcane Collective" vid="94">
-                    </div>
-                    <div vid="95">
-                        <label class="block text-[10px] uppercase tracking-widest text-emerald-300 mb-2 ml-1" vid="96">Your Role</label>
-                        <input type="text" class="w-full px-5 py-3 rounded-xl" placeholder="Executive Director" vid="97">
-                    </div>
-                </div>
-                <div vid="98">
-                    <label class="block text-[10px] uppercase tracking-widest text-emerald-300 mb-2 ml-1" vid="99">Primary Challenge</label>
-                    <textarea rows="4" class="w-full px-5 py-3 rounded-xl resize-none" placeholder="Describe the current barrier in your communication flow..." vid="100"></textarea>
-                </div>
-                <button type="submit" class="w-full py-5 bg-emerald-500 hover:bg-emerald-400 text-white font-bold rounded-full uppercase tracking-[0.2em] text-sm transition-all transform hover:scale-[1.02] shadow-[0_10px_30px_-5px_rgba(16,185,129,0.5)]" vid="101">
-                    Submit Application
-                </button>
-            </form>
+          <h2 class="font-magical text-3xl text-white text-center mb-10" vid="88">
+            Apply for the <span class="text-emerald-400" vid="89">Council</span>
+          </h2>
+        
+          <!-- ✅ Set action to your Apps Script Web App URL -->
+          <form
+            id="directorForm"
+            class="space-y-6"
+            action="PASTE_YOUR_WEB_APP_URL_HERE"
+            method="POST"
+            target="aw_hidden_iframe"
+            vid="90"
+          >
+            <!-- Optional: capture the page URL -->
+            <input type="hidden" name="page" id="pageField" value="">
+        
+            <div class="grid md:grid-cols-2 gap-6" vid="91">
+              <div vid="92">
+                <label class="block text-[10px] uppercase tracking-widest text-emerald-300 mb-2 ml-1" vid="93">Organization Name</label>
+                <input name="org" type="text" class="w-full px-5 py-3 rounded-xl" placeholder="The Arcane Collective" required vid="94">
+              </div>
+        
+              <div vid="95">
+                <label class="block text-[10px] uppercase tracking-widest text-emerald-300 mb-2 ml-1" vid="96">Your Role</label>
+                <input name="role" type="text" class="w-full px-5 py-3 rounded-xl" placeholder="Executive Director" required vid="97">
+              </div>
+            </div>
+        
+            <div class="grid md:grid-cols-2 gap-6">
+              <div>
+                <label class="block text-[10px] uppercase tracking-widest text-emerald-300 mb-2 ml-1">Your Name</label>
+                <input name="name" type="text" class="w-full px-5 py-3 rounded-xl" placeholder="Your name" required>
+              </div>
+        
+              <div>
+                <label class="block text-[10px] uppercase tracking-widest text-emerald-300 mb-2 ml-1">Email</label>
+                <input name="email" type="email" class="w-full px-5 py-3 rounded-xl" placeholder="you@org.org" required>
+              </div>
+            </div>
+        
+            <div vid="98">
+              <label class="block text-[10px] uppercase tracking-widest text-emerald-300 mb-2 ml-1" vid="99">Primary Challenge</label>
+              <textarea name="challenge" rows="4" class="w-full px-5 py-3 rounded-xl resize-none" placeholder="Describe the current barrier in your communication flow..." required vid="100"></textarea>
+            </div>
+        
+            <div>
+              <label class="block text-[10px] uppercase tracking-widest text-emerald-300 mb-2 ml-1">Notes (optional)</label>
+              <textarea name="notes" rows="3" class="w-full px-5 py-3 rounded-xl resize-none" placeholder="Anything else you want me to know?"></textarea>
+            </div>
+        
+            <button type="submit"
+              class="w-full py-5 bg-emerald-500 hover:bg-emerald-400 text-white font-bold rounded-full uppercase tracking-[0.2em] text-sm transition-all transform hover:scale-[1.02] shadow-[0_10px_30px_-5px_rgba(16,185,129,0.5)]"
+              vid="101">
+              Submit Application
+            </button>
+        
+            <!-- Success message -->
+            <div id="directorSuccess" class="hidden mt-6 text-center text-sm text-emerald-200">
+              Received. I’ll follow up shortly.
+            </div>
+          </form>
         </div>
+        
+        <script>
+          // Put current page URL into hidden field
+          document.getElementById("pageField").value = window.location.href;
+        
+          // Show success message after submit (iframe submission won’t navigate)
+          const form = document.getElementById("directorForm");
+          const success = document.getElementById("directorSuccess");
+        
+          form.addEventListener("submit", () => {
+            setTimeout(() => {
+              success.classList.remove("hidden");
+              form.reset();
+              document.getElementById("pageField").value = window.location.href;
+            }, 600);
+          });
+        </script>
 
     </main>
 

@@ -1,110 +1,116 @@
 <!doctype html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Nonprofit Platform Alignment Quiz | The Algorithm Witch</title>
 
   <script src="https://cdn.tailwindcss.com/3.4.17"></script>
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@400;700;900&family=Inter:wght@300;400;500;600&family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&display=swap" rel="stylesheet" />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@400;700;900&family=Inter:wght@300;400;500;600&family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&display=swap" rel="stylesheet">
   <script src="https://unpkg.com/@phosphor-icons/web"></script>
 
   <style>
-    :root{
-      --color-bg:#030014;
-      --color-card:rgba(20,15,45,.6);
-      --color-accent:#a855f7;
-      --color-gold:#fde047;
-      --color-cyan:#22d3ee;
+    :root {
+      --color-bg: #030014;
+      --color-card: rgba(20, 15, 45, 0.6);
+      --color-accent: #a855f7;
+      --color-gold: #fde047;
+      --color-cyan: #22d3ee;
     }
 
-    body{
-      background-color:var(--color-bg);
-      color:#e2e8f0;
-      font-family:'Inter',sans-serif;
-      margin:0;
-      padding:0;
-      overflow-x:hidden;
-      background-image:radial-gradient(circle at 50% 0%, #1e1b4b 0%, #030014 60%);
-      min-height:100vh;
+    body {
+      background-color: var(--color-bg);
+      color: #e2e8f0;
+      font-family: 'Inter', sans-serif;
+      margin: 0;
+      padding: 0;
+      overflow-x: hidden;
+      background-image: radial-gradient(circle at 50% 0%, #1e1b4b 0%, #030014 60%);
+      min-height: 100vh;
     }
 
-    .font-magical{font-family:'Cinzel Decorative',cursive;}
-    .font-serif-italic{font-family:'Playfair Display',serif;font-style:italic;}
+    .font-magical { font-family: 'Cinzel Decorative', cursive; }
+    .font-serif-italic { font-family: 'Playfair Display', serif; font-style: italic; }
 
-    .stars{
-      position:fixed; top:0; left:0; width:100%; height:100%;
-      pointer-events:none; z-index:0;
-    }
-    .star{
-      position:absolute;
-      background:white;
-      border-radius:50%;
-      opacity:0;
-      animation:twinkle var(--duration) ease-in-out infinite;
-      animation-delay:var(--delay);
-    }
-    @keyframes twinkle{
-      0%{opacity:0;transform:scale(.5)}
-      50%{opacity:var(--opacity);transform:scale(1.2);box-shadow:0 0 4px rgba(255,255,255,.8)}
-      100%{opacity:0;transform:scale(.5)}
+    .stars {
+      position: fixed;
+      top: 0; left: 0; width: 100%; height: 100%;
+      pointer-events: none; z-index: 0;
     }
 
-    .glass-panel{
-      background:rgba(13,12,34,.4);
-      backdrop-filter:blur(12px);
-      -webkit-backdrop-filter:blur(12px);
-      border:1px solid rgba(139,92,246,.15);
-      box-shadow:0 8px 32px 0 rgba(0,0,0,.37);
+    .star {
+      position: absolute;
+      background: white;
+      border-radius: 50%;
+      opacity: 0;
+      animation: twinkle var(--duration) ease-in-out infinite;
+      animation-delay: var(--delay);
     }
 
-    .glass-card{
-      background:rgba(255,255,255,.03);
-      border:1px solid rgba(255,255,255,.05);
-      backdrop-filter:blur(10px);
-      transition:all .3s cubic-bezier(.4,0,.2,1);
-      position:relative;
-      overflow:hidden;
-    }
-    .glass-card:hover{
-      background:rgba(255,255,255,.07);
-      border-color:rgba(168,85,247,.3);
-      transform:translateY(-2px);
-    }
-    .glass-card.selected{
-      background:rgba(168,85,247,.15);
-      border-color:var(--color-gold);
-      box-shadow:0 0 20px -5px rgba(253,224,71,.2);
+    @keyframes twinkle {
+      0% { opacity: 0; transform: scale(0.5); }
+      50% { opacity: var(--opacity); transform: scale(1.2); box-shadow: 0 0 4px rgba(255, 255, 255, 0.8); }
+      100% { opacity: 0; transform: scale(0.5); }
     }
 
-    .btn-gold{
-      background:linear-gradient(135deg,#fde047 0%,#eab308 100%);
-      color:#422006;
-      font-weight:700;
-      text-transform:uppercase;
-      letter-spacing:.1em;
-      transition:all .3s ease;
-      box-shadow:0 4px 15px rgba(234,179,8,.3);
-    }
-    .btn-gold:hover{
-      transform:scale(1.02);
-      box-shadow:0 6px 20px rgba(234,179,8,.4);
+    .glass-panel {
+      background: rgba(13, 12, 34, 0.4);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border: 1px solid rgba(139, 92, 246, 0.15);
+      box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
     }
 
-    .badge-tiktok{border-color:#e879f9;color:#f0abfc;background:rgba(232,121,249,.1)}
-    .badge-instagram{border-color:#f472b6;color:#fbcfe8;background:rgba(244,114,182,.1)}
-    .badge-linkedin{border-color:#22d3ee;color:#a5f3fc;background:rgba(34,211,238,.1)}
-    .badge-youtube{border-color:#f87171;color:#fecaca;background:rgba(248,113,113,.1)}
-    .badge-blog{border-color:#facc15;color:#fef08a;background:rgba(250,204,21,.1)}
-    .badge-threads{border-color:#a78bfa;color:#ddd6fe;background:rgba(167,139,250,.1)}
-    .badge-bluesky{border-color:#38bdf8;color:#bae6fd;background:rgba(56,189,248,.1)}
+    .glass-card {
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid rgba(255, 255, 255, 0.05);
+      backdrop-filter: blur(10px);
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      position: relative;
+      overflow: hidden;
+    }
 
-    .progress-bar{
-      background:linear-gradient(90deg,#a855f7,#fde047);
-      box-shadow:0 0 10px rgba(168,85,247,.5);
-      transition:width .5s ease;
+    .glass-card:hover {
+      background: rgba(255, 255, 255, 0.07);
+      border-color: rgba(168, 85, 247, 0.3);
+      transform: translateY(-2px);
+    }
+
+    .glass-card.selected {
+      background: rgba(168, 85, 247, 0.15);
+      border-color: var(--color-gold);
+      box-shadow: 0 0 20px -5px rgba(253, 224, 71, 0.2);
+    }
+
+    .btn-gold {
+      background: linear-gradient(135deg, #fde047 0%, #eab308 100%);
+      color: #422006;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      transition: all 0.3s ease;
+      box-shadow: 0 4px 15px rgba(234, 179, 8, 0.3);
+    }
+
+    .btn-gold:hover {
+      transform: scale(1.02);
+      box-shadow: 0 6px 20px rgba(234, 179, 8, 0.4);
+    }
+
+    .badge-tiktok { border-color: #e879f9; color: #f0abfc; background: rgba(232, 121, 249, 0.1); }
+    .badge-instagram { border-color: #f472b6; color: #fbcfe8; background: rgba(244, 114, 182, 0.1); }
+    .badge-linkedin { border-color: #22d3ee; color: #a5f3fc; background: rgba(34, 211, 238, 0.1); }
+    .badge-youtube { border-color: #f87171; color: #fecaca; background: rgba(248, 113, 113, 0.1); }
+    .badge-blog { border-color: #facc15; color: #fef08a; background: rgba(250, 204, 21, 0.1); }
+    .badge-threads { border-color: #a78bfa; color: #ddd6fe; background: rgba(167, 139, 250, 0.1); }
+    .badge-bluesky { border-color: #38bdf8; color: #bae6fd; background: rgba(56, 189, 248, 0.1); }
+
+    .progress-bar {
+      background: linear-gradient(90deg, #a855f7, #fde047);
+      box-shadow: 0 0 10px rgba(168, 85, 247, 0.5);
+      transition: width 0.5s ease;
     }
   </style>
 </head>
@@ -122,8 +128,7 @@
         <i class="ph-duotone ph-compass text-6xl text-purple-400 animate-pulse"></i>
       </div>
       <h1 class="font-magical text-4xl md:text-6xl text-white mb-6 leading-tight">
-        Nonprofit Platform<br />
-        <span class="text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-amber-200">Alignment Quiz</span>
+        Nonprofit Platform<br><span class="text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-amber-200">Alignment Quiz</span>
       </h1>
       <p class="font-serif-italic text-xl md:text-2xl text-gray-300 mb-8 max-w-xl mx-auto">
         Which distribution architecture fits how your organization actually operates?
@@ -154,13 +159,55 @@
         <h2 id="question-text" class="font-magical text-2xl md:text-3xl text-white mb-10 leading-relaxed">
           What are you trying to build in the next 12 months?
         </h2>
+
         <div id="options-grid" class="grid gap-4 w-full"></div>
+
+        <p id="select-warning" class="text-red-400 text-xs mt-6 hidden">
+          Please select an option to continue.
+        </p>
       </div>
 
       <div class="p-8 border-t border-white/5 flex justify-end">
         <button id="next-btn" onclick="nextQuestion()" class="btn-gold px-8 py-3 rounded-full text-xs tracking-widest opacity-0 pointer-events-none transition-all duration-300 translate-y-2">
           Next Section
         </button>
+      </div>
+    </section>
+
+    <!-- EMAIL GATE -->
+    <section id="email-gate" class="hidden glass-panel rounded-3xl overflow-hidden relative min-h-[600px] flex flex-col">
+      <div class="w-full h-1 bg-white/10 absolute top-0 left-0">
+        <div class="h-full progress-bar" style="width: 100%"></div>
+      </div>
+
+      <div class="flex-1 flex flex-col items-center justify-center px-8 md:px-16 py-16 text-center">
+        <div class="mb-6 inline-flex items-center justify-center w-16 h-16 rounded-full border border-amber-400/30 bg-amber-400/10">
+          <i class="ph-duotone ph-envelope-simple text-3xl text-amber-300"></i>
+        </div>
+
+        <span class="text-[10px] uppercase tracking-[0.2em] text-cyan-400 font-bold mb-4 block">Almost There</span>
+
+        <h2 class="font-magical text-3xl md:text-4xl text-white mb-4 leading-tight">
+          Your Stack Is Ready<br><span class="text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-amber-200">Where Shall We Send It?</span>
+        </h2>
+
+        <p class="font-serif-italic text-lg text-gray-300 mb-10 max-w-md">
+          Enter your email to reveal your platform architecture and receive the full breakdown.
+        </p>
+
+        <div class="w-full max-w-md">
+          <div class="flex flex-col sm:flex-row gap-3">
+            <input id="email-input" type="email" placeholder="your@organization.org"
+              class="flex-1 bg-white/5 border border-white/10 focus:border-purple-500/60 focus:outline-none text-white placeholder-gray-500 rounded-full px-6 py-4 text-sm transition-all">
+            <button id="email-submit" onclick="submitEmail()" class="btn-gold px-8 py-4 rounded-full text-xs tracking-[0.2em] whitespace-nowrap">
+              Reveal My Stack
+            </button>
+          </div>
+
+          <p id="email-error" class="text-red-400 text-xs mt-3 hidden">Please enter a valid email address.</p>
+          <p id="email-status" class="text-gray-400 text-xs mt-3 hidden"></p>
+          <p class="text-gray-600 text-[10px] uppercase tracking-widest mt-6">No grimoires sold to third parties. Ever.</p>
+        </div>
       </div>
     </section>
 
@@ -174,9 +221,9 @@
         <div class="w-24 h-1 bg-gradient-to-r from-transparent via-purple-500 to-transparent mx-auto"></div>
       </div>
 
-      <div id="platform-badges" class="flex flex-wrap justify-center gap-4 mb-10"></div>
+      <div id="platform-badges" class="flex flex-wrap justify-center gap-4 mb-12"></div>
 
-      <div class="grid md:grid-cols-3 gap-8 mb-10">
+      <div class="grid md:grid-cols-3 gap-8 mb-12">
         <div class="glass-card p-6 rounded-xl border-t-2 border-t-purple-500">
           <h3 class="font-magical text-lg text-white mb-4 flex items-center gap-2">
             <i class="ph-duotone ph-check-circle text-purple-400"></i> Why This Fits
@@ -199,19 +246,6 @@
         </div>
       </div>
 
-      <!-- EMAIL CAPTURE -->
-      <div class="max-w-xl mx-auto glass-card p-6 rounded-xl mb-10">
-        <h3 class="font-magical text-lg text-white mb-2">Send this result to your inbox</h3>
-        <p class="text-sm text-gray-400 mb-4">Enter an email. We log your stack and answers in a spreadsheet.</p>
-
-        <div class="flex flex-col sm:flex-row gap-3">
-          <input id="lead-email" type="email" placeholder="you@org.org"
-                 class="flex-1 px-4 py-3 rounded-lg bg-black/30 border border-white/10 text-white text-sm outline-none focus:border-purple-400" />
-          <button id="lead-btn" onclick="submitLead()" class="btn-gold px-6 py-3 rounded-lg text-xs tracking-widest">Send</button>
-        </div>
-        <p id="lead-status" class="text-xs text-gray-500 mt-3"></p>
-      </div>
-
       <div class="text-center">
         <button onclick="location.reload()" class="px-8 py-3 border border-white/20 hover:bg-white/5 text-white text-xs tracking-[0.2em] uppercase rounded-full transition-all">
           Retake The Quiz
@@ -226,14 +260,12 @@
 
   <script>
     // =========================
-    // 0) CONFIG YOU'LL UPDATE
+    // GOOGLE SHEETS WEB APP URL
     // =========================
-    // After you deploy your Google Apps Script as a Web App, paste the URL here.
-    // The script should accept JSON via POST and return JSON (or plain text) success.
-    const GOOGLE_SHEETS_WEBAPP_URL = "PASTE_YOUR_GOOGLE_SCRIPT_WEBAPP_URL_HERE";
+    const GOOGLE_SHEETS_WEBAPP_URL = "https://script.google.com/macros/s/AKfycbzBtDMEXCEVz9N_XNUHYRpTl5aNjxjM57Z_GK-hbJCEhn4k9P1bXFXa__jdUq2Fa9oT/exec";
 
     // =========================
-    // 1) STARS
+    // STARS
     // =========================
     const starContainer = document.getElementById('star-container');
     for (let i = 0; i < 150; i++) {
@@ -257,7 +289,7 @@
     }
 
     // =========================
-    // 2) QUIZ DATA
+    // QUIZ DATA
     // =========================
     const questions = [
       {
@@ -315,26 +347,22 @@
     ];
 
     let currentStep = 0;
+    let scores = { tiktok: 0, instagram: 0, linkedin: 0, youtube: 0, blog: 0, threads: 0, bluesky: 0 };
+    let answers = [];                  // stores selected option ids (A/B/C...)
+    let pendingResultStackKeys = [];   // computed before email submit
 
-    // scores per platform
-    let scores = {
-      tiktok: 0,
-      instagram: 0,
-      linkedin: 0,
-      youtube: 0,
-      blog: 0,
-      threads: 0,
-      bluesky: 0
+    const PLATFORM_LABELS = {
+      tiktok: "TikTok",
+      instagram: "Instagram",
+      linkedin: "LinkedIn",
+      youtube: "YouTube",
+      blog: "Blog + SEO",
+      threads: "Threads",
+      bluesky: "Bluesky"
     };
 
-    // store the user's selected option id per question (A/B/C/D/E)
-    let answers = []; // e.g., ["B","D","C","A","B"]
-
-    // store the final result stack globally for lead submission
-    window.__RESULT_STACK__ = [];
-
     // =========================
-    // 3) DOM HOOKS
+    // DOM HOOKS
     // =========================
     const introEl = document.getElementById('intro');
     const quizContainerEl = document.getElementById('quiz-container');
@@ -346,9 +374,11 @@
     const questionTextEl = document.getElementById('question-text');
     const optionsGridEl = document.getElementById('options-grid');
     const resultsEl = document.getElementById('results');
+    const emailGateEl = document.getElementById('email-gate');
+    const selectWarningEl = document.getElementById('select-warning');
 
     // =========================
-    // 4) QUIZ FLOW
+    // QUIZ FLOW
     // =========================
     function startQuiz() {
       introEl.classList.add('hidden');
@@ -359,27 +389,28 @@
     function renderQuestion() {
       const q = questions[currentStep];
 
-      // animate out
+      // reset selection state for this question
+      delete quizContainerEl.dataset.currentPlatforms;
+      delete quizContainerEl.dataset.currentOptionId;
+
+      // transition out
       questionAreaEl.style.opacity = '0';
       questionAreaEl.style.transform = 'translateY(10px)';
 
       setTimeout(() => {
-        // labels
         sectionLabelEl.innerText = q.label.split(":")[0];
         qCurrentEl.innerText = currentStep + 1;
         questionTextEl.innerText = q.question;
 
-        // progress should reach 100% on the last question
-        const denom = (questions.length - 1);
-        progressEl.style.width = `${Math.min(100, (currentStep / denom) * 100)}%`;
+        // progress
+        progressEl.style.width = `${((currentStep) / questions.length) * 100}%`;
 
-        // render options
+        // options
         optionsGridEl.innerHTML = '';
         q.options.forEach((opt) => {
           const btn = document.createElement('button');
-          btn.type = "button";
           btn.className = 'glass-card w-full text-left p-6 rounded-xl group transition-all duration-300';
-          btn.onclick = () => selectOption(btn, opt);
+          btn.onclick = () => selectOption(btn, opt.platforms, opt.id);
           btn.innerHTML = `
             <div class="flex items-start gap-4 pointer-events-none">
               <div class="w-8 h-8 rounded-full border border-white/20 flex items-center justify-center text-xs font-bold text-gray-400 group-hover:bg-white/10 group-hover:text-white transition-colors flex-shrink-0">
@@ -391,126 +422,198 @@
           optionsGridEl.appendChild(btn);
         });
 
-        // hide next until selection
+        // hide warning + disable next until selected
+        selectWarningEl.classList.add('hidden');
         nextBtnEl.classList.add('opacity-0', 'pointer-events-none', 'translate-y-2');
 
-        // animate in
+        // transition in
         questionAreaEl.style.opacity = '1';
         questionAreaEl.style.transform = 'translateY(0)';
-      }, 300);
+      }, 250);
     }
 
-    function selectOption(btn, opt) {
-      // toggle selection UI
+    function selectOption(btn, platforms, optionId) {
       const buttons = optionsGridEl.querySelectorAll('button');
       buttons.forEach(b => b.classList.remove('selected'));
       btn.classList.add('selected');
 
-      // store platforms and answer id
-      quizContainerEl.dataset.currentPlatforms = JSON.stringify(opt.platforms);
-      quizContainerEl.dataset.currentAnswerId = opt.id;
+      quizContainerEl.dataset.currentPlatforms = JSON.stringify(platforms);
+      quizContainerEl.dataset.currentOptionId = optionId;
 
-      // enable next
+      selectWarningEl.classList.add('hidden');
       nextBtnEl.classList.remove('opacity-0', 'pointer-events-none', 'translate-y-2');
     }
 
     function nextQuestion() {
-      // update score with the selected platforms
       const platforms = JSON.parse(quizContainerEl.dataset.currentPlatforms || "[]");
+      const optionId = quizContainerEl.dataset.currentOptionId || "";
+
+      if (!optionId) {
+        selectWarningEl.classList.remove('hidden');
+        return;
+      }
+
+      answers.push(optionId);
       platforms.forEach(p => scores[p]++);
 
-      // store answer id
-      const a = quizContainerEl.dataset.currentAnswerId || "";
-      answers[currentStep] = a;
-
-      // move forward
       currentStep++;
 
       if (currentStep < questions.length) {
         renderQuestion();
       } else {
-        // ensure progress at 100%
         progressEl.style.width = "100%";
-        showResults();
+        pendingResultStackKeys = computeResultStackKeys_();
+        showEmailGate();
       }
     }
 
-    // =========================
-    // 5) RESULT STACK LOGIC (MAX 4, COHERENT)
-    // =========================
-    function showResults() {
+    function showEmailGate() {
       quizContainerEl.classList.add('hidden');
-      resultsEl.classList.remove('hidden');
-
-      const sorted = Object.entries(scores).sort((a,b)=>b[1]-a[1]);
-
-      function getScore(p){ return scores[p] || 0; }
-      function addUnique(arr, p){
-        if (!arr.includes(p) && getScore(p) > 0) arr.push(p);
-      }
-
-      const [p1, s1] = sorted[0];
-      const [p2, s2] = sorted[1];
-
-      let resultStack = [p1];
-
-      // include #2 unless #1 is clearly dominant
-      if (!(s1 >= 4 && s2 <= s1 - 2)) addUnique(resultStack, p2);
-
-      // coherence rules
-      if (resultStack.includes('tiktok')) addUnique(resultStack, 'instagram');
-
-      if (resultStack.includes('threads') || resultStack.includes('bluesky')) {
-        if (getScore('linkedin') > 0) addUnique(resultStack, 'linkedin');
-      }
-
-      // infra pairing
-      if (getScore('youtube') >= 3) addUnique(resultStack, 'blog');
-      if (getScore('blog') >= 3) addUnique(resultStack, 'youtube');
-
-      // fill remaining slots by score
-      for (const [p, s] of sorted) {
-        if (resultStack.length >= 4) break;
-        if (s <= 0) continue;
-        if (!resultStack.includes(p)) resultStack.push(p);
-      }
-
-      // final guardrails
-      if (resultStack.length === 1 && resultStack[0] === 'threads') addUnique(resultStack, 'linkedin');
-      if (resultStack.length === 1 && resultStack[0] === 'bluesky') addUnique(resultStack, 'linkedin');
-
-      if (resultStack.length === 2 && resultStack.includes('instagram') && resultStack.includes('bluesky')) {
-        addUnique(resultStack, 'linkedin');
-      }
-
-      // cap at 4
-      resultStack = resultStack.slice(0, 4);
-
-      window.__RESULT_STACK__ = resultStack;
-
-      renderBadges(resultStack);
-      renderText(resultStack);
+      emailGateEl.classList.remove('hidden');
     }
 
     // =========================
-    // 6) RENDER BADGES + COPY
+    // RESULTS COMPUTATION
     // =========================
-    function renderBadges(stack) {
+    function computeResultStackKeys_() {
+      const sortedPlatforms = Object.entries(scores).sort((a, b) => b[1] - a[1]);
+      const topScore = sortedPlatforms[0][1];
+
+      let resultStack = [];
+      resultStack.push(sortedPlatforms[0][0]);
+
+      for (let i = 1; i < sortedPlatforms.length; i++) {
+        const p = sortedPlatforms[i][0];
+        const s = sortedPlatforms[i][1];
+        if (s >= (topScore - 2) && resultStack.length < 4 && s > 0) resultStack.push(p);
+      }
+
+      if (resultStack.length === 1 && resultStack[0] === 'threads') {
+        const nextBest = sortedPlatforms.find(x => x[0] !== 'threads')[0];
+        resultStack.push(nextBest);
+      }
+
+      if (resultStack.length === 1 && resultStack[0] === 'bluesky') {
+        const nextBest = sortedPlatforms.find(x => x[0] !== 'bluesky')[0];
+        resultStack.push(nextBest);
+      }
+
+      if (resultStack.length === 2 && resultStack.includes('tiktok') && resultStack.includes('bluesky')) {
+        resultStack.push('instagram');
+      }
+
+      return resultStack.slice(0, 4);
+    }
+
+    function stackLabels_(stackKeys) {
+      return stackKeys.map(k => PLATFORM_LABELS[k] || k);
+    }
+
+    // =========================
+    // EMAIL SUBMIT + SHEETS POST
+    // =========================
+    async function submitEmail() {
+      const emailInput = document.getElementById('email-input');
+      const emailError = document.getElementById('email-error');
+      const emailStatus = document.getElementById('email-status');
+      const submitBtn = document.getElementById('email-submit');
+
+      const val = (emailInput.value || "").trim();
+      const valid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(val);
+
+      if (!valid) {
+        emailError.classList.remove('hidden');
+        emailStatus.classList.add('hidden');
+        emailInput.classList.add('border-red-500/60');
+        return;
+      }
+
+      emailError.classList.add('hidden');
+      emailInput.classList.remove('border-red-500/60');
+
+      // UI: loading
+      submitBtn.disabled = true;
+      submitBtn.classList.add('opacity-60');
+      emailStatus.classList.remove('hidden');
+      emailStatus.innerText = "Saving your result…";
+
+      const stackKeys = pendingResultStackKeys.length ? pendingResultStackKeys : computeResultStackKeys_();
+      const stackText = stackLabels_(stackKeys).join(" + ");
+
+      const payload = {
+        email: val,
+        result_stack: stackText,
+        scores: scores,
+        answers: answers,
+        timestamp_iso: new Date().toISOString(),
+        page_url: window.location.href,
+        user_agent: navigator.userAgent
+      };
+
+      try {
+        // Apps Script Web Apps can be finicky with CORS.
+        // This "no headers" approach is often the most reliable.
+        const res = await fetch(GOOGLE_SHEETS_WEBAPP_URL, {
+          method: "POST",
+          body: JSON.stringify(payload)
+        });
+
+        const text = await res.text(); // script returns JSON text
+        let ok = true;
+        try {
+          const parsed = JSON.parse(text);
+          ok = !!parsed.ok;
+        } catch (_) {
+          // if it isn't JSON, still proceed; row might have been appended
+          ok = true;
+        }
+
+        if (!ok) {
+          emailStatus.innerText = "Saved failed. Check Apps Script deployment permissions.";
+          submitBtn.disabled = false;
+          submitBtn.classList.remove('opacity-60');
+          return;
+        }
+
+        emailStatus.innerText = "Saved. Revealing your stack…";
+
+        // reveal results
+        emailGateEl.classList.add('hidden');
+        resultsEl.classList.remove('hidden');
+        showResultsContent(stackKeys);
+      } catch (e) {
+        emailStatus.innerText = "Save failed. Check your Web App URL and deployment access (Anyone).";
+        submitBtn.disabled = false;
+        submitBtn.classList.remove('opacity-60');
+      }
+    }
+
+    // =========================
+    // RENDER RESULTS
+    // =========================
+    function showResultsContent(stackKeys) {
+      const keys = stackKeys && stackKeys.length ? stackKeys : computeResultStackKeys_();
+      renderBadges(keys);
+      renderText(keys);
+    }
+
+    function renderBadges(stackKeys) {
       const container = document.getElementById('platform-badges');
       container.innerHTML = "";
 
       const config = {
-        tiktok:   { icon:'ph-tiktok-logo',        label:'TikTok',      class:'badge-tiktok' },
-        instagram:{ icon:'ph-instagram-logo',     label:'Instagram',   class:'badge-instagram' },
-        linkedin: { icon:'ph-linkedin-logo',      label:'LinkedIn',    class:'badge-linkedin' },
-        youtube:  { icon:'ph-youtube-logo',       label:'YouTube',     class:'badge-youtube' },
-        blog:     { icon:'ph-rss',               label:'Blog + SEO',   class:'badge-blog' },
-        threads:  { icon:'ph-chat-teardrop-text', label:'Threads',     class:'badge-threads' },
-        bluesky:  { icon:'ph-butterfly',          label:'Bluesky',     class:'badge-bluesky' }
+        tiktok: { icon: 'ph-tiktok-logo', label: 'TikTok', class: 'badge-tiktok' },
+        instagram: { icon: 'ph-instagram-logo', label: 'Instagram', class: 'badge-instagram' },
+        linkedin: { icon: 'ph-linkedin-logo', label: 'LinkedIn', class: 'badge-linkedin' },
+        youtube: { icon: 'ph-youtube-logo', label: 'YouTube', class: 'badge-youtube' },
+        blog: { icon: 'ph-rss', label: 'Blog + SEO', class: 'badge-blog' },
+        threads: { icon: 'ph-chat-teardrop-text', label: 'Threads', class: 'badge-threads' },
+        bluesky: { icon: 'ph-butterfly', label: 'Bluesky', class: 'badge-bluesky' }
       };
 
-      stack.forEach(p => {
+      stackKeys.forEach(p => {
         const data = config[p];
+        if (!data) return;
         const div = document.createElement('div');
         div.className = `flex items-center gap-2 px-6 py-3 rounded-full border ${data.class}`;
         div.innerHTML = `
@@ -521,7 +624,7 @@
       });
     }
 
-    function renderText(stack) {
+    function renderText(stackKeys) {
       const whyEl = document.getElementById('result-why');
       const commitEl = document.getElementById('result-commit');
       const dropEl = document.getElementById('result-drop');
@@ -530,118 +633,35 @@
       let commitText = "";
       let dropText = "";
 
-      if (stack.includes('tiktok') || stack.includes('instagram')) {
-        whyText += "This stack matches organizations built for visual storytelling, high-velocity engagement, and fast testing. ";
-        commitText += "Commit to consistent output and simple production systems so you can publish without bottlenecks. ";
-        dropText += "Deprioritize slow approvals and over-polishing. Your constraint is speed and consistency. ";
+      if (stackKeys.includes('tiktok') || stackKeys.includes('instagram')) {
+        whyText += "Your strengths lie in visual storytelling and high-velocity engagement. You are built to move fast. ";
+        commitText += "You must commit to consistent output and quick iteration so the system can test and learn you. ";
+        dropText += "Deprioritize lengthy approval loops that slow you down before the post even exists. ";
       }
 
-      if (stack.includes('linkedin')) {
-        whyText += "You have a credibility advantage in professional networks where authority and comment depth matter. ";
-        commitText += "Commit to identifiable human voices and thoughtful posts that invite real responses. ";
-        dropText += "Deprioritize trend-chasing that does not convert into trust, partners, or institutional leverage. ";
+      if (stackKeys.includes('linkedin')) {
+        whyText += "You are advantaged by professional credibility and public-facing authority. ";
+        commitText += "Commit to posts from specific human voices and stay responsive in the comments. ";
+        dropText += "Deprioritize trend-chasing that creates attention without trust. ";
       }
 
-      if (stack.includes('youtube') || stack.includes('blog')) {
-        whyText += "You are positioned to build durable discoverability through a library model, not a daily feed model. ";
-        commitText += "Commit to clear topic architecture, titles, and language that stays consistent across web, transcripts, and posts. ";
-        dropText += "Deprioritize daily churn that produces activity without compounding discoverability. ";
+      if (stackKeys.includes('youtube') || stackKeys.includes('blog')) {
+        whyText += "You are building a library that compounds discoverability over time. ";
+        commitText += "Commit to topic consistency, strong titles, and durable educational assets. ";
+        dropText += "Deprioritize daily churn that vanishes before it can compound. ";
       }
 
-      if (stack.includes('bluesky') || stack.includes('threads')) {
-        whyText += "Conversation and niche network presence are part of your path to influence. ";
-        commitText += "Commit to dialogue. Posting without replying will not produce durable network position. ";
+      if (stackKeys.includes('bluesky') || stackKeys.includes('threads')) {
+        whyText += "You benefit from dialogue and niche network presence. ";
+        commitText += "Commit to conversation and consistent participation, not drive-by posting. ";
       }
 
-      if (!whyText) whyText = "Your inputs suggest a balanced approach. Focus on the channels you can sustain and measure outcomes.";
+      if (!whyText) whyText = "This stack aligns with how you operate and where your strengths will compound.";
 
       whyEl.innerText = whyText.trim();
-      commitEl.innerText = commitText.trim() || "Commit to a cadence your team can sustain for at least 8 weeks before reassessing.";
-      dropEl.innerText = dropText.trim() || "Deprioritize any platform that drains time without producing measurable progress toward your goal.";
+      commitEl.innerText = commitText.trim();
+      dropEl.innerText = dropText.trim();
     }
-
-    // =========================
-    // 7) LEAD SUBMISSION TO "EXCEL" (GOOGLE SHEETS)
-    // =========================
-    // Plan:
-    // - You will create a Google Sheet.
-    // - You will deploy a Google Apps Script Web App that accepts POST JSON.
-    // - This frontend will POST:
-    //   email, resultStack, scores, answers, timestamp, userAgent, pageUrl
-    // - Your script will append a row.
-
-    async function submitLead(){
-      const emailEl = document.getElementById('lead-email');
-      const statusEl = document.getElementById('lead-status');
-      const btnEl = document.getElementById('lead-btn');
-
-      const email = (emailEl.value || "").trim();
-
-      if (!email || !email.includes('@')) {
-        statusEl.innerText = "Enter a valid email address.";
-        return;
-      }
-
-      if (!GOOGLE_SHEETS_WEBAPP_URL || GOOGLE_SHEETS_WEBAPP_URL.includes("PASTE_YOUR_GOOGLE")) {
-        statusEl.innerText = "Webhook URL not set yet. Paste your Google Script Web App URL into the code.";
-        return;
-      }
-
-      btnEl.disabled = true;
-      btnEl.classList.add('opacity-60');
-      statusEl.innerText = "Sending…";
-
-      const payload = {
-        email,
-        result_stack: (window.__RESULT_STACK__ || []).join(" + "),
-        scores: scores,
-        answers: answers, // ["A","D","C","B","A"]
-        timestamp_iso: new Date().toISOString(),
-        page_url: window.location.href,
-        user_agent: navigator.userAgent
-      };
-
-      try {
-        const res = await fetch(GOOGLE_SHEETS_WEBAPP_URL, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(payload)
-        });
-
-        // Some Apps Script endpoints respond with text. We handle both.
-        const text = await res.text();
-
-        if (!res.ok) {
-          statusEl.innerText = "Send failed. Check your Apps Script permissions and deployment.";
-          btnEl.disabled = false;
-          btnEl.classList.remove('opacity-60');
-          return;
-        }
-
-        statusEl.innerText = "Sent. Check your inbox soon.";
-        emailEl.value = "";
-      } catch (e) {
-        statusEl.innerText = "Send failed. If you're testing locally, check CORS and Apps Script deployment settings.";
-      } finally {
-        btnEl.disabled = false;
-        btnEl.classList.remove('opacity-60');
-      }
-    }
-
-    // =========================
-    // 8) OPTIONAL: HELPER FOR YOUR GOOGLE SHEET COLUMNS
-    // =========================
-    // When you create your spreadsheet, use columns like:
-    // A: timestamp_iso
-    // B: email
-    // C: result_stack
-    // D: scores_json
-    // E: answers_joined
-    // F: page_url
-    // G: user_agent
-    //
-    // Your Apps Script can stringify payload.scores and join answers with "-".
-    //
   </script>
 </body>
 </html>

@@ -1,0 +1,561 @@
+<html lang="en" vid="0"><head vid="1">
+    <meta charset="UTF-8" vid="2">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" vid="3">
+    <title vid="4">Nonprofit Platform Alignment Quiz | The Algorithm Witch</title>
+    <script src="https://cdn.tailwindcss.com/3.4.17" vid="5"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com" vid="6">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="" vid="7">
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@400;700;900&amp;family=Inter:wght@300;400;500;600&amp;family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&amp;display=swap" rel="stylesheet" vid="8">
+    <script src="https://unpkg.com/@phosphor-icons/web" vid="9"></script>
+    <style vid="10">
+        :root {
+            --color-bg: #030014;
+            --color-card: rgba(20, 15, 45, 0.6);
+            --color-accent: #a855f7;
+            --color-gold: #fde047;
+            --color-cyan: #22d3ee;
+        }
+
+        body {
+            background-color: var(--color-bg);
+            color: #e2e8f0;
+            font-family: 'Inter', sans-serif;
+            margin: 0;
+            padding: 0;
+            overflow-x: hidden;
+            background-image: radial-gradient(circle at 50% 0%, #1e1b4b 0%, #030014 60%);
+            min-height: 100vh;
+        }
+
+        .font-magical { font-family: 'Cinzel Decorative', cursive; }
+        .font-serif-italic { font-family: 'Playfair Display', serif; font-style: italic; }
+
+        .stars {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            pointer-events: none; z-index: 0;
+        }
+
+        .star {
+            position: absolute;
+            background: white;
+            border-radius: 50%;
+            opacity: 0;
+            animation: twinkle var(--duration) ease-in-out infinite;
+            animation-delay: var(--delay);
+        }
+
+        @keyframes twinkle {
+            0% { opacity: 0; transform: scale(0.5); }
+            50% { opacity: var(--opacity); transform: scale(1.2); box-shadow: 0 0 4px rgba(255, 255, 255, 0.8); }
+            100% { opacity: 0; transform: scale(0.5); }
+        }
+
+        .glass-panel {
+            background: rgba(13, 12, 34, 0.4);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(139, 92, 246, 0.15);
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+        }
+
+        .glass-card {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(10px);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .glass-card:hover {
+            background: rgba(255, 255, 255, 0.07);
+            border-color: rgba(168, 85, 247, 0.3);
+            transform: translateY(-2px);
+        }
+
+        .glass-card.selected {
+            background: rgba(168, 85, 247, 0.15);
+            border-color: var(--color-gold);
+            box-shadow: 0 0 20px -5px rgba(253, 224, 71, 0.2);
+        }
+
+        .btn-gold {
+            background: linear-gradient(135deg, #fde047 0%, #eab308 100%);
+            color: #422006;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(234, 179, 8, 0.3);
+        }
+
+        .btn-gold:hover {
+            transform: scale(1.02);
+            box-shadow: 0 6px 20px rgba(234, 179, 8, 0.4);
+        }
+
+        .fade-enter {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+        
+        .fade-enter-active {
+            opacity: 1;
+            transform: translateY(0);
+            transition: opacity 500ms, transform 500ms;
+        }
+
+        .fade-exit {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .fade-exit-active {
+            opacity: 0;
+            transform: translateY(-20px);
+            transition: opacity 500ms, transform 500ms;
+        }
+
+        
+        .badge-tiktok { border-color: #e879f9; color: #f0abfc; background: rgba(232, 121, 249, 0.1); }
+        .badge-instagram { border-color: #f472b6; color: #fbcfe8; background: rgba(244, 114, 182, 0.1); }
+        .badge-linkedin { border-color: #22d3ee; color: #a5f3fc; background: rgba(34, 211, 238, 0.1); }
+        .badge-youtube { border-color: #f87171; color: #fecaca; background: rgba(248, 113, 113, 0.1); }
+        .badge-blog { border-color: #facc15; color: #fef08a; background: rgba(250, 204, 21, 0.1); }
+        .badge-threads { border-color: #a78bfa; color: #ddd6fe; background: rgba(167, 139, 250, 0.1); }
+        .badge-bluesky { border-color: #38bdf8; color: #bae6fd; background: rgba(56, 189, 248, 0.1); }
+
+        .progress-bar {
+            background: linear-gradient(90deg, #a855f7, #fde047);
+            box-shadow: 0 0 10px rgba(168, 85, 247, 0.5);
+            transition: width 0.5s ease;
+        }
+    </style>
+</head>
+<body class="flex flex-col items-center justify-center min-h-screen p-4 sm:p-6" vid="11">
+
+    <div id="star-container" class="stars" vid="12"></div>
+    
+    
+    <div class="fixed top-[-20%] left-[-10%] w-[600px] h-[600px] bg-purple-900/20 rounded-full blur-[120px] pointer-events-none z-0" vid="13"></div>
+    <div class="fixed bottom-[-10%] right-[-10%] w-[500px] h-[500px] bg-indigo-900/20 rounded-full blur-[100px] pointer-events-none z-0" vid="14"></div>
+
+    
+    <main class="relative z-10 w-full max-w-3xl mx-auto" vid="15">
+        
+        
+        <section id="intro" class="glass-panel rounded-3xl p-8 md:p-16 text-center transform transition-all duration-500" vid="16">
+            <div class="mb-6 flex justify-center" vid="17">
+                <i class="ph-duotone ph-compass text-6xl text-purple-400 animate-pulse" vid="18"></i>
+            </div>
+            <h1 class="font-magical text-4xl md:text-6xl text-white mb-6 leading-tight" vid="19">
+                Nonprofit Platform<br vid="20"><span class="text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-amber-200" vid="21">Alignment Quiz</span>
+            </h1>
+            <p class="font-serif-italic text-xl md:text-2xl text-gray-300 mb-8 max-w-xl mx-auto" vid="22">
+                Which distribution architecture fits how your organization actually operates?
+            </p>
+            <p class="text-gray-400 text-sm tracking-widest uppercase mb-12" vid="23">
+                Select the answer that feels most structurally true.
+            </p>
+            <button onclick="startQuiz()" class="btn-gold px-10 py-4 rounded-full text-sm tracking-[0.2em] shadow-lg" vid="24">
+                Begin the Quiz
+            </button>
+        </section>
+
+        
+        <section id="quiz-container" class="hidden glass-panel rounded-3xl overflow-hidden relative min-h-[600px] flex flex-col" vid="25">
+            
+            <div class="w-full h-1 bg-white/10 absolute top-0 left-0" vid="26">
+                <div id="progress" class="h-full w-0 progress-bar" vid="27"></div>
+            </div>
+
+            
+            <div class="pt-10 px-8 md:px-12 flex justify-between items-center mb-4" vid="28">
+                <div class="flex items-center gap-2" vid="29">
+                    <span class="w-2 h-2 rounded-full bg-purple-500 animate-pulse" vid="30"></span>
+                    <span id="section-label" class="text-xs font-bold text-cyan-400 uppercase tracking-widest" vid="31">Section 1</span>
+                </div>
+                <div class="text-xs text-gray-500 font-mono" vid="32"><span id="q-current" vid="33">1</span>/5</div>
+            </div>
+
+            
+            <div id="question-area" class="flex-1 px-8 md:px-12 pb-12 flex flex-col justify-center transition-all duration-500" vid="34">
+                <h2 id="question-text" class="font-magical text-2xl md:text-3xl text-white mb-10 leading-relaxed" vid="35">
+                    What are you trying to build in the next 12 months?
+                </h2>
+
+                <div id="options-grid" class="grid gap-4 w-full" vid="36">
+                    
+                </div>
+            </div>
+
+            
+            <div class="p-8 border-t border-white/5 flex justify-end" vid="37">
+                <button id="next-btn" onclick="nextQuestion()" class="btn-gold px-8 py-3 rounded-full text-xs tracking-widest opacity-0 pointer-events-none transition-all duration-300 translate-y-2" vid="38">
+                    Next Section
+                </button>
+            </div>
+        </section>
+
+        
+        <section id="results" class="hidden glass-panel rounded-3xl p-8 md:p-12 transition-all duration-700" vid="39">
+            <div class="text-center mb-12" vid="40">
+                <div class="inline-flex items-center justify-center p-3 rounded-full border border-purple-500/30 bg-purple-500/10 mb-6" vid="41">
+                    <i class="ph-fill ph-sparkle text-amber-300" vid="42"></i>
+                </div>
+                <h2 class="font-magical text-3xl md:text-5xl text-white mb-4" vid="43">Your Platform Stack</h2>
+                <div class="w-24 h-1 bg-gradient-to-r from-transparent via-purple-500 to-transparent mx-auto" vid="44"></div>
+            </div>
+
+            
+            <div id="platform-badges" class="flex flex-wrap justify-center gap-4 mb-12" vid="45">
+                
+            </div>
+
+            
+            <div class="grid md:grid-cols-3 gap-8 mb-12" vid="46">
+                <div class="glass-card p-6 rounded-xl border-t-2 border-t-purple-500" vid="47">
+                    <h3 class="font-magical text-lg text-white mb-4 flex items-center gap-2" vid="48">
+                        <i class="ph-duotone ph-check-circle text-purple-400" vid="49"></i> Why This Fits
+                    </h3>
+                    <p id="result-why" class="text-sm text-gray-400 leading-relaxed" vid="50">
+                        Based on your inputs, this structure aligns with your current capacity and strategic goals.
+                    </p>
+                </div>
+
+                <div class="glass-card p-6 rounded-xl border-t-2 border-t-amber-500" vid="51">
+                    <h3 class="font-magical text-lg text-white mb-4 flex items-center gap-2" vid="52">
+                        <i class="ph-duotone ph-handshake text-amber-400" vid="53"></i> Commitment
+                    </h3>
+                    <p id="result-commit" class="text-sm text-gray-400 leading-relaxed" vid="54">
+                        You must commit to consistent output and engagement to make this stack viable.
+                    </p>
+                </div>
+
+                <div class="glass-card p-6 rounded-xl border-t-2 border-t-red-500" vid="55">
+                    <h3 class="font-magical text-lg text-white mb-4 flex items-center gap-2" vid="56">
+                        <i class="ph-duotone ph-x-circle text-red-400" vid="57"></i> Deprioritize
+                    </h3>
+                    <p id="result-drop" class="text-sm text-gray-400 leading-relaxed" vid="58">
+                        Let go of platforms that drain resources without contributing to your core objective.
+                    </p>
+                </div>
+            </div>
+
+            <div class="text-center" vid="59">
+                <button onclick="location.reload()" class="px-8 py-3 border border-white/20 hover:bg-white/5 text-white text-xs tracking-[0.2em] uppercase rounded-full transition-all" vid="60">
+                    Retake The Quiz
+                </button>
+            </div>
+        </section>
+
+    </main>
+
+    <footer class="relative z-10 mt-12 text-center text-gray-600 text-[10px] uppercase tracking-widest" vid="61">
+        The Algorithm Witch • Digital Alchemy
+    </footer>
+
+    <script vid="62">
+        
+        const starContainer = document.getElementById('star-container');
+        for (let i = 0; i < 150; i++) {
+            const star = document.createElement('div');
+            star.classList.add('star');
+            const x = Math.random() * 100;
+            const y = Math.random() * 100;
+            const size = Math.random() < 0.1 ? 2 : 1;
+            const duration = 2 + Math.random() * 4;
+            const delay = Math.random() * 5;
+            const opacity = 0.2 + Math.random() * 0.6;
+            
+            star.style.left = `${x}%`;
+            star.style.top = `${y}%`;
+            star.style.width = `${size}px`;
+            star.style.height = `${size}px`;
+            star.style.setProperty('--duration', `${duration}s`);
+            star.style.setProperty('--delay', `${delay}s`);
+            star.style.setProperty('--opacity', opacity);
+            starContainer.appendChild(star);
+        }
+
+        
+        const questions = [
+            {
+                label: "Section 1: Your Core Objective",
+                question: "What are you trying to build in the next 12 months?",
+                options: [
+                    { id: "A", text: "Local turnout and community density", platforms: ["tiktok", "instagram"] },
+                    { id: "B", text: "Cultural visibility and rapid narrative influence", platforms: ["tiktok", "instagram"] },
+                    { id: "C", text: "Professional credibility and policy authority", platforms: ["linkedin"] },
+                    { id: "D", text: "Long-term discoverability and educational infrastructure", platforms: ["youtube", "blog"] },
+                    { id: "E", text: "Ongoing issue conversation inside a niche network", platforms: ["threads", "bluesky"] }
+                ]
+            },
+            {
+                label: "Section 2: Content Reality",
+                question: "What do you already produce consistently?",
+                options: [
+                    { id: "A", text: "Short-form video or staff willing to be on camera", platforms: ["tiktok"] },
+                    { id: "B", text: "Polished visuals and structured explainers", platforms: ["instagram"] },
+                    { id: "C", text: "Executive commentary, announcements, thought leadership", platforms: ["linkedin"] },
+                    { id: "D", text: "Webinars, panels, research briefings", platforms: ["youtube", "blog"] },
+                    { id: "E", text: "Written commentary and public dialogue threads", platforms: ["threads", "bluesky"] }
+                ]
+            },
+            {
+                label: "Section 3: Capacity",
+                question: "What can your team realistically sustain weekly?",
+                options: [
+                    { id: "A", text: "Filming and editing short-form", platforms: ["tiktok"] },
+                    { id: "B", text: "Designing visual posts and carousels", platforms: ["instagram"] },
+                    { id: "C", text: "Writing reflective posts and responding to comments", platforms: ["linkedin", "threads"] },
+                    { id: "D", text: "Maintaining long-form archives", platforms: ["youtube", "blog"] },
+                    { id: "E", text: "Participating in ongoing discussion", platforms: ["threads", "bluesky"] }
+                ]
+            },
+            {
+                label: "Section 4: Geography",
+                question: "Is geographic proximity central to your work?",
+                options: [
+                    { id: "A", text: "Yes. We are city or region-based.", platforms: ["tiktok", "instagram"] },
+                    { id: "B", text: "Somewhat. We scale but still care about place.", platforms: ["instagram", "youtube", "blog"] },
+                    { id: "C", text: "No. Our work is national or thematic.", platforms: ["linkedin", "youtube", "blog"] }
+                ]
+            },
+            {
+                label: "Section 5: Risk Tolerance",
+                question: "Which statement feels most true?",
+                options: [
+                    { id: "A", text: "We are comfortable operating inside high-velocity, trend-based systems.", platforms: ["tiktok", "instagram", "threads"] },
+                    { id: "B", text: "We prefer structured credibility and predictability.", platforms: ["linkedin", "instagram"] },
+                    { id: "C", text: "We want durable authority even if growth is slower.", platforms: ["youtube", "blog"] },
+                    { id: "D", text: "We care more about influence inside specific communities than scale.", platforms: ["bluesky"] }
+                ]
+            }
+        ];
+
+        let currentStep = 0;
+        let scores = {
+            tiktok: 0,
+            instagram: 0,
+            linkedin: 0,
+            youtube: 0,
+            blog: 0,
+            threads: 0,
+            bluesky: 0
+        };
+
+        const introEl = document.getElementById('intro');
+        const quizContainerEl = document.getElementById('quiz-container');
+        const questionAreaEl = document.getElementById('question-area');
+        const nextBtnEl = document.getElementById('next-btn');
+        const progressEl = document.getElementById('progress');
+        const sectionLabelEl = document.getElementById('section-label');
+        const qCurrentEl = document.getElementById('q-current');
+        const questionTextEl = document.getElementById('question-text');
+        const optionsGridEl = document.getElementById('options-grid');
+        const resultsEl = document.getElementById('results');
+
+        function startQuiz() {
+            introEl.classList.add('hidden');
+            quizContainerEl.classList.remove('hidden');
+            renderQuestion();
+        }
+
+        function renderQuestion() {
+            const q = questions[currentStep];
+            
+            
+            questionAreaEl.style.opacity = '0';
+            questionAreaEl.style.transform = 'translateY(10px)';
+
+            setTimeout(() => {
+                
+                sectionLabelEl.innerText = q.label.split(":")[0];
+                qCurrentEl.innerText = currentStep + 1;
+                questionTextEl.innerText = q.question;
+                
+                
+                progressEl.style.width = `${((currentStep) / 5) * 100}%`;
+
+                
+                optionsGridEl.innerHTML = '';
+                q.options.forEach((opt, index) => {
+                    const btn = document.createElement('button');
+                    btn.className = 'glass-card w-full text-left p-6 rounded-xl group transition-all duration-300';
+                    btn.onclick = () => selectOption(btn, opt.platforms);
+                    btn.innerHTML = `
+                        <div class="flex items-start gap-4 pointer-events-none">
+                            <div class="w-8 h-8 rounded-full border border-white/20 flex items-center justify-center text-xs font-bold text-gray-400 group-hover:bg-white/10 group-hover:text-white transition-colors flex-shrink-0">
+                                ${opt.id}
+                            </div>
+                            <span class="text-gray-200 group-hover:text-white text-sm md:text-base leading-relaxed">${opt.text}</span>
+                        </div>
+                    `;
+                    optionsGridEl.appendChild(btn);
+                });
+
+                
+                nextBtnEl.classList.add('opacity-0', 'pointer-events-none', 'translate-y-2');
+                
+                
+                questionAreaEl.style.opacity = '1';
+                questionAreaEl.style.transform = 'translateY(0)';
+            }, 300);
+        }
+
+        function selectOption(btn, platforms) {
+            
+            const buttons = optionsGridEl.querySelectorAll('button');
+            buttons.forEach(b => b.classList.remove('selected'));
+            
+            
+            btn.classList.add('selected');
+
+            
+            
+            
+            
+            
+            
+            quizContainerEl.dataset.currentPlatforms = JSON.stringify(platforms);
+
+            
+            nextBtnEl.classList.remove('opacity-0', 'pointer-events-none', 'translate-y-2');
+        }
+
+        function nextQuestion() {
+            
+            const platforms = JSON.parse(quizContainerEl.dataset.currentPlatforms || "[]");
+            platforms.forEach(p => scores[p]++);
+
+            currentStep++;
+
+            if (currentStep < questions.length) {
+                renderQuestion();
+            } else {
+                showResults();
+            }
+        }
+
+        function showResults() {
+            quizContainerEl.classList.add('hidden');
+            resultsEl.classList.remove('hidden');
+
+            
+            let sortedPlatforms = Object.entries(scores).sort((a, b) => b[1] - a[1]);
+            let topScore = sortedPlatforms[0][1];
+            
+            
+            
+            
+            
+            let resultStack = [];
+            
+            
+            resultStack.push(sortedPlatforms[0][0]);
+            
+            
+            for(let i = 1; i < sortedPlatforms.length; i++) {
+                let p = sortedPlatforms[i][0];
+                let s = sortedPlatforms[i][1];
+                
+                
+                
+                if (s >= (topScore - 2) && resultStack.length < 4 && s > 0) {
+                    resultStack.push(p);
+                }
+            }
+
+            
+            
+            if (resultStack.length === 1 && resultStack[0] === 'threads') {
+                
+                let nextBest = sortedPlatforms.find(p => p[0] !== 'threads')[0];
+                resultStack.push(nextBest);
+            }
+             
+             if (resultStack.length === 1 && resultStack[0] === 'bluesky') {
+                let nextBest = sortedPlatforms.find(p => p[0] !== 'bluesky')[0];
+                resultStack.push(nextBest);
+            }
+            
+            if (resultStack.length === 2 && resultStack.includes('tiktok') && resultStack.includes('bluesky')) {
+                resultStack.push('instagram'); 
+            }
+
+            renderBadges(resultStack);
+            renderText(resultStack);
+        }
+
+        function renderBadges(stack) {
+            const container = document.getElementById('platform-badges');
+            const config = {
+                tiktok: { icon: 'ph-tiktok-logo', label: 'TikTok', class: 'badge-tiktok' },
+                instagram: { icon: 'ph-instagram-logo', label: 'Instagram', class: 'badge-instagram' },
+                linkedin: { icon: 'ph-linkedin-logo', label: 'LinkedIn', class: 'badge-linkedin' },
+                youtube: { icon: 'ph-youtube-logo', label: 'YouTube', class: 'badge-youtube' },
+                blog: { icon: 'ph-rss', label: 'Blog + SEO', class: 'badge-blog' },
+                threads: { icon: 'ph-chat-teardrop-text', label: 'Threads', class: 'badge-threads' },
+                bluesky: { icon: 'ph-butterfly', label: 'Bluesky', class: 'badge-bluesky' }
+            };
+
+            stack.forEach(p => {
+                const data = config[p];
+                const div = document.createElement('div');
+                div.className = `flex items-center gap-2 px-6 py-3 rounded-full border ${data.class}`;
+                div.innerHTML = `
+                    <i class="${data.icon} text-lg"></i>
+                    <span class="font-bold uppercase tracking-wider text-xs">${data.label}</span>
+                `;
+                container.appendChild(div);
+            });
+        }
+
+        function renderText(stack) {
+            const whyEl = document.getElementById('result-why');
+            const commitEl = document.getElementById('result-commit');
+            const dropEl = document.getElementById('result-drop');
+
+            
+            
+            
+            let whyText = "";
+            let commitText = "";
+            let dropText = "";
+
+            if (stack.includes('tiktok') || stack.includes('instagram')) {
+                whyText += "Your strengths lie in visual storytelling and high-velocity engagement. You are built to move fast. ";
+                commitText += "You must commit to a volume strategy—posting consistently to feed the algorithmic beast. ";
+                dropText += "Deprioritize perfect polish and lengthy approval processes. Speed is your currency. ";
+            }
+
+            if (stack.includes('linkedin')) {
+                whyText += "Your organization thrives on professional credibility and institutional authority. ";
+                commitText += "Commit to thought leadership from specific human voices, not just a faceless brand logo. ";
+                dropText += "Stop trying to chase consumer trends or memes that don't serve your professional standing. ";
+            }
+
+            if (stack.includes('youtube') || stack.includes('blog')) {
+                whyText += "You are building a library, not just a feed. You value discoverability over immediacy. ";
+                commitText += "Commit to SEO research and high-quality, durable content that solves specific problems. ";
+                dropText += "Deprioritize the daily churn of ephemeral social updates that vanish in 24 hours. ";
+            }
+
+            if (stack.includes('bluesky') || stack.includes('threads')) {
+                whyText += "You prefer dialogue and niche community building over mass broadcast. ";
+                commitText += "Commit to actual conversation—replying as much as you post. ";
+            }
+
+            
+            if (whyText === "") whyText = "This balanced stack allows you to reach your audience where they are most active.";
+            
+            whyEl.innerText = whyText;
+            commitEl.innerText = commitText;
+            dropEl.innerText = dropText;
+        }
+
+    </script>
+
+</body></html>

@@ -31,6 +31,7 @@
   <link rel="icon" type="image/png" href="https://thealgorithmwitch.github.io/favicon-16x16.png" sizes="16x16" />
   <link rel="apple-touch-icon" href="https://thealgorithmwitch.github.io/apple-touch-icon.png" />
   <meta name="theme-color" content="#030014" />
+  <meta name="color-scheme" content="dark" />
 
   <!-- Marketing / privacy nicety -->
   <meta name="referrer" content="strict-origin-when-cross-origin" />
@@ -125,11 +126,31 @@
   }
   </script>
 
-  <link rel="stylesheet" href="/assets/tailwind.css?v=3" />
+  <!-- Critical paint: instant dark background, avoids flash while CSS loads -->
+  <style>
+    html, body { background:#030014; margin:0; padding:0; }
+    body { color:#e2e8f0; font-family: system-ui, -apple-system, Segoe UI, Roboto, Inter, Arial, sans-serif; }
+  </style>
+
+  <!-- Preconnect first -->
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@400;700;900&family=Inter:wght@300;400;500;600&family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&display=swap" rel="stylesheet" />
-  <script src="https://unpkg.com/@phosphor-icons/web"></script>
+
+  <!-- FAST SWAP: Tailwind (preload -> stylesheet onload, with noscript fallback) -->
+  <link rel="preload" as="style" href="/assets/tailwind.css?v=3" onload="this.onload=null;this.rel='stylesheet'">
+  <noscript><link rel="stylesheet" href="/assets/tailwind.css?v=3" /></noscript>
+
+  <!-- FAST SWAP: Google Fonts -->
+  <link rel="preload" as="style"
+        href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@400;700;900&family=Inter:wght@300;400;500;600&family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&display=swap"
+        onload="this.onload=null;this.rel='stylesheet'">
+  <noscript>
+    <link rel="stylesheet"
+          href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@400;700;900&family=Inter:wght@300;400;500;600&family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&display=swap" />
+  </noscript>
+
+  <!-- Icons: defer so it never blocks first paint -->
+  <script defer src="https://unpkg.com/@phosphor-icons/web"></script>
 
   <style>
     :root {
@@ -287,7 +308,7 @@
     <div class="absolute bottom-[-10%] right-[-10%] w-[600px] h-[600px] bg-indigo-900/20 rounded-full blur-[100px] mix-blend-screen mobile-soften-fx" vid="15"></div>
   </div>
 
-  <!-- NAV (updated: mobile dropdown like homepage, keeps existing links/tags) -->
+  <!-- NAV -->
   <nav id="navbar" class="fixed top-0 w-full z-50 px-6 py-6 transition-all duration-300" vid="16">
     <div class="max-w-7xl mx-auto glass-panel rounded-full px-8 py-4 flex justify-between items-center" vid="17">
       <a href="index.html" class="flex items-center gap-3 group" vid="18">
@@ -308,13 +329,11 @@
         Summon Me
       </a>
 
-      <!-- Mobile menu button (added) -->
       <button id="menuButton" class="md:hidden text-white text-2xl" aria-expanded="false" aria-controls="mobileMenu" aria-label="Open menu">
         <i class="ph ph-list"></i>
       </button>
     </div>
 
-    <!-- Mobile dropdown (added) -->
     <div id="mobileMenu" class="md:hidden hidden mt-3 mx-auto max-w-7xl glass-panel rounded-2xl px-6 py-4">
       <div class="flex flex-col gap-4 text-xs uppercase tracking-[0.2em] text-gray-300 font-medium">
         <a href="index.html#origins" class="nav-link hover:text-white transition-colors">Origins</a>
@@ -445,7 +464,6 @@
         </a>
 
         <!-- ROW 2 -->
-
         <a href="https://www.youtube.com/shorts/n1LmEk7jp-o" target="_blank" rel="noopener noreferrer" class="glass-card rounded-xl flex flex-col group" vid="36">
           <div class="aspect-square thumbnail-placeholder flex items-center justify-center border-b border-white/5" vid="37">
             <img src="assets/images/communitysolar.jpeg" alt="" class="w-full h-full object-cover opacity-90 group-hover:opacity-100 transition-opacity" loading="lazy" decoding="async" />
@@ -650,10 +668,12 @@
       </div>
     </section>
 
-    <section id="projects" class="section-fade-up" vid="60">
+    <!-- NOTE: you had two sections with id="projects". keeping your structure but IDs must be unique. -->
+    <section id="practices" class="section-fade-up" vid="60">
       <div class="text-center mb-16" vid="61">
         <span class="text-gradient-gold font-magical tracking-[0.3em] text-xs font-bold block mb-4 uppercase" vid="62">Work Monuments</span>
-        <h2 class="font-magical text-5xl text-white" vid="63">Digital Practices</h2>
+        <!-- Mobile-safe heading -->
+        <h2 class="font-magical text-4xl sm:text-5xl text-white" vid="63">Digital Practices</h2>
         <div class="w-24 h-1 bg-gradient-to-r from-transparent via-purple-500 to-transparent mx-auto mt-6 opacity-30" vid="64"></div>
       </div>
 
@@ -738,7 +758,7 @@
       </div>
     </section>
 
-    <!-- CENTERED BUTTONS (no forced wrap) -->
+    <!-- CENTERED BUTTONS -->
     <div class="mt-16 flex justify-center">
       <div class="flex flex-col sm:flex-row items-center justify-center gap-6">
         <a href="services.html"
@@ -822,7 +842,7 @@
       }, { passive: true });
     }
 
-    // Section reveal: robust for iOS Safari + fallback (prevents "tap to show")
+    // Section reveal: robust for iOS Safari + fallback
     const sections = Array.from(document.querySelectorAll('.section-fade-up'));
 
     if (prefersReducedMotion) {

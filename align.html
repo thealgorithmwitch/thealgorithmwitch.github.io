@@ -1,6 +1,12 @@
 <!doctype html>
 <html lang="en">
 <head>
+  <!-- Prevent iOS flash / ensure dark background immediately -->
+  <style>
+    html, body { background:#030014; margin:0; padding:0; }
+    body { color:#e2e8f0; font-family: system-ui, -apple-system, Segoe UI, Roboto, Inter, Arial, sans-serif; }
+  </style>
+
   <!-- Google tag (gtag.js) -->
   <script async src="https://www.googletagmanager.com/gtag/js?id=G-3CBRL5V6FD"></script>
   <script>
@@ -22,6 +28,7 @@
   <link rel="icon" type="image/png" href="https://thealgorithmwitch.github.io/favicon-16x16.png" sizes="16x16" />
   <link rel="apple-touch-icon" href="https://thealgorithmwitch.github.io/apple-touch-icon.png" />
   <meta name="theme-color" content="#030014" />
+  <meta name="color-scheme" content="dark" />
 
   <!-- Marketing / privacy nicety -->
   <meta name="referrer" content="strict-origin-when-cross-origin" />
@@ -95,11 +102,23 @@
   }
   </script>
 
-  <link rel="stylesheet" href="/assets/tailwind.css?v=3" />
+  <!-- Tailwind: preload so CSS doesn't block as long -->
+  <link rel="preload" as="style" href="/assets/tailwind.css?v=3" onload="this.onload=null;this.rel='stylesheet'">
+  <noscript><link rel="stylesheet" href="/assets/tailwind.css?v=3" /></noscript>
+
+  <!-- Fonts: preload as style + swap -->
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@400;700;900&family=Inter:wght@300;400;500;600&family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&display=swap" rel="stylesheet" />
-  <script src="https://unpkg.com/@phosphor-icons/web"></script>
+  <link rel="preload" as="style"
+        href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@400;700;900&family=Inter:wght@300;400;500;600&family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&display=swap"
+        onload="this.onload=null;this.rel='stylesheet'">
+  <noscript>
+    <link rel="stylesheet"
+          href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@400;700;900&family=Inter:wght@300;400;500;600&family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&display=swap" />
+  </noscript>
+
+  <!-- Icons: defer so it never blocks first paint -->
+  <script defer src="https://unpkg.com/@phosphor-icons/web"></script>
 
   <style>
     :root {
@@ -114,8 +133,6 @@
       background-color: var(--color-bg);
       color: #e2e8f0;
       font-family: 'Inter', sans-serif;
-      margin: 0;
-      padding: 0;
       overflow-x: hidden;
       background-image: radial-gradient(circle at 50% 0%, #1e1b4b 0%, #030014 60%);
       min-height: 100vh;
@@ -128,6 +145,7 @@
       position: fixed;
       top: 0; left: 0; width: 100%; height: 100%;
       pointer-events: none; z-index: 0;
+      contain: layout paint;
     }
 
     .star {
@@ -137,6 +155,7 @@
       opacity: 0;
       animation: twinkle var(--duration) ease-in-out infinite;
       animation-delay: var(--delay);
+      will-change: transform, opacity;
     }
 
     @keyframes twinkle {
@@ -157,9 +176,11 @@
       background: rgba(255, 255, 255, 0.03);
       border: 1px solid rgba(255, 255, 255, 0.05);
       backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
       transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
       position: relative;
       overflow: hidden;
+      contain: layout paint;
     }
 
     .glass-card:hover {
@@ -180,7 +201,7 @@
       font-weight: 700;
       text-transform: uppercase;
       letter-spacing: 0.1em;
-      transition: all 0.3s ease;
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
       box-shadow: 0 4px 15px rgba(234, 179, 8, 0.3);
     }
 
@@ -200,7 +221,7 @@
     .progress-bar {
       background: linear-gradient(90deg, #a855f7, #fde047);
       box-shadow: 0 0 10px rgba(168, 85, 247, 0.5);
-      transition: width 0.5s ease;
+      transition: width 0.4s ease;
     }
 
     .nav-link { position: relative; }
@@ -216,15 +237,14 @@
     }
     .nav-link:hover::after { width: 100%; }
 
-    /* ====== KEY FIX: desktop always-center (with fixed header) ====== */
+    /* Layout */
     .page-shell {
       min-height: 100vh;
       display: flex;
       flex-direction: column;
     }
 
-    /* Give the fixed header a real height so we can center in remaining space */
-    :root { --nav-h: 104px; } /* approx: py-6 (48) + panel height */
+    :root { --nav-h: 104px; }
     @media (min-width: 768px) { :root { --nav-h: 112px; } }
 
     .stage {
@@ -237,7 +257,6 @@
       padding-bottom: 40px;
     }
 
-    /* On desktop, lock centering in the remaining viewport height (header excluded) */
     @media (min-width: 1024px) {
       .stage {
         min-height: calc(100vh - var(--nav-h));
@@ -246,13 +265,24 @@
       }
       .stage-inner {
         width: 100%;
-        max-width: 48rem; /* ~ max-w-3xl */
+        max-width: 48rem;
         margin: 0 auto;
       }
-      /* keep footer from pushing the stage down on desktop */
-      .footer {
-        display: none;
-      }
+      .footer { display: none; }
+    }
+
+    /* Make anchor jumps correct with fixed header */
+    section { scroll-margin-top: calc(var(--nav-h) + 18px); }
+
+    /* Mobile perf: soften heavy fx */
+    @media (max-width: 768px) {
+      .glass-panel { backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); }
+      .glass-card { backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); }
+      .mobile-soften-fx { filter: blur(90px) !important; opacity: 0.18 !important; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .star { animation: none !important; opacity: 0.35; }
     }
   </style>
 </head>
@@ -260,7 +290,7 @@
 <body class="page-shell">
   <div id="star-container" class="stars"></div>
 
-  <!-- HEADER (fixed): Algorithm Witch + Summon Me only -->
+  <!-- HEADER (fixed): now includes in-page nav links -->
   <nav id="navbar" class="fixed top-0 w-full z-50 px-6 py-6">
     <div class="max-w-7xl mx-auto glass-panel rounded-full px-8 py-4 flex justify-between items-center">
       <a href="index.html" class="flex items-center gap-3 group">
@@ -271,14 +301,36 @@
         <span class="font-magical text-lg text-white tracking-widest group-hover:text-purple-200">Algorithm Witch</span>
       </a>
 
-      <a href="summon.html" class="inline-flex items-center justify-center px-6 py-2 bg-purple-500/20 border border-purple-400 rounded-full text-xs uppercase tracking-widest text-white hover:bg-purple-500/30 transition-colors">
+      <!-- Desktop in-page links (Practices -> results/monuments) -->
+      <div class="hidden md:flex items-center gap-8 text-xs uppercase tracking-[0.2em] text-gray-300 font-medium">
+        <a href="#intro" class="nav-link hover:text-white transition-colors" data-scroll>Quiz</a>
+        <a href="#results" class="nav-link hover:text-white transition-colors" data-scroll>Practices</a>
+      </div>
+
+      <a href="summon.html" class="hidden md:inline-flex items-center justify-center px-6 py-2 bg-purple-500/20 border border-purple-400 rounded-full text-xs uppercase tracking-widest text-white hover:bg-purple-500/30 transition-colors">
         Summon Me
       </a>
+
+      <!-- Mobile menu button -->
+      <button id="menuButton" class="md:hidden text-white text-2xl" aria-expanded="false" aria-controls="mobileMenu" aria-label="Open menu">
+        <i class="ph ph-list"></i>
+      </button>
+    </div>
+
+    <!-- Mobile dropdown -->
+    <div id="mobileMenu" class="md:hidden hidden mt-3 mx-auto max-w-7xl glass-panel rounded-2xl px-6 py-4">
+      <div class="flex flex-col gap-4 text-xs uppercase tracking-[0.2em] text-gray-300 font-medium">
+        <a href="#intro" class="nav-link hover:text-white transition-colors" data-scroll>Quiz</a>
+        <a href="#results" class="nav-link hover:text-white transition-colors" data-scroll>Practices</a>
+        <a href="summon.html" class="mt-2 inline-flex items-center justify-center px-6 py-3 bg-purple-500/20 border border-purple-400 rounded-full text-xs uppercase tracking-widest text-white hover:bg-purple-500/30 transition-colors">
+          Summon Me <i class="ph-bold ph-arrow-right ml-2"></i>
+        </a>
+      </div>
     </div>
   </nav>
 
-  <div class="fixed top-[-20%] left-[-10%] w-[600px] h-[600px] bg-purple-900/20 rounded-full blur-[120px] pointer-events-none z-0"></div>
-  <div class="fixed bottom-[-10%] right-[-10%] w-[500px] h-[500px] bg-indigo-900/20 rounded-full blur-[100px] pointer-events-none z-0"></div>
+  <div class="fixed top-[-20%] left-[-10%] w-[600px] h-[600px] bg-purple-900/20 rounded-full blur-[120px] pointer-events-none z-0 mobile-soften-fx"></div>
+  <div class="fixed bottom-[-10%] right-[-10%] w-[500px] h-[500px] bg-indigo-900/20 rounded-full blur-[100px] pointer-events-none z-0 mobile-soften-fx"></div>
 
   <!-- CENTER STAGE -->
   <main class="stage relative z-10">
@@ -372,7 +424,7 @@
         </div>
       </section>
 
-      <!-- RESULTS -->
+      <!-- RESULTS (this is the "Monuments" section your nav should jump to) -->
       <section id="results" class="hidden glass-panel rounded-3xl p-8 md:p-12 transition-all duration-700">
         <div class="text-center mb-12">
           <div class="inline-flex items-center justify-center p-3 rounded-full border border-purple-500/30 bg-purple-500/10 mb-6">
@@ -422,32 +474,87 @@
 
   <script>
     // =========================
+    // NAV: in-page anchor scrolling that accounts for fixed header
+    // =========================
+    (function () {
+      const menuBtn = document.getElementById('menuButton');
+      const mobileMenu = document.getElementById('mobileMenu');
+
+      if (menuBtn && mobileMenu) {
+        menuBtn.addEventListener('click', () => {
+          mobileMenu.classList.toggle('hidden');
+          const expanded = menuBtn.getAttribute('aria-expanded') === 'true';
+          menuBtn.setAttribute('aria-expanded', String(!expanded));
+        });
+      }
+
+      function closeMobileMenu() {
+        if (!mobileMenu) return;
+        mobileMenu.classList.add('hidden');
+        if (menuBtn) menuBtn.setAttribute('aria-expanded', 'false');
+      }
+
+      function getNavOffset() {
+        const nav = document.getElementById('navbar');
+        return nav ? nav.offsetHeight + 10 : 120;
+      }
+
+      document.querySelectorAll('a[data-scroll]').forEach((a) => {
+        a.addEventListener('click', (e) => {
+          const href = a.getAttribute('href') || '';
+          if (!href.startsWith('#')) return;
+
+          const target = document.querySelector(href);
+          if (!target) return;
+
+          e.preventDefault();
+          closeMobileMenu();
+
+          const top = target.getBoundingClientRect().top + window.pageYOffset - getNavOffset();
+          window.scrollTo({ top, behavior: 'smooth' });
+          history.replaceState(null, '', href);
+        });
+      });
+    })();
+
+    // =========================
     // GOOGLE SHEETS WEB APP URL
     // =========================
     const GOOGLE_SHEETS_WEBAPP_URL = "https://script.google.com/macros/s/AKfycbyu1ToyvQc6-tcdJOMMbnKz4Std6BS1VWAiCgsOfTXplVVPMgS5itla41OXm5YoMr3p/exec";
 
     // =========================
-    // STARS
+    // STARS (mobile optimized)
     // =========================
-    const starContainer = document.getElementById('star-container');
-    for (let i = 0; i < 150; i++) {
-      const star = document.createElement('div');
-      star.classList.add('star');
-      const x = Math.random() * 100;
-      const y = Math.random() * 100;
-      const size = Math.random() < 0.1 ? 2 : 1;
-      const duration = 2 + Math.random() * 4;
-      const delay = Math.random() * 5;
-      const opacity = 0.2 + Math.random() * 0.6;
+    const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const isSmallScreen = window.matchMedia('(max-width: 768px)').matches;
 
-      star.style.left = `${x}%`;
-      star.style.top = `${y}%`;
-      star.style.width = `${size}px`;
-      star.style.height = `${size}px`;
-      star.style.setProperty('--duration', `${duration}s`);
-      star.style.setProperty('--delay', `${delay}s`);
-      star.style.setProperty('--opacity', opacity);
-      starContainer.appendChild(star);
+    const starContainer = document.getElementById('star-container');
+    const starCount = prefersReducedMotion ? 0 : (isSmallScreen ? 70 : 150);
+
+    if (starContainer && starCount > 0) {
+      const frag = document.createDocumentFragment();
+      for (let i = 0; i < starCount; i++) {
+        const star = document.createElement('div');
+        star.classList.add('star');
+
+        const x = Math.random() * 100;
+        const y = Math.random() * 100;
+        const size = Math.random() < 0.1 ? 2 : 1;
+        const duration = 2 + Math.random() * 4;
+        const delay = Math.random() * 5;
+        const opacity = 0.2 + Math.random() * 0.6;
+
+        star.style.left = `${x}%`;
+        star.style.top = `${y}%`;
+        star.style.width = `${size}px`;
+        star.style.height = `${size}px`;
+        star.style.setProperty('--duration', `${duration}s`);
+        star.style.setProperty('--delay', `${delay}s`);
+        star.style.setProperty('--opacity', opacity);
+
+        frag.appendChild(star);
+      }
+      starContainer.appendChild(frag);
     }
 
     // =========================
@@ -546,6 +653,8 @@
       introEl.classList.add('hidden');
       quizContainerEl.classList.remove('hidden');
       renderQuestion();
+      // keep URL stable and allow share to start view
+      history.replaceState(null, '', '#intro');
     }
 
     function renderQuestion() {
@@ -585,7 +694,7 @@
 
         questionAreaEl.style.opacity = '1';
         questionAreaEl.style.transform = 'translateY(0)';
-      }, 250);
+      }, 180);
     }
 
     function selectOption(btn, platforms, optionId) {
@@ -626,6 +735,7 @@
     function showEmailGate() {
       quizContainerEl.classList.add('hidden');
       emailGateEl.classList.remove('hidden');
+      history.replaceState(null, '', '#email-gate');
     }
 
     // =========================
@@ -732,6 +842,14 @@
         emailGateEl.classList.add('hidden');
         resultsEl.classList.remove('hidden');
         showResultsContent(stackKeys);
+
+        // Make nav jump possible immediately
+        history.replaceState(null, '', '#results');
+        const nav = document.getElementById('navbar');
+        const offset = nav ? nav.offsetHeight + 10 : 120;
+        const top = resultsEl.getBoundingClientRect().top + window.pageYOffset - offset;
+        window.scrollTo({ top, behavior: 'smooth' });
+
       } catch (e) {
         emailStatus.innerText = "Save failed. Check your Web App URL and deployment access (Anyone).";
         submitBtn.disabled = false;

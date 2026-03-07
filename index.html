@@ -155,6 +155,219 @@
   </script>
 
   <style>
+    .grimoire-vault {
+    position: relative;
+    margin-top: 3rem;
+    border-radius: 2rem;
+    overflow: hidden;
+  }
+  
+  .grimoire-vault-bg {
+    position: absolute;
+    inset: 0;
+    border-radius: 2rem;
+    border: 1px solid rgba(168, 85, 247, 0.2);
+    background: linear-gradient(
+      90deg,
+      #0a0520 0%,
+      rgba(59, 7, 100, 0.4) 50%,
+      #0a0520 100%
+    );
+  }
+  
+  .grimoire-vault-glow {
+    position: absolute;
+    inset: 0;
+    border-radius: 2rem;
+    background: radial-gradient(
+      ellipse at center,
+      rgba(168, 85, 247, 0.12) 0%,
+      transparent 70%
+    );
+  }
+  
+  .grimoire-vault-line-top,
+  .grimoire-vault-line-bottom {
+    position: absolute;
+    left: 0;
+    right: 0;
+    height: 1px;
+  }
+  
+  .grimoire-vault-line-top {
+    top: 0;
+    background: linear-gradient(
+      90deg,
+      transparent,
+      rgba(168, 85, 247, 0.5),
+      transparent
+    );
+  }
+  
+  .grimoire-vault-line-bottom {
+    bottom: 0;
+    background: linear-gradient(
+      90deg,
+      transparent,
+      rgba(168, 85, 247, 0.3),
+      transparent
+    );
+  }
+  
+  .grimoire-vault-inner {
+    position: relative;
+    z-index: 10;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2rem;
+    padding: 2.5rem;
+  }
+  
+  .grimoire-vault-copy {
+    display: flex;
+    align-items: center;
+    gap: 1.25rem;
+    flex: 1;
+    width: 100%;
+  }
+  
+  .grimoire-vault-icon-wrap {
+    position: relative;
+    flex-shrink: 0;
+  }
+  
+  .grimoire-vault-icon-glow {
+    position: absolute;
+    inset: 0;
+    background: rgba(168, 85, 247, 0.2);
+    filter: blur(20px);
+    border-radius: 9999px;
+  }
+  
+  .grimoire-vault-icon {
+    position: relative;
+    width: 4rem;
+    height: 4rem;
+    border-radius: 1rem;
+    background: rgba(59, 7, 100, 0.6);
+    border: 1px solid rgba(168, 85, 247, 0.4);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 0 30px -5px rgba(168, 85, 247, 0.5);
+  }
+  
+  .grimoire-vault-meta {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 0.25rem;
+    flex-wrap: wrap;
+  }
+  
+  .grimoire-vault-label {
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.25em;
+    color: #c084fc;
+    font-weight: 700;
+  }
+  
+  .grimoire-vault-badge {
+    padding: 0.125rem 0.5rem;
+    border-radius: 9999px;
+    font-size: 9px;
+    text-transform: uppercase;
+    letter-spacing: 0.15em;
+    color: #fcd34d;
+    background: rgba(251, 191, 36, 0.1);
+    border: 1px solid rgba(251, 191, 36, 0.2);
+    font-weight: 700;
+  }
+  
+  .grimoire-vault-title {
+    font-size: 1.5rem;
+    color: white;
+    margin: 0 0 0.25rem;
+  }
+  
+  .grimoire-vault-text {
+    font-size: 0.875rem;
+    line-height: 1.7;
+    color: rgb(156 163 175);
+  }
+  
+  .grimoire-vault-button {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 1rem 2rem;
+    border-radius: 9999px;
+    overflow: hidden;
+    flex-shrink: 0;
+    text-decoration: none;
+  }
+  
+  .grimoire-vault-button-bg {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(90deg, #6d28d9 0%, #a855f7 100%);
+    transition: all 0.3s ease;
+  }
+  
+  .grimoire-vault-button:hover .grimoire-vault-button-bg {
+    background: linear-gradient(90deg, #7c3aed 0%, #c084fc 100%);
+  }
+  
+  .grimoire-vault-button-shine {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+      90deg,
+      transparent,
+      rgba(255, 255, 255, 0.15),
+      transparent
+    );
+    transform: translateX(-100%);
+    transition: transform 0.7s ease;
+  }
+  
+  .grimoire-vault-button:hover .grimoire-vault-button-shine {
+    transform: translateX(100%);
+  }
+  
+  .grimoire-vault-button > * {
+    position: relative;
+    z-index: 1;
+  }
+  
+  .grimoire-vault-button-text {
+    color: white;
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.2em;
+    font-weight: 700;
+    white-space: nowrap;
+  }
+  
+  .grimoire-vault-button-arrow {
+    color: rgba(255, 255, 255, 0.7);
+    font-size: 0.875rem;
+    transition: transform 0.3s ease;
+  }
+  
+  .grimoire-vault-button:hover .grimoire-vault-button-arrow {
+    transform: translateX(4px);
+  }
+  
+  @media (min-width: 768px) {
+    .grimoire-vault-inner {
+      flex-direction: row;
+      justify-content: space-between;
+    }
+  }
     .faq-wrap {
     max-width: 48rem;
     margin: 0 auto;
@@ -711,34 +924,44 @@
         </div>
       </div>
     
-      <!-- Vault Callout -->
-      <div class="mt-12 relative rounded-[2rem] overflow-hidden">
-        <div class="absolute inset-0 bg-gradient-to-r from-[#0a0520] via-purple-950/40 to-[#0a0520] border border-purple-500/20 rounded-[2rem]"></div>
-        <div class="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_rgba(168,85,247,0.12)_0%,_transparent_70%)] rounded-[2rem]"></div>
-        <div class="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-purple-500/50 to-transparent"></div>
-        <div class="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-purple-500/30 to-transparent"></div>
-    
-        <div class="relative z-10 flex flex-col md:flex-row items-center gap-8 px-10 py-10">
-          <div class="flex items-center gap-5 flex-1">
-            <div class="relative shrink-0">
-              <div class="absolute inset-0 bg-purple-500/20 blur-xl rounded-full"></div>
-              <div class="relative w-16 h-16 rounded-2xl bg-purple-950/60 border border-purple-500/40 flex items-center justify-center shadow-[0_0_30px_-5px_rgba(168,85,247,0.5)]">
-                <i class="ph-duotone ph-vault text-3xl text-purple-300"></i>
+        <!-- Vault Callout -->
+        <div class="grimoire-vault">
+          <div class="grimoire-vault-bg"></div>
+          <div class="grimoire-vault-glow"></div>
+          <div class="grimoire-vault-line-top"></div>
+          <div class="grimoire-vault-line-bottom"></div>
+        
+          <div class="grimoire-vault-inner">
+            <div class="grimoire-vault-copy">
+              <div class="grimoire-vault-icon-wrap">
+                <div class="grimoire-vault-icon-glow"></div>
+                <div class="grimoire-vault-icon">
+                  <i class="ph-duotone ph-vault text-3xl text-purple-300"></i>
+                </div>
+              </div>
+        
+              <div>
+                <div class="grimoire-vault-meta">
+                  <span class="grimoire-vault-label">Grimoire Vault</span>
+                  <span class="grimoire-vault-badge">Portfolio</span>
+                </div>
+        
+                <h3 class="font-magical grimoire-vault-title">Unlock the Grimoire Vault</h3>
+                <p class="grimoire-vault-text">
+                  Enter the archive of digital monuments, post library, campaign case studies, and strategic works from a decade of mission-driven alchemy.
+                </p>
               </div>
             </div>
-    
-            <div>
-              <div class="flex items-center gap-2 mb-1">
-                <span class="text-[10px] uppercase tracking-[0.25em] text-purple-400 font-bold">Grimoire Vault</span>
-                <span class="px-2 py-0.5 bg-amber-400/10 border border-amber-400/20 rounded-full text-[9px] uppercase tracking-widest text-amber-300 font-bold">Portfolio</span>
-              </div>
-    
-              <h3 class="font-magical text-2xl text-white mb-1">Unlock the Grimoire Vault</h3>
-              <p class="text-gray-400 text-sm font-light leading-relaxed">
-                Enter the archive of digital monuments, post library, campaign case studies, and strategic works from a decade of mission-driven alchemy.
-              </p>
-            </div>
+        
+            <a href="grimoire.html" class="grimoire-vault-button">
+              <div class="grimoire-vault-button-bg"></div>
+              <div class="grimoire-vault-button-shine"></div>
+              <i class="ph-duotone ph-lock-open text-white text-lg"></i>
+              <span class="grimoire-vault-button-text">Unlock Grimoire Vault</span>
+              <i class="ph-bold ph-arrow-right grimoire-vault-button-arrow"></i>
+            </a>
           </div>
+        </div>
     
           <a href="grimoire.html" class="shrink-0 group relative inline-flex items-center gap-3 px-8 py-4 rounded-full overflow-hidden">
             <div class="absolute inset-0 bg-gradient-to-r from-purple-700 to-purple-500 group-hover:from-purple-600 group-hover:to-purple-400 transition-all duration-300"></div>

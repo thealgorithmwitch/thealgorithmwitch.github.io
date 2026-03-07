@@ -445,169 +445,341 @@
     The Algorithm Witch • Digital Alchemy
   </footer>
 
-  <script>
-    (function () {
-      const menuBtn = document.getElementById('menuButton');
-      const mobileMenu = document.getElementById('mobileMenu');
+<script>
+  (function () {
+    const menuBtn = document.getElementById('menuButton');
+    const mobileMenu = document.getElementById('mobileMenu');
 
-      if (menuBtn && mobileMenu) {
-        menuBtn.addEventListener('click', () => {
-          mobileMenu.classList.toggle('hidden');
-          const expanded = menuBtn.getAttribute('aria-expanded') === 'true';
-          menuBtn.setAttribute('aria-expanded', String(!expanded));
-        });
-      }
-
-      function closeMobileMenu() {
-        if (!mobileMenu) return;
-        mobileMenu.classList.add('hidden');
-        if (menuBtn) menuBtn.setAttribute('aria-expanded', 'false');
-      }
-
-      function getNavOffset() {
-        const nav = document.getElementById('navbar');
-        return nav ? nav.offsetHeight + 10 : 120;
-      }
-
-      document.querySelectorAll('a[data-scroll]').forEach((a) => {
-        a.addEventListener('click', (e) => {
-          const href = a.getAttribute('href') || '';
-          if (!href.startsWith('#')) return;
-
-          const target = document.querySelector(href);
-          if (!target) return;
-
-          e.preventDefault();
-          closeMobileMenu();
-
-          const top = target.getBoundingClientRect().top + window.pageYOffset - getNavOffset();
-          window.scrollTo({ top, behavior: 'smooth' });
-          history.replaceState(null, '', href);
-        });
+    if (menuBtn && mobileMenu) {
+      menuBtn.addEventListener('click', () => {
+        mobileMenu.classList.toggle('hidden');
+        const expanded = menuBtn.getAttribute('aria-expanded') === 'true';
+        menuBtn.setAttribute('aria-expanded', String(!expanded));
       });
-    })();
-
-    const GOOGLE_SHEETS_WEBAPP_URL = "https://script.google.com/macros/s/AKfycbyu1ToyvQc6-tcdJOMMbnKz4Std6BS1VWAiCgsOfTXplVVPMgS5itla41OXm5YoMr3p/exec";
-
-    const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    const isSmallScreen = window.matchMedia('(max-width: 768px)').matches;
-
-    const starContainer = document.getElementById('star-container');
-    const starCount = prefersReducedMotion ? 0 : (isSmallScreen ? 70 : 150);
-
-    if (starContainer && starCount > 0) {
-      const frag = document.createDocumentFragment();
-      for (let i = 0; i < starCount; i++) {
-        const star = document.createElement('div');
-        star.classList.add('star');
-
-        const x = Math.random() * 100;
-        const y = Math.random() * 100;
-        const size = Math.random() < 0.1 ? 2 : 1;
-        const duration = 2 + Math.random() * 4;
-        const delay = Math.random() * 5;
-        const opacity = 0.2 + Math.random() * 0.6;
-
-        star.style.left = `${x}%`;
-        star.style.top = `${y}%`;
-        star.style.width = `${size}px`;
-        star.style.height = `${size}px`;
-        star.style.setProperty('--duration', `${duration}s`);
-        star.style.setProperty('--delay', `${delay}s`);
-        star.style.setProperty('--opacity', opacity);
-
-        frag.appendChild(star);
-      }
-      starContainer.appendChild(frag);
     }
 
-    const questions = [
-      {
-        label: "Section 1: Your Core Objective",
-        question: "What are you trying to build in the next 12 months?",
-        options: [
-          { id: "A", text: "Local turnout and community density", scores: { tiktok: 3, instagram: 3, linkedin: 0, youtube: 0, blog: 1, threads: 0, bluesky: 0 } },
-          { id: "B", text: "Cultural visibility and rapid narrative influence", scores: { tiktok: 3, instagram: 2, linkedin: 0, youtube: 0, blog: 0, threads: 1, bluesky: 0 } },
-          { id: "C", text: "Professional credibility and policy authority", scores: { tiktok: 0, instagram: 0, linkedin: 4, youtube: 1, blog: 1, threads: 0, bluesky: 0 } },
-          { id: "D", text: "Long-term discoverability and educational infrastructure", scores: { tiktok: 0, instagram: 0, linkedin: 1, youtube: 4, blog: 4, threads: 0, bluesky: 0 } },
-          { id: "E", text: "Ongoing issue conversation inside a niche network", scores: { tiktok: 0, instagram: 0, linkedin: 2, youtube: 0, blog: 0, threads: 3, bluesky: 3 } }
-        ]
-      },
-      {
-        label: "Section 2: Content Reality",
-        question: "What do you already produce consistently?",
-        options: [
-          { id: "A", text: "Short-form video or staff willing to be on camera", scores: { tiktok: 3, instagram: 2, linkedin: 0, youtube: 1, blog: 0, threads: 0, bluesky: 0 } },
-          { id: "B", text: "Polished visuals and structured explainers", scores: { tiktok: 1, instagram: 3, linkedin: 1, youtube: 0, blog: 1, threads: 0, bluesky: 0 } },
-          { id: "C", text: "Executive commentary, announcements, thought leadership", scores: { tiktok: 0, instagram: 1, linkedin: 4, youtube: 1, blog: 2, threads: 1, bluesky: 0 } },
-          { id: "D", text: "Webinars, panels, research briefings", scores: { tiktok: 0, instagram: 0, linkedin: 1, youtube: 4, blog: 3, threads: 0, bluesky: 0 } },
-          { id: "E", text: "Articles, white papers, and blogs", scores: { tiktok: 0, instagram: 0, linkedin: 3, youtube: 2, blog: 4, threads: 0, bluesky: 0 } }
-        ]
-      },
-      {
-        label: "Section 3: Capacity",
-        question: "What can your team realistically sustain weekly?",
-        options: [
-          { id: "A", text: "Filming and editing short-form", scores: { tiktok: 3, instagram: 2, linkedin: 0, youtube: 1, blog: 0, threads: 0, bluesky: 0 } },
-          { id: "B", text: "Designing visual posts and carousels", scores: { tiktok: 1, instagram: 3, linkedin: 1, youtube: 0, blog: 1, threads: 0, bluesky: 0 } },
-          { id: "C", text: "Writing reflective posts and responding to comments", scores: { tiktok: 0, instagram: 1, linkedin: 4, youtube: 0, blog: 1, threads: 2, bluesky: 1 } },
-          { id: "D", text: "Maintaining long-form archives", scores: { tiktok: 0, instagram: 0, linkedin: 1, youtube: 4, blog: 4, threads: 0, bluesky: 0 } },
-          { id: "E", text: "Participating in ongoing discussion", scores: { tiktok: 0, instagram: 0, linkedin: 1, youtube: 0, blog: 0, threads: 3, bluesky: 3 } }
-        ]
-      },
-      {
-        label: "Section 4: Geography",
-        question: "Is geographic proximity central to your work?",
-        options: [
-          { id: "A", text: "Yes. We are city or region-based.", scores: { tiktok: 3, instagram: 3, linkedin: 0, youtube: 0, blog: 1, threads: 0, bluesky: 0 } },
-          { id: "B", text: "Somewhat. We scale but still care about place.", scores: { tiktok: 1, instagram: 2, linkedin: 1, youtube: 1, blog: 2, threads: 0, bluesky: 0 } },
-          { id: "C", text: "No. Our work is national or thematic.", scores: { tiktok: 0, instagram: 0, linkedin: 2, youtube: 2, blog: 2, threads: 1, bluesky: 1 } }
-        ]
-      },
-      {
-        label: "Section 5: Risk Tolerance",
-        question: "Which statement feels most true?",
-        options: [
-          { id: "A", text: "We are comfortable operating inside high-velocity, trend-based systems.", scores: { tiktok: 3, instagram: 2, linkedin: 0, youtube: 0, blog: 0, threads: 1, bluesky: 0 } },
-          { id: "B", text: "We prefer structured credibility and predictability.", scores: { tiktok: 0, instagram: 1, linkedin: 4, youtube: 1, blog: 1, threads: 0, bluesky: 0 } },
-          { id: "C", text: "We want durable authority even if growth is slower.", scores: { tiktok: 0, instagram: 0, linkedin: 1, youtube: 4, blog: 4, threads: 0, bluesky: 0 } },
-          { id: "D", text: "We care more about influence inside specific communities than scale.", scores: { tiktok: 0, instagram: 0, linkedin: 1, youtube: 0, blog: 1, threads: 2, bluesky: 3 } }
-        ]
-      },
-      {
-        label: "Section 6: Leadership Visibility",
-        question: "How comfortable is your organization with putting real people at the center of public communication?",
-        options: [
-          { id: "A", text: "Very comfortable. We already have visible staff or leadership voices.", scores: { tiktok: 2, instagram: 1, linkedin: 4, youtube: 2, blog: 0, threads: 1, bluesky: 0 } },
-          { id: "B", text: "Somewhat. We can do this selectively.", scores: { tiktok: 1, instagram: 2, linkedin: 2, youtube: 1, blog: 1, threads: 1, bluesky: 0 } },
-          { id: "C", text: "Not really. We prefer institution-first communications.", scores: { tiktok: 0, instagram: 1, linkedin: 1, youtube: 1, blog: 4, threads: 0, bluesky: 0 } }
-        ]
-      },
-      {
-        label: "Section 7: Search and Reference Behavior",
-        question: "How often do you need people to find and return to your content later?",
-        options: [
-          { id: "A", text: "Constantly. Our content needs long shelf life.", scores: { tiktok: 0, instagram: 0, linkedin: 1, youtube: 4, blog: 4, threads: 0, bluesky: 0 } },
-          { id: "B", text: "Sometimes. It helps, but it is not the whole strategy.", scores: { tiktok: 1, instagram: 1, linkedin: 2, youtube: 2, blog: 2, threads: 0, bluesky: 0 } },
-          { id: "C", text: "Rarely. We mostly need attention in the moment.", scores: { tiktok: 3, instagram: 2, linkedin: 0, youtube: 0, blog: 0, threads: 1, bluesky: 0 } }
-        ]
-      },
-      {
-        label: "Section 8: Interaction Style",
-        question: "What kind of relationship are you best equipped to maintain with your audience?",
-        options: [
-          { id: "A", text: "Fast, visual, frequent touchpoints", scores: { tiktok: 3, instagram: 3, linkedin: 0, youtube: 0, blog: 0, threads: 1, bluesky: 0 } },
-          { id: "B", text: "Professional commentary and discussion", scores: { tiktok: 0, instagram: 0, linkedin: 4, youtube: 1, blog: 2, threads: 2, bluesky: 1 } },
-          { id: "C", text: "Deep educational resources people can revisit", scores: { tiktok: 0, instagram: 0, linkedin: 1, youtube: 4, blog: 4, threads: 0, bluesky: 0 } },
-          { id: "D", text: "Niche conversation with issue communities", scores: { tiktok: 0, instagram: 0, linkedin: 1, youtube: 0, blog: 1, threads: 3, bluesky: 3 } }
-        ]
-      }
-    ];
+    function closeMobileMenu() {
+      if (!mobileMenu) return;
+      mobileMenu.classList.add('hidden');
+      if (menuBtn) menuBtn.setAttribute('aria-expanded', 'false');
+    }
+
+    function getNavOffset() {
+      const nav = document.getElementById('navbar');
+      return nav ? nav.offsetHeight + 10 : 120;
+    }
+
+    document.querySelectorAll('a[data-scroll]').forEach((a) => {
+      a.addEventListener('click', (e) => {
+        const href = a.getAttribute('href') || '';
+        if (!href.startsWith('#')) return;
+
+        const target = document.querySelector(href);
+        if (!target) return;
+
+        e.preventDefault();
+        closeMobileMenu();
+
+        const top = target.getBoundingClientRect().top + window.pageYOffset - getNavOffset();
+        window.scrollTo({ top, behavior: 'smooth' });
+        history.replaceState(null, '', href);
+      });
+    });
+  })();
+
+  const GOOGLE_SHEETS_WEBAPP_URL = "https://script.google.com/macros/s/AKfycbyu1ToyvQc6-tcdJOMMbnKz4Std6BS1VWAiCgsOfTXplVVPMgS5itla41OXm5YoMr3p/exec";
+
+  const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const isSmallScreen = window.matchMedia('(max-width: 768px)').matches;
+
+  const starContainer = document.getElementById('star-container');
+  const starCount = prefersReducedMotion ? 0 : (isSmallScreen ? 70 : 150);
+
+  if (starContainer && starCount > 0) {
+    const frag = document.createDocumentFragment();
+    for (let i = 0; i < starCount; i++) {
+      const star = document.createElement('div');
+      star.classList.add('star');
+
+      const x = Math.random() * 100;
+      const y = Math.random() * 100;
+      const size = Math.random() < 0.1 ? 2 : 1;
+      const duration = 2 + Math.random() * 4;
+      const delay = Math.random() * 5;
+      const opacity = 0.2 + Math.random() * 0.6;
+
+      star.style.left = `${x}%`;
+      star.style.top = `${y}%`;
+      star.style.width = `${size}px`;
+      star.style.height = `${size}px`;
+      star.style.setProperty('--duration', `${duration}s`);
+      star.style.setProperty('--delay', `${delay}s`);
+      star.style.setProperty('--opacity', opacity);
+
+      frag.appendChild(star);
+    }
+    starContainer.appendChild(frag);
+  }
+
+  // =========================
+  // QUIZ DATA
+  // =========================
+  // Scores = platform recommendation strength
+  // Signals = structural conditions from the article
+  const questions = [
+    {
+      label: "Section 1: Core Objective",
+      question: "What outcome matters most over the next 12 months?",
+      options: [
+        {
+          id: "A",
+          text: "Drive local turnout, attendance, or community density",
+          scores: { tiktok: 4, instagram: 4, linkedin: 0, youtube: 0, blog: 1, threads: 0, bluesky: 0 },
+          signals: { local: 3, authority: 0, search: 0, reporter: 0, instagramAffinity: 1 }
+        },
+        {
+          id: "B",
+          text: "Increase cultural visibility and public attention around your issue",
+          scores: { tiktok: 4, instagram: 3, linkedin: 1, youtube: 0, blog: 0, threads: 1, bluesky: 0 },
+          signals: { local: 0, authority: 0, search: 0, reporter: 0, instagramAffinity: 1 }
+        },
+        {
+          id: "C",
+          text: "Build professional credibility with funders, partners, and policy audiences",
+          scores: { tiktok: 0, instagram: 0, linkedin: 5, youtube: 1, blog: 2, threads: 0, bluesky: 0 },
+          signals: { local: 0, authority: 3, search: 0, reporter: 0, instagramAffinity: 0 }
+        },
+        {
+          id: "D",
+          text: "Build long-term discoverability through educational resources",
+          scores: { tiktok: 0, instagram: 0, linkedin: 2, youtube: 5, blog: 5, threads: 0, bluesky: 0 },
+          signals: { local: 0, authority: 1, search: 3, reporter: 0, instagramAffinity: 0 }
+        },
+        {
+          id: "E",
+          text: "Sustain issue conversation inside a niche discourse network",
+          scores: { tiktok: 0, instagram: 0, linkedin: 2, youtube: 0, blog: 1, threads: 4, bluesky: 3 },
+          signals: { local: 0, authority: 1, search: 0, reporter: 1, instagramAffinity: 1 }
+        }
+      ]
+    },
+    {
+      label: "Section 2: What You Already Have",
+      question: "What kind of content does your team already produce well?",
+      options: [
+        {
+          id: "A",
+          text: "Short-form video with staff or creators on camera",
+          scores: { tiktok: 4, instagram: 3, linkedin: 0, youtube: 1, blog: 0, threads: 0, bluesky: 0 },
+          signals: { local: 0, authority: 0, search: 0, reporter: 0, instagramAffinity: 1 }
+        },
+        {
+          id: "B",
+          text: "Carousels, explainers, toolkits, and visual education",
+          scores: { tiktok: 1, instagram: 4, linkedin: 1, youtube: 0, blog: 1, threads: 1, bluesky: 0 },
+          signals: { local: 0, authority: 0, search: 0, reporter: 0, instagramAffinity: 2 }
+        },
+        {
+          id: "C",
+          text: "Executive perspective, organizational commentary, and milestone framing",
+          scores: { tiktok: 0, instagram: 1, linkedin: 5, youtube: 1, blog: 2, threads: 1, bluesky: 0 },
+          signals: { local: 0, authority: 3, search: 0, reporter: 0, instagramAffinity: 0 }
+        },
+        {
+          id: "D",
+          text: "Webinars, trainings, briefings, panels, and recorded events",
+          scores: { tiktok: 0, instagram: 0, linkedin: 1, youtube: 5, blog: 4, threads: 0, bluesky: 0 },
+          signals: { local: 0, authority: 1, search: 2, reporter: 0, instagramAffinity: 0 }
+        },
+        {
+          id: "E",
+          text: "Written resources, policy briefs, articles, and white papers",
+          scores: { tiktok: 0, instagram: 0, linkedin: 4, youtube: 2, blog: 5, threads: 0, bluesky: 0 },
+          signals: { local: 0, authority: 2, search: 3, reporter: 0, instagramAffinity: 0 }
+        }
+      ]
+    },
+    {
+      label: "Section 3: Audience",
+      question: "Who most needs to see your work?",
+      options: [
+        {
+          id: "A",
+          text: "Local residents, volunteers, event-goers, or community participants",
+          scores: { tiktok: 3, instagram: 4, linkedin: 0, youtube: 0, blog: 1, threads: 0, bluesky: 0 },
+          signals: { local: 3, authority: 0, search: 0, reporter: 0, instagramAffinity: 1 }
+        },
+        {
+          id: "B",
+          text: "Funders, board members, partner organizations, and professional peers",
+          scores: { tiktok: 0, instagram: 0, linkedin: 5, youtube: 1, blog: 2, threads: 0, bluesky: 0 },
+          signals: { local: 0, authority: 3, search: 0, reporter: 0, instagramAffinity: 0 }
+        },
+        {
+          id: "C",
+          text: "Policymakers, advocates, coalition staff, and issue insiders",
+          scores: { tiktok: 0, instagram: 0, linkedin: 5, youtube: 1, blog: 2, threads: 2, bluesky: 1 },
+          signals: { local: 0, authority: 3, search: 0, reporter: 1, instagramAffinity: 0 }
+        },
+        {
+          id: "D",
+          text: "Reporters, researchers, analysts, and media-adjacent networks",
+          scores: { tiktok: 0, instagram: 0, linkedin: 4, youtube: 0, blog: 1, threads: 1, bluesky: 4 },
+          signals: { local: 0, authority: 2, search: 0, reporter: 4, instagramAffinity: 0 }
+        },
+        {
+          id: "E",
+          text: "A broader public audience that may not know your issue yet",
+          scores: { tiktok: 4, instagram: 3, linkedin: 1, youtube: 1, blog: 0, threads: 0, bluesky: 0 },
+          signals: { local: 0, authority: 0, search: 0, reporter: 0, instagramAffinity: 1 }
+        }
+      ]
+    },
+    {
+      label: "Section 4: Leadership Visibility",
+      question: "How comfortable is your organization with putting real people at the center of communications?",
+      options: [
+        {
+          id: "A",
+          text: "Very comfortable. We already have strong internal voices.",
+          scores: { tiktok: 1, instagram: 1, linkedin: 5, youtube: 2, blog: 0, threads: 1, bluesky: 0 },
+          signals: { local: 0, authority: 3, search: 0, reporter: 0, instagramAffinity: 0 }
+        },
+        {
+          id: "B",
+          text: "Somewhat. We can do this selectively.",
+          scores: { tiktok: 1, instagram: 2, linkedin: 3, youtube: 1, blog: 1, threads: 1, bluesky: 0 },
+          signals: { local: 0, authority: 1, search: 0, reporter: 0, instagramAffinity: 1 }
+        },
+        {
+          id: "C",
+          text: "Not much. We prefer institution-first communications.",
+          scores: { tiktok: 0, instagram: 1, linkedin: 2, youtube: 2, blog: 4, threads: 0, bluesky: 0 },
+          signals: { local: 0, authority: 1, search: 1, reporter: 0, instagramAffinity: 0 }
+        }
+      ]
+    },
+    {
+      label: "Section 5: Shelf Life",
+      question: "How important is it that people can find your content later through search or reference?",
+      options: [
+        {
+          id: "A",
+          text: "Essential. We need a long shelf life.",
+          scores: { tiktok: 0, instagram: 0, linkedin: 2, youtube: 5, blog: 5, threads: 0, bluesky: 0 },
+          signals: { local: 0, authority: 1, search: 4, reporter: 0, instagramAffinity: 0 }
+        },
+        {
+          id: "B",
+          text: "Helpful, though it is not the whole strategy.",
+          scores: { tiktok: 1, instagram: 1, linkedin: 3, youtube: 3, blog: 3, threads: 0, bluesky: 0 },
+          signals: { local: 0, authority: 1, search: 2, reporter: 0, instagramAffinity: 0 }
+        },
+        {
+          id: "C",
+          text: "Less important. We mostly need attention in the moment.",
+          scores: { tiktok: 4, instagram: 3, linkedin: 0, youtube: 0, blog: 0, threads: 1, bluesky: 0 },
+          signals: { local: 0, authority: 0, search: 0, reporter: 0, instagramAffinity: 1 }
+        }
+      ]
+    },
+    {
+      label: "Section 6: Weekly Capacity",
+      question: "What kind of work can your team actually sustain every week?",
+      options: [
+        {
+          id: "A",
+          text: "Fast video production and quick response cycles",
+          scores: { tiktok: 4, instagram: 3, linkedin: 0, youtube: 1, blog: 0, threads: 0, bluesky: 0 },
+          signals: { local: 0, authority: 0, search: 0, reporter: 0, instagramAffinity: 1 }
+        },
+        {
+          id: "B",
+          text: "Designing polished visual posts and save-worthy carousels",
+          scores: { tiktok: 1, instagram: 4, linkedin: 1, youtube: 0, blog: 1, threads: 1, bluesky: 0 },
+          signals: { local: 0, authority: 0, search: 0, reporter: 0, instagramAffinity: 2 }
+        },
+        {
+          id: "C",
+          text: "Writing thoughtful commentary and staying active in public discussion",
+          scores: { tiktok: 0, instagram: 1, linkedin: 5, youtube: 0, blog: 1, threads: 3, bluesky: 1 },
+          signals: { local: 0, authority: 2, search: 0, reporter: 1, instagramAffinity: 1 }
+        },
+        {
+          id: "D",
+          text: "Maintaining an archive of durable educational assets",
+          scores: { tiktok: 0, instagram: 0, linkedin: 2, youtube: 5, blog: 5, threads: 0, bluesky: 0 },
+          signals: { local: 0, authority: 1, search: 3, reporter: 0, instagramAffinity: 0 }
+        },
+        {
+          id: "E",
+          text: "A lean cadence with limited output and limited platform management",
+          scores: { tiktok: 0, instagram: 0, linkedin: 3, youtube: 1, blog: 3, threads: 0, bluesky: 0 },
+          signals: { local: 0, authority: 1, search: 1, reporter: 0, instagramAffinity: 0 }
+        }
+      ]
+    },
+    {
+      label: "Section 7: Geography",
+      question: "How much does your work depend on geographic trust or place-based relevance?",
+      options: [
+        {
+          id: "A",
+          text: "A lot. We are rooted in a city, state, or region.",
+          scores: { tiktok: 3, instagram: 4, linkedin: 0, youtube: 0, blog: 1, threads: 0, bluesky: 0 },
+          signals: { local: 3, authority: 0, search: 0, reporter: 0, instagramAffinity: 1 }
+        },
+        {
+          id: "B",
+          text: "Somewhat. Place matters, but we also scale beyond it.",
+          scores: { tiktok: 1, instagram: 2, linkedin: 1, youtube: 1, blog: 2, threads: 0, bluesky: 0 },
+          signals: { local: 1, authority: 0, search: 1, reporter: 0, instagramAffinity: 1 }
+        },
+        {
+          id: "C",
+          text: "Not much. Our work is thematic, national, or sector-wide.",
+          scores: { tiktok: 0, instagram: 0, linkedin: 3, youtube: 2, blog: 2, threads: 1, bluesky: 1 },
+          signals: { local: 0, authority: 2, search: 1, reporter: 1, instagramAffinity: 0 }
+        }
+      ]
+    },
+    {
+      label: "Section 8: Relationship Style",
+      question: "What kind of audience relationship are you best equipped to maintain?",
+      options: [
+        {
+          id: "A",
+          text: "Private sharing, DMs, saves, and recurring visual touchpoints",
+          scores: { tiktok: 1, instagram: 5, linkedin: 0, youtube: 0, blog: 0, threads: 3, bluesky: 0 },
+          signals: { local: 0, authority: 0, search: 0, reporter: 0, instagramAffinity: 3 }
+        },
+        {
+          id: "B",
+          text: "Professional reflection, milestone framing, and public-facing commentary",
+          scores: { tiktok: 0, instagram: 0, linkedin: 5, youtube: 1, blog: 2, threads: 2, bluesky: 0 },
+          signals: { local: 0, authority: 3, search: 0, reporter: 0, instagramAffinity: 0 }
+        },
+        {
+          id: "C",
+          text: "An educational archive people can revisit and share over time",
+          scores: { tiktok: 0, instagram: 0, linkedin: 2, youtube: 5, blog: 5, threads: 0, bluesky: 0 },
+          signals: { local: 0, authority: 1, search: 4, reporter: 0, instagramAffinity: 0 }
+        },
+        {
+          id: "D",
+          text: "Conversation with journalists, researchers, analysts, or niche issue communities",
+          scores: { tiktok: 0, instagram: 0, linkedin: 3, youtube: 0, blog: 1, threads: 1, bluesky: 4 },
+          signals: { local: 0, authority: 1, search: 0, reporter: 3, instagramAffinity: 0 }
+        }
+      ]
+    }
+  ];
 
     let currentStep = 0;
     let scores = { tiktok: 0, instagram: 0, linkedin: 0, youtube: 0, blog: 0, threads: 0, bluesky: 0 };
     let answers = [];
     let pendingResultStackKeys = [];
+    let signals = { local: 0, authority: 0, search: 0, reporter: 0, instagramAffinity: 0 };
 
     const PLATFORM_LABELS = {
       tiktok: "TikTok",
@@ -646,6 +818,7 @@
       const q = questions[currentStep];
 
       delete quizContainerEl.dataset.currentScores;
+      delete quizContainerEl.dataset.currentSignals;
       delete quizContainerEl.dataset.currentOptionId;
 
       questionAreaEl.style.opacity = '0';
@@ -662,7 +835,7 @@
         q.options.forEach((opt) => {
           const btn = document.createElement('button');
           btn.className = 'glass-card w-full text-left p-6 rounded-xl group transition-all duration-300';
-          btn.onclick = () => selectOption(btn, opt.scores, opt.id);
+          btn.onclick = () => selectOption(btn, opt.scores, opt.signals, opt.id);
           btn.innerHTML = `
             <div class="flex items-start gap-4 pointer-events-none">
               <div class="w-8 h-8 rounded-full border border-white/20 flex items-center justify-center text-xs font-bold text-gray-400 group-hover:bg-white/10 group-hover:text-white transition-colors flex-shrink-0">
@@ -682,12 +855,13 @@
       }, 180);
     }
 
-    function selectOption(btn, optionScores, optionId) {
+    function selectOption(btn, optionScores, optionSignals, optionId) {
       const buttons = optionsGridEl.querySelectorAll('button');
       buttons.forEach(b => b.classList.remove('selected'));
       btn.classList.add('selected');
 
       quizContainerEl.dataset.currentScores = JSON.stringify(optionScores);
+      quizContainerEl.dataset.currentSignals = JSON.stringify(optionSignals || {});
       quizContainerEl.dataset.currentOptionId = optionId;
 
       selectWarningEl.classList.add('hidden');
@@ -696,6 +870,7 @@
 
     function nextQuestion() {
       const optionScores = JSON.parse(quizContainerEl.dataset.currentScores || "{}");
+      const optionSignals = JSON.parse(quizContainerEl.dataset.currentSignals || "{}");
       const optionId = quizContainerEl.dataset.currentOptionId || "";
 
       if (!optionId) {
@@ -704,8 +879,13 @@
       }
 
       answers.push(optionId);
+
       Object.entries(optionScores).forEach(([platform, value]) => {
         scores[platform] += value;
+      });
+
+      Object.entries(optionSignals).forEach(([key, value]) => {
+        signals[key] = (signals[key] || 0) + value;
       });
 
       currentStep++;
@@ -732,23 +912,43 @@
 
       if (!sorted.length) return [];
 
-      const [p1, s1] = sorted[0];
-      const [p2, s2] = sorted[1] || [null, 0];
-      const [p3, s3] = sorted[2] || [null, 0];
-      const [p4, s4] = sorted[3] || [null, 0];
+      // LinkedIn structural boost based on article
+      if (signals.authority >= 5) scores.linkedin += 2;
+      if (signals.search >= 4) {
+        scores.blog += 1;
+        scores.youtube += 1;
+      }
+      if (signals.local >= 4) {
+        scores.instagram += 1;
+        scores.tiktok += 1;
+      }
+      if (signals.instagramAffinity >= 3) {
+        scores.threads += 1;
+      }
+
+      const ranked = Object.entries(scores)
+        .filter(([, score]) => score > 0)
+        .sort((a, b) => b[1] - a[1]);
+
+      const [p1, s1] = ranked[0];
+      const [p2, s2] = ranked[1] || [null, 0];
+      const [p3, s3] = ranked[2] || [null, 0];
+      const [p4, s4] = ranked[3] || [null, 0];
 
       let result = [];
 
-      if (s1 >= 14 && (s1 - s2) >= 4) {
+      // strong single-platform outcome
+      if (s1 >= 15 && (s1 - s2) >= 5) {
         result = [p1];
-        return finalizeStack_(result, sorted, 1);
+        return finalizeStack_(result, ranked, 1);
       }
 
-      if (s1 >= 12) result.push(p1);
-      if (p2 && s2 >= 10 && (s1 - s2) <= 4) result.push(p2);
+      // base inclusion thresholds
+      if (s1 >= 11) result.push(p1);
+      if (p2 && s2 >= 9 && (s1 - s2) <= 4) result.push(p2);
 
       if (result.length === 1) {
-        return finalizeStack_(result, sorted, 1);
+        return finalizeStack_(result, ranked, 1);
       }
 
       if (p3 && s3 >= 8 && (s2 - s3) <= 3) {
@@ -759,10 +959,10 @@
         result.push(p4);
       }
 
-      return finalizeStack_(result, sorted, 4);
+      return finalizeStack_(result, ranked, 4);
     }
 
-    function finalizeStack_(stack, sorted, maxLen) {
+    function finalizeStack_(stack, ranked, maxLen) {
       let result = [...stack];
 
       function has(p) {
@@ -770,7 +970,7 @@
       }
 
       function scoreOf(p) {
-        const found = sorted.find(([key]) => key === p);
+        const found = ranked.find(([key]) => key === p);
         return found ? found[1] : 0;
       }
 
@@ -778,24 +978,55 @@
         if (!has(p) && scoreOf(p) >= min) result.push(p);
       }
 
+      // YouTube + Blog infrastructure coupling
       if (has('youtube') && !has('blog')) addIfStrong('blog', 8);
       if (has('blog') && !has('youtube')) addIfStrong('youtube', 8);
 
+      // TikTok usually wants Instagram if viable
       if (has('tiktok') && !has('instagram')) addIfStrong('instagram', 9);
 
-      if ((has('threads') || has('bluesky')) && !has('linkedin')) {
-        addIfStrong('linkedin', 8);
+      // LinkedIn should appear more often when authority is structurally present
+      if (signals.authority >= 4 && !has('linkedin') && scoreOf('linkedin') >= 7) {
+        result.push('linkedin');
       }
 
-      if (result.length === 1 && (has('threads') || has('bluesky'))) {
-        if (scoreOf('linkedin') >= 7) result.push('linkedin');
+      // Threads over Bluesky when Instagram is already strong
+      // unless reporter connection need is clearly high
+      const reporterHeavy = signals.reporter >= 5;
+      if (has('instagram')) {
+        if (has('bluesky') && !reporterHeavy) {
+          result = result.filter(p => p !== 'bluesky');
+          addIfStrong('threads', 7);
+        }
+        if (!has('threads') && scoreOf('threads') >= 7) {
+          result.push('threads');
+        }
       }
 
+      // Bluesky should mostly appear for media / reporter / analyst need
+      if (has('bluesky') && !reporterHeavy) {
+        if (scoreOf('threads') >= scoreOf('bluesky') - 1) {
+          result = result.filter(p => p !== 'bluesky');
+          addIfStrong('threads', 7);
+        }
+      }
+
+      // Threads and Bluesky both need an authority anchor more often than not
+      if ((has('threads') || has('bluesky')) && !has('linkedin') && scoreOf('linkedin') >= 7) {
+        result.push('linkedin');
+      }
+
+      // Do not let weak 4th platforms sneak in
       result = [...new Set(result)];
 
       if (result.length > maxLen) {
-        const preferredOrder = ['tiktok', 'instagram', 'linkedin', 'youtube', 'blog', 'threads', 'bluesky'];
+        const preferredOrder = ['linkedin', 'instagram', 'tiktok', 'youtube', 'blog', 'threads', 'bluesky'];
         result = preferredOrder.filter(p => result.includes(p)).slice(0, maxLen);
+      }
+
+      // clean low-confidence single community-only result
+      if (result.length === 1 && (result[0] === 'threads' || result[0] === 'bluesky')) {
+        if (scoreOf('linkedin') >= 7) result.push('linkedin');
       }
 
       return result;
@@ -925,37 +1156,48 @@
       let commitText = "";
       let dropText = "";
 
-      if (stackKeys.includes('tiktok') || stackKeys.includes('instagram')) {
-        whyText += "Your strengths lie in visual storytelling and high-velocity engagement. ";
-        commitText += "Commit to consistent output and quick iteration so the system can test and learn you. ";
-        dropText += "Deprioritize lengthy approval loops that slow you down before the post exists. ";
+      if (stackKeys.includes('linkedin')) {
+        whyText += "Your organization is structurally advantaged by credibility, public-facing authority, and professional context. ";
+        commitText += "Commit to clear perspective from real internal voices, especially around milestones, analysis, and organizational movement. ";
+        dropText += "Deprioritize generic trend adaptation that creates attention without strengthening trust. ";
       }
 
-      if (stackKeys.includes('linkedin')) {
-        whyText += "You are advantaged by professional credibility and public-facing authority. ";
-        commitText += "Commit to posts from specific human voices and stay responsive in the comments. ";
-        dropText += "Deprioritize trend-chasing that creates attention without trust. ";
+      if (stackKeys.includes('instagram')) {
+        whyText += "You have conditions that favor visual coherence, repeat recognition, and relationship depth. ";
+        commitText += "Commit to a consistent visual language, clear framing, and content people will save or send privately. ";
+        dropText += "Deprioritize scattered formats that make your positioning harder to recognize. ";
+      }
+
+      if (stackKeys.includes('tiktok')) {
+        whyText += "You are equipped for high-velocity discovery and short-form distribution. ";
+        commitText += "Commit to fluent on-camera storytelling and fast testing. ";
+        dropText += "Deprioritize slow approval structures that break momentum. ";
       }
 
       if (stackKeys.includes('youtube') || stackKeys.includes('blog')) {
-        whyText += "You are building a library that compounds discoverability over time. ";
-        commitText += "Commit to topic consistency, strong titles, and durable educational assets. ";
-        dropText += "Deprioritize daily churn that vanishes before it can compound. ";
+        whyText += "You have a strong case for owned infrastructure and durable discovery. ";
+        commitText += "Commit to topic consistency, searchable titles, transcripts, and educational assets that hold value over time. ";
+        dropText += "Deprioritize daily churn that disappears before it can compound. ";
       }
 
-      if (stackKeys.includes('bluesky') || stackKeys.includes('threads')) {
-        whyText += "You benefit from dialogue and niche network presence. ";
-        commitText += "Commit to conversation and consistent participation, not drive-by posting. ";
+      if (stackKeys.includes('threads')) {
+        whyText += "Threads makes sense here as a conversational extension, especially where Instagram relationship signals or ongoing public discussion matter. ";
+        commitText += "Commit to real dialogue and regular participation. ";
+      }
+
+      if (stackKeys.includes('bluesky')) {
+        whyText += "Bluesky is showing up because your answers suggest a stronger need for journalists, researchers, analysts, or media-adjacent networks. ";
+        commitText += "Commit to consistent presence in niche issue discourse rather than broad audience posting. ";
       }
 
       if (stackKeys.length === 1) {
-        whyText += "One platform rose clearly above the rest, so focus will serve you better than breadth. ";
+        whyText += "One platform clearly outperformed the rest, which means focus is more valuable than spreading attention thin. ";
       } else if (stackKeys.length === 2) {
-        whyText += "This pair is strong enough to work together without overextending your capacity. ";
+        whyText += "This pair gives you a strong core without overextending your team. ";
       } else if (stackKeys.length === 3) {
-        whyText += "This is a layered but still manageable stack. ";
+        whyText += "This is a layered stack with a clear center of gravity. ";
       } else if (stackKeys.length === 4) {
-        whyText += "You have enough structural alignment to support a broader stack without it becoming chaotic. ";
+        whyText += "You have enough structural alignment to support a broader stack, but only if each platform has a distinct job. ";
       }
 
       if (!whyText) whyText = "This stack aligns with how you operate and where your strengths will compound.";
@@ -965,5 +1207,7 @@
       dropEl.innerText = dropText.trim() || "Deprioritize channels that drain time without supporting your actual objective.";
     }
   </script>
+</body>
+</html>
 </body>
 </html>

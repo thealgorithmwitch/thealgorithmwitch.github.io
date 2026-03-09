@@ -903,11 +903,11 @@
 function computeResultStackKeys_() {
   const adjusted = { ...scores };
 
-  // Softer structural boosts
-  if (signals.authority >= 7) adjusted.linkedin += 2;
+  // Structural boosts, but kept moderate so raw answers still matter most
+  if (signals.authority >= 8) adjusted.linkedin += 2;
   else if (signals.authority >= 5) adjusted.linkedin += 1;
 
-  if (signals.search >= 7) {
+  if (signals.search >= 8) {
     adjusted.blog += 2;
     adjusted.youtube += 2;
   } else if (signals.search >= 5) {
@@ -915,7 +915,7 @@ function computeResultStackKeys_() {
     adjusted.youtube += 1;
   }
 
-  if (signals.local >= 5) {
+  if (signals.local >= 6) {
     adjusted.instagram += 2;
     adjusted.tiktok += 1;
   } else if (signals.local >= 3) {
@@ -929,9 +929,9 @@ function computeResultStackKeys_() {
     adjusted.threads += 1;
   }
 
-  // Bluesky stays narrow
-  if (signals.reporter >= 7) adjusted.bluesky += 3;
-  else if (signals.reporter >= 5) adjusted.bluesky += 1;
+  // Bluesky stays narrow and mainly reporter-led
+  if (signals.reporter >= 8) adjusted.bluesky += 3;
+  else if (signals.reporter >= 6) adjusted.bluesky += 1;
   else adjusted.bluesky -= 2;
 
   const ranked = Object.entries(adjusted)
@@ -944,37 +944,43 @@ function computeResultStackKeys_() {
   const [p2, s2] = ranked[1] || [null, 0];
   const [p3, s3] = ranked[2] || [null, 0];
   const [p4, s4] = ranked[3] || [null, 0];
+  const [p5, s5] = ranked[4] || [null, 0];
 
   let result = [];
 
-  // Single-platform only when dominance is unmistakable
-  if (s1 >= 20 && (s1 - s2) >= 9) {
-    return finalizeStack_([p1], ranked);
+  // 1-platform should be rare and require very clear dominance
+  if (s1 >= 24 && (s1 - s2) >= 10) {
+    return finalizeStack_([p1], ranked, 1);
   }
 
   result.push(p1);
 
-  // Two-platform outcome should be the default stable case
-  if (p2 && s2 >= 7 && (s1 - s2) <= 8) {
+  // 2-platform should happen often, but still require a real second signal
+  if (p2 && s2 >= 8 && (s1 - s2) <= 9) {
     result.push(p2);
   } else {
-    return finalizeStack_(result, ranked);
+    return finalizeStack_(result, ranked, 2);
   }
 
-  // Third platform should require stronger proof
-  if (p3 && s3 >= 9 && (s2 - s3) <= 2) {
+  // 3-platform should also be reasonably common
+  if (p3 && s3 >= 7 && (s2 - s3) <= 4) {
     result.push(p3);
   }
 
-  // Fourth platform should be extremely rare
-  if (result.length >= 3 && p4 && s4 >= 13 && (s3 - s4) <= 1) {
+  // 4-platform should be the most common "full stack" outcome
+  if (p4 && s4 >= 6 && (s3 - s4) <= 4) {
     result.push(p4);
   }
 
-  return finalizeStack_(result, ranked);
+  // 5-platform should be possible but still earned
+  if (p5 && s5 >= 6 && (s4 - s5) <= 3) {
+    result.push(p5);
+  }
+
+  return finalizeStack_(result, ranked, 5);
 }
 
-function finalizeStack_(stack, ranked) {
+function finalizeStack_(stack, ranked, maxLen = 5) {
   let result = [...new Set(stack)];
 
   function has(p) {
@@ -986,7 +992,7 @@ function finalizeStack_(stack, ranked) {
     return found ? found[1] : 0;
   }
 
-  function addIfStrong(p, min = 8) {
+  function addIfStrong(p, min = 7) {
     if (!has(p) && scoreOf(p) >= min) result.push(p);
   }
 
@@ -994,89 +1000,117 @@ function finalizeStack_(stack, ranked) {
     result = result.filter(x => x !== p);
   }
 
-  const reporterVeryHigh = signals.reporter >= 7;
-  const reporterHigh = signals.reporter >= 5;
-  const strongSearch = signals.search >= 7;
-  const strongAuthority = signals.authority >= 6;
+  const reporterVeryHigh = signals.reporter >= 8;
+  const reporterHigh = signals.reporter >= 6;
+  const strongSearch = signals.search >= 8;
+  const moderateSearch = signals.search >= 5;
+  const strongAuthority = signals.authority >= 7;
+  const moderateAuthority = signals.authority >= 5;
   const strongConversation = signals.conversation >= 4;
+  const instagramConversation = signals.instagramAffinity >= 2 && signals.conversation >= 3;
 
-  // LinkedIn should appear when clearly warranted, but not swallow the result
-  if (strongAuthority && !has('linkedin') && scoreOf('linkedin') >= 8) {
+  // LinkedIn should appear when truly justified, but not swallow everything
+  if (!has('linkedin') && strongAuthority && scoreOf('linkedin') >= 8) {
+    result.push('linkedin');
+  } else if (!has('linkedin') && moderateAuthority && scoreOf('linkedin') >= 10) {
     result.push('linkedin');
   }
 
-  // Pair YouTube + Blog only when search is truly central
+  // Search-heavy orgs should often get Blog + YouTube together
   if (strongSearch) {
-    if (has('youtube') && !has('blog')) addIfStrong('blog', 8);
-    if (has('blog') && !has('youtube')) addIfStrong('youtube', 8);
+    if (has('youtube') && !has('blog')) addIfStrong('blog', 7);
+    if (has('blog') && !has('youtube')) addIfStrong('youtube', 7);
+  } else if (moderateSearch) {
+    if (has('youtube') && !has('blog') && scoreOf('blog') >= 9) result.push('blog');
+    if (has('blog') && !has('youtube') && scoreOf('youtube') >= 9) result.push('youtube');
   }
 
-  // TikTok usually wants Instagram
+  // TikTok should usually pull Instagram unless Instagram is truly weak
   if (has('tiktok') && !has('instagram')) {
-    addIfStrong('instagram', 7);
+    addIfStrong('instagram', 6);
   }
 
   // Instagram should prefer Threads over Bluesky
   if (has('instagram')) {
-    if (strongConversation && !has('threads')) {
-      addIfStrong('threads', 7);
+    if (!has('threads') && instagramConversation) {
+      addIfStrong('threads', 6);
     }
 
     if (has('bluesky') && !reporterVeryHigh) {
       remove('bluesky');
-      addIfStrong('threads', 6);
+      addIfStrong('threads', 5);
     }
 
     if (has('bluesky') && reporterVeryHigh && scoreOf('threads') >= scoreOf('bluesky')) {
       remove('bluesky');
-      addIfStrong('threads', 6);
+      addIfStrong('threads', 5);
     }
   }
 
-  // Bluesky should mainly exist for real reporter-heavy cases
+  // Bluesky should mostly exist only for reporter-heavy cases
   if (has('bluesky') && !reporterHigh) {
     remove('bluesky');
-    addIfStrong('threads', 6);
+    addIfStrong('threads', 5);
   }
 
   if (has('threads') && has('bluesky') && !reporterVeryHigh) {
     remove('bluesky');
   }
 
-  // Community platforms can pull LinkedIn in, but only when clearly strong
-  if ((has('threads') || has('bluesky')) && !has('linkedin') && scoreOf('linkedin') >= 8 && signals.authority >= 4) {
+  // Community stacks can pull LinkedIn in, but only when it is truly present in the answers
+  if ((has('threads') || has('bluesky')) && !has('linkedin') && moderateAuthority && scoreOf('linkedin') >= 8) {
     result.push('linkedin');
   }
 
-  // Hard cap toward 3 unless every included platform is truly strong
-  result = [...new Set(result)];
-
-  if (result.length > 3) {
-    const protectedPlatforms = new Set([ranked[0][0]]);
-
-    if (has('tiktok')) protectedPlatforms.add('instagram');
-
-    if (strongSearch) {
-      if (has('blog')) protectedPlatforms.add('youtube');
-      if (has('youtube')) protectedPlatforms.add('blog');
-    }
-
-    const removable = result
-      .filter(p => !protectedPlatforms.has(p))
-      .map(p => [p, scoreOf(p)])
-      .sort((a, b) => a[1] - b[1]);
-
-    while (result.length > 3 && removable.length) {
-      const [platform] = removable.shift();
-      remove(platform);
-    }
-  }
-
+  // Prevent weak community-only single results
   if (result.length === 1 && (result[0] === 'threads' || result[0] === 'bluesky')) {
     if (scoreOf('linkedin') >= 7) result.push('linkedin');
+    else if (scoreOf('instagram') >= 7) result.push('instagram');
   }
 
-  const preferredOrder = ['linkedin', 'instagram', 'tiktok', 'youtube', 'blog', 'threads', 'bluesky'];
+  // Keep 5 possible, but do not let weak filler remain
+  result = [...new Set(result)];
+
+  if (result.length > maxLen) {
+    result = result
+      .map(p => [p, scoreOf(p)])
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, maxLen)
+      .map(([p]) => p);
+  }
+
+  // If we have 5, the weakest included platform still needs to be real
+  if (result.length === 5) {
+    const weakest = result
+      .map(p => [p, scoreOf(p)])
+      .sort((a, b) => a[1] - b[1])[0];
+
+    if (weakest && weakest[1] < 6) {
+      remove(weakest[0]);
+    }
+  }
+
+  // If we have 4, also prevent a totally weak filler
+  if (result.length === 4) {
+    const weakest = result
+      .map(p => [p, scoreOf(p)])
+      .sort((a, b) => a[1] - b[1])[0];
+
+    if (weakest && weakest[1] < 5) {
+      remove(weakest[0]);
+    }
+  }
+
+  const preferredOrder = [
+    'linkedin',
+    'instagram',
+    'tiktok',
+    'youtube',
+    'blog',
+    'threads',
+    'bluesky'
+  ];
+
   result = preferredOrder.filter(p => result.includes(p));
 
   return result;
@@ -1247,7 +1281,10 @@ function finalizeStack_(stack, ranked) {
       whyText += "This is a layered stack with a clear center of gravity. ";
     } else if (stackKeys.length === 4) {
       whyText += "You have enough structural alignment to support a broader stack, but only if each platform has a distinct job. ";
+    } else if (stackKeys.length === 5) {
+      whyText += "You have the conditions for a broad ecosystem, but only if each platform plays a distinct role in the stack. ";
     }
+    
 
     if (!whyText) whyText = "This stack aligns with how you operate and where your strengths will compound.";
 

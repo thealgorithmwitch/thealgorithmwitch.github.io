@@ -555,25 +555,120 @@
       </footer>
     </main>
 
-    <script vid="144">
-        const starContainer = document.getElementById('star-container');
-        for (let i = 0; i < 150; i++) {
-            const star = document.createElement('div');
-            star.classList.add('star');
-            star.style.left = `${Math.random() * 100}%`;
-            star.style.top = `${Math.random() * 100}%`;
-            star.style.width = star.style.height = `${Math.random() < 0.1 ? 2 : 1}px`;
-            star.style.setProperty('--duration', `${3 + Math.random() * 5}s`);
-            star.style.setProperty('--delay', `${Math.random() * 5}s`);
-            star.style.setProperty('--opacity', 0.2 + Math.random() * 0.5);
-            starContainer.appendChild(star);
-        }
+<script>
+  const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const isSmallScreen = window.matchMedia('(max-width: 768px)').matches;
+  const canHover = window.matchMedia('(hover: hover) and (pointer: fine)').matches;
 
-        const observer = new IntersectionObserver((entries) => {
-            entries.forEach(entry => {
-                if (entry.isIntersecting) entry.target.classList.add('visible');
-            });
-        }, { threshold: 0.1 });
-        document.querySelectorAll('.section-fade-up').forEach(el => observer.observe(el));
-    </script>
+  const starContainer = document.getElementById('star-container');
+  const starCount = prefersReducedMotion ? 0 : (isSmallScreen ? 8 : 150);
+
+  function buildStars() {
+    if (!starContainer || starCount <= 0) return;
+    const frag = document.createDocumentFragment();
+
+    for (let i = 0; i < starCount; i++) {
+      const star = document.createElement('div');
+      star.classList.add('star');
+
+      const x = Math.random() * 100;
+      const y = Math.random() * 100;
+      const duration = 3 + Math.random() * 5;
+      const delay = Math.random() * 5;
+      const size = Math.random() < 0.1 ? 2 : 1;
+      const opacity = 0.2 + Math.random() * 0.5;
+
+      star.style.left = `${x}%`;
+      star.style.top = `${y}%`;
+      star.style.width = `${size}px`;
+      star.style.height = `${size}px`;
+      star.style.setProperty('--duration', `${duration}s`);
+      star.style.setProperty('--delay', `${delay}s`);
+      star.style.setProperty('--opacity', opacity);
+
+      frag.appendChild(star);
+    }
+
+    starContainer.appendChild(frag);
+  }
+
+  if (starCount > 0) {
+    if ('requestIdleCallback' in window) requestIdleCallback(buildStars, { timeout: 1200 });
+    else window.setTimeout(buildStars, 700);
+  }
+
+  (function () {
+    const nav = document.getElementById('navbar');
+    if (!nav) return;
+    const glassPanel = nav.querySelector('.glass-panel');
+    let ticking = false;
+
+    function onScroll() {
+      if (ticking) return;
+      ticking = true;
+
+      requestAnimationFrame(() => {
+        const scrolled = window.scrollY > 50;
+        nav.classList.toggle('py-2', scrolled);
+        nav.classList.toggle('py-6', !scrolled);
+        if (glassPanel) glassPanel.classList.toggle('bg-[#0a0520]/80', scrolled);
+        ticking = false;
+      });
+    }
+
+    window.addEventListener('scroll', onScroll, { passive: true });
+    onScroll();
+  })();
+
+  if (canHover) {
+    const cards = Array.from(document.querySelectorAll('.glass-card'));
+    let rafPending = false;
+    let lastX = 0, lastY = 0;
+
+    document.addEventListener('mousemove', (e) => {
+      lastX = e.clientX;
+      lastY = e.clientY;
+      if (rafPending) return;
+      rafPending = true;
+
+      requestAnimationFrame(() => {
+        for (const card of cards) {
+          const rect = card.getBoundingClientRect();
+          card.style.setProperty('--mouse-x', `${lastX - rect.left}px`);
+          card.style.setProperty('--mouse-y', `${lastY - rect.top}px`);
+        }
+        rafPending = false;
+      });
+    }, { passive: true });
+  }
+
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) entry.target.classList.add('visible');
+    });
+  }, { threshold: 0.1, rootMargin: '0px 0px -50px 0px' });
+
+  document.querySelectorAll('.section-fade-up').forEach(el => {
+    if (prefersReducedMotion) el.classList.add('visible');
+    else observer.observe(el);
+  });
+
+  const menuBtn = document.getElementById('menuButton');
+  const mobileMenu = document.getElementById('mobileMenu');
+
+  if (menuBtn && mobileMenu) {
+    menuBtn.addEventListener('click', () => {
+      mobileMenu.classList.toggle('hidden');
+      const expanded = menuBtn.getAttribute('aria-expanded') === 'true';
+      menuBtn.setAttribute('aria-expanded', String(!expanded));
+    });
+
+    mobileMenu.querySelectorAll('a').forEach((link) => {
+      link.addEventListener('click', () => {
+        mobileMenu.classList.add('hidden');
+        menuBtn.setAttribute('aria-expanded', 'false');
+      });
+    });
+  }
+</script>
 </body></html>

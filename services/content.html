@@ -147,6 +147,61 @@
   <script src="https://unpkg.com/@phosphor-icons/web"></script>
 
   <style>
+
+    .nav-link {
+    position: relative;
+  }
+  
+  .nav-link::after {
+    content: '';
+    position: absolute;
+    bottom: -4px;
+    left: 0;
+    width: 0%;
+    height: 1px;
+    background-color: #a855f7;
+    transition: width 0.3s ease;
+  }
+  
+  .nav-link:hover::after {
+    width: 100%;
+  }
+  
+  @media (max-width: 768px) {
+    .glass-panel {
+      backdrop-filter: none;
+      -webkit-backdrop-filter: none;
+      background: rgba(13, 12, 34, 0.82);
+      box-shadow: none !important;
+    }
+  
+    .glass-card {
+      backdrop-filter: none;
+      -webkit-backdrop-filter: none;
+      background: rgba(255, 255, 255, 0.04);
+      box-shadow: none !important;
+    }
+  
+    .section-fade-up {
+      opacity: 1 !important;
+      transform: none !important;
+      transition: none !important;
+    }
+  
+    .star {
+      animation: none !important;
+      opacity: 0.25 !important;
+    }
+  }
+  
+  @media (prefers-reduced-motion: reduce) {
+    html { scroll-behavior: auto; }
+  
+    .star {
+      animation: none !important;
+      opacity: 0.35;
+    }
+  }
     :root {
       --color-bg: #030014;
       --color-card: rgba(20, 15, 45, 0.6);
@@ -255,46 +310,54 @@
     <div id="star-container" class="stars" vid="12"></div>
 
       <!-- NAV 1 -->
-    <nav id="navbar" class="fixed top-0 w-full z-50 px-6 py-6" vid="13">
-      <div class="max-w-7xl mx-auto glass-panel rounded-full px-8 py-4 flex justify-between items-center" vid="14">
-    
-        <!-- Brand -->
-        <a href="/" class="flex items-center gap-3 group" vid="15">
-          <i class="ph-fill ph-sparkle text-purple-600 text-xl group-hover:rotate-12 transition-transform" vid="18"></i>
-          <span class="font-magical text-xl text-white tracking-widest" vid="17">Algorithm Witch</span>
-        </a>
-    
-        <!-- Back to Services (desktop) -->
-        <div class="hidden md:flex items-center gap-8 text-xs uppercase tracking-[0.2em] text-gray-300 font-medium" vid="18">
-          <a href="/services.html" class="flex items-center gap-2 hover:text-emerald-300 transition-colors" vid="19">
-            <i class="ph ph-arrow-left" vid="20"></i> Back to Services
-          </a>
-        </div>
-    
-        <!-- Pricing (desktop) -->
-        <a href="#tiers"
-            class="hidden md:inline-flex px-6 py-2 bg-purple-500/10 border border-purple-500/30 rounded-full text-xs uppercase tracking-widest text-white transition-all hover:bg-purple-500/20"
-           vid="20">
-          View Pricing
-        </a>
-    
-      </div>
+<nav id="navbar" class="fixed top-0 w-full z-50 px-6 py-6 transition-all duration-300">
+  <div class="max-w-7xl mx-auto glass-panel rounded-full px-8 py-4 flex justify-between items-center">
 
-      <!-- Mobile Menu -->
-    <div id="mobileMenu" class="md:hidden hidden mt-3 mx-auto max-w-7xl glass-panel rounded-2xl px-6 py-4">
-      <div class="flex flex-col gap-4 text-xs uppercase tracking-[0.2em] text-gray-300 font-medium">
-    
-        <a href="/services.html" class="flex items-center gap-2 hover:text-emerald-300 transition-colors">
-          <i class="ph ph-arrow-left"></i> Back to Services
-        </a>
-    
-        <a href="#tiers" class="nav-link hover:text-white transition-colors">
-          View Pricing
-        </a>
-    
-      </div>
-</div>
-    </nav>
+    <!-- Brand -->
+    <a href="/" class="flex items-center gap-3 group">
+      <i class="ph-fill ph-sparkle text-fuchsia-400 text-xl group-hover:rotate-12 transition-transform"></i>
+      <span class="font-magical text-xl text-white tracking-widest">Algorithm Witch</span>
+    </a>
+
+    <!-- Desktop nav -->
+    <div class="hidden md:flex items-center gap-8 text-xs uppercase tracking-[0.2em] text-gray-300 font-medium">
+      <a href="/services.html" class="flex items-center gap-2 hover:text-fuchsia-300 transition-colors">
+        <i class="ph ph-arrow-left"></i> Back to Services
+      </a>
+    </div>
+
+    <!-- Desktop CTA -->
+    <a href="#tiers"
+       class="hidden md:inline-flex px-6 py-2 bg-fuchsia-500/10 border border-fuchsia-500/30 rounded-full text-xs uppercase tracking-widest text-white transition-all hover:bg-fuchsia-500/20">
+      View Pricing
+    </a>
+
+    <!-- Mobile toggle -->
+    <button id="menuButton"
+      class="md:hidden text-white text-2xl"
+      aria-expanded="false"
+      aria-controls="mobileMenu"
+      aria-label="Open menu">
+      <i class="ph ph-list"></i>
+    </button>
+
+  </div>
+
+  <!-- Mobile menu -->
+  <div id="mobileMenu" class="md:hidden hidden mt-3 mx-auto max-w-7xl glass-panel rounded-2xl px-6 py-4">
+    <div class="flex flex-col gap-4 text-xs uppercase tracking-[0.2em] text-gray-300 font-medium">
+
+      <a href="/services.html" class="flex items-center gap-2 hover:text-fuchsia-300 transition-colors">
+        <i class="ph ph-arrow-left"></i> Back to Services
+      </a>
+
+      <a href="#tiers" class="nav-link hover:text-white transition-colors">
+        View Pricing
+      </a>
+
+    </div>
+  </div>
+</nav>
 
     <main class="relative z-10 w-full max-w-6xl mx-auto px-6 pt-40 pb-32" vid="21">
         

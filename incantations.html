@@ -438,446 +438,549 @@
         <span class="text-sm text-white font-medium tracking-wide" vid="216">Incantation copied to clipboard <span class="text-purple-400 ml-1" vid="217">✦</span></span>
     </div>
 
-    <script vid="218">
-        <script>
-          let TAXONOMY = {
-            orgs: [],
-            expandedKeywords: [],
-            weightedIndex: [],
-            controlLists: {
-              orgTypes: [],
-              issueAreas: [],
-              audiences: [],
-              goals: [],
-              categories: []
-            }
-          };
-        
-          const DATA_ENDPOINT = "PASTE_YOUR_APPS_SCRIPT_WEB_APP_URL_HERE";
-        </script>
+<script>
+  let TAXONOMY = {
+    orgs: [],
+    expandedKeywords: [],
+    weightedIndex: [],
+    controlLists: {
+      orgTypes: [],
+      issueAreas: [],
+      audiences: [],
+      goals: [],
+      categories: []
+    }
+  };
 
-        function scorePhrase(phrase) {
-            let score = 30; 
-            const words = phrase.toLowerCase().split(' ').filter(w => w.trim().length > 0);
-            if (words.length >= 4) score += 20;
-            if (words.length >= 6) score += 10;
-            
-            const actionWords = ['join','donate','volunteer','support','enroll','apply','fund','give'];
-            if (actionWords.some(w => phrase.toLowerCase().includes(w))) score += 15;
-            
-            if (phrase.toLowerCase().includes('nonprofit') || phrase.toLowerCase().includes('program') || phrase.toLowerCase().includes('initiative') || phrase.toLowerCase().includes('campaign') || phrase.toLowerCase().includes('organization')) score += 10;
-            
-            const broadTerms = ['climate','energy','environment','sustainability','green'];
-            if (words.length <= 1 && broadTerms.includes(phrase.toLowerCase())) score -= 20;
-            
-            const inTaxonomy = TAXONOMY.weightedIndex.find(k => k.phrase.toLowerCase() === phrase.toLowerCase());
-            if (inTaxonomy) score = Math.max(score, inTaxonomy.weight);
-            
-            return Math.min(Math.max(score, 0), 100);
+  const DATA_ENDPOINT = "https://script.google.com/macros/s/AKfycbyoc0do8SDfLTDwxhES9v2pddHjexwrLqq2TEHNPcXc-us6nxYhH66lr4QOUXkDJPgr9g/exec";
+
+  function scorePhrase(phrase) {
+    let score = 30;
+    const words = phrase.toLowerCase().split(' ').filter(w => w.trim().length > 0);
+
+    if (words.length >= 4) score += 20;
+    if (words.length >= 6) score += 10;
+
+    const actionWords = ['join', 'donate', 'volunteer', 'support', 'enroll', 'apply', 'fund', 'give'];
+    if (actionWords.some(w => phrase.toLowerCase().includes(w))) score += 15;
+
+    if (
+      phrase.toLowerCase().includes('nonprofit') ||
+      phrase.toLowerCase().includes('program') ||
+      phrase.toLowerCase().includes('initiative') ||
+      phrase.toLowerCase().includes('campaign') ||
+      phrase.toLowerCase().includes('organization')
+    ) score += 10;
+
+    const broadTerms = ['climate', 'energy', 'environment', 'sustainability', 'green'];
+    if (words.length <= 1 && broadTerms.includes(phrase.toLowerCase())) score -= 20;
+
+    const inTaxonomy = TAXONOMY.weightedIndex.find(
+      k => (k.phrase || '').toLowerCase() === phrase.toLowerCase()
+    );
+    if (inTaxonomy) score = Math.max(score, inTaxonomy.weight || 0);
+
+    return Math.min(Math.max(score, 0), 100);
+  }
+
+  function getFlags(phrase, score) {
+    let flags = [];
+    const lower = phrase.toLowerCase();
+    const wordsCount = lower.split(' ').filter(w => w.trim().length > 0).length;
+
+    if (score >= 85) flags.push("High Intent");
+    if (lower.includes('program') || lower.includes('initiative') || lower.includes('research')) {
+      flags.push("Program-Specific");
+    }
+    if (['donate', 'join', 'volunteer', 'support', 'enroll', 'apply', 'fund', 'give'].some(w => lower.includes(w))) {
+      flags.push("Conversion-Friendly");
+    }
+
+    const adGrantWords = [
+      'program', 'nonprofit', 'initiative', 'campaign', 'advocacy',
+      'organization', 'near me', 'donate', 'join', 'volunteer',
+      'support', 'enroll', 'apply'
+    ];
+    const isAdGrant = wordsCount >= 2 && score >= 70 && adGrantWords.some(w => lower.includes(w));
+    if (isAdGrant) flags.push("Strong Ad Grant Candidate");
+
+    if (score <= 25) flags.push("Too Broad");
+    if (wordsCount <= 2 && score < 50 && !isAdGrant) flags.push("Generic");
+    if (wordsCount === 1) flags.push("Low Intent");
+
+    return [...new Set(flags)];
+  }
+
+  function getFlagStyle(flag) {
+    const map = {
+      "High Intent": "flag-high-intent",
+      "Strong Ad Grant Candidate": "flag-ad-grant",
+      "Program-Specific": "flag-program",
+      "Conversion-Friendly": "flag-conversion",
+      "Too Broad": "flag-broad",
+      "Generic": "flag-generic",
+      "Low Intent": "flag-low-intent"
+    };
+    return map[flag] || "bg-white/5 text-gray-300 border-white/10";
+  }
+
+  function getWeightColor(weight) {
+    if (weight >= 80) return "text-emerald-400 bg-emerald-500/10 border-emerald-500/20";
+    if (weight >= 60) return "text-amber-400 bg-amber-500/10 border-amber-500/20";
+    return "text-rose-400 bg-rose-500/10 border-rose-500/20";
+  }
+
+  function getWeightBarColor(weight) {
+    if (weight >= 80) return "bg-emerald-400 shadow-[0_0_10px_rgba(52,211,153,0.6)]";
+    if (weight >= 60) return "bg-amber-400 shadow-[0_0_10px_rgba(251,191,36,0.6)]";
+    return "bg-rose-500 shadow-[0_0_10px_rgba(244,63,94,0.6)]";
+  }
+
+  function escapeSingleQuotes(str) {
+    return String(str).replace(/'/g, "\\'");
+  }
+
+  function createCardHTML(data, highlightText = "") {
+    const phrase = data?.phrase || "";
+    const score = data.weight !== undefined ? data.weight : scorePhrase(phrase);
+    const flags = data.flags || getFlags(phrase, score);
+
+    let displayPhrase = phrase;
+    if (highlightText) {
+      const escaped = highlightText.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      const regex = new RegExp(`(${escaped})`, 'gi');
+      displayPhrase = displayPhrase.replace(
+        regex,
+        '<span class="text-white font-bold bg-purple-500/40 px-1 rounded-sm">$1</span>'
+      );
+    }
+
+    const flagsHtml = flags
+      .map(f => `<span class="px-2 py-0.5 rounded-md border text-[9px] uppercase tracking-wider ${getFlagStyle(f)} whitespace-nowrap">${f}</span>`)
+      .join('');
+
+    let metaHtml = '';
+    if (data.category) {
+      metaHtml += `<span class="text-[9px] text-purple-300 uppercase tracking-widest flex items-center gap-1"><i class="ph-fill ph-folder"></i> ${data.category}</span>`;
+    }
+    if (data.sourceOrg) {
+      metaHtml += `<span class="text-[9px] text-cyan-300 uppercase tracking-widest flex items-center gap-1"><i class="ph-fill ph-buildings"></i> ${data.sourceOrg}</span>`;
+    }
+    if (data.unique) {
+      metaHtml += `<span class="text-[9px] text-amber-300 border border-amber-500/30 bg-amber-500/10 px-1.5 py-0.5 rounded flex items-center gap-1"><i class="ph-fill ph-star"></i> Unique</span>`;
+    }
+
+    return `
+      <div class="glass-card rounded-xl p-4 flex flex-col gap-3 group relative overflow-hidden h-full justify-between min-h-[120px]">
+        <div>
+          <div class="flex justify-between items-start gap-3 mb-2">
+            <h4 class="text-sm font-medium text-gray-200 leading-snug group-hover:text-white transition-colors pr-8">${displayPhrase}</h4>
+            <button onclick="copyToClipboard('${escapeSingleQuotes(phrase)}')" class="absolute right-3 top-3 text-gray-500 hover:text-purple-400 transition-all bg-black/60 p-1.5 rounded-lg border border-white/10 hover:border-purple-500/50 opacity-0 group-hover:opacity-100 transform translate-y-[-5px] group-hover:translate-y-0">
+              <i class="ph-bold ph-copy"></i>
+            </button>
+          </div>
+          ${metaHtml ? `<div class="flex flex-wrap items-center gap-3 mb-3 bg-black/20 p-1.5 rounded-md">${metaHtml}</div>` : ''}
+          <div class="flex flex-wrap gap-1.5 mb-2">${flagsHtml}</div>
+        </div>
+        <div class="flex items-center gap-3 pt-3 border-t border-white/5 mt-auto">
+          <div class="px-2 py-0.5 rounded border text-[10px] font-bold tracking-wider ${getWeightColor(score)}">PWR ${score}</div>
+          <div class="flex-1 h-1.5 bg-black/50 rounded-full overflow-hidden border border-white/5">
+            <div class="h-full rounded-full transition-all duration-1000 ${getWeightBarColor(score)}" style="width: ${score}%"></div>
+          </div>
+        </div>
+      </div>
+    `;
+  }
+
+  async function loadTaxonomy() {
+    try {
+      const response = await fetch(DATA_ENDPOINT, { cache: "no-store" });
+      if (!response.ok) throw new Error(`HTTP ${response.status}`);
+
+      const data = await response.json();
+
+      TAXONOMY = {
+        orgs: Array.isArray(data.orgs) ? data.orgs : [],
+        expandedKeywords: Array.isArray(data.expandedKeywords) ? data.expandedKeywords : [],
+        weightedIndex: Array.isArray(data.weightedIndex) ? data.weightedIndex : [],
+        controlLists: {
+          orgTypes: data.controlLists?.orgTypes || [],
+          issueAreas: data.controlLists?.issueAreas || [],
+          audiences: data.controlLists?.audiences || [],
+          goals: data.controlLists?.goals || [],
+          categories: data.controlLists?.categories || []
         }
+      };
 
-        function getFlags(phrase, score) {
-            let flags = [];
-            const lower = phrase.toLowerCase();
-            const wordsCount = lower.split(' ').filter(w=>w.trim().length>0).length;
+      return true;
+    } catch (error) {
+      console.error("Failed to load taxonomy:", error);
+      return false;
+    }
+  }
 
-            if (score >= 85) flags.push("High Intent");
-            if (lower.includes('program') || lower.includes('initiative') || lower.includes('research')) flags.push("Program-Specific");
-            if (['donate','join','volunteer','support','enroll','apply','fund','give'].some(w => lower.includes(w))) flags.push("Conversion-Friendly");
+  function showLoadError() {
+    const toast = document.getElementById('toast');
+    toast.innerHTML = `
+      <i class="ph-fill ph-warning-circle text-rose-400 text-xl"></i>
+      <span class="text-sm text-white font-medium tracking-wide">
+        Failed to load grimoire data
+      </span>
+    `;
+    toast.classList.add('toast-show');
+    setTimeout(() => toast.classList.remove('toast-show'), 3000);
+  }
 
-            const adGrantWords = ['program', 'nonprofit', 'initiative', 'campaign', 'advocacy', 'organization', 'near me', 'donate', 'join', 'volunteer', 'support', 'enroll', 'apply'];
-            const isAdGrant = wordsCount >= 2 && score >= 70 && adGrantWords.some(w => lower.includes(w));
-            if (isAdGrant) flags.push("Strong Ad Grant Candidate");
+  function initApp() {
+    const popSelect = (id, list, placeholder) => {
+      const el = document.getElementById(id);
+      if (!el) return;
+      el.innerHTML = `<option value="">${placeholder}</option>` + list.map(item => `<option value="${item}">${item}</option>`).join('');
+    };
 
-            if (score <= 25) flags.push("Too Broad");
-            if (wordsCount <= 2 && score < 50 && !isAdGrant) flags.push("Generic");
-            if (wordsCount === 1) flags.push("Low Intent");
+    popSelect('gen-org-type', TAXONOMY.controlLists.orgTypes, 'Select Org Type...');
+    popSelect('gen-issue-area', TAXONOMY.controlLists.issueAreas, 'Select Domain...');
+    popSelect('gen-audience', TAXONOMY.controlLists.audiences, 'Select Entity...');
+    popSelect('gen-goal', TAXONOMY.controlLists.goals, 'Select Outcome...');
 
-            return [...new Set(flags)];
-        }
+    popSelect('org-select', TAXONOMY.orgs.map(o => o.name), 'Choose an Organization...');
+    popSelect('cat-select', TAXONOMY.controlLists.categories, 'Choose a Domain...');
 
-        function getFlagStyle(flag) {
-            const map = {
-                "High Intent": "flag-high-intent",
-                "Strong Ad Grant Candidate": "flag-ad-grant",
-                "Program-Specific": "flag-program",
-                "Conversion-Friendly": "flag-conversion",
-                "Too Broad": "flag-broad",
-                "Generic": "flag-generic",
-                "Low Intent": "flag-low-intent"
-            };
-            return map[flag] || "bg-white/5 text-gray-300 border-white/10";
-        }
+    document.getElementById('generator-form')?.addEventListener('submit', handleGenerate);
+    document.getElementById('org-select')?.addEventListener('change', handleOrgSelect);
+    document.getElementById('cat-select')?.addEventListener('change', handleCatSelect);
+    document.getElementById('search-input')?.addEventListener('input', handleSearch);
+    document.getElementById('search-ad-grant-filter')?.addEventListener('change', handleSearch);
+    document.getElementById('search-sort')?.addEventListener('change', handleSearch);
 
-        function getWeightColor(weight) {
-            if (weight >= 80) return "text-emerald-400 bg-emerald-500/10 border-emerald-500/20";
-            if (weight >= 60) return "text-amber-400 bg-amber-500/10 border-amber-500/20";
-            return "text-rose-400 bg-rose-500/10 border-rose-500/20";
-        }
-        function getWeightBarColor(weight) {
-            if (weight >= 80) return "bg-emerald-400 shadow-[0_0_10px_rgba(52,211,153,0.6)]";
-            if (weight >= 60) return "bg-amber-400 shadow-[0_0_10px_rgba(251,191,36,0.6)]";
-            return "bg-rose-500 shadow-[0_0_10px_rgba(244,63,94,0.6)]";
-        }
+    window.allPhrasesDict = {};
+    TAXONOMY.weightedIndex.forEach(item => {
+      if (item?.phrase) window.allPhrasesDict[item.phrase] = { ...item };
+    });
 
-        function createCardHTML(data, highlightText = "") {
-            const score = data.weight !== undefined ? data.weight : scorePhrase(data.phrase);
-            const flags = data.flags || getFlags(data.phrase, score);
-            
-            let displayPhrase = data.phrase;
-            if (highlightText) {
-                const regex = new RegExp(`(${highlightText})`, 'gi');
-                displayPhrase = displayPhrase.replace(regex, '<span class="text-white font-bold bg-purple-500/40 px-1 rounded-sm">$1</span>');
-            }
-
-            let flagsHtml = flags.map(f => `<span class="px-2 py-0.5 rounded-md border text-[9px] uppercase tracking-wider ${getFlagStyle(f)} whitespace-nowrap">${f}</span>`).join('');
-            
-            let metaHtml = '';
-            if (data.category) metaHtml += `<span class="text-[9px] text-purple-300 uppercase tracking-widest flex items-center gap-1"><i class="ph-fill ph-folder"></i> ${data.category}</span>`;
-            if (data.sourceOrg) metaHtml += `<span class="text-[9px] text-cyan-300 uppercase tracking-widest flex items-center gap-1"><i class="ph-fill ph-buildings"></i> ${data.sourceOrg}</span>`;
-            if (data.unique) metaHtml += `<span class="text-[9px] text-amber-300 border border-amber-500/30 bg-amber-500/10 px-1.5 py-0.5 rounded flex items-center gap-1"><i class="ph-fill ph-star"></i> Unique</span>`;
-
-            return `
-                <div class="glass-card rounded-xl p-4 flex flex-col gap-3 group relative overflow-hidden h-full justify-between min-h-[120px]">
-                    <div>
-                        <div class="flex justify-between items-start gap-3 mb-2">
-                            <h4 class="text-sm font-medium text-gray-200 leading-snug group-hover:text-white transition-colors pr-8">${displayPhrase}</h4>
-                            <button onclick="copyToClipboard('${data.phrase.replace(/'/g, "\\'")}')" class="absolute right-3 top-3 text-gray-500 hover:text-purple-400 transition-all bg-black/60 p-1.5 rounded-lg border border-white/10 hover:border-purple-500/50 opacity-0 group-hover:opacity-100 transform translate-y-[-5px] group-hover:translate-y-0">
-                                <i class="ph-bold ph-copy"></i>
-                            </button>
-                        </div>
-                        ${metaHtml ? `<div class="flex flex-wrap items-center gap-3 mb-3 bg-black/20 p-1.5 rounded-md">${metaHtml}</div>` : ''}
-                        <div class="flex flex-wrap gap-1.5 mb-2">${flagsHtml}</div>
-                    </div>
-                    <div class="flex items-center gap-3 pt-3 border-t border-white/5 mt-auto">
-                        <div class="px-2 py-0.5 rounded border text-[10px] font-bold tracking-wider ${getWeightColor(score)}">PWR ${score}</div>
-                        <div class="flex-1 h-1.5 bg-black/50 rounded-full overflow-hidden border border-white/5">
-                            <div class="h-full rounded-full transition-all duration-1000 ${getWeightBarColor(score)}" style="width: ${score}%"></div>
-                        </div>
-                    </div>
-                </div>
-            `;
-        }
-
-        function initApp() {
-            const popSelect = (id, list, placeholder) => {
-                const el = document.getElementById(id);
-                el.innerHTML = `<option value="">${placeholder}</option>` + list.map(item => `<option value="${item}">${item}</option>`).join('');
-            };
-
-            popSelect('gen-org-type', TAXONOMY.controlLists.orgTypes, 'Select Org Type...');
-            popSelect('gen-issue-area', TAXONOMY.controlLists.issueAreas, 'Select Domain...');
-            popSelect('gen-audience', TAXONOMY.controlLists.audiences, 'Select Entity...');
-            popSelect('gen-goal', TAXONOMY.controlLists.goals, 'Select Outcome...');
-
-            popSelect('org-select', TAXONOMY.orgs.map(o=>o.name), 'Choose an Organization...');
-            popSelect('cat-select', TAXONOMY.controlLists.categories, 'Choose a Domain...');
-
-            document.getElementById('generator-form').addEventListener('submit', handleGenerate);
-            document.getElementById('org-select').addEventListener('change', handleOrgSelect);
-            document.getElementById('cat-select').addEventListener('change', handleCatSelect);
-            document.getElementById('search-input').addEventListener('input', handleSearch);
-            document.getElementById('search-ad-grant-filter').addEventListener('change', handleSearch);
-            document.getElementById('search-sort').addEventListener('change', handleSearch);
-
-            window.allPhrasesDict = {};
-            TAXONOMY.weightedIndex.forEach(item => window.allPhrasesDict[item.phrase] = {...item});
-            TAXONOMY.expandedKeywords.forEach(item => {
-                if(!window.allPhrasesDict[item.phrase]) {
-                    window.allPhrasesDict[item.phrase] = {
-                        phrase: item.phrase,
-                        category: item.category,
-                        weight: scorePhrase(item.phrase) 
-                    };
-                }
-            });
-        }
-
-        function switchTab(tabId) {
-            document.querySelectorAll('.view-panel').forEach(el => {
-                el.classList.add('hidden');
-                el.classList.remove('flex');
-            });
-            document.querySelectorAll('.nav-tab').forEach(el => {
-                el.classList.remove('active');
-                el.classList.add('text-gray-400');
-            });
-            
-            const targetView = document.getElementById(`view-${tabId}`);
-            const targetTab = document.getElementById(`tab-${tabId}`);
-            
-            targetView.classList.remove('hidden');
-            targetView.classList.add('flex');
-            
-            if(targetTab) {
-                targetTab.classList.add('active');
-                targetTab.classList.remove('text-gray-400');
-            }
-        }
-
-        function handleGenerate(e) {
-            e.preventDefault();
-            const orgType = document.getElementById('gen-org-type').value;
-            const issueArea = document.getElementById('gen-issue-area').value;
-            const audience = document.getElementById('gen-audience').value;
-            const goal = document.getElementById('gen-goal').value;
-
-            if(!issueArea || !audience) {
-                alert("The spell requires at least a Domain and Target Entity to weave.");
-                return;
-            }
-
-            document.getElementById('gen-empty').style.opacity = '0';
-            setTimeout(() => {
-                document.getElementById('gen-empty').classList.add('hidden');
-                const outArea = document.getElementById('gen-output');
-                outArea.classList.remove('hidden');
-            }, 300);
-
-            const issue = issueArea.toLowerCase();
-            const aud = audience.toLowerCase();
-            let phrases = [
-                `${issue} program`, `${issue} nonprofit`, `${issue} initiative`,
-                `${issue} for ${aud}`, `${issue} advocacy organization`, `${issue} policy nonprofit`,
-                `community ${issue} program`, `${issue} campaign`, `support ${issue} nonprofit`,
-                `donate ${issue} organization`, `join ${issue} program`, `volunteer ${issue} nonprofit`,
-                `${issue} near me`, `${issue} grant program`, `${issue} research nonprofit`
-            ];
-
-            if(orgType) {
-                const orgT = orgType.toLowerCase().replace('501(c)(3)', '').trim();
-                phrases.push(`${issue} ${orgT}`);
-            }
-
-            if (goal === 'Google Ad Grant') phrases.push(`donate ${issue} nonprofit`, `join ${issue} nonprofit`, `volunteer ${issue} nonprofit`);
-            if (goal === 'Volunteer Recruitment') phrases.push(`volunteer ${issue}`, `join ${issue} team`);
-            if (goal === 'Donor Acquisition') phrases.push(`donate ${issue}`, `support ${issue} fund`, `give to ${issue}`);
-
-            phrases = [...new Set(phrases)]; 
-
-            let results = phrases.map(p => {
-                let score = scorePhrase(p);
-                return { phrase: p, weight: score, flags: getFlags(p, score) };
-            }).sort((a,b) => b.weight - a.weight);
-
-            const filterOn = document.getElementById('gen-ad-grant-filter').checked;
-            if (filterOn) results = results.filter(r => r.flags.includes("Strong Ad Grant Candidate"));
-
-            const core = results.filter(r => !r.flags.includes("Program-Specific") && !r.flags.includes("Conversion-Friendly"));
-            const prog = results.filter(r => r.flags.includes("Program-Specific"));
-            const action = results.filter(r => r.flags.includes("Conversion-Friendly"));
-
-            const renderList = (id, list) => {
-                const el = document.getElementById(id);
-                if(list.length === 0) el.innerHTML = `<div class="text-xs text-gray-500 italic p-6 text-center border border-dashed border-white/10 rounded-xl">Silence in this domain.</div>`;
-                else el.innerHTML = list.map(item => createCardHTML(item)).join('');
-            };
-
-            renderList('gen-core-list', core);
-            renderList('gen-prog-list', prog);
-            renderList('gen-action-list', action);
-        }
-
-        function handleOrgSelect(e) {
-            const orgName = e.target.value;
-            if(!orgName) {
-                document.getElementById('org-empty').classList.remove('hidden');
-                document.getElementById('org-content').classList.add('hidden');
-                return;
-            }
-
-            document.getElementById('org-empty').classList.add('hidden');
-            document.getElementById('org-content').classList.remove('hidden');
-            document.getElementById('org-content').classList.add('flex');
-
-            const org = TAXONOMY.orgs.find(o => o.name === orgName);
-            
-            document.getElementById('org-name-display').innerText = org.name;
-            document.getElementById('org-sector-badge').innerText = org.sector;
-            document.getElementById('org-program-badge').innerText = org.programArea;
-            document.getElementById('org-audience-text').innerText = org.audience;
-
-            const toCardList = (words) => words.map(w => createCardHTML({phrase: w})).join('');
-
-            document.getElementById('org-core-list').innerHTML = toCardList(org.coreKeywords);
-            document.getElementById('org-prog-list').innerHTML = toCardList(org.programmaticKeywords);
-            document.getElementById('org-action-list').innerHTML = toCardList(org.actionKeywords);
-
-            const expansions = TAXONOMY.expandedKeywords.filter(ek => 
-                org.programmaticKeywords.some(pk => ek.phrase.includes(pk.split(' ')[0])) || 
-                ek.category === org.sector || 
-                (ek.related && ek.related.some(r => org.coreKeywords.includes(r)))
-            ).slice(0, 4); 
-
-            document.getElementById('org-expansions-list').innerHTML = expansions.length ? 
-                expansions.map(e => createCardHTML(e)).join('') : '<span class="text-gray-500 text-sm italic">No expansions discovered.</span>';
-
-            const topW = TAXONOMY.weightedIndex.filter(wi => wi.sourceOrg === org.name).sort((a,b)=>b.weight-a.weight).slice(0,4);
-            document.getElementById('org-top-list').innerHTML = topW.length ? 
-                topW.map(w => createCardHTML(w)).join('') : '<span class="text-gray-500 text-sm italic">No weighted metrics found.</span>';
-        }
-
-        function handleCatSelect(e) {
-            const cat = e.target.value;
-            if(!cat) {
-                document.getElementById('cat-empty').classList.remove('hidden');
-                document.getElementById('cat-content').classList.add('hidden');
-                return;
-            }
-
-            document.getElementById('cat-empty').classList.add('hidden');
-            document.getElementById('cat-content').classList.remove('hidden');
-            document.getElementById('cat-content').classList.add('flex');
-
-            const phrases = TAXONOMY.expandedKeywords.filter(ek => ek.category === cat);
-            let phtml = '';
-            ['Core Issue', 'Programmatic', 'Action'].forEach(type => {
-                const typePhrases = phrases.filter(p => p.type === type);
-                if(typePhrases.length > 0) {
-                    phtml += `<div class="mb-6"><h5 class="text-xs uppercase tracking-[0.2em] text-gray-400 font-bold mb-3 flex items-center gap-2"><div class="w-1.5 h-1.5 rounded-full bg-emerald-400"></div> ${type}</h5>`;
-                    phtml += `<div class="grid sm:grid-cols-2 gap-4">${typePhrases.map(p => createCardHTML(p)).join('')}</div></div>`;
-                }
-            });
-            document.getElementById('cat-phrases-list').innerHTML = phtml || '<span class="text-gray-500 text-sm">No phrases inscribed in this domain.</span>';
-
-            const topW = TAXONOMY.weightedIndex.filter(wi => wi.category === cat).sort((a,b)=>b.weight-a.weight).slice(0,5);
-            document.getElementById('cat-top-list').innerHTML = topW.length ? 
-                topW.map(w => createCardHTML(w)).join('') : '<span class="text-gray-500 text-sm italic">No weighted metrics found.</span>';
-
-            const relatedOrgs = TAXONOMY.orgs.filter(o => o.sector === cat || (topW.some(w=>w.sourceOrg === o.name)));
-            const orgsHtml = relatedOrgs.map(o => `<button onclick="document.getElementById('org-select').value='${o.name}'; handleOrgSelect({target:{value:'${o.name}'}}); switchTab('org-explorer');" class="px-4 py-2 bg-purple-900/40 hover:bg-purple-800/60 border border-purple-500/30 rounded-lg text-xs text-white transition-all flex items-center gap-2 shadow-sm"><i class="ph-fill ph-buildings text-purple-400"></i> ${o.name}</button>`).join('');
-            document.getElementById('cat-orgs-list').innerHTML = orgsHtml || '<span class="text-gray-500 text-sm italic">No entities mapped.</span>';
-        }
-
-        function handleSearch() {
-            const query = document.getElementById('search-input').value.toLowerCase().trim();
-            const adGrantOnly = document.getElementById('search-ad-grant-filter').checked;
-            const sortBy = document.getElementById('search-sort').value;
-
-            const emptyState = document.getElementById('search-empty');
-            const resultList = document.getElementById('search-results-list');
-            const stats = document.getElementById('search-results-stats');
-
-            if(query.length === 0 && !adGrantOnly) {
-                emptyState.classList.remove('hidden');
-                resultList.innerHTML = '';
-                stats.classList.add('hidden');
-                return;
-            }
-
-            emptyState.classList.add('hidden');
-            stats.classList.remove('hidden');
-
-            let results = Object.values(window.allPhrasesDict);
-
-            if(query) {
-                results = results.filter(r => 
-                    r.phrase.toLowerCase().includes(query) || 
-                    (r.sourceOrg && r.sourceOrg.toLowerCase().includes(query)) ||
-                    (r.category && r.category.toLowerCase().includes(query))
-                );
-            }
-
-            results = results.map(r => {
-                if(!r.flags) r.flags = getFlags(r.phrase, r.weight);
-                return r;
-            });
-
-            if(adGrantOnly) results = results.filter(r => r.flags.includes("Strong Ad Grant Candidate"));
-
-            if(sortBy === 'weight') results.sort((a,b) => b.weight - a.weight);
-            else if (sortBy === 'category') results.sort((a,b) => (a.category||'').localeCompare(b.category||''));
-            else results.sort((a,b) => a.phrase.localeCompare(b.phrase));
-
-            stats.innerText = `${results.length} incantation${results.length!==1?'s':''} found`;
-            resultList.innerHTML = results.map(r => createCardHTML(r, query)).join('');
-        }
-
-        function copyToClipboard(text) {
-            navigator.clipboard.writeText(text).then(() => {
-                const toast = document.getElementById('toast');
-                toast.classList.add('toast-show');
-                setTimeout(() => toast.classList.remove('toast-show'), 2500);
-            });
-        }
-
-        function copyGroup(containerId) {
-            const container = document.getElementById(containerId);
-            if(!container) return;
-            const textNodes = container.querySelectorAll('h4.text-sm');
-            const texts = Array.from(textNodes).map(h => h.innerText);
-            if(texts.length > 0) copyToClipboard(texts.join('\n'));
-        }
-
-        window.onload = async () => {
-          const starContainer = document.getElementById('star-container');
-          const starCount = 100;
-          for (let i = 0; i < starCount; i++) {
-            const star = document.createElement('div');
-            star.classList.add('star');
-            const x = Math.random() * 100;
-            const y = Math.random() * 100;
-            const duration = 3 + Math.random() * 5;
-            const delay = Math.random() * 5;
-            const size = Math.random() < 0.1 ? 3 : (Math.random() < 0.3 ? 2 : 1);
-            const opacity = 0.1 + Math.random() * 0.5;
-            star.style.left = `${x}%`;
-            star.style.top = `${y}%`;
-            star.style.width = `${size}px`;
-            star.style.height = `${size}px`;
-            star.style.setProperty('--duration', `${duration}s`);
-            star.style.setProperty('--delay', `${delay}s`);
-            star.style.setProperty('--opacity', opacity);
-            starContainer.appendChild(star);
-          }
-        
-          const ok = await loadTaxonomy();
-          if (!ok) {
-            showLoadError();
-          }
-        
-          initApp();
+    TAXONOMY.expandedKeywords.forEach(item => {
+      if (item?.phrase && !window.allPhrasesDict[item.phrase]) {
+        window.allPhrasesDict[item.phrase] = {
+          phrase: item.phrase,
+          category: item.category,
+          weight: scorePhrase(item.phrase)
         };
-                  async function loadTaxonomy() {
-                    try {
-                      const response = await fetch(DATA_ENDPOINT, { cache: "no-store" });
-                      if (!response.ok) throw new Error(`HTTP ${response.status}`);
-                  
-                      const data = await response.json();
-                  
-                      TAXONOMY = {
-                        orgs: Array.isArray(data.orgs) ? data.orgs : [],
-                        expandedKeywords: Array.isArray(data.expandedKeywords) ? data.expandedKeywords : [],
-                        weightedIndex: Array.isArray(data.weightedIndex) ? data.weightedIndex : [],
-                        controlLists: {
-                          orgTypes: data.controlLists?.orgTypes || [],
-                          issueAreas: data.controlLists?.issueAreas || [],
-                          audiences: data.controlLists?.audiences || [],
-                          goals: data.controlLists?.goals || [],
-                          categories: data.controlLists?.categories || []
-                        }
-                      };
-                  
-                      return true;
-                    } catch (error) {
-                      console.error("Failed to load taxonomy:", error);
-                      return false;
-                    }
-                  }
-                  
-                  function showLoadError() {
-                    const toast = document.getElementById('toast');
-                    toast.innerHTML = `
-                      <i class="ph-fill ph-warning-circle text-rose-400 text-xl"></i>
-                      <span class="text-sm text-white font-medium tracking-wide">
-                        Failed to load grimoire data
-                      </span>
-                    `;
-                    toast.classList.add('toast-show');
-                    setTimeout(() => toast.classList.remove('toast-show'), 3000);
-                  }
-            initApp();
-        };
-    </script>
+      }
+    });
+  }
 
-</body></html>
+  function switchTab(tabId) {
+    document.querySelectorAll('.view-panel').forEach(el => {
+      el.classList.add('hidden');
+      el.classList.remove('flex');
+    });
+
+    document.querySelectorAll('.nav-tab').forEach(el => {
+      el.classList.remove('active');
+      el.classList.add('text-gray-400');
+    });
+
+    const targetView = document.getElementById(`view-${tabId}`);
+    const targetTab = document.getElementById(`tab-${tabId}`);
+
+    targetView?.classList.remove('hidden');
+    targetView?.classList.add('flex');
+
+    if (targetTab) {
+      targetTab.classList.add('active');
+      targetTab.classList.remove('text-gray-400');
+    }
+  }
+
+  function handleGenerate(e) {
+    e.preventDefault();
+
+    const orgType = document.getElementById('gen-org-type').value;
+    const issueArea = document.getElementById('gen-issue-area').value;
+    const audience = document.getElementById('gen-audience').value;
+    const goal = document.getElementById('gen-goal').value;
+
+    if (!issueArea || !audience) {
+      alert("The spell requires at least a Domain and Target Entity to weave.");
+      return;
+    }
+
+    document.getElementById('gen-empty').style.opacity = '0';
+    setTimeout(() => {
+      document.getElementById('gen-empty').classList.add('hidden');
+      document.getElementById('gen-output').classList.remove('hidden');
+    }, 300);
+
+    const issue = issueArea.toLowerCase();
+    const aud = audience.toLowerCase();
+
+    let phrases = [
+      `${issue} program`,
+      `${issue} nonprofit`,
+      `${issue} initiative`,
+      `${issue} for ${aud}`,
+      `${issue} advocacy organization`,
+      `${issue} policy nonprofit`,
+      `community ${issue} program`,
+      `${issue} campaign`,
+      `support ${issue} nonprofit`,
+      `donate ${issue} organization`,
+      `join ${issue} program`,
+      `volunteer ${issue} nonprofit`,
+      `${issue} near me`,
+      `${issue} grant program`,
+      `${issue} research nonprofit`
+    ];
+
+    if (orgType) {
+      const orgT = orgType.toLowerCase().replace('501(c)(3)', '').trim();
+      phrases.push(`${issue} ${orgT}`);
+    }
+
+    if (goal === 'Google Ad Grant') {
+      phrases.push(`donate ${issue} nonprofit`, `join ${issue} nonprofit`, `volunteer ${issue} nonprofit`);
+    }
+    if (goal === 'Volunteer Recruitment') {
+      phrases.push(`volunteer ${issue}`, `join ${issue} team`);
+    }
+    if (goal === 'Donor Acquisition') {
+      phrases.push(`donate ${issue}`, `support ${issue} fund`, `give to ${issue}`);
+    }
+
+    phrases = [...new Set(phrases)];
+
+    let results = phrases
+      .map(p => {
+        const score = scorePhrase(p);
+        return { phrase: p, weight: score, flags: getFlags(p, score) };
+      })
+      .sort((a, b) => b.weight - a.weight);
+
+    const filterOn = document.getElementById('gen-ad-grant-filter').checked;
+    if (filterOn) {
+      results = results.filter(r => r.flags.includes("Strong Ad Grant Candidate"));
+    }
+
+    const core = results.filter(r => !r.flags.includes("Program-Specific") && !r.flags.includes("Conversion-Friendly"));
+    const prog = results.filter(r => r.flags.includes("Program-Specific"));
+    const action = results.filter(r => r.flags.includes("Conversion-Friendly"));
+
+    const renderList = (id, list) => {
+      const el = document.getElementById(id);
+      if (!el) return;
+      if (list.length === 0) {
+        el.innerHTML = `<div class="text-xs text-gray-500 italic p-6 text-center border border-dashed border-white/10 rounded-xl">Silence in this domain.</div>`;
+      } else {
+        el.innerHTML = list.map(item => createCardHTML(item)).join('');
+      }
+    };
+
+    renderList('gen-core-list', core);
+    renderList('gen-prog-list', prog);
+    renderList('gen-action-list', action);
+  }
+
+  function handleOrgSelect(e) {
+    const orgName = e.target.value;
+
+    if (!orgName) {
+      document.getElementById('org-empty').classList.remove('hidden');
+      document.getElementById('org-content').classList.add('hidden');
+      return;
+    }
+
+    const org = TAXONOMY.orgs.find(o => o.name === orgName);
+    if (!org) return;
+
+    document.getElementById('org-empty').classList.add('hidden');
+    document.getElementById('org-content').classList.remove('hidden');
+    document.getElementById('org-content').classList.add('flex');
+
+    document.getElementById('org-name-display').innerText = org.name || '';
+    document.getElementById('org-sector-badge').innerText = org.sector || '';
+    document.getElementById('org-program-badge').innerText = org.programArea || '';
+    document.getElementById('org-audience-text').innerText = org.audience || '';
+
+    const toCardList = (words) => (words || []).map(w => createCardHTML({ phrase: w })).join('');
+
+    document.getElementById('org-core-list').innerHTML = toCardList(org.coreKeywords);
+    document.getElementById('org-prog-list').innerHTML = toCardList(org.programmaticKeywords);
+    document.getElementById('org-action-list').innerHTML = toCardList(org.actionKeywords);
+
+    const expansions = TAXONOMY.expandedKeywords.filter(ek =>
+      (org.programmaticKeywords || []).some(pk => ek.phrase?.includes(pk.split(' ')[0])) ||
+      ek.category === org.sector ||
+      (ek.related && ek.related.some(r => (org.coreKeywords || []).includes(r)))
+    ).slice(0, 4);
+
+    document.getElementById('org-expansions-list').innerHTML = expansions.length
+      ? expansions.map(item => createCardHTML(item)).join('')
+      : '<span class="text-gray-500 text-sm italic">No expansions discovered.</span>';
+
+    const topW = TAXONOMY.weightedIndex
+      .filter(wi => wi.sourceOrg === org.name)
+      .sort((a, b) => b.weight - a.weight)
+      .slice(0, 4);
+
+    document.getElementById('org-top-list').innerHTML = topW.length
+      ? topW.map(item => createCardHTML(item)).join('')
+      : '<span class="text-gray-500 text-sm italic">No weighted metrics found.</span>';
+  }
+
+  function handleCatSelect(e) {
+    const cat = e.target.value;
+
+    if (!cat) {
+      document.getElementById('cat-empty').classList.remove('hidden');
+      document.getElementById('cat-content').classList.add('hidden');
+      return;
+    }
+
+    document.getElementById('cat-empty').classList.add('hidden');
+    document.getElementById('cat-content').classList.remove('hidden');
+    document.getElementById('cat-content').classList.add('flex');
+
+    const phrases = TAXONOMY.expandedKeywords.filter(ek => ek.category === cat);
+
+    let phtml = '';
+    ['Core Issue', 'Programmatic', 'Action'].forEach(type => {
+      const typePhrases = phrases.filter(p => p.type === type);
+      if (typePhrases.length > 0) {
+        phtml += `<div class="mb-6"><h5 class="text-xs uppercase tracking-[0.2em] text-gray-400 font-bold mb-3 flex items-center gap-2"><div class="w-1.5 h-1.5 rounded-full bg-emerald-400"></div> ${type}</h5>`;
+        phtml += `<div class="grid sm:grid-cols-2 gap-4">${typePhrases.map(p => createCardHTML(p)).join('')}</div></div>`;
+      }
+    });
+
+    document.getElementById('cat-phrases-list').innerHTML = phtml || '<span class="text-gray-500 text-sm">No phrases inscribed in this domain.</span>';
+
+    const topW = TAXONOMY.weightedIndex
+      .filter(wi => wi.category === cat)
+      .sort((a, b) => b.weight - a.weight)
+      .slice(0, 5);
+
+    document.getElementById('cat-top-list').innerHTML = topW.length
+      ? topW.map(item => createCardHTML(item)).join('')
+      : '<span class="text-gray-500 text-sm italic">No weighted metrics found.</span>';
+
+    const relatedOrgs = TAXONOMY.orgs.filter(o => o.sector === cat || topW.some(w => w.sourceOrg === o.name));
+
+    const orgsHtml = relatedOrgs.map(o => `
+      <button
+        onclick="document.getElementById('org-select').value='${escapeSingleQuotes(o.name)}'; handleOrgSelect({target:{value:'${escapeSingleQuotes(o.name)}'}}); switchTab('org-explorer');"
+        class="px-4 py-2 bg-purple-900/40 hover:bg-purple-800/60 border border-purple-500/30 rounded-lg text-xs text-white transition-all flex items-center gap-2 shadow-sm">
+        <i class="ph-fill ph-buildings text-purple-400"></i> ${o.name}
+      </button>
+    `).join('');
+
+    document.getElementById('cat-orgs-list').innerHTML = orgsHtml || '<span class="text-gray-500 text-sm italic">No entities mapped.</span>';
+  }
+
+  function handleSearch() {
+    const query = document.getElementById('search-input').value.toLowerCase().trim();
+    const adGrantOnly = document.getElementById('search-ad-grant-filter').checked;
+    const sortBy = document.getElementById('search-sort').value;
+
+    const emptyState = document.getElementById('search-empty');
+    const resultList = document.getElementById('search-results-list');
+    const stats = document.getElementById('search-results-stats');
+
+    if (query.length === 0 && !adGrantOnly) {
+      emptyState.classList.remove('hidden');
+      resultList.innerHTML = '';
+      stats.classList.add('hidden');
+      return;
+    }
+
+    emptyState.classList.add('hidden');
+    stats.classList.remove('hidden');
+
+    let results = Object.values(window.allPhrasesDict || {});
+
+    if (query) {
+      results = results.filter(r =>
+        (r.phrase || '').toLowerCase().includes(query) ||
+        (r.sourceOrg && r.sourceOrg.toLowerCase().includes(query)) ||
+        (r.category && r.category.toLowerCase().includes(query))
+      );
+    }
+
+    results = results.map(r => {
+      if (!r.flags) r.flags = getFlags(r.phrase, r.weight || scorePhrase(r.phrase));
+      return r;
+    });
+
+    if (adGrantOnly) {
+      results = results.filter(r => r.flags.includes("Strong Ad Grant Candidate"));
+    }
+
+    if (sortBy === 'weight') results.sort((a, b) => (b.weight || 0) - (a.weight || 0));
+    else if (sortBy === 'category') results.sort((a, b) => (a.category || '').localeCompare(b.category || ''));
+    else results.sort((a, b) => (a.phrase || '').localeCompare(b.phrase || ''));
+
+    stats.innerText = `${results.length} incantation${results.length !== 1 ? 's' : ''} found`;
+    resultList.innerHTML = results.map(r => createCardHTML(r, query)).join('');
+  }
+
+  function copyToClipboard(text) {
+    navigator.clipboard.writeText(text).then(() => {
+      const toast = document.getElementById('toast');
+      toast.innerHTML = `
+        <i class="ph-fill ph-check-circle text-emerald-400 text-xl animate-bounce"></i>
+        <span class="text-sm text-white font-medium tracking-wide">
+          Incantation copied to clipboard <span class="text-purple-400 ml-1">✦</span>
+        </span>
+      `;
+      toast.classList.add('toast-show');
+      setTimeout(() => toast.classList.remove('toast-show'), 2500);
+    });
+  }
+
+  function copyGroup(containerId) {
+    const container = document.getElementById(containerId);
+    if (!container) return;
+    const textNodes = container.querySelectorAll('h4.text-sm');
+    const texts = Array.from(textNodes).map(h => h.innerText);
+    if (texts.length > 0) copyToClipboard(texts.join('\n'));
+  }
+
+  function createStars() {
+    const starContainer = document.getElementById('star-container');
+    const starCount = 100;
+
+    for (let i = 0; i < starCount; i++) {
+      const star = document.createElement('div');
+      star.classList.add('star');
+
+      const x = Math.random() * 100;
+      const y = Math.random() * 100;
+      const duration = 3 + Math.random() * 5;
+      const delay = Math.random() * 5;
+      const size = Math.random() < 0.1 ? 3 : (Math.random() < 0.3 ? 2 : 1);
+      const opacity = 0.1 + Math.random() * 0.5;
+
+      star.style.left = `${x}%`;
+      star.style.top = `${y}%`;
+      star.style.width = `${size}px`;
+      star.style.height = `${size}px`;
+      star.style.setProperty('--duration', `${duration}s`);
+      star.style.setProperty('--delay', `${delay}s`);
+      star.style.setProperty('--opacity', opacity);
+
+      starContainer.appendChild(star);
+    }
+  }
+
+  window.onload = async () => {
+    createStars();
+
+    const ok = await loadTaxonomy();
+    if (!ok) {
+      showLoadError();
+    }
+
+    initApp();
+  };
+</script>
+
+</body>
+</html>

@@ -1,0 +1,1384 @@
+<html lang="en" vid="0"><head vid="1">
+    <meta charset="UTF-8" vid="2">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" vid="3">
+    <title vid="4">The Algorithm Witch | Digital Alchemy</title>
+    <script src="https://cdn.tailwindcss.com/3.4.17" vid="5"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com" vid="6">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="" vid="7">
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@400;700;900&amp;family=Inter:wght@300;400;500;600&amp;family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&amp;display=swap" rel="stylesheet" vid="8">
+    <script src="https://unpkg.com/@phosphor-icons/web" vid="9"></script>
+    <style vid="10">
+        
+        :root {
+            --color-bg: #030014;
+            --color-card: rgba(20, 15, 45, 0.6);
+            --color-purple: #a855f7;
+            --color-gold: #fde047;
+            --color-cyan: #06b6d4;
+            --color-amber: #f59e0b;
+            --color-emerald: #10b981;
+            --color-fuchsia: #d946ef;
+        }
+
+        body {
+            background-color: var(--color-bg);
+            color: #e2e8f0;
+            font-family: 'Inter', sans-serif;
+            margin: 0;
+            padding: 0;
+            overflow-x: hidden;
+            scroll-behavior: smooth;
+        }
+
+        
+        .page {
+            display: none;
+        }
+        .page.active {
+            display: block;
+        }
+
+        
+        .font-magical { font-family: 'Cinzel Decorative', cursive; }
+        .font-serif-heading { font-family: 'Playfair Display', serif; }
+
+        
+        .stars {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            pointer-events: none; z-index: 0;
+        }
+        .star {
+            position: absolute;
+            background: white;
+            border-radius: 50%;
+            opacity: 0;
+            animation: twinkle var(--duration) ease-in-out infinite;
+            animation-delay: var(--delay);
+        }
+        @keyframes twinkle {
+            0% { opacity: 0; transform: scale(0.5); }
+            50% { opacity: var(--opacity); transform: scale(1.2); box-shadow: 0 0 4px rgba(255, 255, 255, 0.8); }
+            100% { opacity: 0; transform: scale(0.5); }
+        }
+
+        
+        .glass-panel {
+            background: rgba(13, 12, 34, 0.6);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+        }
+        .glass-card {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(10px);
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        
+        .glass-card::before {
+            content: ''; position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background: radial-gradient(600px circle at var(--mouse-x) var(--mouse-y), rgba(255, 255, 255, 0.08), transparent 40%);
+            opacity: 0; transition: opacity 0.5s; pointer-events: none;
+        }
+        .glass-card:hover::before { opacity: 1; }
+
+        
+        #page-fractional-director .glass-panel { border: 1px solid rgba(139, 92, 246, 0.15); }
+        #page-fractional-director .glass-card:hover { border-color: rgba(16, 185, 129, 0.3); transform: translateY(-5px); box-shadow: 0 15px 40px -10px rgba(16, 185, 129, 0.2); }
+        #page-fractional-director input, #page-fractional-director textarea { background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1); color: white; transition: all 0.3s ease; }
+        #page-fractional-director input:focus, #page-fractional-director textarea:focus { outline: none; border-color: var(--color-emerald); background: rgba(16, 185, 129, 0.05); }
+
+        #page-brand-kit .glass-panel, #page-website-revamp .glass-panel { border: 1px solid rgba(6, 182, 212, 0.15); box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37); }
+        #page-brand-kit .glass-card:hover, #page-website-revamp .glass-card:hover { border-color: rgba(6, 182, 212, 0.3); transform: translateY(-5px); box-shadow: 0 15px 40px -10px rgba(6, 182, 212, 0.2); }
+        #page-brand-kit .glass-card.gold-hover:hover { border-color: rgba(253, 224, 71, 0.3); box-shadow: 0 15px 40px -10px rgba(253, 224, 71, 0.15); }
+        #page-brand-kit .glass-card.gold-hover::before { background: radial-gradient(600px circle at var(--mouse-x) var(--mouse-y), rgba(253, 224, 71, 0.08), transparent 40%); }
+
+        #page-monthly-content .glass-panel { border: 1px solid rgba(139, 92, 246, 0.15); }
+        #page-monthly-content .glass-card:hover { border-color: rgba(167, 139, 250, 0.3); transform: translateY(-5px); box-shadow: 0 15px 40px -10px rgba(139, 92, 246, 0.2); }
+
+        #page-digital-metrics .glass-panel { border: 1px solid rgba(245, 158, 11, 0.1); box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37); }
+        #page-digital-metrics .glass-card:hover { border-color: rgba(245, 158, 11, 0.3); transform: translateY(-5px); box-shadow: 0 15px 40px -10px rgba(245, 158, 11, 0.15); }
+
+        
+        .emerald-glow { box-shadow: 0 0 50px -10px rgba(16, 185, 129, 0.4); }
+        .cyan-glow { box-shadow: 0 0 40px -10px rgba(6, 182, 212, 0.5); }
+        .amber-glow { box-shadow: 0 0 40px -5px rgba(245, 158, 11, 0.4); }
+        .text-gradient-gold { background: linear-gradient(to right, #fef9c3, #fbbf24, #fef9c3); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-size: 200% auto; animation: shine 8s linear infinite; }
+        .text-gradient-purple { background: linear-gradient(135deg, #e9d5ff 0%, #c084fc 50%, #a855f7 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .text-gradient-amber { background: linear-gradient(to right, #fef3c7, #f59e0b, #fef3c7); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-size: 200% auto; animation: shine 8s linear infinite; }
+        @keyframes shine { to { background-position: 200% center; } }
+        .float { animation: float 6s ease-in-out infinite; }
+        @keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-15px); } }
+
+        
+        .section-fade-up { opacity: 0; transform: translateY(30px); transition: opacity 0.8s ease-out, transform 0.8s ease-out; }
+        .section-fade-up.visible { opacity: 1; transform: translateY(0); }
+        details[open] summary i { transform: rotate(180deg); }
+
+        
+        #page-presentation { width: 100vw; height: 100vh; overflow: hidden; position: relative; }
+        .ambient-glow { position: fixed; border-radius: 50%; filter: blur(120px); opacity: 0.4; pointer-events: none; z-index: 0; transition: all 1s ease-in-out; }
+        .slide { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; opacity: 0; transform: translateY(40px) scale(0.98); transition: all 0.8s cubic-bezier(0.4, 0, 0.2, 1); pointer-events: none; z-index: 0; padding: 4rem; }
+        .slide.active { opacity: 1; transform: translateY(0) scale(1); pointer-events: auto; z-index: 10; }
+        .slide.previous { transform: translateY(-40px) scale(0.98); }
+        .nav-btn { position: fixed; top: 50%; transform: translateY(-50%); z-index: 50; width: 48px; height: 48px; border-radius: 50%; background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1); color: rgba(255, 255, 255, 0.5); display: flex; align-items: center; justify-content: center; cursor: pointer; backdrop-filter: blur(8px); transition: all 0.3s ease; }
+        .nav-btn:hover { background: rgba(255, 255, 255, 0.1); color: white; border-color: rgba(168, 85, 247, 0.5); box-shadow: 0 0 20px rgba(168, 85, 247, 0.3); }
+        .nav-btn:active { transform: translateY(-50%) scale(0.95); }
+        .nav-prev { left: 2rem; }
+        .nav-next { right: 2rem; }
+        .presentation-controls { position: fixed; bottom: 2rem; left: 50%; transform: translateX(-50%); z-index: 50; display: flex; align-items: center; gap: 2rem; padding: 0.75rem 2rem; border-radius: 9999px; background: rgba(0, 0, 0, 0.4); border: 1px solid rgba(255, 255, 255, 0.1); backdrop-filter: blur(12px); }
+        .dots-container { display: flex; gap: 0.75rem; }
+        .dot { width: 8px; height: 8px; border-radius: 50%; background: rgba(255, 255, 255, 0.2); cursor: pointer; transition: all 0.3s ease; }
+        .dot:hover { background: rgba(255, 255, 255, 0.5); }
+        .dot.active { background: var(--color-purple); transform: scale(1.5); box-shadow: 0 0 10px var(--color-purple); }
+        .slide-counter { font-family: 'Inter', sans-serif; font-size: 0.75rem; letter-spacing: 0.2em; color: rgba(255, 255, 255, 0.5); font-weight: 600; }
+        .content-container { width: 100%; max-width: 1200px; max-height: 100%; display: flex; flex-direction: column; justify-content: center; }
+        .service-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 1.5rem; }
+        .service-full { grid-column: 1 / -1; }
+    </style>
+</head>
+<body class="selection:bg-purple-600 selection:text-white antialiased text-base" vid="11">
+
+    
+    <div id="star-container" class="stars" vid="12"></div>
+
+    
+    <div id="page-presentation" class="page active" vid="13">
+        <div id="ambient-1" class="ambient-glow w-[800px] h-[800px] top-[-20%] left-[-10%] bg-purple-900/30 mix-blend-screen" vid="14"></div>
+        <div id="ambient-2" class="ambient-glow w-[600px] h-[600px] bottom-[-10%] right-[-10%] bg-indigo-900/20 mix-blend-screen" vid="15"></div>
+
+        <div class="fixed top-6 left-8 z-50 flex items-center gap-3" vid="16">
+            <div class="relative" vid="17">
+                <i class="ph-fill ph-sparkle text-purple-400 text-2xl" vid="18"></i>
+                <i class="ph-fill ph-star-four text-yellow-300 text-xs absolute -top-1 -right-2 animate-pulse" vid="19"></i>
+            </div>
+            <span class="font-magical text-xl text-white tracking-widest opacity-80" vid="20">Algorithm Witch</span>
+        </div>
+
+        <button id="btn-prev" class="nav-btn nav-prev" aria-label="Previous Slide" vid="21">
+            <i class="ph-bold ph-caret-left text-xl" vid="22"></i>
+        </button>
+        <button id="btn-next" class="nav-btn nav-next" aria-label="Next Slide" vid="23">
+            <i class="ph-bold ph-caret-right text-xl" vid="24"></i>
+        </button>
+
+        <div class="presentation-controls" vid="25">
+            <div class="dots-container" id="dots-container" vid="26"></div>
+            <div class="w-px h-4 bg-white/20" vid="27"></div>
+            <div class="slide-counter" id="slide-counter" vid="28">1 / 6</div>
+        </div>
+
+        <main id="slides-container" class="relative w-full h-full" vid="29">
+
+            
+            <section class="slide active" data-theme="purple" data-ambient="bg-purple-900/30,bg-indigo-900/20" vid="30">
+                <div class="content-container items-center text-center" vid="31">
+                    <div class="mb-8 relative inline-block float" vid="32">
+                        <div class="absolute -inset-2 bg-gradient-to-r from-purple-600 via-fuchsia-500 to-indigo-600 rounded-full blur opacity-30" vid="33"></div>
+                        <div class="relative px-6 py-2 bg-[#0a0520] rounded-full border border-purple-500/30 text-purple-200 text-xs font-medium uppercase tracking-[0.2em] flex items-center gap-2" vid="34">
+                            <i class="ph-fill ph-magic-wand text-yellow-400" vid="35"></i> Digital Strategy &amp; Alchemy
+                        </div>
+                    </div>
+                    <h1 class="font-magical text-6xl md:text-8xl lg:text-9xl mb-8 leading-[1.1] drop-shadow-2xl" vid="36">
+                        <span class="text-white block" vid="37">The Algorithm</span>
+                        <span class="text-gradient-gold block mt-2" vid="38">Witch</span>
+                    </h1>
+                    <p class="font-serif-heading text-2xl md:text-4xl text-purple-100/90 max-w-4xl mx-auto leading-relaxed font-light italic mt-6" vid="39">
+                        "I’m an algorithm witch channeling content across the right platforms to find the right people."
+                    </p>
+                    <div class="mt-16 animate-pulse opacity-60 flex flex-col items-center gap-2" vid="40">
+                        <span class="text-[10px] uppercase tracking-widest text-purple-300" vid="41">Scroll to begin</span>
+                        <i class="ph-bold ph-arrow-down text-purple-400" vid="42"></i>
+                    </div>
+                </div>
+            </section>
+
+            
+            <section class="slide" data-theme="fuchsia" data-ambient="bg-fuchsia-900/20,bg-amber-900/20" vid="43">
+                <div class="content-container" vid="44">
+                    <div class="flex items-center gap-4 mb-12" vid="45">
+                        <span class="h-px w-12 bg-fuchsia-500" vid="46"></span>
+                        <h2 class="font-magical text-4xl text-white uppercase tracking-widest" vid="47">Demystifying the Craft</h2>
+                    </div>
+                    <div class="grid lg:grid-cols-12 gap-16 items-center" vid="48">
+                        <div class="lg:col-span-7 space-y-8" vid="49">
+                            <div class="glass-panel p-10 rounded-3xl relative overflow-hidden border-l-4 border-l-fuchsia-500 shadow-[0_10px_40px_-10px_rgba(217,70,239,0.2)]" vid="50">
+                                <p class="text-xl text-gray-300 leading-relaxed font-light mb-6" vid="51">
+                                    Digital communications work often gets talked about like it’s a mystery. People don’t always know what digital strategists actually do, how content travels online, or why some messages land while others disappear.
+                                </p>
+                                <p class="text-2xl text-white font-serif-heading italic leading-relaxed pl-6 border-l-2 border-fuchsia-400/50" vid="52">
+                                    "I lean into the <span class="text-fuchsia-300" vid="53">“algorithm witch”</span> framing because it reflects that confusion and gives me space to explain the work clearly."
+                                </p>
+                            </div>
+                            <div class="prose prose-invert prose-xl text-gray-400 font-light leading-relaxed" vid="54">
+                                <p vid="55">As a senior digital strategist and content lead with <strong class="text-white font-medium text-fuchsia-200" vid="56">10 years of experience</strong> supporting policy and advocacy, I align content across web, email, and social so organizations can build collective power.</p>
+                            </div>
+                        </div>
+                        <div class="lg:col-span-5 grid gap-6" vid="57">
+                            <div class="glass-card p-8 rounded-2xl flex items-center gap-6 border-l-2 border-l-amber-500/50 bg-gradient-to-r from-amber-500/5 to-transparent" vid="58">
+                                <div class="w-16 h-16 shrink-0 bg-amber-900/30 rounded-full flex items-center justify-center text-amber-400 shadow-[0_0_20px_-5px_rgba(245,158,11,0.4)]" vid="59">
+                                    <i class="ph-duotone ph-eye text-3xl" vid="60"></i>
+                                </div>
+                                <div vid="61">
+                                    <div class="font-magical text-4xl text-white mb-1" vid="62">2M+</div>
+                                    <div class="text-[10px] uppercase tracking-widest text-amber-200 font-bold" vid="63">Impressions Generated</div>
+                                </div>
+                            </div>
+                            <div class="glass-card p-8 rounded-2xl flex items-center gap-6 border-l-2 border-l-fuchsia-500/50 bg-gradient-to-r from-fuchsia-500/5 to-transparent" vid="64">
+                                <div class="w-16 h-16 shrink-0 bg-fuchsia-900/30 rounded-full flex items-center justify-center text-fuchsia-400 shadow-[0_0_20px_-5px_rgba(217,70,239,0.4)]" vid="65">
+                                    <i class="ph-duotone ph-users-three text-3xl" vid="66"></i>
+                                </div>
+                                <div vid="67">
+                                    <div class="font-magical text-4xl text-white mb-1" vid="68">20k+</div>
+                                    <div class="text-[10px] uppercase tracking-widest text-fuchsia-200 font-bold" vid="69">Followers Engaged</div>
+                                </div>
+                            </div>
+                            <div class="glass-card p-8 rounded-2xl flex items-center gap-6 border-l-2 border-l-cyan-500/50 bg-gradient-to-r from-cyan-500/5 to-transparent" vid="70">
+                                <div class="w-16 h-16 shrink-0 bg-cyan-900/30 rounded-full flex items-center justify-center text-cyan-400 shadow-[0_0_20px_-5px_rgba(6,182,212,0.4)]" vid="71">
+                                    <i class="ph-duotone ph-cursor-click text-3xl" vid="72"></i>
+                                </div>
+                                <div vid="73">
+                                    <div class="font-magical text-4xl text-white mb-1" vid="74">30k+</div>
+                                    <div class="text-[10px] uppercase tracking-widest text-cyan-200 font-bold" vid="75">Annual Web Visits</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            
+            <section class="slide" data-theme="purple" data-ambient="bg-cyan-900/20,bg-purple-900/20" vid="76">
+                <div class="content-container" vid="77">
+                    <div class="text-center mb-16" vid="78">
+                        <span class="text-purple-400 uppercase tracking-[0.3em] text-xs font-bold mb-3 block" vid="79">Methodology</span>
+                        <h2 class="font-magical text-5xl md:text-6xl text-white mb-6" vid="80">The Grimoire</h2>
+                        <div class="w-24 h-1 bg-gradient-to-r from-transparent via-purple-500 to-transparent mx-auto opacity-50" vid="81"></div>
+                    </div>
+                    <div class="grid md:grid-cols-3 gap-8 h-full" vid="82">
+                        <div class="glass-card p-10 rounded-3xl flex flex-col h-full border-t-2 border-t-cyan-500/40 relative overflow-hidden group" vid="83">
+                            <div class="absolute top-0 right-0 w-40 h-40 bg-cyan-600/10 blur-[50px] rounded-full" vid="84"></div>
+                            <div class="w-16 h-16 rounded-2xl bg-cyan-950/40 border border-cyan-500/30 flex items-center justify-center mb-8 shadow-[0_0_20px_-5px_rgba(6,182,212,0.3)] group-hover:scale-110 transition-transform" vid="85">
+                                <i class="ph-duotone ph-chart-polar text-3xl text-cyan-300" vid="86"></i>
+                            </div>
+                            <h3 class="font-magical text-3xl text-white mb-3" vid="87">System Analysis</h3>
+                            <p class="text-cyan-400 text-xs uppercase tracking-widest mb-6 font-bold flex items-center gap-2" vid="88"><span class="w-4 h-px bg-cyan-500" vid="89"></span> Uncovering Mechanics</p>
+                            <ul class="space-y-4 pt-6 border-t border-white/10 text-base text-gray-300 flex-grow" vid="90">
+                                <li class="flex items-start gap-3" vid="91"><i class="ph-fill ph-sparkle text-cyan-500 text-sm mt-1" vid="92"></i> Search behavior analysis</li>
+                                <li class="flex items-start gap-3" vid="93"><i class="ph-fill ph-sparkle text-cyan-500 text-sm mt-1" vid="94"></i> Platform updates tracking</li>
+                                <li class="flex items-start gap-3" vid="95"><i class="ph-fill ph-sparkle text-cyan-500 text-sm mt-1" vid="96"></i> Audience pattern recognition</li>
+                            </ul>
+                        </div>
+                        <div class="glass-card p-10 rounded-3xl flex flex-col h-full border-t-2 border-t-purple-500/40 relative overflow-hidden group transform md:-translate-y-4 shadow-[0_20px_40px_-10px_rgba(168,85,247,0.2)]" vid="97">
+                            <div class="absolute top-0 right-0 w-40 h-40 bg-purple-600/10 blur-[50px] rounded-full" vid="98"></div>
+                            <div class="w-16 h-16 rounded-2xl bg-purple-950/40 border border-purple-500/30 flex items-center justify-center mb-8 shadow-[0_0_20px_-5px_rgba(168,85,247,0.3)] group-hover:scale-110 transition-transform" vid="99">
+                                <i class="ph-duotone ph-flask text-3xl text-purple-300" vid="100"></i>
+                            </div>
+                            <h3 class="font-magical text-3xl text-white mb-3" vid="101">Alchemy</h3>
+                            <p class="text-purple-400 text-xs uppercase tracking-widest mb-6 font-bold flex items-center gap-2" vid="102"><span class="w-4 h-px bg-purple-500" vid="103"></span> Transforming Narrative</p>
+                            <ul class="space-y-4 pt-6 border-t border-white/10 text-base text-gray-300 flex-grow" vid="104">
+                                <li class="flex items-start gap-3" vid="105"><i class="ph-fill ph-sparkle text-purple-500 text-sm mt-1" vid="106"></i> Narrative structuring</li>
+                                <li class="flex items-start gap-3" vid="107"><i class="ph-fill ph-sparkle text-purple-500 text-sm mt-1" vid="108"></i> Mission alignment</li>
+                                <li class="flex items-start gap-3" vid="109"><i class="ph-fill ph-sparkle text-purple-500 text-sm mt-1" vid="110"></i> Voice consistency</li>
+                            </ul>
+                        </div>
+                        <div class="glass-card p-10 rounded-3xl flex flex-col h-full border-t-2 border-t-amber-500/40 relative overflow-hidden group" vid="111">
+                            <div class="absolute top-0 right-0 w-40 h-40 bg-amber-600/10 blur-[50px] rounded-full" vid="112"></div>
+                            <div class="w-16 h-16 rounded-2xl bg-amber-950/40 border border-amber-500/30 flex items-center justify-center mb-8 shadow-[0_0_20px_-5px_rgba(245,158,11,0.3)] group-hover:scale-110 transition-transform" vid="113">
+                                <i class="ph-duotone ph-broadcast text-3xl text-amber-300" vid="114"></i>
+                            </div>
+                            <h3 class="font-magical text-3xl text-white mb-3" vid="115">Amplify</h3>
+                            <p class="text-amber-400 text-xs uppercase tracking-widest mb-6 font-bold flex items-center gap-2" vid="116"><span class="w-4 h-px bg-amber-500" vid="117"></span> Building Power</p>
+                            <ul class="space-y-4 pt-6 border-t border-white/10 text-base text-gray-300 flex-grow" vid="118">
+                                <li class="flex items-start gap-3" vid="119"><i class="ph-fill ph-sparkle text-amber-500 text-sm mt-1" vid="120"></i> Distribution systems</li>
+                                <li class="flex items-start gap-3" vid="121"><i class="ph-fill ph-sparkle text-amber-500 text-sm mt-1" vid="122"></i> Campaign architecture</li>
+                                <li class="flex items-start gap-3" vid="123"><i class="ph-fill ph-sparkle text-amber-500 text-sm mt-1" vid="124"></i> Workflow templates</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            
+            <section class="slide" data-theme="mixed" data-ambient="bg-purple-900/20,bg-cyan-900/10" vid="125">
+                <div class="content-container" vid="126">
+                    <div class="text-center mb-12" vid="127">
+                        <span class="text-purple-400 uppercase tracking-[0.3em] text-xs font-bold mb-3 block" vid="128">Offerings &amp; Incantations</span>
+                        <h2 class="font-magical text-5xl md:text-6xl text-white mb-6" vid="129">The Service Menu</h2>
+                    </div>
+                    <div class="service-grid" vid="130">
+                        
+                        <div onclick="showPage('page-monthly-content')" class="glass-card p-8 rounded-3xl flex gap-6 items-center border-l-4 border-l-purple-500/70 bg-gradient-to-r from-purple-500/5 to-transparent cursor-pointer hover:scale-[1.02] hover:shadow-[0_0_30px_rgba(168,85,247,0.3)] transition-all" vid="131">
+                            <div class="w-16 h-16 shrink-0 rounded-2xl bg-purple-950/40 border border-purple-500/30 flex items-center justify-center shadow-[0_0_20px_-5px_rgba(168,85,247,0.4)]" vid="132">
+                                <i class="ph-duotone ph-gear-six text-3xl text-purple-300" vid="133"></i>
+                            </div>
+                            <div vid="134">
+                                <h3 class="font-magical text-2xl text-white mb-1" vid="135">Monthly Content Engine</h3>
+                                <p class="font-serif-heading italic text-purple-300 text-sm mb-2" vid="136">Consistent momentum across the digital ether.</p>
+                                <p class="text-gray-400 text-sm font-light" vid="137">Creation, scheduling, and distribution across social, email, and web.</p>
+                            </div>
+                        </div>
+
+                        <div onclick="showPage('page-website-revamp')" class="glass-card p-8 rounded-3xl flex gap-6 items-center border-l-4 border-l-cyan-500/70 bg-gradient-to-r from-cyan-500/5 to-transparent cursor-pointer hover:scale-[1.02] hover:shadow-[0_0_30px_rgba(6,182,212,0.3)] transition-all" vid="138">
+                            <div class="w-16 h-16 shrink-0 rounded-2xl bg-cyan-950/40 border border-cyan-500/30 flex items-center justify-center shadow-[0_0_20px_-5px_rgba(6,182,212,0.4)]" vid="139">
+                                <i class="ph-duotone ph-layout text-3xl text-cyan-300" vid="140"></i>
+                            </div>
+                            <div vid="141">
+                                <h3 class="font-magical text-2xl text-white mb-1" vid="142">Website Revamp</h3>
+                                <p class="font-serif-heading italic text-cyan-300 text-sm mb-2" vid="143">A digital hearth for your mission to dwell.</p>
+                                <p class="text-gray-400 text-sm font-light" vid="144">Transform stagnant web presences into vibrant hubs of public education.</p>
+                            </div>
+                        </div>
+
+                        <div onclick="showPage('page-digital-metrics')" class="glass-card p-8 rounded-3xl flex gap-6 items-center border-l-4 border-l-amber-500/70 bg-gradient-to-r from-amber-500/5 to-transparent cursor-pointer hover:scale-[1.02] hover:shadow-[0_0_30px_rgba(245,158,11,0.3)] transition-all" vid="145">
+                            <div class="w-16 h-16 shrink-0 rounded-2xl bg-amber-950/40 border border-amber-500/30 flex items-center justify-center shadow-[0_0_20px_-5px_rgba(245,158,11,0.4)]" vid="146">
+                                <i class="ph-duotone ph-chart-line-up text-3xl text-amber-300" vid="147"></i>
+                            </div>
+                            <div vid="148">
+                                <h3 class="font-magical text-2xl text-white mb-1" vid="149">Digital Metrics Intensive</h3>
+                                <p class="font-serif-heading italic text-amber-300 text-sm mb-2" vid="150">Peering through the scrying glass of data.</p>
+                                <p class="text-gray-400 text-sm font-light" vid="151">Translate raw analytics into actionable wisdom for maximum reach.</p>
+                            </div>
+                        </div>
+
+                        <div onclick="showPage('page-brand-kit')" class="glass-card p-8 rounded-3xl flex gap-6 items-center border-l-4 border-l-fuchsia-500/70 bg-gradient-to-r from-fuchsia-500/5 to-transparent cursor-pointer hover:scale-[1.02] hover:shadow-[0_0_30px_rgba(217,70,239,0.3)] transition-all" vid="152">
+                            <div class="w-16 h-16 shrink-0 rounded-2xl bg-fuchsia-950/40 border border-fuchsia-500/30 flex items-center justify-center shadow-[0_0_20px_-5px_rgba(217,70,239,0.4)]" vid="153">
+                                <i class="ph-duotone ph-paint-brush text-3xl text-fuchsia-300" vid="154"></i>
+                            </div>
+                            <div vid="155">
+                                <h3 class="font-magical text-2xl text-white mb-1" vid="156">Brand Kit Revamp</h3>
+                                <p class="font-serif-heading italic text-fuchsia-300 text-sm mb-2" vid="157">Infusing your visual sigil with new life.</p>
+                                <p class="text-gray-400 text-sm font-light" vid="158">Reset and define the true name and face of your digital entity.</p>
+                            </div>
+                        </div>
+
+                        <div onclick="showPage('page-fractional-director')" class="glass-card p-8 rounded-3xl flex gap-8 items-center border-t-2 border-t-emerald-500/70 bg-emerald-900/10 service-full mt-2 relative overflow-hidden cursor-pointer hover:scale-[1.02] hover:shadow-[0_0_40px_rgba(16,185,129,0.4)] transition-all" vid="159">
+                            <div class="absolute right-0 top-0 w-64 h-full bg-gradient-to-l from-emerald-500/10 to-transparent blur-xl" vid="160"></div>
+                            <div class="w-20 h-20 shrink-0 rounded-2xl bg-emerald-950/60 border border-emerald-500/40 flex items-center justify-center shadow-[0_0_30px_-5px_rgba(16,185,129,0.5)] z-10" vid="161">
+                                <i class="ph-duotone ph-crown text-4xl text-emerald-300" vid="162"></i>
+                            </div>
+                            <div class="z-10" vid="163">
+                                <h3 class="font-magical text-3xl text-white mb-2" vid="164">Fractional Communications Director</h3>
+                                <p class="font-serif-heading italic text-emerald-300 text-lg mb-2" vid="165">Senior leadership within your inner circle.</p>
+                                <p class="text-gray-300 text-base font-light max-w-3xl" vid="166">High-level strategic oversight for organizations in transition or high-pressure advocacy moments. Senior expertise without the full-time overhead.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            
+            <section class="slide" data-theme="emerald" data-ambient="bg-emerald-900/30,bg-teal-900/20" vid="167">
+                <div class="content-container items-center relative" vid="168">
+                    <div class="glass-panel p-16 md:p-24 rounded-[4rem] relative overflow-hidden w-full max-w-5xl border-emerald-500/20" vid="169">
+                        <div class="absolute inset-0 bg-gradient-to-br from-emerald-900/30 via-transparent to-transparent pointer-events-none" vid="170"></div>
+                        <div class="absolute top-[-20%] right-[-10%] w-[500px] h-[500px] bg-emerald-500/10 blur-[100px] rounded-full pointer-events-none" vid="171"></div>
+                        <div class="relative z-10 flex flex-col items-center text-center" vid="172">
+                            <div class="flex items-center gap-3 mb-10" vid="173">
+                                <div class="p-3 bg-emerald-500/10 rounded-xl text-emerald-400 border border-emerald-500/30 shadow-[0_0_20px_rgba(16,185,129,0.2)]" vid="174">
+                                    <i class="ph-fill ph-plant text-2xl" vid="175"></i>
+                                </div>
+                                <span class="uppercase tracking-[0.3em] text-emerald-400 text-sm font-bold" vid="176">Field of Focus</span>
+                            </div>
+                            <h2 class="font-magical text-5xl md:text-7xl text-white mb-10 leading-tight" vid="177">
+                                Digital infrastructure for <br vid="178"><span class="text-emerald-300 drop-shadow-[0_0_20px_rgba(16,185,129,0.5)]" vid="179">public education</span>
+                            </h2>
+                            <p class="font-serif-heading text-2xl md:text-3xl text-emerald-100/90 leading-relaxed mb-16 italic max-w-3xl mx-auto" vid="180">
+                                "I work primarily in <span class="text-emerald-400 font-bold" vid="181">climate</span>, <span class="text-emerald-400 font-bold" vid="182">clean energy</span>, and <span class="text-emerald-400 font-bold" vid="183">policy</span> spaces where public understanding is foundational to any campaign."
+                            </p>
+                            <div class="grid grid-cols-2 md:grid-cols-4 gap-6 w-full" vid="184">
+                                <div class="bg-black/40 backdrop-blur-md p-8 rounded-3xl border border-emerald-500/20 hover:bg-emerald-900/30 transition-all group flex flex-col items-center justify-center" vid="185">
+                                    <i class="ph-duotone ph-globe-hemisphere-west text-5xl text-emerald-400 mb-4 group-hover:scale-110 transition-transform drop-shadow-[0_0_10px_rgba(52,211,153,0.5)]" vid="186"></i>
+                                    <div class="text-white font-magical text-xl tracking-wide" vid="187">Climate</div>
+                                </div>
+                                <div class="bg-black/40 backdrop-blur-md p-8 rounded-3xl border border-emerald-500/20 hover:bg-emerald-900/30 transition-all group flex flex-col items-center justify-center" vid="188">
+                                    <i class="ph-duotone ph-lightning text-5xl text-yellow-300 mb-4 group-hover:scale-110 transition-transform drop-shadow-[0_0_10px_rgba(253,224,71,0.5)]" vid="189"></i>
+                                    <div class="text-white font-magical text-xl tracking-wide" vid="190">Energy</div>
+                                </div>
+                                <div class="bg-black/40 backdrop-blur-md p-8 rounded-3xl border border-emerald-500/20 hover:bg-emerald-900/30 transition-all group flex flex-col items-center justify-center" vid="191">
+                                    <i class="ph-duotone ph-scales text-5xl text-blue-400 mb-4 group-hover:scale-110 transition-transform drop-shadow-[0_0_10px_rgba(96,165,250,0.5)]" vid="192"></i>
+                                    <div class="text-white font-magical text-xl tracking-wide" vid="193">Policy</div>
+                                </div>
+                                <div class="bg-black/40 backdrop-blur-md p-8 rounded-3xl border border-emerald-500/20 hover:bg-emerald-900/30 transition-all group flex flex-col items-center justify-center" vid="194">
+                                    <i class="ph-duotone ph-users-three text-5xl text-fuchsia-400 mb-4 group-hover:scale-110 transition-transform drop-shadow-[0_0_10px_rgba(232,121,249,0.5)]" vid="195"></i>
+                                    <div class="text-white font-magical text-xl tracking-wide" vid="196">Advocacy</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            
+            <section class="slide" data-theme="purple" data-ambient="bg-purple-900/30,bg-indigo-900/20" vid="197">
+                <div class="content-container items-center text-center" vid="198">
+                    <div class="flex items-center justify-center gap-6 mb-16 opacity-60" vid="199">
+                        <div class="h-px bg-purple-500 w-24" vid="200"></div>
+                        <i class="ph-fill ph-crystal-ball text-purple-400 text-5xl animate-pulse drop-shadow-[0_0_20px_rgba(168,85,247,0.8)]" vid="201"></i>
+                        <div class="h-px bg-purple-500 w-24" vid="202"></div>
+                    </div>
+                    <h2 class="font-magical text-6xl md:text-8xl text-white mb-8" vid="203">Ready to cast your spell?</h2>
+                    <p class="text-purple-200/80 mb-16 text-2xl max-w-2xl mx-auto font-light leading-relaxed" vid="204">
+                        Let's align your narrative, amplify your message, and find your people through the power of digital alchemy.
+                    </p>
+                    <a href="mailto:hello@algorithmwitch.com" class="inline-flex items-center justify-center px-12 py-6 bg-white text-purple-900 rounded-full font-bold tracking-widest uppercase text-lg hover:scale-105 transition-transform shadow-[0_0_60px_-10px_rgba(255,255,255,0.6)] mb-20 group relative overflow-hidden" vid="205">
+                        <div class="absolute inset-0 w-full h-full bg-gradient-to-r from-transparent via-purple-500/20 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700" vid="206"></div>
+                        <span class="relative z-10 flex items-center" vid="207">Summon Me <i class="ph-bold ph-arrow-right ml-3 text-xl group-hover:translate-x-1 transition-transform" vid="208"></i></span>
+                    </a>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    
+    <div id="page-fractional-director" class="page" vid="209">
+        <nav class="fixed top-0 w-full z-50 px-6 py-6" vid="210">
+            <div class="max-w-7xl mx-auto glass-panel rounded-full px-8 py-4 flex justify-between items-center" vid="211">
+                <a onclick="showPage('page-presentation')" class="cursor-pointer flex items-center gap-3 group text-gray-400 hover:text-white transition-colors" vid="212">
+                    <i class="ph-bold ph-caret-left" vid="213"></i>
+                    <span class="text-xs uppercase tracking-widest font-bold" vid="214">Back to Services</span>
+                </a>
+                <div class="font-magical text-lg text-white tracking-widest" vid="215">Algorithm Witch</div>
+                <div class="w-24" vid="216"></div> 
+            </div>
+        </nav>
+
+        <main class="relative z-10 w-full max-w-6xl mx-auto px-6 pt-40 pb-32" vid="217">
+            <header class="text-center mb-24 section-fade-up" vid="218">
+                <div class="w-28 h-28 mx-auto mb-8 rounded-full bg-emerald-950/40 border border-emerald-500/30 flex items-center justify-center emerald-glow" vid="219">
+                    <i class="ph-duotone ph-crown text-6xl text-emerald-300" vid="220"></i>
+                </div>
+                <h1 class="font-magical text-4xl md:text-6xl text-white mb-6" vid="221">Fractional <span class="text-emerald-400" vid="222">Director</span></h1>
+                <p class="font-serif-heading text-xl md:text-2xl text-emerald-100/70 italic max-w-2xl mx-auto" vid="223">
+                    "Senior leadership within your inner circle."
+                </p>
+            </header>
+
+            <div class="grid md:grid-cols-2 gap-8 mb-24 section-fade-up" vid="224">
+                <div class="glass-panel p-10 rounded-[2.5rem] border-t border-t-emerald-500/20" vid="225">
+                    <h3 class="font-magical text-xl text-emerald-300 mb-8 tracking-widest" vid="226">Engagement Structure</h3>
+                    <div class="space-y-6" vid="227">
+                        <div class="flex items-start gap-4" vid="228">
+                            <i class="ph-duotone ph-hourglass-medium text-2xl text-emerald-400" vid="229"></i>
+                            <div vid="230">
+                                <p class="text-white font-bold" vid="231">Monthly Bandwidth</p>
+                                <p class="text-gray-400 text-sm" vid="232">15-20 focused hours per month dedicated to strategic oversight and high-level execution.</p>
+                            </div>
+                        </div>
+                        <div class="flex items-start gap-4" vid="233">
+                            <i class="ph-duotone ph-calendar-check text-2xl text-emerald-400" vid="234"></i>
+                            <div vid="235">
+                                <p class="text-white font-bold" vid="236">Meeting Cadence</p>
+                                <p class="text-gray-400 text-sm" vid="237">Weekly 1:1 with Leadership, bi-weekly team syncs, and availability for emergency "war room" sessions.</p>
+                            </div>
+                        </div>
+                        <div class="flex items-start gap-4" vid="238">
+                            <i class="ph-duotone ph-clipboard-text text-2xl text-emerald-400" vid="239"></i>
+                            <div vid="240">
+                                <p class="text-white font-bold" vid="241">Core Deliverables</p>
+                                <p class="text-gray-400 text-sm" vid="242">Quarterly Comms Roadmap, Crisis Protocol Docs, Monthly Performance Audits, and Hiring Support.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="glass-panel p-10 rounded-[2.5rem] bg-emerald-950/10 border-emerald-500/10" vid="243">
+                    <h3 class="font-magical text-xl text-white mb-8 tracking-widest" vid="244">Is This Right For You?</h3>
+                    <ul class="space-y-4" vid="245">
+                        <li class="flex items-center gap-3 text-gray-300" vid="246">
+                            <i class="ph-bold ph-check-circle text-emerald-400" vid="247"></i>
+                            <span vid="248">You are scaling but not ready for a $200k/yr hire.</span>
+                        </li>
+                        <li class="flex items-center gap-3 text-gray-300" vid="249">
+                            <i class="ph-bold ph-check-circle text-emerald-400" vid="250"></i>
+                            <span vid="251">Your comms team is talented but lacks senior direction.</span>
+                        </li>
+                        <li class="flex items-center gap-3 text-gray-300" vid="252">
+                            <i class="ph-bold ph-check-circle text-emerald-400" vid="253"></i>
+                            <span vid="254">You are entering a high-stakes advocacy or launch phase.</span>
+                        </li>
+                        <li class="flex items-center gap-3 text-gray-300" vid="255">
+                            <i class="ph-bold ph-check-circle text-emerald-400" vid="256"></i>
+                            <span vid="257">Your message is getting lost in organizational noise.</span>
+                        </li>
+                        <li class="flex items-center gap-3 text-gray-300" vid="258">
+                            <i class="ph-bold ph-check-circle text-emerald-400" vid="259"></i>
+                            <span vid="260">You need a partner who understands both "soul" and "scale".</span>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="mb-24 section-fade-up" vid="261">
+                <h3 class="font-magical text-2xl text-center text-white mb-12 tracking-widest" vid="262">What I Bring to the Inner Circle</h3>
+                <div class="grid grid-cols-1 md:grid-cols-5 gap-4" vid="263">
+                    <div class="glass-card p-6 rounded-2xl text-center flex flex-col items-center" vid="264">
+                        <i class="ph-duotone ph-strategy text-3xl text-emerald-300 mb-4" vid="265"></i>
+                        <h4 class="font-magical text-xs text-white uppercase tracking-tighter mb-2" vid="266">Strategy</h4>
+                        <p class="text-[10px] text-gray-400 leading-relaxed" vid="267">Long-term visioning and tactical deployment.</p>
+                    </div>
+                    <div class="glass-card p-6 rounded-2xl text-center flex flex-col items-center" vid="268">
+                        <i class="ph-duotone ph-users-three text-3xl text-emerald-300 mb-4" vid="269"></i>
+                        <h4 class="font-magical text-xs text-white uppercase tracking-tighter mb-2" vid="270">Leadership</h4>
+                        <p class="text-[10px] text-gray-400 leading-relaxed" vid="271">Content governance and brand consistency.</p>
+                    </div>
+                    <div class="glass-card p-6 rounded-2xl text-center flex flex-col items-center" vid="272">
+                        <i class="ph-duotone ph-student text-3xl text-emerald-300 mb-4" vid="273"></i>
+                        <h4 class="font-magical text-xs text-white uppercase tracking-tighter mb-2" vid="274">Mentorship</h4>
+                        <p class="text-[10px] text-gray-400 leading-relaxed" vid="275">Upskilling your current internal team members.</p>
+                    </div>
+                    <div class="glass-card p-6 rounded-2xl text-center flex flex-col items-center" vid="276">
+                        <i class="ph-duotone ph-warning-diamond text-3xl text-emerald-300 mb-4" vid="277"></i>
+                        <h4 class="font-magical text-xs text-white uppercase tracking-tighter mb-2" vid="278">Crisis Comms</h4>
+                        <p class="text-[10px] text-gray-400 leading-relaxed" vid="279">Rapid response and reputation management.</p>
+                    </div>
+                    <div class="glass-card p-6 rounded-2xl text-center flex flex-col items-center" vid="280">
+                        <i class="ph-duotone ph-tree-structure text-3xl text-emerald-300 mb-4" vid="281"></i>
+                        <h4 class="font-magical text-xs text-white uppercase tracking-tighter mb-2" vid="282">Systems</h4>
+                        <p class="text-[10px] text-gray-400 leading-relaxed" vid="283">Building sustainable workflows and pipelines.</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="max-w-3xl mx-auto glass-panel p-12 rounded-[3rem] section-fade-up" vid="284">
+                <h2 class="font-magical text-3xl text-white text-center mb-10" vid="285">Apply for the <span class="text-emerald-400" vid="286">Council</span></h2>
+                <form class="space-y-6" vid="287">
+                    <div class="grid md:grid-cols-2 gap-6" vid="288">
+                        <div vid="289">
+                            <label class="block text-[10px] uppercase tracking-widest text-emerald-300 mb-2 ml-1" vid="290">Organization Name</label>
+                            <input type="text" class="w-full px-5 py-3 rounded-xl" placeholder="The Arcane Collective" vid="291">
+                        </div>
+                        <div vid="292">
+                            <label class="block text-[10px] uppercase tracking-widest text-emerald-300 mb-2 ml-1" vid="293">Your Role</label>
+                            <input type="text" class="w-full px-5 py-3 rounded-xl" placeholder="Executive Director" vid="294">
+                        </div>
+                    </div>
+                    <div vid="295">
+                        <label class="block text-[10px] uppercase tracking-widest text-emerald-300 mb-2 ml-1" vid="296">Primary Challenge</label>
+                        <textarea rows="4" class="w-full px-5 py-3 rounded-xl resize-none" placeholder="Describe the current barrier in your communication flow..." vid="297"></textarea>
+                    </div>
+                    <button type="submit" class="w-full py-5 bg-emerald-500 hover:bg-emerald-400 text-white font-bold rounded-full uppercase tracking-[0.2em] text-sm transition-all transform hover:scale-[1.02] shadow-[0_10px_30px_-5px_rgba(16,185,129,0.5)]" vid="298">
+                        Submit Application
+                    </button>
+                </form>
+            </div>
+        </main>
+    </div>
+
+    
+    <div id="page-brand-kit" class="page" vid="299">
+        <nav class="fixed top-0 w-full z-50 px-6 py-6" vid="300">
+            <div class="max-w-7xl mx-auto glass-panel rounded-full px-8 py-4 flex justify-between items-center" vid="301">
+                <a onclick="showPage('page-presentation')" class="cursor-pointer flex items-center gap-3 group" vid="302">
+                    <i class="ph-fill ph-sparkle text-cyan-400 text-2xl group-hover:rotate-12 transition-transform" vid="303"></i>
+                    <span class="font-magical text-xl text-white tracking-widest" vid="304">Algorithm Witch</span>
+                </a>
+                
+                <div class="hidden md:flex items-center gap-8 text-xs uppercase tracking-[0.2em] text-gray-300 font-medium" vid="305">
+                    <a onclick="showPage('page-presentation')" class="cursor-pointer flex items-center gap-2 hover:text-cyan-300 transition-colors" vid="306">
+                        <i class="ph ph-arrow-left" vid="307"></i> Back to Services
+                    </a>
+                </div>
+
+                <a href="#contact-brand-kit" class="hidden md:inline-flex items-center justify-center px-6 py-2 bg-cyan-500/10 hover:bg-cyan-500/20 border border-cyan-500/30 rounded-full text-xs uppercase tracking-widest text-white transition-all hover:scale-105" vid="308">
+                    Summon Me
+                </a>
+            </div>
+        </nav>
+
+        <main class="relative z-10 w-full max-w-6xl mx-auto px-6 pt-40 pb-32" vid="309">
+            <header class="text-center mb-12 section-fade-up" vid="310">
+                <div class="w-24 h-24 mx-auto mb-8 rounded-3xl bg-cyan-950/40 border border-cyan-500/30 flex items-center justify-center cyan-glow" vid="311">
+                    <i class="ph-duotone ph-swatches text-5xl text-cyan-300" vid="312"></i>
+                </div>
+                <h1 class="font-magical text-5xl md:text-7xl text-white mb-6" vid="313">Brand Kit <span class="text-cyan-400" vid="314">Revamp</span></h1>
+                <p class="font-serif-heading text-xl md:text-2xl text-cyan-100/70 italic max-w-2xl mx-auto mb-10" vid="315">
+                    "Reset. Defining the true name and face of your digital entity."
+                </p>
+                <div class="inline-block px-4 py-2 rounded-full bg-cyan-950/30 border border-cyan-500/20" vid="316">
+                    <span class="text-cyan-400 text-xs font-bold uppercase tracking-[0.2em]" vid="317">Messaging, Visual &amp; Positioning</span>
+                </div>
+            </header>
+
+            <section class="mb-32 section-fade-up" vid="318">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-8" vid="319">
+                    <div class="glass-card p-10 rounded-3xl border-t border-t-cyan-500/30 h-full" vid="320">
+                        <div class="flex items-center gap-4 mb-8" vid="321">
+                            <div class="w-12 h-12 rounded-xl bg-cyan-500/10 flex items-center justify-center" vid="322">
+                                <i class="ph-duotone ph-cubes text-2xl text-cyan-400" vid="323"></i>
+                            </div>
+                            <h3 class="font-magical text-2xl text-white" vid="324">Core Foundation</h3>
+                        </div>
+                        <ul class="space-y-6" vid="325">
+                            <li class="flex items-start gap-4" vid="326">
+                                <i class="ph-fill ph-check-circle text-cyan-400 text-xl mt-1 shrink-0" vid="327"></i>
+                                <div vid="328"><span class="text-white font-medium block mb-1" vid="329">Core Narrative Positioning</span><span class="text-sm text-gray-400" vid="330">Defining the heart of your story and mission.</span></div>
+                            </li>
+                            <li class="flex items-start gap-4" vid="331">
+                                <i class="ph-fill ph-check-circle text-cyan-400 text-xl mt-1 shrink-0" vid="332"></i>
+                                <div vid="333"><span class="text-white font-medium block mb-1" vid="334">Messaging Pillars</span><span class="text-sm text-gray-400" vid="335">Key themes that support your brand promise.</span></div>
+                            </li>
+                            <li class="flex items-start gap-4" vid="336">
+                                <i class="ph-fill ph-check-circle text-cyan-400 text-xl mt-1 shrink-0" vid="337"></i>
+                                <div vid="338"><span class="text-white font-medium block mb-1" vid="339">Voice &amp; Tone Guidelines</span><span class="text-sm text-gray-400" vid="340">How you speak to your audience across channels.</span></div>
+                            </li>
+                            <li class="flex items-start gap-4" vid="341">
+                                <i class="ph-fill ph-check-circle text-cyan-400 text-xl mt-1 shrink-0" vid="342"></i>
+                                <div vid="343"><span class="text-white font-medium block mb-1" vid="344">Policy Positioning</span><span class="text-sm text-gray-400" vid="345">Stance on industry issues and ethical standards.</span></div>
+                            </li>
+                            <li class="flex items-start gap-4" vid="346">
+                                <i class="ph-fill ph-check-circle text-cyan-400 text-xl mt-1 shrink-0" vid="347"></i>
+                                <div vid="348"><span class="text-white font-medium block mb-1" vid="349">Visual Direction</span><span class="text-sm text-gray-400" vid="350">Logo, graphics, color palette, and typography selection.</span></div>
+                            </li>
+                            <li class="flex items-start gap-4" vid="351">
+                                <i class="ph-fill ph-check-circle text-cyan-400 text-xl mt-1 shrink-0" vid="352"></i>
+                                <div vid="353"><span class="text-white font-medium block mb-1" vid="354">Digital Launch Toolkit</span><span class="text-sm text-gray-400" vid="355">Assets and sample posts for your reveal.</span></div>
+                            </li>
+                        </ul>
+                    </div>
+
+                    <div class="glass-card gold-hover p-10 rounded-3xl border-t border-t-[#fde047]/30 h-full" vid="356">
+                        <div class="flex items-center gap-4 mb-8" vid="357">
+                            <div class="w-12 h-12 rounded-xl bg-[#fde047]/10 flex items-center justify-center" vid="358">
+                                <i class="ph-duotone ph-sparkle text-2xl text-[#fde047]" vid="359"></i>
+                            </div>
+                            <h3 class="font-magical text-2xl text-white" vid="360">Optional Add-Ons</h3>
+                        </div>
+                        <ul class="space-y-6" vid="361">
+                            <li class="flex items-start gap-4 group" vid="362">
+                                <div class="w-6 h-6 rounded-full border border-[#fde047]/40 flex items-center justify-center shrink-0 mt-1 group-hover:bg-[#fde047]/10 transition-colors" vid="363"><i class="ph-bold ph-plus text-[#fde047] text-xs" vid="364"></i></div>
+                                <div vid="365"><span class="text-white font-medium block mb-1" vid="366">Visual Direction Guidance</span><span class="text-sm text-gray-400" vid="367">Extended consultation on implementing your new look.</span></div>
+                            </li>
+                            <li class="flex items-start gap-4 group" vid="368">
+                                <div class="w-6 h-6 rounded-full border border-[#fde047]/40 flex items-center justify-center shrink-0 mt-1 group-hover:bg-[#fde047]/10 transition-colors" vid="369"><i class="ph-bold ph-plus text-[#fde047] text-xs" vid="370"></i></div>
+                                <div vid="371"><span class="text-white font-medium block mb-1" vid="372">Bio &amp; Boilerplate Rewrites</span><span class="text-sm text-gray-400" vid="373">Professional bios adapted for different platforms.</span></div>
+                            </li>
+                            <li class="flex items-start gap-4 group" vid="374">
+                                <div class="w-6 h-6 rounded-full border border-[#fde047]/40 flex items-center justify-center shrink-0 mt-1 group-hover:bg-[#fde047]/10 transition-colors" vid="375"><i class="ph-bold ph-plus text-[#fde047] text-xs" vid="376"></i></div>
+                                <div vid="377"><span class="text-white font-medium block mb-1" vid="378">LinkedIn Profile Optimization</span><span class="text-sm text-gray-400" vid="379">Strategic updates to leadership profiles.</span></div>
+                            </li>
+                            <li class="flex items-start gap-4 group" vid="380">
+                                <div class="w-6 h-6 rounded-full border border-[#fde047]/40 flex items-center justify-center shrink-0 mt-1 group-hover:bg-[#fde047]/10 transition-colors" vid="381"><i class="ph-bold ph-plus text-[#fde047] text-xs" vid="382"></i></div>
+                                <div vid="383"><span class="text-white font-medium block mb-1" vid="384">Tagline Development</span><span class="text-sm text-gray-400" vid="385">Catchy, memorable phrases that stick.</span></div>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </section>
+
+            <section class="mb-32 section-fade-up" vid="386">
+                <h2 class="font-magical text-2xl text-white mb-16 text-center uppercase tracking-widest" vid="387">The Evolution Process</h2>
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-8 relative" vid="388">
+                    <div class="flex flex-col items-center text-center group" vid="389">
+                        <div class="w-12 h-12 rounded-full border border-cyan-500/50 flex items-center justify-center font-magical text-cyan-400 mb-6 group-hover:bg-cyan-500/20 transition-all relative z-10 bg-[#030014]" vid="390">01</div>
+                        <h3 class="font-magical text-white mb-3 text-lg" vid="391">Audit</h3>
+                        <p class="text-xs text-gray-500 leading-relaxed px-4" vid="392">Review of current brand assets and identifying positioning gaps.</p>
+                    </div>
+                    <div class="flex flex-col items-center text-center group" vid="393">
+                        <div class="w-12 h-12 rounded-full border border-cyan-500/50 flex items-center justify-center font-magical text-cyan-400 mb-6 group-hover:bg-cyan-500/20 transition-all relative z-10 bg-[#030014]" vid="394">02</div>
+                        <h3 class="font-magical text-white mb-3 text-lg" vid="395">Define</h3>
+                        <p class="text-xs text-gray-500 leading-relaxed px-4" vid="396">Establishing core narrative, values, and distinct voice.</p>
+                    </div>
+                    <div class="flex flex-col items-center text-center group" vid="397">
+                        <div class="w-12 h-12 rounded-full border border-cyan-500/50 flex items-center justify-center font-magical text-cyan-400 mb-6 group-hover:bg-cyan-500/20 transition-all relative z-10 bg-[#030014]" vid="398">03</div>
+                        <h3 class="font-magical text-white mb-3 text-lg" vid="399">Design</h3>
+                        <p class="text-xs text-gray-500 leading-relaxed px-4" vid="400">Crafting visual identity, logos, and aesthetic direction.</p>
+                    </div>
+                    <div class="flex flex-col items-center text-center group" vid="401">
+                        <div class="w-12 h-12 rounded-full border border-cyan-500/50 flex items-center justify-center font-magical text-cyan-400 mb-6 group-hover:bg-cyan-500/20 transition-all relative z-10 bg-[#030014]" vid="402">04</div>
+                        <h3 class="font-magical text-white mb-3 text-lg" vid="403">Launch</h3>
+                        <p class="text-xs text-gray-500 leading-relaxed px-4" vid="404">Delivering the complete kit and digital toolkit for rollout.</p>
+                    </div>
+                    <div class="hidden md:block absolute top-6 left-0 w-full h-px bg-gradient-to-r from-transparent via-cyan-900 to-transparent z-0" vid="405"></div>
+                </div>
+            </section>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-12 mb-32 section-fade-up" vid="406">
+                <div class="glass-card p-12 rounded-[2.5rem] border-l-4 border-l-cyan-500 h-full" vid="407">
+                    <h2 class="font-magical text-2xl text-white mb-8" vid="408">Who It's For</h2>
+                    <ul class="space-y-6 text-gray-300" vid="409">
+                        <li class="flex items-start gap-4" vid="410"><i class="ph-fill ph-diamond text-cyan-400 mt-1 text-xl" vid="411"></i> <span vid="412">Organizations at a brand crossroads needing clarity.</span></li>
+                        <li class="flex items-start gap-4" vid="413"><i class="ph-fill ph-diamond text-cyan-400 mt-1 text-xl" vid="414"></i> <span vid="415">Leaders whose identity has outgrown their visuals.</span></li>
+                        <li class="flex items-start gap-4" vid="416"><i class="ph-fill ph-diamond text-cyan-400 mt-1 text-xl" vid="417"></i> <span vid="418">Nonprofits launching new campaigns or pivoting focus.</span></li>
+                        <li class="flex items-start gap-4" vid="419"><i class="ph-fill ph-diamond text-cyan-400 mt-1 text-xl" vid="420"></i> <span vid="421">Founders ready to show up with full authority.</span></li>
+                    </ul>
+                </div>
+                <div class="flex flex-col gap-6 h-full justify-center" vid="422">
+                    <div class="glass-card p-8 rounded-3xl border border-white/5 hover:border-cyan-500/20" vid="423">
+                        <div class="flex justify-between items-center mb-4" vid="424">
+                            <span class="font-magical text-cyan-400 uppercase text-xs tracking-widest" vid="425">The Naming</span>
+                            <span class="font-magical text-white text-xl" vid="426">$3,200+</span>
+                        </div>
+                        <p class="text-sm text-gray-400" vid="427">Messaging and positioning foundation only. No visual direction included.</p>
+                    </div>
+                    <div class="glass-card p-8 rounded-3xl border border-cyan-500/40 cyan-glow relative" vid="428">
+                        <div class="absolute -top-3 right-6 bg-cyan-500 text-[#030014] text-[10px] font-bold uppercase tracking-wider px-3 py-1 rounded-full" vid="429">Recommended</div>
+                        <div class="flex justify-between items-center mb-4" vid="430">
+                            <span class="font-magical text-cyan-400 uppercase text-xs tracking-widest" vid="431">The Full Transmutation</span>
+                            <span class="font-magical text-white text-xl" vid="432">$6,500+</span>
+                        </div>
+                        <p class="text-sm text-gray-400" vid="433">Complete brand kit with all core deliverables, visuals, and launch assets.</p>
+                    </div>
+                </div>
+            </div>
+
+            <footer id="contact-brand-kit" class="max-w-4xl mx-auto text-center pt-20 relative section-fade-up" vid="434">
+                <div class="flex items-center justify-center gap-4 mb-12 opacity-40" vid="435">
+                    <div class="h-px bg-cyan-500 w-16" vid="436"></div>
+                    <i class="ph-fill ph-sparkle text-cyan-400 text-2xl animate-pulse" vid="437"></i>
+                    <div class="h-px bg-cyan-500 w-16" vid="438"></div>
+                </div>
+                <h2 class="font-magical text-4xl text-white mb-8" vid="439">Ready to Reclaim Your Name?</h2>
+                <a href="mailto:hello@algorithmwitch.com" class="inline-flex items-center justify-center px-10 py-5 bg-white text-cyan-900 rounded-full font-bold tracking-widest uppercase text-sm hover:scale-105 transition-transform shadow-[0_0_50px_-10px_rgba(6,182,212,0.4)] group" vid="440">
+                    Summon Me <i class="ph-bold ph-arrow-right ml-2 group-hover:translate-x-1 transition-transform" vid="441"></i>
+                </a>
+            </footer>
+        </main>
+    </div>
+
+    
+    <div id="page-monthly-content" class="page" vid="442">
+        <nav class="fixed top-0 w-full z-50 px-6 py-6" vid="443">
+            <div class="max-w-7xl mx-auto glass-panel rounded-full px-8 py-4 flex justify-between items-center" vid="444">
+                <a onclick="showPage('page-presentation')" class="cursor-pointer flex items-center gap-2 group text-xs uppercase tracking-widest text-purple-300 hover:text-white transition-colors" vid="445">
+                    <i class="ph-bold ph-arrow-left group-hover:-translate-x-1 transition-transform" vid="446"></i> Back to Services
+                </a>
+                <a onclick="showPage('page-presentation')" class="cursor-pointer flex items-center gap-3" vid="447">
+                    <i class="ph-fill ph-sparkle text-purple-400 text-xl" vid="448"></i>
+                    <span class="font-magical text-lg text-white tracking-widest" vid="449">Algorithm Witch</span>
+                </a>
+                <a href="#tiers-monthly-content" class="hidden md:inline-flex px-6 py-2 bg-purple-500/10 border border-purple-500/30 rounded-full text-xs uppercase tracking-widest text-white transition-all hover:bg-purple-500/20" vid="450">
+                    View Pricing
+                </a>
+            </div>
+        </nav>
+
+        <main class="relative z-10 w-full max-w-6xl mx-auto px-6 pt-40 pb-32" vid="451">
+            <section class="text-center mb-24 section-fade-up" vid="452">
+                <div class="w-32 h-32 mx-auto rounded-[2rem] bg-purple-950/40 border border-purple-500/30 flex items-center justify-center shadow-[0_0_60px_-10px_rgba(168,85,247,0.5)] mb-10" vid="453">
+                    <i class="ph-duotone ph-gear-six text-6xl text-purple-300 animate-[spin_10s_linear_infinite]" vid="454"></i>
+                </div>
+                <h1 class="font-magical text-5xl md:text-7xl text-white mb-6" vid="455">Monthly <span class="text-gradient-gold" vid="456">Content</span> Engine</h1>
+                <p class="font-serif-heading text-2xl md:text-3xl text-purple-100/70 italic max-w-3xl mx-auto" vid="457">
+                    "Consistent momentum across the digital ether."
+                </p>
+            </section>
+
+            <section class="mb-32 section-fade-up" vid="458">
+                <h2 class="font-magical text-3xl text-white text-center mb-12" vid="459">What's Included</h2>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6" vid="460">
+                    <div class="glass-card p-8 rounded-3xl border-t border-t-purple-500/20" vid="461">
+                        <i class="ph-duotone ph-calendar-blank text-3xl text-purple-400 mb-4" vid="462"></i>
+                        <h3 class="font-magical text-xl text-white mb-2" vid="463">Content Calendar</h3>
+                        <p class="text-gray-400 text-sm leading-relaxed" vid="464">A 30-day architectural roadmap of your digital presence, aligned with your campaign cycles.</p>
+                    </div>
+                    <div class="glass-card p-8 rounded-3xl border-t border-t-purple-500/20" vid="465">
+                        <i class="ph-duotone ph-share-network text-3xl text-purple-400 mb-4" vid="466"></i>
+                        <h3 class="font-magical text-xl text-white mb-2" vid="467">Social Posts &amp; Graphics</h3>
+                        <p class="text-gray-400 text-sm leading-relaxed" vid="468">Platform-optimized assets and copy that spark engagement and community dialogue.</p>
+                    </div>
+                    <div class="glass-card p-8 rounded-3xl border-t border-t-purple-500/20" vid="469">
+                        <i class="ph-duotone ph-envelope-open text-3xl text-purple-400 mb-4" vid="470"></i>
+                        <h3 class="font-magical text-xl text-white mb-2" vid="471">Email Newsletter</h3>
+                        <p class="text-gray-400 text-sm leading-relaxed" vid="472">Deep-dive storytelling delivered straight to your community's inner sanctum: the inbox.</p>
+                    </div>
+                    <div class="glass-card p-8 rounded-3xl border-t border-t-purple-500/20" vid="473">
+                        <i class="ph-duotone ph-chart-bar text-3xl text-purple-400 mb-4" vid="474"></i>
+                        <h3 class="font-magical text-xl text-white mb-2" vid="475">Analytics Report</h3>
+                        <p class="text-gray-400 text-sm leading-relaxed" vid="476">Monthly scrying of the data to see what resonated and how to refine our next incantation.</p>
+                    </div>
+                    <div class="glass-card p-8 rounded-3xl border-t border-t-purple-500/20" vid="477">
+                        <i class="ph-duotone ph-clock text-3xl text-purple-400 mb-4" vid="478"></i>
+                        <h3 class="font-magical text-xl text-white mb-2" vid="479">Platform Scheduling</h3>
+                        <p class="text-gray-400 text-sm leading-relaxed" vid="480">Full automation of your posts, ensuring your message lands at the precise hour of peak influence.</p>
+                    </div>
+                    <div class="glass-card p-8 rounded-3xl border-t border-t-purple-500/20" vid="481">
+                        <i class="ph-duotone ph-users-three text-3xl text-purple-400 mb-4" vid="482"></i>
+                        <h3 class="font-magical text-xl text-white mb-2" vid="483">Strategy Call</h3>
+                        <p class="text-gray-400 text-sm leading-relaxed" vid="484">A face-to-face monthly synchronization to align our digital alchemy with your real-world goals.</p>
+                    </div>
+                </div>
+            </section>
+
+            <section class="mb-32 section-fade-up flex flex-col md:flex-row gap-12 items-center" vid="485">
+                <div class="flex-1 space-y-6" vid="486">
+                    <h2 class="font-magical text-4xl text-white" vid="487">Who It's For</h2>
+                    <div class="space-y-4" vid="488">
+                        <div class="flex gap-4 items-start" vid="489"><i class="ph-bold ph-check-circle text-purple-400 mt-1" vid="490"></i><p class="text-gray-300" vid="491"><strong class="text-white" vid="492">Overextended Advocacy Leads:</strong> Organizations with a powerful message but no time to feed the digital beast.</p></div>
+                        <div class="flex gap-4 items-start" vid="493"><i class="ph-bold ph-check-circle text-purple-400 mt-1" vid="494"></i><p class="text-gray-300" vid="495"><strong class="text-white" vid="496">Public Intellectuals:</strong> Thinkers and writers who need their long-form ideas distilled into bite-sized magic.</p></div>
+                        <div class="flex gap-4 items-start" vid="497"><i class="ph-bold ph-check-circle text-purple-400 mt-1" vid="498"></i><p class="text-gray-300" vid="499"><strong class="text-white" vid="500">Purpose-Driven Brands:</strong> Companies that want to move away from "content noise" and toward community building.</p></div>
+                    </div>
+                </div>
+                <div class="flex-1 glass-card p-1 rounded-[3rem]" vid="501">
+                    <img src="https://images.unsplash.com/photo-1635311029177-3363327d6d9d?auto=format&amp;fit=crop&amp;q=80&amp;w=800" alt="Mystical Workspace" class="rounded-[2.8rem] opacity-60 mix-blend-lighten" vid="502">
+                </div>
+            </section>
+
+            <section id="tiers-monthly-content" class="mb-32 section-fade-up" vid="503">
+                <h2 class="font-magical text-3xl text-white text-center mb-12" vid="504">Pricing Tiers</h2>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-8" vid="505">
+                    <div class="glass-card p-10 rounded-[2.5rem] flex flex-col border-t border-t-gray-500/20" vid="506">
+                        <span class="text-gray-400 text-xs uppercase tracking-widest mb-2" vid="507">Starter</span>
+                        <h3 class="font-magical text-2xl text-white mb-4" vid="508">The Spark</h3>
+                        <div class="text-4xl font-serif-heading text-white mb-8" vid="509">$1,500 <span class="text-sm text-gray-500" vid="510">/mo</span></div>
+                        <ul class="space-y-4 mb-10 text-sm text-gray-300 flex-grow" vid="511">
+                            <li class="flex items-center gap-2" vid="512"><i class="ph-bold ph-sparkle text-purple-400" vid="513"></i> 2 Social Posts Weekly</li>
+                            <li class="flex items-center gap-2" vid="514"><i class="ph-bold ph-sparkle text-purple-400" vid="515"></i> 1 Monthly Newsletter</li>
+                            <li class="flex items-center gap-2" vid="516"><i class="ph-bold ph-sparkle text-purple-400" vid="517"></i> Basic Analytics</li>
+                        </ul>
+                        <a href="#contact-monthly-content" class="w-full py-4 text-center border border-white/10 rounded-full text-xs uppercase tracking-widest text-white hover:bg-white/5 transition-all" vid="518">Select Spark</a>
+                    </div>
+                    <div class="glass-card p-10 rounded-[2.5rem] flex flex-col border-t-2 border-t-purple-500 relative transform scale-105" vid="519">
+                        <div class="absolute -top-4 left-1/2 -translate-x-1/2 bg-purple-500 text-[10px] uppercase font-bold tracking-tighter px-4 py-1 rounded-full text-white" vid="520">Most Popular</div>
+                        <span class="text-purple-300 text-xs uppercase tracking-widest mb-2" vid="521">Growth</span>
+                        <h3 class="font-magical text-2xl text-white mb-4" vid="522">The Flame</h3>
+                        <div class="text-4xl font-serif-heading text-white mb-8" vid="523">$3,200 <span class="text-sm text-gray-500" vid="524">/mo</span></div>
+                        <ul class="space-y-4 mb-10 text-sm text-gray-200 flex-grow" vid="525">
+                            <li class="flex items-center gap-2" vid="526"><i class="ph-bold ph-sparkle text-purple-400" vid="527"></i> 4 Social Posts Weekly</li>
+                            <li class="flex items-center gap-2" vid="528"><i class="ph-bold ph-sparkle text-purple-400" vid="529"></i> Bi-Weekly Newsletter</li>
+                            <li class="flex items-center gap-2" vid="530"><i class="ph-bold ph-sparkle text-purple-400" vid="531"></i> Full Monthly Reporting</li>
+                            <li class="flex items-center gap-2" vid="532"><i class="ph-bold ph-sparkle text-purple-400" vid="533"></i> Strategy Sync (45m)</li>
+                        </ul>
+                        <a href="#contact-monthly-content" class="w-full py-4 text-center bg-purple-500 rounded-full text-xs uppercase tracking-widest font-bold text-white shadow-[0_0_30px_-5px_rgba(168,85,247,0.5)] hover:scale-105 transition-all" vid="534">Ignite Now</a>
+                    </div>
+                    <div class="glass-card p-10 rounded-[2.5rem] flex flex-col border-t border-t-yellow-500/20" vid="535">
+                        <span class="text-yellow-200 text-xs uppercase tracking-widest mb-2" vid="536">Premium</span>
+                        <h3 class="font-magical text-2xl text-white mb-4" vid="537">Full Coven</h3>
+                        <div class="text-4xl font-serif-heading text-white mb-8" vid="538">$5,500 <span class="text-sm text-gray-500" vid="539">/mo</span></div>
+                        <ul class="space-y-4 mb-10 text-sm text-gray-300 flex-grow" vid="540">
+                            <li class="flex items-center gap-2" vid="541"><i class="ph-bold ph-sparkle text-yellow-400" vid="542"></i> Daily Social Presence</li>
+                            <li class="flex items-center gap-2" vid="543"><i class="ph-bold ph-sparkle text-yellow-400" vid="544"></i> Weekly Newsletter &amp; Blog</li>
+                            <li class="flex items-center gap-2" vid="545"><i class="ph-bold ph-sparkle text-yellow-400" vid="546"></i> Multi-Platform Management</li>
+                            <li class="flex items-center gap-2" vid="547"><i class="ph-bold ph-sparkle text-yellow-400" vid="548"></i> Priority Strategy (Weekly)</li>
+                        </ul>
+                        <a href="#contact-monthly-content" class="w-full py-4 text-center border border-yellow-500/30 rounded-full text-xs uppercase tracking-widest text-white hover:bg-yellow-500/10 transition-all" vid="549">Join the Coven</a>
+                    </div>
+                </div>
+            </section>
+
+            <section class="mb-32 section-fade-up max-w-3xl mx-auto" vid="550">
+                <h2 class="font-magical text-3xl text-white text-center mb-12" vid="551">Common Enquiries</h2>
+                <div class="space-y-4" vid="552">
+                    <details class="glass-card rounded-2xl p-2 group" vid="553">
+                        <summary class="flex items-center justify-between p-4 cursor-pointer list-none font-serif-heading text-lg text-white" vid="554">What platforms do you manage?<i class="ph-bold ph-caret-down text-purple-400 transition-transform duration-300" vid="555"></i></summary>
+                        <div class="px-4 pb-4 text-gray-400 text-sm leading-relaxed" vid="556">We specialize in platforms where narrative and community thrive: LinkedIn, Instagram, Threads, and X. For the Coven tier, we also manage email platforms (Substack, Mailchimp) and web-based journals.</div>
+                    </details>
+                    <details class="glass-card rounded-2xl p-2 group" vid="557">
+                        <summary class="flex items-center justify-between p-4 cursor-pointer list-none font-serif-heading text-lg text-white" vid="558">How much of my time will this require?<i class="ph-bold ph-caret-down text-purple-400 transition-transform duration-300" vid="559"></i></summary>
+                        <div class="px-4 pb-4 text-gray-400 text-sm leading-relaxed" vid="560">After our initial alignment session, we aim to take 90% of the workload off your plate. We'll need about 60 minutes of your time per month for strategy and approvals.</div>
+                    </details>
+                    <details class="glass-card rounded-2xl p-2 group" vid="561">
+                        <summary class="flex items-center justify-between p-4 cursor-pointer list-none font-serif-heading text-lg text-white" vid="562">Is there a minimum commitment?<i class="ph-bold ph-caret-down text-purple-400 transition-transform duration-300" vid="563"></i></summary>
+                        <div class="px-4 pb-4 text-gray-400 text-sm leading-relaxed" vid="564">Alchemy takes time to brew. We require a 3-month initial commitment to allow the algorithms to recognize and reward our consistent presence.</div>
+                    </details>
+                </div>
+            </section>
+
+            <footer id="contact-monthly-content" class="max-w-4xl mx-auto text-center pt-20 relative section-fade-up" vid="565">
+                <div class="flex items-center justify-center gap-4 mb-12 opacity-40" vid="566">
+                    <div class="h-px bg-purple-500 w-16" vid="567"></div>
+                    <i class="ph-fill ph-crystal-ball text-purple-400 text-2xl animate-pulse" vid="568"></i>
+                    <div class="h-px bg-purple-500 w-16" vid="569"></div>
+                </div>
+                <h2 class="font-magical text-4xl text-white mb-8" vid="570">Ready to start the engine?</h2>
+                <a href="mailto:hello@algorithmwitch.com" class="inline-flex items-center justify-center px-10 py-5 bg-white text-purple-900 rounded-full font-bold tracking-widest uppercase text-sm hover:scale-105 transition-transform shadow-[0_0_50px_-10px_rgba(255,255,255,0.4)] mb-20 group" vid="571">
+                    Summon Me <i class="ph-bold ph-arrow-right ml-2 group-hover:translate-x-1 transition-transform" vid="572"></i>
+                </a>
+            </footer>
+        </main>
+    </div>
+
+    
+    <div id="page-website-revamp" class="page" vid="573">
+        <nav class="fixed top-0 w-full z-50 px-6 py-6" vid="574">
+            <div class="max-w-7xl mx-auto glass-panel rounded-full px-8 py-4 flex justify-between items-center" vid="575">
+                <a onclick="showPage('page-presentation')" class="cursor-pointer flex items-center gap-3 group" vid="576">
+                    <i class="ph-fill ph-sparkle text-cyan-400 text-2xl group-hover:rotate-12 transition-transform" vid="577"></i>
+                    <span class="font-magical text-xl text-white tracking-widest" vid="578">Algorithm Witch</span>
+                </a>
+                
+                <div class="hidden md:flex items-center gap-8 text-xs uppercase tracking-[0.2em] text-gray-300 font-medium" vid="579">
+                    <a onclick="showPage('page-presentation')" class="cursor-pointer flex items-center gap-2 hover:text-cyan-300 transition-colors" vid="580">
+                        <i class="ph ph-arrow-left" vid="581"></i> Back to Services
+                    </a>
+                </div>
+
+                <a href="#contact-website-revamp" class="hidden md:inline-flex items-center justify-center px-6 py-2 bg-cyan-500/10 hover:bg-cyan-500/20 border border-cyan-500/30 rounded-full text-xs uppercase tracking-widest text-white transition-all hover:scale-105" vid="582">
+                    Summon Me
+                </a>
+            </div>
+        </nav>
+
+        <main class="relative z-10 w-full max-w-6xl mx-auto px-6 pt-40 pb-32" vid="583">
+            <header class="text-center mb-24 section-fade-up" vid="584">
+                <div class="w-24 h-24 mx-auto mb-8 rounded-3xl bg-cyan-950/40 border border-cyan-500/30 flex items-center justify-center cyan-glow" vid="585">
+                    <i class="ph-duotone ph-layout text-5xl text-cyan-300" vid="586"></i>
+                </div>
+                <h1 class="font-magical text-5xl md:text-7xl text-white mb-6" vid="587">Website <span class="text-cyan-400" vid="588">Revamp</span></h1>
+                <p class="font-serif-heading text-xl md:text-2xl text-cyan-100/70 italic max-w-2xl mx-auto" vid="589">
+                    "A digital hearth for your mission to dwell."
+                </p>
+            </header>
+
+            <section class="mb-32 section-fade-up" vid="590">
+                <h2 class="font-magical text-2xl text-white mb-12 text-center uppercase tracking-widest" vid="591">The Deliverables</h2>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6" vid="592">
+                    <div class="glass-card p-8 rounded-3xl border-t border-t-cyan-500/20" vid="593">
+                        <i class="ph-duotone ph-magnifying-glass text-3xl text-cyan-400 mb-4" vid="594"></i>
+                        <h3 class="font-magical text-lg text-white mb-2" vid="595">UX Audit</h3>
+                        <p class="text-sm text-gray-400 leading-relaxed" vid="596">Deep analysis of current user paths to identify where engagement is lost and opportunities reside.</p>
+                    </div>
+                    <div class="glass-card p-8 rounded-3xl border-t border-t-cyan-500/20" vid="597">
+                        <i class="ph-duotone ph-tree-structure text-3xl text-cyan-400 mb-4" vid="598"></i>
+                        <h3 class="font-magical text-lg text-white mb-2" vid="599">Sitemap Alchemy</h3>
+                        <p class="text-sm text-gray-400 leading-relaxed" vid="600">Strategic reorganization of your site architecture for intuitive navigation and clarity.</p>
+                    </div>
+                    <div class="glass-card p-8 rounded-3xl border-t border-t-cyan-500/20" vid="601">
+                        <i class="ph-duotone ph-feather text-3xl text-cyan-400 mb-4" vid="602"></i>
+                        <h3 class="font-magical text-lg text-white mb-2" vid="603">Copy Editing</h3>
+                        <p class="text-sm text-gray-400 leading-relaxed" vid="604">Refining your voice to resonate with your audience while maintaining authority and warmth.</p>
+                    </div>
+                    <div class="glass-card p-8 rounded-3xl border-t border-t-cyan-500/20" vid="605">
+                        <i class="ph-duotone ph-palette text-3xl text-cyan-400 mb-4" vid="606"></i>
+                        <h3 class="font-magical text-lg text-white mb-2" vid="607">Visual Redesign</h3>
+                        <p class="text-sm text-gray-400 leading-relaxed" vid="608">A complete aesthetic transformation tailored to your brand's unique digital signature.</p>
+                    </div>
+                    <div class="glass-card p-8 rounded-3xl border-t border-t-cyan-500/20" vid="609">
+                        <i class="ph-duotone ph-code text-3xl text-cyan-400 mb-4" vid="610"></i>
+                        <h3 class="font-magical text-lg text-white mb-2" vid="611">CMS Setup</h3>
+                        <p class="text-sm text-gray-400 leading-relaxed" vid="612">Robust backend configuration allowing your team to update content without needing a developer.</p>
+                    </div>
+                    <div class="glass-card p-8 rounded-3xl border-t border-t-cyan-500/20" vid="613">
+                        <i class="ph-duotone ph-rocket-launch text-3xl text-cyan-400 mb-4" vid="614"></i>
+                        <h3 class="font-magical text-lg text-white mb-2" vid="615">Launch Support</h3>
+                        <p class="text-sm text-gray-400 leading-relaxed" vid="616">Hands-on guidance through the migration process and technical verification for a seamless reveal.</p>
+                    </div>
+                </div>
+            </section>
+
+            <section class="mb-32 section-fade-up" vid="617">
+                <h2 class="font-magical text-2xl text-white mb-16 text-center uppercase tracking-widest" vid="618">The Evolution Process</h2>
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-8 relative" vid="619">
+                    <div class="flex flex-col items-center text-center group" vid="620">
+                        <div class="w-12 h-12 rounded-full border border-cyan-500/50 flex items-center justify-center font-magical text-cyan-400 mb-6 group-hover:bg-cyan-500/20 transition-all" vid="621">01</div>
+                        <h3 class="font-magical text-white mb-3" vid="622">Discovery</h3>
+                        <p class="text-xs text-gray-500" vid="623">Scrying session to uncover goals, audience, and technical needs.</p>
+                    </div>
+                    <div class="flex flex-col items-center text-center group" vid="624">
+                        <div class="w-12 h-12 rounded-full border border-cyan-500/50 flex items-center justify-center font-magical text-cyan-400 mb-6 group-hover:bg-cyan-500/20 transition-all" vid="625">02</div>
+                        <h3 class="font-magical text-white mb-3" vid="626">Design</h3>
+                        <p class="text-xs text-gray-500" vid="627">Crafting the visual grimoire and user journey wireframes.</p>
+                    </div>
+                    <div class="flex flex-col items-center text-center group" vid="628">
+                        <div class="w-12 h-12 rounded-full border border-cyan-500/50 flex items-center justify-center font-magical text-cyan-400 mb-6 group-hover:bg-cyan-500/20 transition-all" vid="629">03</div>
+                        <h3 class="font-magical text-white mb-3" vid="630">Build</h3>
+                        <p class="text-xs text-gray-500" vid="631">Transmuting designs into a fast, accessible digital reality.</p>
+                    </div>
+                    <div class="flex flex-col items-center text-center group" vid="632">
+                        <div class="w-12 h-12 rounded-full border border-cyan-500/50 flex items-center justify-center font-magical text-cyan-400 mb-6 group-hover:bg-cyan-500/20 transition-all" vid="633">04</div>
+                        <h3 class="font-magical text-white mb-3" vid="634">Launch</h3>
+                        <p class="text-xs text-gray-500" vid="635">The final ritual—deployment and performance optimization.</p>
+                    </div>
+                </div>
+            </section>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-12 mb-32 section-fade-up" vid="636">
+                <div class="glass-card p-12 rounded-[2.5rem] border-l-4 border-l-cyan-500" vid="637">
+                    <h2 class="font-magical text-2xl text-white mb-6" vid="638">Who It's For</h2>
+                    <ul class="space-y-4 text-gray-300" vid="639">
+                        <li class="flex items-start gap-3" vid="640"><i class="ph ph-check-circle text-cyan-400 mt-1" vid="641"></i> Non-profits with outdated digital presences</li>
+                        <li class="flex items-start gap-3" vid="642"><i class="ph ph-check-circle text-cyan-400 mt-1" vid="643"></i> Organizations whose mission has evolved</li>
+                        <li class="flex items-start gap-3" vid="644"><i class="ph ph-check-circle text-cyan-400 mt-1" vid="645"></i> Advocacy groups needing high-conversion hubs</li>
+                        <li class="flex items-start gap-3" vid="646"><i class="ph ph-check-circle text-cyan-400 mt-1" vid="647"></i> Leaders who value design as a tool for impact</li>
+                    </ul>
+                </div>
+                <div class="flex flex-col gap-6" vid="648">
+                    <div class="glass-card p-8 rounded-3xl" vid="649">
+                        <div class="flex justify-between items-center mb-4" vid="650">
+                            <span class="font-magical text-cyan-400 uppercase text-xs tracking-widest" vid="651">The Single Vision</span>
+                            <span class="font-magical text-white" vid="652">$4,500+</span>
+                        </div>
+                        <p class="text-sm text-gray-400" vid="653">A focused revamp for high-impact landing pages or 5-page microsites.</p>
+                    </div>
+                    <div class="glass-card p-8 rounded-3xl border border-cyan-500/40 cyan-glow" vid="654">
+                        <div class="flex justify-between items-center mb-4" vid="655">
+                            <span class="font-magical text-cyan-400 uppercase text-xs tracking-widest" vid="656">The Great Ritual</span>
+                            <span class="font-magical text-white" vid="657">$12,000+</span>
+                        </div>
+                        <p class="text-sm text-gray-400" vid="658">Full-scale organizational website overhaul with deep UX and content strategy.</p>
+                    </div>
+                </div>
+            </div>
+
+            <footer id="contact-website-revamp" class="max-w-4xl mx-auto text-center pt-20 relative section-fade-up" vid="659">
+                <div class="flex items-center justify-center gap-4 mb-12 opacity-40" vid="660">
+                    <div class="h-px bg-cyan-500 w-16" vid="661"></div>
+                    <i class="ph-fill ph-sparkle text-cyan-400 text-2xl animate-pulse" vid="662"></i>
+                    <div class="h-px bg-cyan-500 w-16" vid="663"></div>
+                </div>
+                <h2 class="font-magical text-4xl text-white mb-8" vid="664">Ready to Renovate Your Hearth?</h2>
+                <a href="mailto:hello@algorithmwitch.com" class="inline-flex items-center justify-center px-10 py-5 bg-white text-cyan-900 rounded-full font-bold tracking-widest uppercase text-sm hover:scale-105 transition-transform shadow-[0_0_50px_-10px_rgba(6,182,212,0.4)] group" vid="665">
+                    Summon Me <i class="ph-bold ph-arrow-right ml-2 group-hover:translate-x-1 transition-transform" vid="666"></i>
+                </a>
+            </footer>
+        </main>
+    </div>
+
+    
+    <div id="page-digital-metrics" class="page" vid="667">
+        <nav class="fixed top-0 w-full z-50 px-6 py-6" vid="668">
+            <div class="max-w-7xl mx-auto glass-panel rounded-full px-8 py-4 flex justify-between items-center" vid="669">
+                <a onclick="showPage('page-presentation')" class="cursor-pointer flex items-center gap-2 group text-xs uppercase tracking-[0.2em] text-gray-400 hover:text-amber-400 transition-colors" vid="670">
+                    <i class="ph-bold ph-arrow-left group-hover:-translate-x-1 transition-transform" vid="671"></i>
+                    Back to Services
+                </a>
+                
+                <a onclick="showPage('page-presentation')" class="cursor-pointer flex items-center gap-3 group" vid="672">
+                    <div class="relative" vid="673">
+                        <i class="ph-fill ph-sparkle text-amber-400 text-2xl group-hover:scale-110 transition-transform duration-300" vid="674"></i>
+                    </div>
+                    <span class="font-magical text-lg text-white tracking-widest" vid="675">Algorithm Witch</span>
+                </a>
+
+                <div class="w-32" vid="676"></div> 
+            </div>
+        </nav>
+
+        <main class="relative z-10 w-full max-w-5xl mx-auto px-6 pt-40 pb-32" vid="677">
+            <header class="text-center mb-24 section-fade-up" vid="678">
+                <div class="w-24 h-24 mx-auto rounded-3xl bg-amber-950/40 border border-amber-500/30 flex items-center justify-center amber-glow mb-10" vid="679">
+                    <i class="ph-duotone ph-chart-line-up text-5xl text-amber-300" vid="680"></i>
+                </div>
+                <span class="text-amber-400 uppercase tracking-[0.4em] text-xs font-bold mb-4 block" vid="681">Intensive Analysis</span>
+                <h1 class="font-magical text-5xl md:text-6xl text-white mb-6" vid="682">Digital <span class="text-gradient-amber" vid="683">Metrics</span> Intensive</h1>
+                <p class="font-serif-heading text-xl md:text-2xl text-amber-100/70 italic max-w-2xl mx-auto" vid="684">
+                    "Peering through the scrying glass of data."
+                </p>
+            </header>
+
+            <section class="mb-24 section-fade-up" vid="685">
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6" vid="686">
+                    <div class="glass-card p-8 rounded-3xl border-t border-t-amber-500/20" vid="687">
+                        <span class="text-amber-500/40 text-xs font-mono mb-2 block" vid="688">SIGNAL STRENGTH</span>
+                        <div class="flex items-end gap-2" vid="689">
+                            <span class="text-4xl font-magical text-white" vid="690">84.2%</span>
+                            <span class="text-emerald-400 text-xs mb-1" vid="691"><i class="ph-bold ph-caret-up" vid="692"></i> 12%</span>
+                        </div>
+                        <div class="mt-4 h-1 w-full bg-white/5 rounded-full overflow-hidden" vid="693">
+                            <div class="h-full bg-amber-500 w-[84%]" vid="694"></div>
+                        </div>
+                    </div>
+                    <div class="glass-card p-8 rounded-3xl border-t border-t-purple-500/20" vid="695">
+                        <span class="text-purple-500/40 text-xs font-mono mb-2 block" vid="696">ORACLE REACH</span>
+                        <div class="flex items-end gap-2" vid="697">
+                            <span class="text-4xl font-magical text-white" vid="698">12.8k</span>
+                            <span class="text-emerald-400 text-xs mb-1" vid="699"><i class="ph-bold ph-caret-up" vid="700"></i> 4%</span>
+                        </div>
+                        <div class="mt-4 h-1 w-full bg-white/5 rounded-full overflow-hidden" vid="701">
+                            <div class="h-full bg-purple-500 w-[65%]" vid="702"></div>
+                        </div>
+                    </div>
+                    <div class="glass-card p-8 rounded-3xl border-t border-t-cyan-500/20" vid="703">
+                        <span class="text-cyan-500/40 text-xs font-mono mb-2 block" vid="704">RESONANCE RATE</span>
+                        <div class="flex items-end gap-2" vid="705">
+                            <span class="text-4xl font-magical text-white" vid="706">4.2%</span>
+                            <span class="text-rose-400 text-xs mb-1" vid="707"><i class="ph-bold ph-caret-down" vid="708"></i> 0.8%</span>
+                        </div>
+                        <div class="mt-4 h-1 w-full bg-white/5 rounded-full overflow-hidden" vid="709">
+                            <div class="h-full bg-cyan-500 w-[42%]" vid="710"></div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section class="mb-32 section-fade-up" vid="711">
+                <h2 class="font-magical text-3xl text-white mb-12 text-center" vid="712">What's Included in the Rite</h2>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-8" vid="713">
+                    <div class="flex gap-6 items-start" vid="714">
+                        <div class="w-12 h-12 shrink-0 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center" vid="715">
+                            <i class="ph-duotone ph-broadcast text-2xl text-amber-300" vid="716"></i>
+                        </div>
+                        <div vid="717">
+                            <h3 class="font-magical text-lg text-white mb-2" vid="718">Platform Audit</h3>
+                            <p class="text-gray-400 text-sm leading-relaxed" vid="719">A holistic examination of your presence across social and web ecosystems to identify energetic leaks.</p>
+                        </div>
+                    </div>
+                    <div class="flex gap-6 items-start" vid="720">
+                        <div class="w-12 h-12 shrink-0 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center" vid="721">
+                            <i class="ph-duotone ph-selection-all text-2xl text-amber-300" vid="722"></i>
+                        </div>
+                        <div vid="723">
+                            <h3 class="font-magical text-lg text-white mb-2" vid="724">Analytics Dashboard Review</h3>
+                            <p class="text-gray-400 text-sm leading-relaxed" vid="725">Cleaning and calibrating your tracking tools to ensure the data you see is the truth, not an illusion.</p>
+                        </div>
+                    </div>
+                    <div class="flex gap-6 items-start" vid="726">
+                        <div class="w-12 h-12 shrink-0 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center" vid="727">
+                            <i class="ph-duotone ph-shield-check text-2xl text-amber-300" vid="728"></i>
+                        </div>
+                        <div vid="729">
+                            <h3 class="font-magical text-lg text-white mb-2" vid="730">SEO Health Check</h3>
+                            <p class="text-gray-400 text-sm leading-relaxed" vid="731">Scanning your digital foundations for crawlability and keyword alignment with search engine spirits.</p>
+                        </div>
+                    </div>
+                    <div class="flex gap-6 items-start" vid="732">
+                        <div class="w-12 h-12 shrink-0 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center" vid="733">
+                            <i class="ph-duotone ph-eye text-2xl text-amber-300" vid="734"></i>
+                        </div>
+                        <div vid="735">
+                            <h3 class="font-magical text-lg text-white mb-2" vid="736">Competitor Scan</h3>
+                            <p class="text-gray-400 text-sm leading-relaxed" vid="737">Mapping the strategies of those in your orbit to find opportunities for differentiation and dominance.</p>
+                        </div>
+                    </div>
+                    <div class="flex gap-6 items-start" vid="738">
+                        <div class="w-12 h-12 shrink-0 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center" vid="739">
+                            <i class="ph-duotone ph-scroll text-2xl text-amber-300" vid="740"></i>
+                        </div>
+                        <div vid="741">
+                            <h3 class="font-magical text-lg text-white mb-2" vid="742">Recommendations Report</h3>
+                            <p class="text-gray-400 text-sm leading-relaxed" vid="743">A comprehensive grimoire of tactical adjustments and strategic pivots based on our findings.</p>
+                        </div>
+                    </div>
+                    <div class="flex gap-6 items-start" vid="744">
+                        <div class="w-12 h-12 shrink-0 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center" vid="745">
+                            <i class="ph-duotone ph-chats-circle text-2xl text-amber-300" vid="746"></i>
+                        </div>
+                        <div vid="747">
+                            <h3 class="font-magical text-lg text-white mb-2" vid="748">Debrief Call</h3>
+                            <p class="text-gray-400 text-sm leading-relaxed" vid="749">A 60-minute session to walk through the findings and answer any questions from your inner circle.</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section class="mb-32 glass-panel p-12 rounded-[3rem] border-amber-500/20 section-fade-up" vid="750">
+                <div class="text-center max-w-2xl mx-auto" vid="751">
+                    <h2 class="font-magical text-3xl text-white mb-6" vid="752">Who Is This For?</h2>
+                    <p class="text-gray-300 mb-10 font-light leading-relaxed" vid="753">
+                        The Intensive is designed for organizations that feel they are screaming into the void. If you have plenty of data but no clarity, or if you're ready to scale but don't know which lever to pull, this deep dive is your map.
+                    </p>
+                    <div class="flex flex-wrap justify-center gap-4" vid="754">
+                        <span class="px-4 py-2 rounded-full bg-white/5 border border-white/10 text-xs text-amber-200 tracking-wider" vid="755">Non-Profit Orgs</span>
+                        <span class="px-4 py-2 rounded-full bg-white/5 border border-white/10 text-xs text-amber-200 tracking-wider" vid="756">Advocacy Groups</span>
+                        <span class="px-4 py-2 rounded-full bg-white/5 border border-white/10 text-xs text-amber-200 tracking-wider" vid="757">Impact Startups</span>
+                    </div>
+                </div>
+            </section>
+
+            <section class="mb-32 section-fade-up" vid="758">
+                <h2 class="font-magical text-3xl text-white mb-12 text-center" vid="759">Investment Tiers</h2>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl mx-auto" vid="760">
+                    <div class="glass-card p-10 rounded-[2.5rem] relative overflow-hidden group" vid="761">
+                        <div class="absolute top-0 right-0 p-6 opacity-10 group-hover:opacity-20 transition-opacity" vid="762">
+                            <i class="ph-duotone ph-lightning text-6xl text-amber-500" vid="763"></i>
+                        </div>
+                        <h3 class="font-magical text-2xl text-white mb-2" vid="764">The Standard</h3>
+                        <div class="text-3xl font-magical text-amber-400 mb-6" vid="765">$2,500 <span class="text-sm font-sans tracking-widest text-gray-500" vid="766">/ FLAT FEE</span></div>
+                        <ul class="space-y-4 mb-10 text-sm text-gray-300" vid="767">
+                            <li class="flex items-center gap-3" vid="768"><i class="ph ph-check text-amber-500" vid="769"></i> 3 Key Platforms Audit</li>
+                            <li class="flex items-center gap-3" vid="770"><i class="ph ph-check text-amber-500" vid="771"></i> SEO Baseline Report</li>
+                            <li class="flex items-center gap-3" vid="772"><i class="ph ph-check text-amber-500" vid="773"></i> 10-Page Strategy PDF</li>
+                        </ul>
+                        <a href="#contact-digital-metrics" class="block w-full text-center py-4 rounded-full border border-amber-500/30 text-xs uppercase tracking-widest font-bold text-white hover:bg-amber-500/10 transition-colors" vid="774">Select Rite</a>
+                    </div>
+                    <div class="glass-card p-10 rounded-[2.5rem] border-amber-500/40 bg-amber-500/5 relative overflow-hidden group" vid="775">
+                        <div class="absolute -top-1 -right-1 bg-amber-500 px-4 py-1 rounded-bl-xl text-[10px] font-bold text-black uppercase tracking-widest" vid="776">Popular</div>
+                        <h3 class="font-magical text-2xl text-white mb-2" vid="777">The Sovereign</h3>
+                        <div class="text-3xl font-magical text-amber-400 mb-6" vid="778">$4,200 <span class="text-sm font-sans tracking-widest text-gray-500" vid="779">/ FLAT FEE</span></div>
+                        <ul class="space-y-4 mb-10 text-sm text-gray-300" vid="780">
+                            <li class="flex items-center gap-3" vid="781"><i class="ph ph-check text-amber-500" vid="782"></i> Full Ecosystem Audit</li>
+                            <li class="flex items-center gap-3" vid="783"><i class="ph ph-check text-amber-500" vid="784"></i> Competitive Intelligence</li>
+                            <li class="flex items-center gap-3" vid="785"><i class="ph ph-check text-amber-500" vid="786"></i> Custom Looker Dashboard</li>
+                            <li class="flex items-center gap-3" vid="787"><i class="ph ph-check text-amber-500" vid="788"></i> 30-Day Follow-up Call</li>
+                        </ul>
+                        <a href="#contact-digital-metrics" class="block w-full text-center py-4 rounded-full bg-amber-500 text-black text-xs uppercase tracking-widest font-bold hover:scale-105 transition-transform shadow-[0_0_30px_-5px_rgba(245,158,11,0.5)]" vid="789">Select Rite</a>
+                    </div>
+                </div>
+            </section>
+
+            <footer id="contact-digital-metrics" class="max-w-4xl mx-auto text-center pt-20 relative section-fade-up" vid="790">
+                <div class="flex items-center justify-center gap-4 mb-12 opacity-40" vid="791">
+                    <div class="h-px bg-amber-500 w-16" vid="792"></div>
+                    <i class="ph-fill ph-crystal-ball text-amber-400 text-2xl animate-pulse" vid="793"></i>
+                    <div class="h-px bg-amber-500 w-16" vid="794"></div>
+                </div>
+                <h2 class="font-magical text-4xl text-white mb-8" vid="795">Ready to See Clearly?</h2>
+                <a href="mailto:hello@algorithmwitch.com" class="inline-flex items-center justify-center px-10 py-5 bg-white text-amber-900 rounded-full font-bold tracking-widest uppercase text-sm hover:scale-105 transition-transform shadow-[0_0_50px_-10px_rgba(255,255,255,0.4)] mb-20 group" vid="796">
+                    Summon Me <i class="ph-bold ph-arrow-right ml-2 group-hover:translate-x-1 transition-transform" vid="797"></i>
+                </a>
+            </footer>
+        </main>
+    </div>
+
+    
+    <script vid="798">
+        function showPage(pageId) {
+            document.querySelectorAll('.page').forEach(page => {
+                page.classList.remove('active');
+            });
+            document.getElementById(pageId).classList.add('active');
+        }
+
+        
+        document.addEventListener('DOMContentLoaded', () => {
+            
+            
+            const starContainer = document.getElementById('star-container');
+            const starCount = 150;
+            for (let i = 0; i < starCount; i++) {
+                const star = document.createElement('div');
+                star.classList.add('star');
+                star.style.left = `${Math.random() * 100}%`;
+                star.style.top = `${Math.random() * 100}%`;
+                const size = Math.random() < 0.1 ? 3 : (Math.random() < 0.4 ? 2 : 1);
+                star.style.width = `${size}px`;
+                star.style.height = `${size}px`;
+                star.style.setProperty('--duration', `${2 + Math.random() * 4}s`);
+                star.style.setProperty('--delay', `${Math.random() * 5}s`);
+                star.style.setProperty('--opacity', 0.2 + Math.random() * 0.6);
+                starContainer.appendChild(star);
+            }
+
+            
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) entry.target.classList.add('visible');
+                });
+            }, { threshold: 0.1 });
+            document.querySelectorAll('.section-fade-up').forEach(el => observer.observe(el));
+
+            
+            document.addEventListener('mousemove', e => {
+                document.querySelectorAll('.glass-card').forEach(card => {
+                    const rect = card.getBoundingClientRect();
+                    card.style.setProperty('--mouse-x', `${e.clientX - rect.left}px`);
+                    card.style.setProperty('--mouse-y', `${e.clientY - rect.top}px`);
+                });
+            });
+
+            
+            const slides = document.querySelectorAll('.slide');
+            const totalSlides = slides.length;
+            let currentSlide = 0;
+            let isAnimating = false;
+            
+            const btnPrev = document.getElementById('btn-prev');
+            const btnNext = document.getElementById('btn-next');
+            const counterEl = document.getElementById('slide-counter');
+            const dotsContainer = document.getElementById('dots-container');
+            const ambient1 = document.getElementById('ambient-1');
+            const ambient2 = document.getElementById('ambient-2');
+
+            
+            for (let i = 0; i < totalSlides; i++) {
+                const dot = document.createElement('div');
+                dot.classList.add('dot');
+                if(i === 0) dot.classList.add('active');
+                dot.addEventListener('click', () => goToSlide(i));
+                dotsContainer.appendChild(dot);
+            }
+            const dots = document.querySelectorAll('.dot');
+
+            function updateAmbientGlow() {
+                const currentThemeData = slides[currentSlide].getAttribute('data-ambient');
+                if(currentThemeData) {
+                    const classes = currentThemeData.split(',');
+                    ambient1.className = `ambient-glow w-[800px] h-[800px] top-[-20%] left-[-10%] mix-blend-screen ${classes[0]}`;
+                    ambient2.className = `ambient-glow w-[600px] h-[600px] bottom-[-10%] right-[-10%] mix-blend-screen ${classes[1] || classes[0]}`;
+                }
+            }
+
+            function updateSlides(newIndex, direction) {
+                if (isAnimating || newIndex === currentSlide) return;
+                isAnimating = true;
+
+                const currentEl = slides[currentSlide];
+                const nextEl = slides[newIndex];
+
+                nextEl.classList.remove('opacity-0', 'pointer-events-none', 'z-0', 'active', 'previous');
+                
+                if (direction === 'next') {
+                    nextEl.style.transform = 'translateY(40px) scale(0.98)';
+                    currentEl.style.transform = 'translateY(-40px) scale(0.98)';
+                } else {
+                    nextEl.style.transform = 'translateY(-40px) scale(0.98)';
+                    currentEl.style.transform = 'translateY(40px) scale(0.98)';
+                }
+
+                void nextEl.offsetWidth; 
+
+                currentEl.classList.remove('active');
+                currentEl.classList.add('opacity-0', 'pointer-events-none', 'z-0');
+                
+                nextEl.style.transform = ''; 
+                nextEl.classList.add('active');
+
+                dots[currentSlide].classList.remove('active');
+                dots[newIndex].classList.add('active');
+                currentSlide = newIndex;
+                counterEl.innerText = `${currentSlide + 1} / ${totalSlides}`;
+                
+                updateAmbientGlow();
+
+                setTimeout(() => {
+                    currentEl.style.transform = ''; 
+                    isAnimating = false;
+                }, 800);
+            }
+
+            function nextSlide() {
+                if (currentSlide < totalSlides - 1) updateSlides(currentSlide + 1, 'next');
+            }
+
+            function prevSlide() {
+                if (currentSlide > 0) updateSlides(currentSlide - 1, 'prev');
+            }
+
+            function goToSlide(index) {
+                if(index > currentSlide) {
+                    updateSlides(index, 'next');
+                } else if (index < currentSlide) {
+                    updateSlides(index, 'prev');
+                }
+            }
+
+            btnNext.addEventListener('click', nextSlide);
+            btnPrev.addEventListener('click', prevSlide);
+
+            
+            document.addEventListener('keydown', (e) => {
+                if (!document.getElementById('page-presentation').classList.contains('active')) return;
+                if (e.key === 'ArrowRight' || e.key === 'ArrowDown' || e.key === ' ') {
+                    e.preventDefault();
+                    nextSlide();
+                } else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
+                    e.preventDefault();
+                    prevSlide();
+                }
+            });
+
+            let wheelTimeout;
+            document.addEventListener('wheel', (e) => {
+                if (!document.getElementById('page-presentation').classList.contains('active')) return;
+                if (isAnimating) return;
+                if (Math.abs(e.deltaY) < 40) return; 
+                
+                clearTimeout(wheelTimeout);
+                wheelTimeout = setTimeout(() => {
+                    if (e.deltaY > 0) {
+                        nextSlide();
+                    } else {
+                        prevSlide();
+                    }
+                }, 50);
+            }, { passive: false });
+
+            
+            updateAmbientGlow();
+        });
+    </script>
+
+</body></html>

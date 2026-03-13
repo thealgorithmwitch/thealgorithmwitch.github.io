@@ -466,6 +466,10 @@
     return normalizeText(value).replace(/[^a-z0-9]+/g, " ").trim();
   }
 
+  function safeArray(value) {
+    return Array.isArray(value) ? value : [];
+  }
+
   function uniqueBy(arr, keyFn) {
     const seen = new Set();
     return arr.filter(item => {
@@ -476,53 +480,53 @@
     });
   }
 
-  function safeArray(value) {
-    return Array.isArray(value) ? value : [];
+  function getWords(value) {
+    return slugify(value).split(" ").filter(Boolean);
   }
 
-  function titleCase(value) {
-    return String(value || "")
-      .split(" ")
-      .filter(Boolean)
-      .map(word => word.charAt(0).toUpperCase() + word.slice(1))
-      .join(" ");
+  function overlapScore(a, b) {
+    const aWords = getWords(a);
+    const bWords = getWords(b);
+    if (!aWords.length || !bWords.length) return 0;
+    return aWords.filter(word => bWords.includes(word)).length;
+  }
+
+  function phraseMatchesCategory(phrase, category) {
+    if (!phrase || !category) return false;
+    const p = normalizeText(phrase);
+    const c = normalizeText(category);
+    if (p.includes(c) || c.includes(p)) return true;
+    return overlapScore(p, c) >= 1;
   }
 
   function deriveControlListsFromData() {
-    const categoriesFromExpanded = TAXONOMY.expandedKeywords.map(x => x.category).filter(Boolean);
-    const categoriesFromWeighted = TAXONYMYSafeWeighted().map(x => x.category).filter(Boolean);
-    const categoriesFromOrgs = TAXONOMY.orgs
-      .flatMap(org => [org.sector, org.programArea])
-      .filter(Boolean);
+    const categoriesFromExpanded = safeArray(TAXONOMY.expandedKeywords).map(x => x.category).filter(Boolean);
+    const categoriesFromWeighted = safeArray(TAXONOMY.weightedIndex).map(x => x.category).filter(Boolean);
+    const categoriesFromOrgs = safeArray(TAXONOMY.orgs).flatMap(org => [org.sector, org.programArea]).filter(Boolean);
 
-    const issueAreas = uniqueBy(
+    TAXONOMY.controlLists.issueAreas = uniqueBy(
       [...safeArray(TAXONOMY.controlLists.issueAreas), ...categoriesFromExpanded, ...categoriesFromOrgs]
-        .map(x => String(x).trim())
+        .map(String)
+        .map(x => x.trim())
         .filter(Boolean),
       x => normalizeText(x)
     ).sort((a, b) => a.localeCompare(b));
 
-    const categories = uniqueBy(
-      [...safeArray(TAXONOMY.controlLists.categories), ...categoriesFromExpanded, ...categoriesFromWeighted]
-        .map(x => String(x).trim())
+    TAXONOMY.controlLists.categories = uniqueBy(
+      [...safeArray(TAXONOMY.controlLists.categories), ...categoriesFromExpanded, ...categoriesFromWeighted, ...categoriesFromOrgs]
+        .map(String)
+        .map(x => x.trim())
         .filter(Boolean),
       x => normalizeText(x)
     ).sort((a, b) => a.localeCompare(b));
 
-    const audiences = uniqueBy(
-      [...safeArray(TAXONOMY.controlLists.audiences), ...TAXONOMY.orgs.map(o => o.audience)]
-        .map(x => String(x).trim())
+    TAXONOMY.controlLists.audiences = uniqueBy(
+      [...safeArray(TAXONOMY.controlLists.audiences), ...safeArray(TAXONOMY.orgs).map(o => o.audience)]
+        .map(String)
+        .map(x => x.trim())
         .filter(Boolean),
       x => normalizeText(x)
     ).sort((a, b) => a.localeCompare(b));
-
-    TAXONOMY.controlLists.issueAreas = issueAreas;
-    TAXONOMY.controlLists.categories = categories;
-    TAXONOMY.controlLists.audiences = audiences;
-  }
-
-  function TAXONYMYSafeWeighted() {
-    return safeArray(TAXONOMY.weightedIndex);
   }
 
   function scorePhrase(phrase) {
@@ -547,12 +551,12 @@
     const broadTerms = ["climate", "energy", "environment", "sustainability", "green"];
     if (words.length <= 1 && broadTerms.includes(lower)) score -= 20;
 
-    const inWeighted = TAXONYMYSafeWeighted().find(k => normalizeText(k.phrase) === lower);
-    if (inWeighted) score = Math.max(score, Number(inWeighted.weight) || 0);
+    const weightedMatch = safeArray(TAXONOMY.weightedIndex).find(k => normalizeText(k.phrase) === lower);
+    if (weightedMatch) score = Math.max(score, Number(weightedMatch.weight) || 0);
 
-    const inYouTube = safeArray(TAXONOMY.youtubePhraseIndex).find(k => normalizeText(k.phrase) === lower);
-    if (inYouTube) {
-      const ytWeight = Math.min(25 + ((Number(inYouTube.weight) || 0) * 4), 85);
+    const youtubeMatch = safeArray(TAXONOMY.youtubePhraseIndex).find(k => normalizeText(k.phrase) === lower);
+    if (youtubeMatch) {
+      const ytWeight = Math.min(25 + ((Number(youtubeMatch.weight) || 0) * 4), 85);
       score = Math.max(score, ytWeight);
     }
 
@@ -647,7 +651,7 @@
       metaHtml += `<span class="text-[9px] text-amber-300 border border-amber-500/30 bg-amber-500/10 px-1.5 py-0.5 rounded flex items-center gap-1"><i class="ph-fill ph-star"></i> Unique</span>`;
     }
     if (data.source === "youtube") {
-      metaHtml += `<span class="text-[9px] text-red-200 uppercase tracking-widest flex items-center gap-1"><i class="ph-fill ph-youtube-logo"></i> YouTube</span>`;
+      metaHtml += `<span class="text-[9px] text-red-200 border border-red-500/30 bg-red-500/10 px-1.5 py-0.5 rounded flex items-center gap-1"><i class="ph-fill ph-youtube-logo"></i> YouTube</span>`;
     }
 
     return `
@@ -714,38 +718,40 @@
     setTimeout(() => toast.classList.remove("toast-show"), 3000);
   }
 
-  function initApp() {
-    const popSelect = (id, list, placeholder) => {
-      const el = document.getElementById(id);
-      if (!el) return;
-      el.innerHTML =
-        `<option value="">${placeholder}</option>` +
-        safeArray(list).map(item => `<option value="${item}">${item}</option>`).join("");
-    };
+  function guessCategoryForPhrase(phrase) {
+    const lower = normalizeText(phrase);
 
-    popSelect("gen-org-type", TAXONOMY.controlLists.orgTypes, "Select Org Type...");
-    popSelect("gen-issue-area", TAXONOMY.controlLists.issueAreas, "Select Domain...");
-    popSelect("gen-audience", TAXONOMY.controlLists.audiences, "Select Entity...");
-    popSelect("gen-goal", TAXONOMY.controlLists.goals, "Select Outcome...");
+    const exactExpanded = safeArray(TAXONOMY.expandedKeywords).find(x => normalizeText(x.phrase) === lower);
+    if (exactExpanded?.category) return exactExpanded.category;
 
-    popSelect("org-select", TAXONOMY.orgs.map(o => o.name).filter(Boolean), "Choose an Organization...");
-    popSelect("cat-select", TAXONOMY.controlLists.categories, "Choose a Domain...");
+    const weightedMatch = safeArray(TAXONOMY.weightedIndex).find(x => normalizeText(x.phrase) === lower);
+    if (weightedMatch?.category) return weightedMatch.category;
 
-    document.getElementById("generator-form")?.addEventListener("submit", handleGenerate);
-    document.getElementById("org-select")?.addEventListener("change", handleOrgSelect);
-    document.getElementById("cat-select")?.addEventListener("change", handleCatSelect);
-    document.getElementById("search-input")?.addEventListener("input", handleSearch);
-    document.getElementById("search-ad-grant-filter")?.addEventListener("change", handleSearch);
-    document.getElementById("search-sort")?.addEventListener("change", handleSearch);
+    const categoryCounts = {};
+    safeArray(TAXONOMY.expandedKeywords).forEach(x => {
+      if (!x.category || !x.phrase) return;
+      const overlap = overlapScore(x.phrase, phrase);
+      if (overlap > 0) {
+        categoryCounts[x.category] = (categoryCounts[x.category] || 0) + overlap;
+      }
+    });
 
+    const best = Object.entries(categoryCounts).sort((a, b) => b[1] - a[1])[0];
+    return best ? best[0] : "";
+  }
+
+  function buildPhraseIndex() {
     window.allPhrasesDict = {};
 
-    TAXONYMYSafeWeighted().forEach(item => {
+    safeArray(TAXONOMY.weightedIndex).forEach(item => {
       if (!item?.phrase) return;
-      window.allPhrasesDict[normalizeText(item.phrase)] = {
+      const key = normalizeText(item.phrase);
+      window.allPhrasesDict[key] = {
         ...item,
         phrase: item.phrase,
-        source: item.source || "weighted"
+        category: item.category || guessCategoryForPhrase(item.phrase),
+        source: item.source || "weighted",
+        weight: Number(item.weight) || scorePhrase(item.phrase)
       };
     });
 
@@ -755,10 +761,10 @@
       if (!window.allPhrasesDict[key]) {
         window.allPhrasesDict[key] = {
           phrase: item.phrase,
-          category: item.category,
-          type: item.type,
-          weight: scorePhrase(item.phrase),
-          source: "expanded"
+          category: item.category || "",
+          type: item.type || "",
+          source: "expanded",
+          weight: scorePhrase(item.phrase)
         };
       }
     });
@@ -771,7 +777,7 @@
       if (!window.allPhrasesDict[key]) {
         window.allPhrasesDict[key] = {
           phrase: item.phrase,
-          category: guessCategoryForPhrase(item.phrase),
+          category: item.category || guessCategoryForPhrase(item.phrase),
           weight: ytWeight,
           source: "youtube",
           seedQueries: item.seedQueries || []
@@ -779,6 +785,7 @@
       } else {
         window.allPhrasesDict[key] = {
           ...window.allPhrasesDict[key],
+          category: window.allPhrasesDict[key].category || item.category || guessCategoryForPhrase(item.phrase),
           weight: Math.max(Number(window.allPhrasesDict[key].weight) || 0, ytWeight),
           seedQueries: item.seedQueries || window.allPhrasesDict[key].seedQueries || []
         };
@@ -786,28 +793,28 @@
     });
   }
 
-  function guessCategoryForPhrase(phrase) {
-    const lower = normalizeText(phrase);
+  function initApp() {
+    const popSelect = (id, list, placeholder) => {
+      const el = document.getElementById(id);
+      if (!el) return;
+      el.innerHTML = `<option value="">${placeholder}</option>` + safeArray(list).map(item => `<option value="${item}">${item}</option>`).join("");
+    };
 
-    const exactExpanded = TAXONOMY.expandedKeywords.find(x => normalizeText(x.phrase) === lower);
-    if (exactExpanded?.category) return exactExpanded.category;
+    popSelect("gen-org-type", TAXONOMY.controlLists.orgTypes, "Select Org Type...");
+    popSelect("gen-issue-area", TAXONOMY.controlLists.issueAreas, "Select Domain...");
+    popSelect("gen-audience", TAXONOMY.controlLists.audiences, "Select Entity...");
+    popSelect("gen-goal", TAXONOMY.controlLists.goals, "Select Outcome...");
+    popSelect("org-select", safeArray(TAXONOMY.orgs).map(o => o.name).filter(Boolean), "Choose an Organization...");
+    popSelect("cat-select", TAXONOMY.controlLists.categories, "Choose a Domain...");
 
-    const weightedMatch = TAXONYMYSafeWeighted().find(x => normalizeText(x.phrase) === lower);
-    if (weightedMatch?.category) return weightedMatch.category;
+    document.getElementById("generator-form")?.addEventListener("submit", handleGenerate);
+    document.getElementById("org-select")?.addEventListener("change", handleOrgSelect);
+    document.getElementById("cat-select")?.addEventListener("change", handleCatSelect);
+    document.getElementById("search-input")?.addEventListener("input", handleSearch);
+    document.getElementById("search-ad-grant-filter")?.addEventListener("change", handleSearch);
+    document.getElementById("search-sort")?.addEventListener("change", handleSearch);
 
-    const categoryCounts = {};
-    TAXONOMY.expandedKeywords.forEach(x => {
-      if (!x.category || !x.phrase) return;
-      const xWords = slugify(x.phrase).split(" ").filter(Boolean);
-      const pWords = slugify(phrase).split(" ").filter(Boolean);
-      const overlap = xWords.filter(word => pWords.includes(word)).length;
-      if (overlap > 0) {
-        categoryCounts[x.category] = (categoryCounts[x.category] || 0) + overlap;
-      }
-    });
-
-    const best = Object.entries(categoryCounts).sort((a, b) => b[1] - a[1])[0];
-    return best ? best[0] : "";
+    buildPhraseIndex();
   }
 
   function switchTab(tabId) {
@@ -917,6 +924,17 @@
     renderList("gen-action-list", action);
   }
 
+  function getOrgTerms(org) {
+    return [
+      ...safeArray(org.coreKeywords),
+      ...safeArray(org.programmaticKeywords),
+      ...safeArray(org.actionKeywords),
+      org.sector,
+      org.programArea,
+      org.name
+    ].filter(Boolean);
+  }
+
   function handleOrgSelect(e) {
     const orgName = e.target.value;
 
@@ -926,7 +944,7 @@
       return;
     }
 
-    const org = TAXONOMY.orgs.find(o => normalizeText(o.name) === normalizeText(orgName));
+    const org = safeArray(TAXONOMY.orgs).find(o => normalizeText(o.name) === normalizeText(orgName));
     if (!org) return;
 
     document.getElementById("org-empty").classList.add("hidden");
@@ -938,33 +956,20 @@
     document.getElementById("org-program-badge").innerText = org.programArea || "";
     document.getElementById("org-audience-text").innerText = org.audience || "";
 
-    const toCardList = (words, category) =>
-      safeArray(words).map(w => createCardHTML({ phrase: w, category })).join("");
+    const toCardList = (words, category) => safeArray(words).map(w => createCardHTML({ phrase: w, category })).join("");
 
     document.getElementById("org-core-list").innerHTML = toCardList(org.coreKeywords, org.sector);
     document.getElementById("org-prog-list").innerHTML = toCardList(org.programmaticKeywords, org.programArea || org.sector);
     document.getElementById("org-action-list").innerHTML = toCardList(org.actionKeywords, org.programArea || org.sector);
 
-    const orgTerms = [
-      ...safeArray(org.coreKeywords),
-      ...safeArray(org.programmaticKeywords),
-      ...safeArray(org.actionKeywords),
-      org.sector,
-      org.programArea
-    ].filter(Boolean).map(normalizeText);
+    const orgTerms = getOrgTerms(org);
 
     const expansions = uniqueBy(
-      TAXONOMY.expandedKeywords.filter(ek => {
-        const ekPhrase = normalizeText(ek.phrase);
-        const ekCategory = normalizeText(ek.category);
-        const related = safeArray(ek.related).map(normalizeText);
-
+      safeArray(TAXONOMY.expandedKeywords).filter(ek => {
         return orgTerms.some(term =>
-          ekPhrase.includes(term) ||
-          term.includes(ekPhrase) ||
-          ekCategory === normalizeText(org.sector) ||
-          ekCategory === normalizeText(org.programArea) ||
-          related.includes(term)
+          overlapScore(ek.phrase, term) >= 1 ||
+          overlapScore(ek.category, term) >= 1 ||
+          safeArray(ek.related).some(rel => overlapScore(rel, term) >= 1)
         );
       }),
       x => normalizeText(x.phrase)
@@ -975,9 +980,13 @@
       : '<span class="text-gray-500 text-sm italic">No expansions discovered.</span>';
 
     const topW = Object.values(window.allPhrasesDict || {})
-      .filter(item => normalizeText(item.sourceOrg) === normalizeText(org.name))
+      .filter(item => {
+        const sourceOrgMatch = normalizeText(item.sourceOrg) === normalizeText(org.name);
+        const phraseMatch = orgTerms.some(term => overlapScore(item.phrase, term) >= 1);
+        return sourceOrgMatch || phraseMatch;
+      })
       .sort((a, b) => (Number(b.weight) || 0) - (Number(a.weight) || 0))
-      .slice(0, 6);
+      .slice(0, 8);
 
     document.getElementById("org-top-list").innerHTML = topW.length
       ? topW.map(item => createCardHTML(item)).join("")
@@ -999,7 +1008,9 @@
     document.getElementById("cat-content").classList.remove("hidden");
     document.getElementById("cat-content").classList.add("flex");
 
-    const phrases = TAXONOMY.expandedKeywords.filter(ek => normalizeText(ek.category) === catNorm);
+    const phrases = safeArray(TAXONOMY.expandedKeywords).filter(ek =>
+      normalizeText(ek.category) === catNorm || phraseMatchesCategory(ek.category, cat)
+    );
 
     let phtml = "";
     ["Core Issue", "Programmatic", "Action"].forEach(type => {
@@ -1014,33 +1025,37 @@
       phtml || '<span class="text-gray-500 text-sm">No phrases inscribed in this domain.</span>';
 
     const topW = Object.values(window.allPhrasesDict || {})
-      .filter(item => normalizeText(item.category) === catNorm)
+      .filter(item => {
+        const categoryMatch = normalizeText(item.category) === catNorm;
+        const phraseCategoryMatch = phraseMatchesCategory(item.phrase, cat);
+        const sourceOrgCategoryMatch = safeArray(TAXONOMY.orgs).some(org =>
+          normalizeText(org.name) === normalizeText(item.sourceOrg) &&
+          (normalizeText(org.sector) === catNorm || normalizeText(org.programArea) === catNorm)
+        );
+        return categoryMatch || phraseCategoryMatch || sourceOrgCategoryMatch;
+      })
       .sort((a, b) => (Number(b.weight) || 0) - (Number(a.weight) || 0))
-      .slice(0, 8);
+      .slice(0, 10);
 
     document.getElementById("cat-top-list").innerHTML = topW.length
       ? topW.map(item => createCardHTML(item)).join("")
       : '<span class="text-gray-500 text-sm italic">No weighted metrics found.</span>';
 
-    const relatedOrgs = TAXONOMY.orgs.filter(org => {
-      const orgSector = normalizeText(org.sector);
-      const orgProgram = normalizeText(org.programArea);
+    const relatedOrgs = uniqueBy(
+      safeArray(TAXONOMY.orgs).filter(org => {
+        const directMatch =
+          normalizeText(org.sector) === catNorm ||
+          normalizeText(org.programArea) === catNorm;
 
-      if (orgSector === catNorm || orgProgram === catNorm) return true;
+        if (directMatch) return true;
 
-      const orgTerms = [
-        ...safeArray(org.coreKeywords),
-        ...safeArray(org.programmaticKeywords),
-        ...safeArray(org.actionKeywords)
-      ].map(normalizeText);
+        const orgTerms = getOrgTerms(org);
+        return topW.some(item => orgTerms.some(term => overlapScore(item.phrase, term) >= 1));
+      }),
+      o => normalizeText(o.name)
+    );
 
-      return topW.some(item => {
-        const p = normalizeText(item.phrase);
-        return orgTerms.some(term => p.includes(term) || term.includes(p));
-      });
-    });
-
-    const orgsHtml = uniqueBy(relatedOrgs, o => normalizeText(o.name)).map(o => `
+    const orgsHtml = relatedOrgs.map(o => `
       <button
         onclick="document.getElementById('org-select').value='${escapeSingleQuotes(o.name)}'; handleOrgSelect({target:{value:'${escapeSingleQuotes(o.name)}'}}); switchTab('org-explorer');"
         class="px-4 py-2 bg-purple-900/40 hover:bg-purple-800/60 border border-purple-500/30 rounded-lg text-xs text-white transition-all flex items-center gap-2 shadow-sm">
@@ -1160,6 +1175,5 @@
     initApp();
   };
 </script>
-
 </body>
 </html>

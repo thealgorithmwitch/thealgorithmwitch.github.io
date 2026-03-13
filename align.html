@@ -976,38 +976,61 @@ function computeResultStackKeys_() {
   };
 
   const authorityStrength = scoreOf('linkedin');
-  const visualPrimary = scoreOf('instagram') >= scoreOf('tiktok') ? 'instagram' : 'tiktok';
-  const visualStrength = scoreOf(visualPrimary);
-  const searchPrimary = scoreOf('blog') >= scoreOf('youtube') ? 'blog' : 'youtube';
-  const searchStrength = scoreOf(searchPrimary);
 
-  let communityPrimary = 'threads';
-  if (signals.reporter >= 8 && scoreOf('bluesky') > scoreOf('threads')) {
-    communityPrimary = 'bluesky';
-  }
+  const visualPrimary =
+    scoreOf('tiktok') >= scoreOf('instagram') - 1 && scoreOf('tiktok') >= 10
+      ? 'tiktok'
+      : 'instagram';
+  const visualStrength = Math.max(scoreOf('instagram'), scoreOf('tiktok'));
+
+  // Search family should resolve to YouTube as the single-platform candidate,
+  // never Blog + SEO by itself
+  const searchPrimary = 'youtube';
+  const searchStrength = Math.max(scoreOf('youtube'), scoreOf('blog'));
+
+  const communityPrimary =
+    signals.reporter >= 8 && scoreOf('bluesky') > scoreOf('threads')
+      ? 'bluesky'
+      : 'threads';
   const communityStrength = scoreOf(communityPrimary);
 
   const families = [];
 
-  if (authorityStrength >= 11) {
-    families.push({ family: 'authority', platform: 'linkedin', strength: authorityStrength });
+  if (authorityStrength >= 10) {
+    families.push({
+      family: 'authority',
+      platform: 'linkedin',
+      strength: authorityStrength
+    });
   }
 
   if (visualStrength >= 10) {
-    families.push({ family: 'visual', platform: visualPrimary, strength: visualStrength });
+    families.push({
+      family: 'visual',
+      platform: visualPrimary,
+      strength: visualStrength
+    });
   }
 
   if (searchStrength >= 10) {
-    families.push({ family: 'search', platform: searchPrimary, strength: searchStrength });
+    families.push({
+      family: 'search',
+      platform: searchPrimary,
+      strength: searchStrength
+    });
   }
 
-  if (communityStrength >= 9 && signals.conversation >= 3) {
-    families.push({ family: 'community', platform: communityPrimary, strength: communityStrength });
+  if (communityStrength >= 8 && signals.conversation >= 3) {
+    families.push({
+      family: 'community',
+      platform: communityPrimary,
+      strength: communityStrength
+    });
   }
 
   families.sort((a, b) => b.strength - a.strength);
 
-  // Fallback if no family cleared threshold
+  // Fallback if no family clears threshold
   if (!families.length) {
     const [p1, s1] = ranked[0];
     const [p2, s2] = ranked[1] || [null, 0];
@@ -1015,25 +1038,22 @@ function computeResultStackKeys_() {
 
     const fallback = [p1];
 
-    if (p2 && s2 >= 9 && (s1 - s2) <= 6) fallback.push(p2);
-    if (p3 && s3 >= 8 && (s2 - s3) <= 3) fallback.push(p3);
+    if (p2 && s2 >= 8 && (s1 - s2) <= 5) fallback.push(p2);
+    if (p3 && s3 >= 7 && (s2 - s3) <= 3) fallback.push(p3);
 
     return finalizeStack_(fallback, ranked, 3);
   }
 
   let result = [families[0].platform];
 
-  // Single-platform only when the top family is truly dominant
+  // Single-platform only when dominance is very clear
+  // and only for LinkedIn / TikTok / YouTube
   const secondFamilyStrength = families[1] ? families[1].strength : 0;
   const dominantSingle =
-    families[0].strength >= 16 &&
-    (families[0].strength - secondFamilyStrength) >= 6 &&
-    (
-      families[0].platform === 'linkedin' ||
-      families[0].platform === 'instagram' ||
-      families[0].platform === 'blog' ||
-      families[0].platform === 'youtube'
-    );
+    ['linkedin', 'tiktok', 'youtube'].includes(families[0].platform) &&
+    families[0].strength >= 14 &&
+    (families[0].strength - secondFamilyStrength) >= 4 &&
+    secondFamilyStrength < 11;
 
   if (dominantSingle) {
     return finalizeStack_(result, ranked, 1);
@@ -1043,26 +1063,30 @@ function computeResultStackKeys_() {
     result.push(families[1].platform);
   }
 
-  // Mixed profiles like yours should often get 3
-  if (families[2] && families[2].strength >= (families[1].strength - 2)) {
+  // 3-platform results should be common
+  if (families[2] && families[2].strength >= (families[1].strength - 3)) {
     result.push(families[2].platform);
   }
 
-  // 4 only when the 4th family is genuinely present
-  if (families[3] && families[3].strength >= 10 && families[3].strength >= (families[2].strength - 2)) {
+  // 4-platform results should happen when the fourth lane is genuinely real
+  if (
+    families[3] &&
+    families[3].strength >= 9 &&
+    families[3].strength >= ((families[2] ? families[2].strength : 0) - 2)
+  ) {
     result.push(families[3].platform);
   }
 
-  // 5 should be rare and only happen when search pair + broad ecosystem are all strong
+  // 5 platforms should be rare and only happen for broad, truly strong ecosystems
   const canEarnFive =
     scoreOf('linkedin') >= 11 &&
     scoreOf('instagram') >= 10 &&
-    scoreOf('blog') >= 10 &&
     scoreOf('youtube') >= 10 &&
+    scoreOf('blog') >= 9 &&
     (
-      scoreOf('threads') >= 9 ||
+      scoreOf('threads') >= 8 ||
       scoreOf('tiktok') >= 10 ||
-      (signals.reporter >= 8 && scoreOf('bluesky') >= 9)
+      (signals.reporter >= 8 && scoreOf('bluesky') >= 8)
     );
 
   return finalizeStack_(result, ranked, canEarnFive ? 5 : 4);
@@ -1094,23 +1118,25 @@ function finalizeStack_(stack, ranked, maxLen = 4) {
   const moderateSearch = signals.search >= 5;
   const strongAuthority = signals.authority >= 7;
   const moderateAuthority = signals.authority >= 5;
-  const instagramConversation = signals.instagramAffinity >= 2 && signals.conversation >= 3;
+  const instagramConversation =
+    signals.instagramAffinity >= 2 && signals.conversation >= 3;
 
   // Keep LinkedIn present when authority is clearly real
   if (!has('linkedin') && strongAuthority && scoreOf('linkedin') >= 8) {
     result.push('linkedin');
   }
 
-  // Search pair logic
-  if (strongSearch) {
-    if (has('blog')) addIfStrong('youtube', 8);
-    if (has('youtube')) addIfStrong('blog', 8);
-  } else if (moderateSearch) {
-    if (has('blog') && scoreOf('youtube') >= 10) result.push('youtube');
-    if (has('youtube') && scoreOf('blog') >= 10) result.push('blog');
+  // Blog should never stand alone
+  if (has('blog') && !has('youtube')) {
+    addIfStrong('youtube', strongSearch ? 8 : 10);
   }
 
-  // TikTok should usually pull Instagram with it
+  // Search-heavy orgs should often get Blog + YouTube together
+  if (has('youtube') && strongSearch) {
+    addIfStrong('blog', 8);
+  }
+
+  // TikTok usually wants Instagram with it
   if (has('tiktok') && !has('instagram')) {
     addIfStrong('instagram', 7);
   }
@@ -1132,7 +1158,7 @@ function finalizeStack_(stack, ranked, maxLen = 4) {
     }
   }
 
-  // Bluesky should mostly require a real reporter/media need
+  // Bluesky should mostly appear only when reporter/media need is truly strong
   if (has('bluesky') && !reporterHigh) {
     remove('bluesky');
     addIfStrong('threads', 6);
@@ -1142,23 +1168,44 @@ function finalizeStack_(stack, ranked, maxLen = 4) {
     remove('bluesky');
   }
 
-  // Community results can pull in LinkedIn, but only when authority is actually there
+  // Community stacks can pull LinkedIn in, but only when authority is actually there
   if ((has('threads') || has('bluesky')) && !has('linkedin') && moderateAuthority && scoreOf('linkedin') >= 8) {
     result.push('linkedin');
   }
 
-  // Prevent weak community-only singles
-  if (result.length === 1 && (result[0] === 'threads' || result[0] === 'bluesky')) {
-    if (scoreOf('linkedin') >= 8) {
-      result.push('linkedin');
-    } else if (scoreOf('instagram') >= 8) {
-      result.push('instagram');
+  // Prevent weak single-platform outputs you do not want
+  if (result.length === 1) {
+    const only = result[0];
+
+    if (only === 'blog') {
+      result = ['youtube'];
+      if (strongSearch) addIfStrong('blog', 8);
+    }
+
+    if (only === 'instagram') {
+      if (scoreOf('tiktok') >= 10 && scoreOf('tiktok') >= scoreOf('instagram') - 1) {
+        result = ['tiktok'];
+      } else if (scoreOf('linkedin') >= 8) {
+        result = ['linkedin'];
+      } else if (scoreOf('threads') >= 7) {
+        result = ['threads'];
+      }
+    }
+
+    if (only === 'threads' || only === 'bluesky') {
+      if (scoreOf('linkedin') >= 8) {
+        result = ['linkedin'];
+      } else if (scoreOf('tiktok') >= 10) {
+        result = ['tiktok'];
+      } else if (scoreOf('youtube') >= 10) {
+        result = ['youtube'];
+      }
     }
   }
 
-  // Trim weak filler before final ordering
   result = [...new Set(result)];
 
+  // Trim to requested length
   if (result.length > maxLen) {
     result = result
       .map(p => [p, scoreOf(p)])
@@ -1167,6 +1214,7 @@ function finalizeStack_(stack, ranked, maxLen = 4) {
       .map(([p]) => p);
   }
 
+  // Remove weak filler from 5-platform results
   if (result.length === 5) {
     const weakest = result
       .map(p => [p, scoreOf(p)])
@@ -1177,6 +1225,7 @@ function finalizeStack_(stack, ranked, maxLen = 4) {
     }
   }
 
+  // Remove weak filler from 4-platform results
   if (result.length === 4) {
     const weakest = result
       .map(p => [p, scoreOf(p)])

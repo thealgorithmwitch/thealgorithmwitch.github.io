@@ -618,7 +618,7 @@
   </div>
 
   <script>
-    const STORAGE_KEY = "algorithmwitch-revolv-workspace-v1";
+    const STORAGE_KEY = "algorithmwitch-revolv-workspace-v2";
 
     const defaultWorkspaceData = {
       project: {
@@ -906,29 +906,6 @@
           url: "#",
           caption: "Final handoff walkthrough for dashboard and UTM workflow."
         }
-      ],
-
-      deliverables: [
-        {
-          name: "UTM Link Tracking Calculator",
-          submitted: "Pending",
-          status: "Pending Review"
-        },
-        {
-          name: "Looker Studio Dashboard v1",
-          submitted: "Pending",
-          status: "Pending Review"
-        },
-        {
-          name: "Google Ads Audit + Cleanup Recommendations",
-          submitted: "Pending",
-          status: "Pending Review"
-        },
-        {
-          name: "Tracking Link SOP + Recorded Training",
-          submitted: "Pending",
-          status: "Pending Review"
-        }
       ]
     };
 
@@ -944,12 +921,11 @@
         const parsed = JSON.parse(saved);
         if (!parsed || typeof parsed !== 'object') return deepClone(defaultWorkspaceData);
 
+        if (!parsed.project) parsed.project = deepClone(defaultWorkspaceData.project);
         if (!Array.isArray(parsed.tasks)) parsed.tasks = [];
         if (!Array.isArray(parsed.notes)) parsed.notes = [];
         if (!Array.isArray(parsed.assets)) parsed.assets = [];
-        if (!Array.isArray(parsed.phases)) parsed.phases = [];
-        if (!Array.isArray(parsed.deliverables)) parsed.deliverables = [];
-        if (!parsed.project) parsed.project = deepClone(defaultWorkspaceData.project);
+        if (!Array.isArray(parsed.phases)) parsed.phases = deepClone(defaultWorkspaceData.phases);
 
         parsed.tasks = parsed.tasks.map(task => ({
           ...task,
@@ -1027,24 +1003,49 @@
       return name.split(' ').map(n => n[0]).join('').toUpperCase().substring(0, 2);
     };
 
+    function escapeHtml(str) {
+      return String(str ?? '')
+        .replaceAll('&', '&amp;')
+        .replaceAll('<', '&lt;')
+        .replaceAll('>', '&gt;')
+        .replaceAll('"', '&quot;')
+        .replaceAll("'", '&#039;');
+    }
+
+    function escapeAttribute(str) {
+      return String(str ?? '').replaceAll('"', '&quot;');
+    }
+
+    function openModal(el) {
+      if (!el) return;
+      el.classList.remove('hidden');
+      el.classList.add('flex');
+    }
+
+    function closeModal(el) {
+      if (!el) return;
+      el.classList.add('hidden');
+      el.classList.remove('flex');
+    }
+
     function applyProjectMeta() {
-      document.getElementById('header-project-name').textContent = workspaceData.project.name;
-      document.getElementById('header-client-name').textContent = workspaceData.project.client;
-      document.getElementById('header-duration').textContent = workspaceData.project.duration;
+      document.getElementById('header-project-name').textContent = workspaceData.project.name || '';
+      document.getElementById('header-client-name').textContent = workspaceData.project.client || '';
+      document.getElementById('header-duration').textContent = workspaceData.project.duration || '';
 
       const statusEl = document.getElementById('ws-status');
-      statusEl.textContent = workspaceData.project.status;
+      statusEl.textContent = workspaceData.project.status || '';
       statusEl.className = `px-3 py-1 rounded-full font-medium tracking-wide uppercase text-[10px] border ${getStatusStyles(workspaceData.project.status)}`;
 
-      document.getElementById('side-service').textContent = workspaceData.project.service;
-      document.getElementById('side-capacity').textContent = workspaceData.project.capacity;
-      document.getElementById('side-goal').textContent = workspaceData.project.goal;
+      document.getElementById('side-service').textContent = workspaceData.project.service || '';
+      document.getElementById('side-capacity').textContent = workspaceData.project.capacity || '';
+      document.getElementById('side-goal').textContent = workspaceData.project.goal || '';
 
-      document.getElementById('overview-description').textContent = workspaceData.project.description;
-      document.getElementById('overview-service').textContent = workspaceData.project.service;
-      document.getElementById('overview-capacity').textContent = workspaceData.project.capacity;
-      document.getElementById('overview-focus').textContent = workspaceData.project.focus;
-      document.getElementById('overview-goal').textContent = workspaceData.project.goal;
+      document.getElementById('overview-description').textContent = workspaceData.project.description || '';
+      document.getElementById('overview-service').textContent = workspaceData.project.service || '';
+      document.getElementById('overview-capacity').textContent = workspaceData.project.capacity || '';
+      document.getElementById('overview-focus').textContent = workspaceData.project.focus || '';
+      document.getElementById('overview-goal').textContent = workspaceData.project.goal || '';
     }
 
     function renderTasks() {
@@ -1315,21 +1316,33 @@
 
     function renderReview() {
       const container = document.getElementById('review-container');
+      const reviewTasks = workspaceData.tasks.filter(task =>
+        task.status === 'In Review' || task.status === 'Waiting on Client'
+      );
 
-      container.innerHTML = workspaceData.deliverables.map(d => `
+      if (!reviewTasks.length) {
+        container.innerHTML = `
+          <div class="glass-card rounded-xl p-5 text-gray-400 text-sm">
+            Nothing is currently in review.
+          </div>
+        `;
+        return;
+      }
+
+      container.innerHTML = reviewTasks.map(task => `
         <div class="glass-card rounded-xl p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div class="flex items-start sm:items-center gap-4">
             <div class="w-12 h-12 rounded-xl bg-black/50 border border-white/5 flex items-center justify-center shrink-0">
               <i class="ph-duotone ph-file-text text-2xl text-gray-400"></i>
             </div>
             <div>
-              <p class="text-white text-base mb-1">${escapeHtml(d.name || '')}</p>
-              <p class="text-gray-500 text-xs">Submitted: ${escapeHtml(d.submitted || '')}</p>
+              <p class="text-white text-base mb-1">${escapeHtml(task.task || '')}</p>
+              <p class="text-gray-500 text-xs">${escapeHtml(task.category || '')} · ${escapeHtml(task.owner || '')}</p>
             </div>
           </div>
           <div class="flex flex-col sm:flex-row items-start sm:items-center gap-3">
-            <span class="px-3 py-1.5 rounded-full text-[10px] tracking-wider uppercase border text-center min-w-[120px] ${getStatusStyles(d.status)}">
-              ${escapeHtml(d.status || '')}
+            <span class="px-3 py-1.5 rounded-full text-[10px] tracking-wider uppercase border text-center min-w-[120px] ${getStatusStyles(task.status)}">
+              ${escapeHtml(task.status || '')}
             </span>
           </div>
         </div>
@@ -1398,31 +1411,6 @@
       }
       renderTasks();
     };
-
-    function escapeHtml(str) {
-      return String(str ?? '')
-        .replaceAll('&', '&amp;')
-        .replaceAll('<', '&lt;')
-        .replaceAll('>', '&gt;')
-        .replaceAll('"', '&quot;')
-        .replaceAll("'", '&#039;');
-    }
-
-    function escapeAttribute(str) {
-      return String(str ?? '').replaceAll('"', '&quot;');
-    }
-
-    function openModal(el) {
-      if (!el) return;
-      el.classList.remove('hidden');
-      el.classList.add('flex');
-    }
-    
-    function closeModal(el) {
-      if (!el) return;
-      el.classList.add('hidden');
-      el.classList.remove('flex');
-    }
 
     function buildAttachmentEditorRows(attachments) {
       const container = document.getElementById('task-attachments-editor');
@@ -1539,6 +1527,7 @@
       }
 
       renderTasks();
+      renderReview();
       saveWorkspaceData();
       closeModal(taskModal);
     }
@@ -1553,6 +1542,7 @@
       workspaceData.tasks = workspaceData.tasks.filter(t => t.id !== idValue);
       expandedTasks = expandedTasks.filter(id => id !== idValue);
       renderTasks();
+      renderReview();
       saveWorkspaceData();
       closeModal(taskModal);
     }
@@ -1572,6 +1562,7 @@
         document.getElementById('asset-modal-title').textContent = 'New Asset';
       } else {
         asset = deepClone(workspaceData.assets.find(a => a.id === assetId));
+        if (!asset) return;
         document.getElementById('asset-modal-title').textContent = 'Edit Asset';
       }
 
@@ -1698,30 +1689,6 @@
       closeModal(noteModal);
     }
 
-    window.openNoteEditor = (noteId) => openNoteEditor(noteId);
-
-    window.openAssetEditor = function (assetId) {
-      openAssetEditor(assetId);
-    };
-    
-    window.deleteAsset = function (assetId) {
-      if (!confirm('Delete this asset?')) return;
-      workspaceData.assets = workspaceData.assets.filter(a => a.id !== assetId);
-      renderAssets();
-      saveWorkspaceData();
-    };
-    
-    window.openNoteEditor = function (noteId) {
-      openNoteEditor(noteId);
-    };
-    
-    window.deleteNote = function (noteId) {
-      if (!confirm('Delete this note?')) return;
-      workspaceData.notes = workspaceData.notes.filter(n => n.id !== noteId);
-      renderNotes();
-      saveWorkspaceData();
-    };
-
     function openOverviewEditor() {
       document.getElementById('overview-edit-project-name').value = workspaceData.project.name || '';
       document.getElementById('overview-edit-client-name').value = workspaceData.project.client || '';
@@ -1763,6 +1730,32 @@
       renderAll();
       switchTab('tasks');
     }
+
+    window.openTaskEditor = function(taskId) {
+      openTaskEditor(taskId);
+    };
+
+    window.openAssetEditor = function(assetId) {
+      openAssetEditor(assetId);
+    };
+
+    window.deleteAsset = function(assetId) {
+      if (!confirm('Delete this asset?')) return;
+      workspaceData.assets = workspaceData.assets.filter(a => a.id !== assetId);
+      renderAssets();
+      saveWorkspaceData();
+    };
+
+    window.openNoteEditor = function(noteId) {
+      openNoteEditor(noteId);
+    };
+
+    window.deleteNote = function(noteId) {
+      if (!confirm('Delete this note?')) return;
+      workspaceData.notes = workspaceData.notes.filter(n => n.id !== noteId);
+      renderNotes();
+      saveWorkspaceData();
+    };
 
     document.addEventListener('DOMContentLoaded', () => {
       renderAll();

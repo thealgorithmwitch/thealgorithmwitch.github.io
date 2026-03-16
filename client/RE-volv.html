@@ -1413,11 +1413,13 @@
     }
 
     function openModal(el) {
+      if (!el) return;
       el.classList.remove('hidden');
       el.classList.add('flex');
     }
-
+    
     function closeModal(el) {
+      if (!el) return;
       el.classList.add('hidden');
       el.classList.remove('flex');
     }
@@ -1631,15 +1633,6 @@
       closeModal(assetModal);
     }
 
-    window.deleteAsset = (assetId) => {
-      if (!confirm('Delete this asset?')) return;
-      workspaceData.assets = workspaceData.assets.filter(a => a.id !== assetId);
-      renderAssets();
-      saveWorkspaceData();
-    };
-
-    window.openAssetEditor = (assetId) => openAssetEditor(assetId);
-
     function addNote() {
       const date = document.getElementById('new-note-date').value.trim();
       const author = document.getElementById('new-note-author').value.trim() || 'Cassandre';
@@ -1707,7 +1700,22 @@
 
     window.openNoteEditor = (noteId) => openNoteEditor(noteId);
 
-    window.deleteNote = (noteId) => {
+    window.openAssetEditor = function (assetId) {
+      openAssetEditor(assetId);
+    };
+    
+    window.deleteAsset = function (assetId) {
+      if (!confirm('Delete this asset?')) return;
+      workspaceData.assets = workspaceData.assets.filter(a => a.id !== assetId);
+      renderAssets();
+      saveWorkspaceData();
+    };
+    
+    window.openNoteEditor = function (noteId) {
+      openNoteEditor(noteId);
+    };
+    
+    window.deleteNote = function (noteId) {
       if (!confirm('Delete this note?')) return;
       workspaceData.notes = workspaceData.notes.filter(n => n.id !== noteId);
       renderNotes();

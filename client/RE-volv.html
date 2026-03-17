@@ -656,10 +656,22 @@
   async function apiPost(payload) {
     const res = await fetch(API_BASE, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'text/plain;charset=utf-8'
+      },
       body: JSON.stringify(payload)
     });
-    const data = await res.json();
+  
+    const text = await res.text();
+    let data;
+  
+    try {
+      data = JSON.parse(text);
+    } catch (err) {
+      console.error('Non-JSON save response:', text);
+      throw new Error('Save failed: server did not return JSON');
+    }
+  
     if (!data.ok) throw new Error(data.error || 'API error');
     return data;
   }
@@ -1218,34 +1230,42 @@
     };
   }
 
-  async function saveTaskFromModal() {
-    const data = collectTaskFormData();
-
-    if (!data.task) {
-      alert('Task name is required.');
-      return;
+    async function saveTaskFromModal() {
+      try {
+        const data = collectTaskFormData();
+    
+        if (!data.task) {
+          alert('Task name is required.');
+          return;
+        }
+    
+        const res = await apiPost({
+          action: 'saveTask',
+          clientSlug: CLIENT_SLUG,
+          task: data
+        });
+    
+        const idx = workspaceData.tasks.findIndex(t => Number(t.id) === Number(res.task.id));
+        if (idx === -1) {
+          workspaceData.tasks.unshift({
+            ...res.task,
+            attachments: Array.isArray(data.attachments) ? data.attachments : []
+          });
+        } else {
+          workspaceData.tasks[idx] = {
+            ...workspaceData.tasks[idx],
+            ...res.task,
+            attachments: Array.isArray(data.attachments) ? data.attachments : []
+          };
+        }
+    
+        renderAll();
+        closeModal(taskModal);
+      } catch (err) {
+        console.error('Save task failed:', err);
+        alert(`Save task failed: ${err.message}`);
+      }
     }
-
-    const res = await apiPost({
-      action: 'saveTask',
-      clientSlug: CLIENT_SLUG,
-      task: data
-    });
-
-    const idx = workspaceData.tasks.findIndex(t => Number(t.id) === Number(res.task.id));
-    if (idx === -1) {
-      workspaceData.tasks.unshift(res.task);
-    } else {
-      workspaceData.tasks[idx] = {
-        ...workspaceData.tasks[idx],
-        ...res.task,
-        attachments: Array.isArray(data.attachments) ? data.attachments : []
-      };
-    }
-
-    renderAll();
-    closeModal(taskModal);
-  }
 
   async function deleteTaskFromModal() {
     const idValue = Number(document.getElementById('task-edit-id').value);

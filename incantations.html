@@ -287,6 +287,7 @@
             <h2 class="font-magical text-3xl md:text-4xl text-white mb-2">Organization Codex</h2>
             <p class="font-serif-italic text-gray-400 text-sm">Examine the keyword footprints bound to specific entities.</p>
           </div>
+      
           <div class="glass-panel p-6 rounded-2xl flex-shrink-0">
             <label class="block text-[10px] uppercase tracking-[0.15em] text-gray-300 font-semibold mb-3">Select Entity to Inspect</label>
             <div class="relative">
@@ -295,56 +296,71 @@
             </div>
           </div>
         </div>
-
+      
         <div class="flex-1 glass-panel rounded-2xl h-full flex flex-col overflow-hidden relative">
           <div id="org-empty" class="absolute inset-0 flex flex-col items-center justify-center text-center p-8">
             <i class="ph-duotone ph-magnifying-glass text-6xl text-cyan-400 mb-6 opacity-50"></i>
             <p class="font-serif-italic text-2xl text-white mb-2">The codex is closed.</p>
             <p class="text-sm text-gray-400 uppercase tracking-widest">Select an organization to reveal its structural footprint.</p>
           </div>
-
-    <div id="org-content" class="hidden h-full flex flex-col overflow-hidden p-6 lg:p-8">
-      <div class="bg-black/40 border border-cyan-500/20 rounded-2xl p-6 flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8 shrink-0 relative overflow-hidden">
-        <div class="absolute right-0 top-0 h-full w-1/3 bg-gradient-to-l from-cyan-500/10 to-transparent pointer-events-none"></div>
-    
-        <div>
-          <h3 id="org-name-display" class="font-magical text-3xl text-white mb-3"></h3>
-          <div id="org-category-badges" class="flex flex-wrap gap-2"></div>
+      
+          <div id="org-content" class="hidden h-full flex flex-col overflow-hidden p-6 lg:p-8">
+            <div class="bg-black/40 border border-cyan-500/20 rounded-2xl p-6 flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8 shrink-0 relative overflow-hidden">
+              <div class="absolute right-0 top-0 h-full w-1/3 bg-gradient-to-l from-cyan-500/10 to-transparent pointer-events-none"></div>
+      
+              <div>
+                <h3 id="org-name-display" class="font-magical text-3xl text-white mb-3"></h3>
+                <div class="flex flex-wrap gap-2">
+                  <span id="org-sector-badge" class="px-3 py-1.5 bg-purple-500/20 border border-purple-500/40 rounded-md text-[10px] text-purple-200 font-bold uppercase tracking-wider"></span>
+                  <span id="org-program-badge" class="px-3 py-1.5 bg-cyan-500/20 border border-cyan-500/40 rounded-md text-[10px] text-cyan-200 font-bold uppercase tracking-wider"></span>
+                </div>
+              </div>
+      
+              <div class="flex items-center gap-2 px-4 py-2 bg-white/5 border border-white/10 rounded-lg shrink-0">
+                <i class="ph-duotone ph-users text-gray-400 text-lg"></i>
+                <span class="text-xs text-gray-300 font-medium" id="org-audience-text"></span>
+              </div>
+            </div>
+      
+            <div class="flex-1 overflow-y-auto custom-scrollbar pr-2 grid lg:grid-cols-2 gap-8 content-start pb-10">
+              <div class="space-y-6">
+                <div>
+                  <h4 class="text-[11px] uppercase tracking-[0.2em] text-cyan-400 font-bold mb-3 flex items-center gap-2 border-b border-white/5 pb-2">
+                    <i class="ph-bold ph-strategy"></i> Core &amp; Programmatic
+                  </h4>
+                  <div class="grid gap-3">
+                    <div id="org-core-list" class="grid gap-3"></div>
+                    <div id="org-prog-list" class="grid gap-3"></div>
+                  </div>
+                </div>
+      
+                <div>
+                  <h4 class="text-[11px] uppercase tracking-[0.2em] text-emerald-400 font-bold mb-3 flex items-center gap-2 border-b border-white/5 pb-2">
+                    <i class="ph-bold ph-target"></i> Action Keywords
+                  </h4>
+                  <div id="org-action-list" class="grid gap-3"></div>
+                </div>
+              </div>
+      
+              <div class="space-y-6">
+                <div class="bg-purple-900/10 border border-purple-500/20 rounded-xl p-5">
+                  <h4 class="font-magical text-lg text-purple-200 mb-4 flex items-center gap-2">
+                    <i class="ph-fill ph-sparkle text-purple-400"></i> Suggested Expansions
+                  </h4>
+                  <div id="org-expansions-list" class="grid gap-3"></div>
+                </div>
+      
+                <div class="bg-amber-900/10 border border-amber-500/20 rounded-xl p-5">
+                  <h4 class="font-magical text-lg text-amber-200 mb-4 flex items-center gap-2">
+                    <i class="ph-fill ph-crown text-amber-400"></i> Highest Weighted
+                  </h4>
+                  <div id="org-top-list" class="grid gap-3"></div>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
-    
-        <div class="flex items-center gap-2 px-4 py-2 bg-white/5 border border-white/10 rounded-lg shrink-0">
-          <i class="ph-duotone ph-users text-gray-400 text-lg"></i>
-          <span class="text-xs text-gray-300 font-medium" id="org-audience-text"></span>
-        </div>
       </div>
-
-  <div class="flex-1 overflow-y-auto custom-scrollbar pr-2 grid lg:grid-cols-2 gap-8 content-start pb-10">
-    <div class="space-y-6">
-      <div>
-        <h4 class="text-[11px] uppercase tracking-[0.2em] text-cyan-400 font-bold mb-3 flex items-center gap-2 border-b border-white/5 pb-2"><i class="ph-bold ph-strategy"></i> Core &amp; Programmatic</h4>
-        <div class="grid gap-3">
-          <div id="org-core-list" class="grid gap-3"></div>
-          <div id="org-prog-list" class="grid gap-3"></div>
-        </div>
-      </div>
-      <div>
-        <h4 class="text-[11px] uppercase tracking-[0.2em] text-emerald-400 font-bold mb-3 flex items-center gap-2 border-b border-white/5 pb-2"><i class="ph-bold ph-target"></i> Action Keywords</h4>
-        <div id="org-action-list" class="grid gap-3"></div>
-      </div>
-    </div>
-
-    <div class="space-y-6">
-      <div class="bg-purple-900/10 border border-purple-500/20 rounded-xl p-5">
-        <h4 class="font-magical text-lg text-purple-200 mb-4 flex items-center gap-2"><i class="ph-fill ph-sparkle text-purple-400"></i> Suggested Expansions</h4>
-        <div id="org-expansions-list" class="grid gap-3"></div>
-      </div>
-      <div class="bg-amber-900/10 border border-amber-500/20 rounded-xl p-5">
-        <h4 class="font-magical text-lg text-amber-200 mb-4 flex items-center gap-2"><i class="ph-fill ph-crown text-amber-400"></i> Highest Weighted</h4>
-        <div id="org-top-list" class="grid gap-3"></div>
-      </div>
-    </div>
-  </div>
-</div>
             <div class="flex-1 overflow-y-auto custom-scrollbar pr-2 grid lg:grid-cols-2 gap-8 content-start pb-10">
               <div class="space-y-6">
                 <div>
@@ -374,95 +390,105 @@
         </div>
       </div>
 
-      <div id="view-cat-explorer" class="view-panel hidden h-full flex flex-col lg:flex-row gap-6 lg:gap-8">
-        <div class="w-full lg:w-[380px] flex-shrink-0 flex flex-col h-full gap-6">
-          <div class="px-2">
-            <div class="inline-flex items-center gap-2 mb-3 bg-emerald-500/10 border border-emerald-500/20 px-3 py-1 rounded-full">
-              <i class="ph-fill ph-tree-structure text-emerald-400"></i>
-              <span class="text-[10px] uppercase tracking-[0.2em] text-emerald-300 font-bold">Thematic Browse</span>
-            </div>
-            <h2 class="font-magical text-3xl md:text-4xl text-white mb-2">Category Nexus</h2>
-            <p class="font-serif-italic text-gray-400 text-sm">Traverse the ecosystem by overarching themes and domains.</p>
-          </div>
-          <div class="glass-panel p-6 rounded-2xl flex-shrink-0">
-            <label class="block text-[10px] uppercase tracking-[0.15em] text-gray-300 font-semibold mb-3">Select Domain to Traverse</label>
-            <div class="relative">
-              <select id="cat-select" class="glass-input w-full rounded-xl px-4 py-3 text-sm appearance-none cursor-pointer border-emerald-500/30 focus:border-emerald-400"></select>
-              <i class="ph-bold ph-caret-down absolute right-4 bottom-3.5 text-gray-400 pointer-events-none"></i>
-            </div>
-          </div>
+<div id="view-cat-explorer" class="view-panel hidden h-full flex flex-col lg:flex-row gap-6 lg:gap-8">
+  <div class="w-full lg:w-[380px] flex-shrink-0 flex flex-col h-full gap-6">
+    <div class="px-2">
+      <div class="inline-flex items-center gap-2 mb-3 bg-emerald-500/10 border border-emerald-500/20 px-3 py-1 rounded-full">
+        <i class="ph-fill ph-tree-structure text-emerald-400"></i>
+        <span class="text-[10px] uppercase tracking-[0.2em] text-emerald-300 font-bold">Thematic Browse</span>
+      </div>
+      <h2 class="font-magical text-3xl md:text-4xl text-white mb-2">Category Nexus</h2>
+      <p class="font-serif-italic text-gray-400 text-sm">Traverse the ecosystem by overarching themes and domains.</p>
+    </div>
+
+    <div class="glass-panel p-6 rounded-2xl flex-shrink-0">
+      <label class="block text-[10px] uppercase tracking-[0.15em] text-gray-300 font-semibold mb-3">Select Domain to Traverse</label>
+      <div class="relative">
+        <select id="cat-select" class="glass-input w-full rounded-xl px-4 py-3 text-sm appearance-none cursor-pointer border-emerald-500/30 focus:border-emerald-400"></select>
+        <i class="ph-bold ph-caret-down absolute right-4 bottom-3.5 text-gray-400 pointer-events-none"></i>
+      </div>
+    </div>
+  </div>
+
+  <div class="flex-1 glass-panel rounded-2xl h-full flex flex-col overflow-hidden relative">
+    <div id="cat-empty" class="absolute inset-0 flex flex-col items-center justify-center text-center p-8">
+      <i class="ph-duotone ph-circles-three text-6xl text-emerald-400 mb-6 opacity-50"></i>
+      <p class="font-serif-italic text-2xl text-white mb-2">Awaiting connection.</p>
+      <p class="text-sm text-gray-400 uppercase tracking-widest">Select a category to view its interconnected phrases.</p>
+    </div>
+
+    <div id="cat-content" class="hidden h-full flex flex-col overflow-hidden p-6 lg:p-8">
+      <div class="flex-1 overflow-y-auto custom-scrollbar pr-2 grid lg:grid-cols-3 gap-8 content-start pb-10">
+        <div class="lg:col-span-2 space-y-6">
+          <h3 class="font-magical text-2xl text-white border-b border-white/10 pb-3">Domain Lexicon</h3>
+          <div id="cat-phrases-list" class="grid gap-6"></div>
         </div>
 
-        <div class="flex-1 glass-panel rounded-2xl h-full flex flex-col overflow-hidden relative">
-          <div id="cat-empty" class="absolute inset-0 flex flex-col items-center justify-center text-center p-8">
-            <i class="ph-duotone ph-circles-three text-6xl text-emerald-400 mb-6 opacity-50"></i>
-            <p class="font-serif-italic text-2xl text-white mb-2">Awaiting connection.</p>
-            <p class="text-sm text-gray-400 uppercase tracking-widest">Select a category to view its interconnected phrases.</p>
+        <div class="space-y-6">
+          <div class="bg-amber-900/10 border border-amber-500/20 rounded-xl p-5">
+            <h4 class="font-magical text-lg text-amber-200 mb-4 flex items-center gap-2">
+              <i class="ph-fill ph-star text-amber-400"></i> Pinnacle Phrases
+            </h4>
+            <div id="cat-top-list" class="grid gap-3"></div>
           </div>
 
-          <div id="cat-content" class="hidden h-full flex flex-col overflow-hidden p-6 lg:p-8">
-            <div class="flex-1 overflow-y-auto custom-scrollbar pr-2 grid lg:grid-cols-3 gap-8 content-start pb-10">
-              <div class="lg:col-span-2 space-y-6">
-                <h3 class="font-magical text-2xl text-white border-b border-white/10 pb-3">Domain Lexicon</h3>
-                <div id="cat-phrases-list" class="grid gap-6"></div>
-              </div>
-              <div class="space-y-6">
-                <div class="bg-amber-900/10 border border-amber-500/20 rounded-xl p-5">
-                  <h4 class="font-magical text-lg text-amber-200 mb-4 flex items-center gap-2"><i class="ph-fill ph-star text-amber-400"></i> Pinnacle Phrases</h4>
-                  <div id="cat-top-list" class="grid gap-3"></div>
-                </div>
-                <div class="bg-purple-900/10 border border-purple-500/20 rounded-xl p-5">
-                  <h4 class="font-magical text-lg text-purple-200 mb-4 flex items-center gap-2"><i class="ph-fill ph-users-three text-purple-400"></i> Bound Entities</h4>
-                  <div id="cat-orgs-list" class="flex flex-wrap gap-2"></div>
-                </div>
-              </div>
-            </div>
+          <div class="bg-purple-900/10 border border-purple-500/20 rounded-xl p-5">
+            <h4 class="font-magical text-lg text-purple-200 mb-4 flex items-center gap-2">
+              <i class="ph-fill ph-users-three text-purple-400"></i> Bound Entities
+            </h4>
+            <div id="cat-orgs-list" class="flex flex-wrap gap-2"></div>
           </div>
         </div>
       </div>
+    </div>
+  </div>
+</div>
 
-      <div id="view-plat-explorer" class="view-panel hidden h-full flex flex-col lg:flex-row gap-6 lg:gap-8">
-        <div class="w-full lg:w-[380px] flex-shrink-0 flex flex-col h-full gap-6">
-          <div class="px-2">
-            <div class="inline-flex items-center gap-2 mb-3 bg-indigo-500/10 border border-indigo-500/20 px-3 py-1 rounded-full">
-              <i class="ph-fill ph-broadcast text-indigo-400"></i>
-              <span class="text-[10px] uppercase tracking-[0.2em] text-indigo-300 font-bold">Signal Decrypter</span>
-            </div>
-            <h2 class="font-magical text-3xl md:text-4xl text-white mb-2">Platform Nexus</h2>
-            <p class="font-serif-italic text-gray-400 text-sm">Discover high-intent signals manifesting across diverse digital realms.</p>
-          </div>
-          <div class="glass-panel p-6 rounded-2xl flex-shrink-0 flex flex-col gap-6">
-            <div>
-              <label class="block text-[10px] uppercase tracking-[0.15em] text-gray-300 font-semibold mb-3">Select Platform Domain</label>
-              <div class="relative">
-                <select id="plat-select" class="glass-input w-full rounded-xl px-4 py-3 text-sm appearance-none cursor-pointer border-indigo-500/30 focus:border-indigo-400"></select>
-                <i class="ph-bold ph-caret-down absolute right-4 bottom-3.5 text-gray-400 pointer-events-none"></i>
-              </div>
-            </div>
-            <div class="flex items-center justify-between bg-black/30 p-3 rounded-xl border border-white/5">
-              <span class="text-xs font-bold text-gray-300 tracking-wider flex items-center gap-2">
-                <i class="ph-duotone ph-google-logo text-lg text-amber-400"></i> Ad Grants Focus
-              </span>
-              <div class="relative inline-block w-12 h-6 align-middle select-none transition duration-200 ease-in">
-                <input type="checkbox" id="plat-ad-grant-filter" class="toggle-checkbox absolute block w-6 h-6 rounded-full bg-white border-4 appearance-none cursor-pointer transition-all duration-300 z-10">
-                <label for="plat-ad-grant-filter" class="toggle-label block overflow-hidden h-6 rounded-full bg-gray-700 cursor-pointer border border-gray-600 transition-all duration-300"></label>
-              </div>
-            </div>
-          </div>
-        </div>
+<div id="view-plat-explorer" class="view-panel hidden h-full flex flex-col lg:flex-row gap-6 lg:gap-8">
+  <div class="w-full lg:w-[380px] flex-shrink-0 flex flex-col h-full gap-6">
+    <div class="px-2">
+      <div class="inline-flex items-center gap-2 mb-3 bg-indigo-500/10 border border-indigo-500/20 px-3 py-1 rounded-full">
+        <i class="ph-fill ph-broadcast text-indigo-400"></i>
+        <span class="text-[10px] uppercase tracking-[0.2em] text-indigo-300 font-bold">Signal Decrypter</span>
+      </div>
+      <h2 class="font-magical text-3xl md:text-4xl text-white mb-2">Platform Nexus</h2>
+      <p class="font-serif-italic text-gray-400 text-sm">Discover high-intent signals manifesting across diverse digital realms.</p>
+    </div>
 
-        <div class="flex-1 glass-panel rounded-2xl h-full flex flex-col overflow-hidden relative">
-          <div id="plat-content" class="h-full flex flex-col overflow-hidden p-6 lg:p-8">
-            <div class="flex justify-between items-center mb-6 shrink-0 border-b border-white/5 pb-4">
-              <h3 class="font-magical text-2xl text-white flex items-center gap-3">
-                <i class="ph-fill ph-waves text-indigo-400"></i> Detected Frequencies
-              </h3>
-              <span id="plat-results-stats" class="text-xs text-indigo-300 uppercase tracking-widest"></span>
-            </div>
-            <div id="plat-phrases-list" class="flex-1 overflow-y-auto custom-scrollbar pr-2 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 content-start pb-10"></div>
-          </div>
+    <div class="glass-panel p-6 rounded-2xl flex-shrink-0 flex flex-col gap-6">
+      <div>
+        <label class="block text-[10px] uppercase tracking-[0.15em] text-gray-300 font-semibold mb-3">Select Platform Domain</label>
+        <div class="relative">
+          <select id="plat-select" class="glass-input w-full rounded-xl px-4 py-3 text-sm appearance-none cursor-pointer border-indigo-500/30 focus:border-indigo-400"></select>
+          <i class="ph-bold ph-caret-down absolute right-4 bottom-3.5 text-gray-400 pointer-events-none"></i>
         </div>
       </div>
+
+      <div class="flex items-center justify-between bg-black/30 p-3 rounded-xl border border-white/5">
+        <span class="text-xs font-bold text-gray-300 tracking-wider flex items-center gap-2">
+          <i class="ph-duotone ph-google-logo text-lg text-amber-400"></i> Ad Grants Focus
+        </span>
+        <div class="relative inline-block w-12 h-6 align-middle select-none transition duration-200 ease-in">
+          <input type="checkbox" id="plat-ad-grant-filter" class="toggle-checkbox absolute block w-6 h-6 rounded-full bg-white border-4 appearance-none cursor-pointer transition-all duration-300 z-10">
+          <label for="plat-ad-grant-filter" class="toggle-label block overflow-hidden h-6 rounded-full bg-gray-700 cursor-pointer border border-gray-600 transition-all duration-300"></label>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="flex-1 glass-panel rounded-2xl h-full flex flex-col overflow-hidden relative">
+    <div id="plat-content" class="h-full flex flex-col overflow-hidden p-6 lg:p-8">
+      <div class="flex justify-between items-center mb-6 shrink-0 border-b border-white/5 pb-4">
+        <h3 class="font-magical text-2xl text-white flex items-center gap-3">
+          <i class="ph-fill ph-waves text-indigo-400"></i> Detected Frequencies
+        </h3>
+        <span id="plat-results-stats" class="text-xs text-indigo-300 uppercase tracking-widest"></span>
+      </div>
+
+      <div id="plat-phrases-list" class="flex-1 overflow-y-auto custom-scrollbar pr-2 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 content-start pb-10"></div>
+    </div>
+  </div>
+</div>
 
       <div id="view-search" class="view-panel hidden h-full flex flex-col gap-6">
         <div class="glass-panel rounded-2xl p-6 md:p-8 shrink-0 flex flex-col lg:flex-row gap-6 items-center justify-between z-10">
@@ -1183,87 +1209,92 @@
     renderList("gen-action-list", action);
   }
 
-  function handleOrgSelect(e) {
-    const orgName = e.target.value;
+function handleOrgSelect(e) {
+  const orgName = e.target.value;
 
-    if (!orgName) {
-      document.getElementById("org-empty").classList.remove("hidden");
-      document.getElementById("org-content").classList.add("hidden");
-      return;
-    }
+  if (!orgName) {
+    document.getElementById("org-empty").classList.remove("hidden");
+    document.getElementById("org-content").classList.add("hidden");
+    return;
+  }
 
-    const org = TAXONOMY.orgs.find(o => normalizeText(o.name) === normalizeText(orgName));
-    if (!org) return;
+  const org = TAXONOMY.orgs.find(o => normalizeText(o.name) === normalizeText(orgName));
+  if (!org) return;
 
-    document.getElementById("org-empty").classList.add("hidden");
-    document.getElementById("org-content").classList.remove("hidden");
-    document.getElementById("org-content").classList.add("flex");
+  document.getElementById("org-empty").classList.add("hidden");
+  document.getElementById("org-content").classList.remove("hidden");
+  document.getElementById("org-content").classList.add("flex");
 
-    document.getElementById("org-name-display").innerText = org.name || "";
+  document.getElementById("org-name-display").innerText = org.name || "";
+  document.getElementById("org-sector-badge").innerText = org.sector || "";
+  document.getElementById("org-program-badge").innerText = org.programArea || "";
+  document.getElementById("org-audience-text").innerText = org.audience || "";
 
-    const badgeWrap = document.getElementById("org-category-badges");
-    const orgCategoryTags = safeArray(org.categoryTags).length
-      ? safeArray(org.categoryTags)
-      : [org.sector, org.programArea].filter(Boolean);
+  const toCardList = (words, category) =>
+    safeArray(words).map(w => createCardHTML(buildCardData(w, { category }))).join("");
 
-    if (badgeWrap) {
-      badgeWrap.innerHTML = orgCategoryTags.map((cat, index) => `
-        <span class="px-3 py-1.5 ${
-          index === 0
-            ? "bg-purple-500/20 border border-purple-500/40 text-purple-200"
-            : "bg-cyan-500/20 border border-cyan-500/40 text-cyan-200"
-        } rounded-md text-[10px] font-bold uppercase tracking-wider">
-          ${escapeHtml(cat)}
-        </span>
-      `).join("");
-    }
+  document.getElementById("org-core-list").innerHTML =
+    toCardList(org.coreKeywords, org.sector);
 
-    document.getElementById("org-audience-text").innerText = org.audience || "";
+  document.getElementById("org-prog-list").innerHTML =
+    toCardList(org.programmaticKeywords, org.programArea || org.sector);
 
-    const toCardList = (words, category, categoryTags = []) =>
-      safeArray(words).map(w => createCardHTML(buildCardData(w, { category, categoryTags }))).join("");
+  document.getElementById("org-action-list").innerHTML =
+    toCardList(org.actionKeywords, org.programArea || org.sector);
 
-    document.getElementById("org-core-list").innerHTML =
-      toCardList(org.coreKeywords, org.sector, orgCategoryTags);
+  const orgTerms = uniqueStrings([
+    org.name,
+    org.sector,
+    org.programArea,
+    ...safeArray(org.coreKeywords),
+    ...safeArray(org.programmaticKeywords),
+    ...safeArray(org.actionKeywords)
+  ]);
 
-    document.getElementById("org-prog-list").innerHTML =
-      toCardList(org.programmaticKeywords, org.programArea || org.sector, orgCategoryTags);
+  const expansions = uniqueBy(
+    TAXONOMY.expandedKeywords.filter(ek => {
+      const ekPhrase = normalizeText(ek.phrase);
+      const ekTags = getCategoryTags(ek, [ek.category]).map(normalizeText);
+      const related = safeArray(ek.related).map(normalizeText);
 
-    document.getElementById("org-action-list").innerHTML =
-      toCardList(org.actionKeywords, org.programArea || org.sector, orgCategoryTags);
+      return orgTerms.some(term => {
+        const nTerm = normalizeText(term);
+        return (
+          ekPhrase.includes(nTerm) ||
+          nTerm.includes(ekPhrase) ||
+          ekTags.includes(nTerm) ||
+          related.includes(nTerm)
+        );
+      });
+    }),
+    x => normalizeText(x.phrase)
+  ).slice(0, 8);
 
-    const orgTerms = uniqueStrings([
-      org.name,
-      org.sector,
-      org.programArea,
-      ...orgCategoryTags,
-      ...safeArray(org.coreKeywords),
-      ...safeArray(org.programmaticKeywords),
-      ...safeArray(org.actionKeywords)
-    ]);
+  document.getElementById("org-expansions-list").innerHTML = expansions.length
+    ? expansions.map(item => createCardHTML(buildCardData(item))).join("")
+    : '<span class="text-gray-500 text-sm italic">No expansions discovered.</span>';
 
-    const expansions = uniqueBy(
-      TAXONOMY.expandedKeywords.filter(ek => {
-        const ekPhrase = normalizeText(ek.phrase);
-        const ekTags = getCategoryTags(ek, [ek.category]).map(normalizeText);
-        const related = safeArray(ek.related).map(normalizeText);
+  let topW = Object.values(window.allPhrasesDict || {})
+    .filter(item => normalizeText(item.sourceOrg) === normalizeText(org.name))
+    .sort((a, b) => (Number(b.weight) || 0) - (Number(a.weight) || 0))
+    .slice(0, 8);
 
-        return orgTerms.some(term => {
-          const nTerm = normalizeText(term);
-          return (
-            ekPhrase.includes(nTerm) ||
-            nTerm.includes(ekPhrase) ||
-            ekTags.includes(nTerm) ||
-            related.includes(nTerm)
-          );
-        });
-      }),
-      x => normalizeText(x.phrase)
-    ).slice(0, 8);
+  if (!topW.length) {
+    topW = Object.values(window.allPhrasesDict || {})
+      .filter(item => {
+        const itemTags = getCategoryTags(item, [item.category]).map(normalizeText);
+        const termMatch = orgTerms.some(term => overlapCount(item.phrase, term) > 0);
+        const categoryMatch = itemTags.includes(normalizeText(org.sector)) || itemTags.includes(normalizeText(org.programArea));
+        return termMatch || categoryMatch;
+      })
+      .sort((a, b) => (Number(b.weight) || 0) - (Number(a.weight) || 0))
+      .slice(0, 8);
+  }
 
-    document.getElementById("org-expansions-list").innerHTML = expansions.length
-      ? expansions.map(item => createCardHTML(buildCardData(item))).join("")
-      : '<span class="text-gray-500 text-sm italic">No expansions discovered.</span>';
+  document.getElementById("org-top-list").innerHTML = topW.length
+    ? topW.map(item => createCardHTML(buildCardData(item))).join("")
+    : '<span class="text-gray-500 text-sm italic">No weighted metrics found.</span>';
+}
 
     let topW = Object.values(window.allPhrasesDict || {})
       .filter(item => normalizeText(item.sourceOrg) === normalizeText(org.name))

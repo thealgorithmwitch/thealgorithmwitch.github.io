@@ -1267,29 +1267,7 @@ function handleOrgSelect(e) {
     ? topW.map(item => createCardHTML(buildCardData(item))).join("")
     : '<span class="text-gray-500 text-sm italic">No weighted metrics found.</span>';
 }
-
-    let topW = Object.values(window.allPhrasesDict || {})
-      .filter(item => normalizeText(item.sourceOrg) === normalizeText(org.name))
-      .sort((a, b) => (Number(b.weight) || 0) - (Number(a.weight) || 0))
-      .slice(0, 8);
-
-    if (!topW.length) {
-      topW = Object.values(window.allPhrasesDict || {})
-        .filter(item => {
-          const itemTags = getCategoryTags(item, [item.category]).map(normalizeText);
-          const categoryMatch = orgCategoryTags.some(tag => itemTags.includes(normalizeText(tag)));
-          const termMatch = orgTerms.some(term => overlapCount(item.phrase, term) > 0);
-          return categoryMatch || termMatch;
-        })
-        .sort((a, b) => (Number(b.weight) || 0) - (Number(a.weight) || 0))
-        .slice(0, 8);
-    }
-
-    document.getElementById("org-top-list").innerHTML = topW.length
-      ? topW.map(item => createCardHTML(buildCardData(item))).join("")
-      : '<span class="text-gray-500 text-sm italic">No weighted metrics found.</span>';
-  }
-
+  
   function handleCatSelect(e) {
     const cat = e.target.value;
 

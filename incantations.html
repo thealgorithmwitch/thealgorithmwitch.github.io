@@ -308,11 +308,7 @@
               <div class="absolute right-0 top-0 h-full w-1/3 bg-gradient-to-l from-cyan-500/10 to-transparent pointer-events-none"></div>
               <div>
                 <h3 id="org-name-display" class="font-magical text-3xl text-white mb-3"></h3>
-                <div class="flex flex-wrap gap-2">
-                  <span id="org-sector-badge" class="px-3 py-1.5 bg-purple-500/20 border border-purple-500/40 rounded-md text-[10px] text-purple-200 font-bold uppercase tracking-wider"></span>
-                  <span id="org-program-badge" class="px-3 py-1.5 bg-cyan-500/20 border border-cyan-500/40 rounded-md text-[10px] text-cyan-200 font-bold uppercase tracking-wider"></span>
-                </div>
-              </div>
+                <div id="org-category-badges" class="flex flex-wrap gap-2"></div>
               <div class="flex items-center gap-2 px-4 py-2 bg-white/5 border border-white/10 rounded-lg shrink-0">
                 <i class="ph-duotone ph-users text-gray-400 text-lg"></i>
                 <span class="text-xs text-gray-300 font-medium" id="org-audience-text"></span>
@@ -560,24 +556,40 @@
     return count;
   }
 
+  function getCategoryTags(item, fallbacks = []) {
+    const tags = safeArray(item?.categoryTags).length
+      ? safeArray(item.categoryTags)
+      : safeArray(fallbacks).filter(Boolean);
+    return uniqueStrings(tags);
+  }
+
   function deriveControlListsFromData() {
     const issueAreas = uniqueStrings([
       ...safeArray(TAXONOMY.controlLists.issueAreas),
-      ...TAXONOMY.expandedKeywords.map(x => x.category),
-      ...TAXONOMY.weightedIndex.map(x => x.category),
-      ...TAXONOMY.orgs.map(x => x.sector),
-      ...TAXONOMY.orgs.map(x => x.programArea)
+      ...safeArray(TAXONOMY.expandedKeywords).flatMap(x =>
+        safeArray(x.categoryTags).length ? x.categoryTags : [x.category]
+      ),
+      ...safeArray(TAXONOMY.weightedIndex).flatMap(x =>
+        safeArray(x.categoryTags).length ? x.categoryTags : [x.category]
+      ),
+      ...safeArray(TAXONOMY.orgs).flatMap(x =>
+        safeArray(x.categoryTags).length ? x.categoryTags : [x.sector, x.programArea]
+      )
     ]).sort((a, b) => a.localeCompare(b));
 
     const categories = uniqueStrings([
       ...safeArray(TAXONOMY.controlLists.categories),
-      ...TAXONOMY.expandedKeywords.map(x => x.category),
-      ...TAXONOMY.weightedIndex.map(x => x.category)
+      ...safeArray(TAXONOMY.expandedKeywords).flatMap(x =>
+        safeArray(x.categoryTags).length ? x.categoryTags : [x.category]
+      ),
+      ...safeArray(TAXONOMY.weightedIndex).flatMap(x =>
+        safeArray(x.categoryTags).length ? x.categoryTags : [x.category]
+      )
     ]).sort((a, b) => a.localeCompare(b));
 
     const audiences = uniqueStrings([
       ...safeArray(TAXONOMY.controlLists.audiences),
-      ...TAXONOMY.orgs.map(x => x.audience)
+      ...safeArray(TAXONOMY.orgs).map(x => x.audience)
     ]).sort((a, b) => a.localeCompare(b));
 
     const platforms = uniqueStrings([
@@ -660,7 +672,12 @@
     const wordsCount = lower.split(" ").filter(Boolean).length;
 
     if (score >= 85) flags.push("High Intent");
-    if (lower.includes("program") || lower.includes("initiative") || lower.includes("research") || lower.includes("documentary")) {
+    if (
+      lower.includes("program") ||
+      lower.includes("initiative") ||
+      lower.includes("research") ||
+      lower.includes("documentary")
+    ) {
       flags.push("Program-Specific");
     }
     if (["donate", "join", "volunteer", "support", "enroll", "apply", "fund", "give", "best nonprofits"].some(w => lower.includes(w))) {
@@ -733,15 +750,20 @@
     if (typeof phraseOrObject === "string") {
       const existing = getExactPhraseData(phraseOrObject) || {};
       const weight = existing.weight !== undefined ? Number(existing.weight) : scorePhrase(phraseOrObject);
+
       return {
         phrase: phraseOrObject,
         category: existing.category || fallback.category || "",
+        categoryTags: safeArray(existing.categoryTags).length
+          ? safeArray(existing.categoryTags)
+          : (fallback.category ? [fallback.category] : []),
         sourceOrg: existing.sourceOrg || fallback.sourceOrg || "",
         unique: existing.unique || false,
         platform: existing.platform || fallback.platform || "",
         source: existing.source || fallback.source || "",
         flags: safeArray(existing.flags).length ? existing.flags : getFlags(phraseOrObject, weight, existing),
-        weight
+        weight,
+        seedQueries: safeArray(existing.seedQueries)
       };
     }
 
@@ -749,10 +771,14 @@
     const merged = { ...existing, ...phraseOrObject };
 
     if (!merged.category) merged.category = fallback.category || "";
+    if (!safeArray(merged.categoryTags).length) {
+      merged.categoryTags = fallback.category ? [fallback.category] : [];
+    }
     if (!merged.platform) merged.platform = fallback.platform || "";
     if (!merged.sourceOrg) merged.sourceOrg = fallback.sourceOrg || "";
     if (merged.weight === undefined) merged.weight = scorePhrase(merged.phrase || "");
     if (!safeArray(merged.flags).length) merged.flags = getFlags(merged.phrase || "", Number(merged.weight) || 0, merged);
+    if (!safeArray(merged.seedQueries).length) merged.seedQueries = [];
 
     return merged;
   }
@@ -774,10 +800,10 @@
       .join("");
 
     let metaHtml = "";
-    const categoryTags = Array.isArray(data.categoryTags) && data.categoryTags.length
-      ? data.categoryTags
+    const categoryTags = safeArray(data.categoryTags).length
+      ? safeArray(data.categoryTags)
       : (data.category ? [data.category] : []);
-    
+
     if (categoryTags.length) {
       metaHtml += categoryTags.map(cat => `
         <span class="text-[9px] text-purple-300 uppercase tracking-widest flex items-center gap-1 px-2 py-1 rounded-md bg-purple-500/10 border border-purple-500/20">
@@ -821,6 +847,7 @@
       merged[key] = {
         phrase: item.phrase,
         category: item.category || "",
+        categoryTags: safeArray(item.categoryTags),
         keywordType: item.keywordType || "",
         weight: Number(item.weight) || 0,
         sourceOrg: item.sourceOrg || "",
@@ -828,7 +855,8 @@
         flags: safeArray(item.flags),
         notes: item.notes || "",
         source: "weighted",
-        platform: item.platform || ""
+        platform: item.platform || "",
+        seedQueries: safeArray(item.seedQueries)
       };
     });
 
@@ -840,6 +868,7 @@
         merged[key] = {
           phrase: item.phrase,
           category: item.category || "",
+          categoryTags: safeArray(item.categoryTags),
           keywordType: item.type || "",
           weight: scorePhrase(item.phrase),
           sourceOrg: "",
@@ -848,10 +877,14 @@
           notes: "",
           related: safeArray(item.related),
           source: "expanded",
-          platform: item.platform || ""
+          platform: item.platform || "",
+          seedQueries: []
         };
       } else {
         if (!merged[key].category && item.category) merged[key].category = item.category;
+        if (!safeArray(merged[key].categoryTags).length && safeArray(item.categoryTags).length) {
+          merged[key].categoryTags = safeArray(item.categoryTags);
+        }
         if (!merged[key].keywordType && item.type) merged[key].keywordType = item.type;
         if (!merged[key].platform && item.platform) merged[key].platform = item.platform;
       }
@@ -865,6 +898,7 @@
         merged[key] = {
           phrase: item.phrase,
           category: item.category || "",
+          categoryTags: safeArray(item.categoryTags),
           keywordType: item.type || "Platform",
           weight: Number(item.weight) || scorePhrase(item.phrase),
           sourceOrg: item.sourceOrg || "",
@@ -872,7 +906,8 @@
           flags: safeArray(item.flags),
           notes: item.notes || "",
           source: item.platform === "YouTube" ? "youtube" : "platform",
-          platform: item.platform || ""
+          platform: item.platform || "",
+          seedQueries: safeArray(item.seedQueries)
         };
       } else {
         merged[key] = {
@@ -881,6 +916,9 @@
           category: merged[key].category || item.category || "",
           weight: Math.max(Number(merged[key].weight) || 0, Number(item.weight) || 0)
         };
+        if (!safeArray(merged[key].categoryTags).length && safeArray(item.categoryTags).length) {
+          merged[key].categoryTags = safeArray(item.categoryTags);
+        }
         if (!safeArray(merged[key].flags).length && safeArray(item.flags).length) {
           merged[key].flags = safeArray(item.flags);
         }
@@ -896,6 +934,9 @@
         merged[key] = {
           phrase: item.phrase,
           category: item.category || guessCategoryForPhrase(item.phrase) || "",
+          categoryTags: safeArray(item.categoryTags).length
+            ? safeArray(item.categoryTags)
+            : [item.category || guessCategoryForPhrase(item.phrase) || ""].filter(Boolean),
           keywordType: "YouTube",
           weight: youtubeWeight,
           sourceOrg: "",
@@ -909,6 +950,11 @@
       } else {
         merged[key].weight = Math.max(Number(merged[key].weight) || 0, youtubeWeight);
         if (!merged[key].category) merged[key].category = item.category || guessCategoryForPhrase(item.phrase) || "";
+        if (!safeArray(merged[key].categoryTags).length) {
+          merged[key].categoryTags = safeArray(item.categoryTags).length
+            ? safeArray(item.categoryTags)
+            : [item.category || guessCategoryForPhrase(item.phrase) || ""].filter(Boolean);
+        }
         merged[key].seedQueries = uniqueStrings([...(merged[key].seedQueries || []), ...safeArray(item.seedQueries)]);
         merged[key].platform = merged[key].platform || "YouTube";
         if (merged[key].source !== "weighted") merged[key].source = "youtube";
@@ -1124,36 +1170,43 @@
     document.getElementById("org-content").classList.add("flex");
 
     document.getElementById("org-name-display").innerText = org.name || "";
-    
-    <div id="org-category-badges" class="flex flex-wrap gap-2"></div>
+
     const badgeWrap = document.getElementById("org-category-badges");
-    const orgCategoryTags = Array.isArray(org.categoryTags) && org.categoryTags.length
-      ? org.categoryTags
+    const orgCategoryTags = safeArray(org.categoryTags).length
+      ? safeArray(org.categoryTags)
       : [org.sector, org.programArea].filter(Boolean);
-    
-    badgeWrap.innerHTML = orgCategoryTags.map((cat, index) => `
-      <span class="px-3 py-1.5 ${
-        index === 0
-          ? "bg-purple-500/20 border border-purple-500/40 text-purple-200"
-          : "bg-cyan-500/20 border border-cyan-500/40 text-cyan-200"
-      } rounded-md text-[10px] font-bold uppercase tracking-wider">
-        ${escapeHtml(cat)}
-      </span>
-    `).join("");
-    
+
+    if (badgeWrap) {
+      badgeWrap.innerHTML = orgCategoryTags.map((cat, index) => `
+        <span class="px-3 py-1.5 ${
+          index === 0
+            ? "bg-purple-500/20 border border-purple-500/40 text-purple-200"
+            : "bg-cyan-500/20 border border-cyan-500/40 text-cyan-200"
+        } rounded-md text-[10px] font-bold uppercase tracking-wider">
+          ${escapeHtml(cat)}
+        </span>
+      `).join("");
+    }
+
     document.getElementById("org-audience-text").innerText = org.audience || "";
 
-    const toCardList = (words, category) =>
-      safeArray(words).map(w => createCardHTML(buildCardData(w, { category }))).join("");
+    const toCardList = (words, category, categoryTags = []) =>
+      safeArray(words).map(w => createCardHTML(buildCardData(w, { category, categoryTags }))).join("");
 
-    document.getElementById("org-core-list").innerHTML = toCardList(org.coreKeywords, org.sector);
-    document.getElementById("org-prog-list").innerHTML = toCardList(org.programmaticKeywords, org.programArea || org.sector);
-    document.getElementById("org-action-list").innerHTML = toCardList(org.actionKeywords, org.programArea || org.sector);
+    document.getElementById("org-core-list").innerHTML =
+      toCardList(org.coreKeywords, org.sector, orgCategoryTags);
+
+    document.getElementById("org-prog-list").innerHTML =
+      toCardList(org.programmaticKeywords, org.programArea || org.sector, orgCategoryTags);
+
+    document.getElementById("org-action-list").innerHTML =
+      toCardList(org.actionKeywords, org.programArea || org.sector, orgCategoryTags);
 
     const orgTerms = uniqueStrings([
       org.name,
       org.sector,
       org.programArea,
+      ...orgCategoryTags,
       ...safeArray(org.coreKeywords),
       ...safeArray(org.programmaticKeywords),
       ...safeArray(org.actionKeywords)
@@ -1162,7 +1215,7 @@
     const expansions = uniqueBy(
       TAXONOMY.expandedKeywords.filter(ek => {
         const ekPhrase = normalizeText(ek.phrase);
-        const ekCategory = normalizeText(ek.category);
+        const ekTags = getCategoryTags(ek, [ek.category]).map(normalizeText);
         const related = safeArray(ek.related).map(normalizeText);
 
         return orgTerms.some(term => {
@@ -1170,8 +1223,7 @@
           return (
             ekPhrase.includes(nTerm) ||
             nTerm.includes(ekPhrase) ||
-            ekCategory === normalizeText(org.sector) ||
-            ekCategory === normalizeText(org.programArea) ||
+            ekTags.includes(nTerm) ||
             related.includes(nTerm)
           );
         });
@@ -1191,10 +1243,8 @@
     if (!topW.length) {
       topW = Object.values(window.allPhrasesDict || {})
         .filter(item => {
-          const categoryMatch =
-            normalizeText(item.category) === normalizeText(org.sector) ||
-            normalizeText(item.category) === normalizeText(org.programArea);
-
+          const itemTags = getCategoryTags(item, [item.category]).map(normalizeText);
+          const categoryMatch = orgCategoryTags.some(tag => itemTags.includes(normalizeText(tag)));
           const termMatch = orgTerms.some(term => overlapCount(item.phrase, term) > 0);
           return categoryMatch || termMatch;
         })
@@ -1222,7 +1272,10 @@
     document.getElementById("cat-content").classList.remove("hidden");
     document.getElementById("cat-content").classList.add("flex");
 
-    const phrases = TAXONOMY.expandedKeywords.filter(ek => normalizeText(ek.category) === catNorm);
+    const phrases = TAXONOMY.expandedKeywords.filter(ek => {
+      const tags = safeArray(ek.categoryTags).length ? ek.categoryTags : [ek.category];
+      return tags.some(tag => normalizeText(tag) === catNorm);
+    });
 
     let phtml = "";
     ["Core Issue", "Programmatic", "Action"].forEach(type => {
@@ -1237,7 +1290,10 @@
       phtml || '<span class="text-gray-500 text-sm">No phrases inscribed in this domain.</span>';
 
     const topW = Object.values(window.allPhrasesDict || {})
-      .filter(item => normalizeText(item.category) === catNorm)
+      .filter(item => {
+        const tags = safeArray(item.categoryTags).length ? item.categoryTags : [item.category];
+        return tags.some(tag => normalizeText(tag) === catNorm);
+      })
       .sort((a, b) => (Number(b.weight) || 0) - (Number(a.weight) || 0))
       .slice(0, 10);
 
@@ -1247,14 +1303,18 @@
 
     const relatedOrgs = uniqueBy(
       TAXONOMY.orgs.filter(org => {
-        const sectorMatch = normalizeText(org.sector) === catNorm;
-        const programMatch = normalizeText(org.programArea) === catNorm;
-        if (sectorMatch || programMatch) return true;
+        const orgTags = safeArray(org.categoryTags).length
+          ? safeArray(org.categoryTags)
+          : [org.sector, org.programArea].filter(Boolean);
+
+        const directTagMatch = orgTags.some(tag => normalizeText(tag) === catNorm);
+        if (directTagMatch) return true;
 
         const orgTerms = uniqueStrings([
           org.name,
           org.sector,
           org.programArea,
+          ...orgTags,
           ...safeArray(org.coreKeywords),
           ...safeArray(org.programmaticKeywords),
           ...safeArray(org.actionKeywords)
@@ -1348,6 +1408,7 @@
         normalizeText(r.phrase).includes(query) ||
         normalizeText(r.sourceOrg).includes(query) ||
         normalizeText(r.category).includes(query) ||
+        safeArray(r.categoryTags).some(tag => normalizeText(tag).includes(query)) ||
         normalizeText(r.platform).includes(query) ||
         safeArray(r.seedQueries).some(seed => normalizeText(seed).includes(query))
       );

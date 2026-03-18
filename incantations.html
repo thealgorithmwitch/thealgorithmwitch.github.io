@@ -507,7 +507,7 @@
     }
   };
 
-  const DATA_ENDPOINT = "https://script.google.com/macros/s/AKfycbxNvz-eFWOym7xl5VIOatN7GzPAD7AucsyMheEtx750ax-GNbxwbnktkBD-0DGQ2GSbgQ/exec";
+  const DATA_ENDPOINT = "https://script.google.com/macros/s/AKfycby4Gd0KgujMbakbV_PjjwJu7UwqMefl8yPmg-XLdJD5z5k5qtgoEJVdPe0Ep2rS2kEDCA/exec";
 
   function normalizeText(value) {
     return String(value || "").toLowerCase().trim().replace(/\s+/g, " ");
@@ -774,7 +774,17 @@
       .join("");
 
     let metaHtml = "";
-    if (data.category) metaHtml += `<span class="text-[9px] text-purple-300 uppercase tracking-widest flex items-center gap-1"><i class="ph-fill ph-folder"></i> ${escapeHtml(data.category)}</span>`;
+    const categoryTags = Array.isArray(data.categoryTags) && data.categoryTags.length
+      ? data.categoryTags
+      : (data.category ? [data.category] : []);
+    
+    if (categoryTags.length) {
+      metaHtml += categoryTags.map(cat => `
+        <span class="text-[9px] text-purple-300 uppercase tracking-widest flex items-center gap-1 px-2 py-1 rounded-md bg-purple-500/10 border border-purple-500/20">
+          <i class="ph-fill ph-folder"></i> ${escapeHtml(cat)}
+        </span>
+      `).join("");
+    }
     if (data.sourceOrg) metaHtml += `<span class="text-[9px] text-cyan-300 uppercase tracking-widest flex items-center gap-1"><i class="ph-fill ph-buildings"></i> ${escapeHtml(data.sourceOrg)}</span>`;
     if (data.unique) metaHtml += `<span class="text-[9px] text-amber-300 border border-amber-500/30 bg-amber-500/10 px-1.5 py-0.5 rounded flex items-center gap-1"><i class="ph-fill ph-star"></i> Unique</span>`;
     if (data.platform) metaHtml += getPlatformBadge(data.platform);
@@ -1114,8 +1124,23 @@
     document.getElementById("org-content").classList.add("flex");
 
     document.getElementById("org-name-display").innerText = org.name || "";
-    document.getElementById("org-sector-badge").innerText = org.sector || "";
-    document.getElementById("org-program-badge").innerText = org.programArea || "";
+    
+    <div id="org-category-badges" class="flex flex-wrap gap-2"></div>
+    const badgeWrap = document.getElementById("org-category-badges");
+    const orgCategoryTags = Array.isArray(org.categoryTags) && org.categoryTags.length
+      ? org.categoryTags
+      : [org.sector, org.programArea].filter(Boolean);
+    
+    badgeWrap.innerHTML = orgCategoryTags.map((cat, index) => `
+      <span class="px-3 py-1.5 ${
+        index === 0
+          ? "bg-purple-500/20 border border-purple-500/40 text-purple-200"
+          : "bg-cyan-500/20 border border-cyan-500/40 text-cyan-200"
+      } rounded-md text-[10px] font-bold uppercase tracking-wider">
+        ${escapeHtml(cat)}
+      </span>
+    `).join("");
+    
     document.getElementById("org-audience-text").innerText = org.audience || "";
 
     const toCardList = (words, category) =>

@@ -475,7 +475,6 @@
   <footer class="footer relative z-10 mt-8 pb-10 text-center text-gray-600 text-[10px] uppercase tracking-widest">
     The Algorithm Witch • Digital Alchemy
   </footer>
-
 <script>
   (function () {
     const menuBtn = document.getElementById('menuButton');
@@ -931,326 +930,273 @@
     history.replaceState(null, '', '#email-gate');
   }
 
-function computeResultStackKeys_() {
-  const adjusted = { ...scores };
+  function computeResultStackKeys_() {
+    const adjusted = { ...scores };
 
-  // Light structural boosts so answers still matter most
-  if (signals.authority >= 7) adjusted.linkedin += 1;
+    if (signals.authority >= 7) adjusted.linkedin += 1;
 
-  if (signals.search >= 7) {
-    adjusted.blog += 1;
-    adjusted.youtube += 1;
-  } else if (signals.search >= 5) {
-    adjusted.blog += 1;
-  }
+    if (signals.search >= 5) adjusted.blog += 2;
+    if (signals.search >= 8) adjusted.youtube += 1;
 
-  if (signals.local >= 5) {
-    adjusted.instagram += 1;
-    adjusted.tiktok += 1;
-  } else if (signals.local >= 3) {
-    adjusted.instagram += 1;
-  }
+    if (signals.local >= 3) adjusted.instagram += 1;
+    if (signals.local >= 6) adjusted.tiktok += 1;
 
-  if (signals.instagramAffinity >= 4 && signals.conversation >= 4) {
-    adjusted.threads += 2;
-  } else if (signals.instagramAffinity >= 2 && signals.conversation >= 3) {
-    adjusted.threads += 1;
-  }
+    if (signals.instagramAffinity >= 3) adjusted.instagram += 1;
 
-  // Bluesky stays narrow and reporter-led
-  if (signals.reporter >= 7) {
-    adjusted.bluesky += 2;
-  } else if (signals.reporter < 6) {
-    adjusted.bluesky -= 2;
-  }
-
-  const ranked = Object.entries(adjusted)
-    .filter(([, score]) => score > 0)
-    .sort((a, b) => b[1] - a[1]);
-
-  if (!ranked.length) return [];
-
-  const scoreOf = (platform) => {
-    const found = ranked.find(([key]) => key === platform);
-    return found ? found[1] : 0;
-  };
-
-  const authorityStrength = scoreOf('linkedin');
-
-  const visualPrimary =
-    scoreOf('tiktok') >= scoreOf('instagram') - 1 && scoreOf('tiktok') >= 9
-      ? 'tiktok'
-      : 'instagram';
-  const visualStrength = Math.max(scoreOf('instagram'), scoreOf('tiktok'));
-
-  // Search family resolves to YouTube as the solo/search lead
-  const searchPrimary = 'youtube';
-  const searchStrength = Math.max(scoreOf('youtube'), scoreOf('blog'));
-
-  const communityPrimary =
-    signals.reporter >= 7 && scoreOf('bluesky') > scoreOf('threads')
-      ? 'bluesky'
-      : 'threads';
-  const communityStrength = scoreOf(communityPrimary);
-
-  const families = [];
-
-  if (authorityStrength >= 9) {
-    families.push({
-      family: 'authority',
-      platform: 'linkedin',
-      strength: authorityStrength
-    });
-  }
-
-  if (visualStrength >= 9) {
-    families.push({
-      family: 'visual',
-      platform: visualPrimary,
-      strength: visualStrength
-    });
-  }
-
-  if (searchStrength >= 9) {
-    families.push({
-      family: 'search',
-      platform: searchPrimary,
-      strength: searchStrength
-    });
-  }
-
-  if (communityStrength >= 7 && signals.conversation >= 3) {
-    families.push({
-      family: 'community',
-      platform: communityPrimary,
-      strength: communityStrength
-    });
-  }
-
-  families.sort((a, b) => b.strength - a.strength);
-
-  // Fallback when no family clears threshold
-  if (!families.length) {
-    const [p1, s1] = ranked[0];
-    const [p2, s2] = ranked[1] || [null, 0];
-    const [p3, s3] = ranked[2] || [null, 0];
-    const [p4, s4] = ranked[3] || [null, 0];
-
-    const fallback = [p1];
-
-    if (p2 && s2 >= 8 && (s1 - s2) <= 5) fallback.push(p2);
-    if (p3 && s3 >= 7 && (s2 - s3) <= 3) fallback.push(p3);
-    if (p4 && s4 >= 7 && (s3 - s4) <= 2) fallback.push(p4);
-
-    return finalizeStack_(fallback, ranked, 4);
-  }
-
-  let result = [families[0].platform];
-
-  const secondFamilyStrength = families[1] ? families[1].strength : 0;
-
-  // Raise 1-platform outcomes meaningfully
-  const dominantSingle =
-    ['linkedin', 'tiktok', 'youtube'].includes(families[0].platform) &&
-    families[0].strength >= 13 &&
-    (families[0].strength - secondFamilyStrength) >= 3 &&
-    secondFamilyStrength < 10;
-
-  if (dominantSingle) {
-    return finalizeStack_(result, ranked, 1);
-  }
-
-  if (families[1]) result.push(families[1].platform);
-
-  // 3-platform stays common
-  if (families[2] && families[2].strength >= (families[1].strength - 3)) {
-    result.push(families[2].platform);
-  }
-
-  // 4-platform still common
-  if (
-    families[3] &&
-    families[3].strength >= 7 &&
-    families[3].strength >= ((families[2] ? families[2].strength : 0) - 2)
-  ) {
-    result.push(families[3].platform);
-  }
-
-  // Make 5-platform genuinely reachable
-  const canEarnFive =
-    scoreOf('linkedin') >= 10 &&
-    scoreOf('instagram') >= 9 &&
-    scoreOf('youtube') >= 9 &&
-    scoreOf('blog') >= 8 &&
-    (
-      scoreOf('threads') >= 7 ||
-      scoreOf('tiktok') >= 9 ||
-      (signals.reporter >= 7 && scoreOf('bluesky') >= 7)
-    );
-
-  return finalizeStack_(result, ranked, canEarnFive ? 5 : 4);
-}
-
-function finalizeStack_(stack, ranked, maxLen = 4) {
-  let result = [...new Set(stack)];
-
-  function has(p) {
-    return result.includes(p);
-  }
-
-  function scoreOf(p) {
-    const found = ranked.find(([key]) => key === p);
-    return found ? found[1] : 0;
-  }
-
-  function addIfStrong(p, min = 7) {
-    if (!has(p) && scoreOf(p) >= min) result.push(p);
-  }
-
-  function remove(p) {
-    result = result.filter(x => x !== p);
-  }
-
-  const reporterVeryHigh = signals.reporter >= 8;
-  const reporterHigh = signals.reporter >= 6;
-  const strongSearch = signals.search >= 7;
-  const moderateSearch = signals.search >= 5;
-  const strongAuthority = signals.authority >= 7;
-  const moderateAuthority = signals.authority >= 5;
-  const instagramConversation =
-    signals.instagramAffinity >= 2 && signals.conversation >= 3;
-
-  // Keep LinkedIn when authority is clearly real
-  if (!has('linkedin') && strongAuthority && scoreOf('linkedin') >= 8) {
-    result.push('linkedin');
-  }
-
-  // Blog should never stand alone
-  if (has('blog') && !has('youtube')) {
-    addIfStrong('youtube', strongSearch ? 7 : 9);
-  }
-
-  // Search-heavy orgs often get Blog + YouTube together
-  if (has('youtube') && strongSearch) {
-    addIfStrong('blog', 7);
-  } else if (has('youtube') && moderateSearch && scoreOf('blog') >= 8) {
-    result.push('blog');
-  }
-
-  // TikTok usually wants Instagram
-  if (has('tiktok') && !has('instagram')) {
-    addIfStrong('instagram', 6);
-  }
-
-  // Instagram should prefer Threads over Bluesky
-  if (has('instagram')) {
-    if (!has('threads') && instagramConversation) {
-      addIfStrong('threads', 6);
+    if (signals.instagramAffinity >= 2 && signals.conversation >= 3) {
+      adjusted.threads += 1;
+    }
+    if (signals.instagramAffinity >= 4 && signals.conversation >= 4) {
+      adjusted.threads += 1;
     }
 
-    if (has('bluesky') && !reporterVeryHigh) {
-      remove('bluesky');
-      addIfStrong('threads', 6);
+    if (signals.reporter >= 7) {
+      adjusted.bluesky += 2;
+    } else if (signals.reporter < 5) {
+      adjusted.bluesky -= 2;
     }
 
-    if (has('bluesky') && reporterVeryHigh && scoreOf('threads') >= scoreOf('bluesky')) {
-      remove('bluesky');
-      addIfStrong('threads', 6);
+    const ranked = Object.entries(adjusted)
+      .filter(([, score]) => score > 0)
+      .sort((a, b) => b[1] - a[1]);
+
+    if (!ranked.length) return [];
+
+    const scoreOf = (platform) => {
+      const found = ranked.find(([key]) => key === platform);
+      return found ? found[1] : 0;
+    };
+
+    const values = ranked.map(([, score]) => score);
+    while (values.length < 5) values.push(0);
+
+    const [s1, s2, s3, s4, s5] = values;
+    const gap12 = s1 - s2;
+    const gap23 = s2 - s3;
+    const gap34 = s3 - s4;
+    const gap45 = s4 - s5;
+
+    const topPlatform = ranked[0][0];
+
+    let targetLen;
+
+    if (
+      s1 >= 20 &&
+      gap12 >= 9 &&
+      ['blog', 'linkedin', 'youtube', 'tiktok'].includes(topPlatform)
+    ) {
+      targetLen = 1;
+    } else if (
+      s2 >= 12 &&
+      gap12 <= 4 &&
+      gap23 >= 5
+    ) {
+      targetLen = 2;
+    } else if (
+      s3 >= 10 &&
+      gap12 <= 6 &&
+      gap23 <= 4 &&
+      gap34 >= 5
+    ) {
+      targetLen = 3;
+    } else if (
+      s4 >= 8 &&
+      gap12 <= 7 &&
+      gap23 <= 5 &&
+      gap34 <= 4 &&
+      gap45 >= 2
+    ) {
+      targetLen = 4;
+    } else if (
+      s5 >= 7 &&
+      gap12 <= 6 &&
+      gap23 <= 5 &&
+      gap34 <= 4 &&
+      gap45 <= 1
+    ) {
+      targetLen = 5;
+    } else {
+      targetLen = s3 >= 9 ? 3 : 2;
     }
-  }
 
-  // Bluesky should mostly require real reporter/media need
-  if (has('bluesky') && !reporterHigh) {
-    remove('bluesky');
-    addIfStrong('threads', 6);
-  }
+    const visualPrimary =
+      scoreOf('tiktok') >= scoreOf('instagram') + 1
+        ? 'tiktok'
+        : 'instagram';
 
-  if (has('threads') && has('bluesky') && !reporterVeryHigh) {
-    remove('bluesky');
-  }
+    const searchPrimary =
+      scoreOf('blog') >= scoreOf('youtube')
+        ? 'blog'
+        : 'youtube';
 
-  // Community stacks can pull LinkedIn in, but only if authority is actually there
-  if ((has('threads') || has('bluesky')) && !has('linkedin') && moderateAuthority && scoreOf('linkedin') >= 8) {
-    result.push('linkedin');
-  }
+    const communityPrimary =
+      signals.reporter >= 7 && scoreOf('bluesky') > scoreOf('threads')
+        ? 'bluesky'
+        : 'threads';
 
-  // Prevent single-platform outputs you do not want
-  if (result.length === 1) {
-    const only = result[0];
+    const familySeeds = [];
 
-    if (only === 'blog') {
-      result = ['youtube'];
-      if (strongSearch) addIfStrong('blog', 7);
+    if (scoreOf('linkedin') >= 9) {
+      familySeeds.push({ platform: 'linkedin', strength: scoreOf('linkedin') });
     }
 
-    if (only === 'instagram') {
-      if (scoreOf('tiktok') >= 9 && scoreOf('tiktok') >= scoreOf('instagram') - 1) {
-        result = ['tiktok'];
-      } else if (scoreOf('linkedin') >= 8) {
-        result = ['linkedin'];
-      } else if (scoreOf('youtube') >= 9) {
-        result = ['youtube'];
-      } else if (scoreOf('threads') >= 7) {
-        result = ['threads'];
+    if (Math.max(scoreOf('instagram'), scoreOf('tiktok')) >= 9) {
+      familySeeds.push({
+        platform: visualPrimary,
+        strength: Math.max(scoreOf('instagram'), scoreOf('tiktok'))
+      });
+    }
+
+    if (Math.max(scoreOf('blog'), scoreOf('youtube')) >= 8) {
+      familySeeds.push({
+        platform: searchPrimary,
+        strength: Math.max(scoreOf('blog'), scoreOf('youtube'))
+      });
+    }
+
+    if (scoreOf(communityPrimary) >= 7 && signals.conversation >= 3) {
+      familySeeds.push({
+        platform: communityPrimary,
+        strength: scoreOf(communityPrimary)
+      });
+    }
+
+    familySeeds.sort((a, b) => b.strength - a.strength);
+
+    const result = [];
+
+    familySeeds.forEach(({ platform }) => {
+      if (!result.includes(platform) && result.length < targetLen) {
+        result.push(platform);
+      }
+    });
+
+    ranked.forEach(([platform]) => {
+      if (!result.includes(platform) && result.length < targetLen) {
+        result.push(platform);
+      }
+    });
+
+    return finalizeStack_(result, ranked, targetLen);
+  }
+
+  function finalizeStack_(stack, ranked, maxLen = 3) {
+    let result = [...new Set(stack)];
+
+    function has(p) {
+      return result.includes(p);
+    }
+
+    function scoreOf(p) {
+      const found = ranked.find(([key]) => key === p);
+      return found ? found[1] : 0;
+    }
+
+    function addIfStrong(p, min = 7) {
+      if (!has(p) && scoreOf(p) >= min && result.length < maxLen) {
+        result.push(p);
       }
     }
 
-    if (only === 'threads' || only === 'bluesky') {
-      if (scoreOf('linkedin') >= 8) {
-        result = ['linkedin'];
-      } else if (scoreOf('tiktok') >= 9) {
-        result = ['tiktok'];
-      } else if (scoreOf('youtube') >= 9) {
-        result = ['youtube'];
+    function remove(p) {
+      result = result.filter(x => x !== p);
+    }
+
+    const reporterVeryHigh = signals.reporter >= 8;
+    const reporterHigh = signals.reporter >= 6;
+    const strongSearch = signals.search >= 8;
+    const moderateSearch = signals.search >= 6;
+    const strongAuthority = signals.authority >= 7;
+    const moderateAuthority = signals.authority >= 5;
+    const instagramConversation =
+      signals.instagramAffinity >= 2 && signals.conversation >= 3;
+
+    if (!has('linkedin') && strongAuthority) {
+      addIfStrong('linkedin', 8);
+    }
+
+    if (has('youtube') && strongSearch) {
+      addIfStrong('blog', 8);
+    }
+
+    if (has('blog') && strongSearch && maxLen >= 3) {
+      addIfStrong('youtube', 9);
+    }
+
+    if (has('tiktok') && maxLen >= 2) {
+      addIfStrong('instagram', 7);
+    }
+
+    if (has('instagram') && instagramConversation) {
+      addIfStrong('threads', 7);
+    }
+
+    if (has('bluesky') && !reporterHigh) {
+      remove('bluesky');
+      addIfStrong('threads', 7);
+    }
+
+    if (has('instagram') && has('bluesky') && !reporterVeryHigh) {
+      remove('bluesky');
+      addIfStrong('threads', 7);
+    }
+
+    if ((has('threads') || has('bluesky')) && !has('linkedin') && moderateAuthority) {
+      addIfStrong('linkedin', 8);
+    }
+
+    if (result.length === 1) {
+      const only = result[0];
+
+      if (only === 'instagram') {
+        if (scoreOf('blog') >= 10 && signals.search >= 7) {
+          result = ['blog'];
+        } else if (scoreOf('tiktok') >= 9 && scoreOf('tiktok') >= scoreOf('instagram')) {
+          result = ['tiktok'];
+        } else if (scoreOf('linkedin') >= 9) {
+          result = ['linkedin'];
+        }
+      }
+
+      if (only === 'threads' || only === 'bluesky') {
+        if (scoreOf('linkedin') >= 9) {
+          result = ['linkedin'];
+        } else if (scoreOf('blog') >= 10 && signals.search >= 7) {
+          result = ['blog'];
+        } else if (scoreOf('tiktok') >= 9) {
+          result = ['tiktok'];
+        }
+      }
+
+      if (only === 'youtube' && scoreOf('blog') >= scoreOf('youtube') && signals.search >= 7) {
+        result = ['blog'];
       }
     }
-  }
 
-  result = [...new Set(result)];
+    result = [...new Set(result)];
 
-  if (result.length > maxLen) {
-    result = result
-      .map(p => [p, scoreOf(p)])
-      .sort((a, b) => b[1] - a[1])
-      .slice(0, maxLen)
-      .map(([p]) => p);
-  }
-
-  // Keep 5-platform outcomes from collapsing too easily
-  if (result.length === 5) {
-    const weakest = result
-      .map(p => [p, scoreOf(p)])
-      .sort((a, b) => a[1] - b[1])[0];
-
-    if (weakest && weakest[1] < 7) {
-      remove(weakest[0]);
+    if (result.length > maxLen) {
+      result = result
+        .map(p => [p, scoreOf(p)])
+        .sort((a, b) => b[1] - a[1])
+        .slice(0, maxLen)
+        .map(([p]) => p);
     }
+
+    const preferredOrder = [
+      'linkedin',
+      'instagram',
+      'tiktok',
+      'blog',
+      'youtube',
+      'threads',
+      'bluesky'
+    ];
+
+    result = preferredOrder.filter(p => result.includes(p));
+
+    return result;
   }
-
-  if (result.length === 4) {
-    const weakest = result
-      .map(p => [p, scoreOf(p)])
-      .sort((a, b) => a[1] - b[1])[0];
-
-    if (weakest && weakest[1] < 6) {
-      remove(weakest[0]);
-    }
-  }
-
-  const preferredOrder = [
-    'linkedin',
-    'instagram',
-    'tiktok',
-    'youtube',
-    'blog',
-    'threads',
-    'bluesky'
-  ];
-
-  result = preferredOrder.filter(p => result.includes(p));
-
-  return result;
-}
 
   function stackLabels_(stackKeys) {
     return stackKeys.map(k => PLATFORM_LABELS[k] || k);
@@ -1394,14 +1340,14 @@ function finalizeStack_(stack, ranked, maxLen = 4) {
       dropText += "Deprioritize slow approval structures that break momentum. ";
     }
 
-    if (stackKeys.includes('youtube') || stackKeys.includes('blog')) {
+    if (stackKeys.includes('blog') || stackKeys.includes('youtube')) {
       whyText += "You have a strong case for owned infrastructure and durable discovery. ";
-      commitText += "Commit to topic consistency, searchable titles, transcripts, and educational assets that hold value over time. ";
+      commitText += "Commit to topic consistency, searchable titles, and educational assets that hold value over time. ";
       dropText += "Deprioritize daily churn that disappears before it can compound. ";
     }
 
     if (stackKeys.includes('threads')) {
-      whyText += "Threads makes sense here as a conversational extension, especially where Instagram relationship signals or ongoing public discussion matter. ";
+      whyText += "Threads makes sense here as a conversational extension where ongoing public discussion and relationship signals matter. ";
       commitText += "Commit to real dialogue and regular participation. ";
     }
 
@@ -1411,7 +1357,7 @@ function finalizeStack_(stack, ranked, maxLen = 4) {
     }
 
     if (stackKeys.length === 1) {
-      whyText += "One platform clearly outperformed the rest, which means focus is more valuable than spreading attention thin. ";
+      whyText += "One platform clearly outperformed the rest, so focus is more valuable than spreading attention thin. ";
     } else if (stackKeys.length === 2) {
       whyText += "This pair gives you a strong core without overextending your team. ";
     } else if (stackKeys.length === 3) {
@@ -1422,7 +1368,9 @@ function finalizeStack_(stack, ranked, maxLen = 4) {
       whyText += "You have the conditions for a broad ecosystem, but only if each platform plays a distinct role in the stack. ";
     }
 
-    if (!whyText) whyText = "This stack aligns with how you operate and where your strengths will compound.";
+    if (!whyText) {
+      whyText = "This stack aligns with how you operate and where your strengths will compound.";
+    }
 
     whyEl.innerText = whyText.trim();
     commitEl.innerText = commitText.trim() || "Commit to a cadence you can sustain for at least 8 weeks before reassessing.";

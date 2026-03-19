@@ -1200,17 +1200,16 @@ function createCategoryBadge(cat) {
       ? safeArray(org.categoryTags)
       : [org.sector, org.programArea].filter(Boolean);
 
-    if (badgeWrap) {
-      badgeWrap.innerHTML = orgCategoryTags.map((cat, index) => `
-        <span class="px-3 py-1.5 ${
-          index === 0
-            ? "bg-purple-500/20 border border-purple-500/40 text-purple-200"
-            : "bg-cyan-500/20 border border-cyan-500/40 text-cyan-200"
-        } rounded-md text-[10px] font-bold uppercase tracking-wider">
-          ${escapeHtml(cat)}
-        </span>
-      `).join("");
-    }
+      if (badgeWrap) {
+        badgeWrap.innerHTML = orgCategoryTags.map(cat => {
+          const styles = getCategoryColorStyles(cat);
+          return `
+            <span class="px-3 py-1.5 rounded-md text-[10px] font-bold uppercase tracking-wider border ${styles.bgClass} ${styles.borderClass} ${styles.textClass}">
+              ${escapeHtml(cat)}
+            </span>
+          `;
+        }).join("");
+      }
 
     document.getElementById("org-audience-text").innerText = org.audience || "";
 

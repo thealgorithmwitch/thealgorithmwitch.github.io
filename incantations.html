@@ -1329,24 +1329,41 @@ function createCategoryBadge(cat) {
         const orgTags = safeArray(org.categoryTags).length
           ? safeArray(org.categoryTags)
           : [org.sector, org.programArea].filter(Boolean);
-
+    
         const directTagMatch = orgTags.some(tag => normalizeText(tag) === catNorm);
         if (directTagMatch) return true;
-
+    
         const orgTerms = uniqueStrings([
           org.name,
-          org.sector,
-          org.programArea,
           ...orgTags,
           ...safeArray(org.coreKeywords),
           ...safeArray(org.programmaticKeywords),
           ...safeArray(org.actionKeywords)
-        ]);
+        ]).map(normalizeText);
+    
+        const weightedMatch = topW.some(item => {
+          const itemTags = getCategoryTags(item, [item.category]).map(normalizeText);
+          const phraseNorm = normalizeText(item.phrase);
+          return (
+            itemTags.includes(catNorm) &&
+            (
+              normalizeText(item.sourceOrg) === normalizeText(org.name) ||
+              orgTerms.some(term => phraseNorm.includes(term) || term.includes(phraseNorm) || overlapCount(term, phraseNorm) > 0)
+            )
+          );
+        });
 
-        return topW.some(item => orgTerms.some(term => overlapCount(item.phrase, term) > 0));
-      }),
-      x => normalizeText(x.name)
-    );
+    if (weightedMatch) return true;
+
+    const expandedMatch = phrases.some(item => {
+      const phraseNorm = normalizeText(item.phrase);
+      return orgTerms.some(term => phraseNorm.includes(term) || term.includes(phraseNorm) || overlapCount(term, phraseNorm) > 0);
+    });
+
+    return expandedMatch;
+  }),
+  x => normalizeText(x.name)
+);
 
     const orgsHtml = relatedOrgs.map(o => `
       <button

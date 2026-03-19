@@ -496,6 +496,7 @@
     weightedIndex: [],
     youtubePhraseIndex: [],
     platformKeywords: [],
+    categoryColors: {},
     controlLists: {
       orgTypes: [],
       issueAreas: [],
@@ -808,11 +809,9 @@
       ? safeArray(data.categoryTags)
       : (data.category ? [data.category] : []);
 
-    if (categoryTags.length) {
-      metaHtml += categoryTags.map(cat => `
-        <span class="text-[9px] text-purple-300 uppercase tracking-widest flex items-center gap-1 px-2 py-1 rounded-md bg-purple-500/10 border border-purple-500/20">
-          <i class="ph-fill ph-folder"></i> ${escapeHtml(cat)}
-        </span>
+        if (categoryTags.length) {
+          metaHtml += categoryTags.map(cat => createCategoryBadge(cat)).join("");
+        }
       `).join("");
     }
     if (data.sourceOrg) metaHtml += `<span class="text-[9px] text-cyan-300 uppercase tracking-widest flex items-center gap-1"><i class="ph-fill ph-buildings"></i> ${escapeHtml(data.sourceOrg)}</span>`;
@@ -972,16 +971,17 @@
     try {
       const response = await fetch(`${DATA_ENDPOINT}?action=taxonomy`, { cache: "no-store" });
       if (!response.ok) throw new Error(`HTTP ${response.status}`);
-
+  
       const data = await response.json();
       if (data.error) throw new Error(data.message || "Unknown taxonomy load error");
-
+  
       TAXONOMY = {
         orgs: Array.isArray(data.orgs) ? data.orgs : [],
         expandedKeywords: Array.isArray(data.expandedKeywords) ? data.expandedKeywords : [],
         weightedIndex: Array.isArray(data.weightedIndex) ? data.weightedIndex : [],
         youtubePhraseIndex: Array.isArray(data.youtubePhraseIndex) ? data.youtubePhraseIndex : [],
         platformKeywords: Array.isArray(data.platformKeywords) ? data.platformKeywords : [],
+        categoryColors: data.categoryColors || {},
         controlLists: {
           orgTypes: data.controlLists?.orgTypes || [],
           issueAreas: data.controlLists?.issueAreas || [],
@@ -992,10 +992,10 @@
           platforms: data.controlLists?.platforms || []
         }
       };
-
+  
       deriveControlListsFromData();
       window.allPhrasesDict = buildMergedPhraseIndex();
-
+  
       return true;
     } catch (error) {
       console.error("Failed to load taxonomy:", error);
@@ -1015,6 +1015,26 @@
     setTimeout(() => toast.classList.remove("toast-show"), 3000);
   }
 
+
+function getCategoryColorStyles(category) {
+  const styles = TAXONOMY.categoryColors?.[category];
+  if (styles) return styles;
+
+  return {
+    bgClass: "bg-purple-500/10",
+    borderClass: "border-purple-500/20",
+    textClass: "text-purple-300"
+  };
+}
+
+function createCategoryBadge(cat) {
+  const styles = getCategoryColorStyles(cat);
+  return `
+    <span class="text-[9px] uppercase tracking-widest flex items-center gap-1 px-2 py-1 rounded-md border ${styles.bgClass} ${styles.borderClass} ${styles.textClass}">
+      <i class="ph-fill ph-folder"></i> ${escapeHtml(cat)}
+    </span>
+  `;
+}  
   function initApp() {
     const popSelect = (id, list, placeholder) => {
       const el = document.getElementById(id);

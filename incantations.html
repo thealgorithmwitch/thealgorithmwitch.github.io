@@ -307,17 +307,14 @@
           <div id="org-content" class="hidden h-full flex flex-col overflow-hidden p-6 lg:p-8">
             <div class="bg-black/40 border border-cyan-500/20 rounded-2xl p-6 flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8 shrink-0 relative overflow-hidden">
               <div class="absolute right-0 top-0 h-full w-1/3 bg-gradient-to-l from-cyan-500/10 to-transparent pointer-events-none"></div>
-            
+      
               <div>
                 <h3 id="org-name-display" class="font-magical text-3xl text-white mb-3"></h3>
-                <div id="org-category-badges" class="flex flex-wrap gap-2"></div>
+                <div class="flex flex-wrap gap-2">
+                  <span id="org-sector-badge" class="px-3 py-1.5 bg-purple-500/20 border border-purple-500/40 rounded-md text-[10px] text-purple-200 font-bold uppercase tracking-wider"></span>
+                  <span id="org-program-badge" class="px-3 py-1.5 bg-cyan-500/20 border border-cyan-500/40 rounded-md text-[10px] text-cyan-200 font-bold uppercase tracking-wider"></span>
+                </div>
               </div>
-            
-              <div id="org-audience-wrap" class="flex items-center gap-2 px-4 py-2 bg-white/5 border border-white/10 rounded-lg shrink-0 hidden">
-                <i class="ph-duotone ph-users text-gray-400 text-lg"></i>
-                <span class="text-xs text-gray-300 font-medium" id="org-audience-text"></span>
-              </div>
-            </div>
       
               <div class="flex items-center gap-2 px-4 py-2 bg-white/5 border border-white/10 rounded-lg shrink-0">
                 <i class="ph-duotone ph-users text-gray-400 text-lg"></i>
@@ -995,74 +992,40 @@
     return merged;
   }
 
-async function loadTaxonomy() {
-  try {
-    const response = await fetch(`${DATA_ENDPOINT}?action=taxonomy`, { cache: "no-store" });
-    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+  async function loadTaxonomy() {
+    try {
+      const response = await fetch(`${DATA_ENDPOINT}?action=taxonomy`, { cache: "no-store" });
+      if (!response.ok) throw new Error(`HTTP ${response.status}`);
 
-    const data = await response.json();
-    if (data.error) throw new Error(data.message || "Unknown taxonomy load error");
+      const data = await response.json();
+      if (data.error) throw new Error(data.message || "Unknown taxonomy load error");
 
-    TAXONOMY = {
-      orgs: Array.isArray(data.orgs) ? data.orgs : [],
-      expandedKeywords: Array.isArray(data.expandedKeywords) ? data.expandedKeywords : [],
-      weightedIndex: Array.isArray(data.weightedIndex) ? data.weightedIndex : [],
-      youtubePhraseIndex: Array.isArray(data.youtubePhraseIndex) ? data.youtubePhraseIndex : [],
-      platformKeywords: Array.isArray(data.platformKeywords) ? data.platformKeywords : [],
-      categoryColors: data.categoryColors || {},
-      controlLists: {
-        orgTypes: data.controlLists?.orgTypes || [],
-        issueAreas: data.controlLists?.issueAreas || [],
-        audiences: data.controlLists?.audiences || [],
-        goals: data.controlLists?.goals || [],
-        categories: data.controlLists?.categories || [],
-        youtubeSeeds: data.controlLists?.youtubeSeeds || [],
-        platforms: data.controlLists?.platforms || []
-      }
-    };
+      TAXONOMY = {
+        orgs: Array.isArray(data.orgs) ? data.orgs : [],
+        expandedKeywords: Array.isArray(data.expandedKeywords) ? data.expandedKeywords : [],
+        weightedIndex: Array.isArray(data.weightedIndex) ? data.weightedIndex : [],
+        youtubePhraseIndex: Array.isArray(data.youtubePhraseIndex) ? data.youtubePhraseIndex : [],
+        platformKeywords: Array.isArray(data.platformKeywords) ? data.platformKeywords : [],
+        controlLists: {
+          orgTypes: data.controlLists?.orgTypes || [],
+          issueAreas: data.controlLists?.issueAreas || [],
+          audiences: data.controlLists?.audiences || [],
+          goals: data.controlLists?.goals || [],
+          categories: data.controlLists?.categories || [],
+          youtubeSeeds: data.controlLists?.youtubeSeeds || [],
+          platforms: data.controlLists?.platforms || []
+        }
+      };
 
-    deriveControlListsFromData();
-    window.allPhrasesDict = buildMergedPhraseIndex();
+      deriveControlListsFromData();
+      window.allPhrasesDict = buildMergedPhraseIndex();
 
-    return true;
-  } catch (error) {
-    console.error("Failed to load taxonomy:", error);
-    return false;
+      return true;
+    } catch (error) {
+      console.error("Failed to load taxonomy:", error);
+      return false;
+    }
   }
-}
-  function getCategoryColorClasses(category, index = 0) {
-  const explicit = TAXONOMY.categoryColors?.[category];
-  if (explicit) {
-    return `${explicit.bgClass} ${explicit.borderClass} ${explicit.textClass}`;
-  }
-
-  const fallbackPalette = [
-    "bg-purple-500/20 border-purple-500/40 text-purple-200",
-    "bg-cyan-500/20 border-cyan-500/40 text-cyan-200",
-    "bg-emerald-500/20 border-emerald-500/40 text-emerald-200",
-    "bg-amber-500/20 border-amber-500/40 text-amber-200",
-    "bg-fuchsia-500/20 border-fuchsia-500/40 text-fuchsia-200",
-    "bg-blue-500/20 border-blue-500/40 text-blue-200",
-    "bg-rose-500/20 border-rose-500/40 text-rose-200",
-    "bg-indigo-500/20 border-indigo-500/40 text-indigo-200"
-  ];
-
-  return fallbackPalette[index % fallbackPalette.length];
-}
-
-function renderOrgCategoryBadges(org) {
-  const tags = safeArray(org.categoryTags).length
-    ? safeArray(org.categoryTags)
-    : [org.sector, org.programArea].filter(Boolean);
-
-  return tags
-    .filter(Boolean)
-    .map((tag, index) => {
-      const cls = getCategoryColorClasses(tag, index);
-      return `<span class="px-3 py-1.5 rounded-md text-[10px] font-bold uppercase tracking-wider border ${cls}">${escapeHtml(tag)}</span>`;
-    })
-    .join("");
-}
 
   function showLoadError() {
     const toast = document.getElementById("toast");
@@ -1235,35 +1198,26 @@ function handleOrgSelect(e) {
   document.getElementById("org-content").classList.add("flex");
 
   document.getElementById("org-name-display").innerText = org.name || "";
-  document.getElementById("org-category-badges").innerHTML = renderOrgCategoryBadges(org);
+  document.getElementById("org-sector-badge").innerText = org.sector || "";
+  document.getElementById("org-program-badge").innerText = org.programArea || "";
+  document.getElementById("org-audience-text").innerText = org.audience || "";
 
-  const audienceWrap = document.getElementById("org-audience-wrap");
-  const audienceText = document.getElementById("org-audience-text");
-  const audienceValue = (org.audience || "").trim();
-
-  audienceText.innerText = audienceValue;
-  if (audienceValue) audienceWrap.classList.remove("hidden");
-  else audienceWrap.classList.add("hidden");
-
-  const toCardList = (words, category, categoryTags = []) =>
-    safeArray(words).map(w => createCardHTML(buildCardData(w, { category, categoryTags }))).join("");
-
-  const orgTags = safeArray(org.categoryTags).length
-    ? safeArray(org.categoryTags)
-    : [org.sector, org.programArea].filter(Boolean);
+  const toCardList = (words, category) =>
+    safeArray(words).map(w => createCardHTML(buildCardData(w, { category }))).join("");
 
   document.getElementById("org-core-list").innerHTML =
-    toCardList(org.coreKeywords, org.sector, orgTags);
+    toCardList(org.coreKeywords, org.sector);
 
   document.getElementById("org-prog-list").innerHTML =
-    toCardList(org.programmaticKeywords, org.sector, orgTags);
+    toCardList(org.programmaticKeywords, org.programArea || org.sector);
 
   document.getElementById("org-action-list").innerHTML =
-    toCardList(org.actionKeywords, org.sector, orgTags);
+    toCardList(org.actionKeywords, org.programArea || org.sector);
 
   const orgTerms = uniqueStrings([
     org.name,
-    ...orgTags,
+    org.sector,
+    org.programArea,
     ...safeArray(org.coreKeywords),
     ...safeArray(org.programmaticKeywords),
     ...safeArray(org.actionKeywords)
@@ -1301,8 +1255,9 @@ function handleOrgSelect(e) {
     topW = Object.values(window.allPhrasesDict || {})
       .filter(item => {
         const itemTags = getCategoryTags(item, [item.category]).map(normalizeText);
-        const categoryMatch = orgTags.some(tag => itemTags.includes(normalizeText(tag)));
-        return categoryMatch;
+        const termMatch = orgTerms.some(term => overlapCount(item.phrase, term) > 0);
+        const categoryMatch = itemTags.includes(normalizeText(org.sector)) || itemTags.includes(normalizeText(org.programArea));
+        return termMatch || categoryMatch;
       })
       .sort((a, b) => (Number(b.weight) || 0) - (Number(a.weight) || 0))
       .slice(0, 8);
@@ -1312,80 +1267,109 @@ function handleOrgSelect(e) {
     ? topW.map(item => createCardHTML(buildCardData(item))).join("")
     : '<span class="text-gray-500 text-sm italic">No weighted metrics found.</span>';
 }
-  
-function handleCatSelect(e) {
-  const cat = e.target.value;
 
-  if (!cat) {
-    document.getElementById("cat-empty").classList.remove("hidden");
-    document.getElementById("cat-content").classList.add("hidden");
-    return;
+    let topW = Object.values(window.allPhrasesDict || {})
+      .filter(item => normalizeText(item.sourceOrg) === normalizeText(org.name))
+      .sort((a, b) => (Number(b.weight) || 0) - (Number(a.weight) || 0))
+      .slice(0, 8);
+
+    if (!topW.length) {
+      topW = Object.values(window.allPhrasesDict || {})
+        .filter(item => {
+          const itemTags = getCategoryTags(item, [item.category]).map(normalizeText);
+          const categoryMatch = orgCategoryTags.some(tag => itemTags.includes(normalizeText(tag)));
+          const termMatch = orgTerms.some(term => overlapCount(item.phrase, term) > 0);
+          return categoryMatch || termMatch;
+        })
+        .sort((a, b) => (Number(b.weight) || 0) - (Number(a.weight) || 0))
+        .slice(0, 8);
+    }
+
+    document.getElementById("org-top-list").innerHTML = topW.length
+      ? topW.map(item => createCardHTML(buildCardData(item))).join("")
+      : '<span class="text-gray-500 text-sm italic">No weighted metrics found.</span>';
   }
 
-  const catNorm = normalizeText(cat);
+  function handleCatSelect(e) {
+    const cat = e.target.value;
 
-  document.getElementById("cat-empty").classList.add("hidden");
-  document.getElementById("cat-content").classList.remove("hidden");
-  document.getElementById("cat-content").classList.add("flex");
-
-  const phrases = TAXONOMY.expandedKeywords.filter(ek => {
-    const tags = safeArray(ek.categoryTags).length ? ek.categoryTags : [ek.category];
-    return tags.some(tag => normalizeText(tag) === catNorm);
-  });
-
-  let phtml = "";
-  ["Core Issue", "Programmatic", "Action"].forEach(type => {
-    const typePhrases = phrases.filter(p => normalizeText(p.type) === normalizeText(type));
-    if (typePhrases.length > 0) {
-      phtml += `<div class="mb-6"><h5 class="text-xs uppercase tracking-[0.2em] text-gray-400 font-bold mb-3 flex items-center gap-2"><div class="w-1.5 h-1.5 rounded-full bg-emerald-400"></div> ${type}</h5>`;
-      phtml += `<div class="grid sm:grid-cols-2 gap-4">${typePhrases.map(p => createCardHTML(buildCardData(p))).join("")}</div></div>`;
+    if (!cat) {
+      document.getElementById("cat-empty").classList.remove("hidden");
+      document.getElementById("cat-content").classList.add("hidden");
+      return;
     }
-  });
 
-  document.getElementById("cat-phrases-list").innerHTML =
-    phtml || '<span class="text-gray-500 text-sm">No phrases inscribed in this domain.</span>';
+    const catNorm = normalizeText(cat);
 
-  const topW = Object.values(window.allPhrasesDict || {})
-    .filter(item => {
-      const tags = safeArray(item.categoryTags).length ? item.categoryTags : [item.category];
+    document.getElementById("cat-empty").classList.add("hidden");
+    document.getElementById("cat-content").classList.remove("hidden");
+    document.getElementById("cat-content").classList.add("flex");
+
+    const phrases = TAXONOMY.expandedKeywords.filter(ek => {
+      const tags = safeArray(ek.categoryTags).length ? ek.categoryTags : [ek.category];
       return tags.some(tag => normalizeText(tag) === catNorm);
-    })
-    .sort((a, b) => (Number(b.weight) || 0) - (Number(a.weight) || 0))
-    .slice(0, 10);
+    });
 
-  document.getElementById("cat-top-list").innerHTML = topW.length
-    ? topW.map(item => createCardHTML(buildCardData(item))).join("")
-    : '<span class="text-gray-500 text-sm italic">No weighted metrics found.</span>';
+    let phtml = "";
+    ["Core Issue", "Programmatic", "Action"].forEach(type => {
+      const typePhrases = phrases.filter(p => normalizeText(p.type) === normalizeText(type));
+      if (typePhrases.length > 0) {
+        phtml += `<div class="mb-6"><h5 class="text-xs uppercase tracking-[0.2em] text-gray-400 font-bold mb-3 flex items-center gap-2"><div class="w-1.5 h-1.5 rounded-full bg-emerald-400"></div> ${type}</h5>`;
+        phtml += `<div class="grid sm:grid-cols-2 gap-4">${typePhrases.map(p => createCardHTML(buildCardData(p))).join("")}</div></div>`;
+      }
+    });
 
-  const relatedOrgNames = new Set();
+    document.getElementById("cat-phrases-list").innerHTML =
+      phtml || '<span class="text-gray-500 text-sm">No phrases inscribed in this domain.</span>';
 
-  TAXONOMY.orgs.forEach(org => {
-    const orgTags = safeArray(org.categoryTags).length
-      ? safeArray(org.categoryTags)
-      : [org.sector, org.programArea].filter(Boolean);
+    const topW = Object.values(window.allPhrasesDict || {})
+      .filter(item => {
+        const tags = safeArray(item.categoryTags).length ? item.categoryTags : [item.category];
+        return tags.some(tag => normalizeText(tag) === catNorm);
+      })
+      .sort((a, b) => (Number(b.weight) || 0) - (Number(a.weight) || 0))
+      .slice(0, 10);
 
-    if (orgTags.some(tag => normalizeText(tag) === catNorm)) {
-      relatedOrgNames.add(org.name);
-    }
-  });
+    document.getElementById("cat-top-list").innerHTML = topW.length
+      ? topW.map(item => createCardHTML(buildCardData(item))).join("")
+      : '<span class="text-gray-500 text-sm italic">No weighted metrics found.</span>';
 
-  topW.forEach(item => {
-    if (item.sourceOrg) relatedOrgNames.add(item.sourceOrg);
-  });
+    const relatedOrgs = uniqueBy(
+      TAXONOMY.orgs.filter(org => {
+        const orgTags = safeArray(org.categoryTags).length
+          ? safeArray(org.categoryTags)
+          : [org.sector, org.programArea].filter(Boolean);
 
-  const relatedOrgs = TAXONOMY.orgs.filter(org => relatedOrgNames.has(org.name));
+        const directTagMatch = orgTags.some(tag => normalizeText(tag) === catNorm);
+        if (directTagMatch) return true;
 
-  const orgsHtml = relatedOrgs.map(o => `
-    <button
-      onclick="document.getElementById('org-select').value='${escapeSingleQuotes(o.name)}'; handleOrgSelect({target:{value:'${escapeSingleQuotes(o.name)}'}}); switchTab('org-explorer');"
-      class="px-4 py-2 bg-purple-900/40 hover:bg-purple-800/60 border border-purple-500/30 rounded-lg text-xs text-white transition-all flex items-center gap-2 shadow-sm">
-      <i class="ph-fill ph-buildings text-purple-400"></i> ${escapeHtml(o.name)}
-    </button>
-  `).join("");
+        const orgTerms = uniqueStrings([
+          org.name,
+          org.sector,
+          org.programArea,
+          ...orgTags,
+          ...safeArray(org.coreKeywords),
+          ...safeArray(org.programmaticKeywords),
+          ...safeArray(org.actionKeywords)
+        ]);
 
-  document.getElementById("cat-orgs-list").innerHTML =
-    orgsHtml || '<span class="text-gray-500 text-sm italic">No entities mapped.</span>';
-}
+        return topW.some(item => orgTerms.some(term => overlapCount(item.phrase, term) > 0));
+      }),
+      x => normalizeText(x.name)
+    );
+
+    const orgsHtml = relatedOrgs.map(o => `
+      <button
+        onclick="document.getElementById('org-select').value='${escapeSingleQuotes(o.name)}'; handleOrgSelect({target:{value:'${escapeSingleQuotes(o.name)}'}}); switchTab('org-explorer');"
+        class="px-4 py-2 bg-purple-900/40 hover:bg-purple-800/60 border border-purple-500/30 rounded-lg text-xs text-white transition-all flex items-center gap-2 shadow-sm">
+        <i class="ph-fill ph-buildings text-purple-400"></i> ${escapeHtml(o.name)}
+      </button>
+    `).join("");
+
+    document.getElementById("cat-orgs-list").innerHTML =
+      orgsHtml || '<span class="text-gray-500 text-sm italic">No entities mapped.</span>';
+  }
+
   function handlePlatFilter() {
     const platform = document.getElementById("plat-select")?.value || "";
     const adGrantOnly = document.getElementById("plat-ad-grant-filter")?.checked || false;

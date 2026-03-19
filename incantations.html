@@ -811,19 +811,18 @@
       .map(f => `<span class="px-2 py-0.5 rounded-md border text-[9px] uppercase tracking-wider ${getFlagStyle(f)} whitespace-nowrap">${escapeHtml(f)}</span>`)
       .join("");
 
-    let metaHtml = "";
-    const categoryTags = safeArray(data.categoryTags).length
-      ? safeArray(data.categoryTags)
-      : (data.category ? [data.category] : []);
+let metaHtml = "";
+const categoryTags = safeArray(data.categoryTags).length
+  ? safeArray(data.categoryTags)
+  : (data.category ? [data.category] : []);
 
-        if (categoryTags.length) {
-          metaHtml += categoryTags.map(cat => createCategoryBadge(cat)).join("");
-        }
-
-    if (data.sourceOrg) metaHtml += `<span class="text-[9px] text-cyan-300 uppercase tracking-widest flex items-center gap-1"><i class="ph-fill ph-buildings"></i> ${escapeHtml(data.sourceOrg)}</span>`;
-    if (data.unique) metaHtml += `<span class="text-[9px] text-amber-300 border border-amber-500/30 bg-amber-500/10 px-1.5 py-0.5 rounded flex items-center gap-1"><i class="ph-fill ph-star"></i> Unique</span>`;
-    if (data.platform) metaHtml += getPlatformBadge(data.platform);
-    if (data.source === "youtube" && !data.platform) metaHtml += getPlatformBadge("YouTube");
+if (categoryTags.length) {
+  metaHtml += categoryTags.map(cat => createCategoryBadge(cat)).join("");
+}
+if (data.sourceOrg) metaHtml += `<span class="text-[9px] text-cyan-300 uppercase tracking-widest flex items-center gap-1"><i class="ph-fill ph-buildings"></i> ${escapeHtml(data.sourceOrg)}</span>`;
+if (data.unique) metaHtml += `<span class="text-[9px] text-amber-300 border border-amber-500/30 bg-amber-500/10 px-1.5 py-0.5 rounded flex items-center gap-1"><i class="ph-fill ph-star"></i> Unique</span>`;
+if (data.platform) metaHtml += getPlatformBadge(data.platform);
+if (data.source === "youtube" && !data.platform) metaHtml += getPlatformBadge("YouTube");
 
     return `
       <div class="glass-card rounded-xl p-4 flex flex-col gap-3 group relative overflow-hidden h-full justify-between min-h-[120px]">

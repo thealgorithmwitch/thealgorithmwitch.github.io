@@ -579,48 +579,47 @@
     return uniqueStrings(tags);
   }
 
-  function deriveControlListsFromData() {
-    const issueAreas = uniqueStrings([
-      ...safeArray(TAXONOMY.controlLists.issueAreas),
-      ...safeArray(TAXONOMY.expandedKeywords).flatMap(x =>
-        safeArray(x.categoryTags).length ? x.categoryTags : [x.category]
-      ),
-      ...safeArray(TAXONOMY.weightedIndex).flatMap(x =>
-        safeArray(x.categoryTags).length ? x.categoryTags : [x.category]
-      ),
-      ...safeArray(TAXONOMY.orgs).flatMap(x =>
-        safeArray(x.categoryTags).length ? x.categoryTags : [x.sector, x.programArea]
-      )
-    ]).sort((a, b) => a.localeCompare(b));
+function deriveControlListsFromData() {
+  const issueAreas = uniqueStrings([
+    ...safeArray(TAXONOMY.controlLists.issueAreas),
+    ...safeArray(TAXONOMY.expandedKeywords).flatMap(x =>
+      safeArray(x.categoryTags).length ? x.categoryTags : [x.category]
+    ),
+    ...safeArray(TAXONOMY.weightedIndex).flatMap(x =>
+      safeArray(x.categoryTags).length ? x.categoryTags : [x.category]
+    ),
+    ...safeArray(TAXONOMY.orgs).flatMap(x =>
+      safeArray(x.categoryTags).length ? x.categoryTags : [x.sector, x.programArea]
+    )
+  ]).sort((a, b) => a.localeCompare(b));
 
-    const categories = uniqueStrings([
-      ...safeArray(TAXONOMY.controlLists.categories),
-      ...safeArray(TAXONOMY.expandedKeywords).flatMap(x =>
-        safeArray(x.categoryTags).length ? x.categoryTags : [x.category]
-      ),
-      ...safeArray(TAXONOMY.weightedIndex).flatMap(x =>
-        safeArray(x.categoryTags).length ? x.categoryTags : [x.category]
-      )
-    ]).sort((a, b) => a.localeCompare(b));
+  const categories = uniqueStrings([
+    ...safeArray(TAXONOMY.controlLists.categories),
+    ...safeArray(TAXONOMY.expandedKeywords).flatMap(x =>
+      safeArray(x.categoryTags).length ? x.categoryTags : [x.category]
+    ),
+    ...safeArray(TAXONOMY.weightedIndex).flatMap(x =>
+      safeArray(x.categoryTags).length ? x.categoryTags : [x.category]
+    )
+  ]).sort((a, b) => a.localeCompare(b));
 
-    const audiences = uniqueStrings([
-      ...safeArray(TAXONOMY.controlLists.audiences),
-      ...safeArray(TAXONOMY.orgs).map(x => x.audience)
-    ]).sort((a, b) => a.localeCompare(b));
+  const audiences = uniqueStrings([
+    ...safeArray(TAXONOMY.controlLists.audiences),
+    ...safeArray(TAXONOMY.orgs).map(x => x.audience)
+  ]).sort((a, b) => a.localeCompare(b));
 
-    const platforms = uniqueStrings([
-      ...safeArray(TAXONOMY.controlLists.platforms),
-      ...safeArray(TAXONOMY.platformKeywords).map(x => x.platform),
-      ...safeArray(TAXONOMY.youtubePhraseIndex).map(() => "YouTube"),
-      ...safeArray(TAXONOMY.controlLists.googleAdsSeeds).map(() => "Google Ads"),
-      ...safeArray(TAXONOMY.controlLists.searchSeeds).map(() => "Search")
-    ]).sort((a, b) => a.localeCompare(b));
+  const platforms = uniqueStrings([
+    ...safeArray(TAXONOMY.controlLists.platforms),
+    ...safeArray(TAXONOMY.platformKeywords).map(x => x.platform),
+    ...safeArray(TAXONOMY.youtubePhraseIndex).map(() => "YouTube"),
+    ...safeArray(TAXONOMY.controlLists.blueskySeeds).map(() => "Bluesky"),
+  ]).sort((a, b) => a.localeCompare(b));
 
-    TAXONOMY.controlLists.issueAreas = issueAreas;
-    TAXONOMY.controlLists.categories = categories;
-    TAXONOMY.controlLists.audiences = audiences;
-    TAXONOMY.controlLists.platforms = platforms;
-  }
+  TAXONOMY.controlLists.issueAreas = issueAreas;
+  TAXONOMY.controlLists.categories = categories;
+  TAXONOMY.controlLists.audiences = audiences;
+  TAXONOMY.controlLists.platforms = platforms;
+}
 
   function guessCategoryForPhrase(phrase) {
     const target = normalizeText(phrase);

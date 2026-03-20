@@ -519,7 +519,7 @@
     }
   };
 
-  const DATA_ENDPOINT = "https://script.google.com/macros/s/AKfycbyj5_piLtWlWoUsComvMBqkEOY94yTex_RPksqs5Vv6cUR_2UYjiTjvYJsKkNa5rXGLyA/exec";
+  const DATA_ENDPOINT = "https://script.google.com/macros/s/AKfycbx7T42NeB5T--tFj91Yk8Uz0Gt39skoGBTnVUWLbn5UUKTkGwUjJ4r6IlrmaNQQZ8-EXg/exec";
 
   function normalizeText(value) {
     return String(value || "").toLowerCase().trim().replace(/\s+/g, " ");
@@ -713,7 +713,7 @@ function deriveControlListsFromData() {
     if (score <= 25) flags.push("Too Broad");
     if (wordsCount <= 2 && score < 50 && !isAdGrant) flags.push("Generic");
     if (wordsCount === 1) flags.push("Low Intent");
-
+    if (data.source === "bluesky") flags.push("Bluesky Signal");
     if (data.source === "youtube") flags.push("YouTube Signal");
 
     return [...new Set(flags)];
@@ -729,6 +729,7 @@ function deriveControlListsFromData() {
       "Generic": "flag-generic",
       "Low Intent": "flag-low-intent",
       "YouTube Signal": "flag-youtube"
+      "Bluesky Signal": "flag-youtube",
     };
     return map[flag] || "bg-white/5 text-gray-300 border-white/10";
   }

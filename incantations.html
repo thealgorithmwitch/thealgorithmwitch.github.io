@@ -507,13 +507,15 @@
     platformKeywords: [],
     categoryColors: {},
     controlLists: {
-      orgTypes: [],
-      issueAreas: [],
-      audiences: [],
-      goals: [],
-      categories: [],
-      youtubeSeeds: [],
-      platforms: []
+      orgTypes: data.controlLists?.orgTypes || [],
+      issueAreas: data.controlLists?.issueAreas || [],
+      audiences: data.controlLists?.audiences || [],
+      goals: data.controlLists?.goals || [],
+      categories: data.controlLists?.categories || [],
+      youtubeSeeds: data.controlLists?.youtubeSeeds || [],
+      googleAdsSeeds: data.controlLists?.googleAdsSeeds || [],
+      searchSeeds: data.controlLists?.searchSeeds || [],
+      platforms: data.controlLists?.platforms || []
     }
   };
 
@@ -609,7 +611,9 @@
     const platforms = uniqueStrings([
       ...safeArray(TAXONOMY.controlLists.platforms),
       ...safeArray(TAXONOMY.platformKeywords).map(x => x.platform),
-      ...safeArray(TAXONOMY.youtubePhraseIndex).map(() => "YouTube")
+      ...safeArray(TAXONOMY.youtubePhraseIndex).map(() => "YouTube"),
+      ...safeArray(TAXONOMY.controlLists.googleAdsSeeds).map(() => "Google Ads"),
+      ...safeArray(TAXONOMY.controlLists.searchSeeds).map(() => "Search")
     ]).sort((a, b) => a.localeCompare(b));
 
     TAXONOMY.controlLists.issueAreas = issueAreas;
@@ -990,13 +994,15 @@ if (data.source === "youtube" && !data.platform) metaHtml += getPlatformBadge("Y
         platformKeywords: Array.isArray(data.platformKeywords) ? data.platformKeywords : [],
         categoryColors: data.categoryColors || {},
         controlLists: {
-          orgTypes: data.controlLists?.orgTypes || [],
-          issueAreas: data.controlLists?.issueAreas || [],
-          audiences: data.controlLists?.audiences || [],
-          goals: data.controlLists?.goals || [],
-          categories: data.controlLists?.categories || [],
-          youtubeSeeds: data.controlLists?.youtubeSeeds || [],
-          platforms: data.controlLists?.platforms || []
+          orgTypes: [],
+          issueAreas: [],
+          audiences: [],
+          goals: [],
+          categories: [],
+          youtubeSeeds: [],
+          googleAdsSeeds: [],
+          searchSeeds: [],
+          platforms: []
         }
       };
   

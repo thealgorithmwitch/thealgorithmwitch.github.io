@@ -417,16 +417,28 @@
                 <div class="content-container items-center text-center" vid="198">
                     <div class="flex items-center justify-center gap-6 mb-16 opacity-60" vid="199">
                         <div class="h-px bg-purple-500 w-24" vid="200"></div>
-                        <i class="ph-fill ph-crystal-ball text-purple-400 text-5xl animate-pulse drop-shadow-[0_0_20px_rgba(168,85,247,0.8)]" vid="201"></i>
+            
+                        <span class="relative inline-flex items-center justify-center" vid="201">
+                            <i class="ph-fill ph-sparkle text-purple-400 text-5xl animate-pulse drop-shadow-[0_0_20px_rgba(168,85,247,0.8)]"></i>
+                            <i class="ph-fill ph-star-four text-yellow-300 text-base absolute -top-1 -right-2 animate-pulse" style="animation-duration: 1.6s"></i>
+                        </span>
+            
                         <div class="h-px bg-purple-500 w-24" vid="202"></div>
                     </div>
+            
                     <h2 class="font-magical text-6xl md:text-8xl text-white mb-8" vid="203">Ready to cast your spell?</h2>
+            
                     <p class="text-purple-200/80 mb-16 text-2xl max-w-2xl mx-auto font-light leading-relaxed" vid="204">
                         Let's align your narrative, amplify your message, and find your people through the power of digital alchemy.
                     </p>
-                    <a href="mailto:hello@algorithmwitch.com" class="inline-flex items-center justify-center px-12 py-6 bg-white text-purple-900 rounded-full font-bold tracking-widest uppercase text-lg hover:scale-105 transition-transform shadow-[0_0_60px_-10px_rgba(255,255,255,0.6)] mb-20 group relative overflow-hidden" vid="205">
+            
+                    <a href="mailto:hello@algorithmwitch.com"
+                       class="inline-flex items-center justify-center px-12 py-6 bg-white text-purple-900 rounded-full font-bold tracking-widest uppercase text-lg hover:scale-105 transition-transform shadow-[0_0_60px_-10px_rgba(255,255,255,0.6)] mb-20 group relative overflow-hidden"
+                       vid="205">
                         <div class="absolute inset-0 w-full h-full bg-gradient-to-r from-transparent via-purple-500/20 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700" vid="206"></div>
-                        <span class="relative z-10 flex items-center" vid="207">Summon Me <i class="ph-bold ph-arrow-right ml-3 text-xl group-hover:translate-x-1 transition-transform" vid="208"></i></span>
+                        <span class="relative z-10 flex items-center" vid="207">
+                            Summon Me <i class="ph-bold ph-arrow-right ml-3 text-xl group-hover:translate-x-1 transition-transform" vid="208"></i>
+                        </span>
                     </a>
                 </div>
             </section>
@@ -1214,171 +1226,185 @@
     </div>
 
     
-    <script vid="798">
-        function showPage(pageId) {
-            document.querySelectorAll('.page').forEach(page => {
-                page.classList.remove('active');
-            });
-            document.getElementById(pageId).classList.add('active');
+<script>
+    function showPage(pageId) {
+        document.querySelectorAll('.page').forEach(page => {
+            page.classList.remove('active');
+        });
+
+        const nextPage = document.getElementById(pageId);
+        if (nextPage) {
+            nextPage.classList.add('active');
         }
 
-        
-        document.addEventListener('DOMContentLoaded', () => {
-            
-            
-            const starContainer = document.getElementById('star-container');
+        window.scrollTo({
+            top: 0,
+            behavior: 'smooth'
+        });
+
+        document.querySelectorAll('.section-fade-up').forEach(el => {
+            if (nextPage && nextPage.contains(el)) {
+                el.classList.add('visible');
+            }
+        });
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+        const starContainer = document.getElementById('star-container');
+
+        if (starContainer && !starContainer.dataset.built) {
+            starContainer.dataset.built = 'true';
+
             const starCount = 150;
+            const frag = document.createDocumentFragment();
+
             for (let i = 0; i < starCount; i++) {
                 const star = document.createElement('div');
                 star.classList.add('star');
                 star.style.left = `${Math.random() * 100}%`;
                 star.style.top = `${Math.random() * 100}%`;
+
                 const size = Math.random() < 0.1 ? 3 : (Math.random() < 0.4 ? 2 : 1);
                 star.style.width = `${size}px`;
                 star.style.height = `${size}px`;
                 star.style.setProperty('--duration', `${2 + Math.random() * 4}s`);
                 star.style.setProperty('--delay', `${Math.random() * 5}s`);
                 star.style.setProperty('--opacity', 0.2 + Math.random() * 0.6);
-                starContainer.appendChild(star);
+
+                frag.appendChild(star);
             }
 
-            
-            const observer = new IntersectionObserver((entries) => {
-                entries.forEach(entry => {
-                    if (entry.isIntersecting) entry.target.classList.add('visible');
-                });
-            }, { threshold: 0.1 });
-            document.querySelectorAll('.section-fade-up').forEach(el => observer.observe(el));
+            starContainer.appendChild(frag);
+        }
 
-            
-            document.addEventListener('mousemove', e => {
-                document.querySelectorAll('.glass-card').forEach(card => {
-                    const rect = card.getBoundingClientRect();
-                    card.style.setProperty('--mouse-x', `${e.clientX - rect.left}px`);
-                    card.style.setProperty('--mouse-y', `${e.clientY - rect.top}px`);
-                });
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) entry.target.classList.add('visible');
             });
+        }, { threshold: 0.1 });
 
-            
-            const slides = document.querySelectorAll('.slide');
-            const totalSlides = slides.length;
-            let currentSlide = 0;
-            let isAnimating = false;
-            
-            const btnPrev = document.getElementById('btn-prev');
-            const btnNext = document.getElementById('btn-next');
-            const counterEl = document.getElementById('slide-counter');
-            const dotsContainer = document.getElementById('dots-container');
-            const ambient1 = document.getElementById('ambient-1');
-            const ambient2 = document.getElementById('ambient-2');
+        document.querySelectorAll('.section-fade-up').forEach(el => observer.observe(el));
 
-            
-            for (let i = 0; i < totalSlides; i++) {
-                const dot = document.createElement('div');
-                dot.classList.add('dot');
-                if(i === 0) dot.classList.add('active');
-                dot.addEventListener('click', () => goToSlide(i));
-                dotsContainer.appendChild(dot);
-            }
-            const dots = document.querySelectorAll('.dot');
-
-            function updateAmbientGlow() {
-                const currentThemeData = slides[currentSlide].getAttribute('data-ambient');
-                if(currentThemeData) {
-                    const classes = currentThemeData.split(',');
-                    ambient1.className = `ambient-glow w-[800px] h-[800px] top-[-20%] left-[-10%] mix-blend-screen ${classes[0]}`;
-                    ambient2.className = `ambient-glow w-[600px] h-[600px] bottom-[-10%] right-[-10%] mix-blend-screen ${classes[1] || classes[0]}`;
-                }
-            }
-
-            function updateSlides(newIndex, direction) {
-                if (isAnimating || newIndex === currentSlide) return;
-                isAnimating = true;
-
-                const currentEl = slides[currentSlide];
-                const nextEl = slides[newIndex];
-
-                nextEl.classList.remove('opacity-0', 'pointer-events-none', 'z-0', 'active', 'previous');
-                
-                if (direction === 'next') {
-                    nextEl.style.transform = 'translateY(40px) scale(0.98)';
-                    currentEl.style.transform = 'translateY(-40px) scale(0.98)';
-                } else {
-                    nextEl.style.transform = 'translateY(-40px) scale(0.98)';
-                    currentEl.style.transform = 'translateY(40px) scale(0.98)';
-                }
-
-                void nextEl.offsetWidth; 
-
-                currentEl.classList.remove('active');
-                currentEl.classList.add('opacity-0', 'pointer-events-none', 'z-0');
-                
-                nextEl.style.transform = ''; 
-                nextEl.classList.add('active');
-
-                dots[currentSlide].classList.remove('active');
-                dots[newIndex].classList.add('active');
-                currentSlide = newIndex;
-                counterEl.innerText = `${currentSlide + 1} / ${totalSlides}`;
-                
-                updateAmbientGlow();
-
-                setTimeout(() => {
-                    currentEl.style.transform = ''; 
-                    isAnimating = false;
-                }, 800);
-            }
-
-            function nextSlide() {
-                if (currentSlide < totalSlides - 1) updateSlides(currentSlide + 1, 'next');
-            }
-
-            function prevSlide() {
-                if (currentSlide > 0) updateSlides(currentSlide - 1, 'prev');
-            }
-
-            function goToSlide(index) {
-                if(index > currentSlide) {
-                    updateSlides(index, 'next');
-                } else if (index < currentSlide) {
-                    updateSlides(index, 'prev');
-                }
-            }
-
-            btnNext.addEventListener('click', nextSlide);
-            btnPrev.addEventListener('click', prevSlide);
-
-            
-            document.addEventListener('keydown', (e) => {
-                if (!document.getElementById('page-presentation').classList.contains('active')) return;
-                if (e.key === 'ArrowRight' || e.key === 'ArrowDown' || e.key === ' ') {
-                    e.preventDefault();
-                    nextSlide();
-                } else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
-                    e.preventDefault();
-                    prevSlide();
-                }
+        document.addEventListener('mousemove', e => {
+            document.querySelectorAll('.glass-card').forEach(card => {
+                const rect = card.getBoundingClientRect();
+                card.style.setProperty('--mouse-x', `${e.clientX - rect.left}px`);
+                card.style.setProperty('--mouse-y', `${e.clientY - rect.top}px`);
             });
-
-            let wheelTimeout;
-            document.addEventListener('wheel', (e) => {
-                if (!document.getElementById('page-presentation').classList.contains('active')) return;
-                if (isAnimating) return;
-                if (Math.abs(e.deltaY) < 40) return; 
-                
-                clearTimeout(wheelTimeout);
-                wheelTimeout = setTimeout(() => {
-                    if (e.deltaY > 0) {
-                        nextSlide();
-                    } else {
-                        prevSlide();
-                    }
-                }, 50);
-            }, { passive: false });
-
-            
-            updateAmbientGlow();
         });
-    </script>
+
+        const slides = document.querySelectorAll('.slide');
+        const totalSlides = slides.length;
+        let currentSlide = 0;
+        let isAnimating = false;
+
+        const btnPrev = document.getElementById('btn-prev');
+        const btnNext = document.getElementById('btn-next');
+        const counterEl = document.getElementById('slide-counter');
+        const dotsContainer = document.getElementById('dots-container');
+        const ambient1 = document.getElementById('ambient-1');
+        const ambient2 = document.getElementById('ambient-2');
+
+        for (let i = 0; i < totalSlides; i++) {
+            const dot = document.createElement('div');
+            dot.classList.add('dot');
+            if (i === 0) dot.classList.add('active');
+            dot.addEventListener('click', () => goToSlide(i));
+            dotsContainer.appendChild(dot);
+        }
+
+        const dots = document.querySelectorAll('.dot');
+
+        function updateAmbientGlow() {
+            const currentThemeData = slides[currentSlide].getAttribute('data-ambient');
+            if (currentThemeData) {
+                const classes = currentThemeData.split(',');
+                ambient1.className = `ambient-glow w-[800px] h-[800px] top-[-20%] left-[-10%] mix-blend-screen ${classes[0]}`;
+                ambient2.className = `ambient-glow w-[600px] h-[600px] bottom-[-10%] right-[-10%] mix-blend-screen ${classes[1] || classes[0]}`;
+            }
+        }
+
+        function updateSlides(newIndex, direction) {
+            if (isAnimating || newIndex === currentSlide) return;
+            isAnimating = true;
+
+            const currentEl = slides[currentSlide];
+            const nextEl = slides[newIndex];
+
+            nextEl.classList.remove('opacity-0', 'pointer-events-none', 'z-0', 'active', 'previous');
+
+            if (direction === 'next') {
+                nextEl.style.transform = 'translateY(40px) scale(0.98)';
+                currentEl.style.transform = 'translateY(-40px) scale(0.98)';
+            } else {
+                nextEl.style.transform = 'translateY(-40px) scale(0.98)';
+                currentEl.style.transform = 'translateY(40px) scale(0.98)';
+            }
+
+            void nextEl.offsetWidth;
+
+            currentEl.classList.remove('active');
+            currentEl.classList.add('opacity-0', 'pointer-events-none', 'z-0');
+
+            nextEl.style.transform = '';
+            nextEl.classList.add('active');
+
+            dots[currentSlide].classList.remove('active');
+            dots[newIndex].classList.add('active');
+            currentSlide = newIndex;
+            counterEl.innerText = `${currentSlide + 1} / ${totalSlides}`;
+
+            updateAmbientGlow();
+
+            setTimeout(() => {
+                currentEl.style.transform = '';
+                isAnimating = false;
+            }, 800);
+        }
+
+        function nextSlide() {
+            if (currentSlide < totalSlides - 1) updateSlides(currentSlide + 1, 'next');
+        }
+
+        function prevSlide() {
+            if (currentSlide > 0) updateSlides(currentSlide - 1, 'prev');
+        }
+
+        function goToSlide(index) {
+            if (index > currentSlide) updateSlides(index, 'next');
+            else if (index < currentSlide) updateSlides(index, 'prev');
+        }
+
+        btnNext.addEventListener('click', nextSlide);
+        btnPrev.addEventListener('click', prevSlide);
+
+        document.addEventListener('keydown', (e) => {
+            if (!document.getElementById('page-presentation').classList.contains('active')) return;
+
+            if (e.key === 'ArrowRight' || e.key === 'ArrowDown' || e.key === ' ') {
+                e.preventDefault();
+                nextSlide();
+            } else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
+                e.preventDefault();
+                prevSlide();
+            }
+        });
+
+        let wheelTimeout;
+        document.addEventListener('wheel', (e) => {
+            if (!document.getElementById('page-presentation').classList.contains('active')) return;
+            if (isAnimating) return;
+            if (Math.abs(e.deltaY) < 40) return;
+
+            clearTimeout(wheelTimeout);
+            wheelTimeout = setTimeout(() => {
+                if (e.deltaY > 0) nextSlide();
+                else prevSlide();
+            }, 50);
+        }, { passive: false });
+
+        updateAmbientGlow();
+    });
+</script>
 
 </body></html>

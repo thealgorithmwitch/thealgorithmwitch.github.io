@@ -269,16 +269,53 @@
         <span class="font-magical text-sm tracking-widest text-gray-400 uppercase">The Algorithm Witch</span>
       </div>
 
-      <div class="flex items-center gap-3 mt-4 bg-black/30 p-2.5 rounded-lg border border-white/5 cursor-pointer hover:border-white/10 transition-colors group">
-        <div class="w-8 h-8 rounded bg-[#1e1a2d] flex items-center justify-center border border-white/10 group-hover:border-[var(--client-color)] transition-colors">
-          <i id="client-logo" class="ph-fill ph-sun-horizon text-[var(--client-color)] text-lg"></i>
-        </div>
-        <div class="flex-1 min-w-0">
-          <div class="text-xs text-gray-500 font-medium leading-none mb-1">Client Workspace</div>
-          <div id="client-name" class="text-sm font-bold text-white truncate">Re-volv Solar</div>
-        </div>
-        <i class="ph-bold ph-caret-up-down text-gray-600 group-hover:text-gray-400"></i>
-      </div>
+<div class="relative">
+  <button
+    type="button"
+    id="workspace-dropdown-toggle"
+    class="flex items-center gap-3 mt-4 bg-black/30 p-2.5 rounded-lg border border-white/5 cursor-pointer hover:border-white/10 transition-colors group w-full text-left"
+  >
+    <div class="w-8 h-8 rounded bg-[#1e1a2d] flex items-center justify-center border border-white/10 group-hover:border-[var(--client-color)] transition-colors">
+      <i id="client-logo" class="ph-fill ph-sun-horizon text-[var(--client-color)] text-lg"></i>
+    </div>
+    <div class="flex-1 min-w-0">
+      <div class="text-xs text-gray-500 font-medium leading-none mb-1">Client Workspace</div>
+      <div id="client-name" class="text-sm font-bold text-white truncate">Re-volv Solar</div>
+    </div>
+    <i id="workspace-dropdown-icon" class="ph-bold ph-caret-down text-gray-600 group-hover:text-gray-400 transition-transform"></i>
+  </button>
+
+  <div
+    id="workspace-dropdown-menu"
+    class="hidden absolute left-0 right-0 mt-2 bg-[#120c1d]/95 backdrop-blur-md border border-white/10 rounded-lg shadow-[0_8px_30px_rgba(0,0,0,0.45)] overflow-hidden z-50"
+  >
+    <a
+      href="https://thealgorithmwitch.github.io/client/RE-volv.html"
+      target="_blank"
+      rel="noopener noreferrer"
+      class="flex items-center justify-between px-4 py-3 text-sm text-gray-200 hover:bg-white/5 hover:text-white transition-colors border-b border-white/5"
+    >
+      <span class="flex items-center gap-2">
+        <i class="ph-duotone ph-briefcase text-purple-400"></i>
+        Workspace
+      </span>
+      <i class="ph-bold ph-arrow-up-right text-gray-500"></i>
+    </a>
+
+    <a
+      href="https://thealgorithmwitch.github.io/incantations"
+      target="_blank"
+      rel="noopener noreferrer"
+      class="flex items-center justify-between px-4 py-3 text-sm text-gray-200 hover:bg-white/5 hover:text-white transition-colors"
+    >
+      <span class="flex items-center gap-2">
+        <i class="ph-duotone ph-sparkle text-cyan-400"></i>
+        Crafter
+      </span>
+      <i class="ph-bold ph-arrow-up-right text-gray-500"></i>
+    </a>
+  </div>
+</div>
     </div>
 
     <nav class="flex-1 overflow-y-auto p-4 space-y-1">
@@ -1092,66 +1129,64 @@
   let currentPerformanceSummary = {};
   let currentPerformanceTrend = [];
 
-  document.addEventListener("DOMContentLoaded", async () => {
-    applyConfig();
-    initStars();
-    bindNavigation();
-    bindExternalButtons();
-    bindUTMEvents();
-    bindReportFilters();
-    bindUXFilters();
-    bindAuditFilters();
+document.addEventListener("DOMContentLoaded", async () => {
+  applyConfig();
+  initStars();
+  bindNavigation();
+  bindExternalButtons();
+  bindUTMEvents();
+  bindReportFilters();
+  bindUXFilters();
+  bindAuditFilters();
+  bindWorkspaceDropdown();
 
-    updateLocalSyncTime();
-    switchView(getInitialView(), false);
+  updateLocalSyncTime();
+  switchView(getInitialView(), false);
 
-    renderRegistry([]);
-    renderHomeRecentUtmLinks([]);
-    renderEmptyPerformanceState();
-    renderEmptyUxState();
+  renderRegistry([]);
+  renderHomeRecentUtmLinks([]);
+  renderEmptyPerformanceState();
+  renderEmptyUxState();
 
-    try {
-      await loadSettingsFromSheet();
+  try {
+    await loadSettingsFromSheet();
 
-      await Promise.all([
-        loadRegistryFromSheet(),
-        loadAuditFromSheet(),
-        loadResourcesFromSheet()
-      ]);
+    await Promise.all([
+      loadRegistryFromSheet(),
+      loadAuditFromSheet(),
+      loadResourcesFromSheet()
+    ]);
 
-      populateReportFilterOptionsFromRegistry();
-      populateUxPageOptionsFromClarityRows([]);
+    populateReportFilterOptionsFromRegistry();
+    populateUxPageOptionsFromClarityRows([]);
 
-      if (APP_CONFIG.AUTO_SYNC_PERFORMANCE_ON_LOAD) {
-        try {
-          await syncPerformanceData(getPerformanceDaysFromUi(), { silent: true });
-        } catch (error) {
-          console.error("Initial GA sync failed:", error);
-        }
+    if (APP_CONFIG.AUTO_SYNC_PERFORMANCE_ON_LOAD) {
+      try {
+        await syncPerformanceData(getPerformanceDaysFromUi(), { silent: true });
+      } catch (error) {
+        console.error("Initial GA sync failed:", error);
       }
-      
-      await Promise.all([
-        loadPerformanceFromSheet(),
-        loadPerformanceTrendFromSheet()
-      ]);
-      
-      const updated = document.getElementById("reports-last-updated");
-      if (updated) updated.textContent = "Updated: Just now";
-
-      if (APP_CONFIG.AUTO_SYNC_CLARITY_ON_LOAD) {
-        try {
-          await syncClarityData({ silent: true });
-        } catch (error) {
-          console.error("Initial Clarity sync failed:", error);
-        }
-      } else {
-        await loadClarityFromSheet();
-      }
-    } catch (error) {
-      console.error(error);
-      showToast("Connection Error", "Could not load portal data.", "ph-warning", "text-amber-400");
     }
-  });
+
+    await Promise.all([
+      loadPerformanceFromSheet(),
+      loadPerformanceTrendFromSheet()
+    ]);
+
+    if (APP_CONFIG.AUTO_SYNC_CLARITY_ON_LOAD) {
+      try {
+        await syncClarityData({ silent: true });
+      } catch (error) {
+        console.error("Initial Clarity sync failed:", error);
+      }
+    } else {
+      await loadClarityFromSheet();
+    }
+  } catch (error) {
+    console.error(error);
+    showToast("Connection Error", "Could not load portal data.", "ph-warning", "text-amber-400");
+  }
+});
 
   async function loadSettingsFromSheet() {
     const data = await apiGet("getSettings");
@@ -1541,6 +1576,50 @@
     });
     renderPerformanceTrendCharts([]);
   }
+
+  function bindWorkspaceDropdown() {
+  const toggle = document.getElementById("workspace-dropdown-toggle");
+  const menu = document.getElementById("workspace-dropdown-menu");
+  const icon = document.getElementById("workspace-dropdown-icon");
+
+  if (!toggle || !menu || !icon) return;
+
+  toggle.addEventListener("click", (event) => {
+    event.stopPropagation();
+    const isHidden = menu.classList.contains("hidden");
+
+    document.querySelectorAll("[data-dropdown-open='true']").forEach((el) => {
+      el.classList.add("hidden");
+      el.setAttribute("data-dropdown-open", "false");
+    });
+
+    document.querySelectorAll("[data-dropdown-icon='true']").forEach((el) => {
+      el.classList.remove("rotate-180");
+      el.setAttribute("data-dropdown-icon", "false");
+    });
+
+    if (isHidden) {
+      menu.classList.remove("hidden");
+      menu.setAttribute("data-dropdown-open", "true");
+      icon.classList.add("rotate-180");
+      icon.setAttribute("data-dropdown-icon", "true");
+    } else {
+      menu.classList.add("hidden");
+      menu.setAttribute("data-dropdown-open", "false");
+      icon.classList.remove("rotate-180");
+      icon.setAttribute("data-dropdown-icon", "false");
+    }
+  });
+
+  document.addEventListener("click", (event) => {
+    if (!toggle.contains(event.target) && !menu.contains(event.target)) {
+      menu.classList.add("hidden");
+      menu.setAttribute("data-dropdown-open", "false");
+      icon.classList.remove("rotate-180");
+      icon.setAttribute("data-dropdown-icon", "false");
+    }
+  });
+}
 
   function renderPerformanceTrendCharts(trend) {
     renderSparklineChart({

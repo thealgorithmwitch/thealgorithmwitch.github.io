@@ -1038,7 +1038,7 @@
 
 <script>
   const APP_CONFIG = {
-    APPS_SCRIPT_URL: "https://script.google.com/macros/s/AKfycbyhxXgabfTRzmcARiKMIg5pwzFKl94hlbZ2lJ66tl5PjvtAxPZmYU3d4SsCLqsuj9Pm/exec",
+    APPS_SCRIPT_URL: "https://script.google.com/macros/s/AKfycbwEMH8QLWGVrIkxPitEIEqEMxU78ixtxbOkIoqT--oMDPQkO7YZmbtjF0pg2PIMLIRC/exec",
     AUTO_SYNC_PERFORMANCE_ON_LOAD: true,
     AUTO_SYNC_CLARITY_ON_LOAD: false
   };
@@ -1864,16 +1864,23 @@
 
   async function applyReportFilters() {
     const updated = document.getElementById("reports-last-updated");
-    if (updated) updated.textContent = "Updated: Just now";
-
+    if (updated) updated.textContent = "Updating...";
+  
     try {
+      const selectedDays = getPerformanceDaysFromUi();
+  
+      await syncPerformanceData(selectedDays, { silent: true });
+  
       await Promise.all([
         loadPerformanceFromSheet(),
         loadPerformanceTrendFromSheet()
       ]);
+  
+      if (updated) updated.textContent = "Updated: Just now";
       showToast("Filters Applied", "Reports updated with new criteria.", "ph-check-circle");
     } catch (error) {
       console.error(error);
+      if (updated) updated.textContent = "Update failed";
       showToast("Load Error", "Could not refresh report data.", "ph-warning", "text-amber-400");
     }
   }
@@ -1895,38 +1902,34 @@
     applyReportFilters();
   }
 
-  async function syncPerformanceData(days = 30, options = {}) {
-    const { silent = false } = options;
-    const updated = document.getElementById("reports-last-updated");
-    if (updated) updated.textContent = "Updating...";
+async function syncPerformanceData(days = 30, options = {}) {
+  const { silent = false } = options;
+  const updated = document.getElementById("reports-last-updated");
+  if (updated) updated.textContent = "Updating...";
 
-    try {
-      const response = await apiPost("syncPerformanceData", { days });
-      if (!response.ok) throw new Error(response.error || "Sync failed");
+  try {
+    const response = await apiPost("syncPerformanceData", { days });
+    if (!response.ok) throw new Error(response.error || "Sync failed");
 
-      await Promise.all([
-        loadRegistryFromSheet(document.getElementById("registry-search")?.value || ""),
-        loadPerformanceFromSheet(),
-        loadPerformanceTrendFromSheet()
-      ]);
+    await loadRegistryFromSheet(document.getElementById("registry-search")?.value || "");
 
-      if (updated) updated.textContent = "Updated: Just now";
-      updateLocalSyncTime();
+    if (updated) updated.textContent = "Updated: Just now";
+    updateLocalSyncTime();
 
-      if (!silent) {
-        showToast("Sync Complete", "Google Analytics data refreshed.", "ph-check-circle");
-      }
-
-      return response.sync || {};
-    } catch (error) {
-      console.error(error);
-      if (updated) updated.textContent = "Update failed";
-      if (!silent) {
-        showToast("Sync Error", "Could not sync Google Analytics data.", "ph-warning", "text-amber-400");
-      }
-      throw error;
+    if (!silent) {
+      showToast("Sync Complete", "Google Analytics data refreshed.", "ph-check-circle");
     }
+
+    return response.sync || {};
+  } catch (error) {
+    console.error(error);
+    if (updated) updated.textContent = "Update failed";
+    if (!silent) {
+      showToast("Sync Error", "Could not sync Google Analytics data.", "ph-warning", "text-amber-400");
+    }
+    throw error;
   }
+}
 
   async function refreshReportsData() {
     try {

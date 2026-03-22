@@ -1062,49 +1062,35 @@
     audit: "Strategy & Implementation"
   };
 
-  const FALLBACK_REGISTRY = [
-    { campaignName: "Q4_Solar_Savings", source: "linkedin", medium: "social", dateCreated: "Oct 26, 2024", fullUtmLink: "?utm_source=linkedin&utm_medium=social..." },
-    { campaignName: "Newsletter_Oct", source: "hs_email", medium: "email", dateCreated: "Oct 24, 2024", fullUtmLink: "?utm_source=hs_email&utm_medium=email..." },
-    { campaignName: "Search_Brand_T1", source: "google", medium: "cpc", dateCreated: "Oct 20, 2024", fullUtmLink: "?utm_source=google&utm_medium=cpc..." }
-  ];
-
-  const AUDIT_DATA = {
+  const AUDIT_FALLBACK = {
     recommendations: {
       "cross-domain": {
         title: "Fix GA4 Cross-Domain Tracking",
         finding: "Traffic moving between main site and donation portal is losing UTM parameters. This causes conversions to show as direct instead of attributed to campaigns.",
         steps: "GA4 Admin > Data Streams > Web > Configure tag settings > Configure your domains",
-        impact: "Currently around 15% of conversions are unattributed. Fixing this reveals true campaign ROI and improves budget allocation.",
-        category: "Tracking",
-        priority: "High"
+        impact: "Currently around 15% of conversions are unattributed. Fixing this reveals true campaign ROI and improves budget allocation."
       },
       "meta-utms": {
         title: "Standardize Meta Ad UTMs",
         finding: "Current Meta ads use hardcoded UTMs that differ from naming convention. Data is splitting in reports.",
         steps: "Implement dynamic parameters in Meta Ads Manager and align naming with the UTM registry.",
-        impact: "Will consolidate reporting and enable proper campaign-level analysis.",
-        category: "Campaigns",
-        priority: "Medium"
+        impact: "Will consolidate reporting and enable proper campaign-level analysis."
       },
       "mobile-hero": {
         title: "Shorten Mobile Hero Section",
         finding: "Mobile scroll depth is materially lower than desktop. Users are not seeing key content below the fold.",
         steps: "Reduce hero height on mobile and move the primary CTA above the fold.",
-        impact: "Expected lift in mobile engagement and conversion rate.",
-        category: "UX",
-        priority: "High"
+        impact: "Expected lift in mobile engagement and conversion rate."
       }
     }
   };
 
-  let currentRegistryItems = [...FALLBACK_REGISTRY];
+  let currentRegistryItems = [];
   let currentAuditItems = [];
   let currentResourceLinks = [];
   let currentClaritySummary = { rows: [] };
   let currentPerformanceSummary = {};
   let currentPerformanceTrend = [];
-  let isInitialPerformanceSyncAttempted = false;
-  let isInitialClaritySyncAttempted = false;
 
   document.addEventListener("DOMContentLoaded", async () => {
     applyConfig();
@@ -1116,15 +1102,13 @@
     bindUXFilters();
     bindAuditFilters();
 
-    const now = new Date();
-    const syncTime = document.getElementById("sync-time");
-    if (syncTime) {
-      syncTime.innerText = `Synced: Today ${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`;
-    }
-
+    updateLocalSyncTime();
     switchView(getInitialView(), false);
-    renderRegistry(currentRegistryItems);
-    renderHomeRecentUtmLinks(currentRegistryItems);
+
+    renderRegistry([]);
+    renderHomeRecentUtmLinks([]);
+    renderEmptyPerformanceState();
+    renderEmptyUxState();
 
     try {
       await loadSettingsFromSheet();
@@ -1135,12 +1119,20 @@
         loadResourcesFromSheet()
       ]);
 
+      populateReportFilterOptionsFromRegistry();
+      populateUxPageOptionsFromClarityRows([]);
+
       if (APP_CONFIG.AUTO_SYNC_PERFORMANCE_ON_LOAD) {
         try {
           await syncPerformanceData(getPerformanceDaysFromUi(), { silent: true });
         } catch (error) {
           console.error("Initial GA sync failed:", error);
         }
+      } else {
+        await Promise.all([
+          loadPerformanceFromSheet(),
+          loadPerformanceTrendFromSheet()
+        ]);
       }
 
       if (APP_CONFIG.AUTO_SYNC_CLARITY_ON_LOAD) {
@@ -1149,13 +1141,9 @@
         } catch (error) {
           console.error("Initial Clarity sync failed:", error);
         }
+      } else {
+        await loadClarityFromSheet();
       }
-
-      await Promise.all([
-        loadPerformanceFromSheet(),
-        loadPerformanceTrendFromSheet(),
-        loadClarityFromSheet()
-      ]);
     } catch (error) {
       console.error(error);
       showToast("Connection Error", "Could not load portal data.", "ph-warning", "text-amber-400");
@@ -1177,12 +1165,11 @@
     const data = await apiGet("getRegistry", { q: query });
     if (!data.ok) throw new Error(data.error || "Failed to load registry");
 
-    currentRegistryItems = Array.isArray(data.registry) && data.registry.length
-      ? data.registry
-      : [...FALLBACK_REGISTRY];
-
+    currentRegistryItems = Array.isArray(data.registry) ? data.registry : [];
     renderRegistry(currentRegistryItems);
     renderHomeRecentUtmLinks(currentRegistryItems);
+    populateReportFilterOptionsFromRegistry();
+    renderHomePerformanceSnapshot(currentPerformanceSummary);
   }
 
   async function loadAuditFromSheet(status = "all") {
@@ -1202,44 +1189,16 @@
   }
 
   async function loadPerformanceFromSheet() {
-    const params = {
-      source: document.getElementById("filter-source")?.value || "all",
-      medium: document.getElementById("filter-medium")?.value || "all",
-      campaign: document.getElementById("filter-campaign")?.value || "all",
-      landing_page: document.getElementById("filter-landing")?.value || "all"
-    };
-
+    const params = getCurrentReportFilterParams();
     const data = await apiGet("getPerformanceSummary", params);
     if (!data.ok) throw new Error(data.error || "Failed to load performance summary");
 
-    const summary = data.summary || {};
-    currentPerformanceSummary = summary;
-
-    const sessionsEl = document.getElementById("kpi-sessions");
-    const usersEl = document.getElementById("kpi-users");
-    const conversionsEl = document.getElementById("kpi-conversions");
-    const rateEl = document.getElementById("kpi-rate");
-    const durationEl = document.getElementById("kpi-duration");
-    const topSourceEl = document.getElementById("kpi-top-source");
-
-    if (sessionsEl) sessionsEl.textContent = formatNumber(summary.sessions || 0);
-    if (usersEl) usersEl.textContent = formatNumber(summary.users || 0);
-    if (conversionsEl) conversionsEl.textContent = formatNumber(summary.conversions || 0);
-    if (rateEl) rateEl.textContent = formatPercent(summary.conversionRate || 0);
-    if (durationEl) durationEl.textContent = formatDuration(summary.avgSessionDurationSeconds || 0);
-    if (topSourceEl) topSourceEl.textContent = capitalize(summary.topSource || "-");
-
-    renderHomePerformanceSnapshot(summary);
+    currentPerformanceSummary = data.summary || {};
+    renderPerformanceSummary(currentPerformanceSummary);
   }
 
   async function loadPerformanceTrendFromSheet() {
-    const params = {
-      source: document.getElementById("filter-source")?.value || "all",
-      medium: document.getElementById("filter-medium")?.value || "all",
-      campaign: document.getElementById("filter-campaign")?.value || "all",
-      landing_page: document.getElementById("filter-landing")?.value || "all"
-    };
-
+    const params = getCurrentReportFilterParams();
     const data = await apiGet("getPerformanceTrend", params);
     if (!data.ok) throw new Error(data.error || "Failed to load performance trend");
 
@@ -1259,6 +1218,16 @@
 
     currentClaritySummary = data.summary || { rows: [] };
     renderClaritySummary(currentClaritySummary);
+    populateUxPageOptionsFromClarityRows(currentClaritySummary.rows || []);
+  }
+
+  function getCurrentReportFilterParams() {
+    return {
+      source: document.getElementById("filter-source")?.value || "all",
+      medium: document.getElementById("filter-medium")?.value || "all",
+      campaign: document.getElementById("filter-campaign")?.value || "all",
+      landing_page: document.getElementById("filter-landing")?.value || "all"
+    };
   }
 
   function applyConfig() {
@@ -1273,6 +1242,14 @@
     }
   }
 
+  function updateLocalSyncTime() {
+    const now = new Date();
+    const syncTime = document.getElementById("sync-time");
+    if (syncTime) {
+      syncTime.textContent = `Synced: Today ${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`;
+    }
+  }
+
   function getInitialView() {
     const hash = window.location.hash.replace("#", "").trim().toLowerCase();
     return VALID_VIEWS.includes(hash) ? hash : "home";
@@ -1283,8 +1260,7 @@
       const trigger = event.target.closest("[data-view]");
       if (!trigger) return;
       event.preventDefault();
-      const viewId = trigger.getAttribute("data-view");
-      switchView(viewId);
+      switchView(trigger.getAttribute("data-view"));
     });
   }
 
@@ -1301,7 +1277,9 @@
         url === "PORTAL_CONFIG.lookerStudioUrl" ? PORTAL_CONFIG.lookerStudioUrl :
         url;
 
-      if (resolvedUrl) window.open(resolvedUrl, "_blank", "noopener,noreferrer");
+      if (resolvedUrl) {
+        window.open(resolvedUrl, "_blank", "noopener,noreferrer");
+      }
     });
   }
 
@@ -1340,8 +1318,7 @@
   });
 
   function bindUTMEvents() {
-    const fields = ["utm-url", "utm-source", "utm-medium", "utm-campaign", "utm-term", "utm-content"];
-    fields.forEach((id) => {
+    ["utm-url", "utm-source", "utm-medium", "utm-campaign", "utm-term", "utm-content"].forEach((id) => {
       const el = document.getElementById(id);
       if (!el) return;
       el.addEventListener("input", generateUTM);
@@ -1354,10 +1331,7 @@
 
     document.getElementById("copy-utm-button")?.addEventListener("click", copyUTM);
     document.getElementById("save-utm-button")?.addEventListener("click", saveUTM);
-
-    document.getElementById("registry-search")?.addEventListener("input", (event) => {
-      populateRegistry(event.target.value);
-    });
+    document.getElementById("registry-search")?.addEventListener("input", (event) => populateRegistry(event.target.value));
   }
 
   function generateUTM() {
@@ -1429,10 +1403,11 @@
       if (!response.ok) throw new Error(response.error || "Save failed");
 
       await loadRegistryFromSheet();
-      showToast("Saved Successfully", "Link added to master registry.", "ph-check-circle");
+      generateUTM();
+      showToast("Saved Successfully", "Link added to registry.", "ph-check-circle");
     } catch (error) {
       console.error(error);
-      showToast("Save Error", "Could not save to sheet.", "ph-warning", "text-amber-400");
+      showToast("Save Error", error.message || "Could not save to sheet.", "ph-warning", "text-amber-400");
     }
   }
 
@@ -1440,18 +1415,27 @@
     const tbody = document.getElementById("registry-tbody");
     if (!tbody) return;
 
-    tbody.innerHTML = (items || []).map((item) => `
+    if (!items.length) {
+      tbody.innerHTML = `
+        <tr>
+          <td colspan="4" class="text-sm text-gray-400">No tracking links found yet.</td>
+        </tr>
+      `;
+      return;
+    }
+
+    tbody.innerHTML = items.map((item) => `
       <tr>
         <td>
           <div class="font-medium text-white mb-0.5">${escapeHtml(item.campaignName || item.campaign || item.campaignId || "")}</div>
-          <div class="text-[10px] text-gray-500 font-mono truncate max-w-[240px]">${escapeHtml(item.fullUtmLink || item.destinationUrl || "Simulated URL data...")}</div>
+          <div class="text-[10px] text-gray-500 font-mono truncate max-w-[240px]">${escapeHtml(item.fullUtmLink || item.destinationUrl || "")}</div>
         </td>
         <td>
           <span class="badge ${getBadgeColor(item.source)}">${escapeHtml(item.source || "")}</span>
           <span class="text-gray-600 mx-1">/</span>
           <span class="text-xs text-gray-400">${escapeHtml(item.medium || "")}</span>
         </td>
-        <td><div class="text-xs text-gray-400">${escapeHtml(item.dateCreated || item.date || "")}</div></td>
+        <td><div class="text-xs text-gray-400">${escapeHtml(item.dateCreated || "")}</div></td>
         <td>
           <button
             type="button"
@@ -1480,6 +1464,16 @@
     if (!table) return;
 
     const rows = (items || []).slice(0, 3);
+
+    if (!rows.length) {
+      table.innerHTML = `
+        <tr>
+          <td colspan="3" class="text-sm text-gray-400">No recent UTM links yet.</td>
+        </tr>
+      `;
+      return;
+    }
+
     table.innerHTML = rows.map((item) => `
       <tr>
         <td>
@@ -1491,98 +1485,129 @@
           <span class="text-gray-600 mx-1">/</span>
           <span class="text-xs text-gray-400">${escapeHtml(item.medium || "")}</span>
         </td>
-        <td><div class="text-xs text-gray-400">${escapeHtml(item.dateCreated || item.date || "")}</div></td>
+        <td><div class="text-xs text-gray-400">${escapeHtml(item.dateCreated || "")}</div></td>
       </tr>
     `).join("");
   }
 
-  function renderHomePerformanceSnapshot(summary) {
-    const homeCards = document.querySelectorAll("#view-home .grid.grid-cols-1.md\\:grid-cols-2.xl\\:grid-cols-4.gap-5 .glass-card, #view-home .grid.grid-cols-1.md\\:grid-cols-2.xl\\:grid-cols-4.gap-5 button");
-    if (homeCards.length < 3) return;
+  function renderPerformanceSummary(summary) {
+    const sessionsEl = document.getElementById("kpi-sessions");
+    const usersEl = document.getElementById("kpi-users");
+    const conversionsEl = document.getElementById("kpi-conversions");
+    const rateEl = document.getElementById("kpi-rate");
+    const durationEl = document.getElementById("kpi-duration");
+    const topSourceEl = document.getElementById("kpi-top-source");
 
-    const sessionsCard = homeCards[0].querySelector(".text-2xl");
-    const rateCard = homeCards[1].querySelector(".text-2xl");
-    const activeCard = homeCards[2].querySelector(".text-2xl");
+    if (sessionsEl) sessionsEl.textContent = formatNumber(summary.sessions || 0);
+    if (usersEl) usersEl.textContent = formatNumber(summary.users || 0);
+    if (conversionsEl) conversionsEl.textContent = formatNumber(summary.conversions || 0);
+    if (rateEl) rateEl.textContent = formatPercent(summary.conversionRate || 0);
+    if (durationEl) durationEl.textContent = formatDuration(summary.avgSessionDurationSeconds || 0);
+    if (topSourceEl) topSourceEl.textContent = prettifySource(summary.topSource || "-");
+
+    const topSourceCardSub = topSourceEl?.parentElement?.querySelector(".text-xs.text-gray-400");
+    if (topSourceCardSub) {
+      topSourceCardSub.textContent = summary.sessions ? `${formatNumber(summary.sessions)} sessions in current filter` : "No data";
+    }
+
+    renderHomePerformanceSnapshot(summary);
+  }
+
+  function renderHomePerformanceSnapshot(summary) {
+    const cards = document.querySelectorAll("#view-home .grid.grid-cols-1.md\\:grid-cols-2.xl\\:grid-cols-4.gap-5 .glass-card, #view-home .grid.grid-cols-1.md\\:grid-cols-2.xl\\:grid-cols-4.gap-5 button");
+    if (cards.length < 4) return;
+
+    const sessionsCard = cards[0].querySelector(".text-2xl");
+    const rateCard = cards[1].querySelector(".text-2xl");
+    const activeCard = cards[2].querySelector(".text-2xl");
 
     if (sessionsCard) sessionsCard.textContent = formatNumber(summary.sessions || 0);
     if (rateCard) rateCard.textContent = formatPercent(summary.conversionRate || 0);
-    if (activeCard) activeCard.textContent = formatNumber(summary.recordCount || currentRegistryItems.length || 0);
+    if (activeCard) activeCard.textContent = formatNumber(currentRegistryItems.length || 0);
   }
 
-  function renderAuditTable(items) {
-    const tbody = document.querySelector("#audit-recommendations-table tbody");
-    if (!tbody) return;
-
-    tbody.innerHTML = items.length ? items.map((item) => `
-      <tr data-status="${escapeHtml(item.status || "")}" data-audit-id="${escapeHtml(item.noteId || "")}">
-        <td><div class="w-2 h-2 rounded-full ${priorityDotClass(item.priority)}"></div></td>
-        <td class="font-medium text-white text-sm">${escapeHtml(item.title || "")}</td>
-        <td><span class="badge ${categoryBadgeClass(item.category)}">${escapeHtml(item.category || "")}</span></td>
-        <td><span class="badge ${priorityBadgeClass(item.priority)}">${escapeHtml(item.priority || "")}</span></td>
-        <td><span class="text-xs text-gray-300">${escapeHtml(item.status || "")}</span></td>
-        <td class="text-xs text-gray-400">${escapeHtml(item.linkedLandingPage || item.linkedCampaignId || "")}</td>
-      </tr>
-    `).join("") : `
-      <tr>
-        <td colspan="6" class="text-sm text-gray-400">No audit notes found.</td>
-      </tr>
-    `;
-
-    tbody.querySelectorAll("tr[data-audit-id]").forEach((row) => {
-      row.addEventListener("click", () => {
-        const id = row.getAttribute("data-audit-id");
-        showAuditDetail(id);
-      });
+  function renderEmptyPerformanceState() {
+    renderPerformanceSummary({
+      sessions: 0,
+      users: 0,
+      conversions: 0,
+      conversionRate: 0,
+      avgSessionDurationSeconds: 0,
+      topSource: "-"
     });
-
-    if (items.length) {
-      showAuditDetail(items[0].noteId);
-    }
+    renderPerformanceTrendCharts([]);
   }
 
-  function renderResourceLinks(items) {
-    const resourceCard = Array.from(document.querySelectorAll("#view-audit .glass-card")).find((card) => {
-      const heading = card.querySelector("h3");
-      return heading && heading.textContent.trim().toLowerCase() === "resource links";
+  function renderPerformanceTrendCharts(trend) {
+    renderSparklineChart({
+      targetId: "chart-sessions-trend",
+      data: trend,
+      metricKey: "sessions",
+      gradientId: "areaGradient",
+      strokeColor: "#a855f7",
+      labelsColorClass: "text-gray-500"
     });
 
-    if (!resourceCard) return;
+    renderSparklineChart({
+      targetId: "chart-conversions-trend",
+      data: trend,
+      metricKey: "conversions",
+      gradientId: "convGradient",
+      strokeColor: "#00f0ff",
+      labelsColorClass: "text-gray-500"
+    });
+  }
 
-    const target = resourceCard.querySelector(".space-y-3");
-    if (!target) return;
-    if (!items.length) return;
+  function renderSparklineChart({ targetId, data, metricKey, gradientId, strokeColor, labelsColorClass }) {
+    const container = document.getElementById(targetId);
+    if (!container) return;
 
-    target.innerHTML = items.slice(0, 6).map((item) => {
-      const category = String(item.category || "").toLowerCase();
-      const iconClass =
-        category.includes("report") || category.includes("dashboard") ? "ph-chart-line-up" :
-        category.includes("ux") || category.includes("clarity") ? "ph-mouse-left-click" :
-        "ph-link";
-
-      const badgeClass =
-        category.includes("report") || category.includes("dashboard") ? "bg-purple-900/30 text-purple-400" :
-        category.includes("ux") || category.includes("clarity") ? "bg-cyan-900/30 text-cyan-400" :
-        "bg-blue-900/30 text-blue-400";
-
-      return `
-        <button
-          type="button"
-          data-open-url="${escapeHtml(item.url || "")}"
-          class="w-full flex items-center justify-between p-3 rounded bg-black/20 hover:bg-black/40 border border-white/5 hover:border-purple-500/30 transition-all group text-left"
-        >
-          <span class="flex items-center gap-3">
-            <div class="w-8 h-8 rounded ${badgeClass} flex items-center justify-center">
-              <i class="ph-duotone ${iconClass} text-lg"></i>
-            </div>
-            <div>
-              <div class="text-sm font-medium text-gray-200 group-hover:text-white">${escapeHtml(item.label || item.category || "Resource")}</div>
-              <div class="text-[10px] text-gray-500">${escapeHtml(item.description || "")}</div>
-            </div>
-          </span>
-          <i class="ph-bold ph-arrow-up-right text-gray-600 group-hover:text-purple-400"></i>
-        </button>
+    const points = Array.isArray(data) ? data.slice(-12) : [];
+    if (!points.length) {
+      container.innerHTML = `
+        <div class="h-full w-full flex items-center justify-center text-sm text-gray-500">
+          No data for current filters
+        </div>
       `;
-    }).join("");
+      return;
+    }
+
+    const values = points.map((item) => Number(item[metricKey] || 0));
+    const labels = points.map((item) => formatShortDateLabel(item.date));
+    const width = 400;
+    const minY = 10;
+    const maxY = 130;
+    const minVal = Math.min(...values, 0);
+    const maxVal = Math.max(...values, 1);
+    const range = maxVal - minVal || 1;
+
+    const coords = values.map((value, index) => {
+      const x = index * (width / Math.max(values.length - 1, 1));
+      const normalized = (value - minVal) / range;
+      const y = maxY - normalized * (maxY - minY);
+      return { x, y };
+    });
+
+    const linePath = coords.map((point, index) => `${index === 0 ? "M" : "L"}${point.x},${point.y}`).join(" ");
+    const areaPath = `${linePath} L${coords[coords.length - 1].x},150 L${coords[0].x},150 Z`;
+    const lastPoint = coords[coords.length - 1];
+
+    container.innerHTML = `
+      <svg class="w-full h-full" viewBox="0 0 400 150" preserveAspectRatio="none" aria-hidden="true">
+        <defs>
+          <linearGradient id="${gradientId}" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stop-color="${strokeColor}" stop-opacity="0.3"></stop>
+            <stop offset="100%" stop-color="${strokeColor}" stop-opacity="0"></stop>
+          </linearGradient>
+        </defs>
+        <path d="${areaPath}" fill="url(#${gradientId})"></path>
+        <path d="${linePath}" fill="none" stroke="${strokeColor}" stroke-width="2"></path>
+        <circle cx="${lastPoint.x}" cy="${lastPoint.y}" r="4" fill="${strokeColor}"></circle>
+      </svg>
+      <div class="absolute bottom-0 left-0 right-0 flex justify-between text-[9px] ${labelsColorClass} px-2">
+        ${buildTrendLabels(labels)}
+      </div>
+    `;
   }
 
   function renderClaritySummary(summary) {
@@ -1622,7 +1647,7 @@
       }
     }
 
-    const homeUxCard = Array.from(document.querySelectorAll("#view-home button[data-view='ux']")).find(Boolean);
+    const homeUxCard = document.querySelector("#view-home button[data-view='ux']");
     if (homeUxCard) {
       const score = getFrictionLabel_(rows);
       const scoreEl = homeUxCard.querySelector(".text-2xl");
@@ -1632,103 +1657,106 @@
     }
   }
 
-  function renderPerformanceTrendCharts(trend) {
-    renderSparklineChart({
-      targetId: "chart-sessions-trend",
-      title: "Sessions Over Time",
-      subtitle: "Daily trend",
-      data: trend,
-      metricKey: "sessions",
-      gradientId: "areaGradient",
-      strokeColor: "#a855f7",
-      labelsColorClass: "text-gray-500"
-    });
-
-    renderSparklineChart({
-      targetId: "chart-conversions-trend",
-      title: "Conversions Over Time",
-      subtitle: "Daily conversions",
-      data: trend,
-      metricKey: "conversions",
-      gradientId: "convGradient",
-      strokeColor: "#00f0ff",
-      labelsColorClass: "text-gray-500"
+  function renderEmptyUxState() {
+    renderClaritySummary({
+      rageClicks: 0,
+      deadClicks: 0,
+      avgScrollDepth: 0,
+      avgEngagementTimeSeconds: 0,
+      rows: []
     });
   }
 
-  function renderSparklineChart({ targetId, title, subtitle, data, metricKey, gradientId, strokeColor, labelsColorClass }) {
-    const container = document.getElementById(targetId);
-    if (!container) return;
+  function renderAuditTable(items) {
+    const tbody = document.querySelector("#audit-recommendations-table tbody");
+    if (!tbody) return;
 
-    const points = Array.isArray(data) ? data.slice(-12) : [];
-    if (!points.length) return;
+    if (!items.length) {
+      tbody.innerHTML = `
+        <tr>
+          <td colspan="6" class="text-sm text-gray-400">No audit notes found.</td>
+        </tr>
+      `;
+      showAuditDetail(null);
+      return;
+    }
 
-    const values = points.map((item) => Number(item[metricKey] || 0));
-    const labels = points.map((item) => formatShortDateLabel(item.date));
-    const width = 400;
-    const height = 150;
-    const paddingX = 0;
-    const minY = 10;
-    const maxY = 130;
-    const minVal = Math.min(...values, 0);
-    const maxVal = Math.max(...values, 1);
-    const range = maxVal - minVal || 1;
+    tbody.innerHTML = items.map((item) => `
+      <tr data-status="${escapeHtml(item.status || "")}" data-audit-id="${escapeHtml(item.noteId || "")}">
+        <td><div class="w-2 h-2 rounded-full ${priorityDotClass(item.priority)}"></div></td>
+        <td class="font-medium text-white text-sm">${escapeHtml(item.title || "")}</td>
+        <td><span class="badge ${categoryBadgeClass(item.category)}">${escapeHtml(item.category || "")}</span></td>
+        <td><span class="badge ${priorityBadgeClass(item.priority)}">${escapeHtml(item.priority || "")}</span></td>
+        <td><span class="text-xs text-gray-300">${escapeHtml(item.status || "")}</span></td>
+        <td class="text-xs text-gray-400">${escapeHtml(item.linkedLandingPage || item.linkedCampaignId || "")}</td>
+      </tr>
+    `).join("");
 
-    const coords = values.map((value, index) => {
-      const x = paddingX + (index * (width / Math.max(values.length - 1, 1)));
-      const normalized = (value - minVal) / range;
-      const y = maxY - normalized * (maxY - minY);
-      return { x, y, value };
+    tbody.querySelectorAll("tr[data-audit-id]").forEach((row) => {
+      row.addEventListener("click", () => showAuditDetail(row.getAttribute("data-audit-id")));
     });
 
-    const linePath = coords.map((point, index) => `${index === 0 ? "M" : "L"}${point.x},${point.y}`).join(" ");
-    const areaPath = `${linePath} L${coords[coords.length - 1].x},150 L${coords[0].x},150 Z`;
-    const lastPoint = coords[coords.length - 1];
-
-    container.innerHTML = `
-      <svg class="w-full h-full" viewBox="0 0 400 150" preserveAspectRatio="none" aria-hidden="true">
-        <defs>
-          <linearGradient id="${gradientId}" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stop-color="${strokeColor}" stop-opacity="0.3"></stop>
-            <stop offset="100%" stop-color="${strokeColor}" stop-opacity="0"></stop>
-          </linearGradient>
-        </defs>
-        <path d="${areaPath}" fill="url(#${gradientId})"></path>
-        <path d="${linePath}" fill="none" stroke="${strokeColor}" stroke-width="2"></path>
-        <circle cx="${lastPoint.x}" cy="${lastPoint.y}" r="4" fill="${strokeColor}"></circle>
-      </svg>
-      <div class="absolute bottom-0 left-0 right-0 flex justify-between text-[9px] ${labelsColorClass} px-2">
-        ${buildTrendLabels(labels)}
-      </div>
-    `;
+    showAuditDetail(items[0].noteId);
   }
 
-  function buildTrendLabels(labels) {
-    if (!labels.length) return "<span>-</span>";
-    if (labels.length <= 4) return labels.map((label) => `<span>${escapeHtml(label)}</span>`).join("");
+  function renderResourceLinks(items) {
+    const resourceCard = Array.from(document.querySelectorAll("#view-audit .glass-card")).find((card) => {
+      const heading = card.querySelector("h3");
+      return heading && heading.textContent.trim().toLowerCase() === "resource links";
+    });
 
-    const picks = [labels[0], labels[Math.floor(labels.length / 3)], labels[Math.floor((labels.length * 2) / 3)], labels[labels.length - 1]];
-    return picks.map((label) => `<span>${escapeHtml(label)}</span>`).join("");
-  }
+    if (!resourceCard) return;
 
-  function formatShortDateLabel(value) {
-    if (!value) return "-";
-    const date = new Date(value);
-    if (Number.isNaN(date.getTime())) return String(value);
-    return date.toLocaleDateString(undefined, { month: "short", day: "numeric" });
-  }
+    const target = resourceCard.querySelector(".space-y-3");
+    if (!target) return;
 
-  function getFrictionLabel_(rows) {
-    if (!rows || !rows.length) return "Low";
-    const avgRate = rows.reduce((sum, row) => sum + Number(row.rage_rate || 0), 0) / rows.length;
-    if (avgRate >= 0.05) return "High";
-    if (avgRate >= 0.02) return "Medium";
-    return "Low";
+    if (!items.length) return;
+
+    target.innerHTML = items.slice(0, 6).map((item) => {
+      const category = String(item.category || "").toLowerCase();
+      const iconClass =
+        category.includes("report") || category.includes("dashboard") ? "ph-chart-line-up" :
+        category.includes("ux") || category.includes("clarity") ? "ph-mouse-left-click" :
+        "ph-link";
+
+      const badgeClass =
+        category.includes("report") || category.includes("dashboard") ? "bg-purple-900/30 text-purple-400" :
+        category.includes("ux") || category.includes("clarity") ? "bg-cyan-900/30 text-cyan-400" :
+        "bg-blue-900/30 text-blue-400";
+
+      return `
+        <button
+          type="button"
+          data-open-url="${escapeHtml(item.url || "")}"
+          class="w-full flex items-center justify-between p-3 rounded bg-black/20 hover:bg-black/40 border border-white/5 hover:border-purple-500/30 transition-all group text-left"
+        >
+          <span class="flex items-center gap-3">
+            <div class="w-8 h-8 rounded ${badgeClass} flex items-center justify-center">
+              <i class="ph-duotone ${iconClass} text-lg"></i>
+            </div>
+            <div>
+              <div class="text-sm font-medium text-gray-200 group-hover:text-white">${escapeHtml(item.label || item.category || "Resource")}</div>
+              <div class="text-[10px] text-gray-500">${escapeHtml(item.description || "")}</div>
+            </div>
+          </span>
+          <i class="ph-bold ph-arrow-up-right text-gray-600 group-hover:text-purple-400"></i>
+        </button>
+      `;
+    }).join("");
   }
 
   function showAuditDetail(id) {
     const panel = document.getElementById("audit-detail-panel");
     if (!panel) return;
+
+    if (!id) {
+      panel.innerHTML = `
+        <div class="p-4 bg-black/20 rounded border border-white/5">
+          <p class="text-sm text-gray-400">Select a recommendation to view details.</p>
+        </div>
+      `;
+      return;
+    }
 
     const liveItem = currentAuditItems.find((note) => String(note.noteId) === String(id));
     if (liveItem) {
@@ -1742,7 +1770,7 @@
       return;
     }
 
-    const detail = AUDIT_DATA.recommendations[id];
+    const detail = AUDIT_FALLBACK.recommendations[id];
     if (!detail) return;
 
     panel.innerHTML = `
@@ -1759,106 +1787,45 @@
   }
 
   function populateRegistry(query = "") {
-    const q = String(query || "").trim();
-    loadRegistryFromSheet(q).catch((error) => {
+    loadRegistryFromSheet(String(query || "").trim()).catch((error) => {
       console.error(error);
       showToast("Load Error", "Could not refresh registry.", "ph-warning", "text-amber-400");
     });
   }
 
-  function formatNumber(value) {
-    return Number(value || 0).toLocaleString();
+  function populateReportFilterOptionsFromRegistry() {
+    populateSelectFromValues("filter-campaign", currentRegistryItems.map((item) => item.campaignName).filter(Boolean), "All Campaigns");
+    populateSelectFromValues("filter-source", currentRegistryItems.map((item) => item.source).filter(Boolean), "All Sources");
+    populateSelectFromValues("filter-medium", currentRegistryItems.map((item) => item.medium).filter(Boolean), "All");
+    populateSelectFromValues("filter-landing", currentRegistryItems.map((item) => item.landingPage).filter(Boolean), "All Pages");
   }
 
-  function formatPercent(value) {
-    return `${(Number(value || 0) * 100).toFixed(1)}%`;
+  function populateUxPageOptionsFromClarityRows(rows) {
+    const values = (rows || []).map((row) => row.page).filter(Boolean);
+    populateSelectFromValues("ux-filter-page", values, "All Pages");
   }
 
-  function formatDuration(seconds) {
-    const total = Math.round(Number(seconds || 0));
-    const mins = Math.floor(total / 60);
-    const secs = total % 60;
-    return `${mins}:${String(secs).padStart(2, "0")}`;
-  }
+  function populateSelectFromValues(selectId, values, allLabel) {
+    const select = document.getElementById(selectId);
+    if (!select) return;
 
-  function capitalize(value) {
-    const str = String(value || "");
-    if (!str) return "";
-    return str.charAt(0).toUpperCase() + str.slice(1);
-  }
+    const currentValue = select.value || "all";
+    const uniqueValues = Array.from(new Set(values.map((v) => String(v).trim()).filter(Boolean))).sort((a, b) => a.localeCompare(b));
 
-  function escapeHtml(value) {
-    return String(value || "")
-      .replaceAll("&", "&amp;")
-      .replaceAll("<", "&lt;")
-      .replaceAll(">", "&gt;")
-      .replaceAll('"', "&quot;")
-      .replaceAll("'", "&#39;");
-  }
+    select.innerHTML = "";
+    const defaultOpt = document.createElement("option");
+    defaultOpt.value = "all";
+    defaultOpt.textContent = allLabel;
+    select.appendChild(defaultOpt);
 
-  function decodeHtmlEntities(value) {
-    const textarea = document.createElement("textarea");
-    textarea.innerHTML = String(value || "");
-    return textarea.value;
-  }
-
-  function priorityDotClass(priority) {
-    const p = String(priority || "").toLowerCase();
-    if (p === "high") return "bg-rose-500";
-    if (p === "medium") return "bg-amber-500";
-    return "bg-emerald-500";
-  }
-
-  function priorityBadgeClass(priority) {
-    const p = String(priority || "").toLowerCase();
-    if (p === "high") return "badge-rose";
-    if (p === "medium") return "badge-gold";
-    return "badge-emerald";
-  }
-
-  function categoryBadgeClass(category) {
-    const c = String(category || "").toLowerCase();
-    if (c === "tracking") return "badge-cyan";
-    if (c === "campaign" || c === "campaigns") return "badge-purple";
-    if (c === "ux") return "badge-rose";
-    return "badge-gold";
-  }
-
-  function getBadgeColor(source) {
-    return {
-      google: "badge-emerald",
-      linkedin: "badge-purple",
-      hs_email: "badge-cyan",
-      facebook: "badge-rose"
-    }[source] || "badge-gold";
-  }
-
-  async function apiGet(action, params = {}) {
-    const url = new URL(APP_CONFIG.APPS_SCRIPT_URL);
-    url.searchParams.set("action", action);
-
-    Object.entries(params).forEach(([key, value]) => {
-      if (value !== undefined && value !== null && value !== "") {
-        url.searchParams.set(key, value);
-      }
+    uniqueValues.forEach((value) => {
+      const opt = document.createElement("option");
+      opt.value = value;
+      opt.textContent = value;
+      select.appendChild(opt);
     });
 
-    const response = await fetch(url.toString(), { method: "GET" });
-    if (!response.ok) throw new Error("Request failed");
-    return response.json();
-  }
-
-  async function apiPost(action, payload = {}) {
-    const response = await fetch(APP_CONFIG.APPS_SCRIPT_URL, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify({ action, payload })
-    });
-
-    if (!response.ok) throw new Error("Request failed");
-    return response.json();
+    select.value = uniqueValues.includes(currentValue) || currentValue === "all" ? currentValue : "all";
   }
 
   function bindReportFilters() {
@@ -1923,17 +1890,19 @@
       const response = await apiPost("syncPerformanceData", { days });
       if (!response.ok) throw new Error(response.error || "Sync failed");
 
-      isInitialPerformanceSyncAttempted = true;
-
       await Promise.all([
+        loadRegistryFromSheet(document.getElementById("registry-search")?.value || ""),
         loadPerformanceFromSheet(),
         loadPerformanceTrendFromSheet()
       ]);
 
       if (updated) updated.textContent = "Updated: Just now";
+      updateLocalSyncTime();
+
       if (!silent) {
         showToast("Sync Complete", "Google Analytics data refreshed.", "ph-check-circle");
       }
+
       return response.sync || {};
     } catch (error) {
       console.error(error);
@@ -1961,8 +1930,17 @@
 
     document.getElementById("sync-clarity-button")?.addEventListener("click", () => syncClarityData());
     document.getElementById("highlight-friction-page")?.addEventListener("click", () => {
+      const targetPage = document.getElementById("ux-kpi-high")?.textContent?.trim();
       const pageSelect = document.getElementById("ux-filter-page");
-      if (pageSelect) pageSelect.value = "/solar-savings";
+      if (pageSelect && targetPage && targetPage !== "-") {
+        if (![...pageSelect.options].some((opt) => opt.value === targetPage)) {
+          const opt = document.createElement("option");
+          opt.value = targetPage;
+          opt.textContent = targetPage;
+          pageSelect.appendChild(opt);
+        }
+        pageSelect.value = targetPage;
+      }
       applyUXFilters();
     });
   }
@@ -2000,13 +1978,14 @@
 
       if (!response.ok) throw new Error(response.error || "Sync failed");
 
-      isInitialClaritySyncAttempted = true;
-
       await loadClarityFromSheet();
       if (updated) updated.textContent = "Updated: Just now";
+      updateLocalSyncTime();
+
       if (!silent) {
         showToast("Sync Complete", "Clarity data refreshed.", "ph-check-circle");
       }
+
       return response.sync || {};
     } catch (error) {
       console.error(error);
@@ -2041,6 +2020,129 @@
       console.error(error);
       showToast("Load Error", "Could not refresh audit notes.", "ph-warning", "text-amber-400");
     }
+  }
+
+  async function apiGet(action, params = {}) {
+    const url = new URL(APP_CONFIG.APPS_SCRIPT_URL);
+    url.searchParams.set("action", action);
+
+    Object.entries(params).forEach(([key, value]) => {
+      if (value !== undefined && value !== null && value !== "") {
+        url.searchParams.set(key, value);
+      }
+    });
+
+    const response = await fetch(url.toString(), { method: "GET" });
+    if (!response.ok) throw new Error(`GET ${action} failed`);
+    return response.json();
+  }
+
+  async function apiPost(action, payload = {}) {
+    const response = await fetch(APP_CONFIG.APPS_SCRIPT_URL, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ action, payload })
+    });
+
+    if (!response.ok) throw new Error(`POST ${action} failed`);
+    return response.json();
+  }
+
+  function buildTrendLabels(labels) {
+    if (!labels.length) return "<span>-</span>";
+    if (labels.length <= 4) return labels.map((label) => `<span>${escapeHtml(label)}</span>`).join("");
+
+    const picks = [
+      labels[0],
+      labels[Math.floor(labels.length / 3)],
+      labels[Math.floor((labels.length * 2) / 3)],
+      labels[labels.length - 1]
+    ];
+
+    return picks.map((label) => `<span>${escapeHtml(label)}</span>`).join("");
+  }
+
+  function formatShortDateLabel(value) {
+    if (!value) return "-";
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) return String(value);
+    return date.toLocaleDateString(undefined, { month: "short", day: "numeric" });
+  }
+
+  function getFrictionLabel_(rows) {
+    if (!rows || !rows.length) return "Low";
+    const avgRate = rows.reduce((sum, row) => sum + Number(row.rage_rate || 0), 0) / rows.length;
+    if (avgRate >= 0.05) return "High";
+    if (avgRate >= 0.02) return "Medium";
+    return "Low";
+  }
+
+  function prettifySource(value) {
+    const str = String(value || "");
+    if (!str) return "-";
+    if (str === "hs_email") return "HS Email";
+    return str.replaceAll("_", " ").replace(/\b\w/g, (c) => c.toUpperCase());
+  }
+
+  function formatNumber(value) {
+    return Number(value || 0).toLocaleString();
+  }
+
+  function formatPercent(value) {
+    return `${(Number(value || 0) * 100).toFixed(1)}%`;
+  }
+
+  function formatDuration(seconds) {
+    const total = Math.round(Number(seconds || 0));
+    const mins = Math.floor(total / 60);
+    const secs = total % 60;
+    return `${mins}:${String(secs).padStart(2, "0")}`;
+  }
+
+  function escapeHtml(value) {
+    return String(value || "")
+      .replaceAll("&", "&amp;")
+      .replaceAll("<", "&lt;")
+      .replaceAll(">", "&gt;")
+      .replaceAll('"', "&quot;")
+      .replaceAll("'", "&#39;");
+  }
+
+  function decodeHtmlEntities(value) {
+    const textarea = document.createElement("textarea");
+    textarea.innerHTML = String(value || "");
+    return textarea.value;
+  }
+
+  function priorityDotClass(priority) {
+    const p = String(priority || "").toLowerCase();
+    if (p === "high") return "bg-rose-500";
+    if (p === "medium") return "bg-amber-500";
+    return "bg-emerald-500";
+  }
+
+  function priorityBadgeClass(priority) {
+    const p = String(priority || "").toLowerCase();
+    if (p === "high") return "badge-rose";
+    if (p === "medium") return "badge-gold";
+    return "badge-emerald";
+  }
+
+  function categoryBadgeClass(category) {
+    const c = String(category || "").toLowerCase();
+    if (c === "tracking") return "badge-cyan";
+    if (c === "campaign" || c === "campaigns") return "badge-purple";
+    if (c === "ux") return "badge-rose";
+    return "badge-gold";
+  }
+
+  function getBadgeColor(source) {
+    return {
+      google: "badge-emerald",
+      linkedin: "badge-purple",
+      hs_email: "badge-cyan",
+      facebook: "badge-rose"
+    }[String(source || "").toLowerCase()] || "badge-gold";
   }
 
   function showToast(title, message, iconClass, colorClass = "text-emerald-400") {

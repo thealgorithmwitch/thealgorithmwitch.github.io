@@ -1236,12 +1236,10 @@ document.addEventListener("DOMContentLoaded", async () => {
   async function loadRegistryFromSheet(query = "") {
     const data = await apiGet("getRegistry", { q: query });
     if (!data.ok) throw new Error(data.error || "Failed to load registry");
-
+  
     currentRegistryItems = Array.isArray(data.registry) ? data.registry : [];
-    renderRegistry(currentRegistryItems);
-    renderHomeRecentUtmLinks(currentRegistryItems);
-    populateReportFilterOptionsFromRegistry();
-    renderHomePerformanceSnapshot(currentPerformanceSummary);
+    populateUtmFilterOptions(currentRegistryItems);
+    applyUtmRegistryFilters();
   }
 
   async function loadAuditFromSheet(status = "all") {
@@ -1323,6 +1321,58 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
   }
 
+  function applyUtmRegistryFilters() {
+  const campaignFilter = document.getElementById("utm-filter-campaign")?.value || "all";
+  const sourceFilter = document.getElementById("utm-filter-source")?.value || "all";
+  const mediumFilter = document.getElementById("utm-filter-medium")?.value || "all";
+  const statusFilter = document.getElementById("utm-filter-status")?.value || "all";
+  const searchValue = (document.getElementById("utm-search")?.value || "").trim().toLowerCase();
+
+  const filtered = currentRegistryItems.filter((item) => {
+    const campaignName = String(item.campaignName || "").trim();
+    const source = String(item.source || "").trim().toLowerCase();
+    const medium = String(item.medium || "").trim().toLowerCase();
+    const status = String(item.status || "").trim().toLowerCase();
+
+    const hasCleanNaming = /^Q\d+_[A-Za-z0-9]+(?:_[A-Za-z0-9]+)*$/.test(campaignName);
+
+    const matchesCampaign =
+      campaignFilter === "all" || campaignName === campaignFilter;
+
+    const matchesSource =
+      sourceFilter === "all" || source === sourceFilter;
+
+    const matchesMedium =
+      mediumFilter === "all" || medium === mediumFilter;
+
+    const matchesStatus =
+      statusFilter === "all" ||
+      (statusFilter === "flagged" && !hasCleanNaming) ||
+      (statusFilter === "clean" && hasCleanNaming);
+
+    const haystack = [
+      item.campaignName,
+      item.source,
+      item.medium,
+      item.channel,
+      item.term,
+      item.content,
+      item.landingPage,
+      item.destinationUrl,
+      item.fullUtmLink,
+      item.notes
+    ]
+      .join(" ")
+      .toLowerCase();
+
+    const matchesSearch = !searchValue || haystack.includes(searchValue);
+
+    return matchesCampaign && matchesSource && matchesMedium && matchesStatus && matchesSearch;
+  });
+
+  renderRegistry(filtered);
+}
+
   function getInitialView() {
     const hash = window.location.hash.replace("#", "").trim().toLowerCase();
     return VALID_VIEWS.includes(hash) ? hash : "home";
@@ -1336,6 +1386,52 @@ document.addEventListener("DOMContentLoaded", async () => {
       switchView(trigger.getAttribute("data-view"));
     });
   }
+
+  function resetUtmRegistryFilters() {
+  const defaults = {
+    "utm-filter-campaign": "all",
+    "utm-filter-source": "all",
+    "utm-filter-medium": "all",
+    "utm-filter-status": "all",
+    "utm-search": ""
+  };
+
+  Object.entries(defaults).forEach(([id, value]) => {
+    const el = document.getElementById(id);
+    if (el) el.value = value;
+  });
+
+  applyUtmRegistryFilters();
+}
+
+function populateUtmFilterOptions(items) {
+  populateSelectFromValues(
+    "utm-filter-campaign",
+    items.map((item) => item.campaignName).filter(Boolean),
+    "All Campaigns"
+  );
+
+  populateSelectFromValues(
+    "utm-filter-source",
+    items.map((item) => item.source).filter(Boolean),
+    "All Sources"
+  );
+
+  populateSelectFromValues(
+    "utm-filter-medium",
+    items.map((item) => item.medium).filter(Boolean),
+    "All Mediums"
+  );
+}
+
+  function bindUtmRegistryFilters() {
+  ["utm-filter-campaign", "utm-filter-source", "utm-filter-medium", "utm-filter-status"].forEach((id) => {
+    const el = document.getElementById(id);
+    if (el) el.addEventListener("change", applyUtmRegistryFilters);
+  });
+
+  document.getElementById("utm-search")?.addEventListener("input", applyUtmRegistryFilters);
+}
 
   function bindExternalButtons() {
     document.addEventListener("click", (event) => {

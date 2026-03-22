@@ -1972,8 +1972,7 @@ async function saveNoteFromModal() {
   const savedId = String(res.note?.id ?? data.id);
 
   const idx = workspaceData.notes.findIndex((n, index) => {
-    const candidateId = String(n.id ?? `note-${index}`);
-    return candidateId === savedId;
+    return getStableNoteId(n, index) === savedId;
   });
 
   if (idx === -1) {
@@ -2053,14 +2052,6 @@ async function deleteNoteFromModal() {
     workspaceData.assets = workspaceData.assets.filter(a => a.id !== assetId);
     renderAssets();
   };
-
-  workspaceData.notes = workspaceData.notes.filter((n, index) => {
-    const candidateId = String(n.id ?? `note-${index}`);
-    return candidateId !== String(noteId);
-  });
-
-  renderNotes();
-};
   
   function bindWorkspaceSwitcher() {
     const toggle = document.getElementById('workspace-switcher-toggle');

@@ -1323,7 +1323,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
   }
 
-  function applyUtmRegistryFilters() {
+function applyUtmRegistryFilters() {
   const campaignFilter = document.getElementById("utm-filter-campaign")?.value || "all";
   const sourceFilter = document.getElementById("utm-filter-source")?.value || "all";
   const mediumFilter = document.getElementById("utm-filter-medium")?.value || "all";
@@ -1331,12 +1331,16 @@ document.addEventListener("DOMContentLoaded", async () => {
   const searchValue = (document.getElementById("utm-search")?.value || "").trim().toLowerCase();
 
   const filtered = currentRegistryItems.filter((item) => {
-    const campaignName = String(item.campaignName || "").trim();
+    const rawCampaignName = String(item.campaignName || "");
+    const campaignName = rawCampaignName.trim();
+    const normalizedCampaignName = campaignName.replace(/\s+/g, "_");
+
     const source = String(item.source || "").trim().toLowerCase();
     const medium = String(item.medium || "").trim().toLowerCase();
-    const status = String(item.status || "").trim().toLowerCase();
+    const rowStatus = String(item.status || "").trim().toLowerCase();
 
-    const hasCleanNaming = /^Q\d+_[A-Za-z0-9]+(?:_[A-Za-z0-9]+)*$/.test(campaignName);
+    const hasCleanNaming = /^[A-Za-z0-9]+(?:_[A-Za-z0-9]+)+$/.test(normalizedCampaignName);
+    const derivedStatus = rowStatus || (hasCleanNaming ? "clean" : "needs review");
 
     const matchesCampaign =
       campaignFilter === "all" || campaignName === campaignFilter;
@@ -1349,8 +1353,8 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     const matchesStatus =
       statusFilter === "all" ||
-      (statusFilter === "flagged" && !hasCleanNaming) ||
-      (statusFilter === "clean" && hasCleanNaming);
+      (statusFilter === "flagged" && derivedStatus === "needs review") ||
+      (statusFilter === "clean" && derivedStatus === "clean");
 
     const haystack = [
       item.campaignName,
@@ -1363,9 +1367,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       item.destinationUrl,
       item.fullUtmLink,
       item.notes
-    ]
-      .join(" ")
-      .toLowerCase();
+    ].join(" ").toLowerCase();
 
     const matchesSearch = !searchValue || haystack.includes(searchValue);
 

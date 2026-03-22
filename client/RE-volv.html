@@ -1343,19 +1343,23 @@ function renderTasks() {
     `).join('');
   }
 
-  function renderNotes() {
-    const container = document.getElementById('notes-container');
+function renderNotes() {
+  const container = document.getElementById('notes-container');
+  if (!container) return;
 
-    if (!workspaceData.notes.length) {
-      container.innerHTML = `
-        <div class="glass-card rounded-xl p-6 text-gray-400 text-sm">
-          No notes yet.
-        </div>
-      `;
-      return;
-    }
+  if (!workspaceData.notes.length) {
+    container.innerHTML = `
+      <div class="glass-card rounded-xl p-6 text-gray-400 text-sm">
+        No notes yet.
+      </div>
+    `;
+    return;
+  }
 
-    container.innerHTML = workspaceData.notes.map(note => `
+  container.innerHTML = workspaceData.notes.map((note, index) => {
+    const safeId = escapeAttribute(String(note.id ?? `note-${index}`));
+
+    return `
       <div class="note-entry-card">
         <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 mb-4">
           <div class="flex items-center gap-3 min-w-0">
@@ -1372,14 +1376,14 @@ function renderTasks() {
           <div class="flex items-center gap-2 shrink-0">
             <button
               type="button"
-              onclick="openNoteEditor(${Number(note.id)}); event.stopPropagation();"
+              onclick="openNoteEditorById('${safeId}'); event.stopPropagation();"
               class="p-2 rounded-lg bg-white/5 border border-white/10 text-gray-300 hover:text-white"
             >
               <i class="ph-bold ph-pencil-simple"></i>
             </button>
             <button
               type="button"
-              onclick="deleteNote(${Number(note.id)}); event.stopPropagation();"
+              onclick="deleteNoteById('${safeId}'); event.stopPropagation();"
               class="p-2 rounded-lg bg-rose-500/10 border border-rose-500/20 text-rose-300 hover:text-white"
             >
               <i class="ph-bold ph-trash"></i>
@@ -1389,8 +1393,9 @@ function renderTasks() {
 
         <div class="note-text-block text-sm text-gray-300">${escapeHtml(note.text || '')}</div>
       </div>
-    `).join('');
-  }
+    `;
+  }).join('');
+}
 
   function renderAssets() {
     const container = document.getElementById('assets-grid');
@@ -1866,65 +1871,88 @@ function renderTasks() {
     renderNotes();
   }
 
-  function openNoteEditor(noteId) {
-    const note = workspaceData.notes.find(n => Number(n.id) === Number(noteId));
-    if (!note) return;
+function openNoteEditorById(noteId) {
+  const note = workspaceData.notes.find((n, index) => {
+    const candidateId = String(n.id ?? `note-${index}`);
+    return candidateId === String(noteId);
+  });
 
-    document.getElementById('note-edit-id').value = Number(note.id);
-    document.getElementById('note-edit-date').value = note.date || '';
-    document.getElementById('note-edit-author').value = note.author || '';
-    document.getElementById('note-edit-text').value = note.text || '';
-
-    openModal(noteModal);
+  if (!note) {
+    console.error('openNoteEditorById: note not found for id', noteId, workspaceData.notes);
+    alert('Could not open note for editing.');
+    return;
   }
 
-  async function saveNoteFromModal() {
-    const data = {
-      id: document.getElementById('note-edit-id').value ? Number(document.getElementById('note-edit-id').value) : '',
-      date: document.getElementById('note-edit-date').value.trim(),
-      author: document.getElementById('note-edit-author').value.trim() || 'Cassandre',
-      text: document.getElementById('note-edit-text').value.trim()
+  document.getElementById('note-edit-id').value = String(note.id ?? noteId);
+  document.getElementById('note-edit-date').value = note.date || '';
+  document.getElementById('note-edit-author').value = note.author || '';
+  document.getElementById('note-edit-text').value = note.text || '';
+
+  openModal(noteModal);
+}
+
+async function saveNoteFromModal() {
+  const rawId = document.getElementById('note-edit-id').value.trim();
+
+  const data = {
+    id: rawId || '',
+    date: document.getElementById('note-edit-date').value.trim(),
+    author: document.getElementById('note-edit-author').value.trim() || 'Cassandre',
+    text: document.getElementById('note-edit-text').value.trim()
+  };
+
+  if (!data.text) {
+    alert('Note text is required.');
+    return;
+  }
+
+  const res = await apiPost({
+    action: 'saveNote',
+    clientSlug: CLIENT_SLUG,
+    note: data
+  });
+
+  const savedId = String(res.note?.id ?? data.id);
+
+  const idx = workspaceData.notes.findIndex((n, index) => {
+    const candidateId = String(n.id ?? `note-${index}`);
+    return candidateId === savedId;
+  });
+
+  if (idx === -1) {
+    workspaceData.notes.unshift(res.note);
+  } else {
+    workspaceData.notes[idx] = {
+      ...workspaceData.notes[idx],
+      ...res.note
     };
-
-    if (!data.text) {
-      alert('Note text is required.');
-      return;
-    }
-
-    const res = await apiPost({
-      action: 'saveNote',
-      clientSlug: CLIENT_SLUG,
-      note: data
-    });
-
-    const idx = workspaceData.notes.findIndex(n => Number(n.id) === Number(res.note.id));
-
-    if (idx === -1) {
-      workspaceData.notes.unshift(res.note);
-    } else {
-      workspaceData.notes[idx] = {
-        ...workspaceData.notes[idx],
-        ...res.note
-      };
-    }
-
-    renderNotes();
-    closeModal(noteModal);
   }
 
-  async function deleteNoteFromModal() {
-    const idValue = Number(document.getElementById('note-edit-id').value);
-
-    await apiPost({
-      action: 'deleteNote',
-      clientSlug: CLIENT_SLUG,
-      id: idValue
-    });
-
-    workspaceData.notes = workspaceData.notes.filter(n => n.id !== idValue);
-    renderNotes();
+  renderNotes();
+  closeModal(noteModal);
+}
+  
+async function deleteNoteFromModal() {
+  const idValue = document.getElementById('note-edit-id').value.trim();
+  if (!idValue) {
     closeModal(noteModal);
+    return;
   }
+
+  await apiPost({
+    action: 'deleteNote',
+    clientSlug: CLIENT_SLUG,
+    id: idValue
+  });
+
+  workspaceData.notes = workspaceData.notes.filter((n, index) => {
+    const candidateId = String(n.id ?? `note-${index}`);
+    return candidateId !== String(idValue);
+  });
+
+  renderNotes();
+  closeModal(noteModal);
+}
 
   function openOverviewEditor() {
     document.getElementById('overview-edit-project-name').value = workspaceData.project.name || '';
@@ -1970,12 +1998,22 @@ function renderTasks() {
     renderAssets();
   };
 
-  window.deleteNote = async function(noteId) {
-    if (!confirm('Delete this note?')) return;
-    await apiPost({ action: 'deleteNote', clientSlug: CLIENT_SLUG, id: noteId });
-    workspaceData.notes = workspaceData.notes.filter(n => n.id !== noteId);
-    renderNotes();
-  };
+window.deleteNoteById = async function(noteId) {
+  if (!confirm('Delete this note?')) return;
+
+  await apiPost({
+    action: 'deleteNote',
+    clientSlug: CLIENT_SLUG,
+    id: noteId
+  });
+
+  workspaceData.notes = workspaceData.notes.filter((n, index) => {
+    const candidateId = String(n.id ?? `note-${index}`);
+    return candidateId !== String(noteId);
+  });
+
+  renderNotes();
+};
   
   function bindWorkspaceSwitcher() {
     const toggle = document.getElementById('workspace-switcher-toggle');

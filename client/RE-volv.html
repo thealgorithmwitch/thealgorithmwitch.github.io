@@ -352,8 +352,8 @@
         <div id="side-goal" class="text-white text-sm">Trusted data foundation</div>
       </div>
 
-      <button id="reset-workspace-btn" class="w-full mt-2 px-4 py-3 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-300 hover:bg-rose-500/15 text-xs uppercase tracking-widest">
-        Reset Local Data
+      <button id="reset-workspace-btn" class="w-full mt-2 px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-gray-300 hover:bg-white/10 text-xs uppercase tracking-widest">
+        Refresh Workspace
       </button>
     </div>
   </div>
@@ -776,12 +776,31 @@
   let taskFilterStatus = 'all';
   let taskSearchQuery = '';
 
-  const WORKSPACE_CONFIG = {
-  activeWorkspace: "revolv",
-  label: "Re-volv Solar",
-  icon: "ph-sun-horizon",
-  themeColor: "#ffd700"
-};
+  const WORKSPACE_CONFIGS = {
+    nexus: {
+      key: "nexus",
+      label: "Nexus",
+      icon: "ph-intersect-three",
+      themeColor: "#67e8f9",
+      href: "/client.html"
+    },
+    revolv: {
+      key: "revolv",
+      label: "RE-volv Solar",
+      icon: "ph-sun-horizon",
+      themeColor: "#ffd700",
+      href: "/client/RE-volv/dashboard"
+    },
+    incantations: {
+      key: "incantations",
+      label: "Incantations",
+      icon: "ph-sparkle",
+      themeColor: "#f59e0b",
+      href: "/incantations"
+    }
+  };
+
+  const WORKSPACE_CONFIG = WORKSPACE_CONFIGS.revolv;
 
   const taskModal = document.getElementById('task-modal');
   const assetModal = document.getElementById('asset-modal');
@@ -1025,6 +1044,37 @@
         ` : ''}
       `;
     }).join('');
+  }
+
+    function applyWorkspaceSwitcherState() {
+    const toggleLabel = document.getElementById('workspace-switcher-label');
+    const toggleIcon = document.getElementById('workspace-switcher-icon');
+    const toggleIconWrap = document.getElementById('workspace-switcher-icon-wrap');
+
+    if (toggleLabel) toggleLabel.textContent = WORKSPACE_CONFIG.label;
+
+    if (toggleIcon) {
+      toggleIcon.className = `ph-fill ${WORKSPACE_CONFIG.icon} text-lg`;
+      toggleIcon.style.color = WORKSPACE_CONFIG.themeColor;
+    }
+
+    if (toggleIconWrap) {
+      toggleIconWrap.style.borderColor = `${WORKSPACE_CONFIG.themeColor}33`;
+    }
+
+    document.documentElement.style.setProperty('--workspace-accent', WORKSPACE_CONFIG.themeColor);
+
+    document.querySelectorAll('.workspace-option').forEach(option => {
+      option.classList.remove('workspace-option-active');
+
+      const check = option.querySelector('.workspace-option-check');
+      if (check) check.classList.add('hidden');
+
+      if (option.dataset.workspace === WORKSPACE_CONFIG.key) {
+        option.classList.add('workspace-option-active');
+        if (check) check.classList.remove('hidden');
+      }
+    });
   }
 
   function renderScope() {
@@ -1649,27 +1699,41 @@
 
     if (!toggle || !menu || !caret) return;
 
+    const closeMenu = () => {
+      menu.classList.add('hidden');
+      caret.classList.remove('rotate-180');
+      toggle.setAttribute('aria-expanded', 'false');
+    };
+
+    const openMenu = () => {
+      menu.classList.remove('hidden');
+      caret.classList.add('rotate-180');
+      toggle.setAttribute('aria-expanded', 'true');
+    };
+
     toggle.addEventListener('click', (event) => {
       event.stopPropagation();
-      const isHidden = menu.classList.contains('hidden');
-
-      if (isHidden) {
-        menu.classList.remove('hidden');
-        caret.classList.add('rotate-180');
-        toggle.setAttribute('aria-expanded', 'true');
+      if (menu.classList.contains('hidden')) {
+        openMenu();
       } else {
-        menu.classList.add('hidden');
-        caret.classList.remove('rotate-180');
-        toggle.setAttribute('aria-expanded', 'false');
+        closeMenu();
       }
     });
 
     document.addEventListener('click', (event) => {
       if (!toggle.contains(event.target) && !menu.contains(event.target)) {
-        menu.classList.add('hidden');
-        caret.classList.remove('rotate-180');
-        toggle.setAttribute('aria-expanded', 'false');
+        closeMenu();
       }
+    });
+
+    document.addEventListener('keydown', (event) => {
+      if (event.key === 'Escape') closeMenu();
+    });
+
+    menu.querySelectorAll('a').forEach(link => {
+      link.addEventListener('click', () => {
+        closeMenu();
+      });
     });
   }
 
@@ -1681,6 +1745,19 @@
       console.error(err);
       alert('Failed to load workspace from Google Sheets.');
     }
+
+    document.getElementById('reset-workspace-btn')?.addEventListener('click', async () => {
+      try {
+        await loadWorkspaceData();
+        renderAll();
+      } catch (err) {
+        console.error(err);
+        alert('Refresh failed.');
+      }
+    });
+
+    applyWorkspaceSwitcherState();
+    bindWorkspaceSwitcher();
 
     document.querySelectorAll('.ws-nav-btn, .ws-mobile-nav').forEach(btn => {
       btn.addEventListener('click', (e) => {

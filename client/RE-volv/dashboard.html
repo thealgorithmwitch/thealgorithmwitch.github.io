@@ -1036,7 +1036,7 @@
     </div>
   </div>
 
- <script>
+<script>
   const APP_CONFIG = {
     APPS_SCRIPT_URL: "https://script.google.com/macros/s/AKfycbwNHbwMmqkFMSNkRQncFlFJfD-YBTZuwnHBO8fWzskYk-iPvezCUPX-pZ5P8vTMdDJd/exec"
   };
@@ -1060,10 +1060,10 @@
     audit: "Strategy & Implementation"
   };
 
-  const mockRegistry = [
-    { campaign: "Q4_Solar_Savings", source: "linkedin", medium: "social", date: "Oct 26, 2024" },
-    { campaign: "Newsletter_Oct", source: "hs_email", medium: "email", date: "Oct 24, 2024" },
-    { campaign: "Search_Brand_T1", source: "google", medium: "cpc", date: "Oct 20, 2024" }
+  const FALLBACK_REGISTRY = [
+    { campaignName: "Q4_Solar_Savings", source: "linkedin", medium: "social", dateCreated: "Oct 26, 2024", fullUtmLink: "?utm_source=linkedin&utm_medium=social..." },
+    { campaignName: "Newsletter_Oct", source: "hs_email", medium: "email", dateCreated: "Oct 24, 2024", fullUtmLink: "?utm_source=hs_email&utm_medium=email..." },
+    { campaignName: "Search_Brand_T1", source: "google", medium: "cpc", dateCreated: "Oct 20, 2024", fullUtmLink: "?utm_source=google&utm_medium=cpc..." }
   ];
 
   const AUDIT_DATA = {
@@ -1095,8 +1095,10 @@
     }
   };
 
-  let currentRegistryItems = [...mockRegistry];
+  let currentRegistryItems = [...FALLBACK_REGISTRY];
   let currentAuditItems = [];
+  let currentResourceLinks = [];
+  let currentClaritySummary = { rows: [] };
 
   document.addEventListener("DOMContentLoaded", async () => {
     applyConfig();
@@ -1119,10 +1121,13 @@
 
     try {
       await loadSettingsFromSheet();
-      await loadRegistryFromSheet();
-      await loadAuditFromSheet();
-      await loadResourcesFromSheet();
-      await loadPerformanceFromSheet();
+      await Promise.all([
+        loadRegistryFromSheet(),
+        loadAuditFromSheet(),
+        loadResourcesFromSheet(),
+        loadPerformanceFromSheet(),
+        loadClarityFromSheet()
+      ]);
     } catch (error) {
       console.error(error);
       showToast("Connection Error", "Could not load sheet data.", "ph-warning", "text-amber-400");
@@ -1143,13 +1148,19 @@
   async function loadRegistryFromSheet(query = "") {
     const data = await apiGet("getRegistry", { q: query });
     if (!data.ok) throw new Error(data.error || "Failed to load registry");
-    currentRegistryItems = Array.isArray(data.registry) ? data.registry : [];
+
+    currentRegistryItems = Array.isArray(data.registry) && data.registry.length
+      ? data.registry
+      : [...FALLBACK_REGISTRY];
+
     renderRegistry(currentRegistryItems);
+    renderHomeRecentUtmLinks(currentRegistryItems);
   }
 
   async function loadAuditFromSheet(status = "all") {
     const data = await apiGet("getAuditNotes", { status });
     if (!data.ok) throw new Error(data.error || "Failed to load audit notes");
+
     currentAuditItems = Array.isArray(data.notes) ? data.notes : [];
     renderAuditTable(currentAuditItems);
   }
@@ -1157,7 +1168,9 @@
   async function loadResourcesFromSheet() {
     const data = await apiGet("getResourceLinks");
     if (!data.ok) throw new Error(data.error || "Failed to load resource links");
-    console.log("Resource links", data.links);
+
+    currentResourceLinks = Array.isArray(data.links) ? data.links : [];
+    renderResourceLinks(currentResourceLinks);
   }
 
   async function loadPerformanceFromSheet() {
@@ -1185,6 +1198,22 @@
     if (rateEl) rateEl.textContent = formatPercent(summary.conversionRate || 0);
     if (durationEl) durationEl.textContent = formatDuration(summary.avgSessionDurationSeconds || 0);
     if (topSourceEl) topSourceEl.textContent = capitalize(summary.topSource || "-");
+
+    renderHomePerformanceSnapshot(summary);
+  }
+
+  async function loadClarityFromSheet() {
+    const params = {
+      page: document.getElementById("ux-filter-page")?.value || "all",
+      device: document.getElementById("ux-filter-device")?.value || "all",
+      numOfDays: getClarityDaysFromUi()
+    };
+
+    const data = await apiGet("getClaritySummary", params);
+    if (!data.ok) throw new Error(data.error || "Failed to load clarity summary");
+
+    currentClaritySummary = data.summary || { rows: [] };
+    renderClaritySummary(currentClaritySummary);
   }
 
   function applyConfig() {
@@ -1218,6 +1247,7 @@
     document.addEventListener("click", (event) => {
       const trigger = event.target.closest("[data-open-url]");
       if (!trigger) return;
+
       const url = trigger.getAttribute("data-open-url");
       if (!url) return;
 
@@ -1391,7 +1421,7 @@
 
     tbody.querySelectorAll(".registry-copy-btn").forEach((button) => {
       button.addEventListener("click", () => {
-        const value = button.getAttribute("data-copy-value") || "";
+        const value = decodeHtmlEntities(button.getAttribute("data-copy-value") || "");
         if (!value) return;
         navigator.clipboard.writeText(value).then(() => {
           showToast("Copied!", "Registry link copied to clipboard.", "ph-copy");
@@ -1400,11 +1430,45 @@
     });
   }
 
+  function renderHomeRecentUtmLinks(items) {
+    const table = document.querySelector("#view-home .xl\\:col-span-2 table tbody");
+    if (!table) return;
+
+    const rows = (items || []).slice(0, 3);
+    table.innerHTML = rows.map((item) => `
+      <tr>
+        <td>
+          <div class="font-medium text-white mb-0.5">${escapeHtml(item.campaignName || item.campaign || item.campaignId || "")}</div>
+          <div class="text-[10px] text-gray-500 font-mono truncate max-w-[200px]">${escapeHtml(item.fullUtmLink || item.destinationUrl || "")}</div>
+        </td>
+        <td>
+          <span class="badge ${getBadgeColor(item.source)}">${escapeHtml(item.source || "")}</span>
+          <span class="text-gray-600 mx-1">/</span>
+          <span class="text-xs text-gray-400">${escapeHtml(item.medium || "")}</span>
+        </td>
+        <td><div class="text-xs text-gray-400">${escapeHtml(item.dateCreated || item.date || "")}</div></td>
+      </tr>
+    `).join("");
+  }
+
+  function renderHomePerformanceSnapshot(summary) {
+    const homeCards = document.querySelectorAll("#view-home .grid.grid-cols-1.md\\:grid-cols-2.xl\\:grid-cols-4.gap-5 .glass-card, #view-home .grid.grid-cols-1.md\\:grid-cols-2.xl\\:grid-cols-4.gap-5 button");
+    if (homeCards.length < 3) return;
+
+    const sessionsCard = homeCards[0].querySelector(".text-2xl");
+    const rateCard = homeCards[1].querySelector(".text-2xl");
+    const activeCard = homeCards[2].querySelector(".text-2xl");
+
+    if (sessionsCard) sessionsCard.textContent = formatNumber(summary.sessions || 0);
+    if (rateCard) rateCard.textContent = formatPercent(summary.conversionRate || 0);
+    if (activeCard) activeCard.textContent = formatNumber(summary.recordCount || currentRegistryItems.length || 0);
+  }
+
   function renderAuditTable(items) {
     const tbody = document.querySelector("#audit-recommendations-table tbody");
     if (!tbody) return;
 
-    tbody.innerHTML = items.map((item) => `
+    tbody.innerHTML = items.length ? items.map((item) => `
       <tr data-status="${escapeHtml(item.status || "")}" data-audit-id="${escapeHtml(item.noteId || "")}">
         <td><div class="w-2 h-2 rounded-full ${priorityDotClass(item.priority)}"></div></td>
         <td class="font-medium text-white text-sm">${escapeHtml(item.title || "")}</td>
@@ -1413,14 +1477,123 @@
         <td><span class="text-xs text-gray-300">${escapeHtml(item.status || "")}</span></td>
         <td class="text-xs text-gray-400">${escapeHtml(item.linkedLandingPage || item.linkedCampaignId || "")}</td>
       </tr>
-    `).join("");
+    `).join("") : `
+      <tr>
+        <td colspan="6" class="text-sm text-gray-400">No audit notes found.</td>
+      </tr>
+    `;
 
-    tbody.querySelectorAll("tr").forEach((row) => {
+    tbody.querySelectorAll("tr[data-audit-id]").forEach((row) => {
       row.addEventListener("click", () => {
         const id = row.getAttribute("data-audit-id");
         showAuditDetail(id);
       });
     });
+
+    if (items.length) {
+      showAuditDetail(items[0].noteId);
+    }
+  }
+
+  function renderResourceLinks(items) {
+    const resourceCard = Array.from(document.querySelectorAll("#view-audit .glass-card")).find((card) => {
+      const heading = card.querySelector("h3");
+      return heading && heading.textContent.trim().toLowerCase() === "resource links";
+    });
+
+    if (!resourceCard) return;
+
+    const target = resourceCard.querySelector(".space-y-3");
+    if (!target) return;
+
+    if (!items.length) return;
+
+    target.innerHTML = items.slice(0, 6).map((item) => {
+      const category = String(item.category || "").toLowerCase();
+      const iconClass =
+        category.includes("report") || category.includes("dashboard") ? "ph-chart-line-up" :
+        category.includes("ux") || category.includes("clarity") ? "ph-mouse-left-click" :
+        "ph-link";
+
+      const badgeClass =
+        category.includes("report") || category.includes("dashboard") ? "bg-purple-900/30 text-purple-400" :
+        category.includes("ux") || category.includes("clarity") ? "bg-cyan-900/30 text-cyan-400" :
+        "bg-blue-900/30 text-blue-400";
+
+      return `
+        <button
+          type="button"
+          data-open-url="${escapeHtml(item.url || "")}"
+          class="w-full flex items-center justify-between p-3 rounded bg-black/20 hover:bg-black/40 border border-white/5 hover:border-purple-500/30 transition-all group text-left"
+        >
+          <span class="flex items-center gap-3">
+            <div class="w-8 h-8 rounded ${badgeClass} flex items-center justify-center">
+              <i class="ph-duotone ${iconClass} text-lg"></i>
+            </div>
+            <div>
+              <div class="text-sm font-medium text-gray-200 group-hover:text-white">${escapeHtml(item.label || item.category || "Resource")}</div>
+              <div class="text-[10px] text-gray-500">${escapeHtml(item.description || "")}</div>
+            </div>
+          </span>
+          <i class="ph-bold ph-arrow-up-right text-gray-600 group-hover:text-purple-400"></i>
+        </button>
+      `;
+    }).join("");
+  }
+
+  function renderClaritySummary(summary) {
+    const rageEl = document.getElementById("ux-kpi-rage");
+    const deadEl = document.getElementById("ux-kpi-dead");
+    const scrollEl = document.getElementById("ux-kpi-scroll");
+    const timeEl = document.getElementById("ux-kpi-time");
+    const highEl = document.getElementById("ux-kpi-high");
+    const updatedEl = document.getElementById("ux-last-updated");
+
+    const rageClicks = Number(summary.rageClicks || 0);
+    const deadClicks = Number(summary.deadClicks || 0);
+    const avgScrollDepth = Number(summary.avgScrollDepth || 0);
+    const avgEngagementTimeSeconds = Number(summary.avgEngagementTimeSeconds || 0);
+    const rows = Array.isArray(summary.rows) ? summary.rows : [];
+
+    const highestFrictionRow = rows.reduce((best, row) => {
+      const bestRate = best ? Number(best.rage_rate || 0) : -1;
+      const rowRate = Number(row.rage_rate || 0);
+      return rowRate > bestRate ? row : best;
+    }, null);
+
+    if (rageEl) rageEl.textContent = formatNumber(rageClicks);
+    if (deadEl) deadEl.textContent = formatNumber(deadClicks);
+    if (scrollEl) scrollEl.textContent = `${Math.round(avgScrollDepth)}%`;
+    if (timeEl) timeEl.textContent = formatDuration(avgEngagementTimeSeconds);
+    if (highEl) highEl.textContent = highestFrictionRow?.page || "-";
+    if (updatedEl) updatedEl.textContent = "Updated: Just now";
+
+    const highlightCard = document.getElementById("highlight-friction-page");
+    if (highlightCard) {
+      const sub = highlightCard.querySelector(".text-xs.text-rose-400");
+      if (sub) {
+        sub.textContent = highestFrictionRow
+          ? `${formatPercent(highestFrictionRow.rage_rate || 0)} rage rate`
+          : "No page data";
+      }
+    }
+
+    const homeUxCard = Array.from(document.querySelectorAll("#view-home button[data-view='ux']")).find(Boolean);
+    if (homeUxCard) {
+      const score = getFrictionLabel_(rows);
+      const scoreEl = homeUxCard.querySelector(".text-2xl");
+      if (scoreEl) {
+        scoreEl.innerHTML = `${escapeHtml(score)} <span class="text-sm text-gray-500 font-normal">Friction</span>`;
+      }
+    }
+  }
+
+  function getFrictionLabel_(rows) {
+    if (!rows || !rows.length) return "Low";
+    const avgRate = rows.reduce((sum, row) => sum + Number(row.rage_rate || 0), 0) / rows.length;
+    if (avgRate >= 0.05) return "High";
+    if (avgRate >= 0.02) return "Medium";
+    return "Low";
   }
 
   function showAuditDetail(id) {
@@ -1493,6 +1666,12 @@
       .replaceAll("'", "&#39;");
   }
 
+  function decodeHtmlEntities(value) {
+    const textarea = document.createElement("textarea");
+    textarea.innerHTML = String(value || "");
+    return textarea.value;
+  }
+
   function priorityDotClass(priority) {
     const p = String(priority || "").toLowerCase();
     if (p === "high") return "bg-rose-500";
@@ -1513,6 +1692,15 @@
     if (c === "campaign" || c === "campaigns") return "badge-purple";
     if (c === "ux") return "badge-rose";
     return "badge-gold";
+  }
+
+  function getBadgeColor(source) {
+    return {
+      google: "badge-emerald",
+      linkedin: "badge-purple",
+      hs_email: "badge-cyan",
+      facebook: "badge-rose"
+    }[source] || "badge-gold";
   }
 
   async function apiGet(action, params = {}) {
@@ -1541,15 +1729,6 @@
 
     if (!response.ok) throw new Error("Request failed");
     return response.json();
-  }
-
-  function getBadgeColor(source) {
-    return {
-      google: "badge-emerald",
-      linkedin: "badge-purple",
-      hs_email: "badge-cyan",
-      facebook: "badge-rose"
-    }[source] || "badge-gold";
   }
 
   function bindReportFilters() {
@@ -1619,16 +1798,44 @@
     });
   }
 
-  function applyUXFilters() {
-    const updated = document.getElementById("ux-last-updated");
-    if (updated) updated.textContent = "Updated: Just now";
-    showToast("Filters Applied", "UX insights updated.", "ph-check-circle");
+  function getClarityDaysFromUi() {
+    const value = String(document.getElementById("ux-filter-date")?.value || "30");
+    if (value === "7") return 1;
+    if (value === "30") return 3;
+    if (value === "90") return 3;
+    return 3;
   }
 
-  function syncClarityData() {
+  async function applyUXFilters() {
     const updated = document.getElementById("ux-last-updated");
     if (updated) updated.textContent = "Updated: Just now";
-    showToast("Sync Complete", "Clarity data refreshed.", "ph-check-circle");
+
+    try {
+      await loadClarityFromSheet();
+      showToast("Filters Applied", "UX insights updated.", "ph-check-circle");
+    } catch (error) {
+      console.error(error);
+      showToast("Load Error", "Could not refresh UX insights.", "ph-warning", "text-amber-400");
+    }
+  }
+
+  async function syncClarityData() {
+    const updated = document.getElementById("ux-last-updated");
+    if (updated) updated.textContent = "Updated: Just now";
+
+    try {
+      const response = await apiPost("syncClaritySummary", {
+        numOfDays: getClarityDaysFromUi()
+      });
+
+      if (!response.ok) throw new Error(response.error || "Sync failed");
+
+      await loadClarityFromSheet();
+      showToast("Sync Complete", "Clarity data refreshed.", "ph-check-circle");
+    } catch (error) {
+      console.error(error);
+      showToast("Sync Error", "Could not sync Clarity data.", "ph-warning", "text-amber-400");
+    }
   }
 
   function bindAuditFilters() {

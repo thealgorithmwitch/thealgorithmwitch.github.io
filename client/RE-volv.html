@@ -367,37 +367,37 @@
     class="workspace-switcher-menu hidden absolute top-full left-0 right-0 mt-2 rounded-lg z-50 overflow-hidden"
   >
     <div class="p-2 space-y-1">
-      <a
-        id="workspace-option-nexus"
-        href="/client/RE-volv/dashboard.html"
-        class="workspace-option flex items-center gap-3 p-2 rounded hover:bg-white/5 transition-colors"
-        data-workspace="nexus"
-      >
-        <div class="w-7 h-7 rounded bg-[#1e1a2d] flex items-center justify-center border border-white/10">
-          <i class="ph-fill ph-intersect-three text-cyan-300"></i>
-        </div>
-        <div class="min-w-0">
-          <div class="text-sm font-medium text-gray-200">Nexus</div>
-          <div class="text-[10px] text-gray-500">Client portal</div>
-        </div>
-        <i class="workspace-option-check ph-bold ph-check text-purple-400 ml-auto hidden"></i>
-      </a>
+<a
+  id="workspace-option-nexus"
+  href="/client.html"
+  class="workspace-option flex items-center gap-3 p-2 rounded hover:bg-white/5 transition-colors"
+  data-workspace="nexus"
+>
+  <div class="w-7 h-7 rounded bg-[#1e1a2d] flex items-center justify-center border border-white/10">
+    <i class="ph-fill ph-intersect-three text-cyan-300"></i>
+  </div>
+  <div class="min-w-0">
+    <div class="text-sm font-medium text-gray-200">Nexus</div>
+    <div class="text-[10px] text-gray-500">Client portal</div>
+  </div>
+  <i class="workspace-option-check ph-bold ph-check text-purple-400 ml-auto hidden"></i>
+</a>
 
-      <a
-        id="workspace-option-revolv"
-        href="/client/RE-volv/dashboard.html"
-        class="workspace-option flex items-center gap-3 p-2 rounded hover:bg-white/5 transition-colors"
-        data-workspace="revolv"
-      >
-        <div class="w-7 h-7 rounded bg-[#1e1a2d] flex items-center justify-center border border-white/10">
-          <i class="ph-fill ph-sun-horizon text-yellow-300"></i>
-        </div>
-        <div class="min-w-0">
-          <div class="text-sm font-medium text-gray-200">RE-volv Solar</div>
-          <div class="text-[10px] text-gray-500">Project workspace</div>
-        </div>
-        <i class="workspace-option-check ph-bold ph-check text-purple-400 ml-auto hidden"></i>
-      </a>
+<a
+  id="workspace-option-revolv"
+  href="/client/RE-volv/dashboard.html"
+  class="workspace-option flex items-center gap-3 p-2 rounded hover:bg-white/5 transition-colors"
+  data-workspace="revolv"
+>
+  <div class="w-7 h-7 rounded bg-[#1e1a2d] flex items-center justify-center border border-white/10">
+    <i class="ph-fill ph-sun-horizon text-yellow-300"></i>
+  </div>
+  <div class="min-w-0">
+    <div class="text-sm font-medium text-gray-200">RE-volv Solar</div>
+    <div class="text-[10px] text-gray-500">Project workspace</div>
+  </div>
+  <i class="workspace-option-check ph-bold ph-check text-purple-400 ml-auto hidden"></i>
+</a>
 
       <a
         id="workspace-option-incantations"
@@ -933,7 +933,7 @@
 
 <script>
   const API_BASE = "https://script.google.com/macros/s/AKfycbzDrt23nLNFPaWmCBxsHmCzqWxbS-5W7g1H7c4VuqnRivrmtroAbp9sgrrbTM3crTAo/exec";
-  const CLIENT_SLUG = "RE-volv";
+  const CLIENT_SLUG = "re-volv";
 
   let workspaceData = {
     project: {},
@@ -948,31 +948,31 @@
   let taskFilterStatus = 'all';
   let taskSearchQuery = '';
 
-  const WORKSPACE_CONFIGS = {
-    nexus: {
-      key: "nexus",
-      label: "Nexus",
-      icon: "ph-intersect-three",
-      themeColor: "#67e8f9",
-      href: "/client.html"
-    },
-    revolv: {
-      key: "revolv",
-      label: "RE-volv Solar",
-      icon: "ph-sun-horizon",
-      themeColor: "#ffd700",
-      href: "/client/RE-volv/dashboard.html"
-    },
-    incantations: {
-      key: "incantations",
-      label: "Incantations",
-      icon: "ph-sparkle",
-      themeColor: "#f59e0b",
-      href: "/incantations"
-    }
-  };
+const WORKSPACE_CONFIGS = {
+  nexus: {
+    key: "nexus",
+    label: "Nexus",
+    icon: "ph-intersect-three",
+    themeColor: "#67e8f9",
+    href: "/client.html"
+  },
+  revolv: {
+    key: "revolv",
+    label: "RE-volv Solar",
+    icon: "ph-sun-horizon",
+    themeColor: "#ffd700",
+    href: "/client/RE-volv/dashboard.html"
+  },
+  incantations: {
+    key: "incantations",
+    label: "Incantations",
+    icon: "ph-sparkle",
+    themeColor: "#f59e0b",
+    href: "/incantations"
+  }
+};
 
-  const WORKSPACE_CONFIG = WORKSPACE_CONFIGS.revolv;
+const WORKSPACE_CONFIG = WORKSPACE_CONFIGS.revolv;
 
   const taskModal = document.getElementById('task-modal');
   const assetModal = document.getElementById('asset-modal');
@@ -980,19 +980,30 @@
   const overviewModal = document.getElementById('overview-modal');
   const reviewInfoModal = document.getElementById('review-info-modal');
 
-  async function apiGet(action, params = {}) {
-    const url = new URL(API_BASE);
-    url.searchParams.set('action', action);
+async function apiGet(action, params = {}) {
+  const url = new URL(API_BASE);
+  url.searchParams.set('action', action);
 
-    Object.entries(params).forEach(([key, value]) => {
+  Object.entries(params).forEach(([key, value]) => {
+    if (value !== undefined && value !== null && value !== '') {
       url.searchParams.set(key, value);
-    });
+    }
+  });
 
-    const res = await fetch(url.toString());
-    const data = await res.json();
-    if (!data.ok) throw new Error(data.error || 'API error');
-    return data;
+  const res = await fetch(url.toString());
+  const text = await res.text();
+
+  let data;
+  try {
+    data = JSON.parse(text);
+  } catch (err) {
+    console.error('Non-JSON GET response:', text);
+    throw new Error('Server did not return valid JSON');
   }
+
+  if (!data.ok) throw new Error(data.error || 'API error');
+  return data;
+}
 
   async function apiPost(payload) {
     const res = await fetch(API_BASE, {
@@ -1019,7 +1030,23 @@
 
   async function loadWorkspaceData() {
     const data = await apiGet('getWorkspace', { clientSlug: CLIENT_SLUG });
-    workspaceData = data.workspace;
+  
+    if (!data || !data.ok) {
+      throw new Error(data?.error || 'Workspace request failed');
+    }
+  
+    if (!data.workspace) {
+      throw new Error('Workspace data missing from response');
+    }
+  
+    workspaceData = {
+      project: data.workspace.project || {},
+      tasks: Array.isArray(data.workspace.tasks) ? data.workspace.tasks : [],
+      notes: Array.isArray(data.workspace.notes) ? data.workspace.notes : [],
+      assets: Array.isArray(data.workspace.assets) ? data.workspace.assets : [],
+      phases: Array.isArray(data.workspace.phases) ? data.workspace.phases : [],
+      deliverables: Array.isArray(data.workspace.deliverables) ? data.workspace.deliverables : []
+    };
   }
 
   function getNextId(items) {
@@ -1995,9 +2022,12 @@ function renderTasks() {
     });
   }
 
-  function showWorkspaceError(title, message) {
+function showWorkspaceError(title, message) {
+  const tasksList = document.getElementById('tasks-list');
   const reviewContainer = document.getElementById('review-container');
-  const tasksSection = document.getElementById('section-tasks');
+  const scopeContainer = document.getElementById('scope-container');
+  const notesContainer = document.getElementById('notes-container');
+  const assetsGrid = document.getElementById('assets-grid');
 
   const errorCard = `
     <div class="glass-card rounded-xl border border-rose-500/30 bg-rose-500/10 p-5 max-w-2xl">
@@ -2014,13 +2044,13 @@ function renderTasks() {
     </div>
   `;
 
-  if (tasksSection) {
-    tasksSection.innerHTML = errorCard;
-  } else if (reviewContainer) {
-    reviewContainer.innerHTML = errorCard;
-  }
+  if (tasksList) tasksList.innerHTML = errorCard;
+  if (reviewContainer) reviewContainer.innerHTML = '';
+  if (scopeContainer) scopeContainer.innerHTML = '';
+  if (notesContainer) notesContainer.innerHTML = '';
+  if (assetsGrid) assetsGrid.innerHTML = '';
 }
-
+  
 document.addEventListener('DOMContentLoaded', async () => {
   try {
     await loadWorkspaceData();

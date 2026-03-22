@@ -1240,6 +1240,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   
     currentRegistryItems = Array.isArray(data.registry) ? data.registry : [];
     populateUtmFilterOptions(currentRegistryItems);
+    renderHomeRecentUtmLinks(currentRegistryItems);
     applyUtmRegistryFilters();
   }
 
@@ -1494,14 +1495,13 @@ function populateUtmFilterOptions(items) {
       el.addEventListener("input", generateUTM);
       el.addEventListener("change", generateUTM);
     });
-
+  
     document.getElementById("toggle-optional-fields")?.addEventListener("click", () => {
       document.getElementById("optional-fields")?.classList.toggle("hidden");
     });
-
+  
     document.getElementById("copy-utm-button")?.addEventListener("click", copyUTM);
     document.getElementById("save-utm-button")?.addEventListener("click", saveUTM);
-    document.getElementById("registry-search")?.addEventListener("input", (event) => populateRegistry(event.target.value));
   }
 
   function generateUTM() {
@@ -2109,7 +2109,7 @@ function populateUtmFilterOptions(items) {
       const response = await apiPost("syncPerformanceData", { days });
       if (!response.ok) throw new Error(response.error || "Sync failed");
   
-      await loadRegistryFromSheet(document.getElementById("registry-search")?.value || "");
+      await loadRegistryFromSheet();
       updateLocalSyncTime();
   
       if (!silent) {

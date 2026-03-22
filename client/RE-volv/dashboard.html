@@ -1038,7 +1038,9 @@
 
 <script>
   const APP_CONFIG = {
-    APPS_SCRIPT_URL: "https://script.google.com/macros/s/AKfycbwjKIR-4RQyBOMc7JDZ43zsGqc8xbg_SPI2yaE5QNdAGwsKCvSbc_YMZs1s7x1sAGkV/exec"
+    APPS_SCRIPT_URL: "https://script.google.com/macros/s/AKfycbwjKIR-4RQyBOMc7JDZ43zsGqc8xbg_SPI2yaE5QNdAGwsKCvSbc_YMZs1s7x1sAGkV/exec",
+    AUTO_SYNC_PERFORMANCE_ON_LOAD: true,
+    AUTO_SYNC_CLARITY_ON_LOAD: false
   };
 
   let PORTAL_CONFIG = {
@@ -1099,6 +1101,10 @@
   let currentAuditItems = [];
   let currentResourceLinks = [];
   let currentClaritySummary = { rows: [] };
+  let currentPerformanceSummary = {};
+  let currentPerformanceTrend = [];
+  let isInitialPerformanceSyncAttempted = false;
+  let isInitialClaritySyncAttempted = false;
 
   document.addEventListener("DOMContentLoaded", async () => {
     applyConfig();
@@ -1118,19 +1124,41 @@
 
     switchView(getInitialView(), false);
     renderRegistry(currentRegistryItems);
+    renderHomeRecentUtmLinks(currentRegistryItems);
 
     try {
       await loadSettingsFromSheet();
+
       await Promise.all([
         loadRegistryFromSheet(),
         loadAuditFromSheet(),
-        loadResourcesFromSheet(),
+        loadResourcesFromSheet()
+      ]);
+
+      if (APP_CONFIG.AUTO_SYNC_PERFORMANCE_ON_LOAD) {
+        try {
+          await syncPerformanceData(getPerformanceDaysFromUi(), { silent: true });
+        } catch (error) {
+          console.error("Initial GA sync failed:", error);
+        }
+      }
+
+      if (APP_CONFIG.AUTO_SYNC_CLARITY_ON_LOAD) {
+        try {
+          await syncClarityData({ silent: true });
+        } catch (error) {
+          console.error("Initial Clarity sync failed:", error);
+        }
+      }
+
+      await Promise.all([
         loadPerformanceFromSheet(),
+        loadPerformanceTrendFromSheet(),
         loadClarityFromSheet()
       ]);
     } catch (error) {
       console.error(error);
-      showToast("Connection Error", "Could not load sheet data.", "ph-warning", "text-amber-400");
+      showToast("Connection Error", "Could not load portal data.", "ph-warning", "text-amber-400");
     }
   });
 
@@ -1138,9 +1166,9 @@
     const data = await apiGet("getSettings");
     if (!data.ok) throw new Error(data.error || "Failed to load settings");
 
-    PORTAL_CONFIG.clientName = data.settings.clientName || "Client";
-    PORTAL_CONFIG.clarityUrl = data.settings.clarityUrl || "";
-    PORTAL_CONFIG.lookerStudioUrl = data.settings.lookerEmbedUrl || "";
+    PORTAL_CONFIG.clientName = data.settings?.clientName || "Client";
+    PORTAL_CONFIG.clarityUrl = data.settings?.clarityUrl || "";
+    PORTAL_CONFIG.lookerStudioUrl = data.settings?.lookerEmbedUrl || "";
 
     applyConfig();
   }
@@ -1185,6 +1213,8 @@
     if (!data.ok) throw new Error(data.error || "Failed to load performance summary");
 
     const summary = data.summary || {};
+    currentPerformanceSummary = summary;
+
     const sessionsEl = document.getElementById("kpi-sessions");
     const usersEl = document.getElementById("kpi-users");
     const conversionsEl = document.getElementById("kpi-conversions");
@@ -1200,6 +1230,21 @@
     if (topSourceEl) topSourceEl.textContent = capitalize(summary.topSource || "-");
 
     renderHomePerformanceSnapshot(summary);
+  }
+
+  async function loadPerformanceTrendFromSheet() {
+    const params = {
+      source: document.getElementById("filter-source")?.value || "all",
+      medium: document.getElementById("filter-medium")?.value || "all",
+      campaign: document.getElementById("filter-campaign")?.value || "all",
+      landing_page: document.getElementById("filter-landing")?.value || "all"
+    };
+
+    const data = await apiGet("getPerformanceTrend", params);
+    if (!data.ok) throw new Error(data.error || "Failed to load performance trend");
+
+    currentPerformanceTrend = Array.isArray(data.trend) ? data.trend : [];
+    renderPerformanceTrendCharts(currentPerformanceTrend);
   }
 
   async function loadClarityFromSheet() {
@@ -1505,7 +1550,6 @@
 
     const target = resourceCard.querySelector(".space-y-3");
     if (!target) return;
-
     if (!items.length) return;
 
     target.innerHTML = items.slice(0, 6).map((item) => {
@@ -1586,6 +1630,92 @@
         scoreEl.innerHTML = `${escapeHtml(score)} <span class="text-sm text-gray-500 font-normal">Friction</span>`;
       }
     }
+  }
+
+  function renderPerformanceTrendCharts(trend) {
+    renderSparklineChart({
+      targetId: "chart-sessions-trend",
+      title: "Sessions Over Time",
+      subtitle: "Daily trend",
+      data: trend,
+      metricKey: "sessions",
+      gradientId: "areaGradient",
+      strokeColor: "#a855f7",
+      labelsColorClass: "text-gray-500"
+    });
+
+    renderSparklineChart({
+      targetId: "chart-conversions-trend",
+      title: "Conversions Over Time",
+      subtitle: "Daily conversions",
+      data: trend,
+      metricKey: "conversions",
+      gradientId: "convGradient",
+      strokeColor: "#00f0ff",
+      labelsColorClass: "text-gray-500"
+    });
+  }
+
+  function renderSparklineChart({ targetId, title, subtitle, data, metricKey, gradientId, strokeColor, labelsColorClass }) {
+    const container = document.getElementById(targetId);
+    if (!container) return;
+
+    const points = Array.isArray(data) ? data.slice(-12) : [];
+    if (!points.length) return;
+
+    const values = points.map((item) => Number(item[metricKey] || 0));
+    const labels = points.map((item) => formatShortDateLabel(item.date));
+    const width = 400;
+    const height = 150;
+    const paddingX = 0;
+    const minY = 10;
+    const maxY = 130;
+    const minVal = Math.min(...values, 0);
+    const maxVal = Math.max(...values, 1);
+    const range = maxVal - minVal || 1;
+
+    const coords = values.map((value, index) => {
+      const x = paddingX + (index * (width / Math.max(values.length - 1, 1)));
+      const normalized = (value - minVal) / range;
+      const y = maxY - normalized * (maxY - minY);
+      return { x, y, value };
+    });
+
+    const linePath = coords.map((point, index) => `${index === 0 ? "M" : "L"}${point.x},${point.y}`).join(" ");
+    const areaPath = `${linePath} L${coords[coords.length - 1].x},150 L${coords[0].x},150 Z`;
+    const lastPoint = coords[coords.length - 1];
+
+    container.innerHTML = `
+      <svg class="w-full h-full" viewBox="0 0 400 150" preserveAspectRatio="none" aria-hidden="true">
+        <defs>
+          <linearGradient id="${gradientId}" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stop-color="${strokeColor}" stop-opacity="0.3"></stop>
+            <stop offset="100%" stop-color="${strokeColor}" stop-opacity="0"></stop>
+          </linearGradient>
+        </defs>
+        <path d="${areaPath}" fill="url(#${gradientId})"></path>
+        <path d="${linePath}" fill="none" stroke="${strokeColor}" stroke-width="2"></path>
+        <circle cx="${lastPoint.x}" cy="${lastPoint.y}" r="4" fill="${strokeColor}"></circle>
+      </svg>
+      <div class="absolute bottom-0 left-0 right-0 flex justify-between text-[9px] ${labelsColorClass} px-2">
+        ${buildTrendLabels(labels)}
+      </div>
+    `;
+  }
+
+  function buildTrendLabels(labels) {
+    if (!labels.length) return "<span>-</span>";
+    if (labels.length <= 4) return labels.map((label) => `<span>${escapeHtml(label)}</span>`).join("");
+
+    const picks = [labels[0], labels[Math.floor(labels.length / 3)], labels[Math.floor((labels.length * 2) / 3)], labels[labels.length - 1]];
+    return picks.map((label) => `<span>${escapeHtml(label)}</span>`).join("");
+  }
+
+  function formatShortDateLabel(value) {
+    if (!value) return "-";
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) return String(value);
+    return date.toLocaleDateString(undefined, { month: "short", day: "numeric" });
   }
 
   function getFrictionLabel_(rows) {
@@ -1713,7 +1843,7 @@
       }
     });
 
-    const response = await fetch(url.toString());
+    const response = await fetch(url.toString(), { method: "GET" });
     if (!response.ok) throw new Error("Request failed");
     return response.json();
   }
@@ -1741,12 +1871,25 @@
     document.getElementById("refresh-reports-button")?.addEventListener("click", refreshReportsData);
   }
 
+  function getPerformanceDaysFromUi() {
+    const value = String(document.getElementById("filter-date-range")?.value || "30").toLowerCase();
+    if (value === "30") return 30;
+    if (value === "90") return 90;
+    if (value === "quarter") return 90;
+    if (value === "ytd") return 365;
+    const numeric = Number(value);
+    return Number.isFinite(numeric) && numeric > 0 ? numeric : 30;
+  }
+
   async function applyReportFilters() {
     const updated = document.getElementById("reports-last-updated");
     if (updated) updated.textContent = "Updated: Just now";
 
     try {
-      await loadPerformanceFromSheet();
+      await Promise.all([
+        loadPerformanceFromSheet(),
+        loadPerformanceTrendFromSheet()
+      ]);
       showToast("Filters Applied", "Reports updated with new criteria.", "ph-check-circle");
     } catch (error) {
       console.error(error);
@@ -1771,16 +1914,42 @@
     applyReportFilters();
   }
 
-  async function refreshReportsData() {
+  async function syncPerformanceData(days = 30, options = {}) {
+    const { silent = false } = options;
     const updated = document.getElementById("reports-last-updated");
-    if (updated) updated.textContent = "Updated: Just now";
+    if (updated) updated.textContent = "Updating...";
 
     try {
-      await loadPerformanceFromSheet();
-      showToast("Data Refreshed", "Latest metrics loaded.", "ph-check-circle");
+      const response = await apiPost("syncPerformanceData", { days });
+      if (!response.ok) throw new Error(response.error || "Sync failed");
+
+      isInitialPerformanceSyncAttempted = true;
+
+      await Promise.all([
+        loadPerformanceFromSheet(),
+        loadPerformanceTrendFromSheet()
+      ]);
+
+      if (updated) updated.textContent = "Updated: Just now";
+      if (!silent) {
+        showToast("Sync Complete", "Google Analytics data refreshed.", "ph-check-circle");
+      }
+      return response.sync || {};
     } catch (error) {
       console.error(error);
-      showToast("Load Error", "Could not refresh report data.", "ph-warning", "text-amber-400");
+      if (updated) updated.textContent = "Update failed";
+      if (!silent) {
+        showToast("Sync Error", "Could not sync Google Analytics data.", "ph-warning", "text-amber-400");
+      }
+      throw error;
+    }
+  }
+
+  async function refreshReportsData() {
+    try {
+      await syncPerformanceData(getPerformanceDaysFromUi());
+    } catch (error) {
+      console.error(error);
     }
   }
 
@@ -1790,7 +1959,7 @@
       if (el) el.addEventListener("change", applyUXFilters);
     });
 
-    document.getElementById("sync-clarity-button")?.addEventListener("click", syncClarityData);
+    document.getElementById("sync-clarity-button")?.addEventListener("click", () => syncClarityData());
     document.getElementById("highlight-friction-page")?.addEventListener("click", () => {
       const pageSelect = document.getElementById("ux-filter-page");
       if (pageSelect) pageSelect.value = "/solar-savings";
@@ -1819,39 +1988,10 @@
     }
   }
 
-  async function syncPerformanceData(days = 30) {
-  const updated = document.getElementById("reports-last-updated");
-  if (updated) updated.textContent = "Updated: Just now";
-
-  try {
-    const response = await apiPost("syncPerformanceData", { days });
-    if (!response.ok) throw new Error(response.error || "Sync failed");
-
-    await loadPerformanceFromSheet();
-    showToast("Sync Complete", "Google Analytics data refreshed.", "ph-check-circle");
-  } catch (error) {
-    console.error(error);
-    showToast("Sync Error", "Could not sync Google Analytics data.", "ph-warning", "text-amber-400");
-  }
-}
-
-  async function refreshReportsData() {
-  const updated = document.getElementById("reports-last-updated");
-  if (updated) updated.textContent = "Updated: Just now";
-
-  try {
-    await syncPerformanceData(
-      Number(document.getElementById("filter-date-range")?.value || 30)
-    );
-  } catch (error) {
-    console.error(error);
-    showToast("Load Error", "Could not refresh report data.", "ph-warning", "text-amber-400");
-  }
-}
-
-  async function syncClarityData() {
+  async function syncClarityData(options = {}) {
+    const { silent = false } = options;
     const updated = document.getElementById("ux-last-updated");
-    if (updated) updated.textContent = "Updated: Just now";
+    if (updated) updated.textContent = "Updating...";
 
     try {
       const response = await apiPost("syncClaritySummary", {
@@ -1860,11 +2000,21 @@
 
       if (!response.ok) throw new Error(response.error || "Sync failed");
 
+      isInitialClaritySyncAttempted = true;
+
       await loadClarityFromSheet();
-      showToast("Sync Complete", "Clarity data refreshed.", "ph-check-circle");
+      if (updated) updated.textContent = "Updated: Just now";
+      if (!silent) {
+        showToast("Sync Complete", "Clarity data refreshed.", "ph-check-circle");
+      }
+      return response.sync || {};
     } catch (error) {
       console.error(error);
-      showToast("Sync Error", "Could not sync Clarity data.", "ph-warning", "text-amber-400");
+      if (updated) updated.textContent = "Update failed";
+      if (!silent) {
+        showToast("Sync Error", "Could not sync Clarity data.", "ph-warning", "text-amber-400");
+      }
+      throw error;
     }
   }
 

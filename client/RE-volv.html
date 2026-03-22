@@ -55,6 +55,129 @@
       box-shadow: 0 18px 50px rgba(0,0,0,0.45);
     }
 
+        .task-card {
+      background: rgba(10, 6, 20, 0.62);
+      border: 1px solid rgba(168, 85, 247, 0.12);
+      border-radius: 1rem;
+      transition: all 0.24s ease;
+      overflow: hidden;
+    }
+
+    .task-card:hover {
+      border-color: rgba(168, 85, 247, 0.28);
+      background: rgba(168, 85, 247, 0.04);
+    }
+
+    .task-card-header {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr);
+      gap: 0.9rem;
+      padding: 1rem 1rem 0.85rem;
+    }
+
+    @media (min-width: 900px) {
+      .task-card-header {
+        grid-template-columns: minmax(0, 1.8fr) repeat(4, minmax(0, auto));
+        align-items: start;
+      }
+    }
+
+    .task-meta-block {
+      min-width: 0;
+    }
+
+    .task-meta-label {
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      color: #6b7280;
+      margin-bottom: 0.35rem;
+    }
+
+    .task-meta-value {
+      font-size: 0.8rem;
+      color: #d1d5db;
+      line-height: 1.35;
+      word-break: break-word;
+      white-space: normal;
+    }
+
+    .task-title-wrap {
+      min-width: 0;
+    }
+
+    .task-title {
+      color: white;
+      font-size: 0.98rem;
+      font-weight: 600;
+      line-height: 1.4;
+      white-space: normal;
+      word-break: break-word;
+    }
+
+    .task-subtitle {
+      color: #9ca3af;
+      font-size: 0.78rem;
+      margin-top: 0.35rem;
+      white-space: normal;
+      word-break: break-word;
+    }
+
+    .task-card-body {
+      border-top: 1px solid rgba(255,255,255,0.05);
+      padding: 1rem;
+      background: rgba(0, 0, 0, 0.16);
+    }
+
+    .note-entry-card {
+      background: rgba(10, 6, 20, 0.62);
+      border: 1px solid rgba(168, 85, 247, 0.12);
+      border-radius: 1rem;
+      padding: 1rem;
+      transition: all 0.24s ease;
+    }
+
+    .note-entry-card:hover {
+      border-color: rgba(168, 85, 247, 0.28);
+      background: rgba(168, 85, 247, 0.04);
+    }
+
+    .note-text-block {
+      white-space: pre-wrap;
+      word-break: break-word;
+      line-height: 1.7;
+    }
+
+    .review-card-button {
+      width: 100%;
+      text-align: left;
+      background: rgba(10, 6, 20, 0.62);
+      border: 1px solid rgba(168, 85, 247, 0.14);
+      border-radius: 1rem;
+      padding: 1rem;
+      transition: all 0.24s ease;
+    }
+
+    .review-card-button:hover {
+      border-color: rgba(168, 85, 247, 0.3);
+      background: rgba(168, 85, 247, 0.05);
+    }
+
+    .brand-info-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.45rem;
+      padding: 0.45rem 0.75rem;
+      border-radius: 999px;
+      background: rgba(168, 85, 247, 0.14);
+      border: 1px solid rgba(168, 85, 247, 0.24);
+      color: #d8b4fe;
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      font-weight: 600;
+    }
+
     .workspace-option-active {
       background: rgba(168, 85, 247, 0.12);
       border: 1px solid rgba(168, 85, 247, 0.24);
@@ -451,27 +574,50 @@
             <h2 class="font-magical text-2xl text-white tracking-wide">Decisions &amp; Notes Log</h2>
           </div>
 
-          <div class="max-w-5xl">
-            <div class="glass-card border border-purple-500/30 rounded-xl p-5 mb-8">
-              <div class="grid gap-4">
-                <input id="new-note-date" type="text" placeholder="Date label, e.g. Week 2 or Mar 16, 2026" class="w-full bg-black/40 border border-purple-500/30 rounded-xl px-4 py-3 text-sm text-white placeholder-gray-500 focus:outline-none focus:border-purple-400" />
-                <input id="new-note-author" type="text" placeholder="Author" class="w-full bg-black/40 border border-purple-500/30 rounded-xl px-4 py-3 text-sm text-white placeholder-gray-500 focus:outline-none focus:border-purple-400" />
-                <textarea id="new-note-text" placeholder="Log a new decision, meeting note, or update..." class="w-full bg-black/40 border border-purple-500/30 rounded-xl px-4 py-3 text-sm text-white placeholder-gray-500 resize-none h-28 focus:outline-none focus:border-purple-400"></textarea>
+          <div class="grid xl:grid-cols-[minmax(0,380px)_minmax(0,1fr)] gap-6 items-start">
+            <div class="glass-card border border-purple-500/30 rounded-xl p-5">
+              <div class="space-y-4">
+                <div>
+                  <label class="block text-[11px] uppercase tracking-widest text-purple-300 mb-2">Date</label>
+                  <input
+                    id="new-note-date"
+                    type="text"
+                    placeholder="Week 2 or Mar 16, 2026"
+                    class="w-full bg-black/40 border border-purple-500/30 rounded-xl px-4 py-3 text-sm text-white placeholder-gray-500 focus:outline-none focus:border-purple-400"
+                  />
+                </div>
+
+                <div>
+                  <label class="block text-[11px] uppercase tracking-widest text-purple-300 mb-2">Author</label>
+                  <input
+                    id="new-note-author"
+                    type="text"
+                    placeholder="Author"
+                    class="w-full bg-black/40 border border-purple-500/30 rounded-xl px-4 py-3 text-sm text-white placeholder-gray-500 focus:outline-none focus:border-purple-400"
+                  />
+                </div>
+
+                <div>
+                  <label class="block text-[11px] uppercase tracking-widest text-purple-300 mb-2">Note</label>
+                  <textarea
+                    id="new-note-text"
+                    placeholder="Log a new decision, meeting note, or update..."
+                    class="w-full bg-black/40 border border-purple-500/30 rounded-xl px-4 py-3 text-sm text-white placeholder-gray-500 resize-none h-40 focus:outline-none focus:border-purple-400"
+                  ></textarea>
+                </div>
               </div>
 
-              <div class="flex justify-between items-center mt-3 pt-3 border-t border-white/5">
-                <div class="flex gap-2">
-                  <button class="p-2 text-gray-400 hover:text-purple-300 rounded hover:bg-purple-500/10 transition-colors" type="button">
-                    <i class="ph-bold ph-notebook"></i>
-                  </button>
-                </div>
-                <button id="add-note-btn" class="px-5 py-2 bg-white/10 hover:bg-purple-500 border border-white/10 hover:border-purple-400 rounded-lg text-xs tracking-wider uppercase text-white transition-all">
+              <div class="flex justify-end items-center mt-4 pt-4 border-t border-white/5">
+                <button
+                  id="add-note-btn"
+                  class="px-5 py-2 bg-white/10 hover:bg-purple-500 border border-white/10 hover:border-purple-400 rounded-lg text-xs tracking-wider uppercase text-white transition-all"
+                >
                   Post Entry
                 </button>
               </div>
             </div>
 
-            <div id="notes-container" class="relative space-y-8"></div>
+            <div id="notes-container" class="space-y-4 min-w-0"></div>
           </div>
         </div>
 
@@ -486,8 +632,15 @@
         </div>
 
         <div id="section-review" class="ws-section hidden space-y-6 pb-20">
-          <h2 class="font-magical text-2xl text-white tracking-wide border-b border-purple-500/20 pb-4">Client Review Queue</h2>
-          <div id="review-container" class="space-y-4 max-w-4xl"></div>
+          <div class="flex items-center justify-between gap-4 border-b border-purple-500/20 pb-4">
+            <h2 class="font-magical text-2xl text-white tracking-wide">Client Review Queue</h2>
+            <div class="brand-info-chip">
+              <i class="ph-bold ph-sparkle"></i>
+              Click a card for task info
+            </div>
+          </div>
+
+          <div id="review-container" class="space-y-4 max-w-5xl"></div>
         </div>
       </main>
     </div>
@@ -759,6 +912,40 @@
     </div>
   </div>
 
+    <div id="review-info-modal" class="hidden fixed inset-0 z-[70] items-center justify-center bg-black/70 backdrop-blur-md p-4">
+    <div class="modal-shell rounded-2xl w-full max-w-2xl max-h-[90vh] overflow-hidden shadow-[0_20px_60px_-15px_rgba(0,0,0,0.5)]">
+      <div class="flex items-center justify-between px-6 py-4 border-b border-white/10">
+        <div>
+          <div class="text-[11px] uppercase tracking-[0.18em] text-purple-300 mb-1">Client Review</div>
+          <h3 id="review-info-title" class="font-magical text-xl text-white">Task Info</h3>
+        </div>
+        <button id="close-review-info-modal" class="w-10 h-10 rounded-full bg-white/5 hover:bg-white/10 border border-white/10 flex items-center justify-center text-gray-300 hover:text-white">
+          <i class="ph-bold ph-x"></i>
+        </button>
+      </div>
+
+      <div class="p-6 overflow-y-auto max-h-[calc(90vh-140px)] space-y-5">
+        <div class="flex flex-wrap gap-2" id="review-info-meta"></div>
+
+        <div class="glass-card rounded-xl p-5">
+          <div class="text-[11px] uppercase tracking-widest text-purple-300 mb-2">Task Details</div>
+          <div id="review-info-notes" class="text-sm text-gray-300 leading-relaxed whitespace-pre-wrap break-words"></div>
+        </div>
+
+        <div class="glass-card rounded-xl p-5">
+          <div class="text-[11px] uppercase tracking-widest text-purple-300 mb-3">Attachments</div>
+          <div id="review-info-attachments" class="flex flex-wrap gap-2"></div>
+        </div>
+      </div>
+
+      <div class="px-6 py-4 border-t border-white/10 flex justify-end">
+        <button id="review-info-open-task-btn" class="px-5 py-3 rounded-xl bg-purple-600 hover:bg-purple-500 text-white text-xs uppercase tracking-widest">
+          Open Task
+        </button>
+      </div>
+    </div>
+  </div>
+
 <script>
   const API_BASE = "https://script.google.com/macros/s/AKfycbzDrt23nLNFPaWmCBxsHmCzqWxbS-5W7g1H7c4VuqnRivrmtroAbp9sgrrbTM3crTAo/exec";
   const CLIENT_SLUG = "re-volv";
@@ -806,6 +993,7 @@
   const assetModal = document.getElementById('asset-modal');
   const noteModal = document.getElementById('note-modal');
   const overviewModal = document.getElementById('overview-modal');
+  const reviewInfoModal = document.getElementById('review-info-modal');
 
   async function apiGet(action, params = {}) {
     const url = new URL(API_BASE);
@@ -944,7 +1132,7 @@
   }
 
   function renderTasks() {
-    const tbody = document.getElementById('tasks-tbody');
+    const list = document.getElementById('tasks-list');
     let filtered = workspaceData.tasks.slice();
 
     if (taskFilterStatus !== 'all') {
@@ -963,85 +1151,108 @@
 
     document.getElementById('nav-task-count').innerText = workspaceData.tasks.length;
 
-    if (filtered.length === 0) {
-      tbody.innerHTML = `<tr><td colspan="7" class="px-5 py-8 text-center text-gray-500 text-sm">No tasks match the current filters.</td></tr>`;
+    if (!filtered.length) {
+      list.innerHTML = `
+        <div class="glass-card rounded-xl p-8 text-center text-gray-500 text-sm">
+          No tasks match the current filters.
+        </div>
+      `;
       return;
     }
 
-    tbody.innerHTML = filtered.map(t => {
-      const isExpanded = expandedTasks.includes(t.id);
+    list.innerHTML = filtered.map(t => {
+      const isExpanded = expandedTasks.includes(Number(t.id));
+
       return `
-        <tr class="hover:bg-white/5 transition-colors cursor-pointer group" onclick="toggleTask(${t.id})">
-          <td class="px-5 py-3 text-gray-500">
-            <i class="ph-bold ${isExpanded ? 'ph-caret-down text-purple-400' : 'ph-caret-right group-hover:text-white'} transition-colors"></i>
-          </td>
-          <td class="px-5 py-3 font-medium text-white">${escapeHtml(t.task || '')}</td>
-          <td class="px-5 py-3 hidden sm:table-cell text-gray-400">${escapeHtml(t.category || '')}</td>
-          <td class="px-5 py-3">
-            <div class="flex items-center gap-2">
-              <div class="w-6 h-6 rounded-full bg-purple-500/20 border border-purple-500/30 flex items-center justify-center text-[10px] text-purple-300 font-bold">
-                ${escapeHtml(getInitials(t.owner))}
-              </div>
-              <span class="text-gray-300">${escapeHtml(t.owner || '')}</span>
-            </div>
-          </td>
-          <td class="px-5 py-3">
-            <span class="px-2.5 py-1 rounded-full text-[10px] tracking-wider uppercase border inline-block ${getStatusStyles(t.status)}">
-              ${escapeHtml(t.status || '')}
-            </span>
-          </td>
-          <td class="px-5 py-3 hidden lg:table-cell">
-            <span class="text-xs ${getPriorityStyles(t.priority)}">${escapeHtml(t.priority || '')}</span>
-          </td>
-          <td class="px-5 py-3 hidden md:table-cell text-gray-400 text-xs">${escapeHtml(t.due || '')}</td>
-        </tr>
-        ${isExpanded ? `
-          <tr class="bg-black/30 border-t border-purple-500/10">
-            <td colspan="7" class="px-6 md:px-10 py-4">
-              <div class="space-y-4">
-                ${t.notes ? `
-                  <div class="flex items-start gap-3">
-                    <i class="ph-duotone ph-text-align-left text-purple-400 text-lg mt-0.5 shrink-0"></i>
-                    <p class="text-gray-300 text-sm leading-relaxed">${escapeHtml(t.notes)}</p>
-                  </div>
-                ` : '<p class="text-gray-600 text-sm italic">No additional notes.</p>'}
-
-                <div class="space-y-3 pt-2 border-t border-white/5">
-                  <div class="flex items-center justify-between gap-4">
-                    <div class="flex items-center gap-2 text-gray-500 text-xs">
-                      <i class="ph-bold ph-paperclip"></i>
-                      <span>${(t.attachments || []).length} attachment${(t.attachments || []).length !== 1 ? 's' : ''}</span>
-                    </div>
-
-                    <button
-                      onclick="openTaskEditor(${t.id}); event.stopPropagation();"
-                      class="px-3 py-1.5 rounded-lg bg-purple-500/20 border border-purple-500/30 text-purple-300 hover:text-white text-xs uppercase tracking-widest"
-                    >
-                      Edit Task
-                    </button>
-                  </div>
-
-                  ${(t.attachments || []).length ? `
-                    <div class="flex flex-wrap gap-2">
-                      ${(t.attachments || []).map(file => `
-                        <a
-                          href="${escapeAttribute(file.url || '#')}"
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          onclick="event.stopPropagation();"
-                          class="inline-flex items-center gap-2 text-xs px-3 py-1.5 rounded-full bg-white/5 border border-white/10 text-purple-300 hover:text-white hover:border-purple-400/40"
-                        >
-                          <i class="ph-bold ph-paperclip"></i>
-                          ${escapeHtml(file.label || 'Attachment')}
-                        </a>
-                      `).join('')}
-                    </div>
-                  ` : '<p class="text-gray-600 text-sm italic">No attachment links yet.</p>'}
+        <div class="task-card">
+          <button
+            type="button"
+            class="task-card-header w-full text-left"
+            onclick="toggleTask(${Number(t.id)})"
+          >
+            <div class="task-title-wrap">
+              <div class="flex items-start gap-3">
+                <div class="mt-1 text-gray-500 shrink-0">
+                  <i class="ph-bold ${isExpanded ? 'ph-caret-down text-purple-400' : 'ph-caret-right'} transition-colors"></i>
+                </div>
+                <div class="min-w-0">
+                  <div class="task-title">${escapeHtml(t.task || '')}</div>
+                  <div class="task-subtitle">${escapeHtml(t.notes || 'No task notes yet.')}</div>
                 </div>
               </div>
-            </td>
-          </tr>
-        ` : ''}
+            </div>
+
+            <div class="task-meta-block">
+              <div class="task-meta-label">Category</div>
+              <div class="task-meta-value">${escapeHtml(t.category || '—')}</div>
+            </div>
+
+            <div class="task-meta-block">
+              <div class="task-meta-label">Owner</div>
+              <div class="task-meta-value">${escapeHtml(t.owner || '—')}</div>
+            </div>
+
+            <div class="task-meta-block">
+              <div class="task-meta-label">Status</div>
+              <div class="task-meta-value">
+                <span class="px-2.5 py-1 rounded-full text-[10px] tracking-wider uppercase border inline-block ${getStatusStyles(t.status)}">
+                  ${escapeHtml(t.status || '')}
+                </span>
+              </div>
+            </div>
+
+            <div class="task-meta-block">
+              <div class="task-meta-label">Priority / Due</div>
+              <div class="task-meta-value">
+                <span class="${getPriorityStyles(t.priority)}">${escapeHtml(t.priority || '—')}</span>
+                <span class="text-gray-600"> • </span>
+                <span>${escapeHtml(t.due || '—')}</span>
+              </div>
+            </div>
+          </button>
+
+          ${isExpanded ? `
+            <div class="task-card-body space-y-4">
+              <div>
+                <div class="text-[11px] uppercase tracking-widest text-purple-300 mb-2">Notes</div>
+                <p class="text-sm text-gray-300 leading-relaxed whitespace-pre-wrap break-words">
+                  ${escapeHtml(t.notes || 'No additional notes.')}
+                </p>
+              </div>
+
+              <div>
+                <div class="flex items-center justify-between gap-3 mb-3">
+                  <div class="text-[11px] uppercase tracking-widest text-purple-300">Attachments</div>
+                  <button
+                    onclick="openTaskEditor(${Number(t.id)}); event.stopPropagation();"
+                    class="px-3 py-1.5 rounded-lg bg-purple-500/20 border border-purple-500/30 text-purple-300 hover:text-white text-xs uppercase tracking-widest"
+                  >
+                    Edit Task
+                  </button>
+                </div>
+
+                ${(t.attachments || []).length ? `
+                  <div class="flex flex-wrap gap-2">
+                    ${(t.attachments || []).map(file => `
+                      <a
+                        href="${escapeAttribute(file.url || '#')}"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        onclick="event.stopPropagation();"
+                        class="inline-flex items-center gap-2 text-xs px-3 py-1.5 rounded-full bg-white/5 border border-white/10 text-purple-300 hover:text-white hover:border-purple-400/40"
+                      >
+                        <i class="ph-bold ph-paperclip"></i>
+                        ${escapeHtml(file.label || 'Attachment')}
+                      </a>
+                    `).join('')}
+                  </div>
+                ` : `
+                  <p class="text-sm text-gray-500 italic">No attachment links yet.</p>
+                `}
+              </div>
+            </div>
+          ` : ''}
+        </div>
       `;
     }).join('');
   }
@@ -1127,54 +1338,41 @@
       return;
     }
 
-    container.innerHTML = `
-      <div class="timeline-center-line"></div>
-      ${workspaceData.notes.map((note, index) => {
-        const isRight = index % 2 === 0;
-        return `
-          <div class="relative flex items-start md:items-stretch">
-            <div class="absolute left-[1.4rem] md:left-1/2 top-6 -translate-x-1/2 w-3 h-3 rounded-full bg-purple-500 border-[3px] border-[#0a0614] shadow-[0_0_10px_rgba(168,85,247,0.5)] z-10"></div>
+    container.innerHTML = workspaceData.notes.map(note => `
+      <div class="note-entry-card">
+        <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 mb-4">
+          <div class="flex items-center gap-3 min-w-0">
+            <div class="w-9 h-9 rounded-full bg-cyan-500/20 border border-cyan-500/30 flex items-center justify-center text-[10px] text-cyan-300 font-bold shrink-0">
+              ${escapeHtml(getInitials(note.author))}
+            </div>
 
-            <div class="w-full md:w-1/2 ${isRight ? 'md:ml-auto md:pl-10' : 'md:pr-10'} pl-12">
-              <div class="glass-card rounded-xl p-5 relative">
-                <div class="hidden md:block absolute top-6 ${isRight ? '-left-8' : '-right-8'} w-8 h-px bg-purple-500/30"></div>
-
-                <div class="flex items-center justify-between gap-4 mb-3 ${isRight ? '' : 'md:flex-row-reverse'}">
-                  <div class="flex items-center gap-3 ${isRight ? '' : 'md:flex-row-reverse'}">
-                    <div class="w-8 h-8 rounded-full bg-cyan-500/20 border border-cyan-500/30 flex items-center justify-center text-[10px] text-cyan-300 font-bold shrink-0">
-                      ${escapeHtml(getInitials(note.author))}
-                    </div>
-                    <div class="flex flex-col ${isRight ? '' : 'md:items-end md:text-right'}">
-                      <span class="text-white text-sm">${escapeHtml(note.author || '')}</span>
-                      <span class="text-gray-500 text-[10px] uppercase tracking-wider">${escapeHtml(note.date || '')}</span>
-                    </div>
-                  </div>
-
-                  <div class="flex items-center gap-2 shrink-0">
-                    <button
-                      type="button"
-                      onclick="openNoteEditor(${note.id}); event.stopPropagation();"
-                      class="p-2 rounded-lg bg-white/5 border border-white/10 text-gray-300 hover:text-white"
-                    >
-                      <i class="ph-bold ph-pencil-simple"></i>
-                    </button>
-                    <button
-                      type="button"
-                      onclick="deleteNote(${note.id}); event.stopPropagation();"
-                      class="p-2 rounded-lg bg-rose-500/10 border border-rose-500/20 text-rose-300 hover:text-white"
-                    >
-                      <i class="ph-bold ph-trash"></i>
-                    </button>
-                  </div>
-                </div>
-
-                <p class="text-gray-300 text-sm leading-relaxed ${isRight ? '' : 'md:text-right'}">${escapeHtml(note.text || '')}</p>
-              </div>
+            <div class="min-w-0">
+              <div class="text-white text-sm font-medium break-words">${escapeHtml(note.author || '')}</div>
+              <div class="text-gray-500 text-[10px] uppercase tracking-wider break-words">${escapeHtml(note.date || '')}</div>
             </div>
           </div>
-        `;
-      }).join('')}
-    `;
+
+          <div class="flex items-center gap-2 shrink-0">
+            <button
+              type="button"
+              onclick="openNoteEditor(${Number(note.id)}); event.stopPropagation();"
+              class="p-2 rounded-lg bg-white/5 border border-white/10 text-gray-300 hover:text-white"
+            >
+              <i class="ph-bold ph-pencil-simple"></i>
+            </button>
+            <button
+              type="button"
+              onclick="deleteNote(${Number(note.id)}); event.stopPropagation();"
+              class="p-2 rounded-lg bg-rose-500/10 border border-rose-500/20 text-rose-300 hover:text-white"
+            >
+              <i class="ph-bold ph-trash"></i>
+            </button>
+          </div>
+        </div>
+
+        <div class="note-text-block text-sm text-gray-300">${escapeHtml(note.text || '')}</div>
+      </div>
+    `).join('');
   }
 
   function renderAssets() {
@@ -1255,24 +1453,86 @@
     }
 
     container.innerHTML = reviewItems.map(t => `
-      <div class="glass-card rounded-xl p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div class="flex items-start sm:items-center gap-4">
-          <div class="w-12 h-12 rounded-xl bg-black/50 border border-white/5 flex items-center justify-center shrink-0">
-            <i class="ph-duotone ph-user-check text-2xl text-gray-400"></i>
+      <button
+        type="button"
+        class="review-card-button"
+        onclick="openReviewInfo(${Number(t.id)})"
+      >
+        <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
+          <div class="flex items-start gap-4 min-w-0">
+            <div class="w-12 h-12 rounded-xl bg-black/50 border border-white/5 flex items-center justify-center shrink-0">
+              <i class="ph-duotone ph-user-check text-2xl text-purple-300"></i>
+            </div>
+
+            <div class="min-w-0">
+              <p class="text-white text-base mb-1 break-words">${escapeHtml(t.task || '')}</p>
+              <p class="text-gray-500 text-xs break-words">${escapeHtml(t.category || '')}</p>
+              <p class="text-gray-400 text-sm mt-3 line-clamp-2 break-words">
+                ${escapeHtml(t.notes || 'Click for full task info.')}
+              </p>
+            </div>
           </div>
-          <div>
-            <p class="text-white text-base mb-1">${escapeHtml(t.task || '')}</p>
-            <p class="text-gray-500 text-xs">${escapeHtml(t.category || '')}</p>
+
+          <div class="flex flex-col items-start sm:items-end gap-3 shrink-0">
+            <span class="px-3 py-1.5 rounded-full text-[10px] tracking-wider uppercase border text-center min-w-[120px] ${getStatusStyles(t.status)}">
+              ${escapeHtml(t.status || '')}
+            </span>
+
+            <span class="brand-info-chip">
+              <i class="ph-bold ph-info"></i>
+              Info
+            </span>
           </div>
         </div>
-        <div class="flex flex-col sm:flex-row items-start sm:items-center gap-3">
-          <span class="px-3 py-1.5 rounded-full text-[10px] tracking-wider uppercase border text-center min-w-[120px] ${getStatusStyles(t.status)}">
-            ${escapeHtml(t.status || '')}
-          </span>
-        </div>
-      </div>
+      </button>
     `).join('');
   }
+
+    function openReviewInfo(taskId) {
+    const task = workspaceData.tasks.find(t => Number(t.id) === Number(taskId));
+    if (!task) return;
+
+    document.getElementById('review-info-title').textContent = task.task || 'Task Info';
+
+    document.getElementById('review-info-meta').innerHTML = `
+      <span class="px-3 py-1.5 rounded-full text-[10px] tracking-wider uppercase border ${getStatusStyles(task.status)}">
+        ${escapeHtml(task.status || '')}
+      </span>
+      <span class="brand-info-chip">${escapeHtml(task.category || 'Uncategorized')}</span>
+      <span class="brand-info-chip">${escapeHtml(task.owner || 'Unassigned')}</span>
+      <span class="brand-info-chip">${escapeHtml(task.priority || 'No Priority')}</span>
+      <span class="brand-info-chip">${escapeHtml(task.due || 'No Due Date')}</span>
+    `;
+
+    document.getElementById('review-info-notes').textContent = task.notes || 'No notes added yet.';
+
+    const attachmentsWrap = document.getElementById('review-info-attachments');
+    if ((task.attachments || []).length) {
+      attachmentsWrap.innerHTML = task.attachments.map(file => `
+        <a
+          href="${escapeAttribute(file.url || '#')}"
+          target="_blank"
+          rel="noopener noreferrer"
+          class="inline-flex items-center gap-2 text-xs px-3 py-1.5 rounded-full bg-white/5 border border-white/10 text-purple-300 hover:text-white hover:border-purple-400/40"
+        >
+          <i class="ph-bold ph-paperclip"></i>
+          ${escapeHtml(file.label || 'Attachment')}
+        </a>
+      `).join('');
+    } else {
+      attachmentsWrap.innerHTML = `<p class="text-sm text-gray-500 italic">No attachments yet.</p>`;
+    }
+
+    const openTaskBtn = document.getElementById('review-info-open-task-btn');
+    openTaskBtn.onclick = () => {
+      closeModal(reviewInfoModal);
+      openTaskEditor(Number(task.id));
+    };
+
+    openModal(reviewInfoModal);
+  }
+
+  window.openReviewInfo = openReviewInfo;
 
   function renderAll() {
     applyProjectMeta();
@@ -1590,10 +1850,10 @@
   }
 
   function openNoteEditor(noteId) {
-    const note = workspaceData.notes.find(n => n.id === noteId);
+    const note = workspaceData.notes.find(n => Number(n.id) === Number(noteId));
     if (!note) return;
 
-    document.getElementById('note-edit-id').value = note.id;
+    document.getElementById('note-edit-id').value = Number(note.id);
     document.getElementById('note-edit-date').value = note.date || '';
     document.getElementById('note-edit-author').value = note.author || '';
     document.getElementById('note-edit-text').value = note.text || '';
@@ -1603,7 +1863,7 @@
 
   async function saveNoteFromModal() {
     const data = {
-      id: Number(document.getElementById('note-edit-id').value),
+      id: document.getElementById('note-edit-id').value ? Number(document.getElementById('note-edit-id').value) : '',
       date: document.getElementById('note-edit-date').value.trim(),
       author: document.getElementById('note-edit-author').value.trim() || 'Cassandre',
       text: document.getElementById('note-edit-text').value.trim()
@@ -1621,7 +1881,15 @@
     });
 
     const idx = workspaceData.notes.findIndex(n => Number(n.id) === Number(res.note.id));
-    if (idx !== -1) workspaceData.notes[idx] = { ...workspaceData.notes[idx], ...res.note };
+
+    if (idx === -1) {
+      workspaceData.notes.unshift(res.note);
+    } else {
+      workspaceData.notes[idx] = {
+        ...workspaceData.notes[idx],
+        ...res.note
+      };
+    }
 
     renderNotes();
     closeModal(noteModal);
@@ -1737,7 +2005,7 @@
     });
   }
 
-  document.addEventListener('DOMContentLoaded', async () => {
+  document.addEventListener('ContentLoaded', async () => {
     try {
       await loadWorkspaceData();
       renderAll();

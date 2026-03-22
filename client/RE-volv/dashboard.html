@@ -1135,6 +1135,19 @@
         ]);
       }
 
+      if (APP_CONFIG.AUTO_SYNC_PERFORMANCE_ON_LOAD) {
+        try {
+          await syncPerformanceData(365, { silent: true });
+        } catch (error) {
+          console.error("Initial GA sync failed:", error);
+        }
+      } else {
+        await Promise.all([
+          loadPerformanceFromSheet(),
+          loadPerformanceTrendFromSheet()
+        ]);
+      }
+
       if (APP_CONFIG.AUTO_SYNC_CLARITY_ON_LOAD) {
         try {
           await syncClarityData({ silent: true });

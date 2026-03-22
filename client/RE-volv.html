@@ -2024,6 +2024,7 @@ function renderTasks() {
 
 function showWorkspaceError(title, message) {
   const tasksList = document.getElementById('tasks-list');
+  const tasksSection = document.getElementById('section-tasks');
   const reviewContainer = document.getElementById('review-container');
   const scopeContainer = document.getElementById('scope-container');
   const notesContainer = document.getElementById('notes-container');
@@ -2044,11 +2045,43 @@ function showWorkspaceError(title, message) {
     </div>
   `;
 
-  if (tasksList) tasksList.innerHTML = errorCard;
-  if (reviewContainer) reviewContainer.innerHTML = '';
-  if (scopeContainer) scopeContainer.innerHTML = '';
-  if (notesContainer) notesContainer.innerHTML = '';
-  if (assetsGrid) assetsGrid.innerHTML = '';
+  if (tasksList) {
+    tasksList.innerHTML = errorCard;
+  } else if (tasksSection) {
+    tasksSection.innerHTML = errorCard;
+  }
+
+  if (reviewContainer) {
+    reviewContainer.innerHTML = `
+      <div class="glass-card rounded-xl p-6 text-gray-400 text-sm">
+        Review items unavailable while workspace data is loading.
+      </div>
+    `;
+  }
+
+  if (scopeContainer) {
+    scopeContainer.innerHTML = `
+      <div class="glass-card rounded-xl p-6 text-gray-400 text-sm">
+        Scope data unavailable.
+      </div>
+    `;
+  }
+
+  if (notesContainer) {
+    notesContainer.innerHTML = `
+      <div class="glass-card rounded-xl p-6 text-gray-400 text-sm">
+        Notes unavailable.
+      </div>
+    `;
+  }
+
+  if (assetsGrid) {
+    assetsGrid.innerHTML = `
+      <div class="glass-card rounded-xl p-6 text-gray-400 text-sm col-span-full">
+        Assets unavailable.
+      </div>
+    `;
+  }
 }
   
 document.addEventListener('DOMContentLoaded', async () => {

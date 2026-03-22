@@ -1161,6 +1161,13 @@
     audit: "Strategy & Implementation"
   };
 
+  const WORKSPACE_CONFIG = {
+  activeWorkspace: "project",
+  label: "Project Workspace",
+  icon: "ph-briefcase",
+  themeColor: "#ffd700"
+};
+
   const AUDIT_FALLBACK = {
     recommendations: {
       "cross-domain": {
@@ -1210,18 +1217,11 @@ document.addEventListener("DOMContentLoaded", async () => {
   renderHomeRecentUtmLinks([]);
   renderEmptyPerformanceState();
   renderEmptyUxState();
-  applyWorkspaceConfig();
-  initStars();
-  bindWorkspaceDropdown();
-  populateRegistry();
-
-  const now = new Date();
-  document.getElementById("sync-time").innerText =
-    `Synced: Today ${now.getHours().toString().padStart(2, "0")}:${now.getMinutes().toString().padStart(2, "0")}`;
-});
 
   try {
     await loadSettingsFromSheet();
+
+    applyWorkspaceConfig();
 
     await Promise.all([
       loadRegistryFromSheet(),

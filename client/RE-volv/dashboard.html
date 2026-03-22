@@ -1036,64 +1036,67 @@
     </div>
   </div>
 
-  <script>
-    const APP_CONFIG = {
-      APPS_SCRIPT_URL: "https://script.google.com/macros/s/AKfycbxw5cNKBIBNPZ6DAKS_EUl14dX5dWduZqtqAhcE1USMqFCHlwObgmlcR2BG8_4gE3zN/exec"
-    };
-        
-    let PORTAL_CONFIG = {
-      clientName: "Loading...",
-      clientLogoIcon: "ph-sun-horizon",
-      themeColor: "#ffd700",
-      lookerStudioUrl: "",
-      clarityUrl: "",
-      backendType: "Google Sheets"
-    };
+ <script>
+  const APP_CONFIG = {
+    APPS_SCRIPT_URL: "https://script.google.com/macros/s/AKfycbxr6FoqinscJVANJya1rlklxpahaJibURdoVps4u3Yw0GYZ4fQtj33zv8yoAzGtwRT5/exec"
+  };
 
-    const VALID_VIEWS = ["home", "reports", "utm", "ux", "audit"];
+  let PORTAL_CONFIG = {
+    clientName: "Loading...",
+    clientLogoIcon: "ph-sun-horizon",
+    themeColor: "#ffd700",
+    lookerStudioUrl: "",
+    clarityUrl: "",
+    backendType: "Google Sheets"
+  };
 
-    const VIEW_TITLES = {
-      home: "Overview",
-      reports: "Visual Intelligence",
-      utm: "UTM Matrix",
-      ux: "Experience Friction",
-      audit: "Strategy & Implementation"
-    };
+  const VALID_VIEWS = ["home", "reports", "utm", "ux", "audit"];
 
-    const mockRegistry = [
-      { campaign: "Q4_Solar_Savings", source: "linkedin", medium: "social", date: "Oct 26, 2024" },
-      { campaign: "Newsletter_Oct", source: "hs_email", medium: "email", date: "Oct 24, 2024" },
-      { campaign: "Search_Brand_T1", source: "google", medium: "cpc", date: "Oct 20, 2024" }
-    ];
+  const VIEW_TITLES = {
+    home: "Overview",
+    reports: "Visual Intelligence",
+    utm: "UTM Matrix",
+    ux: "Experience Friction",
+    audit: "Strategy & Implementation"
+  };
 
-    const AUDIT_DATA = {
-      recommendations: {
-        "cross-domain": {
-          title: "Fix GA4 Cross-Domain Tracking",
-          finding: "Traffic moving between main site and donation portal is losing UTM parameters. This causes conversions to show as direct instead of attributed to campaigns.",
-          steps: "GA4 Admin > Data Streams > Web > Configure tag settings > Configure your domains",
-          impact: "Currently around 15% of conversions are unattributed. Fixing this reveals true campaign ROI and improves budget allocation.",
-          category: "Tracking",
-          priority: "High"
-        },
-        "meta-utms": {
-          title: "Standardize Meta Ad UTMs",
-          finding: "Current Meta ads use hardcoded UTMs that differ from naming convention. Data is splitting in reports.",
-          steps: "Implement dynamic parameters in Meta Ads Manager and align naming with the UTM registry.",
-          impact: "Will consolidate reporting and enable proper campaign-level analysis.",
-          category: "Campaigns",
-          priority: "Medium"
-        },
-        "mobile-hero": {
-          title: "Shorten Mobile Hero Section",
-          finding: "Mobile scroll depth is materially lower than desktop. Users are not seeing key content below the fold.",
-          steps: "Reduce hero height on mobile and move the primary CTA above the fold.",
-          impact: "Expected lift in mobile engagement and conversion rate.",
-          category: "UX",
-          priority: "High"
-        }
+  const mockRegistry = [
+    { campaign: "Q4_Solar_Savings", source: "linkedin", medium: "social", date: "Oct 26, 2024" },
+    { campaign: "Newsletter_Oct", source: "hs_email", medium: "email", date: "Oct 24, 2024" },
+    { campaign: "Search_Brand_T1", source: "google", medium: "cpc", date: "Oct 20, 2024" }
+  ];
+
+  const AUDIT_DATA = {
+    recommendations: {
+      "cross-domain": {
+        title: "Fix GA4 Cross-Domain Tracking",
+        finding: "Traffic moving between main site and donation portal is losing UTM parameters. This causes conversions to show as direct instead of attributed to campaigns.",
+        steps: "GA4 Admin > Data Streams > Web > Configure tag settings > Configure your domains",
+        impact: "Currently around 15% of conversions are unattributed. Fixing this reveals true campaign ROI and improves budget allocation.",
+        category: "Tracking",
+        priority: "High"
+      },
+      "meta-utms": {
+        title: "Standardize Meta Ad UTMs",
+        finding: "Current Meta ads use hardcoded UTMs that differ from naming convention. Data is splitting in reports.",
+        steps: "Implement dynamic parameters in Meta Ads Manager and align naming with the UTM registry.",
+        impact: "Will consolidate reporting and enable proper campaign-level analysis.",
+        category: "Campaigns",
+        priority: "Medium"
+      },
+      "mobile-hero": {
+        title: "Shorten Mobile Hero Section",
+        finding: "Mobile scroll depth is materially lower than desktop. Users are not seeing key content below the fold.",
+        steps: "Reduce hero height on mobile and move the primary CTA above the fold.",
+        impact: "Expected lift in mobile engagement and conversion rate.",
+        category: "UX",
+        priority: "High"
       }
-    };
+    }
+  };
+
+  let currentRegistryItems = [...mockRegistry];
+  let currentAuditItems = [];
 
   document.addEventListener("DOMContentLoaded", async () => {
     applyConfig();
@@ -1104,15 +1107,16 @@
     bindReportFilters();
     bindUXFilters();
     bindAuditFilters();
-  
+
     const now = new Date();
     const syncTime = document.getElementById("sync-time");
     if (syncTime) {
       syncTime.innerText = `Synced: Today ${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`;
     }
-  
+
     switchView(getInitialView(), false);
-  
+    renderRegistry(currentRegistryItems);
+
     try {
       await loadSettingsFromSheet();
       await loadRegistryFromSheet();
@@ -1125,508 +1129,570 @@
     }
   });
 
-    async function loadSettingsFromSheet() {
-      const data = await apiGet("getSettings");
-      if (!data.ok) throw new Error(data.error || "Failed to load settings");
-    
-      PORTAL_CONFIG.clientName = data.settings.clientName || "Client";
-      PORTAL_CONFIG.clarityUrl = data.settings.clarityUrl || "";
-      PORTAL_CONFIG.lookerStudioUrl = data.settings.lookerEmbedUrl || "";
-    
-      applyConfig();
+  async function loadSettingsFromSheet() {
+    const data = await apiGet("getSettings");
+    if (!data.ok) throw new Error(data.error || "Failed to load settings");
+
+    PORTAL_CONFIG.clientName = data.settings.clientName || "Client";
+    PORTAL_CONFIG.clarityUrl = data.settings.clarityUrl || "";
+    PORTAL_CONFIG.lookerStudioUrl = data.settings.lookerEmbedUrl || "";
+
+    applyConfig();
+  }
+
+  async function loadRegistryFromSheet(query = "") {
+    const data = await apiGet("getRegistry", { q: query });
+    if (!data.ok) throw new Error(data.error || "Failed to load registry");
+    currentRegistryItems = Array.isArray(data.registry) ? data.registry : [];
+    renderRegistry(currentRegistryItems);
+  }
+
+  async function loadAuditFromSheet(status = "all") {
+    const data = await apiGet("getAuditNotes", { status });
+    if (!data.ok) throw new Error(data.error || "Failed to load audit notes");
+    currentAuditItems = Array.isArray(data.notes) ? data.notes : [];
+    renderAuditTable(currentAuditItems);
+  }
+
+  async function loadResourcesFromSheet() {
+    const data = await apiGet("getResourceLinks");
+    if (!data.ok) throw new Error(data.error || "Failed to load resource links");
+    console.log("Resource links", data.links);
+  }
+
+  async function loadPerformanceFromSheet() {
+    const params = {
+      source: document.getElementById("filter-source")?.value || "all",
+      medium: document.getElementById("filter-medium")?.value || "all",
+      campaign: document.getElementById("filter-campaign")?.value || "all",
+      landing_page: document.getElementById("filter-landing")?.value || "all"
+    };
+
+    const data = await apiGet("getPerformanceSummary", params);
+    if (!data.ok) throw new Error(data.error || "Failed to load performance summary");
+
+    const summary = data.summary || {};
+    const sessionsEl = document.getElementById("kpi-sessions");
+    const usersEl = document.getElementById("kpi-users");
+    const conversionsEl = document.getElementById("kpi-conversions");
+    const rateEl = document.getElementById("kpi-rate");
+    const durationEl = document.getElementById("kpi-duration");
+    const topSourceEl = document.getElementById("kpi-top-source");
+
+    if (sessionsEl) sessionsEl.textContent = formatNumber(summary.sessions || 0);
+    if (usersEl) usersEl.textContent = formatNumber(summary.users || 0);
+    if (conversionsEl) conversionsEl.textContent = formatNumber(summary.conversions || 0);
+    if (rateEl) rateEl.textContent = formatPercent(summary.conversionRate || 0);
+    if (durationEl) durationEl.textContent = formatDuration(summary.avgSessionDurationSeconds || 0);
+    if (topSourceEl) topSourceEl.textContent = capitalize(summary.topSource || "-");
+  }
+
+  function applyConfig() {
+    const clientName = document.getElementById("client-name");
+    const clientLogo = document.getElementById("client-logo");
+
+    if (clientName) clientName.textContent = PORTAL_CONFIG.clientName;
+    document.documentElement.style.setProperty("--client-color", PORTAL_CONFIG.themeColor);
+
+    if (clientLogo) {
+      clientLogo.className = `ph-fill ${PORTAL_CONFIG.clientLogoIcon} text-[var(--client-color)] text-lg`;
     }
-    
-    async function loadRegistryFromSheet(query = "") {
-      const data = await apiGet("getRegistry", { q: query });
-      if (!data.ok) throw new Error(data.error || "Failed to load registry");
-      renderRegistry(data.registry || []);
-    }
-    
-    async function loadAuditFromSheet(status = "all") {
-      const data = await apiGet("getAuditNotes", { status });
-      if (!data.ok) throw new Error(data.error || "Failed to load audit notes");
-      renderAuditTable(data.notes || []);
-    }
-    
-    async function loadResourcesFromSheet() {
-      const data = await apiGet("getResourceLinks");
-      if (!data.ok) throw new Error(data.error || "Failed to load resource links");
-      console.log("Resource links", data.links);
-    }
-    
-    async function loadPerformanceFromSheet() {
-      const data = await apiGet("getPerformanceSummary");
-      if (!data.ok) throw new Error(data.error || "Failed to load performance summary");
-    
-      const summary = data.summary || {};
-      const sessionsEl = document.getElementById("kpi-sessions");
-      const usersEl = document.getElementById("kpi-users");
-      const conversionsEl = document.getElementById("kpi-conversions");
-      const rateEl = document.getElementById("kpi-rate");
-      const durationEl = document.getElementById("kpi-duration");
-      const topSourceEl = document.getElementById("kpi-top-source");
-    
-      if (sessionsEl) sessionsEl.textContent = formatNumber(summary.sessions || 0);
-      if (usersEl) usersEl.textContent = formatNumber(summary.users || 0);
-      if (conversionsEl) conversionsEl.textContent = formatNumber(summary.conversions || 0);
-      if (rateEl) rateEl.textContent = formatPercent(summary.conversionRate || 0);
-      if (durationEl) durationEl.textContent = formatDuration(summary.avgSessionDurationSeconds || 0);
-      if (topSourceEl) topSourceEl.textContent = capitalize(summary.topSource || "-");
-    }
+  }
 
-    function applyConfig() {
-      const clientName = document.getElementById("client-name");
-      const clientLogo = document.getElementById("client-logo");
+  function getInitialView() {
+    const hash = window.location.hash.replace("#", "").trim().toLowerCase();
+    return VALID_VIEWS.includes(hash) ? hash : "home";
+  }
 
-      if (clientName) clientName.textContent = PORTAL_CONFIG.clientName;
-      document.documentElement.style.setProperty("--client-color", PORTAL_CONFIG.themeColor);
+  function bindNavigation() {
+    document.addEventListener("click", (event) => {
+      const trigger = event.target.closest("[data-view]");
+      if (!trigger) return;
+      event.preventDefault();
+      const viewId = trigger.getAttribute("data-view");
+      switchView(viewId);
+    });
+  }
 
-      if (clientLogo) {
-        clientLogo.className = `ph-fill ${PORTAL_CONFIG.clientLogoIcon} text-[var(--client-color)] text-lg`;
-      }
-    }
+  function bindExternalButtons() {
+    document.addEventListener("click", (event) => {
+      const trigger = event.target.closest("[data-open-url]");
+      if (!trigger) return;
+      const url = trigger.getAttribute("data-open-url");
+      if (!url) return;
 
-    function getInitialView() {
-      const hash = window.location.hash.replace("#", "").trim().toLowerCase();
-      return VALID_VIEWS.includes(hash) ? hash : "home";
-    }
+      const resolvedUrl =
+        url === "PORTAL_CONFIG.clarityUrl" ? PORTAL_CONFIG.clarityUrl :
+        url === "PORTAL_CONFIG.lookerStudioUrl" ? PORTAL_CONFIG.lookerStudioUrl :
+        url;
 
-    function bindNavigation() {
-      document.addEventListener("click", (event) => {
-        const trigger = event.target.closest("[data-view]");
-        if (!trigger) return;
-        event.preventDefault();
-        const viewId = trigger.getAttribute("data-view");
-        switchView(viewId);
-      });
-    }
+      if (resolvedUrl) window.open(resolvedUrl, "_blank", "noopener,noreferrer");
+    });
+  }
 
-    function bindExternalButtons() {
-      document.addEventListener("click", (event) => {
-        const trigger = event.target.closest("[data-open-url]");
-        if (!trigger) return;
-        const url = trigger.getAttribute("data-open-url");
-        if (url) window.open(url, "_blank", "noopener,noreferrer");
-      });
-    }
+  function switchView(viewId, updateHash = true) {
+    if (!VALID_VIEWS.includes(viewId)) return;
 
-    function switchView(viewId, updateHash = true) {
-      if (!VALID_VIEWS.includes(viewId)) return;
+    const nextNav = document.getElementById(`nav-${viewId}`);
+    const nextView = document.getElementById(`view-${viewId}`);
+    const headerTitle = document.getElementById("header-title");
+    const scrollWrap = document.getElementById("content-scroll");
 
-      const nextNav = document.getElementById(`nav-${viewId}`);
-      const nextView = document.getElementById(`view-${viewId}`);
-      const headerTitle = document.getElementById("header-title");
-      const scrollWrap = document.getElementById("content-scroll");
+    if (!nextNav || !nextView) return;
 
-      if (!nextNav || !nextView) return;
-
-      document.querySelectorAll(".nav-item").forEach((el) => {
-        el.classList.remove("active");
-        el.setAttribute("aria-current", "false");
-      });
-
-      document.querySelectorAll(".view-section").forEach((el) => {
-        el.classList.remove("active");
-        el.hidden = true;
-      });
-
-      nextNav.classList.add("active");
-      nextNav.setAttribute("aria-current", "page");
-      nextView.hidden = false;
-      nextView.classList.add("active");
-
-      if (headerTitle) headerTitle.textContent = VIEW_TITLES[viewId] || "Workspace";
-      if (updateHash) history.replaceState(null, "", `#${viewId}`);
-      if (scrollWrap) scrollWrap.scrollTo({ top: 0, behavior: "smooth" });
-    }
-
-    window.addEventListener("hashchange", () => {
-      switchView(getInitialView(), false);
+    document.querySelectorAll(".nav-item").forEach((el) => {
+      el.classList.remove("active");
+      el.setAttribute("aria-current", "false");
     });
 
-    function bindUTMEvents() {
-      const fields = ["utm-url", "utm-source", "utm-medium", "utm-campaign", "utm-term", "utm-content"];
-      fields.forEach((id) => {
-        const el = document.getElementById(id);
-        if (!el) return;
-        el.addEventListener("input", generateUTM);
-        el.addEventListener("change", generateUTM);
-      });
+    document.querySelectorAll(".view-section").forEach((el) => {
+      el.classList.remove("active");
+      el.hidden = true;
+    });
 
-      document.getElementById("toggle-optional-fields")?.addEventListener("click", () => {
-        document.getElementById("optional-fields")?.classList.toggle("hidden");
-      });
+    nextNav.classList.add("active");
+    nextNav.setAttribute("aria-current", "page");
+    nextView.hidden = false;
+    nextView.classList.add("active");
 
-      document.getElementById("copy-utm-button")?.addEventListener("click", copyUTM);
-      document.getElementById("save-utm-button")?.addEventListener("click", saveUTM);
-      document.getElementById("registry-search")?.addEventListener("input", (event) => populateRegistry(event.target.value));
+    if (headerTitle) headerTitle.textContent = VIEW_TITLES[viewId] || "Workspace";
+    if (updateHash) history.replaceState(null, "", `#${viewId}`);
+    if (scrollWrap) scrollWrap.scrollTo({ top: 0, behavior: "smooth" });
+  }
+
+  window.addEventListener("hashchange", () => {
+    switchView(getInitialView(), false);
+  });
+
+  function bindUTMEvents() {
+    const fields = ["utm-url", "utm-source", "utm-medium", "utm-campaign", "utm-term", "utm-content"];
+    fields.forEach((id) => {
+      const el = document.getElementById(id);
+      if (!el) return;
+      el.addEventListener("input", generateUTM);
+      el.addEventListener("change", generateUTM);
+    });
+
+    document.getElementById("toggle-optional-fields")?.addEventListener("click", () => {
+      document.getElementById("optional-fields")?.classList.toggle("hidden");
+    });
+
+    document.getElementById("copy-utm-button")?.addEventListener("click", copyUTM);
+    document.getElementById("save-utm-button")?.addEventListener("click", saveUTM);
+
+    document.getElementById("registry-search")?.addEventListener("input", (event) => {
+      populateRegistry(event.target.value);
+    });
+  }
+
+  function generateUTM() {
+    const urlValue = document.getElementById("utm-url")?.value.trim() || "";
+    const result = document.getElementById("utm-result");
+    if (!result) return;
+
+    if (!urlValue) {
+      result.value = "";
+      return;
     }
 
-    function generateUTM() {
-      const urlValue = document.getElementById("utm-url")?.value.trim() || "";
-      const result = document.getElementById("utm-result");
-      if (!result) return;
-
-      if (!urlValue) {
-        result.value = "";
-        return;
-      }
-
-      try {
-        const source = document.getElementById("utm-source")?.value || "";
-        const medium = document.getElementById("utm-medium")?.value || "";
-        const campaign = document.getElementById("utm-campaign")?.value.trim() || "";
-        const term = document.getElementById("utm-term")?.value.trim() || "";
-        const content = document.getElementById("utm-content")?.value.trim() || "";
-
-        const url = new URL(urlValue);
-        if (source) url.searchParams.set("utm_source", source.toLowerCase());
-        if (medium) url.searchParams.set("utm_medium", medium.toLowerCase());
-        if (campaign) url.searchParams.set("utm_campaign", campaign.replace(/\s+/g, "_"));
-        if (term) url.searchParams.set("utm_term", term);
-        if (content) url.searchParams.set("utm_content", content);
-
-        result.value = url.toString();
-      } catch {
-        result.value = "Waiting for valid URL format (include https://)...";
-      }
-    }
-
-    function copyUTM() {
-      const value = document.getElementById("utm-result")?.value || "";
-      if (!value || value.startsWith("Waiting")) return;
-      navigator.clipboard.writeText(value).then(() => {
-        showToast("Copied!", "Link copied to clipboard.", "ph-copy");
-      });
-    }
-
-    async function saveUTM() {
-      const destinationUrl = document.getElementById("utm-url")?.value.trim() || "";
+    try {
       const source = document.getElementById("utm-source")?.value || "";
       const medium = document.getElementById("utm-medium")?.value || "";
       const campaign = document.getElementById("utm-campaign")?.value.trim() || "";
-      const content = document.getElementById("utm-content")?.value.trim() || "";
       const term = document.getElementById("utm-term")?.value.trim() || "";
-      const notes = document.getElementById("utm-notes")?.value.trim() || "";
-      const result = document.getElementById("utm-result")?.value || "";
-    
-      if (!destinationUrl || !source || !medium || !campaign || !result || result.startsWith("Waiting")) {
-        showToast("Incomplete", "Please fill required fields to save.", "ph-warning", "text-amber-400");
-        return;
-      }
-    
-      try {
-        const response = await apiPost("saveUTM", {
-          destinationUrl,
-          source,
-          medium,
-          campaign,
-          campaignName: campaign,
-          content,
-          term,
-          notes
-        });
-    
-        if (!response.ok) throw new Error(response.error || "Save failed");
-    
-        await loadRegistryFromSheet();
-        showToast("Saved Successfully", "Link added to master registry.", "ph-check-circle");
-      } catch (error) {
-        console.error(error);
-        showToast("Save Error", "Could not save to sheet.", "ph-warning", "text-amber-400");
-      }
+      const content = document.getElementById("utm-content")?.value.trim() || "";
+
+      const url = new URL(urlValue);
+      if (source) url.searchParams.set("utm_source", source.toLowerCase());
+      if (medium) url.searchParams.set("utm_medium", medium.toLowerCase());
+      if (campaign) url.searchParams.set("utm_campaign", campaign.replace(/\s+/g, "_"));
+      if (term) url.searchParams.set("utm_term", term);
+      if (content) url.searchParams.set("utm_content", content);
+
+      result.value = url.toString();
+    } catch {
+      result.value = "Waiting for valid URL format (include https://)...";
     }
+  }
+
+  function copyUTM() {
+    const value = document.getElementById("utm-result")?.value || "";
+    if (!value || value.startsWith("Waiting")) return;
+
+    navigator.clipboard.writeText(value).then(() => {
+      showToast("Copied!", "Link copied to clipboard.", "ph-copy");
+    });
+  }
+
+  async function saveUTM() {
+    const destinationUrl = document.getElementById("utm-url")?.value.trim() || "";
+    const source = document.getElementById("utm-source")?.value || "";
+    const medium = document.getElementById("utm-medium")?.value || "";
+    const campaign = document.getElementById("utm-campaign")?.value.trim() || "";
+    const content = document.getElementById("utm-content")?.value.trim() || "";
+    const term = document.getElementById("utm-term")?.value.trim() || "";
+    const notes = document.getElementById("utm-notes")?.value.trim() || "";
+    const result = document.getElementById("utm-result")?.value || "";
+
+    if (!destinationUrl || !source || !medium || !campaign || !result || result.startsWith("Waiting")) {
+      showToast("Incomplete", "Please fill required fields to save.", "ph-warning", "text-amber-400");
+      return;
+    }
+
+    try {
+      const response = await apiPost("saveUTM", {
+        destinationUrl,
+        source,
+        medium,
+        campaign,
+        campaignName: campaign,
+        content,
+        term,
+        notes
+      });
+
+      if (!response.ok) throw new Error(response.error || "Save failed");
+
+      await loadRegistryFromSheet();
+      showToast("Saved Successfully", "Link added to master registry.", "ph-check-circle");
+    } catch (error) {
+      console.error(error);
+      showToast("Save Error", "Could not save to sheet.", "ph-warning", "text-amber-400");
+    }
+  }
+
+  function renderRegistry(items) {
+    const tbody = document.getElementById("registry-tbody");
+    if (!tbody) return;
+
+    tbody.innerHTML = (items || []).map((item) => `
+      <tr>
+        <td>
+          <div class="font-medium text-white mb-0.5">${escapeHtml(item.campaignName || item.campaign || item.campaignId || "")}</div>
+          <div class="text-[10px] text-gray-500 font-mono truncate max-w-[240px]">${escapeHtml(item.fullUtmLink || item.destinationUrl || "Simulated URL data...")}</div>
+        </td>
+        <td>
+          <span class="badge ${getBadgeColor(item.source)}">${escapeHtml(item.source || "")}</span>
+          <span class="text-gray-600 mx-1">/</span>
+          <span class="text-xs text-gray-400">${escapeHtml(item.medium || "")}</span>
+        </td>
+        <td><div class="text-xs text-gray-400">${escapeHtml(item.dateCreated || item.date || "")}</div></td>
+        <td>
+          <button
+            type="button"
+            class="registry-copy-btn text-gray-500 hover:text-purple-400 transition-colors"
+            data-copy-value="${escapeHtml(item.fullUtmLink || item.destinationUrl || "")}"
+          >
+            <i class="ph-bold ph-copy"></i>
+          </button>
+        </td>
+      </tr>
+    `).join("");
+
+    tbody.querySelectorAll(".registry-copy-btn").forEach((button) => {
+      button.addEventListener("click", () => {
+        const value = button.getAttribute("data-copy-value") || "";
+        if (!value) return;
+        navigator.clipboard.writeText(value).then(() => {
+          showToast("Copied!", "Registry link copied to clipboard.", "ph-copy");
+        });
+      });
+    });
+  }
 
   function renderAuditTable(items) {
-  const tbody = document.querySelector("#audit-recommendations-table tbody");
-  if (!tbody) return;
+    const tbody = document.querySelector("#audit-recommendations-table tbody");
+    if (!tbody) return;
 
-  tbody.innerHTML = items.map((item) => `
-    <tr data-status="${escapeHtml(item.status || "")}" data-audit-id="${escapeHtml(item.noteId || "")}">
-      <td><div class="w-2 h-2 rounded-full ${priorityDotClass(item.priority)}"></div></td>
-      <td class="font-medium text-white text-sm">${escapeHtml(item.title || "")}</td>
-      <td><span class="badge ${categoryBadgeClass(item.category)}">${escapeHtml(item.category || "")}</span></td>
-      <td><span class="badge ${priorityBadgeClass(item.priority)}">${escapeHtml(item.priority || "")}</span></td>
-      <td><span class="text-xs text-gray-300">${escapeHtml(item.status || "")}</span></td>
-      <td class="text-xs text-gray-400">${escapeHtml(item.linkedLandingPage || item.linkedCampaignId || "")}</td>
-    </tr>
-  `).join("");
+    tbody.innerHTML = items.map((item) => `
+      <tr data-status="${escapeHtml(item.status || "")}" data-audit-id="${escapeHtml(item.noteId || "")}">
+        <td><div class="w-2 h-2 rounded-full ${priorityDotClass(item.priority)}"></div></td>
+        <td class="font-medium text-white text-sm">${escapeHtml(item.title || "")}</td>
+        <td><span class="badge ${categoryBadgeClass(item.category)}">${escapeHtml(item.category || "")}</span></td>
+        <td><span class="badge ${priorityBadgeClass(item.priority)}">${escapeHtml(item.priority || "")}</span></td>
+        <td><span class="text-xs text-gray-300">${escapeHtml(item.status || "")}</span></td>
+        <td class="text-xs text-gray-400">${escapeHtml(item.linkedLandingPage || item.linkedCampaignId || "")}</td>
+      </tr>
+    `).join("");
 
-  document.querySelectorAll("#audit-recommendations-table tbody tr").forEach((row) => {
-    row.addEventListener("click", () => {
-      const id = row.getAttribute("data-audit-id");
-      const item = items.find(note => note.noteId === id);
-      if (!item) return;
-
-      const panel = document.getElementById("audit-detail-panel");
-      if (!panel) return;
-
-      panel.innerHTML = `
-        <div class="p-4 bg-black/20 rounded border border-white/5">
-          <h4 class="text-xs font-bold text-cyan-300 mb-2 uppercase tracking-wider">${escapeHtml(item.title || "")}</h4>
-          <p class="text-xs text-gray-400 mb-3">${escapeHtml(item.finding || "")}</p>
-          <div class="text-xs text-gray-500 bg-black/40 p-2 rounded border border-white/10">${escapeHtml(item.recommendation || "")}</div>
-        </div>
-      `;
+    tbody.querySelectorAll("tr").forEach((row) => {
+      row.addEventListener("click", () => {
+        const id = row.getAttribute("data-audit-id");
+        showAuditDetail(id);
+      });
     });
-  });
-}
+  }
 
-    function formatNumber(value) {
-      return Number(value || 0).toLocaleString();
-    }
-    
-    function formatPercent(value) {
-      return `${(Number(value || 0) * 100).toFixed(1)}%`;
-    }
-    
-    function formatDuration(seconds) {
-      const total = Math.round(Number(seconds || 0));
-      const mins = Math.floor(total / 60);
-      const secs = total % 60;
-      return `${mins}:${String(secs).padStart(2, "0")}`;
-    }
-    
-    function capitalize(value) {
-      const str = String(value || "");
-      if (!str) return "";
-      return str.charAt(0).toUpperCase() + str.slice(1);
-    }
-    
-    function escapeHtml(value) {
-      return String(value || "")
-        .replaceAll("&", "&amp;")
-        .replaceAll("<", "&lt;")
-        .replaceAll(">", "&gt;")
-        .replaceAll('"', "&quot;")
-        .replaceAll("'", "&#39;");
-    }
-    
-    function priorityDotClass(priority) {
-      const p = String(priority || "").toLowerCase();
-      if (p === "high") return "bg-rose-500";
-      if (p === "medium") return "bg-amber-500";
-      return "bg-emerald-500";
-    }
-    
-    function priorityBadgeClass(priority) {
-      const p = String(priority || "").toLowerCase();
-      if (p === "high") return "badge-rose";
-      if (p === "medium") return "badge-gold";
-      return "badge-emerald";
-    }
-    
-    function categoryBadgeClass(category) {
-      const c = String(category || "").toLowerCase();
-      if (c === "tracking") return "badge-cyan";
-      if (c === "campaign") return "badge-purple";
-      if (c === "campaigns") return "badge-purple";
-      if (c === "ux") return "badge-rose";
-      return "badge-gold";
-    }
-    function populateRegistry(query = "") {
-      const tbody = document.getElementById("registry-tbody");
-      if (!tbody) return;
+  function showAuditDetail(id) {
+    const panel = document.getElementById("audit-detail-panel");
+    if (!panel) return;
 
-      const q = String(query || "").trim().toLowerCase();
-      const filtered = mockRegistry.filter((item) => {
-        if (!q) return true;
-        return [item.campaign, item.source, item.medium, item.date].join(" ").toLowerCase().includes(q);
-      });
-
-      tbody.innerHTML = filtered.map((item) => `
-        <tr>
-          <td>
-            <div class="font-medium text-white mb-0.5">${item.campaign}</div>
-            <div class="text-[10px] text-gray-500 font-mono truncate max-w-[200px]">Simulated URL data...</div>
-          </td>
-          <td><span class="badge ${getBadgeColor(item.source)}">${item.source}</span> <span class="text-gray-600 mx-1">/</span> <span class="text-xs text-gray-400">${item.medium}</span></td>
-          <td><div class="text-xs text-gray-400">${item.date}</div></td>
-          <td><button type="button" class="text-gray-500 hover:text-purple-400 transition-colors"><i class="ph-bold ph-copy"></i></button></td>
-        </tr>
-      `).join("");
-    }
-    async function apiGet(action, params = {}) {
-      const url = new URL(APP_CONFIG.APPS_SCRIPT_URL);
-      url.searchParams.set("action", action);
-    
-      Object.entries(params).forEach(([key, value]) => {
-        if (value !== undefined && value !== null && value !== "") {
-          url.searchParams.set(key, value);
-        }
-      });
-    
-      const response = await fetch(url.toString());
-      if (!response.ok) throw new Error("Request failed");
-      return response.json();
-    }
-    
-    async function apiPost(action, payload = {}) {
-      const response = await fetch(APP_CONFIG.APPS_SCRIPT_URL, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({ action, payload })
-      });
-    
-      if (!response.ok) throw new Error("Request failed");
-      return response.json();
-    }
-
-    function getBadgeColor(source) {
-      return {
-        google: "badge-emerald",
-        linkedin: "badge-purple",
-        hs_email: "badge-cyan",
-        facebook: "badge-rose"
-      }[source] || "badge-gold";
-    }
-
-    function bindReportFilters() {
-      ["filter-date-range", "filter-campaign", "filter-source", "filter-medium", "filter-landing"].forEach((id) => {
-        const el = document.getElementById(id);
-        if (el) el.addEventListener("change", applyReportFilters);
-      });
-
-      document.getElementById("reset-report-filters")?.addEventListener("click", resetReportFilters);
-      document.getElementById("refresh-reports-button")?.addEventListener("click", refreshReportsData);
-    }
-
-    function applyReportFilters() {
-      document.getElementById("reports-last-updated").textContent = "Updated: Just now";
-      showToast("Filters Applied", "Reports updated with new criteria.", "ph-check-circle");
-    }
-
-    function resetReportFilters() {
-      const defaults = {
-        "filter-date-range": "30",
-        "filter-campaign": "all",
-        "filter-source": "all",
-        "filter-medium": "all",
-        "filter-landing": "all"
-      };
-
-      Object.entries(defaults).forEach(([id, value]) => {
-        const el = document.getElementById(id);
-        if (el) el.value = value;
-      });
-
-      applyReportFilters();
-    }
-
-    function refreshReportsData() {
-      document.getElementById("reports-last-updated").textContent = "Updated: Just now";
-      showToast("Data Refreshed", "Latest metrics loaded.", "ph-check-circle");
-    }
-
-    function bindUXFilters() {
-      ["ux-filter-date", "ux-filter-page", "ux-filter-device"].forEach((id) => {
-        const el = document.getElementById(id);
-        if (el) el.addEventListener("change", applyUXFilters);
-      });
-
-      document.getElementById("sync-clarity-button")?.addEventListener("click", syncClarityData);
-      document.getElementById("highlight-friction-page")?.addEventListener("click", () => {
-        const pageSelect = document.getElementById("ux-filter-page");
-        if (pageSelect) pageSelect.value = "/solar-savings";
-        applyUXFilters();
-      });
-    }
-
-    function applyUXFilters() {
-      document.getElementById("ux-last-updated").textContent = "Updated: Just now";
-      showToast("Filters Applied", "UX insights updated.", "ph-check-circle");
-    }
-
-    function syncClarityData() {
-      document.getElementById("ux-last-updated").textContent = "Updated: Just now";
-      showToast("Sync Complete", "Clarity data refreshed.", "ph-check-circle");
-    }
-
-    function bindAuditFilters() {
-      document.querySelectorAll(".audit-filter-btn").forEach((btn) => {
-        btn.addEventListener("click", () => {
-          filterAuditByStatus(btn.getAttribute("data-audit-status"));
-        });
-      });
-
-      document.querySelectorAll("#audit-recommendations-table tbody tr").forEach((row) => {
-        row.addEventListener("click", () => {
-          const id = row.getAttribute("data-audit-id");
-          if (id) showAuditDetail(id);
-        });
-      });
-    }
-
-    function filterAuditByStatus(status) {
-      document.querySelectorAll(".audit-filter-btn").forEach((btn) => {
-        const isActive = btn.getAttribute("data-audit-status") === status;
-        btn.className = isActive
-          ? "audit-filter-btn px-3 py-1 rounded text-xs bg-purple-500/20 text-purple-300 border border-purple-500/30"
-          : "audit-filter-btn px-3 py-1 rounded text-xs bg-black/30 text-gray-400 border border-white/10 hover:bg-white/5";
-      });
-
-      document.querySelectorAll("#audit-recommendations-table tbody tr").forEach((row) => {
-        row.style.display = status === "all" || row.dataset.status === status ? "" : "none";
-      });
-    }
-
-    function showAuditDetail(id) {
-      const detail = AUDIT_DATA.recommendations[id];
-      const panel = document.getElementById("audit-detail-panel");
-      if (!detail || !panel) return;
-
+    const liveItem = currentAuditItems.find((note) => String(note.noteId) === String(id));
+    if (liveItem) {
       panel.innerHTML = `
         <div class="p-4 bg-black/20 rounded border border-white/5">
-          <h4 class="text-xs font-bold text-cyan-300 mb-2 uppercase tracking-wider">${detail.title}</h4>
-          <p class="text-xs text-gray-400 mb-3">${detail.finding}</p>
-          <div class="text-xs text-gray-500 font-mono bg-black/40 p-2 rounded border border-white/10">${detail.steps}</div>
-        </div>
-        <div class="p-4 bg-black/20 rounded border border-white/5">
-          <h4 class="text-xs font-bold text-cyan-300 mb-2 uppercase tracking-wider">Impact Assessment</h4>
-          <p class="text-xs text-gray-400">${detail.impact}</p>
+          <h4 class="text-xs font-bold text-cyan-300 mb-2 uppercase tracking-wider">${escapeHtml(liveItem.title || "")}</h4>
+          <p class="text-xs text-gray-400 mb-3">${escapeHtml(liveItem.finding || "")}</p>
+          <div class="text-xs text-gray-500 bg-black/40 p-2 rounded border border-white/10">${escapeHtml(liveItem.recommendation || "")}</div>
         </div>
       `;
+      return;
     }
 
-    function showToast(title, message, iconClass, colorClass = "text-emerald-400") {
-      const toast = document.getElementById("toast");
-      const titleEl = document.getElementById("toast-title");
-      const msgEl = document.getElementById("toast-msg");
-      const iconEl = document.getElementById("toast-icon");
+    const detail = AUDIT_DATA.recommendations[id];
+    if (!detail) return;
 
-      if (!toast || !titleEl || !msgEl || !iconEl) return;
+    panel.innerHTML = `
+      <div class="p-4 bg-black/20 rounded border border-white/5">
+        <h4 class="text-xs font-bold text-cyan-300 mb-2 uppercase tracking-wider">${escapeHtml(detail.title)}</h4>
+        <p class="text-xs text-gray-400 mb-3">${escapeHtml(detail.finding)}</p>
+        <div class="text-xs text-gray-500 font-mono bg-black/40 p-2 rounded border border-white/10">${escapeHtml(detail.steps)}</div>
+      </div>
+      <div class="p-4 bg-black/20 rounded border border-white/5">
+        <h4 class="text-xs font-bold text-cyan-300 mb-2 uppercase tracking-wider">Impact Assessment</h4>
+        <p class="text-xs text-gray-400">${escapeHtml(detail.impact)}</p>
+      </div>
+    `;
+  }
 
-      titleEl.textContent = title;
-      msgEl.textContent = message;
-      iconEl.className = `ph-fill ${iconClass} ${colorClass} text-lg`;
+  function populateRegistry(query = "") {
+    const q = String(query || "").trim();
+    loadRegistryFromSheet(q).catch((error) => {
+      console.error(error);
+      showToast("Load Error", "Could not refresh registry.", "ph-warning", "text-amber-400");
+    });
+  }
 
-      toast.classList.add("toast-show");
-      window.clearTimeout(window.__toastTimer);
-      window.__toastTimer = window.setTimeout(() => {
-        toast.classList.remove("toast-show");
-      }, 2500);
-    }
+  function formatNumber(value) {
+    return Number(value || 0).toLocaleString();
+  }
 
-    function initStars() {
-      const container = document.getElementById("star-container");
-      if (!container) return;
+  function formatPercent(value) {
+    return `${(Number(value || 0) * 100).toFixed(1)}%`;
+  }
 
-      for (let i = 0; i < 50; i += 1) {
-        const star = document.createElement("div");
-        star.className = "star";
-        star.style.left = `${Math.random() * 100}%`;
-        star.style.top = `${Math.random() * 100}%`;
-        const size = Math.random() < 0.1 ? 2 : 1;
-        star.style.width = `${size}px`;
-        star.style.height = `${size}px`;
-        star.style.setProperty("--duration", `${2 + Math.random() * 4}s`);
-        star.style.setProperty("--delay", `${Math.random() * 5}s`);
-        star.style.setProperty("--opacity", `${0.2 + Math.random() * 0.5}`);
-        container.appendChild(star);
+  function formatDuration(seconds) {
+    const total = Math.round(Number(seconds || 0));
+    const mins = Math.floor(total / 60);
+    const secs = total % 60;
+    return `${mins}:${String(secs).padStart(2, "0")}`;
+  }
+
+  function capitalize(value) {
+    const str = String(value || "");
+    if (!str) return "";
+    return str.charAt(0).toUpperCase() + str.slice(1);
+  }
+
+  function escapeHtml(value) {
+    return String(value || "")
+      .replaceAll("&", "&amp;")
+      .replaceAll("<", "&lt;")
+      .replaceAll(">", "&gt;")
+      .replaceAll('"', "&quot;")
+      .replaceAll("'", "&#39;");
+  }
+
+  function priorityDotClass(priority) {
+    const p = String(priority || "").toLowerCase();
+    if (p === "high") return "bg-rose-500";
+    if (p === "medium") return "bg-amber-500";
+    return "bg-emerald-500";
+  }
+
+  function priorityBadgeClass(priority) {
+    const p = String(priority || "").toLowerCase();
+    if (p === "high") return "badge-rose";
+    if (p === "medium") return "badge-gold";
+    return "badge-emerald";
+  }
+
+  function categoryBadgeClass(category) {
+    const c = String(category || "").toLowerCase();
+    if (c === "tracking") return "badge-cyan";
+    if (c === "campaign" || c === "campaigns") return "badge-purple";
+    if (c === "ux") return "badge-rose";
+    return "badge-gold";
+  }
+
+  async function apiGet(action, params = {}) {
+    const url = new URL(APP_CONFIG.APPS_SCRIPT_URL);
+    url.searchParams.set("action", action);
+
+    Object.entries(params).forEach(([key, value]) => {
+      if (value !== undefined && value !== null && value !== "") {
+        url.searchParams.set(key, value);
       }
+    });
+
+    const response = await fetch(url.toString());
+    if (!response.ok) throw new Error("Request failed");
+    return response.json();
+  }
+
+  async function apiPost(action, payload = {}) {
+    const response = await fetch(APP_CONFIG.APPS_SCRIPT_URL, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({ action, payload })
+    });
+
+    if (!response.ok) throw new Error("Request failed");
+    return response.json();
+  }
+
+  function getBadgeColor(source) {
+    return {
+      google: "badge-emerald",
+      linkedin: "badge-purple",
+      hs_email: "badge-cyan",
+      facebook: "badge-rose"
+    }[source] || "badge-gold";
+  }
+
+  function bindReportFilters() {
+    ["filter-date-range", "filter-campaign", "filter-source", "filter-medium", "filter-landing"].forEach((id) => {
+      const el = document.getElementById(id);
+      if (el) el.addEventListener("change", applyReportFilters);
+    });
+
+    document.getElementById("reset-report-filters")?.addEventListener("click", resetReportFilters);
+    document.getElementById("refresh-reports-button")?.addEventListener("click", refreshReportsData);
+  }
+
+  async function applyReportFilters() {
+    const updated = document.getElementById("reports-last-updated");
+    if (updated) updated.textContent = "Updated: Just now";
+
+    try {
+      await loadPerformanceFromSheet();
+      showToast("Filters Applied", "Reports updated with new criteria.", "ph-check-circle");
+    } catch (error) {
+      console.error(error);
+      showToast("Load Error", "Could not refresh report data.", "ph-warning", "text-amber-400");
     }
-  </script>
+  }
+
+  function resetReportFilters() {
+    const defaults = {
+      "filter-date-range": "30",
+      "filter-campaign": "all",
+      "filter-source": "all",
+      "filter-medium": "all",
+      "filter-landing": "all"
+    };
+
+    Object.entries(defaults).forEach(([id, value]) => {
+      const el = document.getElementById(id);
+      if (el) el.value = value;
+    });
+
+    applyReportFilters();
+  }
+
+  async function refreshReportsData() {
+    const updated = document.getElementById("reports-last-updated");
+    if (updated) updated.textContent = "Updated: Just now";
+
+    try {
+      await loadPerformanceFromSheet();
+      showToast("Data Refreshed", "Latest metrics loaded.", "ph-check-circle");
+    } catch (error) {
+      console.error(error);
+      showToast("Load Error", "Could not refresh report data.", "ph-warning", "text-amber-400");
+    }
+  }
+
+  function bindUXFilters() {
+    ["ux-filter-date", "ux-filter-page", "ux-filter-device"].forEach((id) => {
+      const el = document.getElementById(id);
+      if (el) el.addEventListener("change", applyUXFilters);
+    });
+
+    document.getElementById("sync-clarity-button")?.addEventListener("click", syncClarityData);
+    document.getElementById("highlight-friction-page")?.addEventListener("click", () => {
+      const pageSelect = document.getElementById("ux-filter-page");
+      if (pageSelect) pageSelect.value = "/solar-savings";
+      applyUXFilters();
+    });
+  }
+
+  function applyUXFilters() {
+    const updated = document.getElementById("ux-last-updated");
+    if (updated) updated.textContent = "Updated: Just now";
+    showToast("Filters Applied", "UX insights updated.", "ph-check-circle");
+  }
+
+  function syncClarityData() {
+    const updated = document.getElementById("ux-last-updated");
+    if (updated) updated.textContent = "Updated: Just now";
+    showToast("Sync Complete", "Clarity data refreshed.", "ph-check-circle");
+  }
+
+  function bindAuditFilters() {
+    document.querySelectorAll(".audit-filter-btn").forEach((btn) => {
+      btn.addEventListener("click", async () => {
+        const status = btn.getAttribute("data-audit-status") || "all";
+        await filterAuditByStatus(status);
+      });
+    });
+  }
+
+  async function filterAuditByStatus(status) {
+    document.querySelectorAll(".audit-filter-btn").forEach((btn) => {
+      const isActive = btn.getAttribute("data-audit-status") === status;
+      btn.className = isActive
+        ? "audit-filter-btn px-3 py-1 rounded text-xs bg-purple-500/20 text-purple-300 border border-purple-500/30"
+        : "audit-filter-btn px-3 py-1 rounded text-xs bg-black/30 text-gray-400 border border-white/10 hover:bg-white/5";
+    });
+
+    try {
+      await loadAuditFromSheet(status);
+    } catch (error) {
+      console.error(error);
+      showToast("Load Error", "Could not refresh audit notes.", "ph-warning", "text-amber-400");
+    }
+  }
+
+  function showToast(title, message, iconClass, colorClass = "text-emerald-400") {
+    const toast = document.getElementById("toast");
+    const titleEl = document.getElementById("toast-title");
+    const msgEl = document.getElementById("toast-msg");
+    const iconEl = document.getElementById("toast-icon");
+
+    if (!toast || !titleEl || !msgEl || !iconEl) return;
+
+    titleEl.textContent = title;
+    msgEl.textContent = message;
+    iconEl.className = `ph-fill ${iconClass} ${colorClass} text-lg`;
+
+    toast.classList.add("toast-show");
+    window.clearTimeout(window.__toastTimer);
+    window.__toastTimer = window.setTimeout(() => {
+      toast.classList.remove("toast-show");
+    }, 2500);
+  }
+
+  function initStars() {
+    const container = document.getElementById("star-container");
+    if (!container) return;
+
+    for (let i = 0; i < 50; i += 1) {
+      const star = document.createElement("div");
+      star.className = "star";
+      star.style.left = `${Math.random() * 100}%`;
+      star.style.top = `${Math.random() * 100}%`;
+      const size = Math.random() < 0.1 ? 2 : 1;
+      star.style.width = `${size}px`;
+      star.style.height = `${size}px`;
+      star.style.setProperty("--duration", `${2 + Math.random() * 4}s`);
+      star.style.setProperty("--delay", `${Math.random() * 5}s`);
+      star.style.setProperty("--opacity", `${0.2 + Math.random() * 0.5}`);
+      container.appendChild(star);
+    }
+  }
+</script>
 </body>
 </html>

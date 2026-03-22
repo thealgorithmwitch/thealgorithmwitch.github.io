@@ -2111,15 +2111,17 @@ function renderRegistry(items) {
     select.value = uniqueValues.includes(currentValue) || currentValue === "all" ? currentValue : "all";
   }
 
-  function bindReportFilters() {
-    ["filter-date-range", "filter-campaign", "filter-source", "filter-medium", "filter-landing"].forEach((id) => {
-      const el = document.getElementById(id);
-      if (el) el.addEventListener("change", applyReportFilters);
-    });
+function bindReportFilters() {
+  ["filter-date-range", "filter-campaign", "filter-source", "filter-medium", "filter-landing"].forEach((id) => {
+    const el = document.getElementById(id);
+    if (el) {
+      el.addEventListener("change", applyReportFilters);
+    }
+  });
 
-    document.getElementById("reset-report-filters")?.addEventListener("click", resetReportFilters);
-    document.getElementById("refresh-reports-button")?.addEventListener("click", refreshReportsData);
-  }
+  document.getElementById("reset-report-filters")?.addEventListener("click", resetReportFilters);
+  document.getElementById("refresh-reports-button")?.addEventListener("click", refreshReportsData);
+}
 
   function getPerformanceDaysFromUi() {
     const value = String(document.getElementById("filter-date-range")?.value || "30").toLowerCase();
@@ -2131,77 +2133,107 @@ function renderRegistry(items) {
     return Number.isFinite(numeric) && numeric > 0 ? numeric : 30;
   }
 
-  async function applyReportFilters() {
-    const updated = document.getElementById("reports-last-updated");
-    if (updated) updated.textContent = "Updating...";
-  
-    try {
-      const selectedDays = getPerformanceDaysFromUi();
-  
-      await syncPerformanceData(selectedDays, { silent: true });
-  
-      await Promise.all([
-        loadPerformanceFromSheet(),
-        loadPerformanceTrendFromSheet()
-      ]);
-  
-      if (updated) updated.textContent = "Updated: Just now";
-      showToast("Filters Applied", "Reports updated with new criteria.", "ph-check-circle");
-    } catch (error) {
-      console.error(error);
-      if (updated) updated.textContent = "Update failed";
-      showToast("Load Error", "Could not refresh report data.", "ph-warning", "text-amber-400");
+async function applyReportFilters(event) {
+  const updated = document.getElementById("reports-last-updated");
+  if (updated) updated.textContent = "Updating...";
+
+  try {
+    const changedId = event?.target?.id || "";
+    const shouldSync = changedId === "filter-date-range";
+
+    if (shouldSync) {
+      await syncPerformanceData(getPerformanceDaysFromUi(), { silent: true });
     }
+
+    await Promise.all([
+      loadPerformanceFromSheet(),
+      loadPerformanceTrendFromSheet()
+    ]);
+
+    if (updated) updated.textContent = "Updated: Just now";
+    showToast("Filters Applied", "Reports updated with new criteria.", "ph-check-circle");
+  } catch (error) {
+    console.error("applyReportFilters failed:", error);
+    if (updated) updated.textContent = "Update failed";
+    showToast(
+      "Load Error",
+      error?.message || "Could not refresh report data.",
+      "ph-warning-circle",
+      "text-amber-400"
+    );
   }
+}
 
-  function resetReportFilters() {
-    const defaults = {
-      "filter-date-range": "30",
-      "filter-campaign": "all",
-      "filter-source": "all",
-      "filter-medium": "all",
-      "filter-landing": "all"
-    };
+function resetReportFilters() {
+  const defaults = {
+    "filter-date-range": "30",
+    "filter-campaign": "all",
+    "filter-source": "all",
+    "filter-medium": "all",
+    "filter-landing": "all"
+  };
 
-    Object.entries(defaults).forEach(([id, value]) => {
-      const el = document.getElementById(id);
-      if (el) el.value = value;
-    });
+  Object.entries(defaults).forEach(([id, value]) => {
+    const el = document.getElementById(id);
+    if (el) el.value = value;
+  });
 
-    applyReportFilters();
-  }
+  applyReportFilters({ target: { id: "filter-date-range" } });
+}
 
-  async function syncPerformanceData(days = 30, options = {}) {
-    const { silent = false } = options;
-  
-    try {
-      const response = await apiPost("syncPerformanceData", { days });
-      if (!response.ok) throw new Error(response.error || "Sync failed");
-  
-      await loadRegistryFromSheet();
-      updateLocalSyncTime();
-  
-      if (!silent) {
-        showToast("Sync Complete", "Google Analytics data refreshed.", "ph-check-circle");
-      }
-  
-      return response.sync || {};
-    } catch (error) {
-      console.error(error);
-      if (!silent) {
-        showToast("Sync Error", "Could not sync Google Analytics data.", "ph-warning", "text-amber-400");
-      }
-      throw error;
+async function syncPerformanceData(days = 30, options = {}) {
+  const { silent = false } = options;
+
+  try {
+    const response = await apiPost("syncPerformanceData", { days });
+    if (!response.ok) throw new Error(response.error || "Sync failed");
+
+    updateLocalSyncTime();
+
+    if (!silent) {
+      showToast("Sync Complete", "Google Analytics data refreshed.", "ph-check-circle");
     }
-  }
 
-  async function refreshReportsData() {
-    try {
-      await syncPerformanceData(getPerformanceDaysFromUi());
-    } catch (error) {
-      console.error(error);
+    return response.sync || {};
+  } catch (error) {
+    console.error("syncPerformanceData failed:", error);
+    if (!silent) {
+      showToast(
+        "Sync Error",
+        error?.message || "Could not sync Google Analytics data.",
+        "ph-warning-circle",
+        "text-amber-400"
+      );
     }
+    throw error;
   }
+}
+
+async function refreshReportsData() {
+  const updated = document.getElementById("reports-last-updated");
+  if (updated) updated.textContent = "Updating...";
+
+  try {
+    await syncPerformanceData(getPerformanceDaysFromUi(), { silent: true });
+
+    await Promise.all([
+      loadPerformanceFromSheet(),
+      loadPerformanceTrendFromSheet()
+    ]);
+
+    if (updated) updated.textContent = "Updated: Just now";
+    showToast("Sync Complete", "Google Analytics data refreshed.", "ph-check-circle");
+  } catch (error) {
+    console.error("refreshReportsData failed:", error);
+    if (updated) updated.textContent = "Update failed";
+    showToast(
+      "Sync Error",
+      error?.message || "Could not sync Google Analytics data.",
+      "ph-warning-circle",
+      "text-amber-400"
+    );
+  }
+}
 
   function bindUXFilters() {
     ["ux-filter-date", "ux-filter-page", "ux-filter-device"].forEach((id) => {

@@ -549,26 +549,6 @@
             </div>
           </div>
 
-          <div class="glass-card border border-purple-500/20 rounded-xl overflow-hidden shadow-lg">
-            <div class="overflow-x-auto">
-              <table class="w-full text-sm text-left whitespace-nowrap">
-                <thead class="bg-black/60 text-gray-400 text-[10px] uppercase tracking-widest border-b border-purple-500/20">
-                  <tr>
-                    <th class="px-5 py-4 font-medium w-8"></th>
-                    <th class="px-5 py-4 font-medium w-1/3">Task Description</th>
-                    <th class="px-5 py-4 font-medium hidden sm:table-cell">Category</th>
-                    <th class="px-5 py-4 font-medium">Owner</th>
-                    <th class="px-5 py-4 font-medium">Status</th>
-                    <th class="px-5 py-4 font-medium hidden lg:table-cell">Priority</th>
-                    <th class="px-5 py-4 font-medium hidden md:table-cell">Due Date</th>
-                  </tr>
-                </thead>
-                <tbody id="tasks-tbody" class="divide-y divide-white/5 text-gray-200"></tbody>
-              </table>
-            </div>
-          </div>
-        </div>
-
         <div id="section-notes" class="ws-section hidden space-y-6 pb-20">
           <div class="flex items-center justify-between gap-4 border-b border-purple-500/20 pb-4">
             <h2 class="font-magical text-2xl text-white tracking-wide">Decisions &amp; Notes Log</h2>
@@ -2005,22 +1985,50 @@
     });
   }
 
+  function showWorkspaceError(title, message) {
+  const reviewContainer = document.getElementById('review-container');
+  const tasksSection = document.getElementById('section-tasks');
+
+  const errorCard = `
+    <div class="glass-card rounded-xl border border-rose-500/30 bg-rose-500/10 p-5 max-w-2xl">
+      <div class="flex items-start gap-3">
+        <div class="w-10 h-10 rounded-full bg-rose-500/15 border border-rose-500/30 flex items-center justify-center shrink-0">
+          <i class="ph-bold ph-warning-circle text-rose-300 text-lg"></i>
+        </div>
+        <div>
+          <div class="text-[11px] uppercase tracking-[0.18em] text-rose-300 mb-1">Workspace Error</div>
+          <h3 class="text-white font-semibold mb-2">${escapeHtml(title)}</h3>
+          <p class="text-sm text-gray-300 leading-relaxed">${escapeHtml(message)}</p>
+        </div>
+      </div>
+    </div>
+  `;
+
+  if (tasksSection) {
+    tasksSection.innerHTML = errorCard;
+  } else if (reviewContainer) {
+    reviewContainer.innerHTML = errorCard;
+  }
+}
+
   document.addEventListener('DOMContentLoaded', async () => {
     try {
       await loadWorkspaceData();
       renderAll();
-    } catch (err) {
-      console.error(err);
-      alert('Failed to load workspace from Google Sheets.');
-    }
-
-    document.getElementById('reset-workspace-btn')?.addEventListener('click', async () => {
-      try {
-        await loadWorkspaceData();
-        renderAll();
       } catch (err) {
         console.error(err);
-        alert('Refresh failed.');
+        showWorkspaceError(
+          'Failed to load workspace',
+          err?.message || 'Google Sheets data could not be loaded.'
+        );
+      }
+
+      } catch (err) {
+        console.error(err);
+        showWorkspaceError(
+          'Refresh failed',
+          err?.message || 'Workspace data could not be refreshed.'
+        );
       }
     });
 

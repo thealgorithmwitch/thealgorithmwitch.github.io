@@ -1340,7 +1340,10 @@ function applyUtmRegistryFilters() {
     const rowStatus = String(item.status || "").trim().toLowerCase();
 
     const hasCleanNaming = /^[A-Za-z0-9]+(?:_[A-Za-z0-9]+)+$/.test(normalizedCampaignName);
-    const derivedStatus = rowStatus || (hasCleanNaming ? "clean" : "needs review");
+    const derivedStatus =
+      rowStatus === "needs review" || rowStatus === "clean"
+        ? rowStatus
+        : (hasCleanNaming ? "clean" : "needs review");
 
     const matchesCampaign =
       campaignFilter === "all" || campaignName === campaignFilter;

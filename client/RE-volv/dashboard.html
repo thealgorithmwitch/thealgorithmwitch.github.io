@@ -1,1521 +1,1418 @@
-<html lang="en" vid="0"><head vid="1">
-    <meta charset="UTF-8" vid="2">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" vid="3">
-    <title vid="4">Analytics Portal | The Algorithm Witch</title>
-    <script src="https://cdn.tailwindcss.com/3.4.17" vid="5"></script>
-    <link rel="preconnect" href="https://fonts.googleapis.com" vid="6">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="" vid="7">
-    <link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@400;700;900&amp;family=Inter:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet" vid="8">
-    <script src="https://unpkg.com/@phosphor-icons/web" vid="9"></script>
-    
-    <style vid="10">
-        :root {
-            --bg-deep: #05020a;
-            --bg-panel: #120c1d;
-            --border-subtle: rgba(255, 255, 255, 0.08);
-            --border-hover: rgba(168, 85, 247, 0.3);
-            --accent-primary: #c77dff;
-            --accent-secondary: #a855f7;
-            --highlight-gold: #ffd700;
-            --highlight-cyan: #00f0ff;
-            --highlight-emerald: #00ffaa;
-            --text-main: #e2e8f0;
-            --text-muted: #94a3b8;
-        }
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Analytics Portal | The Algorithm Witch</title>
+  <script src="https://cdn.tailwindcss.com/3.4.17"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@400;700;900&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <script src="https://unpkg.com/@phosphor-icons/web"></script>
 
-        body {
-            background-color: var(--bg-deep);
-            color: var(--text-main);
-            font-family: 'Inter', sans-serif;
-            margin: 0;
-            overflow: hidden;
-            width: 100vw;
-            height: 100vh;
-            display: flex;
-        }
+  <style>
+    :root {
+      --bg-deep: #05020a;
+      --bg-panel: #120c1d;
+      --border-subtle: rgba(255, 255, 255, 0.08);
+      --border-hover: rgba(168, 85, 247, 0.3);
+      --accent-primary: #c77dff;
+      --accent-secondary: #a855f7;
+      --highlight-gold: #ffd700;
+      --highlight-cyan: #00f0ff;
+      --highlight-emerald: #00ffaa;
+      --text-main: #e2e8f0;
+      --text-muted: #94a3b8;
+      --client-color: #ffd700;
+    }
 
-        .font-magical { font-family: 'Cinzel Decorative', cursive; }
+    * { box-sizing: border-box; }
+    body {
+      background-color: var(--bg-deep);
+      color: var(--text-main);
+      font-family: "Inter", sans-serif;
+      margin: 0;
+      overflow: hidden;
+      width: 100vw;
+      height: 100vh;
+      display: flex;
+    }
 
-        
-        .stars { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 0; }
-        .star { position: absolute; background: white; border-radius: 50%; opacity: 0; animation: twinkle var(--duration) ease-in-out infinite; animation-delay: var(--delay); }
-        @keyframes twinkle {
-            0% { opacity: 0; transform: scale(0.5); }
-            50% { opacity: var(--opacity); transform: scale(1.2); box-shadow: 0 0 4px rgba(255,255,255,0.8); }
-            100% { opacity: 0; transform: scale(0.5); }
-        }
-        .bg-nebula-1 { position: fixed; top: -20%; left: -10%; width: 50vw; height: 50vw; background: radial-gradient(circle, rgba(168,85,247,0.05) 0%, transparent 70%); border-radius: 50%; pointer-events: none; z-index: 0; filter: blur(60px); }
-        .bg-nebula-2 { position: fixed; bottom: -20%; right: -10%; width: 40vw; height: 40vw; background: radial-gradient(circle, rgba(0,240,255,0.03) 0%, transparent 70%); border-radius: 50%; pointer-events: none; z-index: 0; filter: blur(60px); }
+    .font-magical { font-family: "Cinzel Decorative", cursive; }
 
-        
-        .glass-panel {
-            background: rgba(18, 12, 29, 0.7);
-            backdrop-filter: blur(16px);
-            -webkit-backdrop-filter: blur(16px);
-            border: 1px solid var(--border-subtle);
-        }
+    .stars { position: fixed; inset: 0; pointer-events: none; z-index: 0; }
+    .star {
+      position: absolute;
+      background: white;
+      border-radius: 50%;
+      opacity: 0;
+      animation: twinkle var(--duration) ease-in-out infinite;
+      animation-delay: var(--delay);
+    }
 
-        .glass-card {
-            background: rgba(255, 255, 255, 0.02);
-            border: 1px solid var(--border-subtle);
-            border-radius: 0.75rem;
-            transition: all 0.2s ease;
-        }
-        .glass-card:hover {
-            border-color: var(--border-hover);
-            background: rgba(255, 255, 255, 0.04);
-        }
+    @keyframes twinkle {
+      0% { opacity: 0; transform: scale(0.5); }
+      50% { opacity: var(--opacity); transform: scale(1.2); box-shadow: 0 0 4px rgba(255,255,255,0.8); }
+      100% { opacity: 0; transform: scale(0.5); }
+    }
 
-        .input-magical {
-            background: rgba(0, 0, 0, 0.3);
-            border: 1px solid var(--border-subtle);
-            color: white;
-            transition: all 0.2s;
-        }
-        .input-magical:focus {
-            outline: none;
-            border-color: var(--accent-primary);
-            box-shadow: 0 0 0 2px rgba(199, 125, 255, 0.2);
-            background: rgba(0, 0, 0, 0.5);
-        }
-        .input-magical::placeholder { color: #64748b; }
-        .input-magical option { background: var(--bg-panel); color: white; }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
 
-        
-        ::-webkit-scrollbar { width: 6px; height: 6px; }
-        ::-webkit-scrollbar-track { background: transparent; }
-        ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 10px; }
-        ::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.2); }
+    .bg-nebula-1 {
+      position: fixed;
+      top: -20%;
+      left: -10%;
+      width: 50vw;
+      height: 50vw;
+      background: radial-gradient(circle, rgba(168,85,247,0.05) 0%, transparent 70%);
+      border-radius: 50%;
+      pointer-events: none;
+      z-index: 0;
+      filter: blur(60px);
+    }
 
-        
-        .nav-item {
-            display: flex;
-            align-items: center;
-            gap: 0.75rem;
-            padding: 0.75rem 1rem;
-            border-radius: 0.5rem;
-            color: var(--text-muted);
-            transition: all 0.2s;
-            border: 1px solid transparent;
-            cursor: pointer;
-        }
-        .nav-item:hover {
-            color: white;
-            background: rgba(255,255,255,0.03);
-        }
-        .nav-item.active {
-            color: white;
-            background: linear-gradient(90deg, rgba(168,85,247,0.1) 0%, transparent 100%);
-            border-left: 2px solid var(--accent-primary);
-        }
-        .nav-item i { font-size: 1.25rem; transition: color 0.2s; }
-        .nav-item.active i { color: var(--accent-primary); }
+    .bg-nebula-2 {
+      position: fixed;
+      bottom: -20%;
+      right: -10%;
+      width: 40vw;
+      height: 40vw;
+      background: radial-gradient(circle, rgba(0,240,255,0.03) 0%, transparent 70%);
+      border-radius: 50%;
+      pointer-events: none;
+      z-index: 0;
+      filter: blur(60px);
+    }
 
-        
-        .btn-primary {
-            background: linear-gradient(135deg, #a855f7 0%, #7e22ce 100%);
-            color: white;
-            font-weight: 600;
-            border: 1px solid rgba(255,255,255,0.1);
-            transition: all 0.2s;
-            box-shadow: 0 4px 12px rgba(168,85,247,0.2);
-        }
-        .btn-primary:hover {
-            box-shadow: 0 6px 16px rgba(168,85,247,0.4);
-            transform: translateY(-1px);
-        }
-        .btn-secondary {
-            background: rgba(255,255,255,0.05);
-            color: white;
-            font-weight: 500;
-            border: 1px solid var(--border-subtle);
-            transition: all 0.2s;
-        }
-        .btn-secondary:hover {
-            background: rgba(255,255,255,0.08);
-            border-color: rgba(255,255,255,0.2);
-        }
+    .glass-panel {
+      background: rgba(18, 12, 29, 0.7);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid var(--border-subtle);
+    }
 
-        
-        .data-table { width: 100%; border-collapse: separate; border-spacing: 0; }
-        .data-table th { 
-            text-align: left; 
-            padding: 0.75rem 1rem; 
-            font-size: 0.65rem; 
-            text-transform: uppercase; 
-            letter-spacing: 0.1em; 
-            color: var(--text-muted); 
-            border-bottom: 1px solid var(--border-subtle); 
-            background: rgba(0,0,0,0.2);
-        }
-        .data-table td { 
-            padding: 0.875rem 1rem; 
-            font-size: 0.875rem; 
-            border-bottom: 1px solid var(--border-subtle); 
-            color: #cbd5e1;
-        }
-        .data-table tr:hover td { background: rgba(255,255,255,0.02); }
-        .data-table tr:last-child td { border-bottom: none; }
+    .glass-card {
+      background: rgba(255, 255, 255, 0.02);
+      border: 1px solid var(--border-subtle);
+      border-radius: 0.75rem;
+      transition: all 0.2s ease;
+    }
 
-        
-        .badge { padding: 0.25rem 0.5rem; border-radius: 0.25rem; font-size: 0.65rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; }
-        .badge-cyan { background: rgba(0,240,255,0.1); color: #00f0ff; border: 1px solid rgba(0,240,255,0.2); }
-        .badge-purple { background: rgba(168,85,247,0.1); color: #e9d5ff; border: 1px solid rgba(168,85,247,0.2); }
-        .badge-gold { background: rgba(255,215,0,0.1); color: #ffd700; border: 1px solid rgba(255,215,0,0.2); }
-        .badge-emerald { background: rgba(0,255,170,0.1); color: #00ffaa; border: 1px solid rgba(0,255,170,0.2); }
-        .badge-rose { background: rgba(244,63,94,0.1); color: #fda4af; border: 1px solid rgba(244,63,94,0.2); }
+    .glass-card:hover {
+      border-color: var(--border-hover);
+      background: rgba(255, 255, 255, 0.04);
+    }
 
-        
-        .view-section { display: none; animation: fadeIn 0.3s ease-out forwards; }
-        .view-section.active { display: flex; flex-direction: column; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+    .input-magical {
+      background: rgba(0, 0, 0, 0.3);
+      border: 1px solid var(--border-subtle);
+      color: white;
+      transition: all 0.2s;
+    }
 
-        
-        #toast { transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
-        .toast-show { transform: translateY(0) !important; opacity: 1 !important; }
-    </style>
+    .input-magical:focus {
+      outline: none;
+      border-color: var(--accent-primary);
+      box-shadow: 0 0 0 2px rgba(199, 125, 255, 0.2);
+      background: rgba(0, 0, 0, 0.5);
+    }
+
+    .input-magical::placeholder { color: #64748b; }
+    .input-magical option { background: var(--bg-panel); color: white; }
+
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 10px; }
+    ::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.2); }
+
+    .nav-item {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      padding: 0.75rem 1rem;
+      border-radius: 0.5rem;
+      color: var(--text-muted);
+      transition: all 0.2s;
+      border: 1px solid transparent;
+      cursor: pointer;
+      background: transparent;
+    }
+
+    .nav-item:hover {
+      color: white;
+      background: rgba(255,255,255,0.03);
+    }
+
+    .nav-item.active {
+      color: white;
+      background: linear-gradient(90deg, rgba(168,85,247,0.1) 0%, transparent 100%);
+      border-left: 2px solid var(--accent-primary);
+    }
+
+    .nav-item i { font-size: 1.25rem; transition: color 0.2s; }
+    .nav-item.active i { color: var(--accent-primary); }
+
+    .btn-primary {
+      background: linear-gradient(135deg, #a855f7 0%, #7e22ce 100%);
+      color: white;
+      font-weight: 600;
+      border: 1px solid rgba(255,255,255,0.1);
+      transition: all 0.2s;
+      box-shadow: 0 4px 12px rgba(168,85,247,0.2);
+    }
+
+    .btn-primary:hover {
+      box-shadow: 0 6px 16px rgba(168,85,247,0.4);
+      transform: translateY(-1px);
+    }
+
+    .btn-secondary {
+      background: rgba(255,255,255,0.05);
+      color: white;
+      font-weight: 500;
+      border: 1px solid var(--border-subtle);
+      transition: all 0.2s;
+    }
+
+    .btn-secondary:hover {
+      background: rgba(255,255,255,0.08);
+      border-color: rgba(255,255,255,0.2);
+    }
+
+    .data-table { width: 100%; border-collapse: separate; border-spacing: 0; }
+    .data-table th {
+      text-align: left;
+      padding: 0.75rem 1rem;
+      font-size: 0.65rem;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--text-muted);
+      border-bottom: 1px solid var(--border-subtle);
+      background: rgba(0,0,0,0.2);
+    }
+
+    .data-table td {
+      padding: 0.875rem 1rem;
+      font-size: 0.875rem;
+      border-bottom: 1px solid var(--border-subtle);
+      color: #cbd5e1;
+    }
+
+    .data-table tr:hover td { background: rgba(255,255,255,0.02); }
+    .data-table tr:last-child td { border-bottom: none; }
+
+    .badge {
+      padding: 0.25rem 0.5rem;
+      border-radius: 0.25rem;
+      font-size: 0.65rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .badge-cyan { background: rgba(0,240,255,0.1); color: #00f0ff; border: 1px solid rgba(0,240,255,0.2); }
+    .badge-purple { background: rgba(168,85,247,0.1); color: #e9d5ff; border: 1px solid rgba(168,85,247,0.2); }
+    .badge-gold { background: rgba(255,215,0,0.1); color: #ffd700; border: 1px solid rgba(255,215,0,0.2); }
+    .badge-emerald { background: rgba(0,255,170,0.1); color: #00ffaa; border: 1px solid rgba(0,255,170,0.2); }
+    .badge-rose { background: rgba(244,63,94,0.1); color: #fda4af; border: 1px solid rgba(244,63,94,0.2); }
+
+    .view-section { display: none; animation: fadeIn 0.3s ease-out forwards; }
+    .view-section.active { display: flex; flex-direction: column; }
+
+    #toast { transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+    .toast-show { transform: translateY(0) !important; opacity: 1 !important; }
+  </style>
 </head>
-<body vid="11">
+<body>
+  <div id="star-container" class="stars"></div>
+  <div class="bg-nebula-1"></div>
+  <div class="bg-nebula-2"></div>
 
-    
-    <div id="star-container" class="stars" vid="12"></div>
-    <div class="bg-nebula-1" vid="13"></div>
-    <div class="bg-nebula-2" vid="14"></div>
+  <aside class="w-[260px] h-full glass-panel border-r border-y-0 border-l-0 flex flex-col relative z-20 shrink-0">
+    <div class="p-6 border-b border-white/5">
+      <div class="flex items-center gap-3 mb-1">
+        <i class="ph-fill ph-sparkle text-purple-400 text-xl"></i>
+        <span class="font-magical text-sm tracking-widest text-gray-400 uppercase">The Algorithm Witch</span>
+      </div>
 
-    
-    <aside class="w-[260px] h-full glass-panel border-r border-y-0 border-l-0 flex flex-col relative z-20 shrink-0" vid="15">
-        
-        <div class="p-6 border-b border-white/5" vid="16">
-            <div class="flex items-center gap-3 mb-1" vid="17">
-                <i class="ph-fill ph-sparkle text-purple-400 text-xl" vid="18"></i>
-                <span class="font-magical text-sm tracking-widest text-gray-400 uppercase" vid="19">The Algorithm Witch</span>
-            </div>
-            <div class="flex items-center gap-3 mt-4 bg-black/30 p-2.5 rounded-lg border border-white/5 cursor-pointer hover:border-white/10 transition-colors group" vid="20">
-                <div class="w-8 h-8 rounded bg-[#1e1a2d] flex items-center justify-center border border-white/10 group-hover:border-[var(--client-color)] transition-colors" vid="21">
-                    <i id="client-logo" class="ph-fill ph-sun-horizon text-[var(--client-color)] text-lg" vid="22"></i>
-                </div>
-                <div class="flex-1 min-w-0" vid="23">
-                    <div class="text-xs text-gray-500 font-medium leading-none mb-1" vid="24">Client Workspace</div>
-                    <div id="client-name" class="text-sm font-bold text-white truncate" vid="25">Re-volv Solar</div>
-                </div>
-                <i class="ph-bold ph-caret-up-down text-gray-600 group-hover:text-gray-400" vid="26"></i>
-            </div>
+      <div class="flex items-center gap-3 mt-4 bg-black/30 p-2.5 rounded-lg border border-white/5 cursor-pointer hover:border-white/10 transition-colors group">
+        <div class="w-8 h-8 rounded bg-[#1e1a2d] flex items-center justify-center border border-white/10 group-hover:border-[var(--client-color)] transition-colors">
+          <i id="client-logo" class="ph-fill ph-sun-horizon text-[var(--client-color)] text-lg"></i>
         </div>
-
-        
-<nav class="flex-1 overflow-y-auto p-4 space-y-1">
-  <div class="text-[10px] font-bold text-gray-600 uppercase tracking-widest px-4 mb-2 mt-2">Intelligence</div>
-
-  <button type="button" data-view="home" id="nav-home" class="nav-item active w-full text-left">
-    <i class="ph-duotone ph-squares-four"></i>
-    <span class="text-sm font-medium">Overview</span>
-  </button>
-
-  <button type="button" data-view="reports" id="nav-reports" class="nav-item w-full text-left">
-    <i class="ph-duotone ph-chart-line-up"></i>
-    <span class="text-sm font-medium">Reports</span>
-  </button>
-
-  <div class="text-[10px] font-bold text-gray-600 uppercase tracking-widest px-4 mb-2 mt-6">Operations</div>
-
-  <button type="button" data-view="utm" id="nav-utm" class="nav-item w-full text-left">
-    <i class="ph-duotone ph-link"></i>
-    <span class="text-sm font-medium">UTM Builder</span>
-  </button>
-
-  <button type="button" data-view="ux" id="nav-ux" class="nav-item w-full text-left">
-    <i class="ph-duotone ph-mouse-left-click"></i>
-    <span class="text-sm font-medium">UX Insights</span>
-  </button>
-
-  <button type="button" data-view="audit" id="nav-audit" class="nav-item w-full text-left">
-    <i class="ph-duotone ph-clipboard-text"></i>
-    <span class="text-sm font-medium">Audit &amp; Strategy</span>
-  </button>
-</nav>
-
-        
-        <div class="p-4 border-t border-white/5" vid="45">
-            <div class="bg-black/20 rounded-lg p-3 border border-white/5 flex items-center gap-3 mb-3" vid="46">
-                <div class="relative flex h-2 w-2" vid="47">
-                    <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" vid="48"></span>
-                    <span class="relative inline-flex rounded-full h-2 w-2 bg-emerald-500" vid="49"></span>
-                </div>
-                <div class="flex-1" vid="50">
-                    <div class="text-[10px] text-gray-500 font-medium uppercase tracking-wider" vid="51">Sheets Connected</div>
-                    <div id="sync-time" class="text-xs text-gray-300 font-medium" vid="52">Synced: Today 08:30</div>
-                </div>
-            </div>
-            <div class="flex items-center gap-3 px-2 py-1" vid="53">
-                <div class="w-7 h-7 rounded-full bg-purple-900/50 border border-purple-500/30 flex items-center justify-center text-xs font-bold text-purple-200" vid="54">AW</div>
-                <div class="text-xs text-gray-400 font-medium" vid="55">Consultant View</div>
-            </div>
+        <div class="flex-1 min-w-0">
+          <div class="text-xs text-gray-500 font-medium leading-none mb-1">Client Workspace</div>
+          <div id="client-name" class="text-sm font-bold text-white truncate">Re-volv Solar</div>
         </div>
-    </aside>
-
-    
-    <main class="flex-1 flex flex-col h-full relative z-10 overflow-hidden" vid="56">
-        
-        
-        <header class="h-16 border-b border-white/5 flex items-center justify-between px-8 bg-black/20 backdrop-blur-sm shrink-0" vid="57">
-            <div class="flex items-center gap-2 text-sm" vid="58">
-                <span class="text-gray-500 font-medium" vid="59">Workspace</span>
-                <i class="ph-bold ph-caret-right text-gray-700 text-xs" vid="60"></i>
-                <span id="header-title" class="text-white font-semibold" vid="61">Overview</span>
-            </div>
-            
-            <div class="flex items-center gap-4" vid="62">
-                <div class="flex items-center gap-2 bg-black/40 border border-white/10 rounded-md px-3 py-1.5 cursor-pointer hover:border-white/20 transition-colors" vid="63">
-                    <i class="ph-bold ph-calendar-blank text-gray-400 text-sm" vid="64"></i>
-                    <span class="text-xs text-gray-300 font-medium" vid="65">Last 30 Days</span>
-                    <i class="ph-bold ph-caret-down text-gray-500 text-[10px] ml-1" vid="66"></i>
-                </div>
-                <button class="w-8 h-8 rounded-md bg-black/40 border border-white/10 flex items-center justify-center text-gray-400 hover:text-white transition-colors" vid="67">
-                    <i class="ph-bold ph-bell" vid="68"></i>
-                </button>
-            </div>
-        </header>
-
-        
-        <div class="flex-1 overflow-y-auto custom-scrollbar p-6 lg:p-8 relative" vid="69">
-            
-            
-            <section id="view-home" class="view-section active h-full max-w-7xl mx-auto" vid="70">
-                <div class="flex justify-between items-end mb-8" vid="71">
-                    <div vid="72">
-                        <h1 class="font-magical text-3xl md:text-4xl text-white mb-2" vid="73">Welcome to the Nexus</h1>
-                        <p class="text-sm text-gray-400" vid="74">Your centralized hub for campaign tracking and analytics visibility.</p>
-                    </div>
-                    <button onclick="switchView('reports')" class="btn-primary px-5 py-2.5 rounded-lg text-sm flex items-center gap-2" vid="75">
-                        View Full Dashboard <i class="ph-bold ph-arrow-right" vid="76"></i>
-                    </button>
-                </div>
-
-                
-                <div class="glass-card border-l-2 border-l-gold p-5 mb-8 flex gap-4 relative overflow-hidden group" vid="77">
-                    <div class="absolute right-0 top-0 w-32 h-full bg-gradient-to-l from-amber-500/10 to-transparent pointer-events-none" vid="78"></div>
-                    <div class="w-10 h-10 rounded-full bg-amber-500/10 flex items-center justify-center shrink-0 border border-amber-500/20" vid="79">
-                        <i class="ph-fill ph-lightbulb text-amber-400 text-xl" vid="80"></i>
-                    </div>
-                    <div vid="81">
-                        <h3 class="text-sm font-bold text-amber-300 mb-1 uppercase tracking-wider" vid="82">Strategic Note</h3>
-                        <p class="text-sm text-gray-300 leading-relaxed" vid="83">LinkedIn campaigns for "Solar Savings" are outperforming Meta by 40% in conversion rate this month. Recommend reallocating 20% of remaining Q4 budget to the top-performing LinkedIn ad set.</p>
-                    </div>
-                </div>
-
-                
-                <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8" vid="84">
-                    <div class="glass-card p-5 relative overflow-hidden" vid="85">
-                        <div class="flex justify-between items-start mb-2" vid="86">
-                            <span class="text-[10px] uppercase tracking-wider text-gray-500 font-bold" vid="87">Total Traffic</span>
-                            <i class="ph-duotone ph-users text-purple-400 text-lg" vid="88"></i>
-                        </div>
-                        <div class="text-2xl font-bold text-white mb-1" vid="89">12,450</div>
-                        <div class="text-xs text-emerald-400 flex items-center gap-1 font-medium" vid="90"><i class="ph-bold ph-trend-up" vid="91"></i> +14.2% <span class="text-gray-600" vid="92">vs last mo</span></div>
-                    </div>
-                    
-                    <div class="glass-card p-5 relative overflow-hidden" vid="93">
-                        <div class="flex justify-between items-start mb-2" vid="94">
-                            <span class="text-[10px] uppercase tracking-wider text-gray-500 font-bold" vid="95">Avg. Conv Rate</span>
-                            <i class="ph-duotone ph-target text-cyan-400 text-lg" vid="96"></i>
-                        </div>
-                        <div class="text-2xl font-bold text-white mb-1" vid="97">3.8%</div>
-                        <div class="text-xs text-emerald-400 flex items-center gap-1 font-medium" vid="98"><i class="ph-bold ph-trend-up" vid="99"></i> +0.5% <span class="text-gray-600" vid="100">vs last mo</span></div>
-                    </div>
-
-                    <div class="glass-card p-5 relative overflow-hidden" vid="101">
-                        <div class="flex justify-between items-start mb-2" vid="102">
-                            <span class="text-[10px] uppercase tracking-wider text-gray-500 font-bold" vid="103">Active Campaigns</span>
-                            <i class="ph-duotone ph-megaphone text-gold text-lg" vid="104"></i>
-                        </div>
-                        <div class="text-2xl font-bold text-white mb-1" vid="105">8</div>
-                        <div class="text-xs text-gray-500 font-medium mt-1" vid="106">Tracking via UTM Registry</div>
-                    </div>
-
-                    <div class="glass-card p-5 relative overflow-hidden cursor-pointer hover:border-cyan-500/30" onclick="switchView('ux')" vid="107">
-                        <div class="flex justify-between items-start mb-2" vid="108">
-                            <span class="text-[10px] uppercase tracking-wider text-gray-500 font-bold" vid="109">UX Friction Score</span>
-                            <i class="ph-duotone ph-warning-circle text-rose-400 text-lg" vid="110"></i>
-                        </div>
-                        <div class="text-2xl font-bold text-white mb-1 flex items-baseline gap-1" vid="111">Low <span class="text-sm text-gray-500 font-normal" vid="112">Friction</span></div>
-                        <div class="text-xs text-gray-400 font-medium mt-1 flex items-center gap-1" vid="113"><i class="ph-fill ph-microsoft-logo text-gray-500" vid="114"></i> Clarity Data</div>
-                    </div>
-                </div>
-
-                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6" vid="115">
-                    
-                    <div class="lg:col-span-2 glass-card flex flex-col" vid="116">
-                        <div class="p-5 border-b border-white/5 flex justify-between items-center" vid="117">
-                            <h3 class="text-sm font-bold text-white" vid="118">Recent UTM Links</h3>
-                            <button onclick="switchView('utm')" class="text-xs text-purple-400 hover:text-purple-300 font-medium flex items-center gap-1" vid="119">Open Builder <i class="ph-bold ph-arrow-right" vid="120"></i></button>
-                        </div>
-                        <div class="p-0 overflow-x-auto" vid="121">
-                            <table class="data-table" vid="122">
-                                <thead vid="123">
-                                    <tr vid="124">
-                                        <th vid="125">Campaign</th>
-                                        <th vid="126">Source / Medium</th>
-                                        <th vid="127">Date</th>
-                                    </tr>
-                                </thead>
-                                <tbody vid="128">
-                                    <tr vid="129">
-                                        <td vid="130">
-                                            <div class="font-medium text-white mb-0.5" vid="131">Q4_Solar_Savings</div>
-                                            <div class="text-[10px] text-gray-500 font-mono truncate max-w-[200px]" vid="132">?utm_source=linkedin&amp;utm_medium=social...</div>
-                                        </td>
-                                        <td vid="133"><span class="badge badge-purple" vid="134">linkedin</span> <span class="text-gray-600 mx-1" vid="135">/</span> <span class="text-xs text-gray-400" vid="136">social</span></td>
-                                        <td vid="137"><div class="text-xs text-gray-400" vid="138">Oct 26, 2024</div></td>
-                                    </tr>
-                                    <tr vid="139">
-                                        <td vid="140">
-                                            <div class="font-medium text-white mb-0.5" vid="141">Newsletter_Oct</div>
-                                            <div class="text-[10px] text-gray-500 font-mono truncate max-w-[200px]" vid="142">?utm_source=hs_email&amp;utm_medium=email...</div>
-                                        </td>
-                                        <td vid="143"><span class="badge badge-cyan" vid="144">hs_email</span> <span class="text-gray-600 mx-1" vid="145">/</span> <span class="text-xs text-gray-400" vid="146">email</span></td>
-                                        <td vid="147"><div class="text-xs text-gray-400" vid="148">Oct 24, 2024</div></td>
-                                    </tr>
-                                    <tr vid="149">
-                                        <td vid="150">
-                                            <div class="font-medium text-white mb-0.5" vid="151">Search_Brand_T1</div>
-                                            <div class="text-[10px] text-gray-500 font-mono truncate max-w-[200px]" vid="152">?utm_source=google&amp;utm_medium=cpc...</div>
-                                        </td>
-                                        <td vid="153"><span class="badge badge-emerald" vid="154">google</span> <span class="text-gray-600 mx-1" vid="155">/</span> <span class="text-xs text-gray-400" vid="156">cpc</span></td>
-                                        <td vid="157"><div class="text-xs text-gray-400" vid="158">Oct 20, 2024</div></td>
-                                    </tr>
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-
-                    
-                    <div class="space-y-4" vid="159">
-                        <div class="glass-card p-5" vid="160">
-                            <h3 class="text-sm font-bold text-white mb-4" vid="161">Quick Actions</h3>
-                            <div class="space-y-2" vid="162">
-                                <button onclick="switchView('utm')" class="w-full text-left p-3 rounded-lg bg-black/20 hover:bg-black/40 border border-white/5 hover:border-purple-500/30 transition-all flex items-center gap-3 group" vid="163">
-                                    <div class="w-8 h-8 rounded bg-purple-900/30 flex items-center justify-center text-purple-400 group-hover:text-purple-300" vid="164"><i class="ph-duotone ph-link text-lg" vid="165"></i></div>
-                                    <div vid="166">
-                                        <div class="text-sm font-medium text-gray-200 group-hover:text-white" vid="167">Build a Tracking Link</div>
-                                        <div class="text-[10px] text-gray-500" vid="168">Generate standardized UTMs</div>
-                                    </div>
-                                </button>
-                                <button onclick="switchView('audit')" class="w-full text-left p-3 rounded-lg bg-black/20 hover:bg-black/40 border border-white/5 hover:border-gold/30 transition-all flex items-center gap-3 group" vid="169">
-                                    <div class="w-8 h-8 rounded bg-amber-900/30 flex items-center justify-center text-amber-400 group-hover:text-amber-300" vid="170"><i class="ph-duotone ph-clipboard-text text-lg" vid="171"></i></div>
-                                    <div vid="172">
-                                        <div class="text-sm font-medium text-gray-200 group-hover:text-white" vid="173">Review Audit Notes</div>
-                                        <div class="text-[10px] text-gray-500" vid="174">2 priority items pending</div>
-                                    </div>
-                                </button>
-                                <button onclick="window.open('https://clarity.microsoft.com', '_blank')" class="w-full text-left p-3 rounded-lg bg-black/20 hover:bg-black/40 border border-white/5 hover:border-cyan-500/30 transition-all flex items-center gap-3 group" vid="175">
-                                    <div class="w-8 h-8 rounded bg-cyan-900/30 flex items-center justify-center text-cyan-400 group-hover:text-cyan-300" vid="176"><i class="ph-duotone ph-mouse-left-click text-lg" vid="177"></i></div>
-                                    <div vid="178">
-                                        <div class="text-sm font-medium text-gray-200 group-hover:text-white" vid="179">Open Clarity Dashboard</div>
-                                        <div class="text-[10px] text-gray-500" vid="180">View session recordings</div>
-                                    </div>
-                                    <i class="ph-bold ph-arrow-up-right text-gray-600 ml-auto" vid="181"></i>
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </section>
-
-            
-            <section id="view-utm" class="view-section h-full max-w-7xl mx-auto flex flex-col" vid="182">
-                <div class="mb-6 shrink-0" vid="183">
-                    <h2 class="font-magical text-3xl text-white mb-2" vid="184">UTM Matrix</h2>
-                    <p class="text-sm text-gray-400" vid="185">Generate standardized tracking links to ensure clean data in reporting.</p>
-                </div>
-
-                <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 flex-1 min-h-0 pb-10" vid="186">
-                    
-                    <div class="lg:col-span-5 flex flex-col gap-4 overflow-y-auto custom-scrollbar pr-2" vid="187">
-                        <div class="glass-card p-6" vid="188">
-                            <h3 class="text-xs font-bold text-gray-500 uppercase tracking-widest mb-4 border-b border-white/5 pb-2" vid="189">Link Parameters</h3>
-                            <form id="utm-form" class="space-y-4" vid="190">
-                                <div vid="191">
-                                    <label class="block text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1.5" vid="192">Destination URL <span class="text-rose-400" vid="193">*</span></label>
-                                    <input type="url" id="utm-url" class="input-magical w-full rounded-lg px-3 py-2 text-sm" placeholder="https://re-volv.org/donate" required="" oninput="generateUTM()" vid="194">
-                                </div>
-                                <div class="grid grid-cols-2 gap-4" vid="195">
-                                    <div vid="196">
-                                        <label class="block text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1.5" vid="197">Source <span class="text-rose-400" vid="198">*</span></label>
-                                        <select id="utm-source" class="input-magical w-full rounded-lg px-3 py-2 text-sm appearance-none" required="" onchange="generateUTM()" vid="199">
-                                            <option value="" disabled="" selected="" vid="200">Select...</option>
-                                            <option value="google" vid="201">google</option>
-                                            <option value="linkedin" vid="202">linkedin</option>
-                                            <option value="facebook" vid="203">facebook</option>
-                                            <option value="hs_email" vid="204">hs_email</option>
-                                            <option value="partner" vid="205">partner</option>
-                                        </select>
-                                    </div>
-                                    <div vid="206">
-                                        <label class="block text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1.5" vid="207">Medium <span class="text-rose-400" vid="208">*</span></label>
-                                        <select id="utm-medium" class="input-magical w-full rounded-lg px-3 py-2 text-sm appearance-none" required="" onchange="generateUTM()" vid="209">
-                                            <option value="" disabled="" selected="" vid="210">Select...</option>
-                                            <option value="cpc" vid="211">cpc</option>
-                                            <option value="social" vid="212">social</option>
-                                            <option value="email" vid="213">email</option>
-                                            <option value="referral" vid="214">referral</option>
-                                        </select>
-                                    </div>
-                                </div>
-                                <div vid="215">
-                                    <label class="block text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1.5 flex justify-between" vid="216">
-                                        <span vid="217">Campaign Name <span class="text-rose-400" vid="218">*</span></span>
-                                        <span class="text-[8px] text-gray-600 font-normal normal-case" vid="219">Format: Q4_Initiative_Name</span>
-                                    </label>
-                                    <input type="text" id="utm-campaign" class="input-magical w-full rounded-lg px-3 py-2 text-sm" placeholder="e.g. Q4_Solar_Savings" required="" oninput="generateUTM()" vid="220">
-                                </div>
-                                
-                                <div class="pt-2 border-t border-white/5" vid="221">
-                                    <button type="button" onclick="document.getElementById('optional-fields').classList.toggle('hidden')" class="text-xs text-gray-400 hover:text-white flex items-center gap-1" vid="222">
-                                        <i class="ph-bold ph-plus-circle" vid="223"></i> Show Optional Fields
-                                    </button>
-                                </div>
-                                
-                                <div id="optional-fields" class="hidden space-y-4 pt-2" vid="224">
-                                    <div class="grid grid-cols-2 gap-4" vid="225">
-                                        <div vid="226">
-                                            <label class="block text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1.5" vid="227">Term (Keyword)</label>
-                                            <input type="text" id="utm-term" class="input-magical w-full rounded-lg px-3 py-2 text-sm" placeholder="e.g. solar panels" oninput="generateUTM()" vid="228">
-                                        </div>
-                                        <div vid="229">
-                                            <label class="block text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1.5" vid="230">Content (Ad Var)</label>
-                                            <input type="text" id="utm-content" class="input-magical w-full rounded-lg px-3 py-2 text-sm" placeholder="e.g. blue_banner" oninput="generateUTM()" vid="231">
-                                        </div>
-                                    </div>
-                                    <div vid="232">
-                                        <label class="block text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1.5" vid="233">Notes (For Registry)</label>
-                                        <input type="text" id="utm-notes" class="input-magical w-full rounded-lg px-3 py-2 text-sm" placeholder="Brief note on where this is used..." vid="234">
-                                    </div>
-                                </div>
-                            </form>
-                        </div>
-                    </div>
-
-                    
-                    <div class="lg:col-span-7 flex flex-col gap-4 h-full" vid="235">
-                        
-                        <div class="glass-card p-6 bg-gradient-to-br from-[#181125] to-[#120c1d] border-purple-500/20 shrink-0 relative overflow-hidden" vid="236">
-                            <div class="absolute -right-10 -top-10 w-32 h-32 bg-purple-500/10 rounded-full blur-[30px] pointer-events-none" vid="237"></div>
-                            <h3 class="text-xs font-bold text-purple-300 uppercase tracking-widest mb-3" vid="238">Generated Link</h3>
-                            <div class="relative mb-4" vid="239">
-                                <textarea id="utm-result" class="w-full bg-black/40 border border-purple-500/30 rounded-lg p-3 text-sm text-gray-300 font-mono resize-none h-20 outline-none" readonly="" placeholder="Fill out fields to generate link..." vid="240"></textarea>
-                                <button onclick="copyUTM()" class="absolute right-2 top-2 p-1.5 bg-black/50 hover:bg-purple-900/50 rounded-md border border-white/10 hover:border-purple-500/50 text-gray-400 hover:text-white transition-colors" title="Copy to clipboard" vid="241">
-                                    <i class="ph-bold ph-copy text-lg" vid="242"></i>
-                                </button>
-                            </div>
-                            <div class="flex items-center justify-between" vid="243">
-                                <p class="text-[10px] text-gray-500" vid="244">Saving writes this link to the Google Sheet registry.</p>
-                                <button onclick="saveUTM()" class="btn-primary px-5 py-2 rounded-md text-xs flex items-center gap-2" vid="245">
-                                    <i class="ph-bold ph-floppy-disk" vid="246"></i> Save to Registry
-                                </button>
-                            </div>
-                        </div>
-
-                        
-                        <div class="glass-card flex-1 flex flex-col min-h-[300px]" vid="247">
-                            <div class="p-4 border-b border-white/5 flex justify-between items-center bg-black/10" vid="248">
-                                <h3 class="text-xs font-bold text-gray-400 uppercase tracking-widest flex items-center gap-2" vid="249">
-                                    <i class="ph-fill ph-database text-cyan-500" vid="250"></i> Registry Backend (View)
-                                </h3>
-                                <div class="relative" vid="251">
-                                    <i class="ph-bold ph-magnifying-glass absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-500 text-xs" vid="252"></i>
-                                    <input type="text" class="input-magical rounded text-[10px] pl-7 pr-2 py-1.5 w-40" placeholder="Search registry..." vid="253">
-                                </div>
-                            </div>
-                            <div class="flex-1 overflow-auto" vid="254">
-                                <table class="data-table w-full" vid="255">
-                                    <thead class="sticky top-0 z-10" vid="256">
-                                        <tr vid="257">
-                                            <th vid="258">Campaign</th>
-                                            <th vid="259">Source/Medium</th>
-                                            <th vid="260">Date Saved</th>
-                                            <th class="w-10" vid="261"></th>
-                                        </tr>
-                                    </thead>
-                                    <tbody id="registry-tbody" vid="262">
-                                        
-                                    </tbody>
-                                </table>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </section>
-
-            
-            <section id="view-reports" class="view-section h-full max-w-7xl mx-auto flex flex-col" vid="263">
-                <div class="mb-6 shrink-0 flex justify-between items-end" vid="264">
-                    <div vid="265">
-                        <h2 class="font-magical text-3xl text-white mb-2" vid="266">Visual Intelligence</h2>
-                        <p class="text-sm text-gray-400" vid="267">Performance analytics connected to campaign registry data.</p>
-                    </div>
-                    <div class="flex items-center gap-3" vid="268">
-                        <span class="text-[10px] text-gray-500 uppercase tracking-wider" id="reports-last-updated" vid="269">Updated: Just now</span>
-                        <button class="btn-secondary px-4 py-2 rounded-lg text-xs flex items-center gap-2" onclick="refreshReportsData()" vid="270">
-                            <i class="ph-bold ph-arrows-clockwise" vid="271"></i> Refresh
-                        </button>
-                        <button class="btn-secondary px-4 py-2 rounded-lg text-xs flex items-center gap-2" vid="272">
-                            <i class="ph-bold ph-download-simple" vid="273"></i> Export
-                        </button>
-                    </div>
-                </div>
-
-                <div class="glass-card p-4 mb-6 shrink-0 bg-black/20" vid="274">
-                    <div class="flex items-center gap-2 w-full text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-3 border-b border-white/5 pb-2" vid="275">
-                        <i class="ph-bold ph-faders" vid="276"></i> Global Filters <span class="text-[9px] font-normal normal-case text-gray-600 ml-2" vid="277">— All charts update automatically</span>
-                    </div>
-                    <div class="flex flex-wrap gap-3 items-end" vid="278">
-                        <div vid="279">
-                            <label class="block text-[9px] text-gray-500 mb-1 uppercase" vid="280">Date Range</label>
-                            <select id="filter-date-range" class="input-magical text-xs rounded-md px-2 py-1.5 min-w-[120px]" onchange="applyReportFilters()" vid="281">
-                                <option value="30" vid="282">Last 30 Days</option>
-                                <option value="90" vid="283">Last 90 Days</option>
-                                <option value="quarter" vid="284">This Quarter</option>
-                                <option value="ytd" vid="285">Year to Date</option>
-                            </select>
-                        </div>
-                        <div vid="286">
-                            <label class="block text-[9px] text-gray-500 mb-1 uppercase" vid="287">Campaign</label>
-                            <select id="filter-campaign" class="input-magical text-xs rounded-md px-2 py-1.5 min-w-[140px]" onchange="applyReportFilters()" vid="288">
-                                <option value="all" vid="289">All Campaigns</option>
-                                <option value="Q4_Solar_Savings" vid="290">Q4 Solar Savings</option>
-                                <option value="Search_Brand_T1" vid="291">Search Brand T1</option>
-                                <option value="Newsletter_Oct" vid="292">Newsletter Oct</option>
-                                <option value="Retargeting_Q4" vid="293">Retargeting Q4</option>
-                            </select>
-                        </div>
-                        <div vid="294">
-                            <label class="block text-[9px] text-gray-500 mb-1 uppercase" vid="295">Source</label>
-                            <select id="filter-source" class="input-magical text-xs rounded-md px-2 py-1.5 min-w-[120px]" onchange="applyReportFilters()" vid="296">
-                                <option value="all" vid="297">All Sources</option>
-                                <option value="google" vid="298">Google</option>
-                                <option value="linkedin" vid="299">LinkedIn</option>
-                                <option value="facebook" vid="300">Facebook</option>
-                                <option value="hs_email" vid="301">HubSpot Email</option>
-                                <option value="direct" vid="302">Direct</option>
-                            </select>
-                        </div>
-                        <div vid="303">
-                            <label class="block text-[9px] text-gray-500 mb-1 uppercase" vid="304">Medium</label>
-                            <select id="filter-medium" class="input-magical text-xs rounded-md px-2 py-1.5 min-w-[100px]" onchange="applyReportFilters()" vid="305">
-                                <option value="all" vid="306">All</option>
-                                <option value="cpc" vid="307">CPC</option>
-                                <option value="social" vid="308">Social</option>
-                                <option value="email" vid="309">Email</option>
-                                <option value="organic" vid="310">Organic</option>
-                                <option value="referral" vid="311">Referral</option>
-                            </select>
-                        </div>
-                        <div vid="312">
-                            <label class="block text-[9px] text-gray-500 mb-1 uppercase" vid="313">Landing Page</label>
-                            <select id="filter-landing" class="input-magical text-xs rounded-md px-2 py-1.5 min-w-[140px]" onchange="applyReportFilters()" vid="314">
-                                <option value="all" vid="315">All Pages</option>
-                                <option value="/solar-savings" vid="316">/solar-savings</option>
-                                <option value="/donate" vid="317">/donate</option>
-                                <option value="/about-us" vid="318">/about-us</option>
-                                <option value="/newsletter-signup" vid="319">/newsletter-signup</option>
-                            </select>
-                        </div>
-                        <button onclick="resetReportFilters()" class="text-[10px] text-gray-500 hover:text-gray-300 underline ml-auto" vid="320">Reset all</button>
-                    </div>
-                </div>
-
-                <div class="flex-1 overflow-y-auto custom-scrollbar pb-6 space-y-6" vid="321">
-                    
-                    <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4" vid="322">
-                        <div class="glass-card p-4" vid="323">
-                            <div class="text-[10px] uppercase tracking-wider text-gray-500 font-bold mb-2" vid="324">Sessions</div>
-                            <div class="text-2xl font-bold text-white" id="kpi-sessions" vid="325">12,450</div>
-                            <div class="text-xs text-emerald-400 mt-1" vid="326"><i class="ph-bold ph-trend-up" vid="327"></i> +14.2%</div>
-                        </div>
-                        <div class="glass-card p-4" vid="328">
-                            <div class="text-[10px] uppercase tracking-wider text-gray-500 font-bold mb-2" vid="329">Users</div>
-                            <div class="text-2xl font-bold text-white" id="kpi-users" vid="330">9,832</div>
-                            <div class="text-xs text-emerald-400 mt-1" vid="331"><i class="ph-bold ph-trend-up" vid="332"></i> +11.8%</div>
-                        </div>
-                        <div class="glass-card p-4" vid="333">
-                            <div class="text-[10px] uppercase tracking-wider text-gray-500 font-bold mb-2" vid="334">Conversions</div>
-                            <div class="text-2xl font-bold text-white" id="kpi-conversions" vid="335">473</div>
-                            <div class="text-xs text-emerald-400 mt-1" vid="336"><i class="ph-bold ph-trend-up" vid="337"></i> +8.4%</div>
-                        </div>
-                        <div class="glass-card p-4" vid="338">
-                            <div class="text-[10px] uppercase tracking-wider text-gray-500 font-bold mb-2" vid="339">Conv. Rate</div>
-                            <div class="text-2xl font-bold text-white" id="kpi-rate" vid="340">3.8%</div>
-                            <div class="text-xs text-emerald-400 mt-1" vid="341"><i class="ph-bold ph-trend-up" vid="342"></i> +0.5%</div>
-                        </div>
-                        <div class="glass-card p-4" vid="343">
-                            <div class="text-[10px] uppercase tracking-wider text-gray-500 font-bold mb-2" vid="344">Avg Duration</div>
-                            <div class="text-2xl font-bold text-white" id="kpi-duration" vid="345">2:34</div>
-                            <div class="text-xs text-rose-400 mt-1" vid="346"><i class="ph-bold ph-trend-down" vid="347"></i> -0:12</div>
-                        </div>
-                        <div class="glass-card p-4 border-l-2 border-l-purple-500" vid="348">
-                            <div class="text-[10px] uppercase tracking-wider text-gray-500 font-bold mb-2" vid="349">Top Source</div>
-                            <div class="text-xl font-bold text-white" id="kpi-top-source" vid="350">LinkedIn</div>
-                            <div class="text-xs text-gray-400 mt-1" vid="351">31% of traffic</div>
-                        </div>
-                    </div>
-
-                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6" vid="352">
-                        <div class="glass-card p-5" vid="353">
-                            <div class="flex justify-between items-center mb-4" vid="354">
-                                <h3 class="text-sm font-bold text-white" vid="355">Sessions Over Time</h3>
-                                <span class="text-[10px] text-gray-500" vid="356">Daily trend</span>
-                            </div>
-                            <div class="h-48 relative" id="chart-sessions-trend" vid="357">
-                                <svg class="w-full h-full" viewBox="0 0 400 150" preserveAspectRatio="none" vid="358">
-                                    <defs vid="359">
-                                        <linearGradient id="areaGradient" x1="0" y1="0" x2="0" y2="1" vid="360">
-                                            <stop offset="0%" stop-color="#a855f7" stop-opacity="0.3" vid="361"></stop>
-                                            <stop offset="100%" stop-color="#a855f7" stop-opacity="0" vid="362"></stop>
-                                        </linearGradient>
-                                    </defs>
-                                    <path d="M0,120 Q50,100 100,90 T200,70 T300,60 T400,40 L400,150 L0,150 Z" fill="url(#areaGradient)" vid="363"></path>
-                                    <path d="M0,120 Q50,100 100,90 T200,70 T300,60 T400,40" fill="none" stroke="#a855f7" stroke-width="2" vid="364"></path>
-                                    <circle cx="400" cy="40" r="4" fill="#a855f7" vid="365"></circle>
-                                </svg>
-                                <div class="absolute bottom-0 left-0 right-0 flex justify-between text-[9px] text-gray-500 px-2" vid="366">
-                                    <span vid="367">Oct 1</span><span vid="368">Oct 10</span><span vid="369">Oct 20</span><span vid="370">Oct 30</span>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="glass-card p-5" vid="371">
-                            <div class="flex justify-between items-center mb-4" vid="372">
-                                <h3 class="text-sm font-bold text-white" vid="373">Conversions Over Time</h3>
-                                <span class="text-[10px] text-gray-500" vid="374">Daily conversions</span>
-                            </div>
-                            <div class="h-48 relative" id="chart-conversions-trend" vid="375">
-                                <svg class="w-full h-full" viewBox="0 0 400 150" preserveAspectRatio="none" vid="376">
-                                    <defs vid="377">
-                                        <linearGradient id="convGradient" x1="0" y1="0" x2="0" y2="1" vid="378">
-                                            <stop offset="0%" stop-color="#00f0ff" stop-opacity="0.3" vid="379"></stop>
-                                            <stop offset="100%" stop-color="#00f0ff" stop-opacity="0" vid="380"></stop>
-                                        </linearGradient>
-                                    </defs>
-                                    <path d="M0,130 L40,125 L80,110 L120,115 L160,95 L200,90 L240,85 L280,70 L320,65 L360,50 L400,45 L400,150 L0,150 Z" fill="url(#convGradient)" vid="381"></path>
-                                    <path d="M0,130 L40,125 L80,110 L120,115 L160,95 L200,90 L240,85 L280,70 L320,65 L360,50 L400,45" fill="none" stroke="#00f0ff" stroke-width="2" vid="382"></path>
-                                </svg>
-                                <div class="absolute bottom-0 left-0 right-0 flex justify-between text-[9px] text-gray-500 px-2" vid="383">
-                                    <span vid="384">Oct 1</span><span vid="385">Oct 10</span><span vid="386">Oct 20</span><span vid="387">Oct 30</span>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6" vid="388">
-                        <div class="glass-card p-5" vid="389">
-                            <h3 class="text-sm font-bold text-white mb-4" vid="390">Sessions by Source</h3>
-                            <div class="space-y-3" id="chart-source-bars" vid="391">
-                                <div class="flex items-center gap-3" vid="392">
-                                    <span class="text-xs text-gray-400 w-16" vid="393">LinkedIn</span>
-                                    <div class="flex-1 h-6 bg-black/30 rounded overflow-hidden" vid="394">
-                                        <div class="h-full bg-purple-500 rounded" style="width: 85%" vid="395"></div>
-                                    </div>
-                                    <span class="text-xs font-bold text-white w-10 text-right" vid="396">3,867</span>
-                                </div>
-                                <div class="flex items-center gap-3" vid="397">
-                                    <span class="text-xs text-gray-400 w-16" vid="398">Google</span>
-                                    <div class="flex-1 h-6 bg-black/30 rounded overflow-hidden" vid="399">
-                                        <div class="h-full bg-emerald-500 rounded" style="width: 62%" vid="400"></div>
-                                    </div>
-                                    <span class="text-xs font-bold text-white w-10 text-right" vid="401">2,823</span>
-                                </div>
-                                <div class="flex items-center gap-3" vid="402">
-                                    <span class="text-xs text-gray-400 w-16" vid="403">Direct</span>
-                                    <div class="flex-1 h-6 bg-black/30 rounded overflow-hidden" vid="404">
-                                        <div class="h-full bg-cyan-500 rounded" style="width: 45%" vid="405"></div>
-                                    </div>
-                                    <span class="text-xs font-bold text-white w-10 text-right" vid="406">2,045</span>
-                                </div>
-                                <div class="flex items-center gap-3" vid="407">
-                                    <span class="text-xs text-gray-400 w-16" vid="408">Email</span>
-                                    <div class="flex-1 h-6 bg-black/30 rounded overflow-hidden" vid="409">
-                                        <div class="h-full bg-amber-500 rounded" style="width: 28%" vid="410"></div>
-                                    </div>
-                                    <span class="text-xs font-bold text-white w-10 text-right" vid="411">1,273</span>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="glass-card p-5" vid="412">
-                            <h3 class="text-sm font-bold text-white mb-4" vid="413">Channel Distribution</h3>
-                            <div class="flex items-center justify-center h-40" vid="414">
-                                <svg viewBox="0 0 100 100" class="w-32 h-32 -rotate-90" vid="415">
-                                    <circle cx="50" cy="50" r="40" fill="none" stroke="#a855f7" stroke-width="20" stroke-dasharray="100.5 150" stroke-dashoffset="0" vid="416"></circle>
-                                    <circle cx="50" cy="50" r="40" fill="none" stroke="#10b981" stroke-width="20" stroke-dasharray="75.4 150" stroke-dashoffset="-100.5" vid="417"></circle>
-                                    <circle cx="50" cy="50" r="40" fill="none" stroke="#00f0ff" stroke-width="20" stroke-dasharray="50.3 150" stroke-dashoffset="-175.9" vid="418"></circle>
-                                    <circle cx="50" cy="50" r="40" fill="none" stroke="#f59e0b" stroke-width="20" stroke-dasharray="37.7 150" stroke-dashoffset="-226.2" vid="419"></circle>
-                                </svg>
-                                <div class="absolute inset-0 flex items-center justify-center" vid="420">
-                                    <div class="text-center" vid="421">
-                                        <div class="text-2xl font-bold text-white" vid="422">4</div>
-                                        <div class="text-[9px] text-gray-500" vid="423">Channels</div>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="flex flex-wrap gap-2 justify-center mt-2" vid="424">
-                                <span class="text-[9px] flex items-center gap-1" vid="425"><span class="w-2 h-2 rounded-full bg-purple-500" vid="426"></span>Paid Social</span>
-                                <span class="text-[9px] flex items-center gap-1" vid="427"><span class="w-2 h-2 rounded-full bg-emerald-500" vid="428"></span>Search</span>
-                                <span class="text-[9px] flex items-center gap-1" vid="429"><span class="w-2 h-2 rounded-full bg-cyan-500" vid="430"></span>Direct</span>
-                                <span class="text-[9px] flex items-center gap-1" vid="431"><span class="w-2 h-2 rounded-full bg-amber-500" vid="432"></span>Email</span>
-                            </div>
-                        </div>
-                        <div class="glass-card p-5" vid="433">
-                            <h3 class="text-sm font-bold text-white mb-4" vid="434">Top Landing Pages</h3>
-                            <div class="space-y-2" id="top-landing-pages" vid="435">
-                                <div class="flex items-center justify-between p-2 bg-black/20 rounded" vid="436">
-                                    <span class="text-xs text-gray-300" vid="437">/solar-savings</span>
-                                    <span class="text-xs font-bold text-cyan-400" vid="438">4,230 <span class="text-gray-500 font-normal" vid="439">sess</span></span>
-                                </div>
-                                <div class="flex items-center justify-between p-2 bg-black/20 rounded" vid="440">
-                                    <span class="text-xs text-gray-300" vid="441">/donate</span>
-                                    <span class="text-xs font-bold text-cyan-400" vid="442">2,891 <span class="text-gray-500 font-normal" vid="443">sess</span></span>
-                                </div>
-                                <div class="flex items-center justify-between p-2 bg-black/20 rounded" vid="444">
-                                    <span class="text-xs text-gray-300" vid="445">/about-us</span>
-                                    <span class="text-xs font-bold text-cyan-400" vid="446">1,756 <span class="text-gray-500 font-normal" vid="447">sess</span></span>
-                                </div>
-                                <div class="flex items-center justify-between p-2 bg-black/20 rounded" vid="448">
-                                    <span class="text-xs text-gray-300" vid="449">/newsletter-signup</span>
-                                    <span class="text-xs font-bold text-cyan-400" vid="450">982 <span class="text-gray-500 font-normal" vid="451">sess</span></span>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="glass-card overflow-hidden" vid="452">
-                        <div class="p-5 border-b border-white/5 flex justify-between items-center bg-black/20" vid="453">
-                            <h3 class="text-sm font-bold text-white" vid="454">Campaign Performance Detail</h3>
-                            <div class="text-[10px] text-gray-500" vid="455">Sorted by conversions</div>
-                        </div>
-                        <div class="overflow-x-auto" vid="456">
-                            <table class="data-table w-full" id="campaign-performance-table" vid="457">
-                                <thead vid="458">
-                                    <tr vid="459">
-                                        <th vid="460">Campaign</th>
-                                        <th vid="461">Source</th>
-                                        <th vid="462">Medium</th>
-                                        <th class="text-right" vid="463">Sessions</th>
-                                        <th class="text-right" vid="464">Conversions</th>
-                                        <th class="text-right" vid="465">Conv. Rate</th>
-                                        <th class="text-right" vid="466">Trend</th>
-                                    </tr>
-                                </thead>
-                                <tbody vid="467">
-                                    <tr vid="468">
-                                        <td vid="469"><div class="font-medium text-white" vid="470">Q4_Solar_Savings</div></td>
-                                        <td vid="471"><span class="badge badge-purple" vid="472">linkedin</span></td>
-                                        <td vid="473"><span class="text-xs text-gray-400" vid="474">social</span></td>
-                                        <td class="text-right font-medium text-white" vid="475">3,245</td>
-                                        <td class="text-right font-bold text-emerald-400" vid="476">156</td>
-                                        <td class="text-right font-bold text-cyan-400" vid="477">4.8%</td>
-                                        <td class="text-right" vid="478"><i class="ph-bold ph-trend-up text-emerald-400" vid="479"></i></td>
-                                    </tr>
-                                    <tr vid="480">
-                                        <td vid="481"><div class="font-medium text-white" vid="482">Search_Brand_T1</div></td>
-                                        <td vid="483"><span class="badge badge-emerald" vid="484">google</span></td>
-                                        <td vid="485"><span class="text-xs text-gray-400" vid="486">cpc</span></td>
-                                        <td class="text-right font-medium text-white" vid="487">2,823</td>
-                                        <td class="text-right font-bold text-emerald-400" vid="488">98</td>
-                                        <td class="text-right font-bold text-cyan-400" vid="489">3.5%</td>
-                                        <td class="text-right" vid="490"><i class="ph-bold ph-trend-up text-emerald-400" vid="491"></i></td>
-                                    </tr>
-                                    <tr vid="492">
-                                        <td vid="493"><div class="font-medium text-white" vid="494">Newsletter_Oct</div></td>
-                                        <td vid="495"><span class="badge badge-cyan" vid="496">hs_email</span></td>
-                                        <td vid="497"><span class="text-xs text-gray-400" vid="498">email</span></td>
-                                        <td class="text-right font-medium text-white" vid="499">1,273</td>
-                                        <td class="text-right font-bold text-emerald-400" vid="500">67</td>
-                                        <td class="text-right font-bold text-cyan-400" vid="501">5.3%</td>
-                                        <td class="text-right" vid="502"><i class="ph-bold ph-trend-down text-rose-400" vid="503"></i></td>
-                                    </tr>
-                                    <tr vid="504">
-                                        <td vid="505"><div class="font-medium text-white" vid="506">Retargeting_Q4</div></td>
-                                        <td vid="507"><span class="badge badge-rose" vid="508">facebook</span></td>
-                                        <td vid="509"><span class="text-xs text-gray-400" vid="510">social</span></td>
-                                        <td class="text-right font-medium text-white" vid="511">892</td>
-                                        <td class="text-right font-bold text-emerald-400" vid="512">34</td>
-                                        <td class="text-right font-bold text-cyan-400" vid="513">3.8%</td>
-                                        <td class="text-right" vid="514"><i class="ph-bold ph-minus text-gray-500" vid="515"></i></td>
-                                    </tr>
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-
-                    <div class="glass-card overflow-hidden" vid="516">
-                        <div class="p-5 border-b border-white/5 flex justify-between items-center bg-black/20" vid="517">
-                            <h3 class="text-sm font-bold text-white" vid="518">Landing Page Performance</h3>
-                        </div>
-                        <div class="overflow-x-auto" vid="519">
-                            <table class="data-table w-full" id="landing-page-table" vid="520">
-                                <thead vid="521">
-                                    <tr vid="522">
-                                        <th vid="523">Landing Page</th>
-                                        <th class="text-right" vid="524">Sessions</th>
-                                        <th class="text-right" vid="525">Conv. Rate</th>
-                                        <th class="text-right" vid="526">Bounce Rate</th>
-                                        <th class="text-right" vid="527">Avg Duration</th>
-                                    </tr>
-                                </thead>
-                                <tbody vid="528">
-                                    <tr vid="529">
-                                        <td class="font-medium text-white text-xs" vid="530">/solar-savings</td>
-                                        <td class="text-right text-white" vid="531">4,230</td>
-                                        <td class="text-right" vid="532"><span class="text-emerald-400 font-bold" vid="533">5.2%</span></td>
-                                        <td class="text-right text-gray-400" vid="534">42%</td>
-                                        <td class="text-right text-gray-400" vid="535">2:45</td>
-                                    </tr>
-                                    <tr vid="536">
-                                        <td class="font-medium text-white text-xs" vid="537">/donate</td>
-                                        <td class="text-right text-white" vid="538">2,891</td>
-                                        <td class="text-right" vid="539"><span class="text-emerald-400 font-bold" vid="540">8.7%</span></td>
-                                        <td class="text-right text-gray-400" vid="541">35%</td>
-                                        <td class="text-right text-gray-400" vid="542">3:12</td>
-                                    </tr>
-                                    <tr vid="543">
-                                        <td class="font-medium text-white text-xs" vid="544">/about-us</td>
-                                        <td class="text-right text-white" vid="545">1,756</td>
-                                        <td class="text-right" vid="546"><span class="text-amber-400 font-bold" vid="547">1.2%</span></td>
-                                        <td class="text-right text-gray-400" vid="548">68%</td>
-                                        <td class="text-right text-gray-400" vid="549">1:23</td>
-                                    </tr>
-                                    <tr vid="550">
-                                        <td class="font-medium text-white text-xs" vid="551">/newsletter-signup</td>
-                                        <td class="text-right text-white" vid="552">982</td>
-                                        <td class="text-right" vid="553"><span class="text-emerald-400 font-bold" vid="554">12.4%</span></td>
-                                        <td class="text-right text-gray-400" vid="555">28%</td>
-                                        <td class="text-right text-gray-400" vid="556">1:56</td>
-                                    </tr>
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-                </div>
-            </section>
-
-            
-            <section id="view-ux" class="view-section h-full max-w-7xl mx-auto flex flex-col" vid="557">
-                <div class="mb-6 shrink-0 flex justify-between items-end" vid="558">
-                    <div vid="559">
-                        <h2 class="font-magical text-3xl text-white mb-2" vid="560">Experience Friction</h2>
-                        <p class="text-sm text-gray-400" vid="561">Behavioral insights derived from Microsoft Clarity recordings and heatmaps.</p>
-                    </div>
-                    <div class="flex items-center gap-3" vid="562">
-                        <span class="text-[10px] text-gray-500 uppercase tracking-wider" id="ux-last-updated" vid="563">Updated: Oct 30, 2024</span>
-                        <button onclick="syncClarityData()" class="btn-secondary px-4 py-2 rounded-lg text-xs flex items-center gap-2" vid="564">
-                            <i class="ph-bold ph-arrows-clockwise" vid="565"></i> Sync Data
-                        </button>
-                    </div>
-                </div>
-
-                <div class="glass-card p-4 mb-6 shrink-0 bg-black/20" vid="566">
-                    <div class="flex items-center gap-2 w-full text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-3 border-b border-white/5 pb-2" vid="567">
-                        <i class="ph-bold ph-faders" vid="568"></i> UX Filters
-                    </div>
-                    <div class="flex flex-wrap gap-3 items-end" vid="569">
-                        <div vid="570">
-                            <label class="block text-[9px] text-gray-500 mb-1 uppercase" vid="571">Date Range</label>
-                            <select id="ux-filter-date" class="input-magical text-xs rounded-md px-2 py-1.5 min-w-[120px]" onchange="applyUXFilters()" vid="572">
-                                <option value="30" vid="573">Last 30 Days</option>
-                                <option value="7" vid="574">Last 7 Days</option>
-                                <option value="90" vid="575">Last 90 Days</option>
-                            </select>
-                        </div>
-                        <div vid="576">
-                            <label class="block text-[9px] text-gray-500 mb-1 uppercase" vid="577">Page</label>
-                            <select id="ux-filter-page" class="input-magical text-xs rounded-md px-2 py-1.5 min-w-[140px]" onchange="applyUXFilters()" vid="578">
-                                <option value="all" vid="579">All Pages</option>
-                                <option value="/solar-savings" vid="580">/solar-savings</option>
-                                <option value="/donate" vid="581">/donate</option>
-                                <option value="/about-us" vid="582">/about-us</option>
-                            </select>
-                        </div>
-                        <div vid="583">
-                            <label class="block text-[9px] text-gray-500 mb-1 uppercase" vid="584">Device</label>
-                            <select id="ux-filter-device" class="input-magical text-xs rounded-md px-2 py-1.5 min-w-[100px]" onchange="applyUXFilters()" vid="585">
-                                <option value="all" vid="586">All Devices</option>
-                                <option value="desktop" vid="587">Desktop</option>
-                                <option value="mobile" vid="588">Mobile</option>
-                                <option value="tablet" vid="589">Tablet</option>
-                            </select>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="flex-1 overflow-y-auto custom-scrollbar pb-6 space-y-6" vid="590">
-                    
-                    <div class="grid grid-cols-2 md:grid-cols-5 gap-4" vid="591">
-                        <div class="glass-card p-4 border-l-2 border-l-rose-500" vid="592">
-                            <div class="text-[10px] uppercase tracking-wider text-gray-500 font-bold mb-2" vid="593">Total Rage Clicks</div>
-                            <div class="text-2xl font-bold text-rose-400" id="ux-kpi-rage" vid="594">2,847</div>
-                            <div class="text-xs text-gray-400 mt-1" vid="595">3.2% of sessions</div>
-                        </div>
-                        <div class="glass-card p-4 border-l-2 border-l-amber-500" vid="596">
-                            <div class="text-[10px] uppercase tracking-wider text-gray-500 font-bold mb-2" vid="597">Total Dead Clicks</div>
-                            <div class="text-2xl font-bold text-amber-400" id="ux-kpi-dead" vid="598">1,523</div>
-                            <div class="text-xs text-gray-400 mt-1" vid="599">1.7% of sessions</div>
-                        </div>
-                        <div class="glass-card p-4 border-l-2 border-l-cyan-500" vid="600">
-                            <div class="text-[10px] uppercase tracking-wider text-gray-500 font-bold mb-2" vid="601">Avg Scroll Depth</div>
-                            <div class="text-2xl font-bold text-cyan-400" id="ux-kpi-scroll" vid="602">62%</div>
-                            <div class="text-xs text-emerald-400 mt-1" vid="603"><i class="ph-bold ph-trend-up" vid="604"></i> +4%</div>
-                        </div>
-                        <div class="glass-card p-4" vid="605">
-                            <div class="text-[10px] uppercase tracking-wider text-gray-500 font-bold mb-2" vid="606">Avg Time on Page</div>
-                            <div class="text-2xl font-bold text-white" id="ux-kpi-time" vid="607">1:45</div>
-                            <div class="text-xs text-gray-400 mt-1" vid="608">Per session</div>
-                        </div>
-                        <div class="glass-card p-4 border-l-2 border-l-purple-500 cursor-pointer hover:bg-white/5" onclick="highlightFrictionPage('/solar-savings')" vid="609">
-                            <div class="text-[10px] uppercase tracking-wider text-gray-500 font-bold mb-2" vid="610">Highest Friction</div>
-                            <div class="text-lg font-bold text-white truncate" id="ux-kpi-high" vid="611">/solar-savings</div>
-                            <div class="text-xs text-rose-400 mt-1" vid="612">4.8% rage rate</div>
-                        </div>
-                    </div>
-
-                    <div class="glass-card p-4 border-l-2 border-l-gold" vid="613">
-                        <div class="flex items-start gap-3" vid="614">
-                            <i class="ph-fill ph-lightbulb text-amber-400 text-xl mt-0.5" vid="615"></i>
-                            <div vid="616">
-                                <h3 class="text-sm font-bold text-amber-300 mb-1" vid="617">Auto-Generated Insights</h3>
-                                <div id="ux-insights-container" class="space-y-2 text-sm text-gray-300" vid="618">
-                                    <p class="flex items-start gap-2" vid="619"><i class="ph-bold ph-warning text-rose-400 mt-0.5" vid="620"></i> <span vid="621"><strong vid="622">/solar-savings</strong> shows 4.2% rage clicks — users repeatedly clicking the non-interactive hero banner image expecting it to link to calculator.</span></p>
-                                    <p class="flex items-start gap-2" vid="623"><i class="ph-bold ph-device-mobile text-cyan-400 mt-0.5" vid="624"></i> <span vid="625">Mobile scroll depth (48%) is <strong vid="626">22% lower</strong> than desktop (70%). Consider shortening mobile hero section.</span></p>
-                                    <p class="flex items-start gap-2" vid="627"><i class="ph-bold ph-mouse text-amber-400 mt-0.5" vid="628"></i> <span vid="629"><strong vid="630">/about-us</strong> has 3.1% dead clicks on team member photos — visitors expect clickable bio pages.</span></p>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6" vid="631">
-                        <div class="glass-card p-5" vid="632">
-                            <h3 class="text-sm font-bold text-white mb-4" vid="633">Rage Clicks by Landing Page</h3>
-                            <div class="space-y-3" id="chart-rage-by-page" vid="634">
-                                <div class="flex items-center gap-3" vid="635">
-                                    <span class="text-xs text-gray-400 w-24 truncate" vid="636">/solar-savings</span>
-                                    <div class="flex-1 h-5 bg-black/30 rounded overflow-hidden" vid="637">
-                                        <div class="h-full bg-rose-500 rounded" style="width: 85%" vid="638"></div>
-                                    </div>
-                                    <span class="text-xs font-bold text-rose-400 w-12 text-right" vid="639">4.2%</span>
-                                </div>
-                                <div class="flex items-center gap-3" vid="640">
-                                    <span class="text-xs text-gray-400 w-24 truncate" vid="641">/donate</span>
-                                    <div class="flex-1 h-5 bg-black/30 rounded overflow-hidden" vid="642">
-                                        <div class="h-full bg-rose-500 rounded" style="width: 45%" vid="643"></div>
-                                    </div>
-                                    <span class="text-xs font-bold text-rose-400 w-12 text-right" vid="644">2.1%</span>
-                                </div>
-                                <div class="flex items-center gap-3" vid="645">
-                                    <span class="text-xs text-gray-400 w-24 truncate" vid="646">/about-us</span>
-                                    <div class="flex-1 h-5 bg-black/30 rounded overflow-hidden" vid="647">
-                                        <div class="h-full bg-rose-500 rounded" style="width: 15%" vid="648"></div>
-                                    </div>
-                                    <span class="text-xs font-bold text-gray-400 w-12 text-right" vid="649">0.5%</span>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="glass-card p-5" vid="650">
-                            <h3 class="text-sm font-bold text-white mb-4" vid="651">Dead Clicks by Landing Page</h3>
-                            <div class="space-y-3" id="chart-dead-by-page" vid="652">
-                                <div class="flex items-center gap-3" vid="653">
-                                    <span class="text-xs text-gray-400 w-24 truncate" vid="654">/about-us</span>
-                                    <div class="flex-1 h-5 bg-black/30 rounded overflow-hidden" vid="655">
-                                        <div class="h-full bg-amber-500 rounded" style="width: 78%" vid="656"></div>
-                                    </div>
-                                    <span class="text-xs font-bold text-amber-400 w-12 text-right" vid="657">3.1%</span>
-                                </div>
-                                <div class="flex items-center gap-3" vid="658">
-                                    <span class="text-xs text-gray-400 w-24 truncate" vid="659">/solar-savings</span>
-                                    <div class="flex-1 h-5 bg-black/30 rounded overflow-hidden" vid="660">
-                                        <div class="h-full bg-amber-500 rounded" style="width: 45%" vid="661"></div>
-                                    </div>
-                                    <span class="text-xs font-bold text-amber-400 w-12 text-right" vid="662">1.8%</span>
-                                </div>
-                                <div class="flex items-center gap-3" vid="663">
-                                    <span class="text-xs text-gray-400 w-24 truncate" vid="664">/donate</span>
-                                    <div class="flex-1 h-5 bg-black/30 rounded overflow-hidden" vid="665">
-                                        <div class="h-full bg-amber-500 rounded" style="width: 20%" vid="666"></div>
-                                    </div>
-                                    <span class="text-xs font-bold text-gray-400 w-12 text-right" vid="667">0.8%</span>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6" vid="668">
-                        <div class="glass-card p-5" vid="669">
-                            <h3 class="text-sm font-bold text-white mb-4" vid="670">Rage Clicks by Device</h3>
-                            <div class="flex items-end justify-around h-40 px-4" vid="671">
-                                <div class="flex flex-col items-center gap-2" vid="672">
-                                    <div class="w-12 bg-rose-500/80 rounded-t" style="height: 120px;" vid="673"></div>
-                                    <span class="text-xs text-gray-400" vid="674">Mobile</span>
-                                    <span class="text-xs font-bold text-rose-400" vid="675">4.8%</span>
-                                </div>
-                                <div class="flex flex-col items-center gap-2" vid="676">
-                                    <div class="w-12 bg-rose-500/50 rounded-t" style="height: 75px;" vid="677"></div>
-                                    <span class="text-xs text-gray-400" vid="678">Desktop</span>
-                                    <span class="text-xs font-bold text-gray-400" vid="679">2.1%</span>
-                                </div>
-                                <div class="flex flex-col items-center gap-2" vid="680">
-                                    <div class="w-12 bg-rose-500/30 rounded-t" style="height: 45px;" vid="681"></div>
-                                    <span class="text-xs text-gray-400" vid="682">Tablet</span>
-                                    <span class="text-xs font-bold text-gray-400" vid="683">1.2%</span>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="glass-card p-5" vid="684">
-                            <h3 class="text-sm font-bold text-white mb-4" vid="685">Scroll Depth by Device</h3>
-                            <div class="flex items-end justify-around h-40 px-4" vid="686">
-                                <div class="flex flex-col items-center gap-2" vid="687">
-                                    <div class="w-12 bg-cyan-500/80 rounded-t" style="height: 105px;" vid="688"></div>
-                                    <span class="text-xs text-gray-400" vid="689">Desktop</span>
-                                    <span class="text-xs font-bold text-cyan-400" vid="690">70%</span>
-                                </div>
-                                <div class="flex flex-col items-center gap-2" vid="691">
-                                    <div class="w-12 bg-cyan-500/50 rounded-t" style="height: 72px;" vid="692"></div>
-                                    <span class="text-xs text-gray-400" vid="693">Tablet</span>
-                                    <span class="text-xs font-bold text-cyan-400" vid="694">48%</span>
-                                </div>
-                                <div class="flex flex-col items-center gap-2" vid="695">
-                                    <div class="w-12 bg-cyan-500/30 rounded-t" style="height: 65px;" vid="696"></div>
-                                    <span class="text-xs text-gray-400" vid="697">Mobile</span>
-                                    <span class="text-xs font-bold text-gray-400" vid="698">42%</span>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="glass-card overflow-hidden" vid="699">
-                        <div class="p-5 border-b border-white/5 flex justify-between items-center bg-black/20" vid="700">
-                            <div vid="701">
-                                <h3 class="text-sm font-bold text-white" vid="702">Page Friction Detail</h3>
-                                <p class="text-[10px] text-gray-500" vid="703">From clarity_import backend table</p>
-                            </div>
-                            <div class="flex gap-2" vid="704">
-                                <button onclick="window.open(PORTAL_CONFIG.clarityUrl, '_blank')" class="btn-secondary px-3 py-1.5 rounded text-xs flex items-center gap-2" vid="705">
-                                    <i class="ph-fill ph-microsoft-logo" vid="706"></i> Open Clarity
-                                </button>
-                                <button class="btn-primary px-3 py-1.5 rounded text-xs flex items-center gap-2" vid="707">
-                                    <i class="ph-bold ph-eye" vid="708"></i> Review Top Page
-                                </button>
-                            </div>
-                        </div>
-                        <div class="overflow-x-auto" vid="709">
-                            <table class="data-table w-full" id="ux-friction-table" vid="710">
-                                <thead vid="711">
-                                    <tr vid="712">
-                                        <th vid="713">Landing Page</th>
-                                        <th class="text-right" vid="714">Sessions</th>
-                                        <th class="text-right" vid="715">Rage Clicks</th>
-                                        <th class="text-right" vid="716">Dead Clicks</th>
-                                        <th class="text-right" vid="717">Scroll Depth</th>
-                                        <th vid="718">Primary Issue</th>
-                                    </tr>
-                                </thead>
-                                <tbody vid="719">
-                                    <tr data-page="/solar-savings" vid="720">
-                                        <td class="font-medium text-white text-xs" vid="721">/solar-savings</td>
-                                        <td class="text-right text-white" vid="722">4,230</td>
-                                        <td class="text-right" vid="723"><span class="text-rose-400 font-bold" vid="724">4.2%</span></td>
-                                        <td class="text-right text-amber-400" vid="725">1.8%</td>
-                                        <td class="text-right" vid="726">
-                                            <div class="flex items-center gap-2 justify-end" vid="727">
-                                                <div class="w-16 bg-black/50 rounded-full h-1.5 border border-white/10" vid="728">
-                                                    <div class="bg-cyan-400 h-1.5 rounded-full" style="width: 45%" vid="729"></div>
-                                                </div>
-                                                <span class="text-xs text-gray-400" vid="730">45%</span>
-                                            </div>
-                                        </td>
-                                        <td class="text-xs text-gray-400" vid="731">Hero image not clickable</td>
-                                    </tr>
-                                    <tr data-page="/donate" vid="732">
-                                        <td class="font-medium text-white text-xs" vid="733">/donate</td>
-                                        <td class="text-right text-white" vid="734">2,891</td>
-                                        <td class="text-right text-gray-400" vid="735">2.1%</td>
-                                        <td class="text-right text-gray-400" vid="736">0.8%</td>
-                                        <td class="text-right" vid="737">
-                                            <div class="flex items-center gap-2 justify-end" vid="738">
-                                                <div class="w-16 bg-black/50 rounded-full h-1.5 border border-white/10" vid="739">
-                                                    <div class="bg-cyan-400 h-1.5 rounded-full" style="width: 62%" vid="740"></div>
-                                                </div>
-                                                <span class="text-xs text-gray-400" vid="741">62%</span>
-                                            </div>
-                                        </td>
-                                        <td class="text-xs text-gray-400" vid="742">Form field confusion</td>
-                                    </tr>
-                                    <tr data-page="/about-us" vid="743">
-                                        <td class="font-medium text-white text-xs" vid="744">/about-us</td>
-                                        <td class="text-right text-white" vid="745">1,756</td>
-                                        <td class="text-right text-gray-400" vid="746">0.5%</td>
-                                        <td class="text-right" vid="747"><span class="text-amber-400 font-bold" vid="748">3.1%</span></td>
-                                        <td class="text-right" vid="749">
-                                            <div class="flex items-center gap-2 justify-end" vid="750">
-                                                <div class="w-16 bg-black/50 rounded-full h-1.5 border border-white/10" vid="751">
-                                                    <div class="bg-cyan-400 h-1.5 rounded-full" style="width: 78%" vid="752"></div>
-                                                </div>
-                                                <span class="text-xs text-gray-400" vid="753">78%</span>
-                                            </div>
-                                        </td>
-                                        <td class="text-xs text-gray-400" vid="754">Team photos not linked</td>
-                                    </tr>
-                                    <tr data-page="/newsletter-signup" vid="755">
-                                        <td class="font-medium text-white text-xs" vid="756">/newsletter-signup</td>
-                                        <td class="text-right text-white" vid="757">982</td>
-                                        <td class="text-right text-gray-400" vid="758">1.2%</td>
-                                        <td class="text-right text-gray-400" vid="759">0.4%</td>
-                                        <td class="text-right" vid="760">
-                                            <div class="flex items-center gap-2 justify-end" vid="761">
-                                                <div class="w-16 bg-black/50 rounded-full h-1.5 border border-white/10" vid="762">
-                                                    <div class="bg-cyan-400 h-1.5 rounded-full" style="width: 85%" vid="763"></div>
-                                                </div>
-                                                <span class="text-xs text-gray-400" vid="764">85%</span>
-                                            </div>
-                                        </td>
-                                        <td class="text-xs text-gray-400" vid="765">Low friction — good</td>
-                                    </tr>
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-                </div>
-            </section>
-
-            
-            <section id="view-audit" class="view-section h-full max-w-7xl mx-auto flex flex-col" vid="766">
-                <div class="mb-6 shrink-0 flex justify-between items-end" vid="767">
-                    <div vid="768">
-                        <h2 class="font-magical text-3xl text-white mb-2" vid="769">Strategy &amp; Implementation</h2>
-                        <p class="text-sm text-gray-400" vid="770">Consulting notes, audit findings, recommendations, and tracking guidelines.</p>
-                    </div>
-                    <div class="flex items-center gap-3" vid="771">
-                        <span class="text-[10px] text-gray-500 uppercase tracking-wider" vid="772">Updated: Oct 28, 2024</span>
-                        <span class="px-3 py-1 bg-black/30 border border-white/10 rounded-full text-[10px] font-bold text-gray-400 uppercase tracking-widest" vid="773">Consultant View</span>
-                    </div>
-                </div>
-
-                <div class="flex-1 overflow-y-auto custom-scrollbar pb-6 space-y-6" vid="774">
-                    
-                    <div class="grid grid-cols-1 lg:grid-cols-3 gap-4" vid="775">
-                        <div class="glass-card p-5 border-l-2 border-l-emerald-500 bg-gradient-to-r from-emerald-900/10 to-transparent" vid="776">
-                            <div class="flex items-center gap-2 mb-3" vid="777">
-                                <i class="ph-fill ph-check-circle text-emerald-400 text-lg" vid="778"></i>
-                                <h3 class="text-sm font-bold text-emerald-300" vid="779">What's Working</h3>
-                            </div>
-                            <ul class="space-y-2 text-xs text-gray-300" vid="780">
-                                <li class="flex items-start gap-2" vid="781"><i class="ph-bold ph-check text-emerald-400 mt-0.5" vid="782"></i> LinkedIn campaigns driving highest quality traffic</li>
-                                <li class="flex items-start gap-2" vid="783"><i class="ph-bold ph-check text-emerald-400 mt-0.5" vid="784"></i> Newsletter conversion rate up 5.3% month-over-month</li>
-                                <li class="flex items-start gap-2" vid="785"><i class="ph-bold ph-check text-emerald-400 mt-0.5" vid="786"></i> /donate page performing above industry benchmark</li>
-                            </ul>
-                        </div>
-                        <div class="glass-card p-5 border-l-2 border-l-amber-500 bg-gradient-to-r from-amber-900/10 to-transparent" vid="787">
-                            <div class="flex items-center gap-2 mb-3" vid="788">
-                                <i class="ph-fill ph-warning text-amber-400 text-lg" vid="789"></i>
-                                <h3 class="text-sm font-bold text-amber-300" vid="790">Needs Attention</h3>
-                            </div>
-                            <ul class="space-y-2 text-xs text-gray-300" vid="791">
-                                <li class="flex items-start gap-2" vid="792"><i class="ph-bold ph-warning text-amber-400 mt-0.5" vid="793"></i> Cross-domain tracking dropping UTM attribution</li>
-                                <li class="flex items-start gap-2" vid="794"><i class="ph-bold ph-warning text-amber-400 mt-0.5" vid="795"></i> Mobile scroll depth 22% lower than desktop</li>
-                                <li class="flex items-start gap-2" vid="796"><i class="ph-bold ph-warning text-amber-400 mt-0.5" vid="797"></i> Meta ad UTMs not following naming convention</li>
-                            </ul>
-                        </div>
-                        <div class="glass-card p-5 border-l-2 border-l-cyan-500 bg-gradient-to-r from-cyan-900/10 to-transparent" vid="798">
-                            <div class="flex items-center gap-2 mb-3" vid="799">
-                                <i class="ph-fill ph-arrow-right text-cyan-400 text-lg" vid="800"></i>
-                                <h3 class="text-sm font-bold text-cyan-300" vid="801">Next Action</h3>
-                            </div>
-                            <p class="text-xs text-gray-300 leading-relaxed" vid="802">Implement cross-domain tracking fix by Nov 5. This unblocks accurate campaign attribution for Q4 reporting and allows proper budget reallocation toward top performers.</p>
-                        </div>
-                    </div>
-
-                    <div class="grid grid-cols-1 lg:grid-cols-3 gap-4" vid="803">
-                        <div class="glass-card p-4 border-l-4 border-l-rose-500" vid="804">
-                            <div class="flex items-center justify-between mb-2" vid="805">
-                                <span class="badge badge-rose" vid="806">High Priority</span>
-                                <span class="text-[10px] text-gray-500" vid="807">2 items</span>
-                            </div>
-                            <p class="text-xs text-gray-400" vid="808">Critical issues impacting data accuracy or conversion flow</p>
-                        </div>
-                        <div class="glass-card p-4 border-l-4 border-l-amber-500" vid="809">
-                            <div class="flex items-center justify-between mb-2" vid="810">
-                                <span class="badge badge-gold" vid="811">Medium Priority</span>
-                                <span class="text-[10px] text-gray-500" vid="812">3 items</span>
-                            </div>
-                            <p class="text-xs text-gray-400" vid="813">Optimization opportunities with measurable impact potential</p>
-                        </div>
-                        <div class="glass-card p-4 border-l-4 border-l-emerald-500" vid="814">
-                            <div class="flex items-center justify-between mb-2" vid="815">
-                                <span class="badge badge-emerald" vid="816">Low Priority</span>
-                                <span class="text-[10px] text-gray-500" vid="817">4 items</span>
-                            </div>
-                            <p class="text-xs text-gray-400" vid="818">Nice-to-have improvements and future considerations</p>
-                        </div>
-                    </div>
-
-                    <div class="glass-card overflow-hidden" vid="819">
-                        <div class="p-4 border-b border-white/5 bg-black/20 flex items-center justify-between" vid="820">
-                            <h3 class="text-sm font-bold text-white flex items-center gap-2" vid="821">
-                                <i class="ph-duotone ph-kanban text-purple-400" vid="822"></i> Recommendation Board
-                            </h3>
-                            <div class="flex gap-2" vid="823">
-                                <button onclick="filterAuditByStatus('all')" class="px-3 py-1 rounded text-xs bg-purple-500/20 text-purple-300 border border-purple-500/30" vid="824">All</button>
-                                <button onclick="filterAuditByStatus('new')" class="px-3 py-1 rounded text-xs bg-black/30 text-gray-400 border border-white/10 hover:bg-white/5" vid="825">New</button>
-                                <button onclick="filterAuditByStatus('in-progress')" class="px-3 py-1 rounded text-xs bg-black/30 text-gray-400 border border-white/10 hover:bg-white/5" vid="826">In Progress</button>
-                                <button onclick="filterAuditByStatus('resolved')" class="px-3 py-1 rounded text-xs bg-black/30 text-gray-400 border border-white/10 hover:bg-white/5" vid="827">Resolved</button>
-                            </div>
-                        </div>
-                        <div class="overflow-x-auto" vid="828">
-                            <table class="data-table w-full" id="audit-recommendations-table" vid="829">
-                                <thead vid="830">
-                                    <tr vid="831">
-                                        <th class="w-8" vid="832"></th>
-                                        <th vid="833">Recommendation</th>
-                                        <th vid="834">Category</th>
-                                        <th vid="835">Priority</th>
-                                        <th vid="836">Status</th>
-                                        <th vid="837">Linked To</th>
-                                    </tr>
-                                </thead>
-                                <tbody vid="838">
-                                    <tr data-status="new" data-priority="high" onclick="showAuditDetail('cross-domain')" vid="839">
-                                        <td vid="840"><div class="w-2 h-2 rounded-full bg-rose-500" vid="841"></div></td>
-                                        <td class="font-medium text-white text-sm" vid="842">Fix GA4 Cross-Domain Tracking</td>
-                                        <td vid="843"><span class="badge badge-cyan" vid="844">Tracking</span></td>
-                                        <td vid="845"><span class="badge badge-rose" vid="846">High</span></td>
-                                        <td vid="847"><span class="flex items-center gap-1 text-xs text-amber-400" vid="848"><i class="ph-bold ph-circle" vid="849"></i> New</span></td>
-                                        <td class="text-xs text-gray-400" vid="850">GA4 Data Stream</td>
-                                    </tr>
-                                    <tr data-status="in-progress" data-priority="medium" onclick="showAuditDetail('meta-utms')" vid="851">
-                                        <td vid="852"><div class="w-2 h-2 rounded-full bg-amber-500" vid="853"></div></td>
-                                        <td class="font-medium text-white text-sm" vid="854">Standardize Meta Ad UTMs</td>
-                                        <td vid="855"><span class="badge badge-purple" vid="856">Campaigns</span></td>
-                                        <td vid="857"><span class="badge badge-gold" vid="858">Medium</span></td>
-                                        <td vid="859"><span class="flex items-center gap-1 text-xs text-cyan-400" vid="860"><i class="ph-bold ph-spinner-gap animate-spin" vid="861"></i> In Progress</span></td>
-                                        <td class="text-xs text-gray-400" vid="862">Meta Ads Manager</td>
-                                    </tr>
-                                    <tr data-status="new" data-priority="high" onclick="showAuditDetail('mobile-hero')" vid="863">
-                                        <td vid="864"><div class="w-2 h-2 rounded-full bg-rose-500" vid="865"></div></td>
-                                        <td class="font-medium text-white text-sm" vid="866">Shorten Mobile Hero Section</td>
-                                        <td vid="867"><span class="badge badge-rose" vid="868">UX</span></td>
-                                        <td vid="869"><span class="badge badge-rose" vid="870">High</span></td>
-                                        <td vid="871"><span class="flex items-center gap-1 text-xs text-amber-400" vid="872"><i class="ph-bold ph-circle" vid="873"></i> New</span></td>
-                                        <td class="text-xs text-gray-400" vid="874">/solar-savings</td>
-                                    </tr>
-                                    <tr data-status="resolved" data-priority="medium" onclick="showAuditDetail('linkedin-tracking')" vid="875">
-                                        <td vid="876"><div class="w-2 h-2 rounded-full bg-emerald-500" vid="877"></div></td>
-                                        <td class="font-medium text-white text-sm line-through opacity-60" vid="878">Add LinkedIn Insight Tag</td>
-                                        <td vid="879"><span class="badge badge-cyan" vid="880">Tracking</span></td>
-                                        <td vid="881"><span class="badge badge-gold" vid="882">Medium</span></td>
-                                        <td vid="883"><span class="flex items-center gap-1 text-xs text-emerald-400" vid="884"><i class="ph-bold ph-check-circle" vid="885"></i> Resolved</span></td>
-                                        <td class="text-xs text-gray-400" vid="886">LinkedIn Campaigns</td>
-                                    </tr>
-                                    <tr data-status="new" data-priority="low" onclick="showAuditDetail('team-bios')" vid="887">
-                                        <td vid="888"><div class="w-2 h-2 rounded-full bg-gray-500" vid="889"></div></td>
-                                        <td class="font-medium text-white text-sm" vid="890">Add Clickable Team Bios</td>
-                                        <td vid="891"><span class="badge badge-rose" vid="892">UX</span></td>
-                                        <td vid="893"><span class="badge badge-emerald" vid="894">Low</span></td>
-                                        <td vid="895"><span class="flex items-center gap-1 text-xs text-amber-400" vid="896"><i class="ph-bold ph-circle" vid="897"></i> New</span></td>
-                                        <td class="text-xs text-gray-400" vid="898">/about-us</td>
-                                    </tr>
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-
-                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6" vid="899">
-                        <div class="glass-card p-5" vid="900">
-                            <h3 class="text-sm font-bold text-white mb-4 flex items-center gap-2" vid="901">
-                                <i class="ph-duotone ph-file-text text-cyan-400" vid="902"></i> Implementation Notes
-                            </h3>
-                            <div class="space-y-4 text-sm text-gray-300" id="audit-detail-panel" vid="903">
-                                <div class="p-4 bg-black/20 rounded border border-white/5" vid="904">
-                                    <h4 class="text-xs font-bold text-cyan-300 mb-2 uppercase tracking-wider" vid="905">Cross-Domain Tracking Fix</h4>
-                                    <p class="text-xs text-gray-400 mb-3" vid="906">Traffic moving between main site and donation portal is losing UTM parameters. This causes conversions to show as 'Direct' instead of attributed to campaigns.</p>
-                                    <div class="text-xs text-gray-500 font-mono bg-black/40 p-2 rounded border border-white/10" vid="907">
-                                        GA4 Admin &gt; Data Streams &gt; Web &gt; Configure tag settings &gt; Configure your domains
-                                    </div>
-                                </div>
-                                <div class="p-4 bg-black/20 rounded border border-white/5" vid="908">
-                                    <h4 class="text-xs font-bold text-cyan-300 mb-2 uppercase tracking-wider" vid="909">Impact Assessment</h4>
-                                    <p class="text-xs text-gray-400" vid="910">Currently ~15% of conversions unattributed. Fixing this will reveal true campaign ROI and enable proper budget allocation.</p>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="glass-card p-5" vid="911">
-                            <h3 class="text-sm font-bold text-white mb-4 flex items-center gap-2" vid="912">
-                                <i class="ph-duotone ph-book-bookmark text-amber-400" vid="913"></i> Resource Links
-                            </h3>
-                            <div class="space-y-2" vid="914">
-                                <a href="#" onclick="switchView('reports')" class="flex items-center justify-between p-3 rounded bg-black/20 hover:bg-black/40 border border-white/5 hover:border-purple-500/30 transition-all group" vid="915">
-                                    <span class="flex items-center gap-3" vid="916">
-                                        <div class="w-8 h-8 rounded bg-purple-900/30 flex items-center justify-center text-purple-400" vid="917"><i class="ph-duotone ph-chart-line-up text-lg" vid="918"></i></div>
-                                        <div vid="919">
-                                            <div class="text-sm font-medium text-gray-200 group-hover:text-white" vid="920">View Performance Dashboard</div>
-                                            <div class="text-[10px] text-gray-500" vid="921">Live campaign metrics</div>
-                                        </div>
-                                    </span>
-                                    <i class="ph-bold ph-arrow-right text-gray-600 group-hover:text-purple-400" vid="922"></i>
-                                </a>
-                                <a href="#" onclick="switchView('ux')" class="flex items-center justify-between p-3 rounded bg-black/20 hover:bg-black/40 border border-white/5 hover:border-cyan-500/30 transition-all group" vid="923">
-                                    <span class="flex items-center gap-3" vid="924">
-                                        <div class="w-8 h-8 rounded bg-cyan-900/30 flex items-center justify-center text-cyan-400" vid="925"><i class="ph-duotone ph-mouse-left-click text-lg" vid="926"></i></div>
-                                        <div vid="927">
-                                            <div class="text-sm font-medium text-gray-200 group-hover:text-white" vid="928">Review UX Insights</div>
-                                            <div class="text-[10px] text-gray-500" vid="929">Clarity session data</div>
-                                        </div>
-                                    </span>
-                                    <i class="ph-bold ph-arrow-right text-gray-600 group-hover:text-cyan-400" vid="930"></i>
-                                </a>
-                                <button onclick="window.open('https://clarity.microsoft.com', '_blank')" class="w-full flex items-center justify-between p-3 rounded bg-black/20 hover:bg-black/40 border border-white/5 hover:border-blue-500/30 transition-all group" vid="931">
-                                    <span class="flex items-center gap-3" vid="932">
-                                        <div class="w-8 h-8 rounded bg-blue-900/30 flex items-center justify-center text-blue-400" vid="933"><i class="ph-fill ph-microsoft-logo text-lg" vid="934"></i></div>
-                                        <div vid="935">
-                                            <div class="text-sm font-medium text-gray-200 group-hover:text-white" vid="936">Open Microsoft Clarity</div>
-                                            <div class="text-[10px] text-gray-500" vid="937">Session recordings &amp; heatmaps</div>
-                                        </div>
-                                    </span>
-                                    <i class="ph-bold ph-arrow-up-right text-gray-600 group-hover:text-blue-400" vid="938"></i>
-                                </button>
-                                <button onclick="window.open(PORTAL_CONFIG.lookerStudioUrl, '_blank')" class="w-full flex items-center justify-between p-3 rounded bg-black/20 hover:bg-black/40 border border-white/5 hover:border-emerald-500/30 transition-all group" vid="939">
-                                    <span class="flex items-center gap-3" vid="940">
-                                        <div class="w-8 h-8 rounded bg-emerald-900/30 flex items-center justify-center text-emerald-400" vid="941"><i class="ph-fill ph-google-logo text-lg" vid="942"></i></div>
-                                        <div vid="943">
-                                            <div class="text-sm font-medium text-gray-200 group-hover:text-white" vid="944">Full Looker Studio Report</div>
-                                            <div class="text-[10px] text-gray-500" vid="945">Comprehensive analytics view</div>
-                                        </div>
-                                    </span>
-                                    <i class="ph-bold ph-arrow-up-right text-gray-600 group-hover:text-emerald-400" vid="946"></i>
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="glass-card p-5 border-t-2 border-t-purple-500" vid="947">
-                        <div class="flex items-center gap-3 mb-4" vid="948">
-                            <i class="ph-fill ph-sparkle text-purple-400 text-xl" vid="949"></i>
-                            <h3 class="text-sm font-bold text-white" vid="950">Monthly Strategy Notes</h3>
-                        </div>
-                        <div class="prose prose-invert prose-sm max-w-none text-gray-300" vid="951">
-                            <p class="text-sm leading-relaxed" vid="952">
-                                With Q4 fully underway, we're seeing strong performance from LinkedIn campaigns targeting the "Solar Savings" initiative. 
-                                The primary strategic priority is resolving the cross-domain tracking issue before the year-end giving season peaks. 
-                                Once resolved, we'll have clean attribution data to optimize the 40% higher conversion rate we're seeing on LinkedIn 
-                                compared to Meta, and potentially reallocate budget toward the highest-performing creative variants.
-                            </p>
-                            <div class="mt-4 flex flex-wrap gap-2" vid="953">
-                                <span class="px-2 py-1 rounded bg-purple-900/30 border border-purple-500/20 text-xs text-purple-300" vid="954">Q4 Planning</span>
-                                <span class="px-2 py-1 rounded bg-cyan-900/30 border border-cyan-500/20 text-xs text-cyan-300" vid="955">Attribution</span>
-                                <span class="px-2 py-1 rounded bg-emerald-900/30 border border-emerald-500/20 text-xs text-emerald-300" vid="956">LinkedIn</span>
-                                <span class="px-2 py-1 rounded bg-amber-900/30 border border-amber-500/20 text-xs text-amber-300" vid="957">Year-End Drive</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </section>
-        </div>
-    </main>
-
-    
-    <div id="toast" class="fixed bottom-6 right-6 translate-y-[150%] opacity-0 bg-[#1e1a2d] border border-purple-500/50 rounded-lg p-4 shadow-[0_8px_30px_rgba(0,0,0,0.5)] z-50 flex items-start gap-3 w-80" vid="958">
-        <div class="mt-0.5" vid="959"><i id="toast-icon" class="ph-fill ph-check-circle text-emerald-400 text-lg" vid="960"></i></div>
-        <div vid="961">
-            <h4 id="toast-title" class="text-sm font-bold text-white mb-0.5" vid="962">Success</h4>
-            <p id="toast-msg" class="text-xs text-gray-400" vid="963">Action completed successfully.</p>
-        </div>
+        <i class="ph-bold ph-caret-up-down text-gray-600 group-hover:text-gray-400"></i>
+      </div>
     </div>
 
-<script>
-  const PORTAL_CONFIG = {
-    clientName: "Re-volv Solar",
-    clientLogoIcon: "ph-sun-horizon",
-    themeColor: "#ffd700",
-    lookerStudioUrl: "https://lookerstudio.google.com/embed/reporting/...",
-    clarityUrl: "https://clarity.microsoft.com/...",
-    backendType: "Google Sheets MVP"
-  };
+    <nav class="flex-1 overflow-y-auto p-4 space-y-1">
+      <div class="text-[10px] font-bold text-gray-600 uppercase tracking-widest px-4 mb-2 mt-2">Intelligence</div>
 
-  const VALID_VIEWS = ["home", "reports", "utm", "ux", "audit"];
+      <button type="button" data-view="home" id="nav-home" class="nav-item active w-full text-left">
+        <i class="ph-duotone ph-squares-four"></i>
+        <span class="text-sm font-medium">Overview</span>
+      </button>
 
-  const VIEW_TITLES = {
-    home: "Overview",
-    reports: "Reports Dashboard",
-    utm: "UTM Builder",
-    ux: "UX Insights",
-    audit: "Audit & Strategy"
-  };
+      <button type="button" data-view="reports" id="nav-reports" class="nav-item w-full text-left">
+        <i class="ph-duotone ph-chart-line-up"></i>
+        <span class="text-sm font-medium">Reports</span>
+      </button>
 
-  document.addEventListener("DOMContentLoaded", () => {
-    applyConfig();
-    initStars();
-    populateRegistry();
-    bindSidebarNavigation();
+      <div class="text-[10px] font-bold text-gray-600 uppercase tracking-widest px-4 mb-2 mt-6">Operations</div>
 
-    const now = new Date();
-    const syncTime = document.getElementById("sync-time");
-    if (syncTime) {
-      syncTime.innerText = `Synced: Today ${now.getHours().toString().padStart(2, "0")}:${now.getMinutes().toString().padStart(2, "0")}`;
+      <button type="button" data-view="utm" id="nav-utm" class="nav-item w-full text-left">
+        <i class="ph-duotone ph-link"></i>
+        <span class="text-sm font-medium">UTM Builder</span>
+      </button>
+
+      <button type="button" data-view="ux" id="nav-ux" class="nav-item w-full text-left">
+        <i class="ph-duotone ph-mouse-left-click"></i>
+        <span class="text-sm font-medium">UX Insights</span>
+      </button>
+
+      <button type="button" data-view="audit" id="nav-audit" class="nav-item w-full text-left">
+        <i class="ph-duotone ph-clipboard-text"></i>
+        <span class="text-sm font-medium">Audit &amp; Strategy</span>
+      </button>
+    </nav>
+
+    <div class="p-4 border-t border-white/5">
+      <div class="bg-black/20 rounded-lg p-3 border border-white/5 flex items-center gap-3 mb-3">
+        <div class="relative flex h-2 w-2">
+          <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+          <span class="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+        </div>
+        <div class="flex-1">
+          <div class="text-[10px] text-gray-500 font-medium uppercase tracking-wider">Sheets Connected</div>
+          <div id="sync-time" class="text-xs text-gray-300 font-medium">Synced: Today 08:30</div>
+        </div>
+      </div>
+
+      <div class="flex items-center gap-3 px-2 py-1">
+        <div class="w-7 h-7 rounded-full bg-purple-900/50 border border-purple-500/30 flex items-center justify-center text-xs font-bold text-purple-200">AW</div>
+        <div class="text-xs text-gray-400 font-medium">Consultant View</div>
+      </div>
+    </div>
+  </aside>
+
+  <main class="flex-1 flex flex-col h-full relative z-10 overflow-hidden">
+    <header class="h-16 border-b border-white/5 flex items-center justify-between px-8 bg-black/20 backdrop-blur-sm shrink-0">
+      <div class="flex items-center gap-2 text-sm">
+        <span class="text-gray-500 font-medium">Workspace</span>
+        <i class="ph-bold ph-caret-right text-gray-700 text-xs"></i>
+        <span id="header-title" class="text-white font-semibold">Overview</span>
+      </div>
+
+      <div class="flex items-center gap-4">
+        <div class="flex items-center gap-2 bg-black/40 border border-white/10 rounded-md px-3 py-1.5 cursor-pointer hover:border-white/20 transition-colors">
+          <i class="ph-bold ph-calendar-blank text-gray-400 text-sm"></i>
+          <span class="text-xs text-gray-300 font-medium">Last 30 Days</span>
+          <i class="ph-bold ph-caret-down text-gray-500 text-[10px] ml-1"></i>
+        </div>
+        <button type="button" class="w-8 h-8 rounded-md bg-black/40 border border-white/10 flex items-center justify-center text-gray-400 hover:text-white transition-colors">
+          <i class="ph-bold ph-bell"></i>
+        </button>
+      </div>
+    </header>
+
+    <div class="flex-1 overflow-y-auto custom-scrollbar p-6 lg:p-8 relative">
+      <section id="view-home" class="view-section active h-full max-w-7xl mx-auto">
+        <div class="flex justify-between items-end mb-8">
+          <div>
+            <h1 class="font-magical text-3xl md:text-4xl text-white mb-2">Welcome to the Nexus</h1>
+            <p class="text-sm text-gray-400">Your centralized hub for campaign tracking and analytics visibility.</p>
+          </div>
+          <button type="button" data-view="reports" class="btn-primary px-5 py-2.5 rounded-lg text-sm flex items-center gap-2">
+            View Full Dashboard <i class="ph-bold ph-arrow-right"></i>
+          </button>
+        </div>
+
+        <div class="glass-card border-l-2 border-l-yellow-400 p-5 mb-8 flex gap-4 relative overflow-hidden group">
+          <div class="absolute right-0 top-0 w-32 h-full bg-gradient-to-l from-amber-500/10 to-transparent pointer-events-none"></div>
+          <div class="w-10 h-10 rounded-full bg-amber-500/10 flex items-center justify-center shrink-0 border border-amber-500/20">
+            <i class="ph-fill ph-lightbulb text-amber-400 text-xl"></i>
+          </div>
+          <div>
+            <h3 class="text-sm font-bold text-amber-300 mb-1 uppercase tracking-wider">Strategic Note</h3>
+            <p class="text-sm text-gray-300 leading-relaxed">LinkedIn campaigns for "Solar Savings" are outperforming Meta by 40% in conversion rate this month. Recommend reallocating 20% of remaining Q4 budget to the top-performing LinkedIn ad set.</p>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
+          <div class="glass-card p-5 relative overflow-hidden">
+            <div class="flex justify-between items-start mb-2">
+              <span class="text-[10px] uppercase tracking-wider text-gray-500 font-bold">Total Traffic</span>
+              <i class="ph-duotone ph-users text-purple-400 text-lg"></i>
+            </div>
+            <div class="text-2xl font-bold text-white mb-1">12,450</div>
+            <div class="text-xs text-emerald-400 flex items-center gap-1 font-medium"><i class="ph-bold ph-trend-up"></i> +14.2% <span class="text-gray-600">vs last mo</span></div>
+          </div>
+
+          <div class="glass-card p-5 relative overflow-hidden">
+            <div class="flex justify-between items-start mb-2">
+              <span class="text-[10px] uppercase tracking-wider text-gray-500 font-bold">Avg. Conv Rate</span>
+              <i class="ph-duotone ph-target text-cyan-400 text-lg"></i>
+            </div>
+            <div class="text-2xl font-bold text-white mb-1">3.8%</div>
+            <div class="text-xs text-emerald-400 flex items-center gap-1 font-medium"><i class="ph-bold ph-trend-up"></i> +0.5% <span class="text-gray-600">vs last mo</span></div>
+          </div>
+
+          <div class="glass-card p-5 relative overflow-hidden">
+            <div class="flex justify-between items-start mb-2">
+              <span class="text-[10px] uppercase tracking-wider text-gray-500 font-bold">Active Campaigns</span>
+              <i class="ph-duotone ph-megaphone text-yellow-300 text-lg"></i>
+            </div>
+            <div class="text-2xl font-bold text-white mb-1">8</div>
+            <div class="text-xs text-gray-500 font-medium mt-1">Tracking via UTM Registry</div>
+          </div>
+
+          <button type="button" data-view="ux" class="glass-card p-5 relative overflow-hidden text-left hover:border-cyan-500/30">
+            <div class="flex justify-between items-start mb-2">
+              <span class="text-[10px] uppercase tracking-wider text-gray-500 font-bold">UX Friction Score</span>
+              <i class="ph-duotone ph-warning-circle text-rose-400 text-lg"></i>
+            </div>
+            <div class="text-2xl font-bold text-white mb-1 flex items-baseline gap-1">Low <span class="text-sm text-gray-500 font-normal">Friction</span></div>
+            <div class="text-xs text-gray-400 font-medium mt-1 flex items-center gap-1"><i class="ph-fill ph-microsoft-logo text-gray-500"></i> Clarity Data</div>
+          </button>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <div class="lg:col-span-2 glass-card flex flex-col">
+            <div class="p-5 border-b border-white/5 flex justify-between items-center">
+              <h3 class="text-sm font-bold text-white">Recent UTM Links</h3>
+              <button type="button" data-view="utm" class="text-xs text-purple-400 hover:text-purple-300 font-medium flex items-center gap-1">Open Builder <i class="ph-bold ph-arrow-right"></i></button>
+            </div>
+            <div class="p-0 overflow-x-auto">
+              <table class="data-table">
+                <thead>
+                  <tr>
+                    <th>Campaign</th>
+                    <th>Source / Medium</th>
+                    <th>Date</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td>
+                      <div class="font-medium text-white mb-0.5">Q4_Solar_Savings</div>
+                      <div class="text-[10px] text-gray-500 font-mono truncate max-w-[200px]">?utm_source=linkedin&amp;utm_medium=social...</div>
+                    </td>
+                    <td><span class="badge badge-purple">linkedin</span> <span class="text-gray-600 mx-1">/</span> <span class="text-xs text-gray-400">social</span></td>
+                    <td><div class="text-xs text-gray-400">Oct 26, 2024</div></td>
+                  </tr>
+                  <tr>
+                    <td>
+                      <div class="font-medium text-white mb-0.5">Newsletter_Oct</div>
+                      <div class="text-[10px] text-gray-500 font-mono truncate max-w-[200px]">?utm_source=hs_email&amp;utm_medium=email...</div>
+                    </td>
+                    <td><span class="badge badge-cyan">hs_email</span> <span class="text-gray-600 mx-1">/</span> <span class="text-xs text-gray-400">email</span></td>
+                    <td><div class="text-xs text-gray-400">Oct 24, 2024</div></td>
+                  </tr>
+                  <tr>
+                    <td>
+                      <div class="font-medium text-white mb-0.5">Search_Brand_T1</div>
+                      <div class="text-[10px] text-gray-500 font-mono truncate max-w-[200px]">?utm_source=google&amp;utm_medium=cpc...</div>
+                    </td>
+                    <td><span class="badge badge-emerald">google</span> <span class="text-gray-600 mx-1">/</span> <span class="text-xs text-gray-400">cpc</span></td>
+                    <td><div class="text-xs text-gray-400">Oct 20, 2024</div></td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <div class="space-y-4">
+            <div class="glass-card p-5">
+              <h3 class="text-sm font-bold text-white mb-4">Quick Actions</h3>
+              <div class="space-y-2">
+                <button type="button" data-view="utm" class="w-full text-left p-3 rounded-lg bg-black/20 hover:bg-black/40 border border-white/5 hover:border-purple-500/30 transition-all flex items-center gap-3 group">
+                  <div class="w-8 h-8 rounded bg-purple-900/30 flex items-center justify-center text-purple-400 group-hover:text-purple-300"><i class="ph-duotone ph-link text-lg"></i></div>
+                  <div>
+                    <div class="text-sm font-medium text-gray-200 group-hover:text-white">Build a Tracking Link</div>
+                    <div class="text-[10px] text-gray-500">Generate standardized UTMs</div>
+                  </div>
+                </button>
+
+                <button type="button" data-view="audit" class="w-full text-left p-3 rounded-lg bg-black/20 hover:bg-black/40 border border-white/5 hover:border-yellow-400/30 transition-all flex items-center gap-3 group">
+                  <div class="w-8 h-8 rounded bg-amber-900/30 flex items-center justify-center text-amber-400 group-hover:text-amber-300"><i class="ph-duotone ph-clipboard-text text-lg"></i></div>
+                  <div>
+                    <div class="text-sm font-medium text-gray-200 group-hover:text-white">Review Audit Notes</div>
+                    <div class="text-[10px] text-gray-500">2 priority items pending</div>
+                  </div>
+                </button>
+
+                <button type="button" data-open-url="https://clarity.microsoft.com" class="w-full text-left p-3 rounded-lg bg-black/20 hover:bg-black/40 border border-white/5 hover:border-cyan-500/30 transition-all flex items-center gap-3 group">
+                  <div class="w-8 h-8 rounded bg-cyan-900/30 flex items-center justify-center text-cyan-400 group-hover:text-cyan-300"><i class="ph-duotone ph-mouse-left-click text-lg"></i></div>
+                  <div>
+                    <div class="text-sm font-medium text-gray-200 group-hover:text-white">Open Clarity Dashboard</div>
+                    <div class="text-[10px] text-gray-500">View session recordings</div>
+                  </div>
+                  <i class="ph-bold ph-arrow-up-right text-gray-600 ml-auto"></i>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section id="view-utm" class="view-section h-full max-w-7xl mx-auto flex flex-col" hidden>
+        <div class="mb-6 shrink-0">
+          <h2 class="font-magical text-3xl text-white mb-2">UTM Matrix</h2>
+          <p class="text-sm text-gray-400">Generate standardized tracking links to ensure clean data in reporting.</p>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 flex-1 min-h-0 pb-10">
+          <div class="lg:col-span-5 flex flex-col gap-4 overflow-y-auto custom-scrollbar pr-2">
+            <div class="glass-card p-6">
+              <h3 class="text-xs font-bold text-gray-500 uppercase tracking-widest mb-4 border-b border-white/5 pb-2">Link Parameters</h3>
+              <form id="utm-form" class="space-y-4">
+                <div>
+                  <label class="block text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1.5">Destination URL <span class="text-rose-400">*</span></label>
+                  <input type="url" id="utm-url" class="input-magical w-full rounded-lg px-3 py-2 text-sm" placeholder="https://re-volv.org/donate" required>
+                </div>
+
+                <div class="grid grid-cols-2 gap-4">
+                  <div>
+                    <label class="block text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1.5">Source <span class="text-rose-400">*</span></label>
+                    <select id="utm-source" class="input-magical w-full rounded-lg px-3 py-2 text-sm appearance-none" required>
+                      <option value="" selected disabled>Select...</option>
+                      <option value="google">google</option>
+                      <option value="linkedin">linkedin</option>
+                      <option value="facebook">facebook</option>
+                      <option value="hs_email">hs_email</option>
+                      <option value="partner">partner</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label class="block text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1.5">Medium <span class="text-rose-400">*</span></label>
+                    <select id="utm-medium" class="input-magical w-full rounded-lg px-3 py-2 text-sm appearance-none" required>
+                      <option value="" selected disabled>Select...</option>
+                      <option value="cpc">cpc</option>
+                      <option value="social">social</option>
+                      <option value="email">email</option>
+                      <option value="referral">referral</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div>
+                  <label class="block text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1.5 flex justify-between">
+                    <span>Campaign Name <span class="text-rose-400">*</span></span>
+                    <span class="text-[8px] text-gray-600 font-normal normal-case">Format: Q4_Initiative_Name</span>
+                  </label>
+                  <input type="text" id="utm-campaign" class="input-magical w-full rounded-lg px-3 py-2 text-sm" placeholder="e.g. Q4_Solar_Savings" required>
+                </div>
+
+                <div class="pt-2 border-t border-white/5">
+                  <button type="button" id="toggle-optional-fields" class="text-xs text-gray-400 hover:text-white flex items-center gap-1">
+                    <i class="ph-bold ph-plus-circle"></i> Show Optional Fields
+                  </button>
+                </div>
+
+                <div id="optional-fields" class="hidden space-y-4 pt-2">
+                  <div class="grid grid-cols-2 gap-4">
+                    <div>
+                      <label class="block text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1.5">Term (Keyword)</label>
+                      <input type="text" id="utm-term" class="input-magical w-full rounded-lg px-3 py-2 text-sm" placeholder="e.g. solar panels">
+                    </div>
+                    <div>
+                      <label class="block text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1.5">Content (Ad Var)</label>
+                      <input type="text" id="utm-content" class="input-magical w-full rounded-lg px-3 py-2 text-sm" placeholder="e.g. blue_banner">
+                    </div>
+                  </div>
+                  <div>
+                    <label class="block text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1.5">Notes (For Registry)</label>
+                    <input type="text" id="utm-notes" class="input-magical w-full rounded-lg px-3 py-2 text-sm" placeholder="Brief note on where this is used...">
+                  </div>
+                </div>
+              </form>
+            </div>
+          </div>
+
+          <div class="lg:col-span-7 flex flex-col gap-4 h-full">
+            <div class="glass-card p-6 bg-gradient-to-br from-[#181125] to-[#120c1d] border-purple-500/20 shrink-0 relative overflow-hidden">
+              <div class="absolute -right-10 -top-10 w-32 h-32 bg-purple-500/10 rounded-full blur-[30px] pointer-events-none"></div>
+              <h3 class="text-xs font-bold text-purple-300 uppercase tracking-widest mb-3">Generated Link</h3>
+              <div class="relative mb-4">
+                <textarea id="utm-result" class="w-full bg-black/40 border border-purple-500/30 rounded-lg p-3 text-sm text-gray-300 font-mono resize-none h-20 outline-none" readonly placeholder="Fill out fields to generate link..."></textarea>
+                <button type="button" id="copy-utm-button" class="absolute right-2 top-2 p-1.5 bg-black/50 hover:bg-purple-900/50 rounded-md border border-white/10 hover:border-purple-500/50 text-gray-400 hover:text-white transition-colors" title="Copy to clipboard">
+                  <i class="ph-bold ph-copy text-lg"></i>
+                </button>
+              </div>
+              <div class="flex items-center justify-between">
+                <p class="text-[10px] text-gray-500">Saving writes this link to the Google Sheet registry.</p>
+                <button type="button" id="save-utm-button" class="btn-primary px-5 py-2 rounded-md text-xs flex items-center gap-2">
+                  <i class="ph-bold ph-floppy-disk"></i> Save to Registry
+                </button>
+              </div>
+            </div>
+
+            <div class="glass-card flex-1 flex flex-col min-h-[300px]">
+              <div class="p-4 border-b border-white/5 flex justify-between items-center bg-black/10">
+                <h3 class="text-xs font-bold text-gray-400 uppercase tracking-widest flex items-center gap-2">
+                  <i class="ph-fill ph-database text-cyan-500"></i> Registry Backend (View)
+                </h3>
+                <div class="relative">
+                  <i class="ph-bold ph-magnifying-glass absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-500 text-xs"></i>
+                  <input type="text" id="registry-search" class="input-magical rounded text-[10px] pl-7 pr-2 py-1.5 w-40" placeholder="Search registry...">
+                </div>
+              </div>
+
+              <div class="flex-1 overflow-auto">
+                <table class="data-table w-full">
+                  <thead class="sticky top-0 z-10">
+                    <tr>
+                      <th>Campaign</th>
+                      <th>Source/Medium</th>
+                      <th>Date Saved</th>
+                      <th class="w-10"></th>
+                    </tr>
+                  </thead>
+                  <tbody id="registry-tbody"></tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section id="view-reports" class="view-section h-full max-w-7xl mx-auto flex flex-col" hidden>
+        <div class="mb-6 shrink-0 flex justify-between items-end">
+          <div>
+            <h2 class="font-magical text-3xl text-white mb-2">Visual Intelligence</h2>
+            <p class="text-sm text-gray-400">Performance analytics connected to campaign registry data.</p>
+          </div>
+          <div class="flex items-center gap-3">
+            <span class="text-[10px] text-gray-500 uppercase tracking-wider" id="reports-last-updated">Updated: Just now</span>
+            <button type="button" id="refresh-reports-button" class="btn-secondary px-4 py-2 rounded-lg text-xs flex items-center gap-2">
+              <i class="ph-bold ph-arrows-clockwise"></i> Refresh
+            </button>
+            <button type="button" class="btn-secondary px-4 py-2 rounded-lg text-xs flex items-center gap-2">
+              <i class="ph-bold ph-download-simple"></i> Export
+            </button>
+          </div>
+        </div>
+
+        <div class="glass-card p-4 mb-6 shrink-0 bg-black/20">
+          <div class="flex items-center gap-2 w-full text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-3 border-b border-white/5 pb-2">
+            <i class="ph-bold ph-faders"></i> Global Filters <span class="text-[9px] font-normal normal-case text-gray-600 ml-2">— All charts update automatically</span>
+          </div>
+
+          <div class="flex flex-wrap gap-3 items-end">
+            <div>
+              <label class="block text-[9px] text-gray-500 mb-1 uppercase">Date Range</label>
+              <select id="filter-date-range" class="input-magical text-xs rounded-md px-2 py-1.5 min-w-[120px]">
+                <option value="30">Last 30 Days</option>
+                <option value="90">Last 90 Days</option>
+                <option value="quarter">This Quarter</option>
+                <option value="ytd">Year to Date</option>
+              </select>
+            </div>
+
+            <div>
+              <label class="block text-[9px] text-gray-500 mb-1 uppercase">Campaign</label>
+              <select id="filter-campaign" class="input-magical text-xs rounded-md px-2 py-1.5 min-w-[140px]">
+                <option value="all">All Campaigns</option>
+                <option value="Q4_Solar_Savings">Q4 Solar Savings</option>
+                <option value="Search_Brand_T1">Search Brand T1</option>
+                <option value="Newsletter_Oct">Newsletter Oct</option>
+                <option value="Retargeting_Q4">Retargeting Q4</option>
+              </select>
+            </div>
+
+            <div>
+              <label class="block text-[9px] text-gray-500 mb-1 uppercase">Source</label>
+              <select id="filter-source" class="input-magical text-xs rounded-md px-2 py-1.5 min-w-[120px]">
+                <option value="all">All Sources</option>
+                <option value="google">Google</option>
+                <option value="linkedin">LinkedIn</option>
+                <option value="facebook">Facebook</option>
+                <option value="hs_email">HubSpot Email</option>
+                <option value="direct">Direct</option>
+              </select>
+            </div>
+
+            <div>
+              <label class="block text-[9px] text-gray-500 mb-1 uppercase">Medium</label>
+              <select id="filter-medium" class="input-magical text-xs rounded-md px-2 py-1.5 min-w-[100px]">
+                <option value="all">All</option>
+                <option value="cpc">CPC</option>
+                <option value="social">Social</option>
+                <option value="email">Email</option>
+                <option value="organic">Organic</option>
+                <option value="referral">Referral</option>
+              </select>
+            </div>
+
+            <div>
+              <label class="block text-[9px] text-gray-500 mb-1 uppercase">Landing Page</label>
+              <select id="filter-landing" class="input-magical text-xs rounded-md px-2 py-1.5 min-w-[140px]">
+                <option value="all">All Pages</option>
+                <option value="/solar-savings">/solar-savings</option>
+                <option value="/donate">/donate</option>
+                <option value="/about-us">/about-us</option>
+                <option value="/newsletter-signup">/newsletter-signup</option>
+              </select>
+            </div>
+
+            <button type="button" id="reset-report-filters" class="text-[10px] text-gray-500 hover:text-gray-300 underline ml-auto">Reset all</button>
+          </div>
+        </div>
+
+        <div class="flex-1 overflow-y-auto custom-scrollbar pb-6 space-y-6">
+          <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+            <div class="glass-card p-4">
+              <div class="text-[10px] uppercase tracking-wider text-gray-500 font-bold mb-2">Sessions</div>
+              <div class="text-2xl font-bold text-white" id="kpi-sessions">12,450</div>
+              <div class="text-xs text-emerald-400 mt-1"><i class="ph-bold ph-trend-up"></i> +14.2%</div>
+            </div>
+            <div class="glass-card p-4">
+              <div class="text-[10px] uppercase tracking-wider text-gray-500 font-bold mb-2">Users</div>
+              <div class="text-2xl font-bold text-white" id="kpi-users">9,832</div>
+              <div class="text-xs text-emerald-400 mt-1"><i class="ph-bold ph-trend-up"></i> +11.8%</div>
+            </div>
+            <div class="glass-card p-4">
+              <div class="text-[10px] uppercase tracking-wider text-gray-500 font-bold mb-2">Conversions</div>
+              <div class="text-2xl font-bold text-white" id="kpi-conversions">473</div>
+              <div class="text-xs text-emerald-400 mt-1"><i class="ph-bold ph-trend-up"></i> +8.4%</div>
+            </div>
+            <div class="glass-card p-4">
+              <div class="text-[10px] uppercase tracking-wider text-gray-500 font-bold mb-2">Conv. Rate</div>
+              <div class="text-2xl font-bold text-white" id="kpi-rate">3.8%</div>
+              <div class="text-xs text-emerald-400 mt-1"><i class="ph-bold ph-trend-up"></i> +0.5%</div>
+            </div>
+            <div class="glass-card p-4">
+              <div class="text-[10px] uppercase tracking-wider text-gray-500 font-bold mb-2">Avg Duration</div>
+              <div class="text-2xl font-bold text-white" id="kpi-duration">2:34</div>
+              <div class="text-xs text-rose-400 mt-1"><i class="ph-bold ph-trend-down"></i> -0:12</div>
+            </div>
+            <div class="glass-card p-4 border-l-2 border-l-purple-500">
+              <div class="text-[10px] uppercase tracking-wider text-gray-500 font-bold mb-2">Top Source</div>
+              <div class="text-xl font-bold text-white" id="kpi-top-source">LinkedIn</div>
+              <div class="text-xs text-gray-400 mt-1">31% of traffic</div>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div class="glass-card p-5">
+              <div class="flex justify-between items-center mb-4">
+                <h3 class="text-sm font-bold text-white">Sessions Over Time</h3>
+                <span class="text-[10px] text-gray-500">Daily trend</span>
+              </div>
+              <div class="h-48 relative" id="chart-sessions-trend">
+                <svg class="w-full h-full" viewBox="0 0 400 150" preserveAspectRatio="none">
+                  <defs>
+                    <linearGradient id="areaGradient" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stop-color="#a855f7" stop-opacity="0.3"></stop>
+                      <stop offset="100%" stop-color="#a855f7" stop-opacity="0"></stop>
+                    </linearGradient>
+                  </defs>
+                  <path d="M0,120 Q50,100 100,90 T200,70 T300,60 T400,40 L400,150 L0,150 Z" fill="url(#areaGradient)"></path>
+                  <path d="M0,120 Q50,100 100,90 T200,70 T300,60 T400,40" fill="none" stroke="#a855f7" stroke-width="2"></path>
+                  <circle cx="400" cy="40" r="4" fill="#a855f7"></circle>
+                </svg>
+                <div class="absolute bottom-0 left-0 right-0 flex justify-between text-[9px] text-gray-500 px-2">
+                  <span>Oct 1</span><span>Oct 10</span><span>Oct 20</span><span>Oct 30</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="glass-card p-5">
+              <div class="flex justify-between items-center mb-4">
+                <h3 class="text-sm font-bold text-white">Conversions Over Time</h3>
+                <span class="text-[10px] text-gray-500">Daily conversions</span>
+              </div>
+              <div class="h-48 relative" id="chart-conversions-trend">
+                <svg class="w-full h-full" viewBox="0 0 400 150" preserveAspectRatio="none">
+                  <defs>
+                    <linearGradient id="convGradient" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stop-color="#00f0ff" stop-opacity="0.3"></stop>
+                      <stop offset="100%" stop-color="#00f0ff" stop-opacity="0"></stop>
+                    </linearGradient>
+                  </defs>
+                  <path d="M0,130 L40,125 L80,110 L120,115 L160,95 L200,90 L240,85 L280,70 L320,65 L360,50 L400,45 L400,150 L0,150 Z" fill="url(#convGradient)"></path>
+                  <path d="M0,130 L40,125 L80,110 L120,115 L160,95 L200,90 L240,85 L280,70 L320,65 L360,50 L400,45" fill="none" stroke="#00f0ff" stroke-width="2"></path>
+                </svg>
+                <div class="absolute bottom-0 left-0 right-0 flex justify-between text-[9px] text-gray-500 px-2">
+                  <span>Oct 1</span><span>Oct 10</span><span>Oct 20</span><span>Oct 30</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section id="view-ux" class="view-section h-full max-w-7xl mx-auto flex flex-col" hidden>
+        <div class="mb-6 shrink-0 flex justify-between items-end">
+          <div>
+            <h2 class="font-magical text-3xl text-white mb-2">Experience Friction</h2>
+            <p class="text-sm text-gray-400">Behavioral insights derived from Microsoft Clarity recordings and heatmaps.</p>
+          </div>
+          <div class="flex items-center gap-3">
+            <span class="text-[10px] text-gray-500 uppercase tracking-wider" id="ux-last-updated">Updated: Oct 30, 2024</span>
+            <button type="button" id="sync-clarity-button" class="btn-secondary px-4 py-2 rounded-lg text-xs flex items-center gap-2">
+              <i class="ph-bold ph-arrows-clockwise"></i> Sync Data
+            </button>
+          </div>
+        </div>
+
+        <div class="glass-card p-4 mb-6 shrink-0 bg-black/20">
+          <div class="flex items-center gap-2 w-full text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-3 border-b border-white/5 pb-2">
+            <i class="ph-bold ph-faders"></i> UX Filters
+          </div>
+
+          <div class="flex flex-wrap gap-3 items-end">
+            <div>
+              <label class="block text-[9px] text-gray-500 mb-1 uppercase">Date Range</label>
+              <select id="ux-filter-date" class="input-magical text-xs rounded-md px-2 py-1.5 min-w-[120px]">
+                <option value="30">Last 30 Days</option>
+                <option value="7">Last 7 Days</option>
+                <option value="90">Last 90 Days</option>
+              </select>
+            </div>
+            <div>
+              <label class="block text-[9px] text-gray-500 mb-1 uppercase">Page</label>
+              <select id="ux-filter-page" class="input-magical text-xs rounded-md px-2 py-1.5 min-w-[140px]">
+                <option value="all">All Pages</option>
+                <option value="/solar-savings">/solar-savings</option>
+                <option value="/donate">/donate</option>
+                <option value="/about-us">/about-us</option>
+              </select>
+            </div>
+            <div>
+              <label class="block text-[9px] text-gray-500 mb-1 uppercase">Device</label>
+              <select id="ux-filter-device" class="input-magical text-xs rounded-md px-2 py-1.5 min-w-[100px]">
+                <option value="all">All Devices</option>
+                <option value="desktop">Desktop</option>
+                <option value="mobile">Mobile</option>
+                <option value="tablet">Tablet</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <div class="flex-1 overflow-y-auto custom-scrollbar pb-6 space-y-6">
+          <div class="grid grid-cols-2 md:grid-cols-5 gap-4">
+            <div class="glass-card p-4 border-l-2 border-l-rose-500">
+              <div class="text-[10px] uppercase tracking-wider text-gray-500 font-bold mb-2">Total Rage Clicks</div>
+              <div class="text-2xl font-bold text-rose-400" id="ux-kpi-rage">2,847</div>
+              <div class="text-xs text-gray-400 mt-1">3.2% of sessions</div>
+            </div>
+            <div class="glass-card p-4 border-l-2 border-l-amber-500">
+              <div class="text-[10px] uppercase tracking-wider text-gray-500 font-bold mb-2">Total Dead Clicks</div>
+              <div class="text-2xl font-bold text-amber-400" id="ux-kpi-dead">1,523</div>
+              <div class="text-xs text-gray-400 mt-1">1.7% of sessions</div>
+            </div>
+            <div class="glass-card p-4 border-l-2 border-l-cyan-500">
+              <div class="text-[10px] uppercase tracking-wider text-gray-500 font-bold mb-2">Avg Scroll Depth</div>
+              <div class="text-2xl font-bold text-cyan-400" id="ux-kpi-scroll">62%</div>
+              <div class="text-xs text-emerald-400 mt-1"><i class="ph-bold ph-trend-up"></i> +4%</div>
+            </div>
+            <div class="glass-card p-4">
+              <div class="text-[10px] uppercase tracking-wider text-gray-500 font-bold mb-2">Avg Time on Page</div>
+              <div class="text-2xl font-bold text-white" id="ux-kpi-time">1:45</div>
+              <div class="text-xs text-gray-400 mt-1">Per session</div>
+            </div>
+            <button type="button" id="highlight-friction-page" class="glass-card p-4 border-l-2 border-l-purple-500 text-left hover:bg-white/5">
+              <div class="text-[10px] uppercase tracking-wider text-gray-500 font-bold mb-2">Highest Friction</div>
+              <div class="text-lg font-bold text-white truncate" id="ux-kpi-high">/solar-savings</div>
+              <div class="text-xs text-rose-400 mt-1">4.8% rage rate</div>
+            </button>
+          </div>
+        </div>
+      </section>
+
+      <section id="view-audit" class="view-section h-full max-w-7xl mx-auto flex flex-col" hidden>
+        <div class="mb-6 shrink-0 flex justify-between items-end">
+          <div>
+            <h2 class="font-magical text-3xl text-white mb-2">Strategy &amp; Implementation</h2>
+            <p class="text-sm text-gray-400">Consulting notes, audit findings, recommendations, and tracking guidelines.</p>
+          </div>
+          <div class="flex items-center gap-3">
+            <span class="text-[10px] text-gray-500 uppercase tracking-wider">Updated: Oct 28, 2024</span>
+            <span class="px-3 py-1 bg-black/30 border border-white/10 rounded-full text-[10px] font-bold text-gray-400 uppercase tracking-widest">Consultant View</span>
+          </div>
+        </div>
+
+        <div class="flex-1 overflow-y-auto custom-scrollbar pb-6 space-y-6">
+          <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
+            <div class="glass-card p-5 border-l-2 border-l-emerald-500 bg-gradient-to-r from-emerald-900/10 to-transparent">
+              <div class="flex items-center gap-2 mb-3">
+                <i class="ph-fill ph-check-circle text-emerald-400 text-lg"></i>
+                <h3 class="text-sm font-bold text-emerald-300">What's Working</h3>
+              </div>
+              <ul class="space-y-2 text-xs text-gray-300">
+                <li class="flex items-start gap-2"><i class="ph-bold ph-check text-emerald-400 mt-0.5"></i> LinkedIn campaigns driving highest quality traffic</li>
+                <li class="flex items-start gap-2"><i class="ph-bold ph-check text-emerald-400 mt-0.5"></i> Newsletter conversion rate up 5.3% month-over-month</li>
+                <li class="flex items-start gap-2"><i class="ph-bold ph-check text-emerald-400 mt-0.5"></i> /donate page performing above industry benchmark</li>
+              </ul>
+            </div>
+
+            <div class="glass-card p-5 border-l-2 border-l-amber-500 bg-gradient-to-r from-amber-900/10 to-transparent">
+              <div class="flex items-center gap-2 mb-3">
+                <i class="ph-fill ph-warning text-amber-400 text-lg"></i>
+                <h3 class="text-sm font-bold text-amber-300">Needs Attention</h3>
+              </div>
+              <ul class="space-y-2 text-xs text-gray-300">
+                <li class="flex items-start gap-2"><i class="ph-bold ph-warning text-amber-400 mt-0.5"></i> Cross-domain tracking dropping UTM attribution</li>
+                <li class="flex items-start gap-2"><i class="ph-bold ph-warning text-amber-400 mt-0.5"></i> Mobile scroll depth 22% lower than desktop</li>
+                <li class="flex items-start gap-2"><i class="ph-bold ph-warning text-amber-400 mt-0.5"></i> Meta ad UTMs not following naming convention</li>
+              </ul>
+            </div>
+
+            <div class="glass-card p-5 border-l-2 border-l-cyan-500 bg-gradient-to-r from-cyan-900/10 to-transparent">
+              <div class="flex items-center gap-2 mb-3">
+                <i class="ph-fill ph-arrow-right text-cyan-400 text-lg"></i>
+                <h3 class="text-sm font-bold text-cyan-300">Next Action</h3>
+              </div>
+              <p class="text-xs text-gray-300 leading-relaxed">Implement cross-domain tracking fix by Nov 5. This unblocks accurate campaign attribution for Q4 reporting and allows proper budget reallocation toward top performers.</p>
+            </div>
+          </div>
+
+          <div class="glass-card overflow-hidden">
+            <div class="p-4 border-b border-white/5 bg-black/20 flex items-center justify-between">
+              <h3 class="text-sm font-bold text-white flex items-center gap-2">
+                <i class="ph-duotone ph-kanban text-purple-400"></i> Recommendation Board
+              </h3>
+              <div class="flex gap-2">
+                <button type="button" class="audit-filter-btn px-3 py-1 rounded text-xs bg-purple-500/20 text-purple-300 border border-purple-500/30" data-audit-status="all">All</button>
+                <button type="button" class="audit-filter-btn px-3 py-1 rounded text-xs bg-black/30 text-gray-400 border border-white/10 hover:bg-white/5" data-audit-status="new">New</button>
+                <button type="button" class="audit-filter-btn px-3 py-1 rounded text-xs bg-black/30 text-gray-400 border border-white/10 hover:bg-white/5" data-audit-status="in-progress">In Progress</button>
+                <button type="button" class="audit-filter-btn px-3 py-1 rounded text-xs bg-black/30 text-gray-400 border border-white/10 hover:bg-white/5" data-audit-status="resolved">Resolved</button>
+              </div>
+            </div>
+
+            <div class="overflow-x-auto">
+              <table class="data-table w-full" id="audit-recommendations-table">
+                <thead>
+                  <tr>
+                    <th class="w-8"></th>
+                    <th>Recommendation</th>
+                    <th>Category</th>
+                    <th>Priority</th>
+                    <th>Status</th>
+                    <th>Linked To</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr data-status="new" onclick="showAuditDetail('cross-domain')">
+                    <td><div class="w-2 h-2 rounded-full bg-rose-500"></div></td>
+                    <td class="font-medium text-white text-sm">Fix GA4 Cross-Domain Tracking</td>
+                    <td><span class="badge badge-cyan">Tracking</span></td>
+                    <td><span class="badge badge-rose">High</span></td>
+                    <td><span class="flex items-center gap-1 text-xs text-amber-400"><i class="ph-bold ph-circle"></i> New</span></td>
+                    <td class="text-xs text-gray-400">GA4 Data Stream</td>
+                  </tr>
+                  <tr data-status="in-progress" onclick="showAuditDetail('meta-utms')">
+                    <td><div class="w-2 h-2 rounded-full bg-amber-500"></div></td>
+                    <td class="font-medium text-white text-sm">Standardize Meta Ad UTMs</td>
+                    <td><span class="badge badge-purple">Campaigns</span></td>
+                    <td><span class="badge badge-gold">Medium</span></td>
+                    <td><span class="flex items-center gap-1 text-xs text-cyan-400"><i class="ph-bold ph-spinner-gap animate-spin"></i> In Progress</span></td>
+                    <td class="text-xs text-gray-400">Meta Ads Manager</td>
+                  </tr>
+                  <tr data-status="new" onclick="showAuditDetail('mobile-hero')">
+                    <td><div class="w-2 h-2 rounded-full bg-rose-500"></div></td>
+                    <td class="font-medium text-white text-sm">Shorten Mobile Hero Section</td>
+                    <td><span class="badge badge-rose">UX</span></td>
+                    <td><span class="badge badge-rose">High</span></td>
+                    <td><span class="flex items-center gap-1 text-xs text-amber-400"><i class="ph-bold ph-circle"></i> New</span></td>
+                    <td class="text-xs text-gray-400">/solar-savings</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div class="glass-card p-5">
+              <h3 class="text-sm font-bold text-white mb-4 flex items-center gap-2">
+                <i class="ph-duotone ph-file-text text-cyan-400"></i> Implementation Notes
+              </h3>
+              <div class="space-y-4 text-sm text-gray-300" id="audit-detail-panel">
+                <div class="p-4 bg-black/20 rounded border border-white/5">
+                  <h4 class="text-xs font-bold text-cyan-300 mb-2 uppercase tracking-wider">Cross-Domain Tracking Fix</h4>
+                  <p class="text-xs text-gray-400 mb-3">Traffic moving between main site and donation portal is losing UTM parameters. This causes conversions to show as 'Direct' instead of attributed to campaigns.</p>
+                  <div class="text-xs text-gray-500 font-mono bg-black/40 p-2 rounded border border-white/10">
+                    GA4 Admin &gt; Data Streams &gt; Web &gt; Configure tag settings &gt; Configure your domains
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="glass-card p-5">
+              <h3 class="text-sm font-bold text-white mb-4 flex items-center gap-2">
+                <i class="ph-duotone ph-book-bookmark text-amber-400"></i> Resource Links
+              </h3>
+              <div class="space-y-2">
+                <button type="button" data-view="reports" class="w-full flex items-center justify-between p-3 rounded bg-black/20 hover:bg-black/40 border border-white/5 hover:border-purple-500/30 transition-all group text-left">
+                  <span class="flex items-center gap-3">
+                    <div class="w-8 h-8 rounded bg-purple-900/30 flex items-center justify-center text-purple-400"><i class="ph-duotone ph-chart-line-up text-lg"></i></div>
+                    <div>
+                      <div class="text-sm font-medium text-gray-200 group-hover:text-white">View Performance Dashboard</div>
+                      <div class="text-[10px] text-gray-500">Live campaign metrics</div>
+                    </div>
+                  </span>
+                  <i class="ph-bold ph-arrow-right text-gray-600 group-hover:text-purple-400"></i>
+                </button>
+
+                <button type="button" data-view="ux" class="w-full flex items-center justify-between p-3 rounded bg-black/20 hover:bg-black/40 border border-white/5 hover:border-cyan-500/30 transition-all group text-left">
+                  <span class="flex items-center gap-3">
+                    <div class="w-8 h-8 rounded bg-cyan-900/30 flex items-center justify-center text-cyan-400"><i class="ph-duotone ph-mouse-left-click text-lg"></i></div>
+                    <div>
+                      <div class="text-sm font-medium text-gray-200 group-hover:text-white">Review UX Insights</div>
+                      <div class="text-[10px] text-gray-500">Clarity session data</div>
+                    </div>
+                  </span>
+                  <i class="ph-bold ph-arrow-right text-gray-600 group-hover:text-cyan-400"></i>
+                </button>
+
+                <button type="button" data-open-url="https://clarity.microsoft.com" class="w-full flex items-center justify-between p-3 rounded bg-black/20 hover:bg-black/40 border border-white/5 hover:border-blue-500/30 transition-all group text-left">
+                  <span class="flex items-center gap-3">
+                    <div class="w-8 h-8 rounded bg-blue-900/30 flex items-center justify-center text-blue-400"><i class="ph-fill ph-microsoft-logo text-lg"></i></div>
+                    <div>
+                      <div class="text-sm font-medium text-gray-200 group-hover:text-white">Open Microsoft Clarity</div>
+                      <div class="text-[10px] text-gray-500">Session recordings &amp; heatmaps</div>
+                    </div>
+                  </span>
+                  <i class="ph-bold ph-arrow-up-right text-gray-600 group-hover:text-blue-400"></i>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <div id="toast" class="fixed bottom-6 right-6 translate-y-[150%] opacity-0 bg-[#1e1a2d] border border-purple-500/50 rounded-lg p-4 shadow-[0_8px_30px_rgba(0,0,0,0.5)] z-50 flex items-start gap-3 w-80">
+    <div class="mt-0.5"><i id="toast-icon" class="ph-fill ph-check-circle text-emerald-400 text-lg"></i></div>
+    <div>
+      <h4 id="toast-title" class="text-sm font-bold text-white mb-0.5">Success</h4>
+      <p id="toast-msg" class="text-xs text-gray-400">Action completed successfully.</p>
+    </div>
+  </div>
+
+  <script>
+    const PORTAL_CONFIG = {
+      clientName: "Re-volv Solar",
+      clientLogoIcon: "ph-sun-horizon",
+      themeColor: "#ffd700",
+      lookerStudioUrl: "https://lookerstudio.google.com/embed/reporting/...",
+      clarityUrl: "https://clarity.microsoft.com/...",
+      backendType: "Google Sheets MVP"
+    };
+
+    const VALID_VIEWS = ["home", "reports", "utm", "ux", "audit"];
+
+    const VIEW_TITLES = {
+      home: "Overview",
+      reports: "Reports Dashboard",
+      utm: "UTM Builder",
+      ux: "UX Insights",
+      audit: "Audit & Strategy"
+    };
+
+    const mockRegistry = [
+      { campaign: "Q4_Solar_Savings", source: "linkedin", medium: "social", date: "Oct 26, 2024" },
+      { campaign: "Newsletter_Oct", source: "hs_email", medium: "email", date: "Oct 24, 2024" },
+      { campaign: "Search_Brand_T1", source: "google", medium: "cpc", date: "Oct 20, 2024" }
+    ];
+
+    const AUDIT_DATA = {
+      recommendations: {
+        "cross-domain": {
+          title: "Fix GA4 Cross-Domain Tracking",
+          finding: "Traffic moving between main site and donation portal is losing UTM parameters. This causes conversions to show as 'Direct' instead of attributed to campaigns.",
+          steps: "GA4 Admin > Data Streams > Web > Configure tag settings > Configure your domains",
+          impact: "Currently ~15% of conversions unattributed. Fixing this will reveal true campaign ROI and enable proper budget allocation.",
+          category: "Tracking",
+          priority: "High"
+        },
+        "meta-utms": {
+          title: "Standardize Meta Ad UTMs",
+          finding: "Current Meta ads use hardcoded UTMs that differ from naming convention. Data is splitting in reports.",
+          steps: "Implement dynamic parameters in Meta Ads Manager",
+          impact: "Will consolidate reporting and enable proper campaign-level analysis.",
+          category: "Campaigns",
+          priority: "Medium"
+        },
+        "mobile-hero": {
+          title: "Shorten Mobile Hero Section",
+          finding: "Mobile scroll depth is materially lower than desktop. Users are not seeing key content below the fold.",
+          steps: "Reduce hero height on mobile and move CTA above the fold.",
+          impact: "Expected lift in mobile engagement and conversion rate.",
+          category: "UX",
+          priority: "High"
+        }
+      }
+    };
+
+    document.addEventListener("DOMContentLoaded", () => {
+      applyConfig();
+      initStars();
+      populateRegistry();
+      bindNavigation();
+      bindUTMEvents();
+      bindReportFilters();
+      bindUXFilters();
+      bindAuditFilters();
+      bindExternalButtons();
+
+      const now = new Date();
+      const syncTime = document.getElementById("sync-time");
+      if (syncTime) {
+        syncTime.innerText = `Synced: Today ${now.getHours().toString().padStart(2, "0")}:${now.getMinutes().toString().padStart(2, "0")}`;
+      }
+
+      switchView(getInitialView(), false);
+    });
+
+    function applyConfig() {
+      const clientName = document.getElementById("client-name");
+      const clientLogo = document.getElementById("client-logo");
+
+      if (clientName) clientName.textContent = PORTAL_CONFIG.clientName;
+      document.documentElement.style.setProperty("--client-color", PORTAL_CONFIG.themeColor);
+
+      if (clientLogo) {
+        clientLogo.className = `ph-fill ${PORTAL_CONFIG.clientLogoIcon} text-[var(--client-color)] text-lg`;
+      }
     }
 
-    const initialView = getInitialView();
-    switchView(initialView, false);
-  });
+    function getInitialView() {
+      const hash = window.location.hash.replace("#", "").trim().toLowerCase();
+      return VALID_VIEWS.includes(hash) ? hash : "home";
+    }
 
-  function getInitialView() {
-    const hash = window.location.hash.replace("#", "").trim().toLowerCase();
-    return VALID_VIEWS.includes(hash) ? hash : "home";
-  }
-
-  function bindSidebarNavigation() {
-    document.querySelectorAll("[data-view]").forEach((el) => {
-      el.addEventListener("click", (event) => {
-        event.preventDefault();
-        const viewId = el.getAttribute("data-view");
-        switchView(viewId);
+    function bindNavigation() {
+      document.querySelectorAll("[data-view]").forEach((el) => {
+        el.addEventListener("click", (event) => {
+          event.preventDefault();
+          const viewId = el.getAttribute("data-view");
+          switchView(viewId);
+        });
       });
-    });
-  }
-
-  function switchView(viewId, updateHash = true) {
-    if (!VALID_VIEWS.includes(viewId)) return;
-
-    const nextNav = document.getElementById(`nav-${viewId}`);
-    const nextView = document.getElementById(`view-${viewId}`);
-    const headerTitle = document.getElementById("header-title");
-
-    if (!nextNav || !nextView) {
-      console.warn(`Missing nav or section for view: ${viewId}`);
-      return;
     }
 
-    document.querySelectorAll(".nav-item").forEach((el) => {
-      el.classList.remove("active");
-      el.setAttribute("aria-current", "false");
-    });
-
-    document.querySelectorAll(".view-section").forEach((el) => {
-      el.classList.remove("active");
-      el.setAttribute("hidden", "hidden");
-    });
-
-    nextNav.classList.add("active");
-    nextNav.setAttribute("aria-current", "page");
-
-    nextView.classList.add("active");
-    nextView.removeAttribute("hidden");
-
-    if (headerTitle) {
-      headerTitle.innerText = VIEW_TITLES[viewId] || "Workspace";
+    function bindExternalButtons() {
+      document.querySelectorAll("[data-open-url]").forEach((el) => {
+        el.addEventListener("click", () => {
+          const url = el.getAttribute("data-open-url");
+          if (url) window.open(url, "_blank", "noopener,noreferrer");
+        });
+      });
     }
 
-    if (updateHash) {
-      history.replaceState(null, "", `#${viewId}`);
-    }
-  }
+    function switchView(viewId, updateHash = true) {
+      if (!VALID_VIEWS.includes(viewId)) return;
 
-  window.addEventListener("hashchange", () => {
-    const hashView = getInitialView();
-    switchView(hashView, false);
-  });
-</script>
-</body></html>
+      const nextNav = document.getElementById(`nav-${viewId}`);
+      const nextView = document.getElementById(`view-${viewId}`);
+      const headerTitle = document.getElementById("header-title");
+
+      if (!nextNav || !nextView) return;
+
+      document.querySelectorAll(".nav-item").forEach((el) => {
+        el.classList.remove("active");
+        el.setAttribute("aria-current", "false");
+      });
+
+      document.querySelectorAll(".view-section").forEach((el) => {
+        el.classList.remove("active");
+        el.setAttribute("hidden", "hidden");
+      });
+
+      nextNav.classList.add("active");
+      nextNav.setAttribute("aria-current", "page");
+      nextView.classList.add("active");
+      nextView.removeAttribute("hidden");
+
+      if (headerTitle) headerTitle.textContent = VIEW_TITLES[viewId] || "Workspace";
+      if (updateHash) history.replaceState(null, "", `#${viewId}`);
+    }
+
+    window.addEventListener("hashchange", () => {
+      switchView(getInitialView(), false);
+    });
+
+    function bindUTMEvents() {
+      const url = document.getElementById("utm-url");
+      const source = document.getElementById("utm-source");
+      const medium = document.getElementById("utm-medium");
+      const campaign = document.getElementById("utm-campaign");
+      const term = document.getElementById("utm-term");
+      const content = document.getElementById("utm-content");
+      const toggleOptional = document.getElementById("toggle-optional-fields");
+      const copyButton = document.getElementById("copy-utm-button");
+      const saveButton = document.getElementById("save-utm-button");
+      const search = document.getElementById("registry-search");
+
+      [url, source, medium, campaign, term, content].forEach((el) => {
+        if (!el) return;
+        el.addEventListener("input", generateUTM);
+        el.addEventListener("change", generateUTM);
+      });
+
+      if (toggleOptional) {
+        toggleOptional.addEventListener("click", () => {
+          document.getElementById("optional-fields")?.classList.toggle("hidden");
+        });
+      }
+
+      if (copyButton) copyButton.addEventListener("click", copyUTM);
+      if (saveButton) saveButton.addEventListener("click", saveUTM);
+
+      if (search) {
+        search.addEventListener("input", (event) => {
+          populateRegistry(event.target.value);
+        });
+      }
+    }
+
+    function generateUTM() {
+      const urlValue = document.getElementById("utm-url")?.value.trim() || "";
+      const result = document.getElementById("utm-result");
+
+      if (!result) return;
+      if (!urlValue) {
+        result.value = "";
+        return;
+      }
+
+      try {
+        const source = document.getElementById("utm-source")?.value || "";
+        const medium = document.getElementById("utm-medium")?.value || "";
+        const campaign = document.getElementById("utm-campaign")?.value.trim() || "";
+        const term = document.getElementById("utm-term")?.value.trim() || "";
+        const content = document.getElementById("utm-content")?.value.trim() || "";
+
+        const url = new URL(urlValue);
+        if (source) url.searchParams.set("utm_source", source.toLowerCase());
+        if (medium) url.searchParams.set("utm_medium", medium.toLowerCase());
+        if (campaign) url.searchParams.set("utm_campaign", campaign.replace(/\s+/g, "_"));
+        if (term) url.searchParams.set("utm_term", term);
+        if (content) url.searchParams.set("utm_content", content);
+
+        result.value = url.toString();
+      } catch {
+        result.value = "Waiting for valid URL format (include https://)...";
+      }
+    }
+
+    function copyUTM() {
+      const result = document.getElementById("utm-result")?.value || "";
+      if (!result || result.startsWith("Waiting")) return;
+
+      navigator.clipboard.writeText(result).then(() => {
+        showToast("Copied!", "Link copied to clipboard.", "ph-copy");
+      });
+    }
+
+    function saveUTM() {
+      const campaign = document.getElementById("utm-campaign")?.value.trim() || "";
+      const source = document.getElementById("utm-source")?.value || "";
+      const medium = document.getElementById("utm-medium")?.value || "";
+      const result = document.getElementById("utm-result")?.value || "";
+
+      if (!campaign || !result || result.startsWith("Waiting")) {
+        showToast("Incomplete", "Please fill required fields to save.", "ph-warning", "text-amber-400");
+        return;
+      }
+
+      mockRegistry.unshift({
+        campaign,
+        source,
+        medium,
+        date: "Just now"
+      });
+
+      populateRegistry();
+      showToast("Saved Successfully", "Link added to master registry.", "ph-check-circle");
+    }
+
+    function populateRegistry(query = "") {
+      const tbody = document.getElementById("registry-tbody");
+      if (!tbody) return;
+
+      const filtered = mockRegistry.filter((item) => {
+        const q = query.trim().toLowerCase();
+        if (!q) return true;
+        return [item.campaign, item.source, item.medium, item.date].join(" ").toLowerCase().includes(q);
+      });
+
+      tbody.innerHTML = filtered.map((item) => `
+        <tr>
+          <td>
+            <div class="font-medium text-white mb-0.5">${item.campaign}</div>
+            <div class="text-[10px] text-gray-500 font-mono truncate max-w-[200px]">Simulated URL data...</div>
+          </td>
+          <td><span class="badge ${getBadgeColor(item.source)}">${item.source}</span> <span class="text-gray-600 mx-1">/</span> <span class="text-xs text-gray-400">${item.medium}</span></td>
+          <td><div class="text-xs text-gray-400">${item.date}</div></td>
+          <td><button type="button" class="text-gray-500 hover:text-purple-400 transition-colors"><i class="ph-bold ph-copy"></i></button></td>
+        </tr>
+      `).join("");
+    }
+
+    function getBadgeColor(source) {
+      return {
+        google: "badge-emerald",
+        linkedin: "badge-purple",
+        hs_email: "badge-cyan",
+        facebook: "badge-rose"
+      }[source] || "badge-gold";
+    }
+
+    function bindReportFilters() {
+      ["filter-date-range", "filter-campaign", "filter-source", "filter-medium", "filter-landing"].forEach((id) => {
+        const el = document.getElementById(id);
+        if (el) {
+          el.addEventListener("change", applyReportFilters);
+        }
+      });
+
+      document.getElementById("reset-report-filters")?.addEventListener("click", resetReportFilters);
+      document.getElementById("refresh-reports-button")?.addEventListener("click", refreshReportsData);
+    }
+
+    function applyReportFilters() {
+      showToast("Filters Applied", "Reports updated with new criteria.", "ph-check-circle");
+      const updated = document.getElementById("reports-last-updated");
+      if (updated) updated.textContent = "Updated: Just now";
+    }
+
+    function resetReportFilters() {
+      const defaults = {
+        "filter-date-range": "30",
+        "filter-campaign": "all",
+        "filter-source": "all",
+        "filter-medium": "all",
+        "filter-landing": "all"
+      };
+
+      Object.entries(defaults).forEach(([id, value]) => {
+        const el = document.getElementById(id);
+        if (el) el.value = value;
+      });
+
+      applyReportFilters();
+    }
+
+    function refreshReportsData() {
+      const updated = document.getElementById("reports-last-updated");
+      if (updated) updated.textContent = "Updated: Just now";
+      showToast("Data Refreshed", "Latest metrics loaded.", "ph-check-circle");
+    }
+
+    function bindUXFilters() {
+      ["ux-filter-date", "ux-filter-page", "ux-filter-device"].forEach((id) => {
+        const el = document.getElementById(id);
+        if (el) el.addEventListener("change", applyUXFilters);
+      });
+
+      document.getElementById("sync-clarity-button")?.addEventListener("click", syncClarityData);
+      document.getElementById("highlight-friction-page")?.addEventListener("click", () => {
+        const pageSelect = document.getElementById("ux-filter-page");
+        if (pageSelect) pageSelect.value = "/solar-savings";
+        applyUXFilters();
+      });
+    }
+
+    function applyUXFilters() {
+      const updated = document.getElementById("ux-last-updated");
+      if (updated) updated.textContent = "Updated: Just now";
+      showToast("Filters Applied", "UX insights updated.", "ph-check-circle");
+    }
+
+    function syncClarityData() {
+      const updated = document.getElementById("ux-last-updated");
+      if (updated) updated.textContent = "Updated: Just now";
+      showToast("Sync Complete", "Clarity data refreshed.", "ph-check-circle");
+    }
+
+    function bindAuditFilters() {
+      document.querySelectorAll(".audit-filter-btn").forEach((btn) => {
+        btn.addEventListener("click", () => {
+          filterAuditByStatus(btn.getAttribute("data-audit-status"));
+        });
+      });
+    }
+
+    function filterAuditByStatus(status) {
+      document.querySelectorAll(".audit-filter-btn").forEach((btn) => {
+        const isActive = btn.getAttribute("data-audit-status") === status;
+        btn.className = isActive
+          ? "audit-filter-btn px-3 py-1 rounded text-xs bg-purple-500/20 text-purple-300 border border-purple-500/30"
+          : "audit-filter-btn px-3 py-1 rounded text-xs bg-black/30 text-gray-400 border border-white/10 hover:bg-white/5";
+      });
+
+      document.querySelectorAll("#audit-recommendations-table tbody tr").forEach((row) => {
+        row.style.display = status === "all" || row.dataset.status === status ? "" : "none";
+      });
+    }
+
+    function showAuditDetail(id) {
+      const detail = AUDIT_DATA.recommendations[id];
+      const panel = document.getElementById("audit-detail-panel");
+      if (!detail || !panel) return;
+
+      panel.innerHTML = `
+        <div class="p-4 bg-black/20 rounded border border-white/5">
+          <h4 class="text-xs font-bold text-cyan-300 mb-2 uppercase tracking-wider">${detail.title}</h4>
+          <p class="text-xs text-gray-400 mb-3">${detail.finding}</p>
+          <div class="text-xs text-gray-500 font-mono bg-black/40 p-2 rounded border border-white/10">${detail.steps}</div>
+        </div>
+        <div class="p-4 bg-black/20 rounded border border-white/5">
+          <h4 class="text-xs font-bold text-cyan-300 mb-2 uppercase tracking-wider">Impact Assessment</h4>
+          <p class="text-xs text-gray-400">${detail.impact}</p>
+        </div>
+      `;
+    }
+
+    function showToast(title, message, iconClass, colorClass = "text-emerald-400") {
+      const toast = document.getElementById("toast");
+      const titleEl = document.getElementById("toast-title");
+      const msgEl = document.getElementById("toast-msg");
+      const iconEl = document.getElementById("toast-icon");
+
+      if (!toast || !titleEl || !msgEl || !iconEl) return;
+
+      titleEl.textContent = title;
+      msgEl.textContent = message;
+      iconEl.className = `ph-fill ${iconClass} ${colorClass} text-lg`;
+
+      toast.classList.add("toast-show");
+
+      window.clearTimeout(window.__toastTimer);
+      window.__toastTimer = window.setTimeout(() => {
+        toast.classList.remove("toast-show");
+      }, 2500);
+    }
+
+    function initStars() {
+      const container = document.getElementById("star-container");
+      if (!container) return;
+
+      for (let i = 0; i < 50; i += 1) {
+        const star = document.createElement("div");
+        star.className = "star";
+        star.style.left = `${Math.random() * 100}%`;
+        star.style.top = `${Math.random() * 100}%`;
+        const size = Math.random() < 0.1 ? 2 : 1;
+        star.style.width = `${size}px`;
+        star.style.height = `${size}px`;
+        star.style.setProperty("--duration", `${2 + Math.random() * 4}s`);
+        star.style.setProperty("--delay", `${Math.random() * 5}s`);
+        star.style.setProperty("--opacity", `${0.2 + Math.random() * 0.5}`);
+        container.appendChild(star);
+      }
+    }
+  </script>
+</body>
+</html>

@@ -1037,13 +1037,17 @@
   </div>
 
   <script>
-    const PORTAL_CONFIG = {
-      clientName: "Re-volv Solar",
+    const APP_CONFIG = {
+      APPS_SCRIPT_URL: "https://script.google.com/macros/s/AKfycbxw5cNKBIBNPZ6DAKS_EUl14dX5dWduZqtqAhcE1USMqFCHlwObgmlcR2BG8_4gE3zN/exec"
+    };
+        
+    let PORTAL_CONFIG = {
+      clientName: "Loading...",
       clientLogoIcon: "ph-sun-horizon",
       themeColor: "#ffd700",
-      lookerStudioUrl: "https://lookerstudio.google.com/embed/reporting/...",
-      clarityUrl: "https://clarity.microsoft.com/...",
-      backendType: "Google Sheets MVP"
+      lookerStudioUrl: "",
+      clarityUrl: "",
+      backendType: "Google Sheets"
     };
 
     const VALID_VIEWS = ["home", "reports", "utm", "ux", "audit"];
@@ -1091,25 +1095,84 @@
       }
     };
 
-    document.addEventListener("DOMContentLoaded", () => {
+  document.addEventListener("DOMContentLoaded", async () => {
+    applyConfig();
+    initStars();
+    bindNavigation();
+    bindExternalButtons();
+    bindUTMEvents();
+    bindReportFilters();
+    bindUXFilters();
+    bindAuditFilters();
+  
+    const now = new Date();
+    const syncTime = document.getElementById("sync-time");
+    if (syncTime) {
+      syncTime.innerText = `Synced: Today ${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`;
+    }
+  
+    switchView(getInitialView(), false);
+  
+    try {
+      await loadSettingsFromSheet();
+      await loadRegistryFromSheet();
+      await loadAuditFromSheet();
+      await loadResourcesFromSheet();
+      await loadPerformanceFromSheet();
+    } catch (error) {
+      console.error(error);
+      showToast("Connection Error", "Could not load sheet data.", "ph-warning", "text-amber-400");
+    }
+  });
+
+    async function loadSettingsFromSheet() {
+      const data = await apiGet("getSettings");
+      if (!data.ok) throw new Error(data.error || "Failed to load settings");
+    
+      PORTAL_CONFIG.clientName = data.settings.clientName || "Client";
+      PORTAL_CONFIG.clarityUrl = data.settings.clarityUrl || "";
+      PORTAL_CONFIG.lookerStudioUrl = data.settings.lookerEmbedUrl || "";
+    
       applyConfig();
-      initStars();
-      populateRegistry();
-      bindNavigation();
-      bindExternalButtons();
-      bindUTMEvents();
-      bindReportFilters();
-      bindUXFilters();
-      bindAuditFilters();
-
-      const now = new Date();
-      const syncTime = document.getElementById("sync-time");
-      if (syncTime) {
-        syncTime.innerText = `Synced: Today ${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`;
-      }
-
-      switchView(getInitialView(), false);
-    });
+    }
+    
+    async function loadRegistryFromSheet(query = "") {
+      const data = await apiGet("getRegistry", { q: query });
+      if (!data.ok) throw new Error(data.error || "Failed to load registry");
+      renderRegistry(data.registry || []);
+    }
+    
+    async function loadAuditFromSheet(status = "all") {
+      const data = await apiGet("getAuditNotes", { status });
+      if (!data.ok) throw new Error(data.error || "Failed to load audit notes");
+      renderAuditTable(data.notes || []);
+    }
+    
+    async function loadResourcesFromSheet() {
+      const data = await apiGet("getResourceLinks");
+      if (!data.ok) throw new Error(data.error || "Failed to load resource links");
+      console.log("Resource links", data.links);
+    }
+    
+    async function loadPerformanceFromSheet() {
+      const data = await apiGet("getPerformanceSummary");
+      if (!data.ok) throw new Error(data.error || "Failed to load performance summary");
+    
+      const summary = data.summary || {};
+      const sessionsEl = document.getElementById("kpi-sessions");
+      const usersEl = document.getElementById("kpi-users");
+      const conversionsEl = document.getElementById("kpi-conversions");
+      const rateEl = document.getElementById("kpi-rate");
+      const durationEl = document.getElementById("kpi-duration");
+      const topSourceEl = document.getElementById("kpi-top-source");
+    
+      if (sessionsEl) sessionsEl.textContent = formatNumber(summary.sessions || 0);
+      if (usersEl) usersEl.textContent = formatNumber(summary.users || 0);
+      if (conversionsEl) conversionsEl.textContent = formatNumber(summary.conversions || 0);
+      if (rateEl) rateEl.textContent = formatPercent(summary.conversionRate || 0);
+      if (durationEl) durationEl.textContent = formatDuration(summary.avgSessionDurationSeconds || 0);
+      if (topSourceEl) topSourceEl.textContent = capitalize(summary.topSource || "-");
+    }
 
     function applyConfig() {
       const clientName = document.getElementById("client-name");
@@ -1237,28 +1300,130 @@
       });
     }
 
-    function saveUTM() {
-      const campaign = document.getElementById("utm-campaign")?.value.trim() || "";
+    async function saveUTM() {
+      const destinationUrl = document.getElementById("utm-url")?.value.trim() || "";
       const source = document.getElementById("utm-source")?.value || "";
       const medium = document.getElementById("utm-medium")?.value || "";
+      const campaign = document.getElementById("utm-campaign")?.value.trim() || "";
+      const content = document.getElementById("utm-content")?.value.trim() || "";
+      const term = document.getElementById("utm-term")?.value.trim() || "";
+      const notes = document.getElementById("utm-notes")?.value.trim() || "";
       const result = document.getElementById("utm-result")?.value || "";
-
-      if (!campaign || !result || result.startsWith("Waiting")) {
+    
+      if (!destinationUrl || !source || !medium || !campaign || !result || result.startsWith("Waiting")) {
         showToast("Incomplete", "Please fill required fields to save.", "ph-warning", "text-amber-400");
         return;
       }
-
-      mockRegistry.unshift({
-        campaign,
-        source,
-        medium,
-        date: "Just now"
-      });
-
-      populateRegistry();
-      showToast("Saved Successfully", "Link added to master registry.", "ph-check-circle");
+    
+      try {
+        const response = await apiPost("saveUTM", {
+          destinationUrl,
+          source,
+          medium,
+          campaign,
+          campaignName: campaign,
+          content,
+          term,
+          notes
+        });
+    
+        if (!response.ok) throw new Error(response.error || "Save failed");
+    
+        await loadRegistryFromSheet();
+        showToast("Saved Successfully", "Link added to master registry.", "ph-check-circle");
+      } catch (error) {
+        console.error(error);
+        showToast("Save Error", "Could not save to sheet.", "ph-warning", "text-amber-400");
+      }
     }
 
+  function renderAuditTable(items) {
+  const tbody = document.querySelector("#audit-recommendations-table tbody");
+  if (!tbody) return;
+
+  tbody.innerHTML = items.map((item) => `
+    <tr data-status="${escapeHtml(item.status || "")}" data-audit-id="${escapeHtml(item.noteId || "")}">
+      <td><div class="w-2 h-2 rounded-full ${priorityDotClass(item.priority)}"></div></td>
+      <td class="font-medium text-white text-sm">${escapeHtml(item.title || "")}</td>
+      <td><span class="badge ${categoryBadgeClass(item.category)}">${escapeHtml(item.category || "")}</span></td>
+      <td><span class="badge ${priorityBadgeClass(item.priority)}">${escapeHtml(item.priority || "")}</span></td>
+      <td><span class="text-xs text-gray-300">${escapeHtml(item.status || "")}</span></td>
+      <td class="text-xs text-gray-400">${escapeHtml(item.linkedLandingPage || item.linkedCampaignId || "")}</td>
+    </tr>
+  `).join("");
+
+  document.querySelectorAll("#audit-recommendations-table tbody tr").forEach((row) => {
+    row.addEventListener("click", () => {
+      const id = row.getAttribute("data-audit-id");
+      const item = items.find(note => note.noteId === id);
+      if (!item) return;
+
+      const panel = document.getElementById("audit-detail-panel");
+      if (!panel) return;
+
+      panel.innerHTML = `
+        <div class="p-4 bg-black/20 rounded border border-white/5">
+          <h4 class="text-xs font-bold text-cyan-300 mb-2 uppercase tracking-wider">${escapeHtml(item.title || "")}</h4>
+          <p class="text-xs text-gray-400 mb-3">${escapeHtml(item.finding || "")}</p>
+          <div class="text-xs text-gray-500 bg-black/40 p-2 rounded border border-white/10">${escapeHtml(item.recommendation || "")}</div>
+        </div>
+      `;
+    });
+  });
+}
+
+    function formatNumber(value) {
+      return Number(value || 0).toLocaleString();
+    }
+    
+    function formatPercent(value) {
+      return `${(Number(value || 0) * 100).toFixed(1)}%`;
+    }
+    
+    function formatDuration(seconds) {
+      const total = Math.round(Number(seconds || 0));
+      const mins = Math.floor(total / 60);
+      const secs = total % 60;
+      return `${mins}:${String(secs).padStart(2, "0")}`;
+    }
+    
+    function capitalize(value) {
+      const str = String(value || "");
+      if (!str) return "";
+      return str.charAt(0).toUpperCase() + str.slice(1);
+    }
+    
+    function escapeHtml(value) {
+      return String(value || "")
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("'", "&#39;");
+    }
+    
+    function priorityDotClass(priority) {
+      const p = String(priority || "").toLowerCase();
+      if (p === "high") return "bg-rose-500";
+      if (p === "medium") return "bg-amber-500";
+      return "bg-emerald-500";
+    }
+    
+    function priorityBadgeClass(priority) {
+      const p = String(priority || "").toLowerCase();
+      if (p === "high") return "badge-rose";
+      if (p === "medium") return "badge-gold";
+      return "badge-emerald";
+    }
+    
+    function categoryBadgeClass(category) {
+      const c = String(category || "").toLowerCase();
+      if (c === "tracking") return "badge-cyan";
+      if (c === "campaign") return "badge-purple";
+      if (c === "campaigns") return "badge-purple";
+      if (c === "ux") return "badge-rose";
+      return "badge-gold";
+    }
     function populateRegistry(query = "") {
       const tbody = document.getElementById("registry-tbody");
       if (!tbody) return;
@@ -1280,6 +1445,33 @@
           <td><button type="button" class="text-gray-500 hover:text-purple-400 transition-colors"><i class="ph-bold ph-copy"></i></button></td>
         </tr>
       `).join("");
+    }
+    async function apiGet(action, params = {}) {
+      const url = new URL(APP_CONFIG.APPS_SCRIPT_URL);
+      url.searchParams.set("action", action);
+    
+      Object.entries(params).forEach(([key, value]) => {
+        if (value !== undefined && value !== null && value !== "") {
+          url.searchParams.set(key, value);
+        }
+      });
+    
+      const response = await fetch(url.toString());
+      if (!response.ok) throw new Error("Request failed");
+      return response.json();
+    }
+    
+    async function apiPost(action, payload = {}) {
+      const response = await fetch(APP_CONFIG.APPS_SCRIPT_URL, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({ action, payload })
+      });
+    
+      if (!response.ok) throw new Error("Request failed");
+      return response.json();
     }
 
     function getBadgeColor(source) {

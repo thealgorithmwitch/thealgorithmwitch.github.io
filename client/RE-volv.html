@@ -1121,6 +1121,14 @@ async function apiGet(action, params = {}) {
     return String(str ?? '').replaceAll('"', '&quot;');
   }
 
+  function getStableNoteId(note, index) {
+  const raw = note?.id;
+  if (raw === null || raw === undefined || String(raw).trim() === '') {
+    return `note-${index}`;
+  }
+  return String(raw);
+}
+
   function openModal(el) {
     if (!el) return;
     el.classList.remove('hidden');
@@ -1367,7 +1375,7 @@ function renderNotes() {
   }
 
   container.innerHTML = workspaceData.notes.map((note, index) => {
-    const safeId = escapeAttribute(String(note.id ?? `note-${index}`));
+    const safeId = escapeAttribute(getStableNoteId(note, index));
     const initials = escapeHtml(getInitials(note.author || 'NA'));
     const isEven = index % 2 === 1;
 
@@ -1894,8 +1902,7 @@ function renderNotes() {
 
 function openNoteEditorById(noteId) {
   const note = workspaceData.notes.find((n, index) => {
-    const candidateId = String(n.id ?? `note-${index}`);
-    return candidateId === String(noteId);
+    return getStableNoteId(n, index) === String(noteId);
   });
 
   if (!note) {
@@ -1904,12 +1911,42 @@ function openNoteEditorById(noteId) {
     return;
   }
 
-  document.getElementById('note-edit-id').value = String(note.id ?? noteId);
+  document.getElementById('note-edit-id').value = String(note.id ?? '');
   document.getElementById('note-edit-date').value = note.date || '';
   document.getElementById('note-edit-author').value = note.author || '';
   document.getElementById('note-edit-text').value = note.text || '';
 
   openModal(noteModal);
+}
+
+async function addNote() {
+  const data = {
+    id: '',
+    date: document.getElementById('new-note-date').value.trim() || new Date().toLocaleDateString(),
+    author: document.getElementById('new-note-author').value.trim() || 'Cassandre',
+    text: document.getElementById('new-note-text').value.trim()
+  };
+
+  if (!data.text) {
+    alert('Note text is required.');
+    return;
+  }
+
+  const res = await apiPost({
+    action: 'saveNote',
+    clientSlug: CLIENT_SLUG,
+    note: data
+  });
+
+  const savedNote = res.note || data;
+
+  workspaceData.notes.unshift(savedNote);
+
+  document.getElementById('new-note-date').value = '';
+  document.getElementById('new-note-author').value = '';
+  document.getElementById('new-note-text').value = '';
+
+  renderNotes();
 }
 
 async function saveNoteFromModal() {
@@ -1933,19 +1970,25 @@ async function saveNoteFromModal() {
     note: data
   });
 
-  const savedId = String(res.note?.id ?? data.id);
+  const returnedNote = res.note || data;
+  const returnedRawId = returnedNote?.id;
 
-  const idx = workspaceData.notes.findIndex((n, index) => {
-    const candidateId = String(n.id ?? `note-${index}`);
-    return candidateId === savedId;
-  });
+  let idx = -1;
+
+  if (rawId) {
+    idx = workspaceData.notes.findIndex((n) => String(n.id ?? '') === rawId);
+  }
+
+  if (idx === -1 && returnedRawId !== null && returnedRawId !== undefined && String(returnedRawId).trim() !== '') {
+    idx = workspaceData.notes.findIndex((n) => String(n.id ?? '') === String(returnedRawId));
+  }
 
   if (idx === -1) {
-    workspaceData.notes.unshift(res.note);
+    workspaceData.notes.unshift(returnedNote);
   } else {
     workspaceData.notes[idx] = {
       ...workspaceData.notes[idx],
-      ...res.note
+      ...returnedNote
     };
   }
 
@@ -1955,6 +1998,7 @@ async function saveNoteFromModal() {
 
 async function deleteNoteFromModal() {
   const idValue = document.getElementById('note-edit-id').value.trim();
+
   if (!idValue) {
     closeModal(noteModal);
     return;
@@ -1966,28 +2010,32 @@ async function deleteNoteFromModal() {
     id: idValue
   });
 
-  workspaceData.notes = workspaceData.notes.filter((n, index) => {
-    const candidateId = String(n.id ?? `note-${index}`);
-    return candidateId !== String(idValue);
-  });
+  workspaceData.notes = workspaceData.notes.filter((n) => String(n.id ?? '') !== idValue);
 
   renderNotes();
   closeModal(noteModal);
 }
 
 window.deleteNoteById = async function(noteId) {
+  const note = workspaceData.notes.find((n, index) => getStableNoteId(n, index) === String(noteId));
+  if (!note) return;
+
   if (!confirm('Delete this note?')) return;
+
+  const realId = String(note.id ?? '').trim();
+
+  if (!realId) {
+    alert('This note is missing a saved ID from Google Sheets. Refresh after confirming the Apps Script is returning note IDs.');
+    return;
+  }
 
   await apiPost({
     action: 'deleteNote',
     clientSlug: CLIENT_SLUG,
-    id: noteId
+    id: realId
   });
 
-  workspaceData.notes = workspaceData.notes.filter((n, index) => {
-    const candidateId = String(n.id ?? `note-${index}`);
-    return candidateId !== String(noteId);
-  });
+  workspaceData.notes = workspaceData.notes.filter((n) => String(n.id ?? '') !== realId);
 
   renderNotes();
 };
@@ -2100,15 +2148,6 @@ async function deleteNoteFromModal() {
     workspaceData.assets = workspaceData.assets.filter(a => a.id !== assetId);
     renderAssets();
   };
-
-window.deleteNoteById = async function(noteId) {
-  if (!confirm('Delete this note?')) return;
-
-  await apiPost({
-    action: 'deleteNote',
-    clientSlug: CLIENT_SLUG,
-    id: noteId
-  });
 
   workspaceData.notes = workspaceData.notes.filter((n, index) => {
     const candidateId = String(n.id ?? `note-${index}`);

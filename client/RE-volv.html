@@ -2005,7 +2005,7 @@
     });
   }
 
-  document.addEventListener('ContentLoaded', async () => {
+  document.addEventListener('DOMContentLoaded', async () => {
     try {
       await loadWorkspaceData();
       renderAll();
@@ -2034,22 +2034,23 @@
       });
     });
 
-    document.getElementById('task-filter-status').addEventListener('change', (e) => {
+    document.getElementById('task-filter-status')?.addEventListener('change', (e) => {
       taskFilterStatus = e.target.value;
       renderTasks();
     });
 
-    document.getElementById('task-search').addEventListener('input', (e) => {
+    document.getElementById('task-search')?.addEventListener('input', (e) => {
       taskSearchQuery = e.target.value;
       renderTasks();
     });
 
-    document.getElementById('new-task-btn').addEventListener('click', () => openTaskEditor(null));
-    document.getElementById('close-task-modal').addEventListener('click', () => closeModal(taskModal));
-    document.getElementById('cancel-task-btn').addEventListener('click', () => closeModal(taskModal));
-    document.getElementById('save-task-btn').addEventListener('click', saveTaskFromModal);
-    document.getElementById('delete-task-btn').addEventListener('click', deleteTaskFromModal);
-    document.getElementById('task-add-attachment-btn').addEventListener('click', () => {
+    document.getElementById('new-task-btn')?.addEventListener('click', () => openTaskEditor(null));
+    document.getElementById('close-task-modal')?.addEventListener('click', () => closeModal(taskModal));
+    document.getElementById('cancel-task-btn')?.addEventListener('click', () => closeModal(taskModal));
+    document.getElementById('save-task-btn')?.addEventListener('click', saveTaskFromModal);
+    document.getElementById('delete-task-btn')?.addEventListener('click', deleteTaskFromModal);
+
+    document.getElementById('task-add-attachment-btn')?.addEventListener('click', () => {
       const rows = [...document.querySelectorAll('#task-attachments-editor > div')];
       const current = rows.map(row => ({
         label: row.querySelector('.attachment-label')?.value || '',
@@ -2059,24 +2060,27 @@
       buildAttachmentEditorRows(current);
     });
 
-    document.getElementById('new-asset-btn').addEventListener('click', () => openAssetEditor(null));
-    document.getElementById('close-asset-modal').addEventListener('click', () => closeModal(assetModal));
-    document.getElementById('cancel-asset-btn').addEventListener('click', () => closeModal(assetModal));
-    document.getElementById('save-asset-btn').addEventListener('click', saveAssetFromModal);
-    document.getElementById('delete-asset-btn').addEventListener('click', deleteAssetFromModal);
+    document.getElementById('new-asset-btn')?.addEventListener('click', () => openAssetEditor(null));
+    document.getElementById('close-asset-modal')?.addEventListener('click', () => closeModal(assetModal));
+    document.getElementById('cancel-asset-btn')?.addEventListener('click', () => closeModal(assetModal));
+    document.getElementById('save-asset-btn')?.addEventListener('click', saveAssetFromModal);
+    document.getElementById('delete-asset-btn')?.addEventListener('click', deleteAssetFromModal);
 
-    document.getElementById('add-note-btn').addEventListener('click', addNote);
-    document.getElementById('close-note-modal').addEventListener('click', () => closeModal(noteModal));
-    document.getElementById('cancel-note-btn').addEventListener('click', () => closeModal(noteModal));
-    document.getElementById('save-note-btn').addEventListener('click', saveNoteFromModal);
-    document.getElementById('delete-note-btn').addEventListener('click', deleteNoteFromModal);
+    document.getElementById('add-note-btn')?.addEventListener('click', addNote);
+    document.getElementById('close-note-modal')?.addEventListener('click', () => closeModal(noteModal));
+    document.getElementById('cancel-note-btn')?.addEventListener('click', () => closeModal(noteModal));
+    document.getElementById('save-note-btn')?.addEventListener('click', saveNoteFromModal);
+    document.getElementById('delete-note-btn')?.addEventListener('click', deleteNoteFromModal);
 
-    document.getElementById('edit-overview-btn').addEventListener('click', openOverviewEditor);
-    document.getElementById('close-overview-modal').addEventListener('click', () => closeModal(overviewModal));
-    document.getElementById('cancel-overview-btn').addEventListener('click', () => closeModal(overviewModal));
-    document.getElementById('save-overview-btn').addEventListener('click', saveOverviewFromModal);
+    document.getElementById('edit-overview-btn')?.addEventListener('click', openOverviewEditor);
+    document.getElementById('close-overview-modal')?.addEventListener('click', () => closeModal(overviewModal));
+    document.getElementById('cancel-overview-btn')?.addEventListener('click', () => closeModal(overviewModal));
+    document.getElementById('save-overview-btn')?.addEventListener('click', saveOverviewFromModal);
 
-    [taskModal, assetModal, noteModal, overviewModal].forEach(modal => {
+    document.getElementById('close-review-info-modal')?.addEventListener('click', () => closeModal(reviewInfoModal));
+
+    [taskModal, assetModal, noteModal, overviewModal, reviewInfoModal].forEach(modal => {
+      if (!modal) return;
       modal.addEventListener('click', (e) => {
         if (e.target === modal) closeModal(modal);
       });
@@ -2084,6 +2088,7 @@
 
     switchTab('tasks');
   });
+  
 </script>
 </body>
 </html>

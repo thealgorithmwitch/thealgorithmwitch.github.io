@@ -1331,19 +1331,13 @@ function applyUtmRegistryFilters() {
   const searchValue = (document.getElementById("utm-search")?.value || "").trim().toLowerCase();
 
   const filtered = currentRegistryItems.filter((item) => {
-    const rawCampaignName = String(item.campaignName || "");
-    const campaignName = rawCampaignName.trim();
+    const campaignName = String(item.campaignName || "").trim();
     const normalizedCampaignName = campaignName.replace(/\s+/g, "_");
-
     const source = String(item.source || "").trim().toLowerCase();
     const medium = String(item.medium || "").trim().toLowerCase();
-    const rowStatus = String(item.status || "").trim().toLowerCase();
 
     const hasCleanNaming = /^[A-Za-z0-9]+(?:_[A-Za-z0-9]+)+$/.test(normalizedCampaignName);
-    const derivedStatus =
-      rowStatus === "needs review" || rowStatus === "clean"
-        ? rowStatus
-        : (hasCleanNaming ? "clean" : "needs review");
+    const reviewStatus = hasCleanNaming ? "clean" : "needs review";
 
     const matchesCampaign =
       campaignFilter === "all" || campaignName === campaignFilter;
@@ -1356,8 +1350,8 @@ function applyUtmRegistryFilters() {
 
     const matchesStatus =
       statusFilter === "all" ||
-      (statusFilter === "flagged" && derivedStatus === "needs review") ||
-      (statusFilter === "clean" && derivedStatus === "clean");
+      (statusFilter === "flagged" && reviewStatus === "needs review") ||
+      (statusFilter === "clean" && reviewStatus === "clean");
 
     const haystack = [
       item.campaignName,
@@ -1379,7 +1373,7 @@ function applyUtmRegistryFilters() {
 
   renderRegistry(filtered);
 }
-
+  
   function getInitialView() {
     const hash = window.location.hash.replace("#", "").trim().toLowerCase();
     return VALID_VIEWS.includes(hash) ? hash : "home";
@@ -1586,24 +1580,38 @@ function populateUtmFilterOptions(items) {
     }
   }
 
-  function renderRegistry(items) {
-    const tbody = document.getElementById("registry-tbody");
-    if (!tbody) return;
+function renderRegistry(items) {
+  const tbody = document.getElementById("registry-tbody");
+  if (!tbody) return;
 
-    if (!items.length) {
-      tbody.innerHTML = `
-        <tr>
-          <td colspan="4" class="text-sm text-gray-400">No tracking links found yet.</td>
-        </tr>
-      `;
-      return;
-    }
+  if (!items.length) {
+    tbody.innerHTML = `
+      <tr>
+        <td colspan="4" class="text-sm text-gray-400">No tracking links found yet.</td>
+      </tr>
+    `;
+    return;
+  }
 
-    tbody.innerHTML = items.map((item) => `
+  tbody.innerHTML = items.map((item) => {
+    const campaignName = String(item.campaignName || item.campaign || item.campaignId || "").trim();
+    const normalizedCampaignName = campaignName.replace(/\s+/g, "_");
+    const hasCleanNaming = /^[A-Za-z0-9]+(?:_[A-Za-z0-9]+)+$/.test(normalizedCampaignName);
+
+    const reviewBadge = hasCleanNaming
+      ? `<span class="badge badge-emerald ml-2">Clean</span>`
+      : `<span class="badge badge-gold ml-2">Needs Review</span>`;
+
+    return `
       <tr>
         <td>
-          <div class="font-medium text-white mb-0.5">${escapeHtml(item.campaignName || item.campaign || item.campaignId || "")}</div>
-          <div class="text-[10px] text-gray-500 font-mono truncate max-w-[240px]">${escapeHtml(item.fullUtmLink || item.destinationUrl || "")}</div>
+          <div class="font-medium text-white mb-0.5 flex items-center flex-wrap">
+            ${escapeHtml(campaignName)}
+            ${reviewBadge}
+          </div>
+          <div class="text-[10px] text-gray-500 font-mono truncate max-w-[240px]">
+            ${escapeHtml(item.fullUtmLink || item.destinationUrl || "")}
+          </div>
         </td>
         <td>
           <span class="badge ${getBadgeColor(item.source)}">${escapeHtml(item.source || "")}</span>
@@ -1621,18 +1629,19 @@ function populateUtmFilterOptions(items) {
           </button>
         </td>
       </tr>
-    `).join("");
+    `;
+  }).join("");
 
-    tbody.querySelectorAll(".registry-copy-btn").forEach((button) => {
-      button.addEventListener("click", () => {
-        const value = decodeHtmlEntities(button.getAttribute("data-copy-value") || "");
-        if (!value) return;
-        navigator.clipboard.writeText(value).then(() => {
-          showToast("Copied!", "Registry link copied to clipboard.", "ph-copy");
-        });
+  tbody.querySelectorAll(".registry-copy-btn").forEach((button) => {
+    button.addEventListener("click", () => {
+      const value = decodeHtmlEntities(button.getAttribute("data-copy-value") || "");
+      if (!value) return;
+      navigator.clipboard.writeText(value).then(() => {
+        showToast("Copied!", "Registry link copied to clipboard.", "ph-copy");
       });
     });
-  }
+  });
+}
 
   function renderHomeRecentUtmLinks(items) {
     const table = document.querySelector("#view-home .xl\\:col-span-2 table tbody");

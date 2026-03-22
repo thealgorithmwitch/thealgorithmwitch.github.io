@@ -1819,6 +1819,36 @@
     }
   }
 
+  async function syncPerformanceData(days = 30) {
+  const updated = document.getElementById("reports-last-updated");
+  if (updated) updated.textContent = "Updated: Just now";
+
+  try {
+    const response = await apiPost("syncPerformanceData", { days });
+    if (!response.ok) throw new Error(response.error || "Sync failed");
+
+    await loadPerformanceFromSheet();
+    showToast("Sync Complete", "Google Analytics data refreshed.", "ph-check-circle");
+  } catch (error) {
+    console.error(error);
+    showToast("Sync Error", "Could not sync Google Analytics data.", "ph-warning", "text-amber-400");
+  }
+}
+
+  async function refreshReportsData() {
+  const updated = document.getElementById("reports-last-updated");
+  if (updated) updated.textContent = "Updated: Just now";
+
+  try {
+    await syncPerformanceData(
+      Number(document.getElementById("filter-date-range")?.value || 30)
+    );
+  } catch (error) {
+    console.error(error);
+    showToast("Load Error", "Could not refresh report data.", "ph-warning", "text-amber-400");
+  }
+}
+
   async function syncClarityData() {
     const updated = document.getElementById("ux-last-updated");
     if (updated) updated.textContent = "Updated: Just now";

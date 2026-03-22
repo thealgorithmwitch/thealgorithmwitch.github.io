@@ -1872,34 +1872,6 @@ function renderNotes() {
     closeModal(assetModal);
   }
 
-  async function addNote() {
-    const data = {
-      id: '',
-      date: document.getElementById('new-note-date').value.trim() || new Date().toLocaleDateString(),
-      author: document.getElementById('new-note-author').value.trim() || 'Cassandre',
-      text: document.getElementById('new-note-text').value.trim()
-    };
-
-    if (!data.text) {
-      alert('Note text is required.');
-      return;
-    }
-
-    const res = await apiPost({
-      action: 'saveNote',
-      clientSlug: CLIENT_SLUG,
-      note: data
-    });
-
-    workspaceData.notes.unshift(res.note);
-
-    document.getElementById('new-note-date').value = '';
-    document.getElementById('new-note-author').value = '';
-    document.getElementById('new-note-text').value = '';
-
-    renderNotes();
-  }
-
 function openNoteEditorById(noteId) {
   const note = workspaceData.notes.find((n, index) => {
     return getStableNoteId(n, index) === String(noteId);
@@ -1947,73 +1919,6 @@ async function addNote() {
   document.getElementById('new-note-text').value = '';
 
   renderNotes();
-}
-
-async function saveNoteFromModal() {
-  const rawId = document.getElementById('note-edit-id').value.trim();
-
-  const data = {
-    id: rawId || '',
-    date: document.getElementById('note-edit-date').value.trim(),
-    author: document.getElementById('note-edit-author').value.trim() || 'Cassandre',
-    text: document.getElementById('note-edit-text').value.trim()
-  };
-
-  if (!data.text) {
-    alert('Note text is required.');
-    return;
-  }
-
-  const res = await apiPost({
-    action: 'saveNote',
-    clientSlug: CLIENT_SLUG,
-    note: data
-  });
-
-  const returnedNote = res.note || data;
-  const returnedRawId = returnedNote?.id;
-
-  let idx = -1;
-
-  if (rawId) {
-    idx = workspaceData.notes.findIndex((n) => String(n.id ?? '') === rawId);
-  }
-
-  if (idx === -1 && returnedRawId !== null && returnedRawId !== undefined && String(returnedRawId).trim() !== '') {
-    idx = workspaceData.notes.findIndex((n) => String(n.id ?? '') === String(returnedRawId));
-  }
-
-  if (idx === -1) {
-    workspaceData.notes.unshift(returnedNote);
-  } else {
-    workspaceData.notes[idx] = {
-      ...workspaceData.notes[idx],
-      ...returnedNote
-    };
-  }
-
-  renderNotes();
-  closeModal(noteModal);
-}
-
-async function deleteNoteFromModal() {
-  const idValue = document.getElementById('note-edit-id').value.trim();
-
-  if (!idValue) {
-    closeModal(noteModal);
-    return;
-  }
-
-  await apiPost({
-    action: 'deleteNote',
-    clientSlug: CLIENT_SLUG,
-    id: idValue
-  });
-
-  workspaceData.notes = workspaceData.notes.filter((n) => String(n.id ?? '') !== idValue);
-
-  renderNotes();
-  closeModal(noteModal);
 }
 
 window.deleteNoteById = async function(noteId) {

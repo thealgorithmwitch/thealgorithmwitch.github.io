@@ -27,14 +27,18 @@
     }
 
     * { box-sizing: border-box; }
+
+    html, body {
+      width: 100%;
+      height: 100%;
+    }
+
     body {
       background-color: var(--bg-deep);
       color: var(--text-main);
       font-family: "Inter", sans-serif;
       margin: 0;
       overflow: hidden;
-      width: 100vw;
-      height: 100vh;
       display: flex;
     }
 
@@ -88,7 +92,7 @@
     }
 
     .glass-panel {
-      background: rgba(18, 12, 29, 0.7);
+      background: rgba(18, 12, 29, 0.74);
       backdrop-filter: blur(16px);
       -webkit-backdrop-filter: blur(16px);
       border: 1px solid var(--border-subtle);
@@ -97,7 +101,7 @@
     .glass-card {
       background: rgba(255, 255, 255, 0.02);
       border: 1px solid var(--border-subtle);
-      border-radius: 0.75rem;
+      border-radius: 0.95rem;
       transition: all 0.2s ease;
     }
 
@@ -123,17 +127,18 @@
     .input-magical::placeholder { color: #64748b; }
     .input-magical option { background: var(--bg-panel); color: white; }
 
-    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar { width: 8px; height: 8px; }
     ::-webkit-scrollbar-track { background: transparent; }
-    ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 10px; }
-    ::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.2); }
+    ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.12); border-radius: 999px; }
+    ::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.22); }
 
     .nav-item {
       display: flex;
       align-items: center;
       gap: 0.75rem;
-      padding: 0.75rem 1rem;
-      border-radius: 0.5rem;
+      width: 100%;
+      padding: 0.8rem 1rem;
+      border-radius: 0.7rem;
       color: var(--text-muted);
       transition: all 0.2s;
       border: 1px solid transparent;
@@ -148,7 +153,7 @@
 
     .nav-item.active {
       color: white;
-      background: linear-gradient(90deg, rgba(168,85,247,0.1) 0%, transparent 100%);
+      background: linear-gradient(90deg, rgba(168,85,247,0.12) 0%, rgba(168,85,247,0.02) 100%);
       border-left: 2px solid var(--accent-primary);
     }
 
@@ -185,28 +190,31 @@
     .data-table { width: 100%; border-collapse: separate; border-spacing: 0; }
     .data-table th {
       text-align: left;
-      padding: 0.75rem 1rem;
+      padding: 0.85rem 1rem;
       font-size: 0.65rem;
       text-transform: uppercase;
       letter-spacing: 0.1em;
       color: var(--text-muted);
       border-bottom: 1px solid var(--border-subtle);
-      background: rgba(0,0,0,0.2);
+      background: rgba(0,0,0,0.22);
+      position: sticky;
+      top: 0;
+      z-index: 1;
     }
-
     .data-table td {
-      padding: 0.875rem 1rem;
+      padding: 0.95rem 1rem;
       font-size: 0.875rem;
       border-bottom: 1px solid var(--border-subtle);
       color: #cbd5e1;
     }
-
     .data-table tr:hover td { background: rgba(255,255,255,0.02); }
     .data-table tr:last-child td { border-bottom: none; }
 
     .badge {
+      display: inline-flex;
+      align-items: center;
       padding: 0.25rem 0.5rem;
-      border-radius: 0.25rem;
+      border-radius: 0.35rem;
       font-size: 0.65rem;
       font-weight: 700;
       text-transform: uppercase;
@@ -219,11 +227,34 @@
     .badge-emerald { background: rgba(0,255,170,0.1); color: #00ffaa; border: 1px solid rgba(0,255,170,0.2); }
     .badge-rose { background: rgba(244,63,94,0.1); color: #fda4af; border: 1px solid rgba(244,63,94,0.2); }
 
-    .view-section { display: none; animation: fadeIn 0.3s ease-out forwards; }
-    .view-section.active { display: flex; flex-direction: column; }
+    .view-section {
+      display: none;
+      animation: fadeIn 0.28s ease-out forwards;
+    }
 
-    #toast { transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
-    .toast-show { transform: translateY(0) !important; opacity: 1 !important; }
+    .view-section.active {
+      display: block;
+    }
+
+    .content-shell {
+      max-width: 96rem;
+      margin: 0 auto;
+      width: 100%;
+      padding-bottom: 6rem;
+    }
+
+    #content-scroll {
+      scroll-behavior: smooth;
+    }
+
+    #toast {
+      transition: all 0.28s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+
+    .toast-show {
+      transform: translateY(0) !important;
+      opacity: 1 !important;
+    }
   </style>
 </head>
 <body>
@@ -253,29 +284,29 @@
     <nav class="flex-1 overflow-y-auto p-4 space-y-1">
       <div class="text-[10px] font-bold text-gray-600 uppercase tracking-widest px-4 mb-2 mt-2">Intelligence</div>
 
-      <button type="button" data-view="home" id="nav-home" class="nav-item active w-full text-left">
+      <button type="button" data-view="home" id="nav-home" class="nav-item active text-left">
         <i class="ph-duotone ph-squares-four"></i>
         <span class="text-sm font-medium">Overview</span>
       </button>
 
-      <button type="button" data-view="reports" id="nav-reports" class="nav-item w-full text-left">
+      <button type="button" data-view="reports" id="nav-reports" class="nav-item text-left">
         <i class="ph-duotone ph-chart-line-up"></i>
         <span class="text-sm font-medium">Reports</span>
       </button>
 
       <div class="text-[10px] font-bold text-gray-600 uppercase tracking-widest px-4 mb-2 mt-6">Operations</div>
 
-      <button type="button" data-view="utm" id="nav-utm" class="nav-item w-full text-left">
+      <button type="button" data-view="utm" id="nav-utm" class="nav-item text-left">
         <i class="ph-duotone ph-link"></i>
         <span class="text-sm font-medium">UTM Builder</span>
       </button>
 
-      <button type="button" data-view="ux" id="nav-ux" class="nav-item w-full text-left">
+      <button type="button" data-view="ux" id="nav-ux" class="nav-item text-left">
         <i class="ph-duotone ph-mouse-left-click"></i>
         <span class="text-sm font-medium">UX Insights</span>
       </button>
 
-      <button type="button" data-view="audit" id="nav-audit" class="nav-item w-full text-left">
+      <button type="button" data-view="audit" id="nav-audit" class="nav-item text-left">
         <i class="ph-duotone ph-clipboard-text"></i>
         <span class="text-sm font-medium">Audit &amp; Strategy</span>
       </button>
@@ -320,674 +351,680 @@
       </div>
     </header>
 
-    <div class="flex-1 overflow-y-auto custom-scrollbar p-6 lg:p-8 relative">
-      <section id="view-home" class="view-section active h-full max-w-7xl mx-auto">
-        <div class="flex justify-between items-end mb-8">
-          <div>
-            <h1 class="font-magical text-3xl md:text-4xl text-white mb-2">Welcome to the Nexus</h1>
-            <p class="text-sm text-gray-400">Your centralized hub for campaign tracking and analytics visibility.</p>
-          </div>
-          <button type="button" data-view="reports" class="btn-primary px-5 py-2.5 rounded-lg text-sm flex items-center gap-2">
-            View Full Dashboard <i class="ph-bold ph-arrow-right"></i>
-          </button>
-        </div>
-
-        <div class="glass-card border-l-2 border-l-yellow-400 p-5 mb-8 flex gap-4 relative overflow-hidden group">
-          <div class="absolute right-0 top-0 w-32 h-full bg-gradient-to-l from-amber-500/10 to-transparent pointer-events-none"></div>
-          <div class="w-10 h-10 rounded-full bg-amber-500/10 flex items-center justify-center shrink-0 border border-amber-500/20">
-            <i class="ph-fill ph-lightbulb text-amber-400 text-xl"></i>
-          </div>
-          <div>
-            <h3 class="text-sm font-bold text-amber-300 mb-1 uppercase tracking-wider">Strategic Note</h3>
-            <p class="text-sm text-gray-300 leading-relaxed">LinkedIn campaigns for "Solar Savings" are outperforming Meta by 40% in conversion rate this month. Recommend reallocating 20% of remaining Q4 budget to the top-performing LinkedIn ad set.</p>
-          </div>
-        </div>
-
-        <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
-          <div class="glass-card p-5 relative overflow-hidden">
-            <div class="flex justify-between items-start mb-2">
-              <span class="text-[10px] uppercase tracking-wider text-gray-500 font-bold">Total Traffic</span>
-              <i class="ph-duotone ph-users text-purple-400 text-lg"></i>
+    <div id="content-scroll" class="flex-1 overflow-y-auto p-6 lg:p-8 relative">
+      <div class="content-shell">
+        <section id="view-home" class="view-section active">
+          <div class="space-y-8 md:space-y-10">
+            <div class="flex flex-col gap-5 md:flex-row md:items-end md:justify-between">
+              <div>
+                <h1 class="font-magical text-3xl md:text-4xl text-white mb-2">Welcome to the Nexus</h1>
+                <p class="text-sm text-gray-400">Your centralized hub for campaign tracking and analytics visibility.</p>
+              </div>
+              <button type="button" data-view="reports" class="btn-primary px-5 py-2.5 rounded-lg text-sm flex items-center gap-2 self-start md:self-auto">
+                View Full Dashboard <i class="ph-bold ph-arrow-right"></i>
+              </button>
             </div>
-            <div class="text-2xl font-bold text-white mb-1">12,450</div>
-            <div class="text-xs text-emerald-400 flex items-center gap-1 font-medium"><i class="ph-bold ph-trend-up"></i> +14.2% <span class="text-gray-600">vs last mo</span></div>
-          </div>
 
-          <div class="glass-card p-5 relative overflow-hidden">
-            <div class="flex justify-between items-start mb-2">
-              <span class="text-[10px] uppercase tracking-wider text-gray-500 font-bold">Avg. Conv Rate</span>
-              <i class="ph-duotone ph-target text-cyan-400 text-lg"></i>
+            <div class="glass-card border-l-2 border-l-yellow-400 p-5 md:p-6 flex gap-4 relative overflow-hidden">
+              <div class="absolute right-0 top-0 w-32 h-full bg-gradient-to-l from-amber-500/10 to-transparent pointer-events-none"></div>
+              <div class="w-10 h-10 rounded-full bg-amber-500/10 flex items-center justify-center shrink-0 border border-amber-500/20">
+                <i class="ph-fill ph-lightbulb text-amber-400 text-xl"></i>
+              </div>
+              <div>
+                <h3 class="text-sm font-bold text-amber-300 mb-1 uppercase tracking-wider">Strategic Note</h3>
+                <p class="text-sm text-gray-300 leading-relaxed">LinkedIn campaigns for "Solar Savings" are outperforming Meta by 40% in conversion rate this month. Recommend reallocating 20% of remaining Q4 budget to the top-performing LinkedIn ad set.</p>
+              </div>
             </div>
-            <div class="text-2xl font-bold text-white mb-1">3.8%</div>
-            <div class="text-xs text-emerald-400 flex items-center gap-1 font-medium"><i class="ph-bold ph-trend-up"></i> +0.5% <span class="text-gray-600">vs last mo</span></div>
-          </div>
 
-          <div class="glass-card p-5 relative overflow-hidden">
-            <div class="flex justify-between items-start mb-2">
-              <span class="text-[10px] uppercase tracking-wider text-gray-500 font-bold">Active Campaigns</span>
-              <i class="ph-duotone ph-megaphone text-yellow-300 text-lg"></i>
-            </div>
-            <div class="text-2xl font-bold text-white mb-1">8</div>
-            <div class="text-xs text-gray-500 font-medium mt-1">Tracking via UTM Registry</div>
-          </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-5">
+              <div class="glass-card p-5 relative overflow-hidden">
+                <div class="flex justify-between items-start mb-2">
+                  <span class="text-[10px] uppercase tracking-wider text-gray-500 font-bold">Total Traffic</span>
+                  <i class="ph-duotone ph-users text-purple-400 text-lg"></i>
+                </div>
+                <div class="text-2xl font-bold text-white mb-1">12,450</div>
+                <div class="text-xs text-emerald-400 flex items-center gap-1 font-medium"><i class="ph-bold ph-trend-up"></i> +14.2% <span class="text-gray-600">vs last mo</span></div>
+              </div>
 
-          <button type="button" data-view="ux" class="glass-card p-5 relative overflow-hidden text-left hover:border-cyan-500/30">
-            <div class="flex justify-between items-start mb-2">
-              <span class="text-[10px] uppercase tracking-wider text-gray-500 font-bold">UX Friction Score</span>
-              <i class="ph-duotone ph-warning-circle text-rose-400 text-lg"></i>
-            </div>
-            <div class="text-2xl font-bold text-white mb-1 flex items-baseline gap-1">Low <span class="text-sm text-gray-500 font-normal">Friction</span></div>
-            <div class="text-xs text-gray-400 font-medium mt-1 flex items-center gap-1"><i class="ph-fill ph-microsoft-logo text-gray-500"></i> Clarity Data</div>
-          </button>
-        </div>
+              <div class="glass-card p-5 relative overflow-hidden">
+                <div class="flex justify-between items-start mb-2">
+                  <span class="text-[10px] uppercase tracking-wider text-gray-500 font-bold">Avg. Conv Rate</span>
+                  <i class="ph-duotone ph-target text-cyan-400 text-lg"></i>
+                </div>
+                <div class="text-2xl font-bold text-white mb-1">3.8%</div>
+                <div class="text-xs text-emerald-400 flex items-center gap-1 font-medium"><i class="ph-bold ph-trend-up"></i> +0.5% <span class="text-gray-600">vs last mo</span></div>
+              </div>
 
-        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          <div class="lg:col-span-2 glass-card flex flex-col">
-            <div class="p-5 border-b border-white/5 flex justify-between items-center">
-              <h3 class="text-sm font-bold text-white">Recent UTM Links</h3>
-              <button type="button" data-view="utm" class="text-xs text-purple-400 hover:text-purple-300 font-medium flex items-center gap-1">Open Builder <i class="ph-bold ph-arrow-right"></i></button>
-            </div>
-            <div class="p-0 overflow-x-auto">
-              <table class="data-table">
-                <thead>
-                  <tr>
-                    <th>Campaign</th>
-                    <th>Source / Medium</th>
-                    <th>Date</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr>
-                    <td>
-                      <div class="font-medium text-white mb-0.5">Q4_Solar_Savings</div>
-                      <div class="text-[10px] text-gray-500 font-mono truncate max-w-[200px]">?utm_source=linkedin&amp;utm_medium=social...</div>
-                    </td>
-                    <td><span class="badge badge-purple">linkedin</span> <span class="text-gray-600 mx-1">/</span> <span class="text-xs text-gray-400">social</span></td>
-                    <td><div class="text-xs text-gray-400">Oct 26, 2024</div></td>
-                  </tr>
-                  <tr>
-                    <td>
-                      <div class="font-medium text-white mb-0.5">Newsletter_Oct</div>
-                      <div class="text-[10px] text-gray-500 font-mono truncate max-w-[200px]">?utm_source=hs_email&amp;utm_medium=email...</div>
-                    </td>
-                    <td><span class="badge badge-cyan">hs_email</span> <span class="text-gray-600 mx-1">/</span> <span class="text-xs text-gray-400">email</span></td>
-                    <td><div class="text-xs text-gray-400">Oct 24, 2024</div></td>
-                  </tr>
-                  <tr>
-                    <td>
-                      <div class="font-medium text-white mb-0.5">Search_Brand_T1</div>
-                      <div class="text-[10px] text-gray-500 font-mono truncate max-w-[200px]">?utm_source=google&amp;utm_medium=cpc...</div>
-                    </td>
-                    <td><span class="badge badge-emerald">google</span> <span class="text-gray-600 mx-1">/</span> <span class="text-xs text-gray-400">cpc</span></td>
-                    <td><div class="text-xs text-gray-400">Oct 20, 2024</div></td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
-          </div>
+              <div class="glass-card p-5 relative overflow-hidden">
+                <div class="flex justify-between items-start mb-2">
+                  <span class="text-[10px] uppercase tracking-wider text-gray-500 font-bold">Active Campaigns</span>
+                  <i class="ph-duotone ph-megaphone text-yellow-300 text-lg"></i>
+                </div>
+                <div class="text-2xl font-bold text-white mb-1">8</div>
+                <div class="text-xs text-gray-500 font-medium mt-1">Tracking via UTM Registry</div>
+              </div>
 
-          <div class="space-y-4">
-            <div class="glass-card p-5">
-              <h3 class="text-sm font-bold text-white mb-4">Quick Actions</h3>
-              <div class="space-y-2">
-                <button type="button" data-view="utm" class="w-full text-left p-3 rounded-lg bg-black/20 hover:bg-black/40 border border-white/5 hover:border-purple-500/30 transition-all flex items-center gap-3 group">
-                  <div class="w-8 h-8 rounded bg-purple-900/30 flex items-center justify-center text-purple-400 group-hover:text-purple-300"><i class="ph-duotone ph-link text-lg"></i></div>
-                  <div>
-                    <div class="text-sm font-medium text-gray-200 group-hover:text-white">Build a Tracking Link</div>
-                    <div class="text-[10px] text-gray-500">Generate standardized UTMs</div>
+              <button type="button" data-view="ux" class="glass-card p-5 relative overflow-hidden text-left hover:border-cyan-500/30">
+                <div class="flex justify-between items-start mb-2">
+                  <span class="text-[10px] uppercase tracking-wider text-gray-500 font-bold">UX Friction Score</span>
+                  <i class="ph-duotone ph-warning-circle text-rose-400 text-lg"></i>
+                </div>
+                <div class="text-2xl font-bold text-white mb-1 flex items-baseline gap-1">Low <span class="text-sm text-gray-500 font-normal">Friction</span></div>
+                <div class="text-xs text-gray-400 font-medium mt-1 flex items-center gap-1"><i class="ph-fill ph-microsoft-logo text-gray-500"></i> Clarity Data</div>
+              </button>
+            </div>
+
+            <div class="grid grid-cols-1 xl:grid-cols-3 gap-6">
+              <div class="xl:col-span-2 glass-card flex flex-col overflow-hidden">
+                <div class="p-5 border-b border-white/5 flex justify-between items-center">
+                  <h3 class="text-sm font-bold text-white">Recent UTM Links</h3>
+                  <button type="button" data-view="utm" class="text-xs text-purple-400 hover:text-purple-300 font-medium flex items-center gap-1">Open Builder <i class="ph-bold ph-arrow-right"></i></button>
+                </div>
+                <div class="overflow-x-auto">
+                  <table class="data-table">
+                    <thead>
+                      <tr>
+                        <th>Campaign</th>
+                        <th>Source / Medium</th>
+                        <th>Date</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr>
+                        <td>
+                          <div class="font-medium text-white mb-0.5">Q4_Solar_Savings</div>
+                          <div class="text-[10px] text-gray-500 font-mono truncate max-w-[200px]">?utm_source=linkedin&amp;utm_medium=social...</div>
+                        </td>
+                        <td><span class="badge badge-purple">linkedin</span> <span class="text-gray-600 mx-1">/</span> <span class="text-xs text-gray-400">social</span></td>
+                        <td><div class="text-xs text-gray-400">Oct 26, 2024</div></td>
+                      </tr>
+                      <tr>
+                        <td>
+                          <div class="font-medium text-white mb-0.5">Newsletter_Oct</div>
+                          <div class="text-[10px] text-gray-500 font-mono truncate max-w-[200px]">?utm_source=hs_email&amp;utm_medium=email...</div>
+                        </td>
+                        <td><span class="badge badge-cyan">hs_email</span> <span class="text-gray-600 mx-1">/</span> <span class="text-xs text-gray-400">email</span></td>
+                        <td><div class="text-xs text-gray-400">Oct 24, 2024</div></td>
+                      </tr>
+                      <tr>
+                        <td>
+                          <div class="font-medium text-white mb-0.5">Search_Brand_T1</div>
+                          <div class="text-[10px] text-gray-500 font-mono truncate max-w-[200px]">?utm_source=google&amp;utm_medium=cpc...</div>
+                        </td>
+                        <td><span class="badge badge-emerald">google</span> <span class="text-gray-600 mx-1">/</span> <span class="text-xs text-gray-400">cpc</span></td>
+                        <td><div class="text-xs text-gray-400">Oct 20, 2024</div></td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+
+              <div class="space-y-5">
+                <div class="glass-card p-5">
+                  <h3 class="text-sm font-bold text-white mb-4">Quick Actions</h3>
+                  <div class="space-y-3">
+                    <button type="button" data-view="utm" class="w-full text-left p-3 rounded-lg bg-black/20 hover:bg-black/40 border border-white/5 hover:border-purple-500/30 transition-all flex items-center gap-3 group">
+                      <div class="w-8 h-8 rounded bg-purple-900/30 flex items-center justify-center text-purple-400 group-hover:text-purple-300"><i class="ph-duotone ph-link text-lg"></i></div>
+                      <div>
+                        <div class="text-sm font-medium text-gray-200 group-hover:text-white">Build a Tracking Link</div>
+                        <div class="text-[10px] text-gray-500">Generate standardized UTMs</div>
+                      </div>
+                    </button>
+
+                    <button type="button" data-view="audit" class="w-full text-left p-3 rounded-lg bg-black/20 hover:bg-black/40 border border-white/5 hover:border-yellow-400/30 transition-all flex items-center gap-3 group">
+                      <div class="w-8 h-8 rounded bg-amber-900/30 flex items-center justify-center text-amber-400 group-hover:text-amber-300"><i class="ph-duotone ph-clipboard-text text-lg"></i></div>
+                      <div>
+                        <div class="text-sm font-medium text-gray-200 group-hover:text-white">Review Audit Notes</div>
+                        <div class="text-[10px] text-gray-500">2 priority items pending</div>
+                      </div>
+                    </button>
+
+                    <button type="button" data-open-url="https://clarity.microsoft.com" class="w-full text-left p-3 rounded-lg bg-black/20 hover:bg-black/40 border border-white/5 hover:border-cyan-500/30 transition-all flex items-center gap-3 group">
+                      <div class="w-8 h-8 rounded bg-cyan-900/30 flex items-center justify-center text-cyan-400 group-hover:text-cyan-300"><i class="ph-duotone ph-mouse-left-click text-lg"></i></div>
+                      <div>
+                        <div class="text-sm font-medium text-gray-200 group-hover:text-white">Open Clarity Dashboard</div>
+                        <div class="text-[10px] text-gray-500">View session recordings</div>
+                      </div>
+                      <i class="ph-bold ph-arrow-up-right text-gray-600 ml-auto"></i>
+                    </button>
                   </div>
-                </button>
-
-                <button type="button" data-view="audit" class="w-full text-left p-3 rounded-lg bg-black/20 hover:bg-black/40 border border-white/5 hover:border-yellow-400/30 transition-all flex items-center gap-3 group">
-                  <div class="w-8 h-8 rounded bg-amber-900/30 flex items-center justify-center text-amber-400 group-hover:text-amber-300"><i class="ph-duotone ph-clipboard-text text-lg"></i></div>
-                  <div>
-                    <div class="text-sm font-medium text-gray-200 group-hover:text-white">Review Audit Notes</div>
-                    <div class="text-[10px] text-gray-500">2 priority items pending</div>
-                  </div>
-                </button>
-
-                <button type="button" data-open-url="https://clarity.microsoft.com" class="w-full text-left p-3 rounded-lg bg-black/20 hover:bg-black/40 border border-white/5 hover:border-cyan-500/30 transition-all flex items-center gap-3 group">
-                  <div class="w-8 h-8 rounded bg-cyan-900/30 flex items-center justify-center text-cyan-400 group-hover:text-cyan-300"><i class="ph-duotone ph-mouse-left-click text-lg"></i></div>
-                  <div>
-                    <div class="text-sm font-medium text-gray-200 group-hover:text-white">Open Clarity Dashboard</div>
-                    <div class="text-[10px] text-gray-500">View session recordings</div>
-                  </div>
-                  <i class="ph-bold ph-arrow-up-right text-gray-600 ml-auto"></i>
-                </button>
+                </div>
               </div>
             </div>
           </div>
-        </div>
-      </section>
+        </section>
 
-      <section id="view-utm" class="view-section h-full max-w-7xl mx-auto flex flex-col" hidden>
-        <div class="mb-6 shrink-0">
-          <h2 class="font-magical text-3xl text-white mb-2">UTM Matrix</h2>
-          <p class="text-sm text-gray-400">Generate standardized tracking links to ensure clean data in reporting.</p>
-        </div>
+        <section id="view-reports" class="view-section" hidden>
+          <div class="space-y-8 md:space-y-10">
+            <div class="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
+              <div>
+                <h2 class="font-magical text-3xl text-white mb-2">Visual Intelligence</h2>
+                <p class="text-sm text-gray-400">Performance analytics connected to campaign registry data.</p>
+              </div>
+              <div class="flex flex-wrap items-center gap-3">
+                <span class="text-[10px] text-gray-500 uppercase tracking-wider" id="reports-last-updated">Updated: Just now</span>
+                <button type="button" id="refresh-reports-button" class="btn-secondary px-4 py-2 rounded-lg text-xs flex items-center gap-2">
+                  <i class="ph-bold ph-arrows-clockwise"></i> Refresh
+                </button>
+                <button type="button" class="btn-secondary px-4 py-2 rounded-lg text-xs flex items-center gap-2">
+                  <i class="ph-bold ph-download-simple"></i> Export
+                </button>
+              </div>
+            </div>
 
-        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 flex-1 min-h-0 pb-10">
-          <div class="lg:col-span-5 flex flex-col gap-4 overflow-y-auto custom-scrollbar pr-2">
-            <div class="glass-card p-6">
-              <h3 class="text-xs font-bold text-gray-500 uppercase tracking-widest mb-4 border-b border-white/5 pb-2">Link Parameters</h3>
-              <form id="utm-form" class="space-y-4">
+            <div class="glass-card p-5 bg-black/20">
+              <div class="flex items-center gap-2 w-full text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-4 border-b border-white/5 pb-3">
+                <i class="ph-bold ph-faders"></i> Global Filters <span class="text-[9px] font-normal normal-case text-gray-600 ml-2">All charts update automatically</span>
+              </div>
+
+              <div class="flex flex-wrap gap-4 items-end">
                 <div>
-                  <label class="block text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1.5">Destination URL <span class="text-rose-400">*</span></label>
-                  <input type="url" id="utm-url" class="input-magical w-full rounded-lg px-3 py-2 text-sm" placeholder="https://re-volv.org/donate" required>
-                </div>
-
-                <div class="grid grid-cols-2 gap-4">
-                  <div>
-                    <label class="block text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1.5">Source <span class="text-rose-400">*</span></label>
-                    <select id="utm-source" class="input-magical w-full rounded-lg px-3 py-2 text-sm appearance-none" required>
-                      <option value="" selected disabled>Select...</option>
-                      <option value="google">google</option>
-                      <option value="linkedin">linkedin</option>
-                      <option value="facebook">facebook</option>
-                      <option value="hs_email">hs_email</option>
-                      <option value="partner">partner</option>
-                    </select>
-                  </div>
-
-                  <div>
-                    <label class="block text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1.5">Medium <span class="text-rose-400">*</span></label>
-                    <select id="utm-medium" class="input-magical w-full rounded-lg px-3 py-2 text-sm appearance-none" required>
-                      <option value="" selected disabled>Select...</option>
-                      <option value="cpc">cpc</option>
-                      <option value="social">social</option>
-                      <option value="email">email</option>
-                      <option value="referral">referral</option>
-                    </select>
-                  </div>
+                  <label class="block text-[9px] text-gray-500 mb-1 uppercase">Date Range</label>
+                  <select id="filter-date-range" class="input-magical text-xs rounded-md px-2 py-1.5 min-w-[120px]">
+                    <option value="30">Last 30 Days</option>
+                    <option value="90">Last 90 Days</option>
+                    <option value="quarter">This Quarter</option>
+                    <option value="ytd">Year to Date</option>
+                  </select>
                 </div>
 
                 <div>
-                  <label class="block text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1.5 flex justify-between">
-                    <span>Campaign Name <span class="text-rose-400">*</span></span>
-                    <span class="text-[8px] text-gray-600 font-normal normal-case">Format: Q4_Initiative_Name</span>
-                  </label>
-                  <input type="text" id="utm-campaign" class="input-magical w-full rounded-lg px-3 py-2 text-sm" placeholder="e.g. Q4_Solar_Savings" required>
+                  <label class="block text-[9px] text-gray-500 mb-1 uppercase">Campaign</label>
+                  <select id="filter-campaign" class="input-magical text-xs rounded-md px-2 py-1.5 min-w-[140px]">
+                    <option value="all">All Campaigns</option>
+                    <option value="Q4_Solar_Savings">Q4 Solar Savings</option>
+                    <option value="Search_Brand_T1">Search Brand T1</option>
+                    <option value="Newsletter_Oct">Newsletter Oct</option>
+                    <option value="Retargeting_Q4">Retargeting Q4</option>
+                  </select>
                 </div>
 
-                <div class="pt-2 border-t border-white/5">
-                  <button type="button" id="toggle-optional-fields" class="text-xs text-gray-400 hover:text-white flex items-center gap-1">
-                    <i class="ph-bold ph-plus-circle"></i> Show Optional Fields
-                  </button>
+                <div>
+                  <label class="block text-[9px] text-gray-500 mb-1 uppercase">Source</label>
+                  <select id="filter-source" class="input-magical text-xs rounded-md px-2 py-1.5 min-w-[120px]">
+                    <option value="all">All Sources</option>
+                    <option value="google">Google</option>
+                    <option value="linkedin">LinkedIn</option>
+                    <option value="facebook">Facebook</option>
+                    <option value="hs_email">HubSpot Email</option>
+                    <option value="direct">Direct</option>
+                  </select>
                 </div>
 
-                <div id="optional-fields" class="hidden space-y-4 pt-2">
-                  <div class="grid grid-cols-2 gap-4">
-                    <div>
-                      <label class="block text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1.5">Term (Keyword)</label>
-                      <input type="text" id="utm-term" class="input-magical w-full rounded-lg px-3 py-2 text-sm" placeholder="e.g. solar panels">
-                    </div>
-                    <div>
-                      <label class="block text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1.5">Content (Ad Var)</label>
-                      <input type="text" id="utm-content" class="input-magical w-full rounded-lg px-3 py-2 text-sm" placeholder="e.g. blue_banner">
-                    </div>
-                  </div>
-                  <div>
-                    <label class="block text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1.5">Notes (For Registry)</label>
-                    <input type="text" id="utm-notes" class="input-magical w-full rounded-lg px-3 py-2 text-sm" placeholder="Brief note on where this is used...">
+                <div>
+                  <label class="block text-[9px] text-gray-500 mb-1 uppercase">Medium</label>
+                  <select id="filter-medium" class="input-magical text-xs rounded-md px-2 py-1.5 min-w-[100px]">
+                    <option value="all">All</option>
+                    <option value="cpc">CPC</option>
+                    <option value="social">Social</option>
+                    <option value="email">Email</option>
+                    <option value="organic">Organic</option>
+                    <option value="referral">Referral</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label class="block text-[9px] text-gray-500 mb-1 uppercase">Landing Page</label>
+                  <select id="filter-landing" class="input-magical text-xs rounded-md px-2 py-1.5 min-w-[140px]">
+                    <option value="all">All Pages</option>
+                    <option value="/solar-savings">/solar-savings</option>
+                    <option value="/donate">/donate</option>
+                    <option value="/about-us">/about-us</option>
+                    <option value="/newsletter-signup">/newsletter-signup</option>
+                  </select>
+                </div>
+
+                <button type="button" id="reset-report-filters" class="text-[10px] text-gray-500 hover:text-gray-300 underline ml-auto">Reset all</button>
+              </div>
+            </div>
+
+            <div class="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-5">
+              <div class="glass-card p-4">
+                <div class="text-[10px] uppercase tracking-wider text-gray-500 font-bold mb-2">Sessions</div>
+                <div class="text-2xl font-bold text-white" id="kpi-sessions">12,450</div>
+                <div class="text-xs text-emerald-400 mt-1"><i class="ph-bold ph-trend-up"></i> +14.2%</div>
+              </div>
+              <div class="glass-card p-4">
+                <div class="text-[10px] uppercase tracking-wider text-gray-500 font-bold mb-2">Users</div>
+                <div class="text-2xl font-bold text-white" id="kpi-users">9,832</div>
+                <div class="text-xs text-emerald-400 mt-1"><i class="ph-bold ph-trend-up"></i> +11.8%</div>
+              </div>
+              <div class="glass-card p-4">
+                <div class="text-[10px] uppercase tracking-wider text-gray-500 font-bold mb-2">Conversions</div>
+                <div class="text-2xl font-bold text-white" id="kpi-conversions">473</div>
+                <div class="text-xs text-emerald-400 mt-1"><i class="ph-bold ph-trend-up"></i> +8.4%</div>
+              </div>
+              <div class="glass-card p-4">
+                <div class="text-[10px] uppercase tracking-wider text-gray-500 font-bold mb-2">Conv. Rate</div>
+                <div class="text-2xl font-bold text-white" id="kpi-rate">3.8%</div>
+                <div class="text-xs text-emerald-400 mt-1"><i class="ph-bold ph-trend-up"></i> +0.5%</div>
+              </div>
+              <div class="glass-card p-4">
+                <div class="text-[10px] uppercase tracking-wider text-gray-500 font-bold mb-2">Avg Duration</div>
+                <div class="text-2xl font-bold text-white" id="kpi-duration">2:34</div>
+                <div class="text-xs text-rose-400 mt-1"><i class="ph-bold ph-trend-down"></i> -0:12</div>
+              </div>
+              <div class="glass-card p-4 border-l-2 border-l-purple-500">
+                <div class="text-[10px] uppercase tracking-wider text-gray-500 font-bold mb-2">Top Source</div>
+                <div class="text-xl font-bold text-white" id="kpi-top-source">LinkedIn</div>
+                <div class="text-xs text-gray-400 mt-1">31% of traffic</div>
+              </div>
+            </div>
+
+            <div class="grid grid-cols-1 xl:grid-cols-2 gap-6">
+              <div class="glass-card p-5 md:p-6">
+                <div class="flex justify-between items-center mb-5">
+                  <h3 class="text-sm font-bold text-white">Sessions Over Time</h3>
+                  <span class="text-[10px] text-gray-500">Daily trend</span>
+                </div>
+                <div class="h-52 relative" id="chart-sessions-trend">
+                  <svg class="w-full h-full" viewBox="0 0 400 150" preserveAspectRatio="none">
+                    <defs>
+                      <linearGradient id="areaGradient" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0%" stop-color="#a855f7" stop-opacity="0.3"></stop>
+                        <stop offset="100%" stop-color="#a855f7" stop-opacity="0"></stop>
+                      </linearGradient>
+                    </defs>
+                    <path d="M0,120 Q50,100 100,90 T200,70 T300,60 T400,40 L400,150 L0,150 Z" fill="url(#areaGradient)"></path>
+                    <path d="M0,120 Q50,100 100,90 T200,70 T300,60 T400,40" fill="none" stroke="#a855f7" stroke-width="2"></path>
+                    <circle cx="400" cy="40" r="4" fill="#a855f7"></circle>
+                  </svg>
+                  <div class="absolute bottom-0 left-0 right-0 flex justify-between text-[9px] text-gray-500 px-2">
+                    <span>Oct 1</span><span>Oct 10</span><span>Oct 20</span><span>Oct 30</span>
                   </div>
                 </div>
-              </form>
+              </div>
+
+              <div class="glass-card p-5 md:p-6">
+                <div class="flex justify-between items-center mb-5">
+                  <h3 class="text-sm font-bold text-white">Conversions Over Time</h3>
+                  <span class="text-[10px] text-gray-500">Daily conversions</span>
+                </div>
+                <div class="h-52 relative" id="chart-conversions-trend">
+                  <svg class="w-full h-full" viewBox="0 0 400 150" preserveAspectRatio="none">
+                    <defs>
+                      <linearGradient id="convGradient" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0%" stop-color="#00f0ff" stop-opacity="0.3"></stop>
+                        <stop offset="100%" stop-color="#00f0ff" stop-opacity="0"></stop>
+                      </linearGradient>
+                    </defs>
+                    <path d="M0,130 L40,125 L80,110 L120,115 L160,95 L200,90 L240,85 L280,70 L320,65 L360,50 L400,45 L400,150 L0,150 Z" fill="url(#convGradient)"></path>
+                    <path d="M0,130 L40,125 L80,110 L120,115 L160,95 L200,90 L240,85 L280,70 L320,65 L360,50 L400,45" fill="none" stroke="#00f0ff" stroke-width="2"></path>
+                  </svg>
+                  <div class="absolute bottom-0 left-0 right-0 flex justify-between text-[9px] text-gray-500 px-2">
+                    <span>Oct 1</span><span>Oct 10</span><span>Oct 20</span><span>Oct 30</span>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
+        </section>
 
-          <div class="lg:col-span-7 flex flex-col gap-4 h-full">
-            <div class="glass-card p-6 bg-gradient-to-br from-[#181125] to-[#120c1d] border-purple-500/20 shrink-0 relative overflow-hidden">
-              <div class="absolute -right-10 -top-10 w-32 h-32 bg-purple-500/10 rounded-full blur-[30px] pointer-events-none"></div>
-              <h3 class="text-xs font-bold text-purple-300 uppercase tracking-widest mb-3">Generated Link</h3>
-              <div class="relative mb-4">
-                <textarea id="utm-result" class="w-full bg-black/40 border border-purple-500/30 rounded-lg p-3 text-sm text-gray-300 font-mono resize-none h-20 outline-none" readonly placeholder="Fill out fields to generate link..."></textarea>
-                <button type="button" id="copy-utm-button" class="absolute right-2 top-2 p-1.5 bg-black/50 hover:bg-purple-900/50 rounded-md border border-white/10 hover:border-purple-500/50 text-gray-400 hover:text-white transition-colors" title="Copy to clipboard">
-                  <i class="ph-bold ph-copy text-lg"></i>
-                </button>
+        <section id="view-utm" class="view-section" hidden>
+          <div class="space-y-8 md:space-y-10">
+            <div>
+              <h2 class="font-magical text-3xl text-white mb-2">UTM Matrix</h2>
+              <p class="text-sm text-gray-400">Generate standardized tracking links to ensure clean data in reporting.</p>
+            </div>
+
+            <div class="grid grid-cols-1 xl:grid-cols-12 gap-6">
+              <div class="xl:col-span-5">
+                <div class="glass-card p-6 md:p-7">
+                  <h3 class="text-xs font-bold text-gray-500 uppercase tracking-widest mb-4 border-b border-white/5 pb-2">Link Parameters</h3>
+                  <form id="utm-form" class="space-y-4">
+                    <div>
+                      <label class="block text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1.5">Destination URL <span class="text-rose-400">*</span></label>
+                      <input type="url" id="utm-url" class="input-magical w-full rounded-lg px-3 py-2 text-sm" placeholder="https://re-volv.org/donate" required>
+                    </div>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <div>
+                        <label class="block text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1.5">Source <span class="text-rose-400">*</span></label>
+                        <select id="utm-source" class="input-magical w-full rounded-lg px-3 py-2 text-sm appearance-none" required>
+                          <option value="" selected disabled>Select...</option>
+                          <option value="google">google</option>
+                          <option value="linkedin">linkedin</option>
+                          <option value="facebook">facebook</option>
+                          <option value="hs_email">hs_email</option>
+                          <option value="partner">partner</option>
+                        </select>
+                      </div>
+
+                      <div>
+                        <label class="block text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1.5">Medium <span class="text-rose-400">*</span></label>
+                        <select id="utm-medium" class="input-magical w-full rounded-lg px-3 py-2 text-sm appearance-none" required>
+                          <option value="" selected disabled>Select...</option>
+                          <option value="cpc">cpc</option>
+                          <option value="social">social</option>
+                          <option value="email">email</option>
+                          <option value="referral">referral</option>
+                        </select>
+                      </div>
+                    </div>
+
+                    <div>
+                      <label class="block text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1.5 flex justify-between gap-4">
+                        <span>Campaign Name <span class="text-rose-400">*</span></span>
+                        <span class="text-[8px] text-gray-600 font-normal normal-case">Format: Q4_Initiative_Name</span>
+                      </label>
+                      <input type="text" id="utm-campaign" class="input-magical w-full rounded-lg px-3 py-2 text-sm" placeholder="e.g. Q4_Solar_Savings" required>
+                    </div>
+
+                    <div class="pt-2 border-t border-white/5">
+                      <button type="button" id="toggle-optional-fields" class="text-xs text-gray-400 hover:text-white flex items-center gap-1">
+                        <i class="ph-bold ph-plus-circle"></i> Show Optional Fields
+                      </button>
+                    </div>
+
+                    <div id="optional-fields" class="hidden space-y-4 pt-2">
+                      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                          <label class="block text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1.5">Term (Keyword)</label>
+                          <input type="text" id="utm-term" class="input-magical w-full rounded-lg px-3 py-2 text-sm" placeholder="e.g. solar panels">
+                        </div>
+                        <div>
+                          <label class="block text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1.5">Content (Ad Var)</label>
+                          <input type="text" id="utm-content" class="input-magical w-full rounded-lg px-3 py-2 text-sm" placeholder="e.g. blue_banner">
+                        </div>
+                      </div>
+                      <div>
+                        <label class="block text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1.5">Notes (For Registry)</label>
+                        <input type="text" id="utm-notes" class="input-magical w-full rounded-lg px-3 py-2 text-sm" placeholder="Brief note on where this is used...">
+                      </div>
+                    </div>
+                  </form>
+                </div>
               </div>
-              <div class="flex items-center justify-between">
-                <p class="text-[10px] text-gray-500">Saving writes this link to the Google Sheet registry.</p>
-                <button type="button" id="save-utm-button" class="btn-primary px-5 py-2 rounded-md text-xs flex items-center gap-2">
-                  <i class="ph-bold ph-floppy-disk"></i> Save to Registry
+
+              <div class="xl:col-span-7 space-y-6">
+                <div class="glass-card p-6 bg-gradient-to-br from-[#181125] to-[#120c1d] border-purple-500/20 relative overflow-hidden">
+                  <div class="absolute -right-10 -top-10 w-32 h-32 bg-purple-500/10 rounded-full blur-[30px] pointer-events-none"></div>
+                  <h3 class="text-xs font-bold text-purple-300 uppercase tracking-widest mb-3">Generated Link</h3>
+                  <div class="relative mb-4">
+                    <textarea id="utm-result" class="w-full bg-black/40 border border-purple-500/30 rounded-lg p-3 text-sm text-gray-300 font-mono resize-none h-24 outline-none" readonly placeholder="Fill out fields to generate link..."></textarea>
+                    <button type="button" id="copy-utm-button" class="absolute right-2 top-2 p-1.5 bg-black/50 hover:bg-purple-900/50 rounded-md border border-white/10 hover:border-purple-500/50 text-gray-400 hover:text-white transition-colors" title="Copy to clipboard">
+                      <i class="ph-bold ph-copy text-lg"></i>
+                    </button>
+                  </div>
+                  <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                    <p class="text-[10px] text-gray-500">Saving writes this link to the Google Sheet registry.</p>
+                    <button type="button" id="save-utm-button" class="btn-primary px-5 py-2 rounded-md text-xs flex items-center gap-2 self-start sm:self-auto">
+                      <i class="ph-bold ph-floppy-disk"></i> Save to Registry
+                    </button>
+                  </div>
+                </div>
+
+                <div class="glass-card overflow-hidden">
+                  <div class="p-4 border-b border-white/5 flex flex-col gap-3 sm:flex-row sm:justify-between sm:items-center bg-black/10">
+                    <h3 class="text-xs font-bold text-gray-400 uppercase tracking-widest flex items-center gap-2">
+                      <i class="ph-fill ph-database text-cyan-500"></i> Registry Backend (View)
+                    </h3>
+                    <div class="relative">
+                      <i class="ph-bold ph-magnifying-glass absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-500 text-xs"></i>
+                      <input type="text" id="registry-search" class="input-magical rounded text-[10px] pl-7 pr-2 py-1.5 w-40" placeholder="Search registry...">
+                    </div>
+                  </div>
+
+                  <div class="overflow-x-auto">
+                    <table class="data-table w-full">
+                      <thead>
+                        <tr>
+                          <th>Campaign</th>
+                          <th>Source/Medium</th>
+                          <th>Date Saved</th>
+                          <th class="w-10"></th>
+                        </tr>
+                      </thead>
+                      <tbody id="registry-tbody"></tbody>
+                    </table>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section id="view-ux" class="view-section" hidden>
+          <div class="space-y-8 md:space-y-10">
+            <div class="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
+              <div>
+                <h2 class="font-magical text-3xl text-white mb-2">Experience Friction</h2>
+                <p class="text-sm text-gray-400">Behavioral insights derived from Microsoft Clarity recordings and heatmaps.</p>
+              </div>
+              <div class="flex flex-wrap items-center gap-3">
+                <span class="text-[10px] text-gray-500 uppercase tracking-wider" id="ux-last-updated">Updated: Oct 30, 2024</span>
+                <button type="button" id="sync-clarity-button" class="btn-secondary px-4 py-2 rounded-lg text-xs flex items-center gap-2">
+                  <i class="ph-bold ph-arrows-clockwise"></i> Sync Data
                 </button>
               </div>
             </div>
 
-            <div class="glass-card flex-1 flex flex-col min-h-[300px]">
-              <div class="p-4 border-b border-white/5 flex justify-between items-center bg-black/10">
-                <h3 class="text-xs font-bold text-gray-400 uppercase tracking-widest flex items-center gap-2">
-                  <i class="ph-fill ph-database text-cyan-500"></i> Registry Backend (View)
+            <div class="glass-card p-5 bg-black/20">
+              <div class="flex items-center gap-2 w-full text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-4 border-b border-white/5 pb-3">
+                <i class="ph-bold ph-faders"></i> UX Filters
+              </div>
+
+              <div class="flex flex-wrap gap-4 items-end">
+                <div>
+                  <label class="block text-[9px] text-gray-500 mb-1 uppercase">Date Range</label>
+                  <select id="ux-filter-date" class="input-magical text-xs rounded-md px-2 py-1.5 min-w-[120px]">
+                    <option value="30">Last 30 Days</option>
+                    <option value="7">Last 7 Days</option>
+                    <option value="90">Last 90 Days</option>
+                  </select>
+                </div>
+                <div>
+                  <label class="block text-[9px] text-gray-500 mb-1 uppercase">Page</label>
+                  <select id="ux-filter-page" class="input-magical text-xs rounded-md px-2 py-1.5 min-w-[140px]">
+                    <option value="all">All Pages</option>
+                    <option value="/solar-savings">/solar-savings</option>
+                    <option value="/donate">/donate</option>
+                    <option value="/about-us">/about-us</option>
+                  </select>
+                </div>
+                <div>
+                  <label class="block text-[9px] text-gray-500 mb-1 uppercase">Device</label>
+                  <select id="ux-filter-device" class="input-magical text-xs rounded-md px-2 py-1.5 min-w-[100px]">
+                    <option value="all">All Devices</option>
+                    <option value="desktop">Desktop</option>
+                    <option value="mobile">Mobile</option>
+                    <option value="tablet">Tablet</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+
+            <div class="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-5 gap-5">
+              <div class="glass-card p-4 border-l-2 border-l-rose-500">
+                <div class="text-[10px] uppercase tracking-wider text-gray-500 font-bold mb-2">Total Rage Clicks</div>
+                <div class="text-2xl font-bold text-rose-400" id="ux-kpi-rage">2,847</div>
+                <div class="text-xs text-gray-400 mt-1">3.2% of sessions</div>
+              </div>
+              <div class="glass-card p-4 border-l-2 border-l-amber-500">
+                <div class="text-[10px] uppercase tracking-wider text-gray-500 font-bold mb-2">Total Dead Clicks</div>
+                <div class="text-2xl font-bold text-amber-400" id="ux-kpi-dead">1,523</div>
+                <div class="text-xs text-gray-400 mt-1">1.7% of sessions</div>
+              </div>
+              <div class="glass-card p-4 border-l-2 border-l-cyan-500">
+                <div class="text-[10px] uppercase tracking-wider text-gray-500 font-bold mb-2">Avg Scroll Depth</div>
+                <div class="text-2xl font-bold text-cyan-400" id="ux-kpi-scroll">62%</div>
+                <div class="text-xs text-emerald-400 mt-1"><i class="ph-bold ph-trend-up"></i> +4%</div>
+              </div>
+              <div class="glass-card p-4">
+                <div class="text-[10px] uppercase tracking-wider text-gray-500 font-bold mb-2">Avg Time on Page</div>
+                <div class="text-2xl font-bold text-white" id="ux-kpi-time">1:45</div>
+                <div class="text-xs text-gray-400 mt-1">Per session</div>
+              </div>
+              <button type="button" id="highlight-friction-page" class="glass-card p-4 border-l-2 border-l-purple-500 text-left hover:bg-white/5">
+                <div class="text-[10px] uppercase tracking-wider text-gray-500 font-bold mb-2">Highest Friction</div>
+                <div class="text-lg font-bold text-white truncate" id="ux-kpi-high">/solar-savings</div>
+                <div class="text-xs text-rose-400 mt-1">4.8% rage rate</div>
+              </button>
+            </div>
+          </div>
+        </section>
+
+        <section id="view-audit" class="view-section" hidden>
+          <div class="space-y-8 md:space-y-10">
+            <div class="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
+              <div>
+                <h2 class="font-magical text-3xl text-white mb-2">Strategy &amp; Implementation</h2>
+                <p class="text-sm text-gray-400">Consulting notes, audit findings, recommendations, and tracking guidelines.</p>
+              </div>
+              <div class="flex flex-wrap items-center gap-3">
+                <span class="text-[10px] text-gray-500 uppercase tracking-wider">Updated: Oct 28, 2024</span>
+                <span class="px-3 py-1 bg-black/30 border border-white/10 rounded-full text-[10px] font-bold text-gray-400 uppercase tracking-widest">Consultant View</span>
+              </div>
+            </div>
+
+            <div class="grid grid-cols-1 xl:grid-cols-3 gap-6">
+              <div class="glass-card p-6 border-l-2 border-l-emerald-500 bg-gradient-to-r from-emerald-900/10 to-transparent">
+                <div class="flex items-center gap-2 mb-3">
+                  <i class="ph-fill ph-check-circle text-emerald-400 text-lg"></i>
+                  <h3 class="text-sm font-bold text-emerald-300">What's Working</h3>
+                </div>
+                <ul class="space-y-3 text-sm text-gray-300">
+                  <li class="flex items-start gap-2"><i class="ph-bold ph-check text-emerald-400 mt-0.5"></i> LinkedIn campaigns driving highest quality traffic</li>
+                  <li class="flex items-start gap-2"><i class="ph-bold ph-check text-emerald-400 mt-0.5"></i> Newsletter conversion rate up 5.3% month-over-month</li>
+                  <li class="flex items-start gap-2"><i class="ph-bold ph-check text-emerald-400 mt-0.5"></i> /donate page performing above industry benchmark</li>
+                </ul>
+              </div>
+
+              <div class="glass-card p-6 border-l-2 border-l-amber-500 bg-gradient-to-r from-amber-900/10 to-transparent">
+                <div class="flex items-center gap-2 mb-3">
+                  <i class="ph-fill ph-warning text-amber-400 text-lg"></i>
+                  <h3 class="text-sm font-bold text-amber-300">Needs Attention</h3>
+                </div>
+                <ul class="space-y-3 text-sm text-gray-300">
+                  <li class="flex items-start gap-2"><i class="ph-bold ph-warning text-amber-400 mt-0.5"></i> Cross-domain tracking dropping UTM attribution</li>
+                  <li class="flex items-start gap-2"><i class="ph-bold ph-warning text-amber-400 mt-0.5"></i> Mobile scroll depth 22% lower than desktop</li>
+                  <li class="flex items-start gap-2"><i class="ph-bold ph-warning text-amber-400 mt-0.5"></i> Meta ad UTMs not following naming convention</li>
+                </ul>
+              </div>
+
+              <div class="glass-card p-6 border-l-2 border-l-cyan-500 bg-gradient-to-r from-cyan-900/10 to-transparent">
+                <div class="flex items-center gap-2 mb-3">
+                  <i class="ph-fill ph-arrow-right text-cyan-400 text-lg"></i>
+                  <h3 class="text-sm font-bold text-cyan-300">Next Action</h3>
+                </div>
+                <p class="text-sm text-gray-300 leading-relaxed">Implement cross-domain tracking fix by Nov 5. This unblocks accurate campaign attribution for Q4 reporting and allows proper budget reallocation toward top performers.</p>
+              </div>
+            </div>
+
+            <div class="glass-card overflow-hidden">
+              <div class="p-4 border-b border-white/5 bg-black/20 flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+                <h3 class="text-sm font-bold text-white flex items-center gap-2">
+                  <i class="ph-duotone ph-kanban text-purple-400"></i> Recommendation Board
                 </h3>
-                <div class="relative">
-                  <i class="ph-bold ph-magnifying-glass absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-500 text-xs"></i>
-                  <input type="text" id="registry-search" class="input-magical rounded text-[10px] pl-7 pr-2 py-1.5 w-40" placeholder="Search registry...">
+                <div class="flex flex-wrap gap-2">
+                  <button type="button" class="audit-filter-btn px-3 py-1 rounded text-xs bg-purple-500/20 text-purple-300 border border-purple-500/30" data-audit-status="all">All</button>
+                  <button type="button" class="audit-filter-btn px-3 py-1 rounded text-xs bg-black/30 text-gray-400 border border-white/10 hover:bg-white/5" data-audit-status="new">New</button>
+                  <button type="button" class="audit-filter-btn px-3 py-1 rounded text-xs bg-black/30 text-gray-400 border border-white/10 hover:bg-white/5" data-audit-status="in-progress">In Progress</button>
+                  <button type="button" class="audit-filter-btn px-3 py-1 rounded text-xs bg-black/30 text-gray-400 border border-white/10 hover:bg-white/5" data-audit-status="resolved">Resolved</button>
                 </div>
               </div>
 
-              <div class="flex-1 overflow-auto">
-                <table class="data-table w-full">
-                  <thead class="sticky top-0 z-10">
+              <div class="overflow-x-auto">
+                <table class="data-table w-full" id="audit-recommendations-table">
+                  <thead>
                     <tr>
-                      <th>Campaign</th>
-                      <th>Source/Medium</th>
-                      <th>Date Saved</th>
-                      <th class="w-10"></th>
+                      <th class="w-8"></th>
+                      <th>Recommendation</th>
+                      <th>Category</th>
+                      <th>Priority</th>
+                      <th>Status</th>
+                      <th>Linked To</th>
                     </tr>
                   </thead>
-                  <tbody id="registry-tbody"></tbody>
+                  <tbody>
+                    <tr data-status="new" data-audit-id="cross-domain">
+                      <td><div class="w-2 h-2 rounded-full bg-rose-500"></div></td>
+                      <td class="font-medium text-white text-sm">Fix GA4 Cross-Domain Tracking</td>
+                      <td><span class="badge badge-cyan">Tracking</span></td>
+                      <td><span class="badge badge-rose">High</span></td>
+                      <td><span class="flex items-center gap-1 text-xs text-amber-400"><i class="ph-bold ph-circle"></i> New</span></td>
+                      <td class="text-xs text-gray-400">GA4 Data Stream</td>
+                    </tr>
+                    <tr data-status="in-progress" data-audit-id="meta-utms">
+                      <td><div class="w-2 h-2 rounded-full bg-amber-500"></div></td>
+                      <td class="font-medium text-white text-sm">Standardize Meta Ad UTMs</td>
+                      <td><span class="badge badge-purple">Campaigns</span></td>
+                      <td><span class="badge badge-gold">Medium</span></td>
+                      <td><span class="flex items-center gap-1 text-xs text-cyan-400"><i class="ph-bold ph-spinner-gap animate-spin"></i> In Progress</span></td>
+                      <td class="text-xs text-gray-400">Meta Ads Manager</td>
+                    </tr>
+                    <tr data-status="new" data-audit-id="mobile-hero">
+                      <td><div class="w-2 h-2 rounded-full bg-rose-500"></div></td>
+                      <td class="font-medium text-white text-sm">Shorten Mobile Hero Section</td>
+                      <td><span class="badge badge-rose">UX</span></td>
+                      <td><span class="badge badge-rose">High</span></td>
+                      <td><span class="flex items-center gap-1 text-xs text-amber-400"><i class="ph-bold ph-circle"></i> New</span></td>
+                      <td class="text-xs text-gray-400">/solar-savings</td>
+                    </tr>
+                  </tbody>
                 </table>
               </div>
             </div>
-          </div>
-        </div>
-      </section>
 
-      <section id="view-reports" class="view-section h-full max-w-7xl mx-auto flex flex-col" hidden>
-        <div class="mb-6 shrink-0 flex justify-between items-end">
-          <div>
-            <h2 class="font-magical text-3xl text-white mb-2">Visual Intelligence</h2>
-            <p class="text-sm text-gray-400">Performance analytics connected to campaign registry data.</p>
-          </div>
-          <div class="flex items-center gap-3">
-            <span class="text-[10px] text-gray-500 uppercase tracking-wider" id="reports-last-updated">Updated: Just now</span>
-            <button type="button" id="refresh-reports-button" class="btn-secondary px-4 py-2 rounded-lg text-xs flex items-center gap-2">
-              <i class="ph-bold ph-arrows-clockwise"></i> Refresh
-            </button>
-            <button type="button" class="btn-secondary px-4 py-2 rounded-lg text-xs flex items-center gap-2">
-              <i class="ph-bold ph-download-simple"></i> Export
-            </button>
-          </div>
-        </div>
-
-        <div class="glass-card p-4 mb-6 shrink-0 bg-black/20">
-          <div class="flex items-center gap-2 w-full text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-3 border-b border-white/5 pb-2">
-            <i class="ph-bold ph-faders"></i> Global Filters <span class="text-[9px] font-normal normal-case text-gray-600 ml-2">— All charts update automatically</span>
-          </div>
-
-          <div class="flex flex-wrap gap-3 items-end">
-            <div>
-              <label class="block text-[9px] text-gray-500 mb-1 uppercase">Date Range</label>
-              <select id="filter-date-range" class="input-magical text-xs rounded-md px-2 py-1.5 min-w-[120px]">
-                <option value="30">Last 30 Days</option>
-                <option value="90">Last 90 Days</option>
-                <option value="quarter">This Quarter</option>
-                <option value="ytd">Year to Date</option>
-              </select>
-            </div>
-
-            <div>
-              <label class="block text-[9px] text-gray-500 mb-1 uppercase">Campaign</label>
-              <select id="filter-campaign" class="input-magical text-xs rounded-md px-2 py-1.5 min-w-[140px]">
-                <option value="all">All Campaigns</option>
-                <option value="Q4_Solar_Savings">Q4 Solar Savings</option>
-                <option value="Search_Brand_T1">Search Brand T1</option>
-                <option value="Newsletter_Oct">Newsletter Oct</option>
-                <option value="Retargeting_Q4">Retargeting Q4</option>
-              </select>
-            </div>
-
-            <div>
-              <label class="block text-[9px] text-gray-500 mb-1 uppercase">Source</label>
-              <select id="filter-source" class="input-magical text-xs rounded-md px-2 py-1.5 min-w-[120px]">
-                <option value="all">All Sources</option>
-                <option value="google">Google</option>
-                <option value="linkedin">LinkedIn</option>
-                <option value="facebook">Facebook</option>
-                <option value="hs_email">HubSpot Email</option>
-                <option value="direct">Direct</option>
-              </select>
-            </div>
-
-            <div>
-              <label class="block text-[9px] text-gray-500 mb-1 uppercase">Medium</label>
-              <select id="filter-medium" class="input-magical text-xs rounded-md px-2 py-1.5 min-w-[100px]">
-                <option value="all">All</option>
-                <option value="cpc">CPC</option>
-                <option value="social">Social</option>
-                <option value="email">Email</option>
-                <option value="organic">Organic</option>
-                <option value="referral">Referral</option>
-              </select>
-            </div>
-
-            <div>
-              <label class="block text-[9px] text-gray-500 mb-1 uppercase">Landing Page</label>
-              <select id="filter-landing" class="input-magical text-xs rounded-md px-2 py-1.5 min-w-[140px]">
-                <option value="all">All Pages</option>
-                <option value="/solar-savings">/solar-savings</option>
-                <option value="/donate">/donate</option>
-                <option value="/about-us">/about-us</option>
-                <option value="/newsletter-signup">/newsletter-signup</option>
-              </select>
-            </div>
-
-            <button type="button" id="reset-report-filters" class="text-[10px] text-gray-500 hover:text-gray-300 underline ml-auto">Reset all</button>
-          </div>
-        </div>
-
-        <div class="flex-1 overflow-y-auto custom-scrollbar pb-6 space-y-6">
-          <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-            <div class="glass-card p-4">
-              <div class="text-[10px] uppercase tracking-wider text-gray-500 font-bold mb-2">Sessions</div>
-              <div class="text-2xl font-bold text-white" id="kpi-sessions">12,450</div>
-              <div class="text-xs text-emerald-400 mt-1"><i class="ph-bold ph-trend-up"></i> +14.2%</div>
-            </div>
-            <div class="glass-card p-4">
-              <div class="text-[10px] uppercase tracking-wider text-gray-500 font-bold mb-2">Users</div>
-              <div class="text-2xl font-bold text-white" id="kpi-users">9,832</div>
-              <div class="text-xs text-emerald-400 mt-1"><i class="ph-bold ph-trend-up"></i> +11.8%</div>
-            </div>
-            <div class="glass-card p-4">
-              <div class="text-[10px] uppercase tracking-wider text-gray-500 font-bold mb-2">Conversions</div>
-              <div class="text-2xl font-bold text-white" id="kpi-conversions">473</div>
-              <div class="text-xs text-emerald-400 mt-1"><i class="ph-bold ph-trend-up"></i> +8.4%</div>
-            </div>
-            <div class="glass-card p-4">
-              <div class="text-[10px] uppercase tracking-wider text-gray-500 font-bold mb-2">Conv. Rate</div>
-              <div class="text-2xl font-bold text-white" id="kpi-rate">3.8%</div>
-              <div class="text-xs text-emerald-400 mt-1"><i class="ph-bold ph-trend-up"></i> +0.5%</div>
-            </div>
-            <div class="glass-card p-4">
-              <div class="text-[10px] uppercase tracking-wider text-gray-500 font-bold mb-2">Avg Duration</div>
-              <div class="text-2xl font-bold text-white" id="kpi-duration">2:34</div>
-              <div class="text-xs text-rose-400 mt-1"><i class="ph-bold ph-trend-down"></i> -0:12</div>
-            </div>
-            <div class="glass-card p-4 border-l-2 border-l-purple-500">
-              <div class="text-[10px] uppercase tracking-wider text-gray-500 font-bold mb-2">Top Source</div>
-              <div class="text-xl font-bold text-white" id="kpi-top-source">LinkedIn</div>
-              <div class="text-xs text-gray-400 mt-1">31% of traffic</div>
-            </div>
-          </div>
-
-          <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <div class="glass-card p-5">
-              <div class="flex justify-between items-center mb-4">
-                <h3 class="text-sm font-bold text-white">Sessions Over Time</h3>
-                <span class="text-[10px] text-gray-500">Daily trend</span>
-              </div>
-              <div class="h-48 relative" id="chart-sessions-trend">
-                <svg class="w-full h-full" viewBox="0 0 400 150" preserveAspectRatio="none">
-                  <defs>
-                    <linearGradient id="areaGradient" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="0%" stop-color="#a855f7" stop-opacity="0.3"></stop>
-                      <stop offset="100%" stop-color="#a855f7" stop-opacity="0"></stop>
-                    </linearGradient>
-                  </defs>
-                  <path d="M0,120 Q50,100 100,90 T200,70 T300,60 T400,40 L400,150 L0,150 Z" fill="url(#areaGradient)"></path>
-                  <path d="M0,120 Q50,100 100,90 T200,70 T300,60 T400,40" fill="none" stroke="#a855f7" stroke-width="2"></path>
-                  <circle cx="400" cy="40" r="4" fill="#a855f7"></circle>
-                </svg>
-                <div class="absolute bottom-0 left-0 right-0 flex justify-between text-[9px] text-gray-500 px-2">
-                  <span>Oct 1</span><span>Oct 10</span><span>Oct 20</span><span>Oct 30</span>
-                </div>
-              </div>
-            </div>
-
-            <div class="glass-card p-5">
-              <div class="flex justify-between items-center mb-4">
-                <h3 class="text-sm font-bold text-white">Conversions Over Time</h3>
-                <span class="text-[10px] text-gray-500">Daily conversions</span>
-              </div>
-              <div class="h-48 relative" id="chart-conversions-trend">
-                <svg class="w-full h-full" viewBox="0 0 400 150" preserveAspectRatio="none">
-                  <defs>
-                    <linearGradient id="convGradient" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="0%" stop-color="#00f0ff" stop-opacity="0.3"></stop>
-                      <stop offset="100%" stop-color="#00f0ff" stop-opacity="0"></stop>
-                    </linearGradient>
-                  </defs>
-                  <path d="M0,130 L40,125 L80,110 L120,115 L160,95 L200,90 L240,85 L280,70 L320,65 L360,50 L400,45 L400,150 L0,150 Z" fill="url(#convGradient)"></path>
-                  <path d="M0,130 L40,125 L80,110 L120,115 L160,95 L200,90 L240,85 L280,70 L320,65 L360,50 L400,45" fill="none" stroke="#00f0ff" stroke-width="2"></path>
-                </svg>
-                <div class="absolute bottom-0 left-0 right-0 flex justify-between text-[9px] text-gray-500 px-2">
-                  <span>Oct 1</span><span>Oct 10</span><span>Oct 20</span><span>Oct 30</span>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <section id="view-ux" class="view-section h-full max-w-7xl mx-auto flex flex-col" hidden>
-        <div class="mb-6 shrink-0 flex justify-between items-end">
-          <div>
-            <h2 class="font-magical text-3xl text-white mb-2">Experience Friction</h2>
-            <p class="text-sm text-gray-400">Behavioral insights derived from Microsoft Clarity recordings and heatmaps.</p>
-          </div>
-          <div class="flex items-center gap-3">
-            <span class="text-[10px] text-gray-500 uppercase tracking-wider" id="ux-last-updated">Updated: Oct 30, 2024</span>
-            <button type="button" id="sync-clarity-button" class="btn-secondary px-4 py-2 rounded-lg text-xs flex items-center gap-2">
-              <i class="ph-bold ph-arrows-clockwise"></i> Sync Data
-            </button>
-          </div>
-        </div>
-
-        <div class="glass-card p-4 mb-6 shrink-0 bg-black/20">
-          <div class="flex items-center gap-2 w-full text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-3 border-b border-white/5 pb-2">
-            <i class="ph-bold ph-faders"></i> UX Filters
-          </div>
-
-          <div class="flex flex-wrap gap-3 items-end">
-            <div>
-              <label class="block text-[9px] text-gray-500 mb-1 uppercase">Date Range</label>
-              <select id="ux-filter-date" class="input-magical text-xs rounded-md px-2 py-1.5 min-w-[120px]">
-                <option value="30">Last 30 Days</option>
-                <option value="7">Last 7 Days</option>
-                <option value="90">Last 90 Days</option>
-              </select>
-            </div>
-            <div>
-              <label class="block text-[9px] text-gray-500 mb-1 uppercase">Page</label>
-              <select id="ux-filter-page" class="input-magical text-xs rounded-md px-2 py-1.5 min-w-[140px]">
-                <option value="all">All Pages</option>
-                <option value="/solar-savings">/solar-savings</option>
-                <option value="/donate">/donate</option>
-                <option value="/about-us">/about-us</option>
-              </select>
-            </div>
-            <div>
-              <label class="block text-[9px] text-gray-500 mb-1 uppercase">Device</label>
-              <select id="ux-filter-device" class="input-magical text-xs rounded-md px-2 py-1.5 min-w-[100px]">
-                <option value="all">All Devices</option>
-                <option value="desktop">Desktop</option>
-                <option value="mobile">Mobile</option>
-                <option value="tablet">Tablet</option>
-              </select>
-            </div>
-          </div>
-        </div>
-
-        <div class="flex-1 overflow-y-auto custom-scrollbar pb-6 space-y-6">
-          <div class="grid grid-cols-2 md:grid-cols-5 gap-4">
-            <div class="glass-card p-4 border-l-2 border-l-rose-500">
-              <div class="text-[10px] uppercase tracking-wider text-gray-500 font-bold mb-2">Total Rage Clicks</div>
-              <div class="text-2xl font-bold text-rose-400" id="ux-kpi-rage">2,847</div>
-              <div class="text-xs text-gray-400 mt-1">3.2% of sessions</div>
-            </div>
-            <div class="glass-card p-4 border-l-2 border-l-amber-500">
-              <div class="text-[10px] uppercase tracking-wider text-gray-500 font-bold mb-2">Total Dead Clicks</div>
-              <div class="text-2xl font-bold text-amber-400" id="ux-kpi-dead">1,523</div>
-              <div class="text-xs text-gray-400 mt-1">1.7% of sessions</div>
-            </div>
-            <div class="glass-card p-4 border-l-2 border-l-cyan-500">
-              <div class="text-[10px] uppercase tracking-wider text-gray-500 font-bold mb-2">Avg Scroll Depth</div>
-              <div class="text-2xl font-bold text-cyan-400" id="ux-kpi-scroll">62%</div>
-              <div class="text-xs text-emerald-400 mt-1"><i class="ph-bold ph-trend-up"></i> +4%</div>
-            </div>
-            <div class="glass-card p-4">
-              <div class="text-[10px] uppercase tracking-wider text-gray-500 font-bold mb-2">Avg Time on Page</div>
-              <div class="text-2xl font-bold text-white" id="ux-kpi-time">1:45</div>
-              <div class="text-xs text-gray-400 mt-1">Per session</div>
-            </div>
-            <button type="button" id="highlight-friction-page" class="glass-card p-4 border-l-2 border-l-purple-500 text-left hover:bg-white/5">
-              <div class="text-[10px] uppercase tracking-wider text-gray-500 font-bold mb-2">Highest Friction</div>
-              <div class="text-lg font-bold text-white truncate" id="ux-kpi-high">/solar-savings</div>
-              <div class="text-xs text-rose-400 mt-1">4.8% rage rate</div>
-            </button>
-          </div>
-        </div>
-      </section>
-
-      <section id="view-audit" class="view-section h-full max-w-7xl mx-auto flex flex-col" hidden>
-        <div class="mb-6 shrink-0 flex justify-between items-end">
-          <div>
-            <h2 class="font-magical text-3xl text-white mb-2">Strategy &amp; Implementation</h2>
-            <p class="text-sm text-gray-400">Consulting notes, audit findings, recommendations, and tracking guidelines.</p>
-          </div>
-          <div class="flex items-center gap-3">
-            <span class="text-[10px] text-gray-500 uppercase tracking-wider">Updated: Oct 28, 2024</span>
-            <span class="px-3 py-1 bg-black/30 border border-white/10 rounded-full text-[10px] font-bold text-gray-400 uppercase tracking-widest">Consultant View</span>
-          </div>
-        </div>
-
-        <div class="flex-1 overflow-y-auto custom-scrollbar pb-6 space-y-6">
-          <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
-            <div class="glass-card p-5 border-l-2 border-l-emerald-500 bg-gradient-to-r from-emerald-900/10 to-transparent">
-              <div class="flex items-center gap-2 mb-3">
-                <i class="ph-fill ph-check-circle text-emerald-400 text-lg"></i>
-                <h3 class="text-sm font-bold text-emerald-300">What's Working</h3>
-              </div>
-              <ul class="space-y-2 text-xs text-gray-300">
-                <li class="flex items-start gap-2"><i class="ph-bold ph-check text-emerald-400 mt-0.5"></i> LinkedIn campaigns driving highest quality traffic</li>
-                <li class="flex items-start gap-2"><i class="ph-bold ph-check text-emerald-400 mt-0.5"></i> Newsletter conversion rate up 5.3% month-over-month</li>
-                <li class="flex items-start gap-2"><i class="ph-bold ph-check text-emerald-400 mt-0.5"></i> /donate page performing above industry benchmark</li>
-              </ul>
-            </div>
-
-            <div class="glass-card p-5 border-l-2 border-l-amber-500 bg-gradient-to-r from-amber-900/10 to-transparent">
-              <div class="flex items-center gap-2 mb-3">
-                <i class="ph-fill ph-warning text-amber-400 text-lg"></i>
-                <h3 class="text-sm font-bold text-amber-300">Needs Attention</h3>
-              </div>
-              <ul class="space-y-2 text-xs text-gray-300">
-                <li class="flex items-start gap-2"><i class="ph-bold ph-warning text-amber-400 mt-0.5"></i> Cross-domain tracking dropping UTM attribution</li>
-                <li class="flex items-start gap-2"><i class="ph-bold ph-warning text-amber-400 mt-0.5"></i> Mobile scroll depth 22% lower than desktop</li>
-                <li class="flex items-start gap-2"><i class="ph-bold ph-warning text-amber-400 mt-0.5"></i> Meta ad UTMs not following naming convention</li>
-              </ul>
-            </div>
-
-            <div class="glass-card p-5 border-l-2 border-l-cyan-500 bg-gradient-to-r from-cyan-900/10 to-transparent">
-              <div class="flex items-center gap-2 mb-3">
-                <i class="ph-fill ph-arrow-right text-cyan-400 text-lg"></i>
-                <h3 class="text-sm font-bold text-cyan-300">Next Action</h3>
-              </div>
-              <p class="text-xs text-gray-300 leading-relaxed">Implement cross-domain tracking fix by Nov 5. This unblocks accurate campaign attribution for Q4 reporting and allows proper budget reallocation toward top performers.</p>
-            </div>
-          </div>
-
-          <div class="glass-card overflow-hidden">
-            <div class="p-4 border-b border-white/5 bg-black/20 flex items-center justify-between">
-              <h3 class="text-sm font-bold text-white flex items-center gap-2">
-                <i class="ph-duotone ph-kanban text-purple-400"></i> Recommendation Board
-              </h3>
-              <div class="flex gap-2">
-                <button type="button" class="audit-filter-btn px-3 py-1 rounded text-xs bg-purple-500/20 text-purple-300 border border-purple-500/30" data-audit-status="all">All</button>
-                <button type="button" class="audit-filter-btn px-3 py-1 rounded text-xs bg-black/30 text-gray-400 border border-white/10 hover:bg-white/5" data-audit-status="new">New</button>
-                <button type="button" class="audit-filter-btn px-3 py-1 rounded text-xs bg-black/30 text-gray-400 border border-white/10 hover:bg-white/5" data-audit-status="in-progress">In Progress</button>
-                <button type="button" class="audit-filter-btn px-3 py-1 rounded text-xs bg-black/30 text-gray-400 border border-white/10 hover:bg-white/5" data-audit-status="resolved">Resolved</button>
-              </div>
-            </div>
-
-            <div class="overflow-x-auto">
-              <table class="data-table w-full" id="audit-recommendations-table">
-                <thead>
-                  <tr>
-                    <th class="w-8"></th>
-                    <th>Recommendation</th>
-                    <th>Category</th>
-                    <th>Priority</th>
-                    <th>Status</th>
-                    <th>Linked To</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr data-status="new" onclick="showAuditDetail('cross-domain')">
-                    <td><div class="w-2 h-2 rounded-full bg-rose-500"></div></td>
-                    <td class="font-medium text-white text-sm">Fix GA4 Cross-Domain Tracking</td>
-                    <td><span class="badge badge-cyan">Tracking</span></td>
-                    <td><span class="badge badge-rose">High</span></td>
-                    <td><span class="flex items-center gap-1 text-xs text-amber-400"><i class="ph-bold ph-circle"></i> New</span></td>
-                    <td class="text-xs text-gray-400">GA4 Data Stream</td>
-                  </tr>
-                  <tr data-status="in-progress" onclick="showAuditDetail('meta-utms')">
-                    <td><div class="w-2 h-2 rounded-full bg-amber-500"></div></td>
-                    <td class="font-medium text-white text-sm">Standardize Meta Ad UTMs</td>
-                    <td><span class="badge badge-purple">Campaigns</span></td>
-                    <td><span class="badge badge-gold">Medium</span></td>
-                    <td><span class="flex items-center gap-1 text-xs text-cyan-400"><i class="ph-bold ph-spinner-gap animate-spin"></i> In Progress</span></td>
-                    <td class="text-xs text-gray-400">Meta Ads Manager</td>
-                  </tr>
-                  <tr data-status="new" onclick="showAuditDetail('mobile-hero')">
-                    <td><div class="w-2 h-2 rounded-full bg-rose-500"></div></td>
-                    <td class="font-medium text-white text-sm">Shorten Mobile Hero Section</td>
-                    <td><span class="badge badge-rose">UX</span></td>
-                    <td><span class="badge badge-rose">High</span></td>
-                    <td><span class="flex items-center gap-1 text-xs text-amber-400"><i class="ph-bold ph-circle"></i> New</span></td>
-                    <td class="text-xs text-gray-400">/solar-savings</td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
-          </div>
-
-          <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <div class="glass-card p-5">
-              <h3 class="text-sm font-bold text-white mb-4 flex items-center gap-2">
-                <i class="ph-duotone ph-file-text text-cyan-400"></i> Implementation Notes
-              </h3>
-              <div class="space-y-4 text-sm text-gray-300" id="audit-detail-panel">
-                <div class="p-4 bg-black/20 rounded border border-white/5">
-                  <h4 class="text-xs font-bold text-cyan-300 mb-2 uppercase tracking-wider">Cross-Domain Tracking Fix</h4>
-                  <p class="text-xs text-gray-400 mb-3">Traffic moving between main site and donation portal is losing UTM parameters. This causes conversions to show as 'Direct' instead of attributed to campaigns.</p>
-                  <div class="text-xs text-gray-500 font-mono bg-black/40 p-2 rounded border border-white/10">
-                    GA4 Admin &gt; Data Streams &gt; Web &gt; Configure tag settings &gt; Configure your domains
+            <div class="grid grid-cols-1 xl:grid-cols-2 gap-6">
+              <div class="glass-card p-6">
+                <h3 class="text-sm font-bold text-white mb-4 flex items-center gap-2">
+                  <i class="ph-duotone ph-file-text text-cyan-400"></i> Implementation Notes
+                </h3>
+                <div class="space-y-4 text-sm text-gray-300" id="audit-detail-panel">
+                  <div class="p-4 bg-black/20 rounded border border-white/5">
+                    <h4 class="text-xs font-bold text-cyan-300 mb-2 uppercase tracking-wider">Cross-Domain Tracking Fix</h4>
+                    <p class="text-xs text-gray-400 mb-3">Traffic moving between main site and donation portal is losing UTM parameters. This causes conversions to show as direct instead of attributed to campaigns.</p>
+                    <div class="text-xs text-gray-500 font-mono bg-black/40 p-2 rounded border border-white/10">
+                      GA4 Admin &gt; Data Streams &gt; Web &gt; Configure tag settings &gt; Configure your domains
+                    </div>
                   </div>
                 </div>
               </div>
-            </div>
 
-            <div class="glass-card p-5">
-              <h3 class="text-sm font-bold text-white mb-4 flex items-center gap-2">
-                <i class="ph-duotone ph-book-bookmark text-amber-400"></i> Resource Links
-              </h3>
-              <div class="space-y-2">
-                <button type="button" data-view="reports" class="w-full flex items-center justify-between p-3 rounded bg-black/20 hover:bg-black/40 border border-white/5 hover:border-purple-500/30 transition-all group text-left">
-                  <span class="flex items-center gap-3">
-                    <div class="w-8 h-8 rounded bg-purple-900/30 flex items-center justify-center text-purple-400"><i class="ph-duotone ph-chart-line-up text-lg"></i></div>
-                    <div>
-                      <div class="text-sm font-medium text-gray-200 group-hover:text-white">View Performance Dashboard</div>
-                      <div class="text-[10px] text-gray-500">Live campaign metrics</div>
-                    </div>
-                  </span>
-                  <i class="ph-bold ph-arrow-right text-gray-600 group-hover:text-purple-400"></i>
-                </button>
+              <div class="glass-card p-6">
+                <h3 class="text-sm font-bold text-white mb-4 flex items-center gap-2">
+                  <i class="ph-duotone ph-book-bookmark text-amber-400"></i> Resource Links
+                </h3>
+                <div class="space-y-3">
+                  <button type="button" data-view="reports" class="w-full flex items-center justify-between p-3 rounded bg-black/20 hover:bg-black/40 border border-white/5 hover:border-purple-500/30 transition-all group text-left">
+                    <span class="flex items-center gap-3">
+                      <div class="w-8 h-8 rounded bg-purple-900/30 flex items-center justify-center text-purple-400"><i class="ph-duotone ph-chart-line-up text-lg"></i></div>
+                      <div>
+                        <div class="text-sm font-medium text-gray-200 group-hover:text-white">View Performance Dashboard</div>
+                        <div class="text-[10px] text-gray-500">Live campaign metrics</div>
+                      </div>
+                    </span>
+                    <i class="ph-bold ph-arrow-right text-gray-600 group-hover:text-purple-400"></i>
+                  </button>
 
-                <button type="button" data-view="ux" class="w-full flex items-center justify-between p-3 rounded bg-black/20 hover:bg-black/40 border border-white/5 hover:border-cyan-500/30 transition-all group text-left">
-                  <span class="flex items-center gap-3">
-                    <div class="w-8 h-8 rounded bg-cyan-900/30 flex items-center justify-center text-cyan-400"><i class="ph-duotone ph-mouse-left-click text-lg"></i></div>
-                    <div>
-                      <div class="text-sm font-medium text-gray-200 group-hover:text-white">Review UX Insights</div>
-                      <div class="text-[10px] text-gray-500">Clarity session data</div>
-                    </div>
-                  </span>
-                  <i class="ph-bold ph-arrow-right text-gray-600 group-hover:text-cyan-400"></i>
-                </button>
+                  <button type="button" data-view="ux" class="w-full flex items-center justify-between p-3 rounded bg-black/20 hover:bg-black/40 border border-white/5 hover:border-cyan-500/30 transition-all group text-left">
+                    <span class="flex items-center gap-3">
+                      <div class="w-8 h-8 rounded bg-cyan-900/30 flex items-center justify-center text-cyan-400"><i class="ph-duotone ph-mouse-left-click text-lg"></i></div>
+                      <div>
+                        <div class="text-sm font-medium text-gray-200 group-hover:text-white">Review UX Insights</div>
+                        <div class="text-[10px] text-gray-500">Clarity session data</div>
+                      </div>
+                    </span>
+                    <i class="ph-bold ph-arrow-right text-gray-600 group-hover:text-cyan-400"></i>
+                  </button>
 
-                <button type="button" data-open-url="https://clarity.microsoft.com" class="w-full flex items-center justify-between p-3 rounded bg-black/20 hover:bg-black/40 border border-white/5 hover:border-blue-500/30 transition-all group text-left">
-                  <span class="flex items-center gap-3">
-                    <div class="w-8 h-8 rounded bg-blue-900/30 flex items-center justify-center text-blue-400"><i class="ph-fill ph-microsoft-logo text-lg"></i></div>
-                    <div>
-                      <div class="text-sm font-medium text-gray-200 group-hover:text-white">Open Microsoft Clarity</div>
-                      <div class="text-[10px] text-gray-500">Session recordings &amp; heatmaps</div>
-                    </div>
-                  </span>
-                  <i class="ph-bold ph-arrow-up-right text-gray-600 group-hover:text-blue-400"></i>
-                </button>
+                  <button type="button" data-open-url="https://clarity.microsoft.com" class="w-full flex items-center justify-between p-3 rounded bg-black/20 hover:bg-black/40 border border-white/5 hover:border-blue-500/30 transition-all group text-left">
+                    <span class="flex items-center gap-3">
+                      <div class="w-8 h-8 rounded bg-blue-900/30 flex items-center justify-center text-blue-400"><i class="ph-fill ph-microsoft-logo text-lg"></i></div>
+                      <div>
+                        <div class="text-sm font-medium text-gray-200 group-hover:text-white">Open Microsoft Clarity</div>
+                        <div class="text-[10px] text-gray-500">Session recordings &amp; heatmaps</div>
+                      </div>
+                    </span>
+                    <i class="ph-bold ph-arrow-up-right text-gray-600 group-hover:text-blue-400"></i>
+                  </button>
+                </div>
               </div>
             </div>
           </div>
-        </div>
-      </section>
+        </section>
+      </div>
     </div>
   </main>
 
@@ -1013,10 +1050,10 @@
 
     const VIEW_TITLES = {
       home: "Overview",
-      reports: "Reports Dashboard",
-      utm: "UTM Builder",
-      ux: "UX Insights",
-      audit: "Audit & Strategy"
+      reports: "Visual Intelligence",
+      utm: "UTM Matrix",
+      ux: "Experience Friction",
+      audit: "Strategy & Implementation"
     };
 
     const mockRegistry = [
@@ -1029,16 +1066,16 @@
       recommendations: {
         "cross-domain": {
           title: "Fix GA4 Cross-Domain Tracking",
-          finding: "Traffic moving between main site and donation portal is losing UTM parameters. This causes conversions to show as 'Direct' instead of attributed to campaigns.",
+          finding: "Traffic moving between main site and donation portal is losing UTM parameters. This causes conversions to show as direct instead of attributed to campaigns.",
           steps: "GA4 Admin > Data Streams > Web > Configure tag settings > Configure your domains",
-          impact: "Currently ~15% of conversions unattributed. Fixing this will reveal true campaign ROI and enable proper budget allocation.",
+          impact: "Currently around 15% of conversions are unattributed. Fixing this reveals true campaign ROI and improves budget allocation.",
           category: "Tracking",
           priority: "High"
         },
         "meta-utms": {
           title: "Standardize Meta Ad UTMs",
           finding: "Current Meta ads use hardcoded UTMs that differ from naming convention. Data is splitting in reports.",
-          steps: "Implement dynamic parameters in Meta Ads Manager",
+          steps: "Implement dynamic parameters in Meta Ads Manager and align naming with the UTM registry.",
           impact: "Will consolidate reporting and enable proper campaign-level analysis.",
           category: "Campaigns",
           priority: "Medium"
@@ -1046,7 +1083,7 @@
         "mobile-hero": {
           title: "Shorten Mobile Hero Section",
           finding: "Mobile scroll depth is materially lower than desktop. Users are not seeing key content below the fold.",
-          steps: "Reduce hero height on mobile and move CTA above the fold.",
+          steps: "Reduce hero height on mobile and move the primary CTA above the fold.",
           impact: "Expected lift in mobile engagement and conversion rate.",
           category: "UX",
           priority: "High"
@@ -1059,16 +1096,16 @@
       initStars();
       populateRegistry();
       bindNavigation();
+      bindExternalButtons();
       bindUTMEvents();
       bindReportFilters();
       bindUXFilters();
       bindAuditFilters();
-      bindExternalButtons();
 
       const now = new Date();
       const syncTime = document.getElementById("sync-time");
       if (syncTime) {
-        syncTime.innerText = `Synced: Today ${now.getHours().toString().padStart(2, "0")}:${now.getMinutes().toString().padStart(2, "0")}`;
+        syncTime.innerText = `Synced: Today ${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`;
       }
 
       switchView(getInitialView(), false);
@@ -1092,21 +1129,21 @@
     }
 
     function bindNavigation() {
-      document.querySelectorAll("[data-view]").forEach((el) => {
-        el.addEventListener("click", (event) => {
-          event.preventDefault();
-          const viewId = el.getAttribute("data-view");
-          switchView(viewId);
-        });
+      document.addEventListener("click", (event) => {
+        const trigger = event.target.closest("[data-view]");
+        if (!trigger) return;
+        event.preventDefault();
+        const viewId = trigger.getAttribute("data-view");
+        switchView(viewId);
       });
     }
 
     function bindExternalButtons() {
-      document.querySelectorAll("[data-open-url]").forEach((el) => {
-        el.addEventListener("click", () => {
-          const url = el.getAttribute("data-open-url");
-          if (url) window.open(url, "_blank", "noopener,noreferrer");
-        });
+      document.addEventListener("click", (event) => {
+        const trigger = event.target.closest("[data-open-url]");
+        if (!trigger) return;
+        const url = trigger.getAttribute("data-open-url");
+        if (url) window.open(url, "_blank", "noopener,noreferrer");
       });
     }
 
@@ -1116,6 +1153,7 @@
       const nextNav = document.getElementById(`nav-${viewId}`);
       const nextView = document.getElementById(`view-${viewId}`);
       const headerTitle = document.getElementById("header-title");
+      const scrollWrap = document.getElementById("content-scroll");
 
       if (!nextNav || !nextView) return;
 
@@ -1126,16 +1164,17 @@
 
       document.querySelectorAll(".view-section").forEach((el) => {
         el.classList.remove("active");
-        el.setAttribute("hidden", "hidden");
+        el.hidden = true;
       });
 
       nextNav.classList.add("active");
       nextNav.setAttribute("aria-current", "page");
+      nextView.hidden = false;
       nextView.classList.add("active");
-      nextView.removeAttribute("hidden");
 
       if (headerTitle) headerTitle.textContent = VIEW_TITLES[viewId] || "Workspace";
       if (updateHash) history.replaceState(null, "", `#${viewId}`);
+      if (scrollWrap) scrollWrap.scrollTo({ top: 0, behavior: "smooth" });
     }
 
     window.addEventListener("hashchange", () => {
@@ -1143,44 +1182,28 @@
     });
 
     function bindUTMEvents() {
-      const url = document.getElementById("utm-url");
-      const source = document.getElementById("utm-source");
-      const medium = document.getElementById("utm-medium");
-      const campaign = document.getElementById("utm-campaign");
-      const term = document.getElementById("utm-term");
-      const content = document.getElementById("utm-content");
-      const toggleOptional = document.getElementById("toggle-optional-fields");
-      const copyButton = document.getElementById("copy-utm-button");
-      const saveButton = document.getElementById("save-utm-button");
-      const search = document.getElementById("registry-search");
-
-      [url, source, medium, campaign, term, content].forEach((el) => {
+      const fields = ["utm-url", "utm-source", "utm-medium", "utm-campaign", "utm-term", "utm-content"];
+      fields.forEach((id) => {
+        const el = document.getElementById(id);
         if (!el) return;
         el.addEventListener("input", generateUTM);
         el.addEventListener("change", generateUTM);
       });
 
-      if (toggleOptional) {
-        toggleOptional.addEventListener("click", () => {
-          document.getElementById("optional-fields")?.classList.toggle("hidden");
-        });
-      }
+      document.getElementById("toggle-optional-fields")?.addEventListener("click", () => {
+        document.getElementById("optional-fields")?.classList.toggle("hidden");
+      });
 
-      if (copyButton) copyButton.addEventListener("click", copyUTM);
-      if (saveButton) saveButton.addEventListener("click", saveUTM);
-
-      if (search) {
-        search.addEventListener("input", (event) => {
-          populateRegistry(event.target.value);
-        });
-      }
+      document.getElementById("copy-utm-button")?.addEventListener("click", copyUTM);
+      document.getElementById("save-utm-button")?.addEventListener("click", saveUTM);
+      document.getElementById("registry-search")?.addEventListener("input", (event) => populateRegistry(event.target.value));
     }
 
     function generateUTM() {
       const urlValue = document.getElementById("utm-url")?.value.trim() || "";
       const result = document.getElementById("utm-result");
-
       if (!result) return;
+
       if (!urlValue) {
         result.value = "";
         return;
@@ -1207,10 +1230,9 @@
     }
 
     function copyUTM() {
-      const result = document.getElementById("utm-result")?.value || "";
-      if (!result || result.startsWith("Waiting")) return;
-
-      navigator.clipboard.writeText(result).then(() => {
+      const value = document.getElementById("utm-result")?.value || "";
+      if (!value || value.startsWith("Waiting")) return;
+      navigator.clipboard.writeText(value).then(() => {
         showToast("Copied!", "Link copied to clipboard.", "ph-copy");
       });
     }
@@ -1241,8 +1263,8 @@
       const tbody = document.getElementById("registry-tbody");
       if (!tbody) return;
 
+      const q = String(query || "").trim().toLowerCase();
       const filtered = mockRegistry.filter((item) => {
-        const q = query.trim().toLowerCase();
         if (!q) return true;
         return [item.campaign, item.source, item.medium, item.date].join(" ").toLowerCase().includes(q);
       });
@@ -1272,9 +1294,7 @@
     function bindReportFilters() {
       ["filter-date-range", "filter-campaign", "filter-source", "filter-medium", "filter-landing"].forEach((id) => {
         const el = document.getElementById(id);
-        if (el) {
-          el.addEventListener("change", applyReportFilters);
-        }
+        if (el) el.addEventListener("change", applyReportFilters);
       });
 
       document.getElementById("reset-report-filters")?.addEventListener("click", resetReportFilters);
@@ -1282,9 +1302,8 @@
     }
 
     function applyReportFilters() {
+      document.getElementById("reports-last-updated").textContent = "Updated: Just now";
       showToast("Filters Applied", "Reports updated with new criteria.", "ph-check-circle");
-      const updated = document.getElementById("reports-last-updated");
-      if (updated) updated.textContent = "Updated: Just now";
     }
 
     function resetReportFilters() {
@@ -1305,8 +1324,7 @@
     }
 
     function refreshReportsData() {
-      const updated = document.getElementById("reports-last-updated");
-      if (updated) updated.textContent = "Updated: Just now";
+      document.getElementById("reports-last-updated").textContent = "Updated: Just now";
       showToast("Data Refreshed", "Latest metrics loaded.", "ph-check-circle");
     }
 
@@ -1325,14 +1343,12 @@
     }
 
     function applyUXFilters() {
-      const updated = document.getElementById("ux-last-updated");
-      if (updated) updated.textContent = "Updated: Just now";
+      document.getElementById("ux-last-updated").textContent = "Updated: Just now";
       showToast("Filters Applied", "UX insights updated.", "ph-check-circle");
     }
 
     function syncClarityData() {
-      const updated = document.getElementById("ux-last-updated");
-      if (updated) updated.textContent = "Updated: Just now";
+      document.getElementById("ux-last-updated").textContent = "Updated: Just now";
       showToast("Sync Complete", "Clarity data refreshed.", "ph-check-circle");
     }
 
@@ -1340,6 +1356,13 @@
       document.querySelectorAll(".audit-filter-btn").forEach((btn) => {
         btn.addEventListener("click", () => {
           filterAuditByStatus(btn.getAttribute("data-audit-status"));
+        });
+      });
+
+      document.querySelectorAll("#audit-recommendations-table tbody tr").forEach((row) => {
+        row.addEventListener("click", () => {
+          const id = row.getAttribute("data-audit-id");
+          if (id) showAuditDetail(id);
         });
       });
     }
@@ -1388,7 +1411,6 @@
       iconEl.className = `ph-fill ${iconClass} ${colorClass} text-lg`;
 
       toast.classList.add("toast-show");
-
       window.clearTimeout(window.__toastTimer);
       window.__toastTimer = window.setTimeout(() => {
         toast.classList.remove("toast-show");

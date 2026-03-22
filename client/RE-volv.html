@@ -369,7 +369,7 @@
     <div class="p-2 space-y-1">
       <a
         id="workspace-option-nexus"
-        href="/client/re-volv/dashboard.html"
+        href="/client/RE-volv/dashboard.html"
         class="workspace-option flex items-center gap-3 p-2 rounded hover:bg-white/5 transition-colors"
         data-workspace="nexus"
       >
@@ -548,6 +548,11 @@
               </button>
             </div>
           </div>
+
+          <div class="glass-card border border-purple-500/20 rounded-xl p-4 md:p-5 shadow-lg">
+          <div id="tasks-list" class="space-y-4"></div>
+        </div>
+        </div>
 
         <div id="section-notes" class="ws-section hidden space-y-6 pb-20">
           <div class="flex items-center justify-between gap-4 border-b border-purple-500/20 pb-4">
@@ -928,7 +933,7 @@
 
 <script>
   const API_BASE = "https://script.google.com/macros/s/AKfycbzDrt23nLNFPaWmCBxsHmCzqWxbS-5W7g1H7c4VuqnRivrmtroAbp9sgrrbTM3crTAo/exec";
-  const CLIENT_SLUG = "re-volv";
+  const CLIENT_SLUG = "RE-volv";
 
   let workspaceData = {
     project: {},
@@ -1111,8 +1116,13 @@
     document.getElementById('overview-goal').textContent = workspaceData.project.goal || '';
   }
 
-  function renderTasks() {
-    const list = document.getElementById('tasks-list');
+function renderTasks() {
+  const list = document.getElementById('tasks-list');
+  if (!list) {
+    console.error('renderTasks: #tasks-list not found');
+    return;
+  }
+  
     let filtered = workspaceData.tasks.slice();
 
     if (taskFilterStatus !== 'all') {
@@ -2011,91 +2021,95 @@
   }
 }
 
-  document.addEventListener('DOMContentLoaded', async () => {
+document.addEventListener('DOMContentLoaded', async () => {
+  try {
+    await loadWorkspaceData();
+    renderAll();
+  } catch (err) {
+    console.error(err);
+    showWorkspaceError(
+      'Failed to load workspace',
+      err?.message || 'Google Sheets data could not be loaded.'
+    );
+  }
+
+  document.getElementById('reset-workspace-btn')?.addEventListener('click', async () => {
     try {
       await loadWorkspaceData();
       renderAll();
-      } catch (err) {
-        console.error(err);
-        showWorkspaceError(
-          'Failed to load workspace',
-          err?.message || 'Google Sheets data could not be loaded.'
-        );
-      }
-
-      } catch (err) {
-        console.error(err);
-        showWorkspaceError(
-          'Refresh failed',
-          err?.message || 'Workspace data could not be refreshed.'
-        );
-      }
-    });
-
-    applyWorkspaceSwitcherState();
-    bindWorkspaceSwitcher();
-
-    document.querySelectorAll('.ws-nav-btn, .ws-mobile-nav').forEach(btn => {
-      btn.addEventListener('click', (e) => {
-        const target = e.currentTarget.dataset.target;
-        switchTab(target);
-      });
-    });
-
-    document.getElementById('task-filter-status')?.addEventListener('change', (e) => {
-      taskFilterStatus = e.target.value;
-      renderTasks();
-    });
-
-    document.getElementById('task-search')?.addEventListener('input', (e) => {
-      taskSearchQuery = e.target.value;
-      renderTasks();
-    });
-
-    document.getElementById('new-task-btn')?.addEventListener('click', () => openTaskEditor(null));
-    document.getElementById('close-task-modal')?.addEventListener('click', () => closeModal(taskModal));
-    document.getElementById('cancel-task-btn')?.addEventListener('click', () => closeModal(taskModal));
-    document.getElementById('save-task-btn')?.addEventListener('click', saveTaskFromModal);
-    document.getElementById('delete-task-btn')?.addEventListener('click', deleteTaskFromModal);
-
-    document.getElementById('task-add-attachment-btn')?.addEventListener('click', () => {
-      const rows = [...document.querySelectorAll('#task-attachments-editor > div')];
-      const current = rows.map(row => ({
-        label: row.querySelector('.attachment-label')?.value || '',
-        url: row.querySelector('.attachment-url')?.value || ''
-      }));
-      current.push({ label: '', url: '' });
-      buildAttachmentEditorRows(current);
-    });
-
-    document.getElementById('new-asset-btn')?.addEventListener('click', () => openAssetEditor(null));
-    document.getElementById('close-asset-modal')?.addEventListener('click', () => closeModal(assetModal));
-    document.getElementById('cancel-asset-btn')?.addEventListener('click', () => closeModal(assetModal));
-    document.getElementById('save-asset-btn')?.addEventListener('click', saveAssetFromModal);
-    document.getElementById('delete-asset-btn')?.addEventListener('click', deleteAssetFromModal);
-
-    document.getElementById('add-note-btn')?.addEventListener('click', addNote);
-    document.getElementById('close-note-modal')?.addEventListener('click', () => closeModal(noteModal));
-    document.getElementById('cancel-note-btn')?.addEventListener('click', () => closeModal(noteModal));
-    document.getElementById('save-note-btn')?.addEventListener('click', saveNoteFromModal);
-    document.getElementById('delete-note-btn')?.addEventListener('click', deleteNoteFromModal);
-
-    document.getElementById('edit-overview-btn')?.addEventListener('click', openOverviewEditor);
-    document.getElementById('close-overview-modal')?.addEventListener('click', () => closeModal(overviewModal));
-    document.getElementById('cancel-overview-btn')?.addEventListener('click', () => closeModal(overviewModal));
-    document.getElementById('save-overview-btn')?.addEventListener('click', saveOverviewFromModal);
-
-    document.getElementById('close-review-info-modal')?.addEventListener('click', () => closeModal(reviewInfoModal));
-
-    [taskModal, assetModal, noteModal, overviewModal, reviewInfoModal].forEach(modal => {
-      if (!modal) return;
-      modal.addEventListener('click', (e) => {
-        if (e.target === modal) closeModal(modal);
-      });
-    });
-
-    switchTab('tasks');
+    } catch (err) {
+      console.error(err);
+      showWorkspaceError(
+        'Refresh failed',
+        err?.message || 'Workspace data could not be refreshed.'
+      );
+    }
   });
+
+  applyWorkspaceSwitcherState();
+  bindWorkspaceSwitcher();
+
+  document.querySelectorAll('.ws-nav-btn, .ws-mobile-nav').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      const target = e.currentTarget.dataset.target;
+      switchTab(target);
+    });
+  });
+
+  document.getElementById('task-filter-status')?.addEventListener('change', (e) => {
+    taskFilterStatus = e.target.value;
+    renderTasks();
+  });
+
+  document.getElementById('task-search')?.addEventListener('input', (e) => {
+    taskSearchQuery = e.target.value;
+    renderTasks();
+  });
+
+  document.getElementById('new-task-btn')?.addEventListener('click', () => openTaskEditor(null));
+  document.getElementById('close-task-modal')?.addEventListener('click', () => closeModal(taskModal));
+  document.getElementById('cancel-task-btn')?.addEventListener('click', () => closeModal(taskModal));
+  document.getElementById('save-task-btn')?.addEventListener('click', saveTaskFromModal);
+  document.getElementById('delete-task-btn')?.addEventListener('click', deleteTaskFromModal);
+
+  document.getElementById('task-add-attachment-btn')?.addEventListener('click', () => {
+    const rows = [...document.querySelectorAll('#task-attachments-editor > div')];
+    const current = rows.map(row => ({
+      label: row.querySelector('.attachment-label')?.value || '',
+      url: row.querySelector('.attachment-url')?.value || ''
+    }));
+    current.push({ label: '', url: '' });
+    buildAttachmentEditorRows(current);
+  });
+
+  document.getElementById('new-asset-btn')?.addEventListener('click', () => openAssetEditor(null));
+  document.getElementById('close-asset-modal')?.addEventListener('click', () => closeModal(assetModal));
+  document.getElementById('cancel-asset-btn')?.addEventListener('click', () => closeModal(assetModal));
+  document.getElementById('save-asset-btn')?.addEventListener('click', saveAssetFromModal);
+  document.getElementById('delete-asset-btn')?.addEventListener('click', deleteAssetFromModal);
+
+  document.getElementById('add-note-btn')?.addEventListener('click', addNote);
+  document.getElementById('close-note-modal')?.addEventListener('click', () => closeModal(noteModal));
+  document.getElementById('cancel-note-btn')?.addEventListener('click', () => closeModal(noteModal));
+  document.getElementById('save-note-btn')?.addEventListener('click', saveNoteFromModal);
+  document.getElementById('delete-note-btn')?.addEventListener('click', deleteNoteFromModal);
+
+  document.getElementById('edit-overview-btn')?.addEventListener('click', openOverviewEditor);
+  document.getElementById('close-overview-modal')?.addEventListener('click', () => closeModal(overviewModal));
+  document.getElementById('cancel-overview-btn')?.addEventListener('click', () => closeModal(overviewModal));
+  document.getElementById('save-overview-btn')?.addEventListener('click', saveOverviewFromModal);
+
+  document.getElementById('close-review-info-modal')?.addEventListener('click', () => closeModal(reviewInfoModal));
+
+  [taskModal, assetModal, noteModal, overviewModal, reviewInfoModal].forEach(modal => {
+    if (!modal) return;
+    modal.addEventListener('click', (e) => {
+      if (e.target === modal) closeModal(modal);
+    });
+  });
+
+  switchTab('tasks');
+});
   
 </script>
 </body>

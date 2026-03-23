@@ -1991,6 +1991,7 @@ async function saveNoteFromModal() {
   
 async function deleteNoteFromModal() {
   const idValue = document.getElementById('note-edit-id').value.trim();
+
   if (!idValue) {
     closeModal(noteModal);
     return;
@@ -2002,10 +2003,9 @@ async function deleteNoteFromModal() {
     id: idValue
   });
 
-  workspaceData.notes = workspaceData.notes.filter((n, index) => {
-    const candidateId = String(n.id ?? `note-${index}`);
-    return candidateId !== String(idValue);
-  });
+  workspaceData.notes = workspaceData.notes.filter(
+    n => String(n.id ?? '').trim() !== String(idValue)
+  );
 
   renderNotes();
   closeModal(noteModal);

@@ -1056,6 +1056,7 @@ async function apiGet(action, params = {}) {
       assets: Array.isArray(data.workspace.assets) ? data.workspace.assets : [],
       phases: Array.isArray(data.workspace.phases) ? data.workspace.phases : [],
       deliverables: Array.isArray(data.workspace.deliverables) ? data.workspace.deliverables : []
+      console.log('Loaded notes:', workspaceData.notes);
     };
   }
 
@@ -1969,19 +1970,19 @@ async function saveNoteFromModal() {
     note: data
   });
 
-  const savedId = String(res.note?.id ?? data.id);
+  const savedNote = res.note || data;
+  const savedRealId = String(savedNote.id ?? '').trim();
 
-  const idx = workspaceData.notes.findIndex((n, index) => {
-    return getStableNoteId(n, index) === savedId;
-  });
+  if (rawId) {
+    const existingIndex = workspaceData.notes.findIndex(n => String(n.id ?? '').trim() === rawId);
 
-  if (idx === -1) {
-    workspaceData.notes.unshift(res.note);
+    if (existingIndex !== -1) {
+      workspaceData.notes[existingIndex] = savedNote;
+    } else {
+      workspaceData.notes.unshift(savedNote);
+    }
   } else {
-    workspaceData.notes[idx] = {
-      ...workspaceData.notes[idx],
-      ...res.note
-    };
+    workspaceData.notes.unshift(savedNote);
   }
 
   renderNotes();

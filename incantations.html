@@ -1542,30 +1542,104 @@ function createCategoryBadge(cat) {
     }
   }
 
-async function triggerPageRefresh() {
-  try {
-    const response = await fetch(`${DATA_ENDPOINT}?action=pageRefresh&t=${Date.now()}`, {
-      cache: "no-store"
-    });
-    return await response.json();
-  } catch (error) {
-    console.warn("Page refresh trigger failed:", error);
-    return null;
+  let appInitialized = false;
+
+  async function triggerPageRefresh(batchSize = 2, timeoutMs = 8000) {
+    const url = `${DATA_ENDPOINT}?action=pageRefresh&batchSize=${batchSize}&t=${Date.now()}`;
+
+    try {
+      const response = await Promise.race([
+        fetch(url, { cache: "no-store" }),
+        new Promise((_, reject) =>
+          setTimeout(() => reject(new Error("Refresh timed out")), timeoutMs)
+        )
+      ]);
+
+      if (!response.ok) {
+        throw new Error(`Refresh HTTP ${response.status}`);
+      }
+
+      const data = await response.json();
+      console.log("Page refresh response:", data);
+      return data;
+    } catch (error) {
+      console.warn("Page refresh trigger failed:", error);
+      return null;
+    }
   }
-}
 
-window.onload = async () => {
-  createStars();
+  function initApp() {
+    const popSelect = (id, list, placeholder) => {
+      const el = document.getElementById(id);
+      if (!el) return;
 
-  await triggerPageRefresh();
+      const currentValue = el.value;
 
-  const ok = await loadTaxonomy();
-  if (!ok) {
-    showLoadError();
+      el.innerHTML =
+        `<option value="">${placeholder}</option>` +
+        safeArray(list).map(item => `<option value="${escapeHtml(item)}">${escapeHtml(item)}</option>`).join("");
+
+      if (currentValue && safeArray(list).includes(currentValue)) {
+        el.value = currentValue;
+      }
+    };
+
+    popSelect("gen-org-type", TAXONOMY.controlLists.orgTypes, "Select Org Type...");
+    popSelect("gen-issue-area", TAXONOMY.controlLists.issueAreas, "Select Domain...");
+    popSelect("gen-audience", TAXONOMY.controlLists.audiences, "Select Entity...");
+    popSelect("gen-goal", TAXONOMY.controlLists.goals, "Select Outcome...");
+    popSelect("org-select", TAXONOMY.orgs.map(o => o.name).filter(Boolean), "Choose an Organization...");
+    popSelect("cat-select", TAXONOMY.controlLists.categories, "Choose a Domain...");
+
+    const platSelectEl = document.getElementById("plat-select");
+    if (platSelectEl) {
+      const currentValue = platSelectEl.value;
+      const platformList = safeArray(TAXONOMY.controlLists.platforms);
+
+      platSelectEl.innerHTML =
+        `<option value="">All Platforms</option>` +
+        platformList.map(item => `<option value="${escapeHtml(item)}">${escapeHtml(item)}</option>`).join("");
+
+      if (currentValue && platformList.includes(currentValue)) {
+        platSelectEl.value = currentValue;
+      }
+    }
+
+    if (!appInitialized) {
+      document.getElementById("generator-form")?.addEventListener("submit", handleGenerate);
+      document.getElementById("org-select")?.addEventListener("change", handleOrgSelect);
+      document.getElementById("cat-select")?.addEventListener("change", handleCatSelect);
+      document.getElementById("search-input")?.addEventListener("input", handleSearch);
+      document.getElementById("search-ad-grant-filter")?.addEventListener("change", handleSearch);
+      document.getElementById("search-sort")?.addEventListener("change", handleSearch);
+      document.getElementById("plat-select")?.addEventListener("change", handlePlatFilter);
+      document.getElementById("plat-ad-grant-filter")?.addEventListener("change", handlePlatFilter);
+
+      appInitialized = true;
+    }
+
+    handlePlatFilter();
   }
 
-  initApp();
-};
+  window.onload = async () => {
+    createStars();
+
+    const ok = await loadTaxonomy();
+    if (!ok) {
+      showLoadError();
+      return;
+    }
+
+    initApp();
+
+    const refreshResult = await triggerPageRefresh(2, 8000);
+    if (refreshResult) {
+      const refreshedOk = await loadTaxonomy();
+      if (refreshedOk) {
+        initApp();
+      }
+    }
+  };
 </script>
 
 </body>

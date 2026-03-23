@@ -1038,27 +1038,28 @@ async function apiGet(action, params = {}) {
     return data;
   }
 
-  async function loadWorkspaceData() {
-    const data = await apiGet('getWorkspace', { clientSlug: CLIENT_SLUG });
-  
-    if (!data || !data.ok) {
-      throw new Error(data?.error || 'Workspace request failed');
-    }
-  
-    if (!data.workspace) {
-      throw new Error('Workspace data missing from response');
-    }
-  
-    workspaceData = {
-      project: data.workspace.project || {},
-      tasks: Array.isArray(data.workspace.tasks) ? data.workspace.tasks : [],
-      notes: Array.isArray(data.workspace.notes) ? data.workspace.notes : [],
-      assets: Array.isArray(data.workspace.assets) ? data.workspace.assets : [],
-      phases: Array.isArray(data.workspace.phases) ? data.workspace.phases : [],
-      deliverables: Array.isArray(data.workspace.deliverables) ? data.workspace.deliverables : []
-      console.log('Loaded notes:', workspaceData.notes);
-    };
+async function loadWorkspaceData() {
+  const data = await apiGet('getWorkspace', { clientSlug: CLIENT_SLUG });
+
+  if (!data || !data.ok) {
+    throw new Error(data?.error || 'Workspace request failed');
   }
+
+  if (!data.workspace) {
+    throw new Error('Workspace data missing from response');
+  }
+
+  workspaceData = {
+    project: data.workspace.project || {},
+    tasks: Array.isArray(data.workspace.tasks) ? data.workspace.tasks : [],
+    notes: Array.isArray(data.workspace.notes) ? data.workspace.notes : [],
+    assets: Array.isArray(data.workspace.assets) ? data.workspace.assets : [],
+    phases: Array.isArray(data.workspace.phases) ? data.workspace.phases : [],
+    deliverables: Array.isArray(data.workspace.deliverables) ? data.workspace.deliverables : []
+  };
+
+  console.log('Loaded notes:', workspaceData.notes);
+}
 
   function getNextId(items) {
     if (!items.length) return 1;

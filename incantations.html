@@ -1544,29 +1544,41 @@ function createCategoryBadge(cat) {
 
   let appInitialized = false;
 
-  async function triggerPageRefresh(batchSize = 2, timeoutMs = 8000) {
-    const url = `${DATA_ENDPOINT}?action=pageRefresh&batchSize=${batchSize}&t=${Date.now()}`;
+async function triggerFullRefresh(batchSize = 3, maxRuns = 10) {
+  let runs = 0;
+  let complete = false;
 
+  while (!complete && runs < maxRuns) {
     try {
-      const response = await Promise.race([
-        fetch(url, { cache: "no-store" }),
-        new Promise((_, reject) =>
-          setTimeout(() => reject(new Error("Refresh timed out")), timeoutMs)
-        )
-      ]);
+      const res = await fetch(
+        `${DATA_ENDPOINT}?action=pageRefresh&batchSize=${batchSize}&t=${Date.now()}`,
+        { cache: "no-store" }
+      );
 
-      if (!response.ok) {
-        throw new Error(`Refresh HTTP ${response.status}`);
-      }
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
 
-      const data = await response.json();
-      console.log("Page refresh response:", data);
-      return data;
-    } catch (error) {
-      console.warn("Page refresh trigger failed:", error);
-      return null;
+      const data = await res.json();
+      console.log(`Refresh run ${runs + 1}:`, data);
+
+      // check all sources
+      const googleDone = data?.results?.googleAds?.complete;
+      const youtubeDone = data?.results?.youtube?.complete;
+      const blueskyDone = data?.results?.bluesky?.complete;
+
+      complete = googleDone && youtubeDone && blueskyDone;
+
+      runs++;
+    } catch (err) {
+      console.warn("Refresh loop error:", err);
+      break;
     }
+
+    // small delay so Apps Script doesn't choke
+    await new Promise(r => setTimeout(r, 1200));
   }
+
+  return complete;
+}
 
   function initApp() {
     const popSelect = (id, list, placeholder) => {
@@ -1621,25 +1633,31 @@ function createCategoryBadge(cat) {
     handlePlatFilter();
   }
 
-  window.onload = async () => {
-    createStars();
+window.onload = async () => {
+  createStars();
 
-    const ok = await loadTaxonomy();
-    if (!ok) {
-      showLoadError();
-      return;
-    }
+  // load current data first
+  const ok = await loadTaxonomy();
+  if (!ok) {
+    showLoadError();
+    return;
+  }
 
-    initApp();
+  initApp();
 
-    const refreshResult = await triggerPageRefresh(2, 8000);
-    if (refreshResult) {
-      const refreshedOk = await loadTaxonomy();
-      if (refreshedOk) {
-        initApp();
-      }
-    }
-  };
+  // THEN run full refresh loop
+  const finished = await triggerFullRefresh(3, 12);
+
+  if (finished) {
+    console.log("All seeds processed ✅");
+  } else {
+    console.log("Stopped early (partial refresh)");
+  }
+
+  // reload updated data
+  const refreshedOk = await loadTaxonomy();
+  if (refreshedOk) initApp();
+};
 </script>
 
 </body>

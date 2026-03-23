@@ -1381,50 +1381,50 @@ function renderNotes() {
     const initials = escapeHtml(getInitials(note.author || 'NA'));
     const isEven = index % 2 === 1;
 
-    return `
-      <div class="relative flex items-start gap-6 md:gap-8 group">
-        <div class="absolute left-[1.4rem] md:left-1/2 -translate-x-1/2 mt-1.5 w-3 h-3 rounded-full bg-purple-500 border-[3px] border-[#0a0614] shadow-[0_0_10px_rgba(168,85,247,0.5)] z-10"></div>
-
-        <div class="hidden md:block w-1/2 ${isEven ? 'order-1' : 'order-3'}"></div>
-
-        <div class="flex-1 md:w-1/2 ml-12 md:ml-0 order-2 ${isEven ? 'md:mr-auto md:text-right' : 'md:ml-auto'}">
-          <div class="glass-card rounded-xl p-5 relative">
-            <div class="hidden md:block absolute top-3 w-8 h-px bg-purple-500/30 ${isEven ? '-right-8' : '-left-8'}"></div>
-
-            <div class="flex items-center gap-3 mb-3 ${isEven ? 'md:flex-row-reverse' : ''}">
-              <div class="w-8 h-8 rounded-full bg-cyan-500/20 border border-cyan-500/30 flex items-center justify-center text-[10px] text-cyan-300 font-bold shrink-0">
-                ${initials}
+      return `
+        <div class="relative flex items-start gap-6 md:gap-8 group">
+          <div class="absolute left-[1.4rem] md:left-1/2 -translate-x-1/2 mt-1.5 w-3 h-3 rounded-full bg-purple-500 border-[3px] border-[#0a0614] shadow-[0_0_10px_rgba(168,85,247,0.5)] z-10"></div>
+      
+          <div class="hidden md:block w-1/2 ${isEven ? 'order-1' : 'order-3'}"></div>
+      
+          <div class="flex-1 md:w-1/2 ml-12 md:ml-0 order-2 ${isEven ? 'md:mr-auto md:text-right' : 'md:ml-auto'}">
+            <div class="glass-card rounded-xl p-5 relative">
+              <div class="hidden md:block absolute top-3 w-8 h-px bg-purple-500/30 ${isEven ? '-left-8' : '-right-8'}"></div>
+      
+              <div class="flex items-center gap-3 mb-3 ${isEven ? 'md:flex-row-reverse' : ''}">
+                <div class="w-8 h-8 rounded-full bg-cyan-500/20 border border-cyan-500/30 flex items-center justify-center text-[10px] text-cyan-300 font-bold shrink-0">
+                  ${initials}
+                </div>
+      
+                <div class="flex flex-col ${isEven ? 'md:items-end' : ''}">
+                  <span class="text-white text-sm font-medium">${escapeHtml(note.author || '')}</span>
+                  <span class="text-gray-500 text-[10px] uppercase tracking-wider">${escapeHtml(note.date || '')}</span>
+                </div>
               </div>
-
-              <div class="flex flex-col ${isEven ? 'md:items-end' : ''}">
-                <span class="text-white text-sm font-medium">${escapeHtml(note.author || '')}</span>
-                <span class="text-gray-500 text-[10px] uppercase tracking-wider">${escapeHtml(note.date || '')}</span>
+      
+              <p class="text-gray-300 text-sm leading-relaxed whitespace-pre-wrap break-words">${escapeHtml(note.text || '')}</p>
+      
+              <div class="flex items-center gap-2 mt-4 pt-3 border-t border-white/5 ${isEven ? 'md:justify-end' : ''}">
+                <button
+                  type="button"
+                  onclick="openNoteEditorById('${safeId}'); event.stopPropagation();"
+                  class="p-2 rounded-lg bg-white/5 border border-white/10 text-gray-300 hover:text-white"
+                >
+                  <i class="ph-bold ph-pencil-simple"></i>
+                </button>
+      
+                <button
+                  type="button"
+                  onclick="deleteNoteById('${safeId}'); event.stopPropagation();"
+                  class="p-2 rounded-lg bg-rose-500/10 border border-rose-500/20 text-rose-300 hover:text-white"
+                >
+                  <i class="ph-bold ph-trash"></i>
+                </button>
               </div>
-            </div>
-
-            <p class="text-gray-300 text-sm leading-relaxed whitespace-pre-wrap break-words">${escapeHtml(note.text || '')}</p>
-
-            <div class="flex items-center gap-2 mt-4 pt-3 border-t border-white/5 ${isEven ? 'md:justify-end' : ''}">
-              <button
-                type="button"
-                onclick="openNoteEditorById('${safeId}'); event.stopPropagation();"
-                class="p-2 rounded-lg bg-white/5 border border-white/10 text-gray-300 hover:text-white"
-              >
-                <i class="ph-bold ph-pencil-simple"></i>
-              </button>
-
-              <button
-                type="button"
-                onclick="deleteNoteById('${safeId}'); event.stopPropagation();"
-                class="p-2 rounded-lg bg-rose-500/10 border border-rose-500/20 text-rose-300 hover:text-white"
-              >
-                <i class="ph-bold ph-trash"></i>
-              </button>
             </div>
           </div>
         </div>
-      </div>
-    `;
+      `;
   }).join('');
 }
 

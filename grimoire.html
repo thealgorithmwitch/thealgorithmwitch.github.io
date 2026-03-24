@@ -239,6 +239,154 @@
       border: 1px solid rgba(139, 92, 246, 0.15);
     }
 
+    .flip-card {
+  background-color: transparent;
+  perspective: 1000px;
+  min-height: 430px;
+}
+
+.flip-card-inner {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  min-height: 430px;
+  text-align: left;
+  transition: transform 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+  transform-style: preserve-3d;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .flip-card:hover .flip-card-inner {
+    transform: rotateY(180deg);
+  }
+}
+
+.flip-card.is-flipped .flip-card-inner {
+  transform: rotateY(180deg);
+}
+
+.flip-card-front,
+.flip-card-back {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  min-height: 430px;
+  -webkit-backface-visibility: hidden;
+  backface-visibility: hidden;
+  border-radius: 0.75rem;
+  overflow: hidden;
+}
+
+.flip-card-front {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.flip-card-back {
+  background: rgba(20, 15, 45, 0.82);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(167, 139, 250, 0.3);
+  transform: rotateY(180deg);
+  padding: 1.25rem;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.flip-toggle,
+.flip-close {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid rgba(255,255,255,0.1);
+  background: rgba(0,0,0,0.35);
+  color: #e9d5ff;
+  transition: all 0.2s ease;
+  cursor: pointer;
+}
+
+.flip-toggle {
+  position: absolute;
+  right: 0.9rem;
+  bottom: 0.9rem;
+  width: 2.25rem;
+  height: 2.25rem;
+  border-radius: 9999px;
+  z-index: 5;
+}
+
+.flip-close {
+  width: 2rem;
+  height: 2rem;
+  border-radius: 9999px;
+  flex-shrink: 0;
+}
+
+.flip-toggle:hover,
+.flip-close:hover {
+  background: rgba(168, 85, 247, 0.2);
+  border-color: rgba(168, 85, 247, 0.45);
+  color: white;
+}
+
+.meta-pill {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.3rem 0.65rem;
+  border-radius: 9999px;
+  border: 1px solid rgba(255,255,255,0.1);
+  background: rgba(255,255,255,0.03);
+  color: #d1d5db;
+  font-size: 10px;
+  line-height: 1;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+}
+
+.meta-pill-purple {
+  border-color: rgba(168, 85, 247, 0.35);
+  color: #d8b4fe;
+}
+
+.meta-pill-fuchsia {
+  border-color: rgba(217, 70, 239, 0.35);
+  color: #f0abfc;
+}
+
+.meta-pill-cyan {
+  border-color: rgba(34, 211, 238, 0.35);
+  color: #a5f3fc;
+}
+
+.meta-pill-amber {
+  border-color: rgba(251, 191, 36, 0.35);
+  color: #fde68a;
+}
+
+.flip-link {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.16em;
+  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+}
+
+.library-card.is-hidden {
+  display: none !important;
+}
+
+@media (max-width: 768px) {
+  .flip-card,
+  .flip-card-inner,
+  .flip-card-front,
+  .flip-card-back {
+    min-height: 400px;
+  }
+}
+
     .glass-card {
       background: rgba(255, 255, 255, 0.03);
       border: 1px solid rgba(255, 255, 255, 0.05);
@@ -381,29 +529,77 @@
 
   <main class="relative z-10 w-full max-w-7xl mx-auto px-6 pt-40 pb-20" vid="28">
 
-    <!-- POST LIBRARY SECTION -->
-    <section id="post-library" class="mb-32 section-fade-up" vid="29">
-      <div class="mb-12" vid="30">
-        <div class="flex items-center gap-4 mb-4" vid="31">
-          <span class="h-px w-12 bg-purple-500" vid="32"></span>
-          <h2 class="font-magical text-3xl text-white" vid="33">Grimoire Vault</h2>
-        </div>
-        <p class="text-gray-400 font-light max-w-2xl" vid="34">
-          High-performing content pieces crafted for engagement and trust building across digital systems.
-        </p>
+<section id="post-library" class="mb-32 section-fade-up">
+  <div class="mb-12">
+    <div class="flex items-center gap-4 mb-4">
+      <span class="h-px w-12 bg-purple-500"></span>
+      <h2 class="font-magical text-3xl text-white">Grimoire Vault</h2>
+    </div>
+    <p class="text-gray-400 font-light max-w-2xl mb-8">
+      High-performing content pieces crafted for engagement, education, and trust building across digital systems.
+    </p>
+
+    <div class="glass-panel rounded-xl p-4 mb-8 flex flex-wrap gap-4 items-center">
+      <div class="flex items-center gap-2">
+        <i class="ph-bold ph-funnel text-purple-400"></i>
+        <span class="text-xs uppercase tracking-widest text-gray-400 font-bold">Filter By</span>
       </div>
 
-      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6" vid="35">
+      <div class="relative">
+        <select id="filterPlatform" class="appearance-none bg-black/40 border border-white/10 hover:border-purple-500/50 text-white text-xs px-4 py-2 pr-8 rounded-lg cursor-pointer transition-colors">
+          <option value="all">All Platforms</option>
+          <option value="instagram">Instagram</option>
+          <option value="tiktok">TikTok</option>
+          <option value="youtube">YouTube</option>
+          <option value="website">Website</option>
+          <option value="blog">Blog</option>
+        </select>
+        <i class="ph-bold ph-caret-down absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 text-xs pointer-events-none"></i>
+      </div>
 
-        <!-- ROW 1 -->
-        <a href="https://www.instagram.com/reel/C_Oh-vNSaKo/?igsh=cWt3c2ZtMWNiczZq" target="_blank" rel="noopener noreferrer" class="glass-card rounded-xl flex flex-col group" vid="54">
-          <div class="aspect-square thumbnail-placeholder flex items-center justify-center border-b border-white/5" vid="55">
-            <img src="assets/images/climateinfluencer.jpeg" alt="" class="w-full h-full object-cover opacity-90 group-hover:opacity-100 transition-opacity" loading="lazy" decoding="async" />
+      <div class="relative">
+        <select id="filterPillar" class="appearance-none bg-black/40 border border-white/10 hover:border-purple-500/50 text-white text-xs px-4 py-2 pr-8 rounded-lg cursor-pointer transition-colors">
+          <option value="all">All Pillars</option>
+          <option value="strategy">Strategy</option>
+          <option value="narrative">Narrative</option>
+          <option value="education">Education</option>
+          <option value="advocacy">Advocacy</option>
+        </select>
+        <i class="ph-bold ph-caret-down absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 text-xs pointer-events-none"></i>
+      </div>
+
+      <div class="relative">
+        <select id="filterRole" class="appearance-none bg-black/40 border border-white/10 hover:border-purple-500/50 text-white text-xs px-4 py-2 pr-8 rounded-lg cursor-pointer transition-colors">
+          <option value="all">All Roles</option>
+          <option value="digital-director">Digital Director</option>
+          <option value="communications-manager">Communications Manager</option>
+          <option value="web-designer">Web Designer</option>
+          <option value="content-strategist">Content Strategist</option>
+        </select>
+        <i class="ph-bold ph-caret-down absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 text-xs pointer-events-none"></i>
+      </div>
+
+      <button id="resetLibraryFilters" class="ml-auto text-xs text-gray-400 hover:text-white transition-colors flex items-center gap-1">
+        <i class="ph-bold ph-arrow-counter-clockwise"></i> Reset
+      </button>
+    </div>
+  </div>
+
+  <div id="postLibraryGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+
+    <!-- 1 -->
+    <article class="flip-card library-card"
+      data-platform="instagram"
+      data-pillar="advocacy"
+      data-role="communications-manager content-strategist">
+      <div class="flip-card-inner">
+        <div class="flip-card-front flex flex-col group">
+          <div class="aspect-square thumbnail-placeholder flex items-center justify-center border-b border-white/5">
+            <img src="assets/images/climateinfluencer.jpeg" alt="Navajo Power Home x Creators Campaign" class="w-full h-full object-cover opacity-90 group-hover:opacity-100 transition-opacity" loading="lazy" decoding="async" />
           </div>
-          <div class="p-5" vid="57">
-            <span class="text-[10px] uppercase tracking-[0.2em] text-fuchsia-400 font-bold" vid="58">Instagram • Advocacy</span>
-            <h3 class="text-white font-medium mt-1 mb-4 group-hover:text-fuchsia-200 transition-colors" vid="59">Navajo Power Home x Creators Campaign</h3>
-
+          <div class="p-5">
+            <span class="text-[10px] uppercase tracking-[0.2em] text-fuchsia-400 font-bold">Instagram • Advocacy</span>
+            <h3 class="text-white font-medium mt-1 mb-4 group-hover:text-fuchsia-200 transition-colors">Navajo Power Home x Creators Campaign</h3>
             <div class="grid grid-cols-3 gap-2 pt-3 border-t border-white/5">
               <div class="text-center">
                 <div class="font-magical text-sm text-white">100K</div>
@@ -415,20 +611,61 @@
               </div>
               <div class="text-center">
                 <div class="font-magical text-sm text-yellow-300">5</div>
-                <div class="text-[9px] uppercase tracking-wider text-gray-500 mt-0.5">Total Creators</div>
+                <div class="text-[9px] uppercase tracking-wider text-gray-500 mt-0.5">Creators</div>
               </div>
             </div>
           </div>
-        </a>
+          <button class="flip-toggle" type="button" aria-expanded="false" aria-label="View details for Navajo Power Home x Creators Campaign">
+            <i class="ph-bold ph-sparkle"></i>
+          </button>
+        </div>
+        <div class="flip-card-back">
+          <div>
+            <div class="flex items-start justify-between gap-3 mb-4">
+              <div>
+                <h4 class="text-xs uppercase tracking-widest text-fuchsia-300 font-bold mb-2">What This Demonstrates</h4>
+                <p class="text-sm text-gray-200 leading-relaxed">
+                  Creator partnership strategy grounded in campaign alignment, message clarity, and distributed reach.
+                </p>
+              </div>
+              <button class="flip-close" type="button" aria-label="Close details">
+                <i class="ph-bold ph-x"></i>
+              </button>
+            </div>
+            <div class="mb-5">
+              <h5 class="text-[10px] uppercase tracking-widest text-gray-400 font-bold mb-2">My Role</h5>
+              <div class="flex flex-wrap gap-2">
+                <span class="meta-pill meta-pill-fuchsia">Communications Manager</span>
+                <span class="meta-pill">Content Strategist</span>
+              </div>
+            </div>
+            <div class="mb-6">
+              <h5 class="text-[10px] uppercase tracking-widest text-gray-400 font-bold mb-2">Use Case</h5>
+              <p class="text-xs text-gray-300 leading-relaxed">
+                Multi-creator campaign design for awareness building, partner coordination, and values-aligned storytelling.
+              </p>
+            </div>
+          </div>
+          <a href="https://www.instagram.com/reel/C_Oh-vNSaKo/?igsh=cWt3c2ZtMWNiczZq" target="_blank" rel="noopener noreferrer" class="flip-link text-fuchsia-300 hover:text-white">
+            View live post <i class="ph-bold ph-arrow-up-right ml-1"></i>
+          </a>
+        </div>
+      </div>
+    </article>
 
-        <a href="https://www.instagram.com/reel/DHZL-bJR7E4/" target="_blank" rel="noopener noreferrer" class="glass-card rounded-xl flex flex-col group">
+    <!-- 2 -->
+    <article class="flip-card library-card"
+      data-platform="instagram"
+      data-pillar="advocacy"
+      data-role="digital-director content-strategist">
+      <div class="flip-card-inner">
+        <div class="flip-card-front flex flex-col group">
           <div class="aspect-square thumbnail-placeholder flex items-center justify-center border-b border-white/5">
-            <img src="assets/images/protectcleanenergy.jpeg" alt="" class="w-full h-full object-cover opacity-90 group-hover:opacity-100 transition-opacity" loading="lazy" decoding="async" />
+            <img src="assets/images/protectcleanenergy.jpeg" alt="Authority in the Feed" class="w-full h-full object-cover opacity-90 group-hover:opacity-100 transition-opacity" loading="lazy" decoding="async" />
           </div>
           <div class="p-5">
             <span class="text-[10px] uppercase tracking-[0.2em] text-purple-400 font-bold">Instagram • Advocacy</span>
             <h3 class="text-white font-medium mt-1 mb-4 group-hover:text-purple-200 transition-colors">Authority in the Feed</h3>
-
             <div class="grid grid-cols-3 gap-2 pt-3 border-t border-white/5">
               <div class="text-center">
                 <div class="font-magical text-sm text-white">108</div>
@@ -444,16 +681,57 @@
               </div>
             </div>
           </div>
-        </a>
+          <button class="flip-toggle" type="button" aria-expanded="false" aria-label="View details for Authority in the Feed">
+            <i class="ph-bold ph-sparkle"></i>
+          </button>
+        </div>
+        <div class="flip-card-back">
+          <div>
+            <div class="flex items-start justify-between gap-3 mb-4">
+              <div>
+                <h4 class="text-xs uppercase tracking-widest text-purple-300 font-bold mb-2">What This Demonstrates</h4>
+                <p class="text-sm text-gray-200 leading-relaxed">
+                  Message discipline in a high-trust visual format built for policy credibility and public shareability.
+                </p>
+              </div>
+              <button class="flip-close" type="button" aria-label="Close details">
+                <i class="ph-bold ph-x"></i>
+              </button>
+            </div>
+            <div class="mb-5">
+              <h5 class="text-[10px] uppercase tracking-widest text-gray-400 font-bold mb-2">My Role</h5>
+              <div class="flex flex-wrap gap-2">
+                <span class="meta-pill meta-pill-purple">Digital Director</span>
+                <span class="meta-pill">Content Strategist</span>
+              </div>
+            </div>
+            <div class="mb-6">
+              <h5 class="text-[10px] uppercase tracking-widest text-gray-400 font-bold mb-2">Use Case</h5>
+              <p class="text-xs text-gray-300 leading-relaxed">
+                Strong example of turning institutional voice into something clear, credible, and native to the platform.
+              </p>
+            </div>
+          </div>
+          <a href="https://www.instagram.com/reel/DHZL-bJR7E4/" target="_blank" rel="noopener noreferrer" class="flip-link text-purple-300 hover:text-white">
+            View live post <i class="ph-bold ph-arrow-up-right ml-1"></i>
+          </a>
+        </div>
+      </div>
+    </article>
 
-        <a href="https://www.facesofcleanenergy.org/workforce" target="_blank" rel="noopener noreferrer" class="glass-card rounded-xl flex flex-col group">
+    <!-- 3 -->
+    <article class="flip-card library-card"
+      data-platform="website"
+      data-pillar="education"
+      data-role="web-designer content-strategist">
+      <div class="flip-card-inner">
+        <div class="flip-card-front flex flex-col group">
           <div class="aspect-square thumbnail-placeholder flex items-center justify-center border-b border-white/5">
-            <img src="assets/images/jobboard.jpeg" alt="" class="w-full h-full object-cover opacity-90 group-hover:opacity-100 transition-opacity" loading="lazy" decoding="async" />
+            <img src="assets/images/jobboard.jpeg" alt="Community Campaign Job Board" class="w-full h-full object-cover opacity-90 group-hover:opacity-100 transition-opacity" loading="lazy" decoding="async" />
           </div>
           <div class="p-5">
-            <span class="text-[10px] uppercase tracking-[0.2em] text-cyan-400 font-bold">Website • Job Board</span>
-            <h3 class="text-white font-medium mt-1 mb-4 group-hover:text-cyan-200 transition-colors">Community Campaign</h3>
-
+            <span class="text-[10px] uppercase tracking-[0.2em] text-cyan-400 font-bold">Website • Education</span>
+            <h3 class="text-white font-medium mt-1 mb-4 group-hover:text-cyan-200 transition-colors">Community Campaign Job Board</h3>
             <div class="grid grid-cols-3 gap-2 pt-3 border-t border-white/5">
               <div class="text-center">
                 <div class="font-magical text-sm text-white">8K+</div>
@@ -469,42 +747,123 @@
               </div>
             </div>
           </div>
-        </a>
-
-        <a href="https://www.tiktok.com/@facesofcleanenergy/video/7561142659285339405" target="_blank" rel="noopener noreferrer" class="glass-card rounded-xl flex flex-col group" vid="42">
-          <div class="aspect-square thumbnail-placeholder flex items-center justify-center border-b border-white/5" vid="43">
-            <img src="assets/images/cleanenergymyths.jpeg" alt="" class="w-full h-full object-cover opacity-90 group-hover:opacity-100 transition-opacity" loading="lazy" decoding="async" />
+          <button class="flip-toggle" type="button" aria-expanded="false" aria-label="View details for Community Campaign Job Board">
+            <i class="ph-bold ph-sparkle"></i>
+          </button>
+        </div>
+        <div class="flip-card-back">
+          <div>
+            <div class="flex items-start justify-between gap-3 mb-4">
+              <div>
+                <h4 class="text-xs uppercase tracking-widest text-cyan-300 font-bold mb-2">What This Demonstrates</h4>
+                <p class="text-sm text-gray-200 leading-relaxed">
+                  Website architecture designed to support public resource access, partnerships, and campaign discoverability.
+                </p>
+              </div>
+              <button class="flip-close" type="button" aria-label="Close details">
+                <i class="ph-bold ph-x"></i>
+              </button>
+            </div>
+            <div class="mb-5">
+              <h5 class="text-[10px] uppercase tracking-widest text-gray-400 font-bold mb-2">My Role</h5>
+              <div class="flex flex-wrap gap-2">
+                <span class="meta-pill meta-pill-cyan">Web Designer</span>
+                <span class="meta-pill">Content Strategist</span>
+              </div>
+            </div>
+            <div class="mb-6">
+              <h5 class="text-[10px] uppercase tracking-widest text-gray-400 font-bold mb-2">Use Case</h5>
+              <p class="text-xs text-gray-300 leading-relaxed">
+                Turning campaign energy into an actionable, navigable tool people can actually use.
+              </p>
+            </div>
           </div>
-          <div class="p-5" vid="45">
-            <span class="text-[10px] uppercase tracking-[0.2em] text-amber-400 font-bold" vid="46">TikTok • Narrative</span>
-            <h3 class="text-white font-medium mt-1 mb-4 group-hover:text-amber-200 transition-colors" vid="47">The Alchemy of Viral Hooks</h3>
+          <a href="https://www.facesofcleanenergy.org/workforce" target="_blank" rel="noopener noreferrer" class="flip-link text-cyan-300 hover:text-white">
+            Visit site <i class="ph-bold ph-arrow-up-right ml-1"></i>
+          </a>
+        </div>
+      </div>
+    </article>
 
+    <!-- 4 -->
+    <article class="flip-card library-card"
+      data-platform="tiktok"
+      data-pillar="narrative"
+      data-role="content-strategist communications-manager">
+      <div class="flip-card-inner">
+        <div class="flip-card-front flex flex-col group">
+          <div class="aspect-square thumbnail-placeholder flex items-center justify-center border-b border-white/5">
+            <img src="assets/images/cleanenergymyths.jpeg" alt="The Alchemy of Viral Hooks" class="w-full h-full object-cover opacity-90 group-hover:opacity-100 transition-opacity" loading="lazy" decoding="async" />
+          </div>
+          <div class="p-5">
+            <span class="text-[10px] uppercase tracking-[0.2em] text-amber-400 font-bold">TikTok • Narrative</span>
+            <h3 class="text-white font-medium mt-1 mb-4 group-hover:text-amber-200 transition-colors">The Alchemy of Viral Hooks</h3>
             <div class="grid grid-cols-3 gap-2 pt-3 border-t border-white/5">
               <div class="text-center">
                 <div class="font-magical text-sm text-white">1000+</div>
-                <div class="text-[9px] uppercase tracking-wider text-gray-500 mt-0.5">TikTok Views</div>
+                <div class="text-[9px] uppercase tracking-wider text-gray-500 mt-0.5">Views</div>
               </div>
               <div class="text-center border-x border-white/5">
                 <div class="font-magical text-sm text-amber-300">136</div>
-                <div class="text-[9px] uppercase tracking-wider text-gray-500 mt-0.5">TikTok Likes</div>
+                <div class="text-[9px] uppercase tracking-wider text-gray-500 mt-0.5">Likes</div>
               </div>
               <div class="text-center">
                 <div class="font-magical text-sm text-yellow-300">+12</div>
-                <div class="text-[9px] uppercase tracking-wider text-gray-500 mt-0.5">Followers Gained</div>
+                <div class="text-[9px] uppercase tracking-wider text-gray-500 mt-0.5">Followers</div>
               </div>
             </div>
           </div>
-        </a>
-
-        <!-- ROW 2 -->
-        <a href="https://www.youtube.com/shorts/n1LmEk7jp-o" target="_blank" rel="noopener noreferrer" class="glass-card rounded-xl flex flex-col group" vid="36">
-          <div class="aspect-square thumbnail-placeholder flex items-center justify-center border-b border-white/5" vid="37">
-            <img src="assets/images/communitysolar.jpeg" alt="" class="w-full h-full object-cover opacity-90 group-hover:opacity-100 transition-opacity" loading="lazy" decoding="async" />
+          <button class="flip-toggle" type="button" aria-expanded="false" aria-label="View details for The Alchemy of Viral Hooks">
+            <i class="ph-bold ph-sparkle"></i>
+          </button>
+        </div>
+        <div class="flip-card-back">
+          <div>
+            <div class="flex items-start justify-between gap-3 mb-4">
+              <div>
+                <h4 class="text-xs uppercase tracking-widest text-amber-300 font-bold mb-2">What This Demonstrates</h4>
+                <p class="text-sm text-gray-200 leading-relaxed">
+                  Platform-native hook writing built to hold attention quickly without flattening the message.
+                </p>
+              </div>
+              <button class="flip-close" type="button" aria-label="Close details">
+                <i class="ph-bold ph-x"></i>
+              </button>
+            </div>
+            <div class="mb-5">
+              <h5 class="text-[10px] uppercase tracking-widest text-gray-400 font-bold mb-2">My Role</h5>
+              <div class="flex flex-wrap gap-2">
+                <span class="meta-pill meta-pill-amber">Content Strategist</span>
+                <span class="meta-pill">Communications Manager</span>
+              </div>
+            </div>
+            <div class="mb-6">
+              <h5 class="text-[10px] uppercase tracking-widest text-gray-400 font-bold mb-2">Use Case</h5>
+              <p class="text-xs text-gray-300 leading-relaxed">
+                Short-form storytelling for myth-busting, explanation, and follower growth in a crowded feed.
+              </p>
+            </div>
           </div>
-          <div class="p-5" vid="39">
-            <span class="text-[10px] uppercase tracking-[0.2em] text-purple-400 font-bold" vid="40">YouTube • Strategy</span>
-            <h3 class="text-white font-medium mt-1 mb-4 group-hover:text-purple-200 transition-colors" vid="41">Community Solar Explained</h3>
+          <a href="https://www.tiktok.com/@facesofcleanenergy/video/7561142659285339405" target="_blank" rel="noopener noreferrer" class="flip-link text-amber-300 hover:text-white">
+            View live post <i class="ph-bold ph-arrow-up-right ml-1"></i>
+          </a>
+        </div>
+      </div>
+    </article>
 
+    <!-- 5 -->
+    <article class="flip-card library-card"
+      data-platform="youtube"
+      data-pillar="strategy"
+      data-role="digital-director content-strategist">
+      <div class="flip-card-inner">
+        <div class="flip-card-front flex flex-col group">
+          <div class="aspect-square thumbnail-placeholder flex items-center justify-center border-b border-white/5">
+            <img src="assets/images/communitysolar.jpeg" alt="Community Solar Explained" class="w-full h-full object-cover opacity-90 group-hover:opacity-100 transition-opacity" loading="lazy" decoding="async" />
+          </div>
+          <div class="p-5">
+            <span class="text-[10px] uppercase tracking-[0.2em] text-purple-400 font-bold">YouTube • Strategy</span>
+            <h3 class="text-white font-medium mt-1 mb-4 group-hover:text-purple-200 transition-colors">Community Solar Explained</h3>
             <div class="grid grid-cols-3 gap-2 pt-3 border-t border-white/5">
               <div class="text-center">
                 <div class="font-magical text-sm text-white">800+</div>
@@ -516,20 +875,61 @@
               </div>
               <div class="text-center">
                 <div class="font-magical text-sm text-yellow-300">4</div>
-                <div class="text-[9px] uppercase tracking-wider text-gray-500 mt-0.5">Total Shares</div>
+                <div class="text-[9px] uppercase tracking-wider text-gray-500 mt-0.5">Shares</div>
               </div>
             </div>
           </div>
-        </a>
+          <button class="flip-toggle" type="button" aria-expanded="false" aria-label="View details for Community Solar Explained">
+            <i class="ph-bold ph-sparkle"></i>
+          </button>
+        </div>
+        <div class="flip-card-back">
+          <div>
+            <div class="flex items-start justify-between gap-3 mb-4">
+              <div>
+                <h4 class="text-xs uppercase tracking-widest text-purple-300 font-bold mb-2">What This Demonstrates</h4>
+                <p class="text-sm text-gray-200 leading-relaxed">
+                  Educational video strategy that converts policy complexity into something people can follow fast.
+                </p>
+              </div>
+              <button class="flip-close" type="button" aria-label="Close details">
+                <i class="ph-bold ph-x"></i>
+              </button>
+            </div>
+            <div class="mb-5">
+              <h5 class="text-[10px] uppercase tracking-widest text-gray-400 font-bold mb-2">My Role</h5>
+              <div class="flex flex-wrap gap-2">
+                <span class="meta-pill meta-pill-purple">Digital Director</span>
+                <span class="meta-pill">Content Strategist</span>
+              </div>
+            </div>
+            <div class="mb-6">
+              <h5 class="text-[10px] uppercase tracking-widest text-gray-400 font-bold mb-2">Use Case</h5>
+              <p class="text-xs text-gray-300 leading-relaxed">
+                Video-first explanation content designed for retention, shareability, and partner amplification.
+              </p>
+            </div>
+          </div>
+          <a href="https://www.youtube.com/shorts/n1LmEk7jp-o" target="_blank" rel="noopener noreferrer" class="flip-link text-purple-300 hover:text-white">
+            View live short <i class="ph-bold ph-arrow-up-right ml-1"></i>
+          </a>
+        </div>
+      </div>
+    </article>
 
-        <a href="https://www.instagram.com/reel/CwiVB4DOY5r/" target="_blank" rel="noopener noreferrer" class="glass-card rounded-xl flex flex-col group">
+    <!-- 6 -->
+    <article class="flip-card library-card"
+      data-platform="instagram"
+      data-pillar="education"
+      data-role="communications-manager content-strategist">
+      <div class="flip-card-inner">
+        <div class="flip-card-front flex flex-col group">
           <div class="aspect-square thumbnail-placeholder flex items-center justify-center border-b border-white/5">
-            <img src="assets/images/browngirlgreen.jpeg" alt="" class="w-full h-full object-cover opacity-90 group-hover:opacity-100 transition-opacity" loading="lazy" decoding="async" />
+            <img src="assets/images/browngirlgreen.jpeg" alt="Creator Power Building" class="w-full h-full object-cover opacity-90 group-hover:opacity-100 transition-opacity" loading="lazy" decoding="async" />
           </div>
           <div class="p-5">
             <span class="text-[10px] uppercase tracking-[0.2em] text-fuchsia-400 font-bold">Instagram • Education</span>
             <h3 class="text-white font-medium mt-1 mb-4 group-hover:text-fuchsia-200 transition-colors">Creator Power Building</h3>
-
             <div class="grid grid-cols-3 gap-2 pt-3 border-t border-white/5">
               <div class="text-center">
                 <div class="font-magical text-sm text-white">4000+</div>
@@ -545,16 +945,57 @@
               </div>
             </div>
           </div>
-        </a>
+          <button class="flip-toggle" type="button" aria-expanded="false" aria-label="View details for Creator Power Building">
+            <i class="ph-bold ph-sparkle"></i>
+          </button>
+        </div>
+        <div class="flip-card-back">
+          <div>
+            <div class="flex items-start justify-between gap-3 mb-4">
+              <div>
+                <h4 class="text-xs uppercase tracking-widest text-fuchsia-300 font-bold mb-2">What This Demonstrates</h4>
+                <p class="text-sm text-gray-200 leading-relaxed">
+                  Creator-facing educational content that builds participation without losing strategic clarity.
+                </p>
+              </div>
+              <button class="flip-close" type="button" aria-label="Close details">
+                <i class="ph-bold ph-x"></i>
+              </button>
+            </div>
+            <div class="mb-5">
+              <h5 class="text-[10px] uppercase tracking-widest text-gray-400 font-bold mb-2">My Role</h5>
+              <div class="flex flex-wrap gap-2">
+                <span class="meta-pill meta-pill-fuchsia">Communications Manager</span>
+                <span class="meta-pill">Content Strategist</span>
+              </div>
+            </div>
+            <div class="mb-6">
+              <h5 class="text-[10px] uppercase tracking-widest text-gray-400 font-bold mb-2">Use Case</h5>
+              <p class="text-xs text-gray-300 leading-relaxed">
+                Partner-centered education work that helps audiences understand how to participate and why it matters.
+              </p>
+            </div>
+          </div>
+          <a href="https://www.instagram.com/reel/CwiVB4DOY5r/" target="_blank" rel="noopener noreferrer" class="flip-link text-fuchsia-300 hover:text-white">
+            View live post <i class="ph-bold ph-arrow-up-right ml-1"></i>
+          </a>
+        </div>
+      </div>
+    </article>
 
-        <a href="https://www.genthrive.org" target="_blank" rel="noopener noreferrer" class="glass-card rounded-xl flex flex-col group">
+    <!-- 7 -->
+    <article class="flip-card library-card"
+      data-platform="website"
+      data-pillar="education"
+      data-role="web-designer content-strategist">
+      <div class="flip-card-inner">
+        <div class="flip-card-front flex flex-col group">
           <div class="aspect-square thumbnail-placeholder flex items-center justify-center border-b border-white/5">
-            <img src="assets/images/genthrive.jpeg" alt="" class="w-full h-full object-cover opacity-90 group-hover:opacity-100 transition-opacity" loading="lazy" decoding="async" />
+            <img src="assets/images/genthrive.jpeg" alt="Aligned Navigation" class="w-full h-full object-cover opacity-90 group-hover:opacity-100 transition-opacity" loading="lazy" decoding="async" />
           </div>
           <div class="p-5">
             <span class="text-[10px] uppercase tracking-[0.2em] text-fuchsia-400 font-bold">Website • Education</span>
             <h3 class="text-white font-medium mt-1 mb-4 group-hover:text-fuchsia-200 transition-colors">Aligned Navigation</h3>
-
             <div class="grid grid-cols-3 gap-2 pt-3 border-t border-white/5">
               <div class="text-center">
                 <div class="font-magical text-sm text-white">2</div>
@@ -570,16 +1011,57 @@
               </div>
             </div>
           </div>
-        </a>
-
-        <a href="https://www.instagram.com/cleanenergyforamerica/p/DPmjeHYD10o/?hl=en" target="_blank" rel="noopener noreferrer" class="glass-card rounded-xl flex flex-col group" vid="48">
-          <div class="aspect-square thumbnail-placeholder flex items-center justify-center border-b border-white/5" vid="49">
-            <img src="assets/images/cleanenergydata.jpeg" alt="" class="w-full h-full object-cover opacity-90 group-hover:opacity-100 transition-opacity" loading="lazy" decoding="async" />
+          <button class="flip-toggle" type="button" aria-expanded="false" aria-label="View details for Aligned Navigation">
+            <i class="ph-bold ph-sparkle"></i>
+          </button>
+        </div>
+        <div class="flip-card-back">
+          <div>
+            <div class="flex items-start justify-between gap-3 mb-4">
+              <div>
+                <h4 class="text-xs uppercase tracking-widest text-fuchsia-300 font-bold mb-2">What This Demonstrates</h4>
+                <p class="text-sm text-gray-200 leading-relaxed">
+                  Clean site structure and page hierarchy built to support comprehension, trust, and easy movement.
+                </p>
+              </div>
+              <button class="flip-close" type="button" aria-label="Close details">
+                <i class="ph-bold ph-x"></i>
+              </button>
+            </div>
+            <div class="mb-5">
+              <h5 class="text-[10px] uppercase tracking-widest text-gray-400 font-bold mb-2">My Role</h5>
+              <div class="flex flex-wrap gap-2">
+                <span class="meta-pill meta-pill-fuchsia">Web Designer</span>
+                <span class="meta-pill">Content Strategist</span>
+              </div>
+            </div>
+            <div class="mb-6">
+              <h5 class="text-[10px] uppercase tracking-widest text-gray-400 font-bold mb-2">Use Case</h5>
+              <p class="text-xs text-gray-300 leading-relaxed">
+                A strong example of aligning message, navigation, and visual clarity in a compact site build.
+              </p>
+            </div>
           </div>
-          <div class="p-5" vid="51">
-            <span class="text-[10px] uppercase tracking-[0.2em] text-cyan-400 font-bold" vid="52">Instagram • Education</span>
-            <h3 class="text-white font-medium mt-1 mb-4 group-hover:text-cyan-200 transition-colors" vid="53">Clean Energy Impact Carousel</h3>
+          <a href="https://www.genthrive.org" target="_blank" rel="noopener noreferrer" class="flip-link text-fuchsia-300 hover:text-white">
+            Visit site <i class="ph-bold ph-arrow-up-right ml-1"></i>
+          </a>
+        </div>
+      </div>
+    </article>
 
+    <!-- 8 -->
+    <article class="flip-card library-card"
+      data-platform="instagram"
+      data-pillar="education"
+      data-role="digital-director content-strategist">
+      <div class="flip-card-inner">
+        <div class="flip-card-front flex flex-col group">
+          <div class="aspect-square thumbnail-placeholder flex items-center justify-center border-b border-white/5">
+            <img src="assets/images/cleanenergydata.jpeg" alt="Clean Energy Impact Carousel" class="w-full h-full object-cover opacity-90 group-hover:opacity-100 transition-opacity" loading="lazy" decoding="async" />
+          </div>
+          <div class="p-5">
+            <span class="text-[10px] uppercase tracking-[0.2em] text-cyan-400 font-bold">Instagram • Education</span>
+            <h3 class="text-white font-medium mt-1 mb-4 group-hover:text-cyan-200 transition-colors">Clean Energy Impact Carousel</h3>
             <div class="grid grid-cols-3 gap-2 pt-3 border-t border-white/5">
               <div class="text-center">
                 <div class="font-magical text-sm text-white">1</div>
@@ -595,17 +1077,57 @@
               </div>
             </div>
           </div>
-        </a>
+          <button class="flip-toggle" type="button" aria-expanded="false" aria-label="View details for Clean Energy Impact Carousel">
+            <i class="ph-bold ph-sparkle"></i>
+          </button>
+        </div>
+        <div class="flip-card-back">
+          <div>
+            <div class="flex items-start justify-between gap-3 mb-4">
+              <div>
+                <h4 class="text-xs uppercase tracking-widest text-cyan-300 font-bold mb-2">What This Demonstrates</h4>
+                <p class="text-sm text-gray-200 leading-relaxed">
+                  Data storytelling designed to make abstract impact legible, visual, and easy to share.
+                </p>
+              </div>
+              <button class="flip-close" type="button" aria-label="Close details">
+                <i class="ph-bold ph-x"></i>
+              </button>
+            </div>
+            <div class="mb-5">
+              <h5 class="text-[10px] uppercase tracking-widest text-gray-400 font-bold mb-2">My Role</h5>
+              <div class="flex flex-wrap gap-2">
+                <span class="meta-pill meta-pill-cyan">Digital Director</span>
+                <span class="meta-pill">Content Strategist</span>
+              </div>
+            </div>
+            <div class="mb-6">
+              <h5 class="text-[10px] uppercase tracking-widest text-gray-400 font-bold mb-2">Use Case</h5>
+              <p class="text-xs text-gray-300 leading-relaxed">
+                Translating campaign data into a visual sequence that teaches while reinforcing brand authority.
+              </p>
+            </div>
+          </div>
+          <a href="https://www.instagram.com/cleanenergyforamerica/p/DPmjeHYD10o/?hl=en" target="_blank" rel="noopener noreferrer" class="flip-link text-cyan-300 hover:text-white">
+            View live post <i class="ph-bold ph-arrow-up-right ml-1"></i>
+          </a>
+        </div>
+      </div>
+    </article>
 
-        <!-- ROW 3 -->
-        <a href="https://www.instagram.com/communityledenergy/reel/CwDQXbmJV5h/" target="_blank" rel="noopener noreferrer" class="glass-card rounded-xl flex flex-col group">
+    <!-- 9 -->
+    <article class="flip-card library-card"
+      data-platform="instagram"
+      data-pillar="strategy"
+      data-role="communications-manager content-strategist">
+      <div class="flip-card-inner">
+        <div class="flip-card-front flex flex-col group">
           <div class="aspect-square thumbnail-placeholder flex items-center justify-center border-b border-white/5">
-            <img src="assets/images/mauifires.jpeg" alt="" class="w-full h-full object-cover opacity-90 group-hover:opacity-100 transition-opacity" loading="lazy" decoding="async" />
+            <img src="assets/images/mauifires.jpeg" alt="Accountable Messaging" class="w-full h-full object-cover opacity-90 group-hover:opacity-100 transition-opacity" loading="lazy" decoding="async" />
           </div>
           <div class="p-5">
             <span class="text-[10px] uppercase tracking-[0.2em] text-purple-400 font-bold">Instagram • Strategy</span>
             <h3 class="text-white font-medium mt-1 mb-4 group-hover:text-purple-200 transition-colors">Accountable Messaging</h3>
-
             <div class="grid grid-cols-3 gap-2 pt-3 border-t border-white/5">
               <div class="text-center">
                 <div class="font-magical text-sm text-white">2000+</div>
@@ -621,16 +1143,57 @@
               </div>
             </div>
           </div>
-        </a>
+          <button class="flip-toggle" type="button" aria-expanded="false" aria-label="View details for Accountable Messaging">
+            <i class="ph-bold ph-sparkle"></i>
+          </button>
+        </div>
+        <div class="flip-card-back">
+          <div>
+            <div class="flex items-start justify-between gap-3 mb-4">
+              <div>
+                <h4 class="text-xs uppercase tracking-widest text-purple-300 font-bold mb-2">What This Demonstrates</h4>
+                <p class="text-sm text-gray-200 leading-relaxed">
+                  Fast-turnaround communications work that stays clear, careful, and responsive in a sensitive moment.
+                </p>
+              </div>
+              <button class="flip-close" type="button" aria-label="Close details">
+                <i class="ph-bold ph-x"></i>
+              </button>
+            </div>
+            <div class="mb-5">
+              <h5 class="text-[10px] uppercase tracking-widest text-gray-400 font-bold mb-2">My Role</h5>
+              <div class="flex flex-wrap gap-2">
+                <span class="meta-pill meta-pill-purple">Communications Manager</span>
+                <span class="meta-pill">Content Strategist</span>
+              </div>
+            </div>
+            <div class="mb-6">
+              <h5 class="text-[10px] uppercase tracking-widest text-gray-400 font-bold mb-2">Use Case</h5>
+              <p class="text-xs text-gray-300 leading-relaxed">
+                Crisis-adjacent messaging where accountability, timing, and tone all matter at once.
+              </p>
+            </div>
+          </div>
+          <a href="https://www.instagram.com/communityledenergy/reel/CwDQXbmJV5h/" target="_blank" rel="noopener noreferrer" class="flip-link text-purple-300 hover:text-white">
+            View live post <i class="ph-bold ph-arrow-up-right ml-1"></i>
+          </a>
+        </div>
+      </div>
+    </article>
 
-        <a href="https://www.ecorise.org/environmental-justice/celebrating-black-ejheros/" target="_blank" rel="noopener noreferrer" class="glass-card rounded-xl flex flex-col group">
+    <!-- 10 -->
+    <article class="flip-card library-card"
+      data-platform="blog"
+      data-pillar="narrative"
+      data-role="content-strategist communications-manager">
+      <div class="flip-card-inner">
+        <div class="flip-card-front flex flex-col group">
           <div class="aspect-square thumbnail-placeholder flex items-center justify-center border-b border-white/5">
-            <img src="assets/images/blackejheros.jpeg" alt="" class="w-full h-full object-cover opacity-90 group-hover:opacity-100 transition-opacity" loading="lazy" decoding="async" />
+            <img src="assets/images/blackejheros.jpeg" alt="Environmental Justice Research" class="w-full h-full object-cover opacity-90 group-hover:opacity-100 transition-opacity" loading="lazy" decoding="async" />
           </div>
           <div class="p-5">
             <span class="text-[10px] uppercase tracking-[0.2em] text-amber-400 font-bold">Blog • Narrative</span>
             <h3 class="text-white font-medium mt-1 mb-4 group-hover:text-amber-200 transition-colors">Environmental Justice Research</h3>
-
             <div class="grid grid-cols-3 gap-2 pt-3 border-t border-white/5">
               <div class="text-center">
                 <div class="font-magical text-sm text-white">4</div>
@@ -641,21 +1204,62 @@
                 <div class="text-[9px] uppercase tracking-wider text-gray-500 mt-0.5">Partners</div>
               </div>
               <div class="text-center">
-                <div class="font-magical text-sm text-yellow-300">MORE</div>
+                <div class="font-magical text-sm text-yellow-300">More</div>
                 <div class="text-[9px] uppercase tracking-wider text-gray-500 mt-0.5">Downloads</div>
               </div>
             </div>
           </div>
-        </a>
+          <button class="flip-toggle" type="button" aria-expanded="false" aria-label="View details for Environmental Justice Research">
+            <i class="ph-bold ph-sparkle"></i>
+          </button>
+        </div>
+        <div class="flip-card-back">
+          <div>
+            <div class="flex items-start justify-between gap-3 mb-4">
+              <div>
+                <h4 class="text-xs uppercase tracking-widest text-amber-300 font-bold mb-2">What This Demonstrates</h4>
+                <p class="text-sm text-gray-200 leading-relaxed">
+                  Research-based narrative work that connects history, justice, and audience education in long-form.
+                </p>
+              </div>
+              <button class="flip-close" type="button" aria-label="Close details">
+                <i class="ph-bold ph-x"></i>
+              </button>
+            </div>
+            <div class="mb-5">
+              <h5 class="text-[10px] uppercase tracking-widest text-gray-400 font-bold mb-2">My Role</h5>
+              <div class="flex flex-wrap gap-2">
+                <span class="meta-pill meta-pill-amber">Content Strategist</span>
+                <span class="meta-pill">Communications Manager</span>
+              </div>
+            </div>
+            <div class="mb-6">
+              <h5 class="text-[10px] uppercase tracking-widest text-gray-400 font-bold mb-2">Use Case</h5>
+              <p class="text-xs text-gray-300 leading-relaxed">
+                Editorial storytelling for mission-driven education that needs both emotional intelligence and rigor.
+              </p>
+            </div>
+          </div>
+          <a href="https://www.ecorise.org/environmental-justice/celebrating-black-ejheros/" target="_blank" rel="noopener noreferrer" class="flip-link text-amber-300 hover:text-white">
+            Read article <i class="ph-bold ph-arrow-up-right ml-1"></i>
+          </a>
+        </div>
+      </div>
+    </article>
 
-        <a href="https://republicanratehike.org" target="_blank" rel="noopener noreferrer" class="glass-card rounded-xl flex flex-col group">
+    <!-- 11 -->
+    <article class="flip-card library-card"
+      data-platform="website"
+      data-pillar="education"
+      data-role="web-designer digital-director">
+      <div class="flip-card-inner">
+        <div class="flip-card-front flex flex-col group">
           <div class="aspect-square thumbnail-placeholder flex items-center justify-center border-b border-white/5">
-            <img src="assets/images/republicanratehike.jpeg" alt="" class="w-full h-full object-cover opacity-90 group-hover:opacity-100 transition-opacity" loading="lazy" decoding="async" />
+            <img src="assets/images/republicanratehike.jpeg" alt="Clean Energy Minisite" class="w-full h-full object-cover opacity-90 group-hover:opacity-100 transition-opacity" loading="lazy" decoding="async" />
           </div>
           <div class="p-5">
-            <span class="text-[10px] uppercase tracking-[0.2em] text-cyan-400 font-bold">Instagram • Education</span>
+            <span class="text-[10px] uppercase tracking-[0.2em] text-cyan-400 font-bold">Website • Education</span>
             <h3 class="text-white font-medium mt-1 mb-4 group-hover:text-cyan-200 transition-colors">Clean Energy Minisite</h3>
-
             <div class="grid grid-cols-3 gap-2 pt-3 border-t border-white/5">
               <div class="text-center">
                 <div class="font-magical text-sm text-white">2000+</div>
@@ -671,16 +1275,57 @@
               </div>
             </div>
           </div>
-        </a>
+          <button class="flip-toggle" type="button" aria-expanded="false" aria-label="View details for Clean Energy Minisite">
+            <i class="ph-bold ph-sparkle"></i>
+          </button>
+        </div>
+        <div class="flip-card-back">
+          <div>
+            <div class="flex items-start justify-between gap-3 mb-4">
+              <div>
+                <h4 class="text-xs uppercase tracking-widest text-cyan-300 font-bold mb-2">What This Demonstrates</h4>
+                <p class="text-sm text-gray-200 leading-relaxed">
+                  A focused campaign microsite built for issue clarity, regional relevance, and fast comprehension.
+                </p>
+              </div>
+              <button class="flip-close" type="button" aria-label="Close details">
+                <i class="ph-bold ph-x"></i>
+              </button>
+            </div>
+            <div class="mb-5">
+              <h5 class="text-[10px] uppercase tracking-widest text-gray-400 font-bold mb-2">My Role</h5>
+              <div class="flex flex-wrap gap-2">
+                <span class="meta-pill meta-pill-cyan">Web Designer</span>
+                <span class="meta-pill">Digital Director</span>
+              </div>
+            </div>
+            <div class="mb-6">
+              <h5 class="text-[10px] uppercase tracking-widest text-gray-400 font-bold mb-2">Use Case</h5>
+              <p class="text-xs text-gray-300 leading-relaxed">
+                Campaign web build for issue education where speed, clarity, and conversion all matter.
+              </p>
+            </div>
+          </div>
+          <a href="https://republicanratehike.org" target="_blank" rel="noopener noreferrer" class="flip-link text-cyan-300 hover:text-white">
+            Visit site <i class="ph-bold ph-arrow-up-right ml-1"></i>
+          </a>
+        </div>
+      </div>
+    </article>
 
-        <a href="http://www.akimfarrow.com" target="_blank" rel="noopener noreferrer" class="glass-card rounded-xl flex flex-col group">
+    <!-- 12 -->
+    <article class="flip-card library-card"
+      data-platform="website"
+      data-pillar="narrative"
+      data-role="web-designer content-strategist">
+      <div class="flip-card-inner">
+        <div class="flip-card-front flex flex-col group">
           <div class="aspect-square thumbnail-placeholder flex items-center justify-center border-b border-white/5">
-            <img src="assets/images/akimfarrow.jpeg" alt="" class="w-full h-full object-cover opacity-90 group-hover:opacity-100 transition-opacity" loading="lazy" decoding="async" />
+            <img src="assets/images/akimfarrow.jpeg" alt="Artistic Web Design" class="w-full h-full object-cover opacity-90 group-hover:opacity-100 transition-opacity" loading="lazy" decoding="async" />
           </div>
           <div class="p-5">
             <span class="text-[10px] uppercase tracking-[0.2em] text-amber-400 font-bold">Website • Narrative</span>
             <h3 class="text-white font-medium mt-1 mb-4 group-hover:text-amber-200 transition-colors">Artistic Web Design</h3>
-
             <div class="grid grid-cols-3 gap-2 pt-3 border-t border-white/5">
               <div class="text-center">
                 <div class="font-magical text-sm text-white">12</div>
@@ -692,14 +1337,54 @@
               </div>
               <div class="text-center">
                 <div class="font-magical text-sm text-yellow-300">4</div>
-                <div class="text-[9px] uppercase tracking-wider text-gray-500 mt-0.5">Subpage Styles</div>
+                <div class="text-[9px] uppercase tracking-wider text-gray-500 mt-0.5">Page Styles</div>
               </div>
             </div>
           </div>
-        </a>
-
+          <button class="flip-toggle" type="button" aria-expanded="false" aria-label="View details for Artistic Web Design">
+            <i class="ph-bold ph-sparkle"></i>
+          </button>
+        </div>
+        <div class="flip-card-back">
+          <div>
+            <div class="flex items-start justify-between gap-3 mb-4">
+              <div>
+                <h4 class="text-xs uppercase tracking-widest text-amber-300 font-bold mb-2">What This Demonstrates</h4>
+                <p class="text-sm text-gray-200 leading-relaxed">
+                  Narrative web design shaped around visual identity, atmosphere, and a strong sense of artistic voice.
+                </p>
+              </div>
+              <button class="flip-close" type="button" aria-label="Close details">
+                <i class="ph-bold ph-x"></i>
+              </button>
+            </div>
+            <div class="mb-5">
+              <h5 class="text-[10px] uppercase tracking-widest text-gray-400 font-bold mb-2">My Role</h5>
+              <div class="flex flex-wrap gap-2">
+                <span class="meta-pill meta-pill-amber">Web Designer</span>
+                <span class="meta-pill">Content Strategist</span>
+              </div>
+            </div>
+            <div class="mb-6">
+              <h5 class="text-[10px] uppercase tracking-widest text-gray-400 font-bold mb-2">Use Case</h5>
+              <p class="text-xs text-gray-300 leading-relaxed">
+                Portfolio site design where storytelling, navigation, and art direction need to feel deeply aligned.
+              </p>
+            </div>
+          </div>
+          <a href="http://www.akimfarrow.com" target="_blank" rel="noopener noreferrer" class="flip-link text-amber-300 hover:text-white">
+            Visit site <i class="ph-bold ph-arrow-up-right ml-1"></i>
+          </a>
+        </div>
       </div>
-    </section>
+    </article>
+
+  </div>
+
+  <div id="libraryEmptyState" class="hidden mt-8 glass-panel rounded-xl p-6 text-center text-sm text-gray-300">
+    No posts match that filter combination yet.
+  </div>
+</section>
     
 <section id="practices" class="section-fade-up">
   <div class="text-center mb-16">
@@ -937,107 +1622,218 @@
   </div>
 </footer>
     
-  <script vid="117">
-    // PERF FLAGS
-    const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    const isSmallScreen = window.matchMedia('(max-width: 768px)').matches;
-    const canHover = window.matchMedia('(hover: hover) and (pointer: fine)').matches;
+<script>
+  // PERF FLAGS
+  const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const isSmallScreen = window.matchMedia('(max-width: 768px)').matches;
+  const canHover = window.matchMedia('(hover: hover) and (pointer: fine)').matches;
 
-    // Stars: reduce only on mobile / reduced motion
-    const starContainer = document.getElementById('star-container');
-    const starCount = prefersReducedMotion ? 0 : (isSmallScreen ? 70 : 150);
+  // Stars: reduce only on mobile / reduced motion
+  const starContainer = document.getElementById('star-container');
+  const starCount = prefersReducedMotion ? 0 : (isSmallScreen ? 70 : 150);
 
-    if (starContainer && starCount > 0) {
-      const frag = document.createDocumentFragment();
-      for (let i = 0; i < starCount; i++) {
-        const star = document.createElement('div');
-        star.classList.add('star');
-        const x = Math.random() * 100;
-        const y = Math.random() * 100;
-        const duration = 2 + Math.random() * 4;
-        const delay = Math.random() * 5;
-        const size = Math.random() < 0.1 ? 2 : 1;
-        const opacity = 0.2 + Math.random() * 0.6;
-        star.style.left = `${x}%`;
-        star.style.top = `${y}%`;
-        star.style.width = `${size}px`;
-        star.style.height = `${size}px`;
-        star.style.setProperty('--duration', `${duration}s`);
-        star.style.setProperty('--delay', `${delay}s`);
-        star.style.setProperty('--opacity', opacity);
-        frag.appendChild(star);
-      }
-      starContainer.appendChild(frag);
+  if (starContainer && starCount > 0) {
+    const frag = document.createDocumentFragment();
+    for (let i = 0; i < starCount; i++) {
+      const star = document.createElement('div');
+      star.classList.add('star');
+      const x = Math.random() * 100;
+      const y = Math.random() * 100;
+      const duration = 2 + Math.random() * 4;
+      const delay = Math.random() * 5;
+      const size = Math.random() < 0.1 ? 2 : 1;
+      const opacity = 0.2 + Math.random() * 0.6;
+      star.style.left = `${x}%`;
+      star.style.top = `${y}%`;
+      star.style.width = `${size}px`;
+      star.style.height = `${size}px`;
+      star.style.setProperty('--duration', `${duration}s`);
+      star.style.setProperty('--delay', `${delay}s`);
+      star.style.setProperty('--opacity', opacity);
+      frag.appendChild(star);
     }
+    starContainer.appendChild(frag);
+  }
 
-    // Mouse glow: desktop only (avoids touch jank)
-    if (canHover) {
-      const cards = Array.from(document.querySelectorAll('.glass-card'));
-      let rafPending = false;
-      let lastX = 0, lastY = 0;
+  // Mouse glow: desktop only
+  if (canHover) {
+    const cards = Array.from(document.querySelectorAll('.glass-card'));
+    let rafPending = false;
+    let lastX = 0;
+    let lastY = 0;
 
-      document.addEventListener('mousemove', (e) => {
-        lastX = e.clientX;
-        lastY = e.clientY;
-        if (rafPending) return;
-        rafPending = true;
-
-        requestAnimationFrame(() => {
-          for (const card of cards) {
-            const rect = card.getBoundingClientRect();
-            card.style.setProperty('--mouse-x', `${lastX - rect.left}px`);
-            card.style.setProperty('--mouse-y', `${lastY - rect.top}px`);
-          }
-          rafPending = false;
-        });
-      }, { passive: true });
-    }
-
-    // Section reveal: robust for iOS Safari + fallback
-    const sections = Array.from(document.querySelectorAll('.section-fade-up'));
-
-    if (prefersReducedMotion) {
-      sections.forEach(el => el.classList.add('visible'));
-    } else {
-      const io = new IntersectionObserver((entries) => {
-        for (const entry of entries) {
-          if (entry.isIntersecting) entry.target.classList.add('visible');
-        }
-      }, {
-        threshold: 0.01,
-        rootMargin: '0px 0px -10% 0px'
-      });
+    document.addEventListener('mousemove', (e) => {
+      lastX = e.clientX;
+      lastY = e.clientY;
+      if (rafPending) return;
+      rafPending = true;
 
       requestAnimationFrame(() => {
-        sections.forEach(el => io.observe(el));
+        for (const card of cards) {
+          const rect = card.getBoundingClientRect();
+          card.style.setProperty('--mouse-x', `${lastX - rect.left}px`);
+          card.style.setProperty('--mouse-y', `${lastY - rect.top}px`);
+        }
+        rafPending = false;
       });
+    }, { passive: true });
+  }
 
-      window.addEventListener('load', () => {
-        setTimeout(() => {
-          sections.forEach(el => el.classList.add('visible'));
-        }, 700);
-      }, { once: true });
+  // Section reveal
+  const sections = Array.from(document.querySelectorAll('.section-fade-up'));
+
+  if (prefersReducedMotion) {
+    sections.forEach(el => el.classList.add('visible'));
+  } else {
+    const io = new IntersectionObserver((entries) => {
+      for (const entry of entries) {
+        if (entry.isIntersecting) entry.target.classList.add('visible');
+      }
+    }, {
+      threshold: 0.01,
+      rootMargin: '0px 0px -10% 0px'
+    });
+
+    requestAnimationFrame(() => {
+      sections.forEach(el => io.observe(el));
+    });
+
+    window.addEventListener('load', () => {
+      setTimeout(() => {
+        sections.forEach(el => el.classList.add('visible'));
+      }, 700);
+    }, { once: true });
+  }
+
+  // Mobile menu dropdown
+  const menuBtn = document.getElementById('menuButton');
+  const mobileMenu = document.getElementById('mobileMenu');
+
+  if (menuBtn && mobileMenu) {
+    menuBtn.addEventListener('click', () => {
+      mobileMenu.classList.toggle('hidden');
+      const expanded = menuBtn.getAttribute('aria-expanded') === 'true';
+      menuBtn.setAttribute('aria-expanded', String(!expanded));
+    });
+
+    mobileMenu.querySelectorAll('a').forEach((link) => {
+      link.addEventListener('click', () => {
+        mobileMenu.classList.add('hidden');
+        menuBtn.setAttribute('aria-expanded', 'false');
+      });
+    });
+  }
+
+  // Flip cards + filters
+  (function () {
+    const libraryCards = Array.from(document.querySelectorAll('.library-card'));
+    const flipCards = Array.from(document.querySelectorAll('.flip-card'));
+    const platformSelect = document.getElementById('filterPlatform');
+    const pillarSelect = document.getElementById('filterPillar');
+    const roleSelect = document.getElementById('filterRole');
+    const resetButton = document.getElementById('resetLibraryFilters');
+    const emptyState = document.getElementById('libraryEmptyState');
+
+    function closeAllFlips(exceptCard = null) {
+      flipCards.forEach((card) => {
+        if (card !== exceptCard) {
+          card.classList.remove('is-flipped');
+          const toggle = card.querySelector('.flip-toggle');
+          if (toggle) toggle.setAttribute('aria-expanded', 'false');
+        }
+      });
     }
 
-    // Mobile menu dropdown
-    const menuBtn = document.getElementById('menuButton');
-    const mobileMenu = document.getElementById('mobileMenu');
+    function setCardFlipped(card, shouldFlip) {
+      if (!card) return;
+      if (shouldFlip) {
+        closeAllFlips(card);
+        card.classList.add('is-flipped');
+      } else {
+        card.classList.remove('is-flipped');
+      }
+      const toggle = card.querySelector('.flip-toggle');
+      if (toggle) toggle.setAttribute('aria-expanded', String(shouldFlip));
+    }
 
-    if (menuBtn && mobileMenu) {
-      menuBtn.addEventListener('click', () => {
-        mobileMenu.classList.toggle('hidden');
-        const expanded = menuBtn.getAttribute('aria-expanded') === 'true';
-        menuBtn.setAttribute('aria-expanded', String(!expanded));
-      });
+    flipCards.forEach((card) => {
+      const toggle = card.querySelector('.flip-toggle');
+      const close = card.querySelector('.flip-close');
 
-      mobileMenu.querySelectorAll('a').forEach((link) => {
-        link.addEventListener('click', () => {
-          mobileMenu.classList.add('hidden');
-          menuBtn.setAttribute('aria-expanded', 'false');
+      if (toggle) {
+        toggle.addEventListener('click', (event) => {
+          event.preventDefault();
+          event.stopPropagation();
+          const nextState = !card.classList.contains('is-flipped');
+          setCardFlipped(card, nextState);
         });
+      }
+
+      if (close) {
+        close.addEventListener('click', (event) => {
+          event.preventDefault();
+          event.stopPropagation();
+          setCardFlipped(card, false);
+        });
+      }
+
+      card.addEventListener('keydown', (event) => {
+        if (event.key === 'Escape') {
+          setCardFlipped(card, false);
+        }
+      });
+    });
+
+    document.addEventListener('click', (event) => {
+      if (!event.target.closest('.flip-card')) {
+        closeAllFlips();
+      }
+    });
+
+    function applyFilters() {
+      const platformValue = platformSelect ? platformSelect.value : 'all';
+      const pillarValue = pillarSelect ? pillarSelect.value : 'all';
+      const roleValue = roleSelect ? roleSelect.value : 'all';
+
+      let visibleCount = 0;
+
+      libraryCards.forEach((card) => {
+        const platformMatch = platformValue === 'all' || (card.dataset.platform || '') === platformValue;
+        const pillarMatch = pillarValue === 'all' || (card.dataset.pillar || '') === pillarValue;
+        const roleMatch = roleValue === 'all' || (card.dataset.role || '').split(/\s+/).includes(roleValue);
+
+        const isVisible = platformMatch && pillarMatch && roleMatch;
+
+        card.classList.toggle('is-hidden', !isVisible);
+
+        if (!isVisible) {
+          setCardFlipped(card, false);
+        } else {
+          visibleCount += 1;
+        }
+      });
+
+      if (emptyState) {
+        emptyState.classList.toggle('hidden', visibleCount > 0);
+      }
+    }
+
+    if (platformSelect) platformSelect.addEventListener('change', applyFilters);
+    if (pillarSelect) pillarSelect.addEventListener('change', applyFilters);
+    if (roleSelect) roleSelect.addEventListener('change', applyFilters);
+
+    if (resetButton) {
+      resetButton.addEventListener('click', () => {
+        if (platformSelect) platformSelect.value = 'all';
+        if (pillarSelect) pillarSelect.value = 'all';
+        if (roleSelect) roleSelect.value = 'all';
+        applyFilters();
       });
     }
-  </script>
+
+    applyFilters();
+  })();
+</script>
 
 </body>
 </html>

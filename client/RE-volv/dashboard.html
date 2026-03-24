@@ -2133,18 +2133,11 @@ function bindReportFilters() {
     return Number.isFinite(numeric) && numeric > 0 ? numeric : 30;
   }
 
-async function applyReportFilters(event) {
+async function applyReportFilters() {
   const updated = document.getElementById("reports-last-updated");
   if (updated) updated.textContent = "Updating...";
 
   try {
-    const changedId = event?.target?.id || "";
-    const shouldSync = changedId === "filter-date-range";
-
-    if (shouldSync) {
-      await syncPerformanceData(getPerformanceDaysFromUi(), { silent: true });
-    }
-
     await Promise.all([
       loadPerformanceFromSheet(),
       loadPerformanceTrendFromSheet()
@@ -2214,12 +2207,15 @@ async function refreshReportsData() {
   if (updated) updated.textContent = "Updating...";
 
   try {
-    await syncPerformanceData(getPerformanceDaysFromUi(), { silent: true });
+    await syncPerformanceData(30, { silent: true });
 
     await Promise.all([
+      loadRegistryFromSheet(),
       loadPerformanceFromSheet(),
       loadPerformanceTrendFromSheet()
     ]);
+
+    populateReportFilterOptionsFromRegistry();
 
     if (updated) updated.textContent = "Updated: Just now";
     showToast("Sync Complete", "Google Analytics data refreshed.", "ph-check-circle");

@@ -1235,7 +1235,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     if (APP_CONFIG.AUTO_SYNC_PERFORMANCE_ON_LOAD) {
       try {
-        await syncPerformanceData(getPerformanceDaysFromUi(), { silent: true });
+        await syncPerformanceData(400, { silent: true });
       } catch (error) {
         console.error("Initial GA sync failed:", error);
       }
@@ -2133,20 +2133,11 @@ function bindReportFilters() {
     return Number.isFinite(numeric) && numeric > 0 ? numeric : 30;
   }
 
-async function applyReportFilters(event) {
+async function applyReportFilters() {
   const updated = document.getElementById("reports-last-updated");
   if (updated) updated.textContent = "Updating...";
 
   try {
-    const changedId = event?.target?.id || "";
-    const shouldSync = changedId === "filter-date-range";
-
-    if (shouldSync) {
-      await syncPerformanceData(getPerformanceDaysFromUi(), { silent: true });
-      await loadRegistryFromSheet();
-      populateReportFilterOptionsFromRegistry();
-    }
-
     await Promise.all([
       loadPerformanceFromSheet(),
       loadPerformanceTrendFromSheet()
@@ -2216,10 +2207,7 @@ async function refreshReportsData() {
   if (updated) updated.textContent = "Updating...";
 
   try {
-    await syncPerformanceData(getPerformanceDaysFromUi(), { silent: true });
-
-    await loadRegistryFromSheet();
-    populateReportFilterOptionsFromRegistry();
+    await syncPerformanceData(400, { silent: true });
 
     await Promise.all([
       loadPerformanceFromSheet(),
@@ -2239,7 +2227,7 @@ async function refreshReportsData() {
     );
   }
 }
-
+  
   function bindUXFilters() {
     ["ux-filter-date", "ux-filter-page", "ux-filter-device"].forEach((id) => {
       const el = document.getElementById(id);

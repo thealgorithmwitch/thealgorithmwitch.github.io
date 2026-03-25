@@ -1353,45 +1353,6 @@ document.addEventListener("DOMContentLoaded", async () => {
   }
 });
 
-      const reportRange = document.getElementById("filter-date-range");
-      if (reportRange) reportRange.value = "30";
-      updateHeaderDatePillForView("home");
-
-      await Promise.all([
-        loadHomeSnapshot(),
-        loadRecentRegistryLinks(),
-        loadPerformanceFromSheet(),
-        loadPerformanceTrendFromSheet(),
-        loadPerformanceComparisonFromSheet()
-      ]);
-
-      setDataStatus("loaded", "30 day overview data loaded successfully.");
-
-      if (APP_CONFIG.AUTO_SYNC_CLARITY_ON_LOAD) {
-        try {
-          await syncClarityData({ silent: true });
-        } catch (error) {
-          console.error("Initial Clarity sync failed:", error);
-        }
-      } else {
-        await loadClarityFromSheet();
-      }
-    } catch (error) {
-      setDataStatus("error", "Could not load overview data.");
-      console.error(error);
-      showToast(
-        "Connection Error",
-        error?.message || "Could not load portal data.",
-        "ph-warning-circle",
-        "text-amber-400"
-      );
-    }
-  });
-
-  window.addEventListener("hashchange", () => {
-    switchView(getInitialView(), false);
-  });
-
   async function loadRecentRegistryLinks() {
     const data = await apiGet("getRecentRegistryLinks", {
       range_type: "30",

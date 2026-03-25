@@ -1046,40 +1046,37 @@
                 <span class="px-3 py-1 bg-black/30 border border-white/10 rounded-full text-[10px] font-bold text-gray-400 uppercase tracking-widest">Consultant View</span>
               </div>
             </div>
-
-            <div class="grid grid-cols-1 xl:grid-cols-3 gap-6">
-              <div class="glass-card p-6 border-l-2 border-l-emerald-500 bg-gradient-to-r from-emerald-900/10 to-transparent">
-                <div class="flex items-center gap-2 mb-3">
-                  <i class="ph-fill ph-check-circle text-emerald-400 text-lg"></i>
-                  <h3 class="text-sm font-bold text-emerald-300">What's Working</h3>
+                <div class="grid grid-cols-1 xl:grid-cols-3 gap-6">
+                  <div class="glass-card p-6 border-l-2 border-l-emerald-500 bg-gradient-to-r from-emerald-900/10 to-transparent">
+                    <div class="flex items-center gap-2 mb-3">
+                      <i class="ph-fill ph-check-circle text-emerald-400 text-lg"></i>
+                      <h3 class="text-sm font-bold text-emerald-300">What's Working</h3>
+                    </div>
+                    <ul id="audit-whats-working-list" class="space-y-3 text-sm text-gray-300">
+                      <li class="text-gray-500">Loading highlights...</li>
+                    </ul>
+                  </div>
+                
+                  <div class="glass-card p-6 border-l-2 border-l-amber-500 bg-gradient-to-r from-amber-900/10 to-transparent">
+                    <div class="flex items-center gap-2 mb-3">
+                      <i class="ph-fill ph-warning text-amber-400 text-lg"></i>
+                      <h3 class="text-sm font-bold text-amber-300">Needs Attention</h3>
+                    </div>
+                    <ul id="audit-needs-attention-list" class="space-y-3 text-sm text-gray-300">
+                      <li class="text-gray-500">Loading highlights...</li>
+                    </ul>
+                  </div>
+                
+                  <div class="glass-card p-6 border-l-2 border-l-cyan-500 bg-gradient-to-r from-cyan-900/10 to-transparent">
+                    <div class="flex items-center gap-2 mb-3">
+                      <i class="ph-fill ph-arrow-right text-cyan-400 text-lg"></i>
+                      <h3 class="text-sm font-bold text-cyan-300">Next Action</h3>
+                    </div>
+                    <p id="audit-next-action-text" class="text-sm text-gray-300 leading-relaxed">
+                      Loading next action...
+                    </p>
+                  </div>
                 </div>
-                <ul class="space-y-3 text-sm text-gray-300">
-                  <li class="flex items-start gap-2"><i class="ph-bold ph-check text-emerald-400 mt-0.5"></i> LinkedIn campaigns driving highest quality traffic</li>
-                  <li class="flex items-start gap-2"><i class="ph-bold ph-check text-emerald-400 mt-0.5"></i> Newsletter conversion rate up 5.3% month-over-month</li>
-                  <li class="flex items-start gap-2"><i class="ph-bold ph-check text-emerald-400 mt-0.5"></i> /donate page performing above industry benchmark</li>
-                </ul>
-              </div>
-
-              <div class="glass-card p-6 border-l-2 border-l-amber-500 bg-gradient-to-r from-amber-900/10 to-transparent">
-                <div class="flex items-center gap-2 mb-3">
-                  <i class="ph-fill ph-warning text-amber-400 text-lg"></i>
-                  <h3 class="text-sm font-bold text-amber-300">Needs Attention</h3>
-                </div>
-                <ul class="space-y-3 text-sm text-gray-300">
-                  <li class="flex items-start gap-2"><i class="ph-bold ph-warning text-amber-400 mt-0.5"></i> Cross-domain tracking dropping UTM attribution</li>
-                  <li class="flex items-start gap-2"><i class="ph-bold ph-warning text-amber-400 mt-0.5"></i> Mobile scroll depth 22% lower than desktop</li>
-                  <li class="flex items-start gap-2"><i class="ph-bold ph-warning text-amber-400 mt-0.5"></i> Meta ad UTMs not following naming convention</li>
-                </ul>
-              </div>
-
-              <div class="glass-card p-6 border-l-2 border-l-cyan-500 bg-gradient-to-r from-cyan-900/10 to-transparent">
-                <div class="flex items-center gap-2 mb-3">
-                  <i class="ph-fill ph-arrow-right text-cyan-400 text-lg"></i>
-                  <h3 class="text-sm font-bold text-cyan-300">Next Action</h3>
-                </div>
-                <p class="text-sm text-gray-300 leading-relaxed">Implement cross-domain tracking fix by Nov 5. This unblocks accurate campaign attribution for Q4 reporting and allows proper budget reallocation toward top performers.</p>
-              </div>
-            </div>
 
             <div class="glass-card overflow-hidden">
               <div class="p-4 border-b border-white/5 bg-black/20 flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
@@ -1328,41 +1325,53 @@ document.addEventListener("DOMContentLoaded", async () => {
     "loadPerformanceComparisonFromSheet"
   ];
 
-  const overviewFailures = [];
+    const setupResults = await Promise.allSettled([
+    loadRegistryFromSheet(),
+    loadAuditFromSheet(),
+    loadResourcesFromSheet(),
+    loadAuditHighlights()
+  ]);
 
-  overviewResults.forEach((result, index) => {
-    if (result.status === "rejected") {
-      overviewFailures.push(overviewNames[index]);
-      console.error(`${overviewNames[index]} failed:`, result.reason);
-    }
-  });
+async function loadAuditHighlights() {
+  const data = await apiGet("getAuditHighlights");
+  if (!data.ok) throw new Error(data.error || "Failed to load audit highlights");
 
-  if (overviewFailures.length) {
-    setDataStatus("error", `Some dashboard data failed to load: ${overviewFailures.join(", ")}`);
-    showToast(
-      "Partial Load",
-      `Some data failed: ${overviewFailures.join(", ")}`,
-      "ph-warning-circle",
-      "text-amber-400"
-    );
-  } else {
-    setDataStatus("loaded", "30 day overview data loaded successfully.");
+  renderAuditHighlights(data.highlights || {});
+}
+
+function renderAuditHighlights(highlights) {
+  const workingEl = document.getElementById("audit-whats-working-list");
+  const attentionEl = document.getElementById("audit-needs-attention-list");
+  const nextActionEl = document.getElementById("audit-next-action-text");
+
+  if (workingEl) {
+    const items = Array.isArray(highlights.whatsWorking) ? highlights.whatsWorking : [];
+    workingEl.innerHTML = items.length
+      ? items.map((item) => `
+          <li class="flex items-start gap-2">
+            <i class="ph-bold ph-check text-emerald-400 mt-0.5"></i>
+            <span>${escapeHtml(item)}</span>
+          </li>
+        `).join("")
+      : `<li class="text-gray-500">No resolved wins yet.</li>`;
   }
 
-  if (APP_CONFIG.AUTO_SYNC_CLARITY_ON_LOAD) {
-    try {
-      await syncClarityData({ silent: true });
-    } catch (error) {
-      console.error("Initial Clarity sync failed:", error);
-    }
-  } else {
-    try {
-      await loadClarityFromSheet();
-    } catch (error) {
-      console.error("Initial Clarity load failed:", error);
-    }
+  if (attentionEl) {
+    const items = Array.isArray(highlights.needsAttention) ? highlights.needsAttention : [];
+    attentionEl.innerHTML = items.length
+      ? items.map((item) => `
+          <li class="flex items-start gap-2">
+            <i class="ph-bold ph-warning text-amber-400 mt-0.5"></i>
+            <span>${escapeHtml(item)}</span>
+          </li>
+        `).join("")
+      : `<li class="text-gray-500">No active issues.</li>`;
   }
-});
+
+  if (nextActionEl) {
+    nextActionEl.textContent = highlights.nextAction || "No next action available.";
+  }
+}
 
   function normalizeText(value) {
     return String(value || "")
@@ -1389,6 +1398,40 @@ document.addEventListener("DOMContentLoaded", async () => {
     if (v === "closed") return "resolved";
     return v;
   }
+
+  function renderAuditHighlights(highlights) {
+  const workingEl = document.getElementById("audit-whats-working-list");
+  const attentionEl = document.getElementById("audit-needs-attention-list");
+  const nextActionEl = document.getElementById("audit-next-action-text");
+
+  if (workingEl) {
+    const items = Array.isArray(highlights.whatsWorking) ? highlights.whatsWorking : [];
+    workingEl.innerHTML = items.length
+      ? items.map((item) => `
+          <li class="flex items-start gap-2">
+            <i class="ph-bold ph-check text-emerald-400 mt-0.5"></i>
+            <span>${escapeHtml(item)}</span>
+          </li>
+        `).join("")
+      : `<li class="text-gray-500">No resolved wins yet.</li>`;
+  }
+
+  if (attentionEl) {
+    const items = Array.isArray(highlights.needsAttention) ? highlights.needsAttention : [];
+    attentionEl.innerHTML = items.length
+      ? items.map((item) => `
+          <li class="flex items-start gap-2">
+            <i class="ph-bold ph-warning text-amber-400 mt-0.5"></i>
+            <span>${escapeHtml(item)}</span>
+          </li>
+        `).join("")
+      : `<li class="text-gray-500">No active issues.</li>`;
+  }
+
+  if (nextActionEl) {
+    nextActionEl.textContent = highlights.nextAction || "No next action available.";
+  }
+}
 
   function formatAuditStatusLabel(value) {
     const normalized = normalizeAuditStatus(value);

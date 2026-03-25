@@ -1622,7 +1622,10 @@ function switchView(viewId, updateHash = true) {
 
   async function copyUTM() {
     const value = document.getElementById("utm-result")?.value?.trim() || "";
-    if (!value || value.startsWith("Waiting")) return;
+    if (!value || value.startsWith("Waiting")) {
+    showToast("Nothing to copy", "Generate a valid link first.", "ph-warning", "text-amber-400");
+    return;
+  }
 
     try {
       await copyTextToClipboard(value);

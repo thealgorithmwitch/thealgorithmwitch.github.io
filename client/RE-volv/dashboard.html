@@ -717,98 +717,234 @@
           </div>
         </section>
 
-        <section id="view-utm" class="view-section" hidden>
-          <div class="space-y-8 md:space-y-10">
-            <div>
-              <h2 class="font-magical text-3xl text-white mb-2">UTM Matrix</h2>
-              <p class="text-sm text-gray-400">Generate standardized tracking links to ensure clean data in reporting.</p>
+<section id="view-utm" class="view-section" hidden>
+  <div class="space-y-8 md:space-y-10">
+    <div>
+      <h2 class="font-magical text-3xl text-white mb-2">UTM Matrix</h2>
+      <p class="text-sm text-gray-400">Generate standardized tracking links to ensure clean data in reporting.</p>
+    </div>
+
+    <div class="space-y-6">
+      <div class="grid grid-cols-1 xl:grid-cols-12 gap-6">
+        <div class="xl:col-span-5">
+          <div class="glass-card p-6 md:p-7">
+            <h3 class="text-xs font-bold text-gray-500 uppercase tracking-widest mb-4 border-b border-white/5 pb-2">
+              Link Parameters
+            </h3>
+
+            <form id="utm-form" class="space-y-4">
+              <div>
+                <label class="block text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1.5">
+                  Destination URL <span class="text-rose-400">*</span>
+                </label>
+                <input
+                  type="url"
+                  id="utm-url"
+                  class="input-magical w-full rounded-lg px-3 py-2 text-sm"
+                  placeholder="https://re-volv.org/donate"
+                  required
+                >
+              </div>
+
+              <div class="grid grid-cols-2 gap-4">
+                <div>
+                  <label class="block text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1.5">
+                    Source <span class="text-rose-400">*</span>
+                  </label>
+                  <select
+                    id="utm-source"
+                    class="input-magical w-full rounded-lg px-3 py-2 text-sm appearance-none"
+                    required
+                  >
+                    <option value="" disabled selected>Select...</option>
+                    <option value="google">google</option>
+                    <option value="linkedin">linkedin</option>
+                    <option value="facebook">facebook</option>
+                    <option value="hs_email">hs_email</option>
+                    <option value="partner">partner</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label class="block text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1.5">
+                    Medium <span class="text-rose-400">*</span>
+                  </label>
+                  <select
+                    id="utm-medium"
+                    class="input-magical w-full rounded-lg px-3 py-2 text-sm appearance-none"
+                    required
+                  >
+                    <option value="" disabled selected>Select...</option>
+                    <option value="cpc">cpc</option>
+                    <option value="social">social</option>
+                    <option value="email">email</option>
+                    <option value="referral">referral</option>
+                  </select>
+                </div>
+              </div>
+
+              <div>
+                <label class="block text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1.5 flex justify-between">
+                  <span>Campaign Name <span class="text-rose-400">*</span></span>
+                  <span class="text-[8px] text-gray-600 font-normal normal-case">Format: Q4_Initiative_Name</span>
+                </label>
+                <input
+                  type="text"
+                  id="utm-campaign"
+                  class="input-magical w-full rounded-lg px-3 py-2 text-sm"
+                  placeholder="e.g. Q4_Solar_Savings"
+                  required
+                >
+              </div>
+
+              <div class="pt-2 border-t border-white/5">
+                <button
+                  type="button"
+                  id="toggle-optional-fields"
+                  class="text-xs text-gray-400 hover:text-white flex items-center gap-1"
+                >
+                  <i class="ph-bold ph-plus-circle"></i> Show Optional Fields
+                </button>
+              </div>
+
+              <div id="optional-fields" class="hidden space-y-4 pt-2">
+                <div class="grid grid-cols-2 gap-4">
+                  <div>
+                    <label class="block text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1.5">
+                      Term (Keyword)
+                    </label>
+                    <input
+                      type="text"
+                      id="utm-term"
+                      class="input-magical w-full rounded-lg px-3 py-2 text-sm"
+                      placeholder="e.g. solar panels"
+                    >
+                  </div>
+
+                  <div>
+                    <label class="block text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1.5">
+                      Content (Ad Var)
+                    </label>
+                    <input
+                      type="text"
+                      id="utm-content"
+                      class="input-magical w-full rounded-lg px-3 py-2 text-sm"
+                      placeholder="e.g. blue_banner"
+                    >
+                  </div>
+                </div>
+
+                <div>
+                  <label class="block text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1.5">
+                    Notes (For Registry)
+                  </label>
+                  <input
+                    type="text"
+                    id="utm-notes"
+                    class="input-magical w-full rounded-lg px-3 py-2 text-sm"
+                    placeholder="Brief note on where this is used..."
+                  >
+                </div>
+              </div>
+            </form>
+          </div>
+        </div>
+
+        <div class="xl:col-span-7">
+          <div class="glass-card p-6 bg-gradient-to-br from-[#181125] to-[#120c1d] border-purple-500/20 relative overflow-hidden">
+            <div class="absolute -right-10 -top-10 w-32 h-32 bg-purple-500/10 rounded-full blur-[30px] pointer-events-none"></div>
+            <h3 class="text-xs font-bold text-purple-300 uppercase tracking-widest mb-3">Generated Link</h3>
+
+            <div class="relative mb-4">
+              <textarea
+                id="utm-result"
+                class="w-full bg-black/40 border border-purple-500/30 rounded-lg p-3 pr-12 text-sm text-gray-300 font-mono resize-none h-24 outline-none"
+                readonly
+                placeholder="Fill out fields to generate link..."
+              ></textarea>
+
+              <button
+                type="button"
+                id="copy-utm-button"
+                class="absolute right-2 top-2 p-1.5 bg-black/50 hover:bg-purple-900/50 rounded-md border border-white/10 hover:border-purple-500/50 text-gray-400 hover:text-white transition-colors"
+                title="Copy to clipboard"
+              >
+                <i class="ph-bold ph-copy text-lg"></i>
+              </button>
             </div>
-        
-            <div class="space-y-6">
-              <div class="grid grid-cols-1 xl:grid-cols-12 gap-6">
-                <div class="xl:col-span-5">
-                  <div class="glass-card p-6 md:p-7">
-                    <h3 class="text-xs font-bold text-gray-500 uppercase tracking-widest mb-4 border-b border-white/5 pb-2">Link Parameters</h3>
-                    <form id="utm-form" class="space-y-4">
-                      <!-- keep your existing form content exactly as-is -->
-                    </form>
-                  </div>
-                </div>
-        
-                <div class="xl:col-span-7">
-                  <div class="glass-card p-6 bg-gradient-to-br from-[#181125] to-[#120c1d] border-purple-500/20 relative overflow-hidden">
-                    <div class="absolute -right-10 -top-10 w-32 h-32 bg-purple-500/10 rounded-full blur-[30px] pointer-events-none"></div>
-                    <h3 class="text-xs font-bold text-purple-300 uppercase tracking-widest mb-3">Generated Link</h3>
-                    <div class="relative mb-4">
-                      <textarea id="utm-result" class="w-full bg-black/40 border border-purple-500/30 rounded-lg p-3 pr-12 text-sm text-gray-300 font-mono resize-none h-24 outline-none" readonly placeholder="Fill out fields to generate link..."></textarea>
-                      <button type="button" id="copy-utm-button" class="absolute right-2 top-2 p-1.5 bg-black/50 hover:bg-purple-900/50 rounded-md border border-white/10 hover:border-purple-500/50 text-gray-400 hover:text-white transition-colors" title="Copy to clipboard">
-                        <i class="ph-bold ph-copy text-lg"></i>
-                      </button>
-                    </div>
-                    <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                      <p class="text-[10px] text-gray-500">Saving writes this link to the Google Sheet registry.</p>
-                      <button type="button" id="save-utm-button" class="btn-primary px-5 py-2 rounded-md text-xs flex items-center gap-2 self-start sm:self-auto">
-                        <i class="ph-bold ph-floppy-disk"></i> Save to Registry
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              </div>
-        
-              <div class="glass-card overflow-hidden">
-                <div class="p-4 border-b border-white/5 flex flex-col gap-3 sm:flex-row sm:justify-between sm:items-center bg-black/10">
-                  <h3 class="text-xs font-bold text-gray-400 uppercase tracking-widest flex items-center gap-2">
-                    <i class="ph-fill ph-database text-cyan-500"></i> Registry Backend
-                  </h3>
-        
-                  <div class="flex items-center gap-2 flex-wrap">
-                    <select id="utm-filter-campaign" class="input-magical rounded text-[10px] px-2 py-1.5 min-w-[120px]">
-                      <option value="all">All Campaigns</option>
-                    </select>
-        
-                    <select id="utm-filter-source" class="input-magical rounded text-[10px] px-2 py-1.5 min-w-[100px]">
-                      <option value="all">All Sources</option>
-                    </select>
-        
-                    <select id="utm-filter-status" class="input-magical rounded text-[10px] px-2 py-1.5 min-w-[120px]">
-                      <option value="all">All Statuses</option>
-                      <option value="flagged">Needs Review</option>
-                      <option value="clean">Clean Naming</option>
-                    </select>
-        
-                    <div class="relative">
-                      <i class="ph-bold ph-magnifying-glass absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-500 text-xs"></i>
-                      <input
-                        id="utm-search"
-                        type="text"
-                        class="input-magical rounded text-[10px] pl-7 pr-2 py-1.5 w-40"
-                        placeholder="Search..."
-                      >
-                    </div>
-        
-                    <button type="button" id="utm-reset-filters" class="text-[10px] text-gray-500 hover:text-gray-300 underline">
-                      Reset
-                    </button>
-                  </div>
-                </div>
-        
-                <div class="overflow-x-auto">
-                  <table class="data-table w-full">
-                    <thead>
-                      <tr>
-                        <th>Campaign</th>
-                        <th>Source / Total Sessions</th>
-                        <th>Date Saved</th>
-                        <th class="w-10"></th>
-                      </tr>
-                    </thead>
-                    <tbody id="registry-tbody"></tbody>
-                  </table>
-                </div>
-              </div>
+
+            <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <p class="text-[10px] text-gray-500">Saving writes this link to the Google Sheet registry.</p>
+              <button
+                type="button"
+                id="save-utm-button"
+                class="btn-primary px-5 py-2 rounded-md text-xs flex items-center gap-2 self-start sm:self-auto"
+              >
+                <i class="ph-bold ph-floppy-disk"></i> Save to Registry
+              </button>
             </div>
           </div>
-        </section>
+        </div>
+      </div>
+
+      <div class="glass-card overflow-hidden">
+        <div class="p-4 border-b border-white/5 flex flex-col gap-3 sm:flex-row sm:justify-between sm:items-center bg-black/10">
+          <h3 class="text-xs font-bold text-gray-400 uppercase tracking-widest flex items-center gap-2">
+            <i class="ph-fill ph-database text-cyan-500"></i> Registry Backend
+          </h3>
+
+          <div class="flex items-center gap-2 flex-wrap">
+            <select id="utm-filter-campaign" class="input-magical rounded text-[10px] px-2 py-1.5 min-w-[120px]">
+              <option value="all">All Campaigns</option>
+            </select>
+
+            <select id="utm-filter-source" class="input-magical rounded text-[10px] px-2 py-1.5 min-w-[100px]">
+              <option value="all">All Sources</option>
+            </select>
+
+            <select id="utm-filter-status" class="input-magical rounded text-[10px] px-2 py-1.5 min-w-[120px]">
+              <option value="all">All Statuses</option>
+              <option value="flagged">Needs Review</option>
+              <option value="clean">Clean Naming</option>
+            </select>
+
+            <div class="relative">
+              <i class="ph-bold ph-magnifying-glass absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-500 text-xs"></i>
+              <input
+                id="utm-search"
+                type="text"
+                class="input-magical rounded text-[10px] pl-7 pr-2 py-1.5 w-40"
+                placeholder="Search..."
+              >
+            </div>
+
+            <button
+              type="button"
+              id="utm-reset-filters"
+              class="text-[10px] text-gray-500 hover:text-gray-300 underline"
+            >
+              Reset
+            </button>
+          </div>
+        </div>
+
+        <div class="overflow-x-auto">
+          <table class="data-table w-full">
+            <thead>
+              <tr>
+                <th>Campaign</th>
+                <th>Source / Total Sessions</th>
+                <th>Date Saved</th>
+                <th class="w-10"></th>
+              </tr>
+            </thead>
+            <tbody id="registry-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
 
         <section id="view-ux" class="view-section" hidden>
           <div class="space-y-8 md:space-y-10">

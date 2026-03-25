@@ -506,7 +506,7 @@
                         <th>Date</th>
                       </tr>
                     </thead>
-                    <tbody>
+                    <<tbody id="home-recent-utm-tbody">
                       <tr>
                         <td>
                           <div class="font-medium text-white mb-0.5">Q4_Solar_Savings</div>
@@ -1106,7 +1106,7 @@
                       <th>Linked To</th>
                     </tr>
                   </thead>
-                  <tbody id="home-recent-utm-tbody">
+                  <tbody>
                     <tr data-status="new" data-audit-id="cross-domain">
                       <td><div class="w-2 h-2 rounded-full bg-rose-500"></div></td>
                       <td class="font-medium text-white text-sm">Fix GA4 Cross-Domain Tracking</td>
@@ -1331,9 +1331,9 @@ document.addEventListener("DOMContentLoaded", async () => {
       }
     }
 
-    const reportRange = document.getElementById("filter-date-range");
-    if (reportRange) reportRange.value = "30";
-    updateReportDatePill();
+  const reportRange = document.getElementById("filter-date-range");
+  if (reportRange) reportRange.value = "30";
+  updateHeaderDatePillForView("home");
 
     await Promise.all([
       loadHomeSnapshot(),
@@ -1492,40 +1492,38 @@ function getCurrentReportFilterParams() {
     });
   }
 
-  function switchView(viewId, updateHash = true) {
-    if (!VALID_VIEWS.includes(viewId)) return;
+function switchView(viewId, updateHash = true) {
+  if (!VALID_VIEWS.includes(viewId)) return;
 
-    const nextNav = document.getElementById(`nav-${viewId}`);
-    const nextView = document.getElementById(`view-${viewId}`);
-    const headerTitle = document.getElementById("header-title");
-    const scrollWrap = document.getElementById("content-scroll");
+  const nextNav = document.getElementById(`nav-${viewId}`);
+  const nextView = document.getElementById(`view-${viewId}`);
+  const headerTitle = document.getElementById("header-title");
+  const scrollWrap = document.getElementById("content-scroll");
 
-    if (!nextNav || !nextView) return;
+  if (!nextNav || !nextView) return;
 
-    document.querySelectorAll(".nav-item").forEach((el) => {
-      el.classList.remove("active");
-      el.setAttribute("aria-current", "false");
-    });
-
-    document.querySelectorAll(".view-section").forEach((el) => {
-      el.classList.remove("active");
-      el.hidden = true;
-    });
-
-    nextNav.classList.add("active");
-    nextNav.setAttribute("aria-current", "page");
-    nextView.hidden = false;
-    nextView.classList.add("active");
-
-    if (headerTitle) headerTitle.textContent = VIEW_TITLES[viewId] || "Workspace";
-    if (updateHash) history.replaceState(null, "", `#${viewId}`);
-    if (scrollWrap) scrollWrap.scrollTo({ top: 0, behavior: "smooth" });
-  }
-
-  window.addEventListener("hashchange", () => {
-    switchView(getInitialView(), false);
+  document.querySelectorAll(".nav-item").forEach((el) => {
+    el.classList.remove("active");
+    el.setAttribute("aria-current", "false");
   });
 
+  document.querySelectorAll(".view-section").forEach((el) => {
+    el.classList.remove("active");
+    el.hidden = true;
+  });
+
+  nextNav.classList.add("active");
+  nextNav.setAttribute("aria-current", "page");
+  nextView.hidden = false;
+  nextView.classList.add("active");
+
+  if (headerTitle) headerTitle.textContent = VIEW_TITLES[viewId] || "Workspace";
+  updateHeaderDatePillForView(viewId);
+
+  if (updateHash) history.replaceState(null, "", `#${viewId}`);
+  if (scrollWrap) scrollWrap.scrollTo({ top: 0, behavior: "smooth" });
+}
+  
   function bindExternalButtons() {
     document.addEventListener("click", (event) => {
       const trigger = event.target.closest("[data-open-url]");
@@ -2341,31 +2339,53 @@ function bindReportFilters() {
     return Number.isFinite(numeric) && numeric > 0 ? numeric : 30;
   }
 
-  async function applyReportFilters() {
-    const updated = document.getElementById("reports-last-updated");
-    if (updated) updated.textContent = "Updating...";
+async function applyReportFilters() {
+  const updated = document.getElementById("reports-last-updated");
+  if (updated) updated.textContent = "Updating...";
 
-    updateReportDatePill();
+  updateHeaderDatePillForView("reports");
 
-    try {
-      await Promise.all([
-        loadPerformanceFromSheet(),
-        loadPerformanceTrendFromSheet(),
-        loadPerformanceComparisonFromSheet()
-      ]);
+  try {
+    await Promise.all([
+      loadPerformanceFromSheet(),
+      loadPerformanceTrendFromSheet(),
+      loadPerformanceComparisonFromSheet()
+    ]);
 
-      if (updated) updated.textContent = "Updated: Just now";
-    } catch (error) {
-      console.error("applyReportFilters failed:", error);
-      if (updated) updated.textContent = "Update failed";
-      showToast(
-        "Load Error",
-        error?.message || "Could not refresh report data.",
-        "ph-warning-circle",
-        "text-amber-400"
-      );
-    }
+    if (updated) updated.textContent = "Updated: Just now";
+  } catch (error) {
+    console.error("applyReportFilters failed:", error);
+    if (updated) updated.textContent = "Update failed";
+    showToast(
+      "Load Error",
+      error?.message || "Could not refresh report data.",
+      "ph-warning-circle",
+      "text-amber-400"
+    );
   }
+}
+
+  const value = String(document.getElementById("filter-date-range")?.value || "30");
+  const labelMap = {
+    "30": "Last 30 Days",
+    "90": "Last 90 Days",
+    "quarter": "This Quarter",
+    "ytd": "Year to Date"
+  };
+
+  pill.textContent = labelMap[value] || "Last 30 Days";
+}
+
+  const value = String(document.getElementById("filter-date-range")?.value || "30");
+  const labelMap = {
+    "30": "Last 30 Days",
+    "90": "Last 90 Days",
+    "quarter": "This Quarter",
+    "ytd": "Year to Date"
+  };
+
+  pill.textContent = labelMap[value] || "Last 30 Days";
+}
 
 function resetReportFilters() {
   const defaults = {
@@ -2411,34 +2431,62 @@ function resetReportFilters() {
     }
   }
 
-  async function refreshReportsData() {
-    const updated = document.getElementById("reports-last-updated");
-    if (updated) updated.textContent = "Updating...";
+function updateHeaderDatePillForView() {
+  const pill = document.querySelector("header .text-xs.text-gray-300.font-medium");
+  if (!pill) return;
 
-    try {
-      await syncPerformanceData(365, { silent: true });
+  const homeActive = document.getElementById("view-home")?.classList.contains("active");
 
-      await Promise.all([
-        loadPerformanceFromSheet(),
-        loadPerformanceTrendFromSheet(),
-        loadPerformanceComparisonFromSheet()
-      ]);
-
-      updateReportDatePill();
-
-      if (updated) updated.textContent = "Updated: Just now";
-      showToast("Sync Complete", "Google Analytics data refreshed.", "ph-check-circle");
-    } catch (error) {
-      console.error("refreshReportsData failed:", error);
-      if (updated) updated.textContent = "Update failed";
-      showToast(
-        "Sync Error",
-        error?.message || "Could not sync Google Analytics data.",
-        "ph-warning-circle",
-        "text-amber-400"
-      );
-    }
+  if (homeActive) {
+    pill.textContent = "Last 30 Days";
+    return;
   }
+
+function updateHeaderDatePillForView(viewId) {
+  const pill = document.getElementById("header-date-pill");
+  if (!pill) return;
+
+  if (viewId === "home") {
+    pill.textContent = "Last 30 Days";
+    return;
+  }
+
+  if (viewId === "reports") {
+    updateReportDatePill();
+    return;
+  }
+
+  pill.textContent = "Last 30 Days";
+}
+
+async function refreshReportsData() {
+  const updated = document.getElementById("reports-last-updated");
+  if (updated) updated.textContent = "Updating...";
+
+  try {
+    await syncPerformanceData(365, { silent: true });
+
+    await Promise.all([
+      loadPerformanceFromSheet(),
+      loadPerformanceTrendFromSheet(),
+      loadPerformanceComparisonFromSheet()
+    ]);
+
+    updateHeaderDatePillForView("reports");
+
+    if (updated) updated.textContent = "Updated: Just now";
+    showToast("Sync Complete", "Google Analytics data refreshed.", "ph-check-circle");
+  } catch (error) {
+    console.error("refreshReportsData failed:", error);
+    if (updated) updated.textContent = "Update failed";
+    showToast(
+      "Sync Error",
+      error?.message || "Could not sync Google Analytics data.",
+      "ph-warning-circle",
+      "text-amber-400"
+    );
+  }
+}
 
   function bindUXFilters() {
     ["ux-filter-date", "ux-filter-page", "ux-filter-device"].forEach((id) => {

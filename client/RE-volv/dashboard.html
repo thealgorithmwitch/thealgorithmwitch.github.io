@@ -581,7 +581,7 @@
               <div class="flex flex-wrap items-center gap-3">
                 <span class="text-[10px] text-gray-500 uppercase tracking-wider" id="reports-last-updated">Updated: Just now</span>
                 <button type="button" id="refresh-reports-button" class="btn-secondary px-4 py-2 rounded-lg text-xs flex items-center gap-2">
-                  <i class="ph-bold ph-arrows-clockwise"></i> Refresh
+                  <i class="ph-bold ph-arrows-clockwise"></i> Reload
                 </button>
                   <button type="button" id="export-reports-button" class="btn-secondary px-4 py-2 rounded-lg text-xs flex items-center gap-2">
                     <i class="ph-bold ph-download-simple"></i> Export
@@ -1209,7 +1209,7 @@
 <script>
   const APP_CONFIG = {
     APPS_SCRIPT_URL: "https://script.google.com/macros/s/AKfycbzgmLbKhVKpm-3UlVBlLXE3VQbYQajpgSC2rrhSFGHJclNeqhJ-4qk7HyhWzVaJynIx/exec",
-    AUTO_SYNC_PERFORMANCE_ON_LOAD: true,
+    AUTO_SYNC_PERFORMANCE_ON_LOAD: false,
     AUTO_SYNC_CLARITY_ON_LOAD: false
   };
 
@@ -1309,14 +1309,6 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     populateReportFilterOptionsFromRegistry();
     populateUxPageOptionsFromClarityRows([]);
-
-    if (APP_CONFIG.AUTO_SYNC_PERFORMANCE_ON_LOAD) {
-      try {
-        await syncPerformanceData(365, { silent: true });
-      } catch (error) {
-        console.error("Initial GA sync failed:", error);
-      }
-    }
 
     const reportRange = document.getElementById("filter-date-range");
     if (reportRange) reportRange.value = "30";
@@ -2284,34 +2276,33 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
   }
 
-  async function refreshReportsData() {
-    const updated = document.getElementById("reports-last-updated");
-    if (updated) updated.textContent = "Updating...";
+async function refreshReportsData() {
+  const updated = document.getElementById("reports-last-updated");
+  if (updated) updated.textContent = "Updating...";
 
-    try {
-      await syncPerformanceData(365, { silent: true });
+  try {
+    await Promise.all([
+      loadPerformanceFromSheet(),
+      loadPerformanceTrendFromSheet(),
+      loadPerformanceComparisonFromSheet()
+    ]);
 
-      await Promise.all([
-        loadPerformanceFromSheet(),
-        loadPerformanceTrendFromSheet(),
-        loadPerformanceComparisonFromSheet()
-      ]);
+    updateHeaderDatePillForView("reports");
+    updateLocalSyncTime();
 
-      updateHeaderDatePillForView("reports");
-
-      if (updated) updated.textContent = "Updated: Just now";
-      showToast("Sync Complete", "Google Analytics data refreshed.", "ph-check-circle");
-    } catch (error) {
-      console.error("refreshReportsData failed:", error);
-      if (updated) updated.textContent = "Update failed";
-      showToast(
-        "Sync Error",
-        error?.message || "Could not sync Google Analytics data.",
-        "ph-warning-circle",
-        "text-amber-400"
-      );
-    }
+    if (updated) updated.textContent = "Updated: Just now";
+    showToast("Refresh Complete", "Report data reloaded from sheet.", "ph-check-circle");
+  } catch (error) {
+    console.error("refreshReportsData failed:", error);
+    if (updated) updated.textContent = "Update failed";
+    showToast(
+      "Refresh Error",
+      error?.message || "Could not refresh report data.",
+      "ph-warning-circle",
+      "text-amber-400"
+    );
   }
+}
 
   function bindUXFilters() {
     ["ux-filter-date", "ux-filter-page", "ux-filter-device"].forEach((id) => {

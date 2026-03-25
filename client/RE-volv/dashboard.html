@@ -1275,48 +1275,83 @@
   let currentHomeComparison = null;
   let currentRecentRegistryLinks = [];
 
-  document.addEventListener("DOMContentLoaded", async () => {
-    applyConfig();
-    initStars();
-    bindNavigation();
-    bindExternalButtons();
-    bindUTMEvents();
-    bindUtmRegistryFilters();
-    bindReportFilters();
-    bindUXFilters();
-    bindAuditFilters();
-    bindWorkspaceDropdown();
+document.addEventListener("DOMContentLoaded", async () => {
+  try { applyConfig(); } catch (error) { console.error("applyConfig failed:", error); }
+  try { initStars(); } catch (error) { console.error("initStars failed:", error); }
+  try { bindNavigation(); } catch (error) { console.error("bindNavigation failed:", error); }
+  try { bindExternalButtons(); } catch (error) { console.error("bindExternalButtons failed:", error); }
+  try { bindUTMEvents(); } catch (error) { console.error("bindUTMEvents failed:", error); }
+  try { bindUtmRegistryFilters(); } catch (error) { console.error("bindUtmRegistryFilters failed:", error); }
+  try { bindReportFilters(); } catch (error) { console.error("bindReportFilters failed:", error); }
+  try { bindUXFilters(); } catch (error) { console.error("bindUXFilters failed:", error); }
+  try { bindAuditFilters(); } catch (error) { console.error("bindAuditFilters failed:", error); }
+  try { bindWorkspaceDropdown(); } catch (error) { console.error("bindWorkspaceDropdown failed:", error); }
 
-    updateLocalSyncTime();
-    switchView(getInitialView(), false);
+  updateLocalSyncTime();
+  switchView(getInitialView(), false);
 
-    renderRegistry([]);
-    renderHomeRecentUtmLinks([]);
-    renderLoadingPerformanceState();
-    renderEmptyUxState();
-    renderHomeLoadingState();
-    setDataStatus("loading", "Loading 30 day overview data...");
+  renderRegistry([]);
+  renderHomeRecentUtmLinks([]);
+  renderLoadingPerformanceState();
+  renderEmptyUxState();
+  renderHomeLoadingState();
+  setDataStatus("loading", "Loading 30 day overview data...");
 
-    try {
-      await loadSettingsFromSheet();
-      applyWorkspaceConfig();
+  try {
+    await loadSettingsFromSheet();
+    applyWorkspaceConfig();
 
-      await Promise.all([
-        loadRegistryFromSheet(),
-        loadAuditFromSheet(),
-        loadResourcesFromSheet()
-      ]);
+    await Promise.all([
+      loadRegistryFromSheet(),
+      loadAuditFromSheet(),
+      loadResourcesFromSheet()
+    ]);
 
-      populateReportFilterOptionsFromRegistry();
-      populateUxPageOptionsFromClarityRows([]);
+    populateReportFilterOptionsFromRegistry();
+    populateUxPageOptionsFromClarityRows([]);
 
-      if (APP_CONFIG.AUTO_SYNC_PERFORMANCE_ON_LOAD) {
-        try {
-          await syncPerformanceData(365, { silent: true });
-        } catch (error) {
-          console.error("Initial GA sync failed:", error);
-        }
+    if (APP_CONFIG.AUTO_SYNC_PERFORMANCE_ON_LOAD) {
+      try {
+        await syncPerformanceData(365, { silent: true });
+      } catch (error) {
+        console.error("Initial GA sync failed:", error);
       }
+    }
+
+    const reportRange = document.getElementById("filter-date-range");
+    if (reportRange) reportRange.value = "30";
+    updateHeaderDatePillForView("home");
+
+    await Promise.all([
+      loadHomeSnapshot(),
+      loadRecentRegistryLinks(),
+      loadPerformanceFromSheet(),
+      loadPerformanceTrendFromSheet(),
+      loadPerformanceComparisonFromSheet()
+    ]);
+
+    setDataStatus("loaded", "30 day overview data loaded successfully.");
+
+    if (APP_CONFIG.AUTO_SYNC_CLARITY_ON_LOAD) {
+      try {
+        await syncClarityData({ silent: true });
+      } catch (error) {
+        console.error("Initial Clarity sync failed:", error);
+      }
+    } else {
+      await loadClarityFromSheet();
+    }
+  } catch (error) {
+    setDataStatus("error", "Could not load overview data.");
+    console.error(error);
+    showToast(
+      "Connection Error",
+      error?.message || "Could not load portal data.",
+      "ph-warning-circle",
+      "text-amber-400"
+    );
+  }
+});
 
       const reportRange = document.getElementById("filter-date-range");
       if (reportRange) reportRange.value = "30";
@@ -2919,6 +2954,27 @@
       toast.classList.remove("toast-show");
     }, 2500);
   }
+
+  function bindWorkspaceDropdown() {
+  const toggle = document.getElementById("workspace-dropdown-toggle");
+  const dropdown = document.getElementById("workspace-dropdown");
+  const caret = document.getElementById("workspace-caret");
+
+  if (!toggle || !dropdown || !caret) return;
+
+  toggle.addEventListener("click", (event) => {
+    event.stopPropagation();
+    dropdown.classList.toggle("hidden");
+    caret.classList.toggle("rotate-180");
+  });
+
+  document.addEventListener("click", (event) => {
+    if (!toggle.contains(event.target) && !dropdown.contains(event.target)) {
+      dropdown.classList.add("hidden");
+      caret.classList.remove("rotate-180");
+    }
+  });
+}
 
   function initStars() {
     const container = document.getElementById("star-container");

@@ -1750,12 +1750,12 @@ function renderRegistry(items) {
     if (durationEl) durationEl.textContent = formatDuration(summary.avgSessionDurationSeconds || 0);
     if (topSourceEl) topSourceEl.textContent = prettifySource(summary.topSource || "-");
 
-  const topSourceCardSub = topSourceEl?.parentElement?.querySelector(".text-xs.text-gray-400");
-  if (topSourceCardSub) {
-    topSourceCardSub.textContent = summary.topSourceSessions
-      ? `${formatPercent(summary.topSourceShare || 0)} of traffic`
-      : "No data";
-  }
+const topSourceCardSub = topSourceEl?.parentElement?.querySelector(".text-xs.text-gray-400");
+if (topSourceCardSub) {
+  topSourceCardSub.textContent = summary.topSourceSessions
+    ? `${formatPercent(summary.topSourceShare || 0)} of traffic`
+    : "No data";
+}
 
     renderHomePerformanceSnapshot(summary);
   }
@@ -1771,6 +1771,16 @@ function renderRegistry(items) {
     if (sessionsCard) sessionsCard.textContent = formatNumber(summary.sessions || 0);
     if (rateCard) rateCard.textContent = formatPercent(summary.conversionRate || 0);
     const activeCount = currentRegistryItems.filter((item) => {
+  const status = String(item.status || "").toLowerCase();
+  return status === "active" || status === "detected";
+}).length;
+
+const activeCount = currentRegistryItems.filter((item) => {
+  const status = String(item.status || "").toLowerCase();
+  return status === "active" || status === "detected";
+}).length;
+
+const activeCount = currentRegistryItems.filter((item) => {
   const status = String(item.status || "").toLowerCase();
   return status === "active" || status === "detected";
 }).length;

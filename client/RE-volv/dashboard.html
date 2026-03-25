@@ -1507,32 +1507,49 @@ async function loadAuditFromSheet(status = "all") {
     renderResourceLinks(currentResourceLinks);
   }
 
-  async function loadPerformanceFromSheet() {
-    const params = getCurrentReportFilterParams();
-    const data = await apiGet("getPerformanceSummary", params);
-    if (!data.ok) throw new Error(data.error || "Failed to load performance summary");
+async function loadPerformanceFromSheet() {
+  const params = getCurrentReportFilterParams();
+  const data = await apiGet("getPerformanceSummary", params);
 
-    currentPerformanceSummary = data.summary || {};
-    renderPerformanceSummary(currentPerformanceSummary);
+  if (!data || typeof data !== "object") {
+    throw new Error("Performance summary response was empty");
   }
 
-  async function loadPerformanceTrendFromSheet() {
-    const params = getCurrentReportFilterParams();
-    const data = await apiGet("getPerformanceTrend", params);
-    if (!data.ok) throw new Error(data.error || "Failed to load performance trend");
+  const summary = data.summary || data;
+  currentPerformanceSummary = summary || {};
+  renderPerformanceSummary(currentPerformanceSummary);
+}
 
-    currentPerformanceTrend = Array.isArray(data.trend) ? data.trend : [];
-    renderPerformanceTrendCharts(currentPerformanceTrend);
+async function loadPerformanceTrendFromSheet() {
+  const params = getCurrentReportFilterParams();
+  const data = await apiGet("getPerformanceTrend", params);
+
+  if (!data || typeof data !== "object") {
+    throw new Error("Performance trend response was empty");
   }
 
-  async function loadPerformanceComparisonFromSheet() {
-    const params = getCurrentReportFilterParams();
-    const data = await apiGet("getPerformanceComparison", params);
-    if (!data.ok) throw new Error(data.error || "Failed to load performance comparison");
+  currentPerformanceTrend = Array.isArray(data.trend)
+    ? data.trend
+    : Array.isArray(data.rows)
+    ? data.rows
+    : Array.isArray(data.data)
+    ? data.data
+    : [];
 
-    currentPerformanceComparison = data.comparison || null;
-    renderPerformanceComparison(currentPerformanceComparison);
+  renderPerformanceTrendCharts(currentPerformanceTrend);
+}
+  
+async function loadPerformanceComparisonFromSheet() {
+  const params = getCurrentReportFilterParams();
+  const data = await apiGet("getPerformanceComparison", params);
+
+  if (!data || typeof data !== "object") {
+    throw new Error("Performance comparison response was empty");
   }
+
+  currentPerformanceComparison = data.comparison || data || null;
+  renderPerformanceComparison(currentPerformanceComparison);
+}
 
   async function loadClarityFromSheet() {
     const params = {
@@ -1549,33 +1566,28 @@ async function loadAuditFromSheet(status = "all") {
     populateUxPageOptionsFromClarityRows(currentClaritySummary.rows || []);
   }
 
-  async function loadHomeSnapshot() {
-    const params = {
-      source: "all",
-      campaign: "all",
-      landing_page: "all",
-      range_type: "30",
-      rangeType: "30"
-    };
+async function loadHomeSnapshot() {
+  const params = {
+    source: "all",
+    campaign: "all",
+    landing_page: "all",
+    range_type: "30",
+    rangeType: "30"
+  };
 
-    const [summaryData, comparisonData] = await Promise.all([
-      apiGet("getPerformanceSummary", params),
-      apiGet("getPerformanceComparison", params)
-    ]);
+  const [summaryData, comparisonData] = await Promise.all([
+    apiGet("getPerformanceSummary", params),
+    apiGet("getPerformanceComparison", params)
+  ]);
 
-    if (!summaryData.ok) {
-      throw new Error(summaryData.error || "Failed to load home summary");
-    }
+  const summary = summaryData.summary || summaryData || {};
+  const comparison = comparisonData.comparison || comparisonData || null;
 
-    if (!comparisonData.ok) {
-      throw new Error(comparisonData.error || "Failed to load home comparison");
-    }
+  currentHomeSummary = summary;
+  currentHomeComparison = comparison;
 
-    currentHomeSummary = summaryData.summary || {};
-    currentHomeComparison = comparisonData.comparison || null;
-
-    renderHomeOverviewSnapshot(currentHomeSummary, currentHomeComparison);
-  }
+  renderHomeOverviewSnapshot(currentHomeSummary, currentHomeComparison);
+}
 
 function getCurrentReportFilterParams() {
   const rangeValue = document.getElementById("filter-date-range")?.value || "30";
@@ -1703,65 +1715,105 @@ function getCurrentReportFilterParams() {
     });
   }
 
-  function bindUTMEvents() {
-    ["utm-url", "utm-source", "utm-medium", "utm-campaign", "utm-term", "utm-content"].forEach((id) => {
-      const el = document.getElementById(id);
-      if (!el) return;
-      el.addEventListener("input", generateUTM);
-      el.addEventListener("change", generateUTM);
-    });
+function bindUTMEvents() {
+  const form = document.getElementById("utm-form");
+  const fieldIds = [
+    "utm-url",
+    "utm-source",
+    "utm-medium",
+    "utm-campaign",
+    "utm-term",
+    "utm-content"
+  ];
 
-    document.getElementById("toggle-optional-fields")?.addEventListener("click", () => {
-      document.getElementById("optional-fields")?.classList.toggle("hidden");
-    });
+  fieldIds.forEach((id) => {
+    const el = document.getElementById(id);
+    console.log("UTM bind check:", id, !!el);
 
-    document.getElementById("copy-utm-button")?.addEventListener("click", copyUTM);
-    document.getElementById("save-utm-button")?.addEventListener("click", saveUTM);
+    if (!el) return;
+
+    el.addEventListener("input", generateUTM);
+    el.addEventListener("change", generateUTM);
+    el.addEventListener("keyup", generateUTM);
+  });
+
+  if (form) {
+    form.addEventListener("input", generateUTM);
+    form.addEventListener("change", generateUTM);
   }
 
-  function generateUTM() {
-    const urlValue = document.getElementById("utm-url")?.value.trim() || "";
-    const result = document.getElementById("utm-result");
-    if (!result) return;
+  document.getElementById("toggle-optional-fields")?.addEventListener("click", () => {
+    document.getElementById("optional-fields")?.classList.toggle("hidden");
+  });
 
-    if (!urlValue) {
-      result.value = "";
-      return;
-    }
+  document.getElementById("copy-utm-button")?.addEventListener("click", copyUTM);
+  document.getElementById("save-utm-button")?.addEventListener("click", saveUTM);
 
-    try {
-      const source = document.getElementById("utm-source")?.value || "";
-      const medium = document.getElementById("utm-medium")?.value || "";
-      const campaign = document.getElementById("utm-campaign")?.value.trim() || "";
-      const term = document.getElementById("utm-term")?.value.trim() || "";
-      const content = document.getElementById("utm-content")?.value.trim() || "";
+  generateUTM();
+}
 
-      let urlInput = urlValue;
-      if (!/^https?:\/\//i.test(urlInput)) {
-        urlInput = "https://" + urlInput;
-      }
+function generateUTM() {
+  const result = document.getElementById("utm-result");
+  const urlField = document.getElementById("utm-url");
+  const sourceField = document.getElementById("utm-source");
+  const mediumField = document.getElementById("utm-medium");
+  const campaignField = document.getElementById("utm-campaign");
+  const termField = document.getElementById("utm-term");
+  const contentField = document.getElementById("utm-content");
 
-      const url = new URL(urlInput);
-
-      if (source) url.searchParams.set("utm_source", source.toLowerCase());
-      if (medium) url.searchParams.set("utm_medium", medium.toLowerCase());
-      if (campaign) {
-        url.searchParams.set(
-          "utm_campaign",
-          campaign
-            .trim()
-            .replace(/\s+/g, "_")
-            .replace(/[^A-Za-z0-9_]/g, "")
-        );
-      }
-      if (term) url.searchParams.set("utm_term", term);
-      if (content) url.searchParams.set("utm_content", content);
-
-      result.value = url.toString();
-    } catch {
-      result.value = "Waiting for valid URL format (include https://)...";
-    }
+  if (!result) {
+    console.warn("generateUTM: missing #utm-result");
+    return;
   }
+
+  const urlValue = String(urlField?.value || "").trim();
+  const source = String(sourceField?.value || "").trim();
+  const medium = String(mediumField?.value || "").trim();
+  const campaign = String(campaignField?.value || "").trim();
+  const term = String(termField?.value || "").trim();
+  const content = String(contentField?.value || "").trim();
+
+  console.log("generateUTM inputs:", {
+    urlValue,
+    source,
+    medium,
+    campaign,
+    term,
+    content
+  });
+
+  if (!urlValue) {
+    result.value = "";
+    return;
+  }
+
+  try {
+    let normalizedUrl = urlValue;
+    if (!/^https?:\/\//i.test(normalizedUrl)) {
+      normalizedUrl = `https://${normalizedUrl}`;
+    }
+
+    const url = new URL(normalizedUrl);
+
+    if (source) url.searchParams.set("utm_source", source.toLowerCase());
+    if (medium) url.searchParams.set("utm_medium", medium.toLowerCase());
+    if (campaign) {
+      url.searchParams.set(
+        "utm_campaign",
+        campaign
+          .replace(/\s+/g, "_")
+          .replace(/[^A-Za-z0-9_]/g, "")
+      );
+    }
+    if (term) url.searchParams.set("utm_term", term);
+    if (content) url.searchParams.set("utm_content", content);
+
+    result.value = url.toString();
+  } catch (error) {
+    console.error("generateUTM failed:", error);
+    result.value = "Waiting for valid URL format (include https://)...";
+  }
+}
 
   async function copyTextToClipboard(text) {
     const value = String(text || "").trim();

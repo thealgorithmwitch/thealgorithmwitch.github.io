@@ -419,7 +419,7 @@
       <div class="flex items-center gap-4">
         <div class="flex items-center gap-2 bg-black/40 border border-white/10 rounded-md px-3 py-1.5 cursor-pointer hover:border-white/20 transition-colors">
           <i class="ph-bold ph-calendar-blank text-gray-400 text-sm"></i>
-          <span class="text-xs text-gray-300 font-medium">Last 30 Days</span>
+          <span id="header-date-pill" class="text-xs text-gray-300 font-medium">Last 30 Days</span>
           <i class="ph-bold ph-caret-down text-gray-500 text-[10px] ml-1"></i>
         </div>
         <button type="button" class="w-8 h-8 rounded-md bg-black/40 border border-white/10 flex items-center justify-center text-gray-400 hover:text-white transition-colors">
@@ -1584,10 +1584,15 @@ function switchView(viewId, updateHash = true) {
       const url = new URL(urlInput);
       if (source) url.searchParams.set("utm_source", source.toLowerCase());
       if (medium) url.searchParams.set("utm_medium", medium.toLowerCase());
-      if (campaign) url.searchParams.set("utm_campaign", campaign
-        .trim()
-        .replace(/\s+/g, "_")
-        .replace(/[^A-Za-z0-9_]/g, "")
+      if (campaign) {
+        url.searchParams.set(
+          "utm_campaign",
+          campaign
+            .trim()
+            .replace(/\s+/g, "_")
+            .replace(/[^A-Za-z0-9_]/g, "")
+        );
+      }
       if (term) url.searchParams.set("utm_term", term);
       if (content) url.searchParams.set("utm_content", content);
 
@@ -2233,22 +2238,6 @@ async function loadHomeSnapshot() {
     `;
   }
 
-  function updateReportDatePill() {
-    const pill = document.querySelector("header .text-xs.text-gray-300.font-medium");
-    const value = String(document.getElementById("filter-date-range")?.value || "30");
-
-    if (!pill) return;
-
-    const labelMap = {
-      "30": "Last 30 Days",
-      "90": "Last 90 Days",
-      "quarter": "This Quarter",
-      "ytd": "Year to Date"
-    };
-
-    pill.textContent = labelMap[value] || "Last 30 Days";
-  }
-
 function bindReportFilters() {
   ["filter-date-range", "filter-campaign", "filter-source", "filter-landing"].forEach((id) => {
     const el = document.getElementById(id);
@@ -2446,16 +2435,20 @@ function resetReportFilters() {
     }
   }
 
-function updateHeaderDatePillForView() {
-  const pill = document.querySelector("header .text-xs.text-gray-300.font-medium");
+function updateReportDatePill() {
+  const pill = document.getElementById("header-date-pill");
   if (!pill) return;
 
-  const homeActive = document.getElementById("view-home")?.classList.contains("active");
+  const value = String(document.getElementById("filter-date-range")?.value || "30");
+  const labelMap = {
+    "30": "Last 30 Days",
+    "90": "Last 90 Days",
+    "quarter": "This Quarter",
+    "ytd": "Year to Date"
+  };
 
-  if (homeActive) {
-    pill.textContent = "Last 30 Days";
-    return;
-  }
+  pill.textContent = labelMap[value] || "Last 30 Days";
+}
 
 function updateHeaderDatePillForView(viewId) {
   const pill = document.getElementById("header-date-pill");

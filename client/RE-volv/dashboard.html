@@ -1275,6 +1275,76 @@
   let currentHomeComparison = null;
   let currentRecentRegistryLinks = [];
 
+  document.addEventListener("DOMContentLoaded", async () => {
+  try { applyConfig(); } catch (error) { console.error("applyConfig failed:", error); }
+  try { initStars(); } catch (error) { console.error("initStars failed:", error); }
+  try { bindNavigation(); } catch (error) { console.error("bindNavigation failed:", error); }
+  try { bindExternalButtons(); } catch (error) { console.error("bindExternalButtons failed:", error); }
+  try { bindUTMEvents(); } catch (error) { console.error("bindUTMEvents failed:", error); }
+  try { bindUtmRegistryFilters(); } catch (error) { console.error("bindUtmRegistryFilters failed:", error); }
+  try { bindReportFilters(); } catch (error) { console.error("bindReportFilters failed:", error); }
+  try { bindUXFilters(); } catch (error) { console.error("bindUXFilters failed:", error); }
+  try { bindAuditFilters(); } catch (error) { console.error("bindAuditFilters failed:", error); }
+  try { bindWorkspaceDropdown(); } catch (error) { console.error("bindWorkspaceDropdown failed:", error); }
+
+  updateLocalSyncTime();
+  switchView(getInitialView(), false);
+
+  renderRegistry([]);
+  renderHomeRecentUtmLinks([]);
+  renderLoadingPerformanceState();
+  renderEmptyUxState();
+  renderHomeLoadingState();
+  setDataStatus("loading", "Loading 30 day overview data...");
+
+  try {
+    await loadSettingsFromSheet();
+    applyWorkspaceConfig();
+
+    await Promise.all([
+      loadRegistryFromSheet(),
+      loadAuditFromSheet(),
+      loadResourcesFromSheet()
+    ]);
+
+    populateReportFilterOptionsFromRegistry();
+    populateUxPageOptionsFromClarityRows([]);
+
+    const reportRange = document.getElementById("filter-date-range");
+    if (reportRange) reportRange.value = "30";
+    updateHeaderDatePillForView("home");
+
+    await Promise.all([
+      loadHomeSnapshot(),
+      loadRecentRegistryLinks(),
+      loadPerformanceFromSheet(),
+      loadPerformanceTrendFromSheet(),
+      loadPerformanceComparisonFromSheet()
+    ]);
+
+    setDataStatus("loaded", "30 day overview data loaded successfully.");
+
+    if (APP_CONFIG.AUTO_SYNC_CLARITY_ON_LOAD) {
+      try {
+        await syncClarityData({ silent: true });
+      } catch (error) {
+        console.error("Initial Clarity sync failed:", error);
+      }
+    } else {
+      await loadClarityFromSheet();
+    }
+  } catch (error) {
+    setDataStatus("error", "Could not load overview data.");
+    console.error(error);
+    showToast(
+      "Connection Error",
+      error?.message || "Could not load portal data.",
+      "ph-warning-circle",
+      "text-amber-400"
+    );
+  }
+});
+
   function normalizeText(value) {
     return String(value || "")
       .trim()
@@ -1376,10 +1446,10 @@
   }
 
 async function loadAuditFromSheet(status = "all") {
-  const normalizedStatus = normalizeAuditStatus(status) === "all" ? "all" : normalizeAuditStatus(status);
+  const normalizedStatus = status === "all" ? "all" : normalizeAuditStatus(status);
 
   const data = await apiGet("getAuditNotes", {
-    status: normalizedStatus === "all" ? "all" : normalizedStatus
+    status: normalizedStatus
   });
 
   if (!data.ok) throw new Error(data.error || "Failed to load audit notes");
@@ -2581,7 +2651,73 @@ function showAuditDetail(id) {
     const evidenceMetric = String(liveItem.evidenceMetric || "").trim();
     const evidenceValue = String(liveItem.evidenceValue ?? "").trim();
     const evidenceUrl = String(liveItem.evidenceUrl || "").trim();
-    const linkedTarget = String(liveItem.linkedLandingPage || liveItem.linkedCampaignId || "").trim();
+    const linkedTarget = String(
+      liveItem.linkedLandingPage || liveItem.linkedCampaignId || ""
+    ).trim();
+
+    let evidenceBlock = "";
+
+    if (evidence || evidenceMetric || evidenceValue || evidenceUrl || linkedTarget) {
+      let evidenceRows = "";
+
+      if (evidence) {
+        evidenceRows += `
+          <p class="text-xs text-gray-400 mb-3">${escapeHtml(evidence)}</p>
+        `;
+      }
+
+      if (evidenceMetric) {
+        evidenceRows += `
+          <div class="flex items-start justify-between gap-3 text-xs">
+            <span class="text-gray-500 uppercase tracking-wider">Metric</span>
+            <span class="text-gray-200 text-right">${escapeHtml(evidenceMetric)}</span>
+          </div>
+        `;
+      }
+
+      if (evidenceValue) {
+        evidenceRows += `
+          <div class="flex items-start justify-between gap-3 text-xs">
+            <span class="text-gray-500 uppercase tracking-wider">Value</span>
+            <span class="text-gray-200 text-right">${escapeHtml(evidenceValue)}</span>
+          </div>
+        `;
+      }
+
+      if (linkedTarget) {
+        evidenceRows += `
+          <div class="flex items-start justify-between gap-3 text-xs">
+            <span class="text-gray-500 uppercase tracking-wider">Linked To</span>
+            <span class="text-gray-200 text-right">${escapeHtml(linkedTarget)}</span>
+          </div>
+        `;
+      }
+
+      if (evidenceUrl) {
+        evidenceRows += `
+          <div class="pt-2">
+            <a
+              href="${escapeHtml(evidenceUrl)}"
+              target="_blank"
+              rel="noopener noreferrer"
+              class="inline-flex items-center gap-2 text-xs text-cyan-300 hover:text-cyan-200 underline underline-offset-2"
+            >
+              Open Evidence Link
+              <i class="ph-bold ph-arrow-up-right"></i>
+            </a>
+          </div>
+        `;
+      }
+
+      evidenceBlock = `
+        <div class="p-4 bg-black/20 rounded border border-white/5">
+          <h4 class="text-xs font-bold text-amber-300 mb-3 uppercase tracking-wider">Evidence</h4>
+          <div class="space-y-2">
+            ${evidenceRows}
+          </div>
+        </div>
+      `;
+    }
 
     panel.innerHTML = `
       <div class="p-4 bg-black/20 rounded border border-white/5">
@@ -2595,77 +2731,7 @@ function showAuditDetail(id) {
           ${escapeHtml(liveItem.recommendation || "")}
         </div>
       </div>
-
-      ${
-        evidence || evidenceMetric || evidenceValue || evidenceUrl
-          ? `
-      <div class="p-4 bg-black/20 rounded border border-white/5">
-        <h4 class="text-xs font-bold text-amber-300 mb-3 uppercase tracking-wider">
-          Evidence
-        </h4>
-
-        ${
-          evidence
-            ? `<p class="text-xs text-gray-400 mb-3">${escapeHtml(evidence)}</p>`
-            : ""
-        }
-
-        <div class="space-y-2">
-          ${
-            evidenceMetric
-              ? `
-            <div class="flex items-start justify-between gap-3 text-xs">
-              <span class="text-gray-500 uppercase tracking-wider">Metric</span>
-              <span class="text-gray-200 text-right">${escapeHtml(evidenceMetric)}</span>
-            </div>
-          `
-              : ""
-          }
-
-          ${
-            evidenceValue
-              ? `
-            <div class="flex items-start justify-between gap-3 text-xs">
-              <span class="text-gray-500 uppercase tracking-wider">Value</span>
-              <span class="text-gray-200 text-right">${escapeHtml(evidenceValue)}</span>
-            </div>
-          `
-              : ""
-          }
-
-          ${
-            linkedTarget
-              ? `
-            <div class="flex items-start justify-between gap-3 text-xs">
-              <span class="text-gray-500 uppercase tracking-wider">Linked To</span>
-              <span class="text-gray-200 text-right">${escapeHtml(linkedTarget)}</span>
-            </div>
-          `
-              : ""
-          }
-
-          ${
-            evidenceUrl
-              ? `
-            <div class="pt-2">
-              <a
-                href="${escapeHtml(evidenceUrl)}"
-                target="_blank"
-                rel="noopener noreferrer"
-                class="inline-flex items-center gap-2 text-xs text-cyan-300 hover:text-cyan-200 underline underline-offset-2"
-              >
-                Open Evidence Link
-                <i class="ph-bold ph-arrow-up-right"></i>
-              </a>
-            </div>
-          `
-              : ""
-          }
-        </div>
-      </div>
-      `
-          : ""
-      }
+      ${evidenceBlock}
     `;
     return;
   }

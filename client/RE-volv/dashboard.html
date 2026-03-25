@@ -2572,14 +2572,100 @@ function showAuditDetail(id) {
     return;
   }
 
-  const liveItem = currentAuditItems.find((note) => String(note.noteId || "") === String(id || ""));
+  const liveItem = currentAuditItems.find(
+    (note) => String(note.noteId || "") === String(id || "")
+  );
+
   if (liveItem) {
+    const evidence = String(liveItem.evidence || "").trim();
+    const evidenceMetric = String(liveItem.evidenceMetric || "").trim();
+    const evidenceValue = String(liveItem.evidenceValue ?? "").trim();
+    const evidenceUrl = String(liveItem.evidenceUrl || "").trim();
+    const linkedTarget = String(liveItem.linkedLandingPage || liveItem.linkedCampaignId || "").trim();
+
     panel.innerHTML = `
       <div class="p-4 bg-black/20 rounded border border-white/5">
-        <h4 class="text-xs font-bold text-cyan-300 mb-2 uppercase tracking-wider">${escapeHtml(liveItem.title || "")}</h4>
-        <p class="text-xs text-gray-400 mb-3">${escapeHtml(liveItem.finding || "")}</p>
-        <div class="text-xs text-gray-500 bg-black/40 p-2 rounded border border-white/10">${escapeHtml(liveItem.recommendation || "")}</div>
+        <h4 class="text-xs font-bold text-cyan-300 mb-2 uppercase tracking-wider">
+          ${escapeHtml(liveItem.title || "")}
+        </h4>
+        <p class="text-xs text-gray-400 mb-3">
+          ${escapeHtml(liveItem.finding || "")}
+        </p>
+        <div class="text-xs text-gray-300 bg-black/40 p-3 rounded border border-white/10">
+          ${escapeHtml(liveItem.recommendation || "")}
+        </div>
       </div>
+
+      ${
+        evidence || evidenceMetric || evidenceValue || evidenceUrl
+          ? `
+      <div class="p-4 bg-black/20 rounded border border-white/5">
+        <h4 class="text-xs font-bold text-amber-300 mb-3 uppercase tracking-wider">
+          Evidence
+        </h4>
+
+        ${
+          evidence
+            ? `<p class="text-xs text-gray-400 mb-3">${escapeHtml(evidence)}</p>`
+            : ""
+        }
+
+        <div class="space-y-2">
+          ${
+            evidenceMetric
+              ? `
+            <div class="flex items-start justify-between gap-3 text-xs">
+              <span class="text-gray-500 uppercase tracking-wider">Metric</span>
+              <span class="text-gray-200 text-right">${escapeHtml(evidenceMetric)}</span>
+            </div>
+          `
+              : ""
+          }
+
+          ${
+            evidenceValue
+              ? `
+            <div class="flex items-start justify-between gap-3 text-xs">
+              <span class="text-gray-500 uppercase tracking-wider">Value</span>
+              <span class="text-gray-200 text-right">${escapeHtml(evidenceValue)}</span>
+            </div>
+          `
+              : ""
+          }
+
+          ${
+            linkedTarget
+              ? `
+            <div class="flex items-start justify-between gap-3 text-xs">
+              <span class="text-gray-500 uppercase tracking-wider">Linked To</span>
+              <span class="text-gray-200 text-right">${escapeHtml(linkedTarget)}</span>
+            </div>
+          `
+              : ""
+          }
+
+          ${
+            evidenceUrl
+              ? `
+            <div class="pt-2">
+              <a
+                href="${escapeHtml(evidenceUrl)}"
+                target="_blank"
+                rel="noopener noreferrer"
+                class="inline-flex items-center gap-2 text-xs text-cyan-300 hover:text-cyan-200 underline underline-offset-2"
+              >
+                Open Evidence Link
+                <i class="ph-bold ph-arrow-up-right"></i>
+              </a>
+            </div>
+          `
+              : ""
+          }
+        </div>
+      </div>
+      `
+          : ""
+      }
     `;
     return;
   }

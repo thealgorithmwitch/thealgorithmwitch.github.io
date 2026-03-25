@@ -1143,78 +1143,78 @@ async function loadRecentRegistryLinks() {
   renderHomeRecentUtmLinks(currentRecentRegistryLinks);
 }
 
-  document.addEventListener("DOMContentLoaded", async () => {
-    applyConfig();
-    initStars();
-    bindNavigation();
-    bindExternalButtons();
-    bindUTMEvents();
-    bindUtmRegistryFilters();
-    bindReportFilters();
-    bindUXFilters();
-    bindAuditFilters();
-    bindWorkspaceDropdown();
+document.addEventListener("DOMContentLoaded", async () => {
+  applyConfig();
+  initStars();
+  bindNavigation();
+  bindExternalButtons();
+  bindUTMEvents();
+  bindUtmRegistryFilters();
+  bindReportFilters();
+  bindUXFilters();
+  bindAuditFilters();
+  bindWorkspaceDropdown();
 
-    updateLocalSyncTime();
-    switchView(getInitialView(), false);
+  updateLocalSyncTime();
+  switchView(getInitialView(), false);
 
-    renderRegistry([]);
-    renderHomeRecentUtmLinks([]);
-    renderLoadingPerformanceState();
-    renderEmptyUxState();
+  renderRegistry([]);
+  renderHomeRecentUtmLinks([]);
+  renderLoadingPerformanceState();
+  renderEmptyUxState();
 
-    try {
-      await loadSettingsFromSheet();
-      applyWorkspaceConfig();
+  try {
+    await loadSettingsFromSheet();
+    applyWorkspaceConfig();
 
-      await Promise.all([
-        loadRegistryFromSheet(),
-        loadAuditFromSheet(),
-        loadResourcesFromSheet()
-      ]);
+    await Promise.all([
+      loadRegistryFromSheet(),
+      loadAuditFromSheet(),
+      loadResourcesFromSheet()
+    ]);
 
-      await loadHomeSnapshot();
+    populateReportFilterOptionsFromRegistry();
+    populateUxPageOptionsFromClarityRows([]);
 
-      populateReportFilterOptionsFromRegistry();
-      populateUxPageOptionsFromClarityRows([]);
-
-      if (APP_CONFIG.AUTO_SYNC_PERFORMANCE_ON_LOAD) {
-        try {
-          await syncPerformanceData(365, { silent: true });
-        } catch (error) {
-          console.error("Initial GA sync failed:", error);
-        }
+    if (APP_CONFIG.AUTO_SYNC_PERFORMANCE_ON_LOAD) {
+      try {
+        await syncPerformanceData(365, { silent: true });
+      } catch (error) {
+        console.error("Initial GA sync failed:", error);
       }
-
-      const reportRange = document.getElementById("filter-date-range");
-      if (reportRange) reportRange.value = "30";
-      updateReportDatePill();
-
-      await Promise.all([
-        loadPerformanceFromSheet(),
-        loadPerformanceTrendFromSheet(),
-        loadPerformanceComparisonFromSheet()
-      ]);
-
-      if (APP_CONFIG.AUTO_SYNC_CLARITY_ON_LOAD) {
-        try {
-          await syncClarityData({ silent: true });
-        } catch (error) {
-          console.error("Initial Clarity sync failed:", error);
-        }
-      } else {
-        await loadClarityFromSheet();
-      }
-    } catch (error) {
-      console.error(error);
-      showToast(
-        "Connection Error",
-        error?.message || "Could not load portal data.",
-        "ph-warning-circle",
-        "text-amber-400"
-      );
     }
-  });
+
+    const reportRange = document.getElementById("filter-date-range");
+    if (reportRange) reportRange.value = "30";
+    updateReportDatePill();
+
+    await Promise.all([
+      loadHomeSnapshot(),
+      loadRecentRegistryLinks(),
+      loadPerformanceFromSheet(),
+      loadPerformanceTrendFromSheet(),
+      loadPerformanceComparisonFromSheet()
+    ]);
+
+    if (APP_CONFIG.AUTO_SYNC_CLARITY_ON_LOAD) {
+      try {
+        await syncClarityData({ silent: true });
+      } catch (error) {
+        console.error("Initial Clarity sync failed:", error);
+      }
+    } else {
+      await loadClarityFromSheet();
+    }
+  } catch (error) {
+    console.error(error);
+    showToast(
+      "Connection Error",
+      error?.message || "Could not load portal data.",
+      "ph-warning-circle",
+      "text-amber-400"
+    );
+  }
+});
 
   async function loadSettingsFromSheet() {
     const data = await apiGet("getSettings");
@@ -1230,13 +1230,12 @@ async function loadRecentRegistryLinks() {
   async function loadRegistryFromSheet(query = "") {
     const data = await apiGet("getRegistry", { q: query });
     if (!data.ok) throw new Error(data.error || "Failed to load registry");
-
+  
     currentRegistryItems = Array.isArray(data.registry) ? data.registry : [];
     populateUtmFilterOptions(currentRegistryItems);
-    renderHomeRecentUtmLinks(currentRegistryItems);
     applyUtmRegistryFilters();
   }
-
+  
   async function loadAuditFromSheet(status = "all") {
     const data = await apiGet("getAuditNotes", { status });
     if (!data.ok) throw new Error(data.error || "Failed to load audit notes");
@@ -1603,12 +1602,13 @@ function applyUtmRegistryFilters() {
   renderRegistry(filtered);
 }
 
-  function getRegistrySessionsValue(item) {
+function getRegistrySessionsValue(item) {
   const raw =
+    item.sessions30d ??
+    item.totalSessions ??
     item.sessions ??
     item.sessionCount ??
     item.gaSessions ??
-    item.totalSessions ??
     0;
 
   const num = Number(raw);
@@ -1732,7 +1732,7 @@ function renderHomeRecentUtmLinks(items) {
   const table = document.querySelector("#view-home .xl\\:col-span-2 table tbody");
   if (!table) return;
 
-  const rows = (items || []).slice(0, 3);
+  const rows = Array.isArray(items) ? items.slice(0, 3) : [];
 
   if (!rows.length) {
     table.innerHTML = `
@@ -1746,7 +1746,9 @@ function renderHomeRecentUtmLinks(items) {
   table.innerHTML = rows.map((item) => `
     <tr>
       <td>
-        <div class="font-medium text-white mb-0.5">${escapeHtml(item.campaignName || item.campaign || item.campaignId || "")}</div>
+        <div class="font-medium text-white mb-0.5">
+          ${escapeHtml(item.campaignName || item.campaign || item.campaignId || "")}
+        </div>
         ${getRegistryLinkMarkup(item)}
       </td>
       <td>
@@ -1760,7 +1762,7 @@ function renderHomeRecentUtmLinks(items) {
     </tr>
   `).join("");
 }
-
+  
   function renderPerformanceSummary(summary) {
     const sessionsEl = document.getElementById("kpi-sessions");
     const usersEl = document.getElementById("kpi-users");
@@ -1895,8 +1897,13 @@ async function loadHomeSnapshot() {
     apiGet("getPerformanceComparison", params)
   ]);
 
-  if (!summaryData.ok) throw new Error(summaryData.error || "Failed to load home summary");
-  if (!comparisonData.ok) throw new Error(comparisonData.error || "Failed to load home comparison");
+  if (!summaryData.ok) {
+    throw new Error(summaryData.error || "Failed to load home summary");
+  }
+
+  if (!comparisonData.ok) {
+    throw new Error(comparisonData.error || "Failed to load home comparison");
+  }
 
   currentHomeSummary = summaryData.summary || {};
   currentHomeComparison = comparisonData.comparison || null;
@@ -2522,20 +2529,30 @@ function populateReportFilterOptionsFromRegistry() {
     select.value = uniqueValues.includes(currentValue) || currentValue === "all" ? currentValue : "all";
   }
 
-  async function apiGet(action, params = {}) {
-    const url = new URL(APP_CONFIG.APPS_SCRIPT_URL);
-    url.searchParams.set("action", action);
+async function apiGet(action, params = {}) {
+  const url = new URL(APP_CONFIG.APPS_SCRIPT_URL);
+  url.searchParams.set("action", action);
 
-    Object.entries(params).forEach(([key, value]) => {
-      if (value !== undefined && value !== null && value !== "") {
-        url.searchParams.set(key, value);
-      }
-    });
+  Object.entries(params).forEach(([key, value]) => {
+    if (value !== undefined && value !== null && value !== "") {
+      url.searchParams.set(key, value);
+    }
+  });
 
-    const response = await fetch(url.toString(), { method: "GET" });
-    if (!response.ok) throw new Error(`GET ${action} failed`);
-    return response.json();
+  const response = await fetch(url.toString(), { method: "GET" });
+  const text = await response.text();
+
+  if (!response.ok) {
+    throw new Error(`GET ${action} failed`);
   }
+
+  try {
+    return JSON.parse(text);
+  } catch (error) {
+    console.error("Non-JSON GET response for", action, text);
+    throw new Error(`GET ${action} returned invalid JSON`);
+  }
+}
 
   async function apiPost(action, payload = {}) {
     const response = await fetch(APP_CONFIG.APPS_SCRIPT_URL, {

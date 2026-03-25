@@ -735,148 +735,91 @@
               <h2 class="font-magical text-3xl text-white mb-2">UTM Matrix</h2>
               <p class="text-sm text-gray-400">Generate standardized tracking links to ensure clean data in reporting.</p>
             </div>
-
-            <div class="grid grid-cols-1 xl:grid-cols-12 gap-6">
-              <div class="xl:col-span-5">
-                <div class="glass-card p-6 md:p-7">
-                  <h3 class="text-xs font-bold text-gray-500 uppercase tracking-widest mb-4 border-b border-white/5 pb-2">Link Parameters</h3>
-                  <form id="utm-form" class="space-y-4">
-                    <div>
-                      <label class="block text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1.5">Destination URL <span class="text-rose-400">*</span></label>
-                      <input type="url" id="utm-url" class="input-magical w-full rounded-lg px-3 py-2 text-sm" placeholder="https://re-volv.org/donate" required>
-                    </div>
-
-                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                      <div>
-                        <label class="block text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1.5">Source <span class="text-rose-400">*</span></label>
-                        <select id="utm-source" class="input-magical w-full rounded-lg px-3 py-2 text-sm appearance-none" required>
-                          <option value="" selected disabled>Select...</option>
-                          <option value="google">google</option>
-                          <option value="linkedin">linkedin</option>
-                          <option value="facebook">facebook</option>
-                          <option value="hs_email">hs_email</option>
-                          <option value="partner">partner</option>
-                        </select>
-                      </div>
-
-                      <div>
-                        <label class="block text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1.5">Medium <span class="text-rose-400">*</span></label>
-                        <select id="utm-medium" class="input-magical w-full rounded-lg px-3 py-2 text-sm appearance-none" required>
-                          <option value="" selected disabled>Select...</option>
-                          <option value="cpc">cpc</option>
-                          <option value="social">social</option>
-                          <option value="email">email</option>
-                          <option value="referral">referral</option>
-                        </select>
-                      </div>
-                    </div>
-
-                    <div>
-                      <label class="block text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1.5 flex justify-between gap-4">
-                        <span>Campaign Name <span class="text-rose-400">*</span></span>
-                        <span class="text-[8px] text-gray-600 font-normal normal-case">Format: Q4_Initiative_Name</span>
-                      </label>
-                      <input type="text" id="utm-campaign" class="input-magical w-full rounded-lg px-3 py-2 text-sm" placeholder="e.g. Q4_Solar_Savings" required>
-                    </div>
-
-                    <div class="pt-2 border-t border-white/5">
-                      <button type="button" id="toggle-optional-fields" class="text-xs text-gray-400 hover:text-white flex items-center gap-1">
-                        <i class="ph-bold ph-plus-circle"></i> Show Optional Fields
+        
+            <div class="space-y-6">
+              <div class="grid grid-cols-1 xl:grid-cols-12 gap-6">
+                <div class="xl:col-span-5">
+                  <div class="glass-card p-6 md:p-7">
+                    <h3 class="text-xs font-bold text-gray-500 uppercase tracking-widest mb-4 border-b border-white/5 pb-2">Link Parameters</h3>
+                    <form id="utm-form" class="space-y-4">
+                      <!-- keep your existing form content exactly as-is -->
+                    </form>
+                  </div>
+                </div>
+        
+                <div class="xl:col-span-7">
+                  <div class="glass-card p-6 bg-gradient-to-br from-[#181125] to-[#120c1d] border-purple-500/20 relative overflow-hidden">
+                    <div class="absolute -right-10 -top-10 w-32 h-32 bg-purple-500/10 rounded-full blur-[30px] pointer-events-none"></div>
+                    <h3 class="text-xs font-bold text-purple-300 uppercase tracking-widest mb-3">Generated Link</h3>
+                    <div class="relative mb-4">
+                      <textarea id="utm-result" class="w-full bg-black/40 border border-purple-500/30 rounded-lg p-3 pr-12 text-sm text-gray-300 font-mono resize-none h-24 outline-none" readonly placeholder="Fill out fields to generate link..."></textarea>
+                      <button type="button" id="copy-utm-button" class="absolute right-2 top-2 p-1.5 bg-black/50 hover:bg-purple-900/50 rounded-md border border-white/10 hover:border-purple-500/50 text-gray-400 hover:text-white transition-colors" title="Copy to clipboard">
+                        <i class="ph-bold ph-copy text-lg"></i>
                       </button>
                     </div>
-
-                    <div id="optional-fields" class="hidden space-y-4 pt-2">
-                      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                        <div>
-                          <label class="block text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1.5">Term (Keyword)</label>
-                          <input type="text" id="utm-term" class="input-magical w-full rounded-lg px-3 py-2 text-sm" placeholder="e.g. solar panels">
-                        </div>
-                        <div>
-                          <label class="block text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1.5">Content (Ad Var)</label>
-                          <input type="text" id="utm-content" class="input-magical w-full rounded-lg px-3 py-2 text-sm" placeholder="e.g. blue_banner">
-                        </div>
-                      </div>
-                      <div>
-                        <label class="block text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1.5">Notes (For Registry)</label>
-                        <input type="text" id="utm-notes" class="input-magical w-full rounded-lg px-3 py-2 text-sm" placeholder="Brief note on where this is used...">
-                      </div>
+                    <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                      <p class="text-[10px] text-gray-500">Saving writes this link to the Google Sheet registry.</p>
+                      <button type="button" id="save-utm-button" class="btn-primary px-5 py-2 rounded-md text-xs flex items-center gap-2 self-start sm:self-auto">
+                        <i class="ph-bold ph-floppy-disk"></i> Save to Registry
+                      </button>
                     </div>
-                  </form>
+                  </div>
                 </div>
               </div>
-
-              <div class="xl:col-span-7 space-y-6">
-                <div class="glass-card p-6 bg-gradient-to-br from-[#181125] to-[#120c1d] border-purple-500/20 relative overflow-hidden">
-                  <div class="absolute -right-10 -top-10 w-32 h-32 bg-purple-500/10 rounded-full blur-[30px] pointer-events-none"></div>
-                  <h3 class="text-xs font-bold text-purple-300 uppercase tracking-widest mb-3">Generated Link</h3>
-                  <div class="relative mb-4">
-                    <textarea id="utm-result" class="w-full bg-black/40 border border-purple-500/30 rounded-lg p-3 text-sm text-gray-300 font-mono resize-none h-24 outline-none" readonly placeholder="Fill out fields to generate link..."></textarea>
-                    <button type="button" id="copy-utm-button" class="absolute right-2 top-2 p-1.5 bg-black/50 hover:bg-purple-900/50 rounded-md border border-white/10 hover:border-purple-500/50 text-gray-400 hover:text-white transition-colors" title="Copy to clipboard">
-                      <i class="ph-bold ph-copy text-lg"></i>
-                    </button>
-                  </div>
-                  <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                    <p class="text-[10px] text-gray-500">Saving writes this link to the Google Sheet registry.</p>
-                    <button type="button" id="save-utm-button" class="btn-primary px-5 py-2 rounded-md text-xs flex items-center gap-2 self-start sm:self-auto">
-                      <i class="ph-bold ph-floppy-disk"></i> Save to Registry
+        
+              <div class="glass-card overflow-hidden">
+                <div class="p-4 border-b border-white/5 flex flex-col gap-3 sm:flex-row sm:justify-between sm:items-center bg-black/10">
+                  <h3 class="text-xs font-bold text-gray-400 uppercase tracking-widest flex items-center gap-2">
+                    <i class="ph-fill ph-database text-cyan-500"></i> Registry Backend
+                  </h3>
+        
+                  <div class="flex items-center gap-2 flex-wrap">
+                    <select id="utm-filter-campaign" class="input-magical rounded text-[10px] px-2 py-1.5 min-w-[120px]">
+                      <option value="all">All Campaigns</option>
+                    </select>
+        
+                    <select id="utm-filter-source" class="input-magical rounded text-[10px] px-2 py-1.5 min-w-[100px]">
+                      <option value="all">All Sources</option>
+                    </select>
+        
+                    <select id="utm-filter-medium" class="input-magical rounded text-[10px] px-2 py-1.5 min-w-[100px]">
+                      <option value="all">All Mediums</option>
+                    </select>
+        
+                    <select id="utm-filter-status" class="input-magical rounded text-[10px] px-2 py-1.5 min-w-[120px]">
+                      <option value="all">All Statuses</option>
+                      <option value="flagged">Needs Review</option>
+                      <option value="clean">Clean Naming</option>
+                    </select>
+        
+                    <div class="relative">
+                      <i class="ph-bold ph-magnifying-glass absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-500 text-xs"></i>
+                      <input
+                        id="utm-search"
+                        type="text"
+                        class="input-magical rounded text-[10px] pl-7 pr-2 py-1.5 w-40"
+                        placeholder="Search..."
+                      >
+                    </div>
+        
+                    <button type="button" id="utm-reset-filters" class="text-[10px] text-gray-500 hover:text-gray-300 underline">
+                      Reset
                     </button>
                   </div>
                 </div>
-
-                <div class="glass-card overflow-hidden">
-                  <div class="p-4 border-b border-white/5 flex flex-col gap-3 sm:flex-row sm:justify-between sm:items-center bg-black/10">
-                    <h3 class="text-xs font-bold text-gray-400 uppercase tracking-widest flex items-center gap-2">
-                      <i class="ph-fill ph-database text-cyan-500"></i> Registry Backend (View)
-                    </h3>
-                      <div class="flex items-center gap-2 flex-wrap">
-                        <select id="utm-filter-campaign" class="input-magical rounded text-[10px] px-2 py-1.5 min-w-[120px]" onchange="applyUtmRegistryFilters()">
-                          <option value="all">All Campaigns</option>
-                        </select>
-                      
-                        <select id="utm-filter-source" class="input-magical rounded text-[10px] px-2 py-1.5 min-w-[100px]" onchange="applyUtmRegistryFilters()">
-                          <option value="all">All Sources</option>
-                        </select>
-                      
-                        <select id="utm-filter-medium" class="input-magical rounded text-[10px] px-2 py-1.5 min-w-[100px]" onchange="applyUtmRegistryFilters()">
-                          <option value="all">All Mediums</option>
-                        </select>
-                      
-                        <select id="utm-filter-status" class="input-magical rounded text-[10px] px-2 py-1.5 min-w-[120px]" onchange="applyUtmRegistryFilters()">
-                          <option value="all">All Statuses</option>
-                          <option value="flagged">Needs Review</option>
-                          <option value="clean">Clean Naming</option>
-                        </select>
-                      
-                        <div class="relative">
-                          <i class="ph-bold ph-magnifying-glass absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-500 text-xs"></i>
-                          <input
-                            id="utm-search"
-                            type="text"
-                            class="input-magical rounded text-[10px] pl-7 pr-2 py-1.5 w-40"
-                            placeholder="Search..."
-                            oninput="applyUtmRegistryFilters()"
-                          >
-                        </div>
-                      
-                        <button onclick="resetUtmRegistryFilters()" class="text-[10px] text-gray-500 hover:text-gray-300 underline">
-                          Reset
-                        </button>
-                      </div>
-                  </div>
-
-                  <div class="overflow-x-auto">
-                    <table class="data-table w-full">
-                      <thead>
-                        <tr>
-                          <th>Campaign</th>
-                          <th>Source/Medium</th>
-                          <th>Date Saved</th>
-                          <th class="w-10"></th>
-                        </tr>
-                      </thead>
-                      <tbody id="registry-tbody"></tbody>
-                    </table>
-                  </div>
+        
+                <div class="overflow-x-auto">
+                  <table class="data-table w-full">
+                    <thead>
+                      <tr>
+                        <th>Campaign</th>
+                        <th>Source/Medium</th>
+                        <th>Date Saved</th>
+                        <th class="w-10"></th>
+                      </tr>
+                    </thead>
+                    <tbody id="registry-tbody"></tbody>
+                  </table>
                 </div>
               </div>
             </div>
@@ -1486,13 +1429,14 @@ function populateUtmFilterOptions(items) {
   );
 }
 
-  function bindUtmRegistryFilters() {
+function bindUtmRegistryFilters() {
   ["utm-filter-campaign", "utm-filter-source", "utm-filter-medium", "utm-filter-status"].forEach((id) => {
     const el = document.getElementById(id);
     if (el) el.addEventListener("change", applyUtmRegistryFilters);
   });
 
   document.getElementById("utm-search")?.addEventListener("input", applyUtmRegistryFilters);
+  document.getElementById("utm-reset-filters")?.addEventListener("click", resetUtmRegistryFilters);
 }
 
   function bindExternalButtons() {
@@ -1594,14 +1538,27 @@ function populateUtmFilterOptions(items) {
     }
   }
 
-  function copyUTM() {
-    const value = document.getElementById("utm-result")?.value || "";
-    if (!value || value.startsWith("Waiting")) return;
+async function copyUTM() {
+  const value = document.getElementById("utm-result")?.value?.trim() || "";
+  if (!value || value.startsWith("Waiting")) return;
 
-    navigator.clipboard.writeText(value).then(() => {
+  try {
+    await navigator.clipboard.writeText(value);
+    showToast("Copied!", "Link copied to clipboard.", "ph-copy");
+  } catch (error) {
+    const textarea = document.getElementById("utm-result");
+    if (textarea) {
+      textarea.removeAttribute("readonly");
+      textarea.select();
+      textarea.setSelectionRange(0, textarea.value.length);
+      document.execCommand("copy");
+      textarea.setAttribute("readonly", "readonly");
       showToast("Copied!", "Link copied to clipboard.", "ph-copy");
-    });
+    } else {
+      showToast("Copy Error", "Could not copy link.", "ph-warning", "text-amber-400");
+    }
   }
+}
 
   async function saveUTM() {
     const destinationUrl = document.getElementById("utm-url")?.value.trim() || "";
@@ -1663,15 +1620,18 @@ function renderRegistry(items) {
       ? `<span class="badge badge-emerald ml-2">Clean</span>`
       : `<span class="badge badge-gold ml-2">Needs Review</span>`;
 
+    const rawLink = item.fullUtmLink || item.destinationUrl || "";
+    const displayDate = formatShortSlashDate(item.dateCreated);
+
     return `
       <tr>
         <td>
-          <div class="font-medium text-white mb-0.5 flex items-center flex-wrap">
-            ${escapeHtml(campaignName)}
+          <div class="font-medium text-white flex items-center flex-wrap gap-y-1">
+            <span>${escapeHtml(campaignName)}</span>
             ${reviewBadge}
           </div>
-          <div class="text-[10px] text-gray-500 font-mono truncate max-w-[240px]">
-            ${escapeHtml(item.fullUtmLink || item.destinationUrl || "")}
+          <div class="text-[11px] text-gray-500 font-normal truncate max-w-[420px] mt-1">
+            ${escapeHtml(rawLink)}
           </div>
         </td>
         <td>
@@ -1679,12 +1639,15 @@ function renderRegistry(items) {
           <span class="text-gray-600 mx-1">/</span>
           <span class="text-xs text-gray-400">${escapeHtml(item.medium || "")}</span>
         </td>
-        <td><div class="text-xs text-gray-400">${escapeHtml(item.dateCreated || "")}</div></td>
+        <td>
+          <div class="text-xs text-gray-400">${escapeHtml(displayDate)}</div>
+        </td>
         <td>
           <button
             type="button"
             class="registry-copy-btn text-gray-500 hover:text-purple-400 transition-colors"
-            data-copy-value="${escapeHtml(item.fullUtmLink || item.destinationUrl || "")}"
+            data-copy-value="${escapeHtml(rawLink)}"
+            title="Copy link"
           >
             <i class="ph-bold ph-copy"></i>
           </button>
@@ -1694,46 +1657,70 @@ function renderRegistry(items) {
   }).join("");
 
   tbody.querySelectorAll(".registry-copy-btn").forEach((button) => {
-    button.addEventListener("click", () => {
-      const value = decodeHtmlEntities(button.getAttribute("data-copy-value") || "");
+    button.addEventListener("click", async () => {
+      const value = decodeHtmlEntities(button.getAttribute("data-copy-value") || "").trim();
       if (!value) return;
-      navigator.clipboard.writeText(value).then(() => {
+
+      try {
+        await navigator.clipboard.writeText(value);
         showToast("Copied!", "Registry link copied to clipboard.", "ph-copy");
-      });
+      } catch (error) {
+        showToast("Copy Error", "Could not copy registry link.", "ph-warning", "text-amber-400");
+      }
     });
   });
 }
 
-  function renderHomeRecentUtmLinks(items) {
-    const table = document.querySelector("#view-home .xl\\:col-span-2 table tbody");
-    if (!table) return;
+  function formatShortSlashDate(value) {
+  if (!value) return "-";
 
-    const rows = (items || []).slice(0, 3);
+  let date;
 
-    if (!rows.length) {
-      table.innerHTML = `
-        <tr>
-          <td colspan="3" class="text-sm text-gray-400">No recent UTM links yet.</td>
-        </tr>
-      `;
-      return;
-    }
-
-    table.innerHTML = rows.map((item) => `
-      <tr>
-        <td>
-          <div class="font-medium text-white mb-0.5">${escapeHtml(item.campaignName || item.campaign || item.campaignId || "")}</div>
-          <div class="text-[10px] text-gray-500 font-mono truncate max-w-[200px]">${escapeHtml(item.fullUtmLink || item.destinationUrl || "")}</div>
-        </td>
-        <td>
-          <span class="badge ${getBadgeColor(item.source)}">${escapeHtml(item.source || "")}</span>
-          <span class="text-gray-600 mx-1">/</span>
-          <span class="text-xs text-gray-400">${escapeHtml(item.medium || "")}</span>
-        </td>
-        <td><div class="text-xs text-gray-400">${escapeHtml(item.dateCreated || "")}</div></td>
-      </tr>
-    `).join("");
+  if (Object.prototype.toString.call(value) === "[object Date]" && !isNaN(value.getTime())) {
+    date = value;
+  } else {
+    date = new Date(value);
   }
+
+  if (Number.isNaN(date.getTime())) return String(value);
+
+  const mm = String(date.getMonth() + 1).padStart(2, "0");
+  const dd = String(date.getDate()).padStart(2, "0");
+  const yy = String(date.getFullYear()).slice(-2);
+
+  return `${mm}/${dd}/${yy}`;
+}
+
+function renderHomeRecentUtmLinks(items) {
+  const table = document.querySelector("#view-home .xl\\:col-span-2 table tbody");
+  if (!table) return;
+
+  const rows = (items || []).slice(0, 3);
+
+  if (!rows.length) {
+    table.innerHTML = `
+      <tr>
+        <td colspan="3" class="text-sm text-gray-400">No recent UTM links yet.</td>
+      </tr>
+    `;
+    return;
+  }
+
+  table.innerHTML = rows.map((item) => `
+    <tr>
+      <td>
+        <div class="font-medium text-white mb-0.5">${escapeHtml(item.campaignName || item.campaign || item.campaignId || "")}</div>
+        <div class="text-[11px] text-gray-500 font-normal truncate max-w-[260px] mt-1">${escapeHtml(item.fullUtmLink || item.destinationUrl || "")}</div>
+      </td>
+      <td>
+        <span class="badge ${getBadgeColor(item.source)}">${escapeHtml(item.source || "")}</span>
+        <span class="text-gray-600 mx-1">/</span>
+        <span class="text-xs text-gray-400">${escapeHtml(item.medium || "")}</span>
+      </td>
+      <td><div class="text-xs text-gray-400">${escapeHtml(formatShortSlashDate(item.dateCreated))}</div></td>
+    </tr>
+  `).join("");
+}
 
   function renderPerformanceSummary(summary) {
     const sessionsEl = document.getElementById("kpi-sessions");
@@ -1760,33 +1747,24 @@ if (topSourceCardSub) {
     renderHomePerformanceSnapshot(summary);
   }
 
-  function renderHomePerformanceSnapshot(summary) {
-    const cards = document.querySelectorAll("#view-home .grid.grid-cols-1.md\\:grid-cols-2.xl\\:grid-cols-4.gap-5 .glass-card, #view-home .grid.grid-cols-1.md\\:grid-cols-2.xl\\:grid-cols-4.gap-5 button");
-    if (cards.length < 4) return;
+function renderHomePerformanceSnapshot(summary) {
+  const cards = document.querySelectorAll("#view-home .grid.grid-cols-1.md\\:grid-cols-2.xl\\:grid-cols-4.gap-5 .glass-card, #view-home .grid.grid-cols-1.md\\:grid-cols-2.xl\\:grid-cols-4.gap-5 button");
+  if (cards.length < 4) return;
 
-    const sessionsCard = cards[0].querySelector(".text-2xl");
-    const rateCard = cards[1].querySelector(".text-2xl");
-    const activeCard = cards[2].querySelector(".text-2xl");
+  const sessionsCard = cards[0].querySelector(".text-2xl");
+  const rateCard = cards[1].querySelector(".text-2xl");
+  const activeCard = cards[2].querySelector(".text-2xl");
 
-    if (sessionsCard) sessionsCard.textContent = formatNumber(summary.sessions || 0);
-    if (rateCard) rateCard.textContent = formatPercent(summary.conversionRate || 0);
-    const activeCount = currentRegistryItems.filter((item) => {
-  const status = String(item.status || "").toLowerCase();
-  return status === "active" || status === "detected";
-}).length;
+  if (sessionsCard) sessionsCard.textContent = formatNumber(summary.sessions || 0);
+  if (rateCard) rateCard.textContent = formatPercent(summary.conversionRate || 0);
 
-const activeCount = currentRegistryItems.filter((item) => {
-  const status = String(item.status || "").toLowerCase();
-  return status === "active" || status === "detected";
-}).length;
+  const activeCount = currentRegistryItems.filter((item) => {
+    const status = String(item.status || "").toLowerCase();
+    return status === "active" || status === "detected";
+  }).length;
 
-const activeCount = currentRegistryItems.filter((item) => {
-  const status = String(item.status || "").toLowerCase();
-  return status === "active" || status === "detected";
-}).length;
-
-if (activeCard) activeCard.textContent = formatNumber(activeCount);
-  }
+  if (activeCard) activeCard.textContent = formatNumber(activeCount);
+}
 
   function renderEmptyPerformanceState() {
     renderPerformanceSummary({
@@ -2323,13 +2301,10 @@ async function refreshReportsData() {
     });
   }
 
-  function getClarityDaysFromUi() {
-    const value = String(document.getElementById("ux-filter-date")?.value || "30");
-    if (value === "7") return 1;
-    if (value === "30") return 3;
-    if (value === "90") return 3;
-    return 3;
-  }
+function getClarityDaysFromUi() {
+  const value = Number(document.getElementById("ux-filter-date")?.value || 3);
+  return [1, 2, 3].includes(value) ? value : 3;
+}
 
   async function applyUXFilters() {
     const updated = document.getElementById("ux-last-updated");

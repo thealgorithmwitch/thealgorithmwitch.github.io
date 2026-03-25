@@ -448,7 +448,7 @@
             <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-5">
               <div class="glass-card p-5 relative overflow-hidden">
                 <div class="flex justify-between items-start mb-2">
-                  <span class="text-[10px] uppercase tracking-wider text-gray-500 font-bold">Total Traffic</span>
+                  <span class="text-[10px] uppercase tracking-wider text-gray-500 font-bold">Sessions</span>
                   <i class="ph-duotone ph-users text-purple-400 text-lg"></i>
                 </div>
                 <div class="text-2xl font-bold text-white mb-1">12,450</div>
@@ -907,9 +907,9 @@
                 <div>
                   <label class="block text-[9px] text-gray-500 mb-1 uppercase">Date Range</label>
                   <select id="ux-filter-date" class="input-magical text-xs rounded-md px-2 py-1.5 min-w-[120px]">
-                    <option value="30">Last 30 Days</option>
-                    <option value="7">Last 7 Days</option>
-                    <option value="90">Last 90 Days</option>
+                      <option value="1">Last 1 Day</option>
+                      <option value="2">Last 2 Days</option>
+                      <option value="3">Last 3 Days</option>
                   </select>
                 </div>
                 <div>
@@ -1137,7 +1137,7 @@
 
 <script>
   const APP_CONFIG = {
-    APPS_SCRIPT_URL: "https://script.google.com/macros/s/AKfycbzzvzPYEmXLzPMUK6pMX3mIihB6eJDv8MFHfwn-AaoBI_hswEVvNsnnccj7DZSjVPOn/exec",
+    APPS_SCRIPT_URL: "https://script.google.com/macros/s/AKfycbzJsgasaMXWTNgFI9l0uKNWXev03XD_E7vlWWv0ZN2h7YNuwjoXwdpsLNUUisjmv5U/exec",
     AUTO_SYNC_PERFORMANCE_ON_LOAD: true,
     AUTO_SYNC_CLARITY_ON_LOAD: false
   };
@@ -1198,6 +1198,8 @@ const WORKSPACE_CONFIG = {
   let currentClaritySummary = { rows: [] };
   let currentPerformanceSummary = {};
   let currentPerformanceTrend = [];
+  let currentPerformanceComparison = null;
+  
 
 document.addEventListener("DOMContentLoaded", async () => {
   applyConfig();
@@ -1216,12 +1218,11 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   renderRegistry([]);
   renderHomeRecentUtmLinks([]);
-  renderEmptyPerformanceState();
+  renderLoadingPerformanceState();
   renderEmptyUxState();
 
   try {
     await loadSettingsFromSheet();
-
     applyWorkspaceConfig();
 
     await Promise.all([
@@ -1235,15 +1236,20 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     if (APP_CONFIG.AUTO_SYNC_PERFORMANCE_ON_LOAD) {
       try {
-        await syncPerformanceData(400, { silent: true });
+        await syncPerformanceData(365, { silent: true });
       } catch (error) {
         console.error("Initial GA sync failed:", error);
       }
     }
 
+    const reportRange = document.getElementById("filter-date-range");
+    if (reportRange) reportRange.value = "30";
+    updateReportDatePill();
+
     await Promise.all([
       loadPerformanceFromSheet(),
-      loadPerformanceTrendFromSheet()
+      loadPerformanceTrendFromSheet(),
+      loadPerformanceComparisonFromSheet()
     ]);
 
     if (APP_CONFIG.AUTO_SYNC_CLARITY_ON_LOAD) {
@@ -1256,14 +1262,14 @@ document.addEventListener("DOMContentLoaded", async () => {
       await loadClarityFromSheet();
     }
   } catch (error) {
-  console.error(error);
-  showToast(
-    "Connection Error",
-    error?.message || "Could not load portal data.",
-    "ph-warning-circle",
-    "text-amber-400"
-  );
-}
+    console.error(error);
+    showToast(
+      "Connection Error",
+      error?.message || "Could not load portal data.",
+      "ph-warning-circle",
+      "text-amber-400"
+    );
+  }
 });
 
   async function loadSettingsFromSheet() {
@@ -1368,6 +1374,15 @@ function getCurrentReportFilterParams() {
       syncTime.textContent = `Synced: Today ${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`;
     }
   }
+
+  async function loadPerformanceComparisonFromSheet() {
+  const params = getCurrentReportFilterParams();
+  const data = await apiGet("getPerformanceComparison", params);
+  if (!data.ok) throw new Error(data.error || "Failed to load performance comparison");
+
+  currentPerformanceComparison = data.comparison || null;
+  renderPerformanceComparison(currentPerformanceComparison);
+}
 
 function applyUtmRegistryFilters() {
   const campaignFilter = document.getElementById("utm-filter-campaign")?.value || "all";
@@ -1735,10 +1750,12 @@ function renderRegistry(items) {
     if (durationEl) durationEl.textContent = formatDuration(summary.avgSessionDurationSeconds || 0);
     if (topSourceEl) topSourceEl.textContent = prettifySource(summary.topSource || "-");
 
-    const topSourceCardSub = topSourceEl?.parentElement?.querySelector(".text-xs.text-gray-400");
-    if (topSourceCardSub) {
-      topSourceCardSub.textContent = summary.sessions ? `${formatNumber(summary.sessions)} sessions in current filter` : "No data";
-    }
+  const topSourceCardSub = topSourceEl?.parentElement?.querySelector(".text-xs.text-gray-400");
+  if (topSourceCardSub) {
+    topSourceCardSub.textContent = summary.topSourceSessions
+      ? `${formatPercent(summary.topSourceShare || 0)} of traffic`
+      : "No data";
+  }
 
     renderHomePerformanceSnapshot(summary);
   }
@@ -1753,7 +1770,12 @@ function renderRegistry(items) {
 
     if (sessionsCard) sessionsCard.textContent = formatNumber(summary.sessions || 0);
     if (rateCard) rateCard.textContent = formatPercent(summary.conversionRate || 0);
-    if (activeCard) activeCard.textContent = formatNumber(currentRegistryItems.length || 0);
+    const activeCount = currentRegistryItems.filter((item) => {
+  const status = String(item.status || "").toLowerCase();
+  return status === "active" || status === "detected";
+}).length;
+
+if (activeCard) activeCard.textContent = formatNumber(activeCount);
   }
 
   function renderEmptyPerformanceState() {
@@ -1895,6 +1917,22 @@ function renderRegistry(items) {
       </div>
     `;
   }
+
+  function updateReportDatePill() {
+  const pill = document.querySelector("header .text-xs.text-gray-300.font-medium");
+  const value = String(document.getElementById("filter-date-range")?.value || "30");
+
+  if (!pill) return;
+
+  const labelMap = {
+    "30": "Last 30 Days",
+    "90": "Last 90 Days",
+    "quarter": "This Quarter",
+    "ytd": "Year to Date"
+  };
+
+  pill.textContent = labelMap[value] || "Last 30 Days";
+}
 
   function renderClaritySummary(summary) {
     const rageEl = document.getElementById("ux-kpi-rage");
@@ -2140,14 +2178,16 @@ async function applyReportFilters() {
   const updated = document.getElementById("reports-last-updated");
   if (updated) updated.textContent = "Updating...";
 
+  updateReportDatePill();
+
   try {
     await Promise.all([
       loadPerformanceFromSheet(),
-      loadPerformanceTrendFromSheet()
+      loadPerformanceTrendFromSheet(),
+      loadPerformanceComparisonFromSheet()
     ]);
 
     if (updated) updated.textContent = "Updated: Just now";
-    showToast("Filters Applied", "Reports updated with new criteria.", "ph-check-circle");
   } catch (error) {
     console.error("applyReportFilters failed:", error);
     if (updated) updated.textContent = "Update failed";
@@ -2158,6 +2198,22 @@ async function applyReportFilters() {
       "text-amber-400"
     );
   }
+}
+
+function renderLoadingPerformanceState() {
+  const loadingSummary = {
+    sessions: 0,
+    users: 0,
+    conversions: 0,
+    conversionRate: 0,
+    avgSessionDurationSeconds: 0,
+    topSource: "-",
+    topSourceSessions: 0,
+    topSourceShare: 0
+  };
+
+  renderPerformanceSummary(loadingSummary);
+  renderPerformanceTrendCharts([]);
 }
 
 function resetReportFilters() {
@@ -2210,12 +2266,15 @@ async function refreshReportsData() {
   if (updated) updated.textContent = "Updating...";
 
   try {
-    await syncPerformanceData(400, { silent: true });
+    await syncPerformanceData(365, { silent: true });
 
     await Promise.all([
       loadPerformanceFromSheet(),
-      loadPerformanceTrendFromSheet()
+      loadPerformanceTrendFromSheet(),
+      loadPerformanceComparisonFromSheet()
     ]);
+
+    updateReportDatePill();
 
     if (updated) updated.textContent = "Updated: Just now";
     showToast("Sync Complete", "Google Analytics data refreshed.", "ph-check-circle");
@@ -2444,6 +2503,63 @@ async function refreshReportsData() {
     if (c === "ux") return "badge-rose";
     return "badge-gold";
   }
+
+  
+
+
+
+function renderPerformanceComparison(comparison) {
+  const delta = comparison?.delta || {};
+
+  const reportCards = document.querySelectorAll("#view-reports .grid.grid-cols-2.md\\:grid-cols-3.xl\\:grid-cols-6.gap-5 .glass-card");
+  const homeCards = document.querySelectorAll("#view-home .grid.grid-cols-1.md\\:grid-cols-2.xl\\:grid-cols-4.gap-5 .glass-card, #view-home .grid.grid-cols-1.md\\:grid-cols-2.xl\\:grid-cols-4.gap-5 button");
+
+  updateDeltaText(reportCards[0], delta.sessionsPct, "vs previous period");
+  updateDeltaText(reportCards[1], delta.usersPct, "vs previous period");
+  updateDeltaText(reportCards[2], delta.conversionsPct, "vs previous period");
+  updateDeltaText(reportCards[3], delta.conversionRatePct, "vs previous period");
+  updateDurationDeltaText(reportCards[4], comparison);
+
+  updateDeltaText(homeCards[0], delta.sessionsPct, "vs previous period");
+  updateDeltaText(homeCards[1], delta.conversionRatePct, "vs previous period");
+}
+
+function updateDeltaText(card, pct, suffix) {
+  if (!card) return;
+  const deltaEl = card.querySelector(".text-xs");
+  if (!deltaEl) return;
+
+  const value = Number(pct || 0);
+  const isUp = value >= 0;
+  const icon = isUp ? "ph-trend-up" : "ph-trend-down";
+  const color = isUp ? "text-emerald-400" : "text-rose-400";
+  const sign = isUp ? "+" : "";
+
+  deltaEl.className = `text-xs ${color} mt-1`;
+  deltaEl.innerHTML = `<i class="ph-bold ${icon}"></i> ${sign}${(value * 100).toFixed(1)}%`;
+  if (suffix) {
+    deltaEl.innerHTML += ` <span class="text-gray-600">${escapeHtml(suffix)}</span>`;
+  }
+}
+
+function updateDurationDeltaText(card, comparison) {
+  if (!card) return;
+  const deltaEl = card.querySelector(".text-xs");
+  if (!deltaEl) return;
+
+  const current = Number(comparison?.current?.avgSessionDurationSeconds || 0);
+  const previous = Number(comparison?.previous?.avgSessionDurationSeconds || 0);
+  const diff = current - previous;
+
+  const isUp = diff >= 0;
+  const icon = isUp ? "ph-trend-up" : "ph-trend-down";
+  const color = isUp ? "text-emerald-400" : "text-rose-400";
+  const sign = isUp ? "+" : "-";
+  const formatted = formatDuration(Math.abs(diff));
+
+  deltaEl.className = `text-xs ${color} mt-1`;
+  deltaEl.innerHTML = `<i class="ph-bold ${icon}"></i> ${sign}${formatted} <span class="text-gray-600">vs previous period</span>`;
+}
 
   function getBadgeColor(source) {
     return {

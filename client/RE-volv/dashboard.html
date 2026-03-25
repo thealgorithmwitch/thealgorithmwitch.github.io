@@ -1075,8 +1075,8 @@ let PORTAL_CONFIG = {
   themeColor: "#ffd700",
   lookerStudioUrl: "",
   clarityUrl: "",
-  primaryDomain: "https://re-volv.org",
-  backendType: "Google Sheets"
+  backendType: "Google Sheets",
+  siteUrl: "https://re-volv.org"
 };
 
   const VALID_VIEWS = ["home", "reports", "utm", "ux", "audit"];
@@ -1225,6 +1225,7 @@ async function loadSettingsFromSheet() {
   PORTAL_CONFIG.clarityUrl = data.settings?.clarityUrl || "";
   PORTAL_CONFIG.lookerStudioUrl = data.settings?.lookerEmbedUrl || "";
   PORTAL_CONFIG.primaryDomain = data.settings?.primaryDomain || "https://re-volv.org";
+  PORTAL_CONFIG.siteUrl = data.settings?.siteUrl || "https://re-volv.org";
 
   applyConfig();
 }
@@ -1622,29 +1623,33 @@ function getRegistrySessionsMarkup(item) {
 }
 
 function buildDisplayLink(item) {
-  const full = String(item.fullUtmLink || "").trim();
+  const full = String(item.fullUtmLink || item.full_utm_link || "").trim();
   if (full) return full;
 
-  const dest = String(item.destinationUrl || "").trim();
+  const dest = String(item.destinationUrl || item.destination_url || "").trim();
   if (dest) return dest;
 
   const landing =
-    String(item.landingPage || item.landing_page || "").trim();
+    String(
+      item.landingPage ||
+      item.landing_page ||
+      ""
+    ).trim();
 
   if (!landing) return "";
 
-  if (/^https?:\/\//i.test(landing)) {
-    return landing;
-  }
+  if (/^https?:\/\//i.test(landing)) return landing;
 
-  const baseDomain =
-    String(PORTAL_CONFIG.primaryDomain || "").trim() ||
-    "https://re-volv.org";
+  const base =
+    String(
+      item.siteUrl ||
+      item.site_url ||
+      PORTAL_CONFIG.siteUrl ||
+      "https://re-volv.org"
+    ).replace(/\/+$/, "");
 
-  const normalizedBase = baseDomain.replace(/\/+$/, "");
   const normalizedPath = landing.startsWith("/") ? landing : `/${landing}`;
-
-  return `${normalizedBase}${normalizedPath}`;
+  return `${base}${normalizedPath}`;
 }
 
 

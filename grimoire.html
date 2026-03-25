@@ -1853,6 +1853,7 @@ select {
     flipCards.forEach((card) => {
       const toggle = card.querySelector('.flip-toggle');
       const close = card.querySelector('.flip-close');
+      const backLink = card.querySelector('.flip-link');
 
       if (toggle) {
         toggle.addEventListener('click', (event) => {
@@ -1871,17 +1872,30 @@ select {
         });
       }
 
+      if (backLink) {
+        backLink.addEventListener('click', (event) => {
+          event.stopPropagation();
+        });
+      }
+
+      card.addEventListener('click', (event) => {
+        const clickedToggle = event.target.closest('.flip-toggle');
+        const clickedClose = event.target.closest('.flip-close');
+        const clickedLink = event.target.closest('.flip-link');
+
+        if (clickedToggle || clickedClose || clickedLink) return;
+
+        if (!canHover) {
+          const nextState = !card.classList.contains('is-flipped');
+          setCardFlipped(card, nextState);
+        }
+      });
+
       card.addEventListener('keydown', (event) => {
         if (event.key === 'Escape') {
           setCardFlipped(card, false);
         }
       });
-    });
-
-    document.addEventListener('click', (event) => {
-      if (!event.target.closest('.flip-card')) {
-        closeAllFlips();
-      }
     });
 
     function applyFilters() {

@@ -1129,6 +1129,20 @@
   let currentHomeSummary = {};
   let currentHomeComparison = null;
 
+  let currentRecentRegistryLinks = [];
+
+async function loadRecentRegistryLinks() {
+  const data = await apiGet("getRecentRegistryLinks", {
+    range_type: "30",
+    rangeType: "30"
+  });
+
+  if (!data.ok) throw new Error(data.error || "Failed to load recent links");
+
+  currentRecentRegistryLinks = Array.isArray(data.links) ? data.links : [];
+  renderHomeRecentUtmLinks(currentRecentRegistryLinks);
+}
+
   document.addEventListener("DOMContentLoaded", async () => {
     applyConfig();
     initStars();
@@ -1738,7 +1752,7 @@ function renderRegistry(items) {
         <td>
           <span class="badge ${getBadgeColor(item.source)}">${escapeHtml(item.source || "")}</span>
           <span class="text-gray-600 mx-1">/</span>
-          <span class="text-xs text-gray-300">${formatNumber(getRegistrySessionsValue(item))} sessions</span>
+          <span class="text-xs text-gray-300">${formatNumber(item.sessions30d || 0)} sessions</span>
         </td>
         <td>
           <div class="text-xs text-gray-400">${escapeHtml(formatShortSlashDate(item.dateCreated))}</div>

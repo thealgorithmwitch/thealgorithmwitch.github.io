@@ -1107,31 +1107,10 @@
                     </tr>
                   </thead>
                   <tbody>
-                    <tr data-status="new" data-audit-id="cross-domain">
-                      <td><div class="w-2 h-2 rounded-full bg-rose-500"></div></td>
-                      <td class="font-medium text-white text-sm">Fix GA4 Cross-Domain Tracking</td>
-                      <td><span class="badge badge-cyan">Tracking</span></td>
-                      <td><span class="badge badge-rose">High</span></td>
-                      <td><span class="flex items-center gap-1 text-xs text-amber-400"><i class="ph-bold ph-circle"></i> New</span></td>
-                      <td class="text-xs text-gray-400">GA4 Data Stream</td>
-                    </tr>
-                    <tr data-status="in-progress" data-audit-id="meta-utms">
-                      <td><div class="w-2 h-2 rounded-full bg-amber-500"></div></td>
-                      <td class="font-medium text-white text-sm">Standardize Meta Ad UTMs</td>
-                      <td><span class="badge badge-purple">Campaigns</span></td>
-                      <td><span class="badge badge-gold">Medium</span></td>
-                      <td><span class="flex items-center gap-1 text-xs text-cyan-400"><i class="ph-bold ph-spinner-gap animate-spin"></i> In Progress</span></td>
-                      <td class="text-xs text-gray-400">Meta Ads Manager</td>
-                    </tr>
-                    <tr data-status="new" data-audit-id="mobile-hero">
-                      <td><div class="w-2 h-2 rounded-full bg-rose-500"></div></td>
-                      <td class="font-medium text-white text-sm">Shorten Mobile Hero Section</td>
-                      <td><span class="badge badge-rose">UX</span></td>
-                      <td><span class="badge badge-rose">High</span></td>
-                      <td><span class="flex items-center gap-1 text-xs text-amber-400"><i class="ph-bold ph-circle"></i> New</span></td>
-                      <td class="text-xs text-gray-400">/solar-savings</td>
-                    </tr>
-                  </tbody>
+                      <tr>
+                        <td colspan="6" class="text-sm text-gray-500">Loading audit notes...</td>
+                      </tr>
+                    </tbody>
                 </table>
               </div>
             </div>
@@ -1454,10 +1433,28 @@ async function loadAuditFromSheet(status = "all") {
 
   if (!data.ok) throw new Error(data.error || "Failed to load audit notes");
 
-  currentAuditItems = (Array.isArray(data.notes) ? data.notes : []).map((item) => ({
-    ...item,
-    status: normalizeAuditStatus(item.status)
-  }));
+  currentAuditItems = (Array.isArray(data.notes) ? data.notes : []).map((item) => {
+    const linkedLandingPage = String(item.linkedLandingPage || "").trim();
+    const linkedCampaignId = String(item.linkedCampaignId || "").trim();
+    const evidenceUrl = String(item.evidenceUrl || "").trim();
+
+    let linkedTo = linkedLandingPage || linkedCampaignId || "";
+
+    if (!linkedTo && evidenceUrl) {
+      try {
+        const parsed = new URL(evidenceUrl);
+        linkedTo = parsed.hostname.replace(/^www\./, "");
+      } catch (error) {
+        linkedTo = evidenceUrl;
+      }
+    }
+
+    return {
+      ...item,
+      status: normalizeAuditStatus(item.status),
+      linkedTo
+    };
+  });
 
   renderAuditTable(currentAuditItems, normalizedStatus);
 }
@@ -2549,7 +2546,8 @@ function renderAuditTable(items, activeStatus = "all") {
 
   const normalizedItems = (items || []).map((item) => ({
     ...item,
-    status: normalizeAuditStatus(item.status)
+    status: normalizeAuditStatus(item.status),
+    linkedTo: String(item.linkedTo || item.linkedLandingPage || item.linkedCampaignId || "").trim()
   }));
 
   const filteredItems = activeStatus === "all"
@@ -2559,7 +2557,7 @@ function renderAuditTable(items, activeStatus = "all") {
   if (!filteredItems.length) {
     tbody.innerHTML = `
       <tr>
-        <td colspan="6" class="text-sm text-gray-400">No audit notes found.</td>
+        <td colspan="6" class="text-sm text-gray-500">Loading audit notes...</td>
       </tr>
     `;
     showAuditDetail(null);
@@ -2567,13 +2565,28 @@ function renderAuditTable(items, activeStatus = "all") {
   }
 
   tbody.innerHTML = filteredItems.map((item) => `
-    <tr data-status="${escapeHtml(item.status || "")}" data-audit-id="${escapeHtml(item.noteId || "")}">
-      <td><div class="w-2 h-2 rounded-full ${priorityDotClass(item.priority)}"></div></td>
-      <td class="font-medium text-white text-sm">${escapeHtml(item.title || "")}</td>
-      <td><span class="badge ${categoryBadgeClass(item.category)}">${escapeHtml(item.category || "")}</span></td>
-      <td><span class="badge ${priorityBadgeClass(item.priority)}">${escapeHtml(item.priority || "")}</span></td>
-      <td><span class="text-xs text-gray-300">${escapeHtml(formatAuditStatusLabel(item.status))}</span></td>
-      <td class="text-xs text-gray-400">${escapeHtml(item.linkedLandingPage || item.linkedCampaignId || "")}</td>
+    <tr data-status="${escapeHtml(item.status || "")}" data-audit-id="${escapeHtml(item.noteId || "")}" class="cursor-pointer">
+      <td>
+        <div class="w-2 h-2 rounded-full ${priorityDotClass(item.priority)}"></div>
+      </td>
+      <td class="font-medium text-white text-sm">
+        ${escapeHtml(item.title || "")}
+      </td>
+      <td>
+        <span class="badge ${categoryBadgeClass(item.category)}">${escapeHtml(item.category || "")}</span>
+      </td>
+      <td>
+        <span class="badge ${priorityBadgeClass(item.priority)}">${escapeHtml(item.priority || "")}</span>
+      </td>
+      <td>
+        <span class="${getAuditStatusPillClass(item.status)}">
+          ${getAuditStatusIcon(item.status)}
+          ${escapeHtml(formatAuditStatusLabel(item.status))}
+        </span>
+      </td>
+      <td class="text-xs text-gray-400">
+        ${escapeHtml(item.linkedTo || "Loading...")}
+      </td>
     </tr>
   `).join("");
 
@@ -2652,7 +2665,7 @@ function showAuditDetail(id) {
     const evidenceValue = String(liveItem.evidenceValue ?? "").trim();
     const evidenceUrl = String(liveItem.evidenceUrl || "").trim();
     const linkedTarget = String(
-      liveItem.linkedLandingPage || liveItem.linkedCampaignId || ""
+      liveItem.linkedTo || liveItem.linkedLandingPage || liveItem.linkedCampaignId || ""
     ).trim();
 
     let evidenceBlock = "";
@@ -2959,6 +2972,42 @@ function priorityDotClass(priority) {
   if (p === "high" || p === "critical") return "bg-rose-500";
   if (p === "medium") return "bg-amber-500";
   return "bg-emerald-500";
+}
+
+  function getAuditStatusPillClass(status) {
+  const s = normalizeAuditStatus(status);
+
+  if (s === "new") {
+    return "inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-semibold uppercase tracking-wider bg-amber-500/15 text-amber-300 border border-amber-500/30";
+  }
+
+  if (s === "in-progress") {
+    return "inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-semibold uppercase tracking-wider bg-cyan-500/15 text-cyan-300 border border-cyan-500/30";
+  }
+
+  if (s === "resolved") {
+    return "inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-semibold uppercase tracking-wider bg-emerald-500/15 text-emerald-300 border border-emerald-500/30";
+  }
+
+  return "inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-semibold uppercase tracking-wider bg-white/10 text-gray-300 border border-white/10";
+}
+
+function getAuditStatusIcon(status) {
+  const s = normalizeAuditStatus(status);
+
+  if (s === "new") {
+    return `<i class="ph-fill ph-circle text-[8px]"></i>`;
+  }
+
+  if (s === "in-progress") {
+    return `<i class="ph-bold ph-spinner-gap animate-spin text-xs"></i>`;
+  }
+
+  if (s === "resolved") {
+    return `<i class="ph-bold ph-check-circle text-xs"></i>`;
+  }
+
+  return `<i class="ph-bold ph-dot-outline text-xs"></i>`;
 }
 
 function priorityBadgeClass(priority) {

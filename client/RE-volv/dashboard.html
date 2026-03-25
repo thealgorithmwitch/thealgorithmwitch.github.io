@@ -1104,13 +1104,13 @@
     audit: "Strategy & Implementation"
   };
 
-const WORKSPACE_CONFIG = {
-  activeWorkspace: "project",
-  label: "Nexus",
-  icon: "ph-intersect-three",
-  themeColor: "#67e8f9",
-  sublabel: "Data portal"
-};
+  const WORKSPACE_CONFIG = {
+    activeWorkspace: "project",
+    label: "Nexus",
+    icon: "ph-intersect-three",
+    themeColor: "#67e8f9",
+    sublabel: "Data portal"
+  };
 
   const AUDIT_FALLBACK = {
     recommendations: {
@@ -1142,78 +1142,77 @@ const WORKSPACE_CONFIG = {
   let currentPerformanceSummary = {};
   let currentPerformanceTrend = [];
   let currentPerformanceComparison = null;
-  
 
-document.addEventListener("DOMContentLoaded", async () => {
-  applyConfig();
-  initStars();
-  bindNavigation();
-  bindExternalButtons();
-  bindUTMEvents();
-  bindUtmRegistryFilters();
-  bindReportFilters();
-  bindUXFilters();
-  bindAuditFilters();
-  bindWorkspaceDropdown();
+  document.addEventListener("DOMContentLoaded", async () => {
+    applyConfig();
+    initStars();
+    bindNavigation();
+    bindExternalButtons();
+    bindUTMEvents();
+    bindUtmRegistryFilters();
+    bindReportFilters();
+    bindUXFilters();
+    bindAuditFilters();
+    bindWorkspaceDropdown();
 
-  updateLocalSyncTime();
-  switchView(getInitialView(), false);
+    updateLocalSyncTime();
+    switchView(getInitialView(), false);
 
-  renderRegistry([]);
-  renderHomeRecentUtmLinks([]);
-  renderLoadingPerformanceState();
-  renderEmptyUxState();
+    renderRegistry([]);
+    renderHomeRecentUtmLinks([]);
+    renderLoadingPerformanceState();
+    renderEmptyUxState();
 
-  try {
-    await loadSettingsFromSheet();
-    applyWorkspaceConfig();
+    try {
+      await loadSettingsFromSheet();
+      applyWorkspaceConfig();
 
-    await Promise.all([
-      loadRegistryFromSheet(),
-      loadAuditFromSheet(),
-      loadResourcesFromSheet()
-    ]);
+      await Promise.all([
+        loadRegistryFromSheet(),
+        loadAuditFromSheet(),
+        loadResourcesFromSheet()
+      ]);
 
-    populateReportFilterOptionsFromRegistry();
-    populateUxPageOptionsFromClarityRows([]);
+      populateReportFilterOptionsFromRegistry();
+      populateUxPageOptionsFromClarityRows([]);
 
-    if (APP_CONFIG.AUTO_SYNC_PERFORMANCE_ON_LOAD) {
-      try {
-        await syncPerformanceData(365, { silent: true });
-      } catch (error) {
-        console.error("Initial GA sync failed:", error);
+      if (APP_CONFIG.AUTO_SYNC_PERFORMANCE_ON_LOAD) {
+        try {
+          await syncPerformanceData(365, { silent: true });
+        } catch (error) {
+          console.error("Initial GA sync failed:", error);
+        }
       }
-    }
 
-    const reportRange = document.getElementById("filter-date-range");
-    if (reportRange) reportRange.value = "30";
-    updateReportDatePill();
+      const reportRange = document.getElementById("filter-date-range");
+      if (reportRange) reportRange.value = "30";
+      updateReportDatePill();
 
-    await Promise.all([
-      loadPerformanceFromSheet(),
-      loadPerformanceTrendFromSheet(),
-      loadPerformanceComparisonFromSheet()
-    ]);
+      await Promise.all([
+        loadPerformanceFromSheet(),
+        loadPerformanceTrendFromSheet(),
+        loadPerformanceComparisonFromSheet()
+      ]);
 
-    if (APP_CONFIG.AUTO_SYNC_CLARITY_ON_LOAD) {
-      try {
-        await syncClarityData({ silent: true });
-      } catch (error) {
-        console.error("Initial Clarity sync failed:", error);
+      if (APP_CONFIG.AUTO_SYNC_CLARITY_ON_LOAD) {
+        try {
+          await syncClarityData({ silent: true });
+        } catch (error) {
+          console.error("Initial Clarity sync failed:", error);
+        }
+      } else {
+        await loadClarityFromSheet();
       }
-    } else {
-      await loadClarityFromSheet();
+    } catch (error) {
+      console.error(error);
+      showToast(
+        "Connection Error",
+        error?.message || "Could not load portal data.",
+        "ph-warning-circle",
+        "text-amber-400"
+      );
     }
-  } catch (error) {
-    console.error(error);
-    showToast(
-      "Connection Error",
-      error?.message || "Could not load portal data.",
-      "ph-warning-circle",
-      "text-amber-400"
-    );
-  }
-});
+  });
 
   async function loadSettingsFromSheet() {
     const data = await apiGet("getSettings");
@@ -1229,7 +1228,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   async function loadRegistryFromSheet(query = "") {
     const data = await apiGet("getRegistry", { q: query });
     if (!data.ok) throw new Error(data.error || "Failed to load registry");
-  
+
     currentRegistryItems = Array.isArray(data.registry) ? data.registry : [];
     populateUtmFilterOptions(currentRegistryItems);
     renderHomeRecentUtmLinks(currentRegistryItems);
@@ -1270,6 +1269,15 @@ document.addEventListener("DOMContentLoaded", async () => {
     renderPerformanceTrendCharts(currentPerformanceTrend);
   }
 
+  async function loadPerformanceComparisonFromSheet() {
+    const params = getCurrentReportFilterParams();
+    const data = await apiGet("getPerformanceComparison", params);
+    if (!data.ok) throw new Error(data.error || "Failed to load performance comparison");
+
+    currentPerformanceComparison = data.comparison || null;
+    renderPerformanceComparison(currentPerformanceComparison);
+  }
+
   async function loadClarityFromSheet() {
     const params = {
       page: document.getElementById("ux-filter-page")?.value || "all",
@@ -1284,19 +1292,19 @@ document.addEventListener("DOMContentLoaded", async () => {
     renderClaritySummary(currentClaritySummary);
     populateUxPageOptionsFromClarityRows(currentClaritySummary.rows || []);
   }
-  
-function getCurrentReportFilterParams() {
-  const rangeValue = document.getElementById("filter-date-range")?.value || "30";
 
-  return {
-    source: document.getElementById("filter-source")?.value || "all",
-    medium: document.getElementById("filter-medium")?.value || "all",
-    campaign: document.getElementById("filter-campaign")?.value || "all",
-    landing_page: document.getElementById("filter-landing")?.value || "all",
-    range_type: rangeValue,
-    rangeType: rangeValue
-  };
-}
+  function getCurrentReportFilterParams() {
+    const rangeValue = document.getElementById("filter-date-range")?.value || "30";
+
+    return {
+      source: document.getElementById("filter-source")?.value || "all",
+      medium: document.getElementById("filter-medium")?.value || "all",
+      campaign: document.getElementById("filter-campaign")?.value || "all",
+      landing_page: document.getElementById("filter-landing")?.value || "all",
+      range_type: rangeValue,
+      rangeType: rangeValue
+    };
+  }
 
   function applyConfig() {
     const clientName = document.getElementById("client-name");
@@ -1318,66 +1326,6 @@ function getCurrentReportFilterParams() {
     }
   }
 
-  async function loadPerformanceComparisonFromSheet() {
-  const params = getCurrentReportFilterParams();
-  const data = await apiGet("getPerformanceComparison", params);
-  if (!data.ok) throw new Error(data.error || "Failed to load performance comparison");
-
-  currentPerformanceComparison = data.comparison || null;
-  renderPerformanceComparison(currentPerformanceComparison);
-}
-
-function applyUtmRegistryFilters() {
-  const campaignFilter = document.getElementById("utm-filter-campaign")?.value || "all";
-  const sourceFilter = document.getElementById("utm-filter-source")?.value || "all";
-  const mediumFilter = document.getElementById("utm-filter-medium")?.value || "all";
-  const statusFilter = document.getElementById("utm-filter-status")?.value || "all";
-  const searchValue = (document.getElementById("utm-search")?.value || "").trim().toLowerCase();
-
-  const filtered = currentRegistryItems.filter((item) => {
-    const campaignName = String(item.campaignName || "").trim();
-    const normalizedCampaignName = campaignName.replace(/\s+/g, "_");
-    const source = String(item.source || "").trim().toLowerCase();
-    const medium = String(item.medium || "").trim().toLowerCase();
-
-    const hasCleanNaming = /^[A-Za-z0-9]+(?:_[A-Za-z0-9]+)+$/.test(normalizedCampaignName);
-    const reviewStatus = hasCleanNaming ? "clean" : "needs review";
-
-    const matchesCampaign =
-      campaignFilter === "all" || campaignName === campaignFilter;
-
-    const matchesSource =
-      sourceFilter === "all" || source === sourceFilter;
-
-    const matchesMedium =
-      mediumFilter === "all" || medium === mediumFilter;
-
-    const matchesStatus =
-      statusFilter === "all" ||
-      (statusFilter === "flagged" && reviewStatus === "needs review") ||
-      (statusFilter === "clean" && reviewStatus === "clean");
-
-    const haystack = [
-      item.campaignName,
-      item.source,
-      item.medium,
-      item.channel,
-      item.term,
-      item.content,
-      item.landingPage,
-      item.destinationUrl,
-      item.fullUtmLink,
-      item.notes
-    ].join(" ").toLowerCase();
-
-    const matchesSearch = !searchValue || haystack.includes(searchValue);
-
-    return matchesCampaign && matchesSource && matchesMedium && matchesStatus && matchesSearch;
-  });
-
-  renderRegistry(filtered);
-}
-  
   function getInitialView() {
     const hash = window.location.hash.replace("#", "").trim().toLowerCase();
     return VALID_VIEWS.includes(hash) ? hash : "home";
@@ -1389,108 +1337,6 @@ function applyUtmRegistryFilters() {
       if (!trigger) return;
       event.preventDefault();
       switchView(trigger.getAttribute("data-view"));
-    });
-  }
-
-  function resetUtmRegistryFilters() {
-  const defaults = {
-    "utm-filter-campaign": "all",
-    "utm-filter-source": "all",
-    "utm-filter-medium": "all",
-    "utm-filter-status": "all",
-    "utm-search": ""
-  };
-
-  Object.entries(defaults).forEach(([id, value]) => {
-    const el = document.getElementById(id);
-    if (el) el.value = value;
-  });
-
-  applyUtmRegistryFilters();
-}
-
-function populateUtmFilterOptions(items) {
-  populateSelectFromValues(
-    "utm-filter-campaign",
-    items.map((item) => item.campaignName).filter(Boolean),
-    "All Campaigns"
-  );
-
-  populateSelectFromValues(
-    "utm-filter-source",
-    items.map((item) => item.source).filter(Boolean),
-    "All Sources"
-  );
-
-  populateSelectFromValues(
-    "utm-filter-medium",
-    items.map((item) => item.medium).filter(Boolean),
-    "All Mediums"
-  );
-}
-
-function buildDisplayLink(item) {
-  const full = String(item.fullUtmLink || "").trim();
-  if (full) return full;
-
-  const dest = String(item.destinationUrl || "").trim();
-  if (dest) return dest;
-
-  return "";
-}
-
-function getRegistryLinkMarkup(item) {
-  const link = buildDisplayLink(item);
-
-  if (!link) {
-    return `<div class="text-[11px] text-gray-600 mt-1">No saved link</div>`;
-  }
-
-  return `<div class="text-[11px] text-gray-500 font-normal truncate max-w-[420px] mt-1">${escapeHtml(link)}</div>`;
-}
-
-function formatShortSlashDate(value) {
-  if (!value) return "-";
-
-  const date = Object.prototype.toString.call(value) === "[object Date]"
-    ? value
-    : new Date(value);
-
-  if (Number.isNaN(date.getTime())) return String(value);
-
-  const mm = String(date.getMonth() + 1).padStart(2, "0");
-  const dd = String(date.getDate()).padStart(2, "0");
-  const yy = String(date.getFullYear()).slice(-2);
-
-  return `${mm}/${dd}/${yy}`;
-}
-
-function bindUtmRegistryFilters() {
-  ["utm-filter-campaign", "utm-filter-source", "utm-filter-medium", "utm-filter-status"].forEach((id) => {
-    const el = document.getElementById(id);
-    if (el) el.addEventListener("change", applyUtmRegistryFilters);
-  });
-
-  document.getElementById("utm-search")?.addEventListener("input", applyUtmRegistryFilters);
-  document.getElementById("utm-reset-filters")?.addEventListener("click", resetUtmRegistryFilters);
-}
-
-  function bindExternalButtons() {
-    document.addEventListener("click", (event) => {
-      const trigger = event.target.closest("[data-open-url]");
-      if (!trigger) return;
-
-      const url = trigger.getAttribute("data-open-url");
-      if (!url) return;
-
-      const resolvedUrl =
-        url === "PORTAL_CONFIG.clarityUrl" ? PORTAL_CONFIG.clarityUrl :
-        url === "PORTAL_CONFIG.lookerStudioUrl" ? PORTAL_CONFIG.lookerStudioUrl :
-        url;
-
-      if (resolvedUrl) {
-        window.open(resolvedUrl, "_blank", "noopener,noreferrer");
-      }
     });
   }
 
@@ -1528,6 +1374,25 @@ function bindUtmRegistryFilters() {
     switchView(getInitialView(), false);
   });
 
+  function bindExternalButtons() {
+    document.addEventListener("click", (event) => {
+      const trigger = event.target.closest("[data-open-url]");
+      if (!trigger) return;
+
+      const url = trigger.getAttribute("data-open-url");
+      if (!url) return;
+
+      const resolvedUrl =
+        url === "PORTAL_CONFIG.clarityUrl" ? PORTAL_CONFIG.clarityUrl :
+        url === "PORTAL_CONFIG.lookerStudioUrl" ? PORTAL_CONFIG.lookerStudioUrl :
+        url;
+
+      if (resolvedUrl) {
+        window.open(resolvedUrl, "_blank", "noopener,noreferrer");
+      }
+    });
+  }
+
   function bindUTMEvents() {
     ["utm-url", "utm-source", "utm-medium", "utm-campaign", "utm-term", "utm-content"].forEach((id) => {
       const el = document.getElementById(id);
@@ -1535,11 +1400,11 @@ function bindUtmRegistryFilters() {
       el.addEventListener("input", generateUTM);
       el.addEventListener("change", generateUTM);
     });
-  
+
     document.getElementById("toggle-optional-fields")?.addEventListener("click", () => {
       document.getElementById("optional-fields")?.classList.toggle("hidden");
     });
-  
+
     document.getElementById("copy-utm-button")?.addEventListener("click", copyUTM);
     document.getElementById("save-utm-button")?.addEventListener("click", saveUTM);
   }
@@ -1574,18 +1439,49 @@ function bindUtmRegistryFilters() {
     }
   }
 
-async function copyUTM() {
-  const value = document.getElementById("utm-result")?.value?.trim() || "";
-  if (!value || value.startsWith("Waiting")) return;
+  async function copyTextToClipboard(text) {
+    const value = String(text || "").trim();
+    if (!value) throw new Error("Nothing to copy");
 
-  try {
-    await copyTextToClipboard(value);
-    showToast("Copied!", "Link copied to clipboard.", "ph-copy");
-  } catch (error) {
-    console.error(error);
-    showToast("Copy Error", "Could not copy link.", "ph-warning", "text-amber-400");
+    if (navigator.clipboard && window.isSecureContext) {
+      await navigator.clipboard.writeText(value);
+      return true;
+    }
+
+    const temp = document.createElement("textarea");
+    temp.value = value;
+    temp.setAttribute("readonly", "");
+    temp.style.position = "fixed";
+    temp.style.top = "-9999px";
+    temp.style.left = "-9999px";
+    document.body.appendChild(temp);
+
+    temp.focus();
+    temp.select();
+    temp.setSelectionRange(0, temp.value.length);
+
+    const success = document.execCommand("copy");
+    document.body.removeChild(temp);
+
+    if (!success) {
+      throw new Error("Copy command failed");
+    }
+
+    return true;
   }
-}
+
+  async function copyUTM() {
+    const value = document.getElementById("utm-result")?.value?.trim() || "";
+    if (!value || value.startsWith("Waiting")) return;
+
+    try {
+      await copyTextToClipboard(value);
+      showToast("Copied!", "Link copied to clipboard.", "ph-copy");
+    } catch (error) {
+      console.error(error);
+      showToast("Copy Error", "Could not copy link.", "ph-warning", "text-amber-400");
+    }
+  }
 
   async function saveUTM() {
     const destinationUrl = document.getElementById("utm-url")?.value.trim() || "";
@@ -1625,36 +1521,226 @@ async function copyUTM() {
     }
   }
 
-function renderRegistry(items) {
-  const tbody = document.getElementById("registry-tbody");
-  if (!tbody) return;
+  function resetUtmRegistryFilters() {
+    const defaults = {
+      "utm-filter-campaign": "all",
+      "utm-filter-source": "all",
+      "utm-filter-medium": "all",
+      "utm-filter-status": "all",
+      "utm-search": ""
+    };
 
-  if (!items.length) {
-    tbody.innerHTML = `
-      <tr>
-        <td colspan="4" class="text-sm text-gray-400">No tracking links found yet.</td>
-      </tr>
-    `;
-    return;
+    Object.entries(defaults).forEach(([id, value]) => {
+      const el = document.getElementById(id);
+      if (el) el.value = value;
+    });
+
+    applyUtmRegistryFilters();
   }
 
-  tbody.innerHTML = items.map((item) => {
-    const campaignName = String(item.campaignName || item.campaign || item.campaignId || "").trim();
-    const normalizedCampaignName = campaignName.replace(/\s+/g, "_");
-    const hasCleanNaming = /^[A-Za-z0-9]+(?:_[A-Za-z0-9]+)+$/.test(normalizedCampaignName);
-    const rawLink = buildDisplayLink(item);
+  function populateUtmFilterOptions(items) {
+    populateSelectFromValues(
+      "utm-filter-campaign",
+      items.map((item) => item.campaignName).filter(Boolean),
+      "All Campaigns"
+    );
 
-    const reviewBadge = hasCleanNaming
-      ? `<span class="badge badge-emerald ml-2">Clean</span>`
-      : `<span class="badge badge-gold ml-2">Needs Review</span>`;
+    populateSelectFromValues(
+      "utm-filter-source",
+      items.map((item) => item.source).filter(Boolean),
+      "All Sources"
+    );
 
-    return `
+    populateSelectFromValues(
+      "utm-filter-medium",
+      items.map((item) => item.medium).filter(Boolean),
+      "All Mediums"
+    );
+  }
+
+  function bindUtmRegistryFilters() {
+    ["utm-filter-campaign", "utm-filter-source", "utm-filter-medium", "utm-filter-status"].forEach((id) => {
+      const el = document.getElementById(id);
+      if (el) el.addEventListener("change", applyUtmRegistryFilters);
+    });
+
+    document.getElementById("utm-search")?.addEventListener("input", applyUtmRegistryFilters);
+    document.getElementById("utm-reset-filters")?.addEventListener("click", resetUtmRegistryFilters);
+  }
+
+  function applyUtmRegistryFilters() {
+    const campaignFilter = document.getElementById("utm-filter-campaign")?.value || "all";
+    const sourceFilter = document.getElementById("utm-filter-source")?.value || "all";
+    const mediumFilter = document.getElementById("utm-filter-medium")?.value || "all";
+    const statusFilter = document.getElementById("utm-filter-status")?.value || "all";
+    const searchValue = (document.getElementById("utm-search")?.value || "").trim().toLowerCase();
+
+    const filtered = currentRegistryItems.filter((item) => {
+      const campaignName = String(item.campaignName || "").trim();
+      const normalizedCampaignName = campaignName.replace(/\s+/g, "_");
+      const source = String(item.source || "").trim().toLowerCase();
+      const medium = String(item.medium || "").trim().toLowerCase();
+
+      const hasCleanNaming = /^[A-Za-z0-9]+(?:_[A-Za-z0-9]+)+$/.test(normalizedCampaignName);
+      const reviewStatus = hasCleanNaming ? "clean" : "needs review";
+
+      const matchesCampaign = campaignFilter === "all" || campaignName === campaignFilter;
+      const matchesSource = sourceFilter === "all" || source === sourceFilter;
+      const matchesMedium = mediumFilter === "all" || medium === mediumFilter;
+      const matchesStatus =
+        statusFilter === "all" ||
+        (statusFilter === "flagged" && reviewStatus === "needs review") ||
+        (statusFilter === "clean" && reviewStatus === "clean");
+
+      const haystack = [
+        item.campaignName,
+        item.source,
+        item.medium,
+        item.channel,
+        item.term,
+        item.content,
+        item.landingPage,
+        item.destinationUrl,
+        item.fullUtmLink,
+        item.notes
+      ].join(" ").toLowerCase();
+
+      const matchesSearch = !searchValue || haystack.includes(searchValue);
+
+      return matchesCampaign && matchesSource && matchesMedium && matchesStatus && matchesSearch;
+    });
+
+    renderRegistry(filtered);
+  }
+
+  function buildDisplayLink(item) {
+    const full = String(item.fullUtmLink || "").trim();
+    if (full) return full;
+
+    const dest = String(item.destinationUrl || "").trim();
+    if (dest) return dest;
+
+    return "";
+  }
+
+  function getRegistryLinkMarkup(item) {
+    const link = buildDisplayLink(item);
+
+    if (!link) {
+      return `<div class="text-[11px] text-gray-600 mt-1">No saved link</div>`;
+    }
+
+    return `<div class="text-[11px] text-gray-500 font-normal truncate max-w-[420px] mt-1">${escapeHtml(link)}</div>`;
+  }
+
+  function formatShortSlashDate(value) {
+    if (!value) return "-";
+
+    const date = Object.prototype.toString.call(value) === "[object Date]"
+      ? value
+      : new Date(value);
+
+    if (Number.isNaN(date.getTime())) return String(value);
+
+    const mm = String(date.getMonth() + 1).padStart(2, "0");
+    const dd = String(date.getDate()).padStart(2, "0");
+    const yy = String(date.getFullYear()).slice(-2);
+
+    return `${mm}/${dd}/${yy}`;
+  }
+
+  function renderRegistry(items) {
+    const tbody = document.getElementById("registry-tbody");
+    if (!tbody) return;
+
+    if (!items.length) {
+      tbody.innerHTML = `
+        <tr>
+          <td colspan="4" class="text-sm text-gray-400">No tracking links found yet.</td>
+        </tr>
+      `;
+      return;
+    }
+
+    tbody.innerHTML = items.map((item) => {
+      const campaignName = String(item.campaignName || item.campaign || item.campaignId || "").trim();
+      const normalizedCampaignName = campaignName.replace(/\s+/g, "_");
+      const hasCleanNaming = /^[A-Za-z0-9]+(?:_[A-Za-z0-9]+)+$/.test(normalizedCampaignName);
+      const rawLink = buildDisplayLink(item);
+
+      const reviewBadge = hasCleanNaming
+        ? `<span class="badge badge-emerald ml-2">Clean</span>`
+        : `<span class="badge badge-gold ml-2">Needs Review</span>`;
+
+      return `
+        <tr>
+          <td>
+            <div class="font-medium text-white mb-0.5 flex items-center flex-wrap">
+              ${escapeHtml(campaignName)}
+              ${reviewBadge}
+            </div>
+            ${getRegistryLinkMarkup(item)}
+          </td>
+          <td>
+            <span class="badge ${getBadgeColor(item.source)}">${escapeHtml(item.source || "")}</span>
+            <span class="text-gray-600 mx-1">/</span>
+            <span class="text-xs text-gray-400">${escapeHtml(item.medium || "")}</span>
+          </td>
+          <td>
+            <div class="text-xs text-gray-400">${escapeHtml(formatShortSlashDate(item.dateCreated))}</div>
+          </td>
+          <td>
+            <button
+              type="button"
+              class="registry-copy-btn text-gray-500 hover:text-purple-400 transition-colors"
+              data-copy-value="${escapeHtml(rawLink)}"
+              title="Copy link"
+            >
+              <i class="ph-bold ph-copy"></i>
+            </button>
+          </td>
+        </tr>
+      `;
+    }).join("");
+
+    tbody.querySelectorAll(".registry-copy-btn").forEach((button) => {
+      button.addEventListener("click", async () => {
+        const value = decodeHtmlEntities(button.getAttribute("data-copy-value") || "").trim();
+        if (!value) {
+          showToast("No Link", "This row does not have a saved link yet.", "ph-warning", "text-amber-400");
+          return;
+        }
+
+        try {
+          await copyTextToClipboard(value);
+          showToast("Copied!", "Registry link copied to clipboard.", "ph-copy");
+        } catch (error) {
+          console.error(error);
+          showToast("Copy Error", "Could not copy registry link.", "ph-warning", "text-amber-400");
+        }
+      });
+    });
+  }
+
+  function renderHomeRecentUtmLinks(items) {
+    const table = document.querySelector("#view-home .xl\\:col-span-2 table tbody");
+    if (!table) return;
+
+    const rows = (items || []).slice(0, 3);
+
+    if (!rows.length) {
+      table.innerHTML = `
+        <tr>
+          <td colspan="3" class="text-sm text-gray-400">No recent UTM links yet.</td>
+        </tr>
+      `;
+      return;
+    }
+
+    table.innerHTML = rows.map((item) => `
       <tr>
         <td>
-          <div class="font-medium text-white mb-0.5 flex items-center flex-wrap">
-            ${escapeHtml(campaignName)}
-            ${reviewBadge}
-          </div>
+          <div class="font-medium text-white mb-0.5">${escapeHtml(item.campaignName || item.campaign || item.campaignId || "")}</div>
           ${getRegistryLinkMarkup(item)}
         </td>
         <td>
@@ -1665,91 +1751,9 @@ function renderRegistry(items) {
         <td>
           <div class="text-xs text-gray-400">${escapeHtml(formatShortSlashDate(item.dateCreated))}</div>
         </td>
-        <td>
-          <button
-            type="button"
-            class="registry-copy-btn text-gray-500 hover:text-purple-400 transition-colors"
-            data-copy-value="${escapeHtml(rawLink)}"
-            title="Copy link"
-          >
-            <i class="ph-bold ph-copy"></i>
-          </button>
-        </td>
       </tr>
-    `;
-  }).join("");
-
-  tbody.querySelectorAll(".registry-copy-btn").forEach((button) => {
-    button.addEventListener("click", async () => {
-      const value = decodeHtmlEntities(button.getAttribute("data-copy-value") || "").trim();
-      if (!value) {
-        showToast("No Link", "This row does not have a saved link yet.", "ph-warning", "text-amber-400");
-        return;
-      }
-
-      try {
-        await copyTextToClipboard(value);
-        showToast("Copied!", "Registry link copied to clipboard.", "ph-copy");
-      } catch (error) {
-        console.error(error);
-        showToast("Copy Error", "Could not copy registry link.", "ph-warning", "text-amber-400");
-      }
-    });
-  });
-}
-
-  function formatShortSlashDate(value) {
-  if (!value) return "-";
-
-  let date;
-
-  if (Object.prototype.toString.call(value) === "[object Date]" && !isNaN(value.getTime())) {
-    date = value;
-  } else {
-    date = new Date(value);
+    `).join("");
   }
-
-  if (Number.isNaN(date.getTime())) return String(value);
-
-  const mm = String(date.getMonth() + 1).padStart(2, "0");
-  const dd = String(date.getDate()).padStart(2, "0");
-  const yy = String(date.getFullYear()).slice(-2);
-
-  return `${mm}/${dd}/${yy}`;
-}
-
-function renderHomeRecentUtmLinks(items) {
-  const table = document.querySelector("#view-home .xl\\:col-span-2 table tbody");
-  if (!table) return;
-
-  const rows = (items || []).slice(0, 3);
-
-  if (!rows.length) {
-    table.innerHTML = `
-      <tr>
-        <td colspan="3" class="text-sm text-gray-400">No recent UTM links yet.</td>
-      </tr>
-    `;
-    return;
-  }
-
-  table.innerHTML = rows.map((item) => `
-    <tr>
-      <td>
-        <div class="font-medium text-white mb-0.5">${escapeHtml(item.campaignName || item.campaign || item.campaignId || "")}</div>
-        ${getRegistryLinkMarkup(item)}
-      </td>
-      <td>
-        <span class="badge ${getBadgeColor(item.source)}">${escapeHtml(item.source || "")}</span>
-        <span class="text-gray-600 mx-1">/</span>
-        <span class="text-xs text-gray-400">${escapeHtml(item.medium || "")}</span>
-      </td>
-      <td>
-        <div class="text-xs text-gray-400">${escapeHtml(formatShortSlashDate(item.dateCreated))}</div>
-      </td>
-    </tr>
-  `).join("");
-}
 
   function renderPerformanceSummary(summary) {
     const sessionsEl = document.getElementById("kpi-sessions");
@@ -1766,34 +1770,34 @@ function renderHomeRecentUtmLinks(items) {
     if (durationEl) durationEl.textContent = formatDuration(summary.avgSessionDurationSeconds || 0);
     if (topSourceEl) topSourceEl.textContent = prettifySource(summary.topSource || "-");
 
-const topSourceCardSub = topSourceEl?.parentElement?.querySelector(".text-xs.text-gray-400");
-if (topSourceCardSub) {
-  topSourceCardSub.textContent = summary.topSourceSessions
-    ? `${formatPercent(summary.topSourceShare || 0)} of traffic`
-    : "No data";
-}
+    const topSourceCardSub = topSourceEl?.parentElement?.querySelector(".text-xs.text-gray-400");
+    if (topSourceCardSub) {
+      topSourceCardSub.textContent = summary.topSourceSessions
+        ? `${formatPercent(summary.topSourceShare || 0)} of traffic`
+        : "No data";
+    }
 
     renderHomePerformanceSnapshot(summary);
   }
 
-function renderHomePerformanceSnapshot(summary) {
-  const cards = document.querySelectorAll("#view-home .grid.grid-cols-1.md\\:grid-cols-2.xl\\:grid-cols-4.gap-5 .glass-card, #view-home .grid.grid-cols-1.md\\:grid-cols-2.xl\\:grid-cols-4.gap-5 button");
-  if (cards.length < 4) return;
+  function renderHomePerformanceSnapshot(summary) {
+    const cards = document.querySelectorAll("#view-home .grid.grid-cols-1.md\\:grid-cols-2.xl\\:grid-cols-4.gap-5 .glass-card, #view-home .grid.grid-cols-1.md\\:grid-cols-2.xl\\:grid-cols-4.gap-5 button");
+    if (cards.length < 4) return;
 
-  const sessionsCard = cards[0].querySelector(".text-2xl");
-  const rateCard = cards[1].querySelector(".text-2xl");
-  const activeCard = cards[2].querySelector(".text-2xl");
+    const sessionsCard = cards[0].querySelector(".text-2xl");
+    const rateCard = cards[1].querySelector(".text-2xl");
+    const activeCard = cards[2].querySelector(".text-2xl");
 
-  if (sessionsCard) sessionsCard.textContent = formatNumber(summary.sessions || 0);
-  if (rateCard) rateCard.textContent = formatPercent(summary.conversionRate || 0);
+    if (sessionsCard) sessionsCard.textContent = formatNumber(summary.sessions || 0);
+    if (rateCard) rateCard.textContent = formatPercent(summary.conversionRate || 0);
 
-  const activeCount = currentRegistryItems.filter((item) => {
-    const status = String(item.status || "").toLowerCase();
-    return status === "active" || status === "detected";
-  }).length;
+    const activeCount = currentRegistryItems.filter((item) => {
+      const status = String(item.status || "").toLowerCase();
+      return status === "active" || status === "detected";
+    }).length;
 
-  if (activeCard) activeCard.textContent = formatNumber(activeCount);
-}
+    if (activeCard) activeCard.textContent = formatNumber(activeCount);
+  }
 
   function renderEmptyPerformanceState() {
     renderPerformanceSummary({
@@ -1804,6 +1808,22 @@ function renderHomePerformanceSnapshot(summary) {
       avgSessionDurationSeconds: 0,
       topSource: "-"
     });
+    renderPerformanceTrendCharts([]);
+  }
+
+  function renderLoadingPerformanceState() {
+    const loadingSummary = {
+      sessions: 0,
+      users: 0,
+      conversions: 0,
+      conversionRate: 0,
+      avgSessionDurationSeconds: 0,
+      topSource: "-",
+      topSourceSessions: 0,
+      topSourceShare: 0
+    };
+
+    renderPerformanceSummary(loadingSummary);
     renderPerformanceTrendCharts([]);
   }
 
@@ -1936,20 +1956,260 @@ function renderHomePerformanceSnapshot(summary) {
   }
 
   function updateReportDatePill() {
-  const pill = document.querySelector("header .text-xs.text-gray-300.font-medium");
-  const value = String(document.getElementById("filter-date-range")?.value || "30");
+    const pill = document.querySelector("header .text-xs.text-gray-300.font-medium");
+    const value = String(document.getElementById("filter-date-range")?.value || "30");
 
-  if (!pill) return;
+    if (!pill) return;
 
-  const labelMap = {
-    "30": "Last 30 Days",
-    "90": "Last 90 Days",
-    "quarter": "This Quarter",
-    "ytd": "Year to Date"
-  };
+    const labelMap = {
+      "30": "Last 30 Days",
+      "90": "Last 90 Days",
+      "quarter": "This Quarter",
+      "ytd": "Year to Date"
+    };
 
-  pill.textContent = labelMap[value] || "Last 30 Days";
-}
+    pill.textContent = labelMap[value] || "Last 30 Days";
+  }
+
+  function bindReportFilters() {
+    ["filter-date-range", "filter-campaign", "filter-source", "filter-medium", "filter-landing"].forEach((id) => {
+      const el = document.getElementById(id);
+      if (el) {
+        el.addEventListener("change", applyReportFilters);
+      }
+    });
+
+    document.getElementById("reset-report-filters")?.addEventListener("click", resetReportFilters);
+    document.getElementById("refresh-reports-button")?.addEventListener("click", refreshReportsData);
+    document.getElementById("export-reports-button")?.addEventListener("click", exportCurrentReportCsv);
+  }
+
+  function exportCurrentReportCsv() {
+    const rows = Array.isArray(currentPerformanceTrend) ? currentPerformanceTrend : [];
+
+    if (!rows.length) {
+      showToast("No Data", "There is no report data to export.", "ph-warning", "text-amber-400");
+      return;
+    }
+
+    const headers = ["date", "sessions", "users", "conversions", "conversion_rate"];
+    const csvRows = [
+      headers.join(","),
+      ...rows.map((row) => {
+        return [
+          csvEscape(row.date),
+          csvEscape(row.sessions),
+          csvEscape(row.users),
+          csvEscape(row.conversions),
+          csvEscape(row.conversionRate)
+        ].join(",");
+      })
+    ];
+
+    const blob = new Blob([csvRows.join("\n")], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    const dateLabel = new Date().toISOString().slice(0, 10);
+
+    link.href = url;
+    link.download = `analytics-report-${dateLabel}.csv`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+
+    showToast("Export Ready", "Report CSV downloaded.", "ph-download-simple");
+  }
+
+  function csvEscape(value) {
+    const str = String(value ?? "");
+    if (/[",\n]/.test(str)) {
+      return `"${str.replace(/"/g, '""')}"`;
+    }
+    return str;
+  }
+
+  function getPerformanceDaysFromUi() {
+    const value = String(document.getElementById("filter-date-range")?.value || "30").toLowerCase();
+    if (value === "30") return 30;
+    if (value === "90") return 90;
+    if (value === "quarter") return 90;
+    if (value === "ytd") return 365;
+    const numeric = Number(value);
+    return Number.isFinite(numeric) && numeric > 0 ? numeric : 30;
+  }
+
+  async function applyReportFilters() {
+    const updated = document.getElementById("reports-last-updated");
+    if (updated) updated.textContent = "Updating...";
+
+    updateReportDatePill();
+
+    try {
+      await Promise.all([
+        loadPerformanceFromSheet(),
+        loadPerformanceTrendFromSheet(),
+        loadPerformanceComparisonFromSheet()
+      ]);
+
+      if (updated) updated.textContent = "Updated: Just now";
+    } catch (error) {
+      console.error("applyReportFilters failed:", error);
+      if (updated) updated.textContent = "Update failed";
+      showToast(
+        "Load Error",
+        error?.message || "Could not refresh report data.",
+        "ph-warning-circle",
+        "text-amber-400"
+      );
+    }
+  }
+
+  function resetReportFilters() {
+    const defaults = {
+      "filter-date-range": "30",
+      "filter-campaign": "all",
+      "filter-source": "all",
+      "filter-medium": "all",
+      "filter-landing": "all"
+    };
+
+    Object.entries(defaults).forEach(([id, value]) => {
+      const el = document.getElementById(id);
+      if (el) el.value = value;
+    });
+
+    applyReportFilters();
+  }
+
+  async function syncPerformanceData(days = 30, options = {}) {
+    const { silent = false } = options;
+
+    try {
+      const response = await apiPost("syncPerformanceData", { days });
+      if (!response.ok) throw new Error(response.error || "Sync failed");
+
+      updateLocalSyncTime();
+
+      if (!silent) {
+        showToast("Sync Complete", "Google Analytics data refreshed.", "ph-check-circle");
+      }
+
+      return response.sync || {};
+    } catch (error) {
+      console.error("syncPerformanceData failed:", error);
+      if (!silent) {
+        showToast(
+          "Sync Error",
+          error?.message || "Could not sync Google Analytics data.",
+          "ph-warning-circle",
+          "text-amber-400"
+        );
+      }
+      throw error;
+    }
+  }
+
+  async function refreshReportsData() {
+    const updated = document.getElementById("reports-last-updated");
+    if (updated) updated.textContent = "Updating...";
+
+    try {
+      await syncPerformanceData(365, { silent: true });
+
+      await Promise.all([
+        loadPerformanceFromSheet(),
+        loadPerformanceTrendFromSheet(),
+        loadPerformanceComparisonFromSheet()
+      ]);
+
+      updateReportDatePill();
+
+      if (updated) updated.textContent = "Updated: Just now";
+      showToast("Sync Complete", "Google Analytics data refreshed.", "ph-check-circle");
+    } catch (error) {
+      console.error("refreshReportsData failed:", error);
+      if (updated) updated.textContent = "Update failed";
+      showToast(
+        "Sync Error",
+        error?.message || "Could not sync Google Analytics data.",
+        "ph-warning-circle",
+        "text-amber-400"
+      );
+    }
+  }
+
+  function bindUXFilters() {
+    ["ux-filter-date", "ux-filter-page", "ux-filter-device"].forEach((id) => {
+      const el = document.getElementById(id);
+      if (el) el.addEventListener("change", applyUXFilters);
+    });
+
+    document.getElementById("sync-clarity-button")?.addEventListener("click", () => syncClarityData());
+    document.getElementById("highlight-friction-page")?.addEventListener("click", () => {
+      const targetPage = document.getElementById("ux-kpi-high")?.textContent?.trim();
+      const pageSelect = document.getElementById("ux-filter-page");
+      if (pageSelect && targetPage && targetPage !== "-") {
+        if (![...pageSelect.options].some((opt) => opt.value === targetPage)) {
+          const opt = document.createElement("option");
+          opt.value = targetPage;
+          opt.textContent = targetPage;
+          pageSelect.appendChild(opt);
+        }
+        pageSelect.value = targetPage;
+      }
+      applyUXFilters();
+    });
+  }
+
+  function getClarityDaysFromUi() {
+    const value = Number(document.getElementById("ux-filter-date")?.value || 3);
+    return [1, 2, 3].includes(value) ? value : 3;
+  }
+
+  async function applyUXFilters() {
+    const updated = document.getElementById("ux-last-updated");
+    if (updated) updated.textContent = "Updated: Just now";
+
+    try {
+      await loadClarityFromSheet();
+      showToast("Filters Applied", "UX insights updated.", "ph-check-circle");
+    } catch (error) {
+      console.error(error);
+      showToast("Load Error", "Could not refresh UX insights.", "ph-warning", "text-amber-400");
+    }
+  }
+
+  async function syncClarityData(options = {}) {
+    const { silent = false } = options;
+    const updated = document.getElementById("ux-last-updated");
+    if (updated) updated.textContent = "Updating...";
+
+    try {
+      const response = await apiPost("syncClaritySummary", {
+        numOfDays: getClarityDaysFromUi()
+      });
+
+      if (!response.ok) throw new Error(response.error || "Sync failed");
+
+      await loadClarityFromSheet();
+      if (updated) updated.textContent = "Updated: Just now";
+      updateLocalSyncTime();
+
+      if (!silent) {
+        showToast("Sync Complete", "Clarity data refreshed.", "ph-check-circle");
+      }
+
+      return response.sync || {};
+    } catch (error) {
+      console.error(error);
+      if (updated) updated.textContent = "Update failed";
+      if (!silent) {
+        showToast("Sync Error", "Could not sync Clarity data.", "ph-warning", "text-amber-400");
+      }
+      throw error;
+    }
+  }
 
   function renderClaritySummary(summary) {
     const rageEl = document.getElementById("ux-kpi-rage");
@@ -2001,11 +2261,36 @@ function renderHomePerformanceSnapshot(summary) {
   function renderEmptyUxState() {
     renderClaritySummary({
       rageClicks: 0,
-      deadClicks: 0, 
+      deadClicks: 0,
       avgScrollDepth: 0,
       avgEngagementTimeSeconds: 0,
       rows: []
     });
+  }
+
+  function bindAuditFilters() {
+    document.querySelectorAll(".audit-filter-btn").forEach((btn) => {
+      btn.addEventListener("click", async () => {
+        const status = btn.getAttribute("data-audit-status") || "all";
+        await filterAuditByStatus(status);
+      });
+    });
+  }
+
+  async function filterAuditByStatus(status) {
+    document.querySelectorAll(".audit-filter-btn").forEach((btn) => {
+      const isActive = btn.getAttribute("data-audit-status") === status;
+      btn.className = isActive
+        ? "audit-filter-btn px-3 py-1 rounded text-xs bg-purple-500/20 text-purple-300 border border-purple-500/30"
+        : "audit-filter-btn px-3 py-1 rounded text-xs bg-black/30 text-gray-400 border border-white/10 hover:bg-white/5";
+    });
+
+    try {
+      await loadAuditFromSheet(status);
+    } catch (error) {
+      console.error(error);
+      showToast("Load Error", "Could not refresh audit notes.", "ph-warning", "text-amber-400");
+    }
   }
 
   function renderAuditTable(items) {
@@ -2169,318 +2454,6 @@ function renderHomePerformanceSnapshot(summary) {
     select.value = uniqueValues.includes(currentValue) || currentValue === "all" ? currentValue : "all";
   }
 
-function bindReportFilters() {
-  ["filter-date-range", "filter-campaign", "filter-source", "filter-medium", "filter-landing"].forEach((id) => {
-    const el = document.getElementById(id);
-    if (el) {
-      el.addEventListener("change", applyReportFilters);
-    }
-  });
-
-  document.getElementById("reset-report-filters")?.addEventListener("click", resetReportFilters);
-  document.getElementById("refresh-reports-button")?.addEventListener("click", refreshReportsData);
-  document.getElementById("export-reports-button")?.addEventListener("click", exportCurrentReportCsv);
-}
-
-  function exportCurrentReportCsv() {
-  const rows = Array.isArray(currentPerformanceTrend) ? currentPerformanceTrend : [];
-
-  if (!rows.length) {
-    showToast("No Data", "There is no report data to export.", "ph-warning", "text-amber-400");
-    return;
-  }
-
-  const headers = ["date", "sessions", "users", "conversions", "conversion_rate"];
-  const csvRows = [
-    headers.join(","),
-    ...rows.map((row) => {
-      return [
-        csvEscape(row.date),
-        csvEscape(row.sessions),
-        csvEscape(row.users),
-        csvEscape(row.conversions),
-        csvEscape(row.conversionRate)
-      ].join(",");
-    })
-  ];
-
-  const blob = new Blob([csvRows.join("\n")], { type: "text/csv;charset=utf-8;" });
-  const url = URL.createObjectURL(blob);
-  const link = document.createElement("a");
-  const dateLabel = new Date().toISOString().slice(0, 10);
-
-  link.href = url;
-  link.download = `analytics-report-${dateLabel}.csv`;
-  document.body.appendChild(link);
-  link.click();
-  document.body.removeChild(link);
-  URL.revokeObjectURL(url);
-
-  showToast("Export Ready", "Report CSV downloaded.", "ph-download-simple");
-}
-
-function csvEscape(value) {
-  const str = String(value ?? "");
-  if (/[",\n]/.test(str)) {
-    return `"${str.replace(/"/g, '""')}"`;
-  }
-  return str;
-}
-  
-  function getPerformanceDaysFromUi() {
-    const value = String(document.getElementById("filter-date-range")?.value || "30").toLowerCase();
-    if (value === "30") return 30;
-    if (value === "90") return 90;
-    if (value === "quarter") return 90;
-    if (value === "ytd") return 365;
-    const numeric = Number(value);
-    return Number.isFinite(numeric) && numeric > 0 ? numeric : 30;
-  }
-
-async function applyReportFilters() {
-  const updated = document.getElementById("reports-last-updated");
-  if (updated) updated.textContent = "Updating...";
-
-  updateReportDatePill();
-
-  try {
-    await Promise.all([
-      loadPerformanceFromSheet(),
-      loadPerformanceTrendFromSheet(),
-      loadPerformanceComparisonFromSheet()
-    ]);
-
-    if (updated) updated.textContent = "Updated: Just now";
-  } catch (error) {
-    console.error("applyReportFilters failed:", error);
-    if (updated) updated.textContent = "Update failed";
-    showToast(
-      "Load Error",
-      error?.message || "Could not refresh report data.",
-      "ph-warning-circle",
-      "text-amber-400"
-    );
-  }
-}
-
-function renderLoadingPerformanceState() {
-  const loadingSummary = {
-    sessions: 0,
-    users: 0,
-    conversions: 0,
-    conversionRate: 0,
-    avgSessionDurationSeconds: 0,
-    topSource: "-",
-    topSourceSessions: 0,
-    topSourceShare: 0
-  };
-
-  renderPerformanceSummary(loadingSummary);
-  renderPerformanceTrendCharts([]);
-}
-
-function resetReportFilters() {
-  const defaults = {
-    "filter-date-range": "30",
-    "filter-campaign": "all",
-    "filter-source": "all",
-    "filter-medium": "all",
-    "filter-landing": "all"
-  };
-
-  Object.entries(defaults).forEach(([id, value]) => {
-    const el = document.getElementById(id);
-    if (el) el.value = value;
-  });
-
-  applyReportFilters({ target: { id: "filter-date-range" } });
-}
-
-  async function copyTextToClipboard(text) {
-  const value = String(text || "").trim();
-  if (!value) throw new Error("Nothing to copy");
-
-  if (navigator.clipboard && window.isSecureContext) {
-    await navigator.clipboard.writeText(value);
-    return true;
-  }
-
-  const temp = document.createElement("textarea");
-  temp.value = value;
-  temp.setAttribute("readonly", "");
-  temp.style.position = "fixed";
-  temp.style.top = "-9999px";
-  temp.style.left = "-9999px";
-  document.body.appendChild(temp);
-
-  temp.focus();
-  temp.select();
-  temp.setSelectionRange(0, temp.value.length);
-
-  const success = document.execCommand("copy");
-  document.body.removeChild(temp);
-
-  if (!success) {
-    throw new Error("Copy command failed");
-  }
-
-  return true;
-}
-
-async function syncPerformanceData(days = 30, options = {}) {
-  const { silent = false } = options;
-
-  try {
-    const response = await apiPost("syncPerformanceData", { days });
-    if (!response.ok) throw new Error(response.error || "Sync failed");
-
-    updateLocalSyncTime();
-
-    if (!silent) {
-      showToast("Sync Complete", "Google Analytics data refreshed.", "ph-check-circle");
-    }
-
-    return response.sync || {};
-  } catch (error) {
-    console.error("syncPerformanceData failed:", error);
-    if (!silent) {
-      showToast(
-        "Sync Error",
-        error?.message || "Could not sync Google Analytics data.",
-        "ph-warning-circle",
-        "text-amber-400"
-      );
-    }
-    throw error;
-  }
-}
-
-async function refreshReportsData() {
-  const updated = document.getElementById("reports-last-updated");
-  if (updated) updated.textContent = "Updating...";
-
-  try {
-    await syncPerformanceData(365, { silent: true });
-
-    await Promise.all([
-      loadPerformanceFromSheet(),
-      loadPerformanceTrendFromSheet(),
-      loadPerformanceComparisonFromSheet()
-    ]);
-
-    updateReportDatePill();
-
-    if (updated) updated.textContent = "Updated: Just now";
-    showToast("Sync Complete", "Google Analytics data refreshed.", "ph-check-circle");
-  } catch (error) {
-    console.error("refreshReportsData failed:", error);
-    if (updated) updated.textContent = "Update failed";
-    showToast(
-      "Sync Error",
-      error?.message || "Could not sync Google Analytics data.",
-      "ph-warning-circle",
-      "text-amber-400"
-    );
-  }
-}
-  
-  function bindUXFilters() {
-    ["ux-filter-date", "ux-filter-page", "ux-filter-device"].forEach((id) => {
-      const el = document.getElementById(id);
-      if (el) el.addEventListener("change", applyUXFilters);
-    });
-
-    document.getElementById("sync-clarity-button")?.addEventListener("click", () => syncClarityData());
-    document.getElementById("highlight-friction-page")?.addEventListener("click", () => {
-      const targetPage = document.getElementById("ux-kpi-high")?.textContent?.trim();
-      const pageSelect = document.getElementById("ux-filter-page");
-      if (pageSelect && targetPage && targetPage !== "-") {
-        if (![...pageSelect.options].some((opt) => opt.value === targetPage)) {
-          const opt = document.createElement("option");
-          opt.value = targetPage;
-          opt.textContent = targetPage;
-          pageSelect.appendChild(opt);
-        }
-        pageSelect.value = targetPage;
-      }
-      applyUXFilters();
-    });
-  }
-
-function getClarityDaysFromUi() {
-  const value = Number(document.getElementById("ux-filter-date")?.value || 3);
-  return [1, 2, 3].includes(value) ? value : 3;
-}
-
-  async function applyUXFilters() {
-    const updated = document.getElementById("ux-last-updated");
-    if (updated) updated.textContent = "Updated: Just now";
-
-    try {
-      await loadClarityFromSheet();
-      showToast("Filters Applied", "UX insights updated.", "ph-check-circle");
-    } catch (error) {
-      console.error(error);
-      showToast("Load Error", "Could not refresh UX insights.", "ph-warning", "text-amber-400");
-    }
-  }
-
-  async function syncClarityData(options = {}) {
-    const { silent = false } = options;
-    const updated = document.getElementById("ux-last-updated");
-    if (updated) updated.textContent = "Updating...";
-
-    try {
-      const response = await apiPost("syncClaritySummary", {
-        numOfDays: getClarityDaysFromUi()
-      });
-
-      if (!response.ok) throw new Error(response.error || "Sync failed");
-
-      await loadClarityFromSheet();
-      if (updated) updated.textContent = "Updated: Just now";
-      updateLocalSyncTime();
-
-      if (!silent) {
-        showToast("Sync Complete", "Clarity data refreshed.", "ph-check-circle");
-      }
-
-      return response.sync || {};
-    } catch (error) {
-      console.error(error);
-      if (updated) updated.textContent = "Update failed";
-      if (!silent) {
-        showToast("Sync Error", "Could not sync Clarity data.", "ph-warning", "text-amber-400");
-      }
-      throw error;
-    }
-  }
-
-  function bindAuditFilters() {
-    document.querySelectorAll(".audit-filter-btn").forEach((btn) => {
-      btn.addEventListener("click", async () => {
-        const status = btn.getAttribute("data-audit-status") || "all";
-        await filterAuditByStatus(status);
-      });
-    });
-  }
-
-  async function filterAuditByStatus(status) {
-    document.querySelectorAll(".audit-filter-btn").forEach((btn) => {
-      const isActive = btn.getAttribute("data-audit-status") === status;
-      btn.className = isActive
-        ? "audit-filter-btn px-3 py-1 rounded text-xs bg-purple-500/20 text-purple-300 border border-purple-500/30"
-        : "audit-filter-btn px-3 py-1 rounded text-xs bg-black/30 text-gray-400 border border-white/10 hover:bg-white/5";
-    });
-
-    try {
-      await loadAuditFromSheet(status);
-    } catch (error) {
-      console.error(error);
-      showToast("Load Error", "Could not refresh audit notes.", "ph-warning", "text-amber-400");
-    }
-  }
-
   async function apiGet(action, params = {}) {
     const url = new URL(APP_CONFIG.APPS_SCRIPT_URL);
     url.searchParams.set("action", action);
@@ -2595,62 +2568,58 @@ function getClarityDaysFromUi() {
     return "badge-gold";
   }
 
-  
+  function renderPerformanceComparison(comparison) {
+    const delta = comparison?.delta || {};
 
+    const reportCards = document.querySelectorAll("#view-reports .grid.grid-cols-2.md\\:grid-cols-3.xl\\:grid-cols-6.gap-5 .glass-card");
+    const homeCards = document.querySelectorAll("#view-home .grid.grid-cols-1.md\\:grid-cols-2.xl\\:grid-cols-4.gap-5 .glass-card, #view-home .grid.grid-cols-1.md\\:grid-cols-2.xl\\:grid-cols-4.gap-5 button");
 
+    updateDeltaText(reportCards[0], delta.sessionsPct, "vs previous period");
+    updateDeltaText(reportCards[1], delta.usersPct, "vs previous period");
+    updateDeltaText(reportCards[2], delta.conversionsPct, "vs previous period");
+    updateDeltaText(reportCards[3], delta.conversionRatePct, "vs previous period");
+    updateDurationDeltaText(reportCards[4], comparison);
 
-function renderPerformanceComparison(comparison) {
-  const delta = comparison?.delta || {};
-
-  const reportCards = document.querySelectorAll("#view-reports .grid.grid-cols-2.md\\:grid-cols-3.xl\\:grid-cols-6.gap-5 .glass-card");
-  const homeCards = document.querySelectorAll("#view-home .grid.grid-cols-1.md\\:grid-cols-2.xl\\:grid-cols-4.gap-5 .glass-card, #view-home .grid.grid-cols-1.md\\:grid-cols-2.xl\\:grid-cols-4.gap-5 button");
-
-  updateDeltaText(reportCards[0], delta.sessionsPct, "vs previous period");
-  updateDeltaText(reportCards[1], delta.usersPct, "vs previous period");
-  updateDeltaText(reportCards[2], delta.conversionsPct, "vs previous period");
-  updateDeltaText(reportCards[3], delta.conversionRatePct, "vs previous period");
-  updateDurationDeltaText(reportCards[4], comparison);
-
-  updateDeltaText(homeCards[0], delta.sessionsPct, "vs previous period");
-  updateDeltaText(homeCards[1], delta.conversionRatePct, "vs previous period");
-}
-
-function updateDeltaText(card, pct, suffix) {
-  if (!card) return;
-  const deltaEl = card.querySelector(".text-xs");
-  if (!deltaEl) return;
-
-  const value = Number(pct || 0);
-  const isUp = value >= 0;
-  const icon = isUp ? "ph-trend-up" : "ph-trend-down";
-  const color = isUp ? "text-emerald-400" : "text-rose-400";
-  const sign = isUp ? "+" : "";
-
-  deltaEl.className = `text-xs ${color} mt-1`;
-  deltaEl.innerHTML = `<i class="ph-bold ${icon}"></i> ${sign}${(value * 100).toFixed(1)}%`;
-  if (suffix) {
-    deltaEl.innerHTML += ` <span class="text-gray-600">${escapeHtml(suffix)}</span>`;
+    updateDeltaText(homeCards[0], delta.sessionsPct, "vs previous period");
+    updateDeltaText(homeCards[1], delta.conversionRatePct, "vs previous period");
   }
-}
 
-function updateDurationDeltaText(card, comparison) {
-  if (!card) return;
-  const deltaEl = card.querySelector(".text-xs");
-  if (!deltaEl) return;
+  function updateDeltaText(card, pct, suffix) {
+    if (!card) return;
+    const deltaEl = card.querySelector(".text-xs");
+    if (!deltaEl) return;
 
-  const current = Number(comparison?.current?.avgSessionDurationSeconds || 0);
-  const previous = Number(comparison?.previous?.avgSessionDurationSeconds || 0);
-  const diff = current - previous;
+    const value = Number(pct || 0);
+    const isUp = value >= 0;
+    const icon = isUp ? "ph-trend-up" : "ph-trend-down";
+    const color = isUp ? "text-emerald-400" : "text-rose-400";
+    const sign = isUp ? "+" : "";
 
-  const isUp = diff >= 0;
-  const icon = isUp ? "ph-trend-up" : "ph-trend-down";
-  const color = isUp ? "text-emerald-400" : "text-rose-400";
-  const sign = isUp ? "+" : "-";
-  const formatted = formatDuration(Math.abs(diff));
+    deltaEl.className = `text-xs ${color} mt-1`;
+    deltaEl.innerHTML = `<i class="ph-bold ${icon}"></i> ${sign}${(value * 100).toFixed(1)}%`;
+    if (suffix) {
+      deltaEl.innerHTML += ` <span class="text-gray-600">${escapeHtml(suffix)}</span>`;
+    }
+  }
 
-  deltaEl.className = `text-xs ${color} mt-1`;
-  deltaEl.innerHTML = `<i class="ph-bold ${icon}"></i> ${sign}${formatted} <span class="text-gray-600">vs previous period</span>`;
-}
+  function updateDurationDeltaText(card, comparison) {
+    if (!card) return;
+    const deltaEl = card.querySelector(".text-xs");
+    if (!deltaEl) return;
+
+    const current = Number(comparison?.current?.avgSessionDurationSeconds || 0);
+    const previous = Number(comparison?.previous?.avgSessionDurationSeconds || 0);
+    const diff = current - previous;
+
+    const isUp = diff >= 0;
+    const icon = isUp ? "ph-trend-up" : "ph-trend-down";
+    const color = isUp ? "text-emerald-400" : "text-rose-400";
+    const sign = isUp ? "+" : "-";
+    const formatted = formatDuration(Math.abs(diff));
+
+    deltaEl.className = `text-xs ${color} mt-1`;
+    deltaEl.innerHTML = `<i class="ph-bold ${icon}"></i> ${sign}${formatted} <span class="text-gray-600">vs previous period</span>`;
+  }
 
   function getBadgeColor(source) {
     return {

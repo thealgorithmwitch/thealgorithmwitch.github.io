@@ -494,7 +494,7 @@
                     <thead>
                       <tr>
                         <th>Campaign</th>
-                        <th>Source / Sessions</th>
+                        <th>Source / Total Sessions</th>
                         <th>Date</th>
                       </tr>
                     </thead>
@@ -797,7 +797,7 @@
                     <thead>
                       <tr>
                         <th>Campaign</th>
-                        <th>Source / Sessions</th>
+                        <th>Source / Total Sessions</th>
                         <th>Date Saved</th>
                         <th class="w-10"></th>
                       </tr>
@@ -1126,6 +1126,8 @@
   let currentPerformanceSummary = {};
   let currentPerformanceTrend = [];
   let currentPerformanceComparison = null;
+  let currentHomeSummary = {};
+  let currentHomeComparison = null;
 
   document.addEventListener("DOMContentLoaded", async () => {
     applyConfig();
@@ -1156,6 +1158,8 @@
         loadAuditFromSheet(),
         loadResourcesFromSheet()
       ]);
+
+      await loadHomeSnapshot();
 
       populateReportFilterOptionsFromRegistry();
       populateUxPageOptionsFromClarityRows([]);
@@ -1764,8 +1768,6 @@ function renderRegistry(items) {
         ? `${formatPercent(summary.topSourceShare || 0)} of traffic`
         : "No data";
     }
-
-    renderHomePerformanceSnapshot(summary);
   }
 
   function renderHomePerformanceSnapshot(summary) {
@@ -1798,6 +1800,35 @@ function renderRegistry(items) {
     });
     renderPerformanceTrendCharts([]);
   }
+
+function renderHomeOverviewSnapshot(summary, comparison) {
+  const cards = document.querySelectorAll(
+    "#view-home .grid.grid-cols-1.md\\:grid-cols-2.xl\\:grid-cols-4.gap-5 .glass-card, #view-home .grid.grid-cols-1.md\\:grid-cols-2.xl\\:grid-cols-4.gap-5 button"
+  );
+  if (cards.length < 4) return;
+
+  const sessionsCard = cards[0];
+  const rateCard = cards[1];
+  const activeCard = cards[2];
+
+  const sessionsValue = sessionsCard.querySelector(".text-2xl");
+  const rateValue = rateCard.querySelector(".text-2xl");
+  const activeValue = activeCard.querySelector(".text-2xl");
+
+  if (sessionsValue) sessionsValue.textContent = formatNumber(summary.sessions || 0);
+  if (rateValue) rateValue.textContent = formatPercent(summary.conversionRate || 0);
+
+  const activeCount = currentRegistryItems.filter((item) => {
+    const status = String(item.status || "").toLowerCase();
+    return status === "active" || status === "detected";
+  }).length;
+
+  if (activeValue) activeValue.textContent = formatNumber(activeCount);
+
+  const delta = comparison?.delta || {};
+  updateDeltaText(sessionsCard, delta.sessionsPct, "vs last mo");
+  updateDeltaText(rateCard, delta.conversionRatePct, "vs last mo");
+}
 
   function renderLoadingPerformanceState() {
     const loadingSummary = {

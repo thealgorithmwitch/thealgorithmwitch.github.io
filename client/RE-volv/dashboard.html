@@ -1728,38 +1728,37 @@ function renderRegistry(items) {
   });
 }
 
-  function renderHomeRecentUtmLinks(items) {
-    const table = document.querySelector("#view-home .xl\\:col-span-2 table tbody");
-    if (!table) return;
+function renderHomeRecentUtmLinks(items) {
+  const table = document.querySelector("#view-home .xl\\:col-span-2 table tbody");
+  if (!table) return;
 
-    const rows = (items || []).slice(0, 3);
+  const rows = (items || []).slice(0, 3);
 
-    if (!rows.length) {
-      table.innerHTML = `
-        <tr>
-          <td colspan="3" class="text-sm text-gray-400">No recent UTM links yet.</td>
-        </tr>
-      `;
-      return;
-    }
-
-    table.innerHTML = rows.map((item) => `
+  if (!rows.length) {
+    table.innerHTML = `
       <tr>
-        <td>
-          <div class="font-medium text-white mb-0.5">${escapeHtml(item.campaignName || item.campaign || item.campaignId || "")}</div>
-          ${getRegistryLinkMarkup(item)}
-        </td>
-        <td>
-          <span class="badge ${getBadgeColor(item.source)}">${escapeHtml(item.source || "")}</span>
-          <span class="text-gray-600 mx-1">/</span>
-          <span class="text-xs text-gray-300">${formatNumber(item.sessions30d || 0)} sessions</span>
-        </td>
-        <td>
-          <div class="text-xs text-gray-400">${escapeHtml(formatShortSlashDate(item.dateCreated))}</div>
-        </td>
+        <td colspan="3" class="text-sm text-gray-400">No recent UTM links yet.</td>
       </tr>
-    `).join("");
+    `;
+    return;
   }
+
+  table.innerHTML = rows.map((item) => `
+    <tr>
+      <td>
+        <div class="font-medium text-white mb-0.5">${escapeHtml(item.campaignName || item.campaign || item.campaignId || "")}</div>
+        ${getRegistryLinkMarkup(item)}
+      </td>
+      <td>
+        <span class="badge ${getBadgeColor(item.source)}">${escapeHtml(item.source || "")}</span>
+        <span class="text-gray-600 mx-1">/</span>
+        <span class="text-xs text-gray-300">${formatNumber(getRegistrySessionsValue(item))} sessions</span>
+      </td>
+      <td>
+        <div class="text-xs text-gray-400">${escapeHtml(formatShortSlashDate(item.dateCreated))}</div>
+      </td>
+    `).join("");
+}
 
   function renderPerformanceSummary(summary) {
     const sessionsEl = document.getElementById("kpi-sessions");
@@ -1881,6 +1880,29 @@ function renderHomeOverviewSnapshot(summary, comparison) {
     });
   }
 
+async function loadHomeSnapshot() {
+  const params = {
+    source: "all",
+    campaign: "all",
+    landing_page: "all",
+    range_type: "30",
+    rangeType: "30"
+  };
+
+  const [summaryData, comparisonData] = await Promise.all([
+    apiGet("getPerformanceSummary", params),
+    apiGet("getPerformanceComparison", params)
+  ]);
+
+  if (!summaryData.ok) throw new Error(summaryData.error || "Failed to load home summary");
+  if (!comparisonData.ok) throw new Error(comparisonData.error || "Failed to load home comparison");
+
+  currentHomeSummary = summaryData.summary || {};
+  currentHomeComparison = comparisonData.comparison || null;
+
+  renderHomeOverviewSnapshot(currentHomeSummary, currentHomeComparison);
+}
+  
   function applyWorkspaceConfig() {
     const clientName = document.getElementById("client-name");
     const clientLogo = document.getElementById("client-logo");

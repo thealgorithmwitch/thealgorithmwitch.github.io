@@ -1584,9 +1584,16 @@ function switchView(viewId, updateHash = true) {
       const url = new URL(urlInput);
       if (source) url.searchParams.set("utm_source", source.toLowerCase());
       if (medium) url.searchParams.set("utm_medium", medium.toLowerCase());
-      if (campaign) url.searchParams.set("utm_campaign", campaign.replace(/\s+/g, "_"));
+      if (campaign) url.searchParams.set("utm_campaign", campaign
+        .trim()
+        .replace(/\s+/g, "_")
+        .replace(/[^A-Za-z0-9_]/g, "")
       if (term) url.searchParams.set("utm_term", term);
       if (content) url.searchParams.set("utm_content", content);
+
+      if (urlValue && source && medium && campaign) {
+      copyTextToClipboard(result.value).catch(() => {});
+    }
 
       result.value = url.toString();
     } catch {

@@ -1757,7 +1757,8 @@ function renderHomeRecentUtmLinks(items) {
       <td>
         <div class="text-xs text-gray-400">${escapeHtml(formatShortSlashDate(item.dateCreated))}</div>
       </td>
-    `).join("");
+    </tr>
+  `).join("");
 }
 
   function renderPerformanceSummary(summary) {
@@ -2635,21 +2636,17 @@ function populateReportFilterOptionsFromRegistry() {
     return "badge-gold";
   }
 
-  function renderPerformanceComparison(comparison) {
-    const delta = comparison?.delta || {};
+function renderPerformanceComparison(comparison) {
+  const delta = comparison?.delta || {};
 
-    const reportCards = document.querySelectorAll("#view-reports .grid.grid-cols-2.md\\:grid-cols-3.xl\\:grid-cols-6.gap-5 .glass-card");
-    const homeCards = document.querySelectorAll("#view-home .grid.grid-cols-1.md\\:grid-cols-2.xl\\:grid-cols-4.gap-5 .glass-card, #view-home .grid.grid-cols-1.md\\:grid-cols-2.xl\\:grid-cols-4.gap-5 button");
+  const reportCards = document.querySelectorAll("#view-reports .grid.grid-cols-2.md\\:grid-cols-3.xl\\:grid-cols-6.gap-5 .glass-card");
 
-    updateDeltaText(reportCards[0], delta.sessionsPct, "vs previous period");
-    updateDeltaText(reportCards[1], delta.usersPct, "vs previous period");
-    updateDeltaText(reportCards[2], delta.conversionsPct, "vs previous period");
-    updateDeltaText(reportCards[3], delta.conversionRatePct, "vs previous period");
-    updateDurationDeltaText(reportCards[4], comparison);
-
-    updateDeltaText(homeCards[0], delta.sessionsPct, "vs previous period");
-    updateDeltaText(homeCards[1], delta.conversionRatePct, "vs previous period");
-  }
+  updateDeltaText(reportCards[0], delta.sessionsPct, "vs previous period");
+  updateDeltaText(reportCards[1], delta.usersPct, "vs previous period");
+  updateDeltaText(reportCards[2], delta.conversionsPct, "vs previous period");
+  updateDeltaText(reportCards[3], delta.conversionRatePct, "vs previous period");
+  updateDurationDeltaText(reportCards[4], comparison);
+}
 
   function updateDeltaText(card, pct, suffix) {
     if (!card) return;

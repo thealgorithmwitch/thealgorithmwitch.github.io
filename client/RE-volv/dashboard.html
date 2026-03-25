@@ -621,18 +621,6 @@
                 </div>
 
                 <div>
-                  <label class="block text-[9px] text-gray-500 mb-1 uppercase">Medium</label>
-                  <select id="filter-medium" class="input-magical text-xs rounded-md px-2 py-1.5 min-w-[100px]">
-                    <option value="all">All</option>
-                    <option value="cpc">CPC</option>
-                    <option value="social">Social</option>
-                    <option value="email">Email</option>
-                    <option value="organic">Organic</option>
-                    <option value="referral">Referral</option>
-                  </select>
-                </div>
-
-                <div>
                   <label class="block text-[9px] text-gray-500 mb-1 uppercase">Landing Page</label>
                   <select id="filter-landing" class="input-magical text-xs rounded-md px-2 py-1.5 min-w-[140px]">
                     <option value="all">All Pages</option>
@@ -782,10 +770,6 @@
                       <option value="all">All Sources</option>
                     </select>
         
-                    <select id="utm-filter-medium" class="input-magical rounded text-[10px] px-2 py-1.5 min-w-[100px]">
-                      <option value="all">All Mediums</option>
-                    </select>
-        
                     <select id="utm-filter-status" class="input-magical rounded text-[10px] px-2 py-1.5 min-w-[120px]">
                       <option value="all">All Statuses</option>
                       <option value="flagged">Needs Review</option>
@@ -813,7 +797,7 @@
                     <thead>
                       <tr>
                         <th>Campaign</th>
-                        <th>Source/Medium</th>
+                        <th>Source/Sessions</th>
                         <th>Date Saved</th>
                         <th class="w-10"></th>
                       </tr>
@@ -1293,18 +1277,17 @@
     populateUxPageOptionsFromClarityRows(currentClaritySummary.rows || []);
   }
 
-  function getCurrentReportFilterParams() {
-    const rangeValue = document.getElementById("filter-date-range")?.value || "30";
+function getCurrentReportFilterParams() {
+  const rangeValue = document.getElementById("filter-date-range")?.value || "30";
 
-    return {
-      source: document.getElementById("filter-source")?.value || "all",
-      medium: document.getElementById("filter-medium")?.value || "all",
-      campaign: document.getElementById("filter-campaign")?.value || "all",
-      landing_page: document.getElementById("filter-landing")?.value || "all",
-      range_type: rangeValue,
-      rangeType: rangeValue
-    };
-  }
+  return {
+    source: document.getElementById("filter-source")?.value || "all",
+    campaign: document.getElementById("filter-campaign")?.value || "all",
+    landing_page: document.getElementById("filter-landing")?.value || "all",
+    range_type: rangeValue,
+    rangeType: rangeValue
+  };
+}
 
   function applyConfig() {
     const clientName = document.getElementById("client-name");
@@ -1521,97 +1504,102 @@
     }
   }
 
-  function resetUtmRegistryFilters() {
-    const defaults = {
-      "utm-filter-campaign": "all",
-      "utm-filter-source": "all",
-      "utm-filter-medium": "all",
-      "utm-filter-status": "all",
-      "utm-search": ""
-    };
+function resetUtmRegistryFilters() {
+  const defaults = {
+    "utm-filter-campaign": "all",
+    "utm-filter-source": "all",
+    "utm-filter-status": "all",
+    "utm-search": ""
+  };
 
-    Object.entries(defaults).forEach(([id, value]) => {
-      const el = document.getElementById(id);
-      if (el) el.value = value;
-    });
+  Object.entries(defaults).forEach(([id, value]) => {
+    const el = document.getElementById(id);
+    if (el) el.value = value;
+  });
 
-    applyUtmRegistryFilters();
-  }
+  applyUtmRegistryFilters();
+}
 
-  function populateUtmFilterOptions(items) {
-    populateSelectFromValues(
-      "utm-filter-campaign",
-      items.map((item) => item.campaignName).filter(Boolean),
-      "All Campaigns"
-    );
+function populateUtmFilterOptions(items) {
+  populateSelectFromValues(
+    "utm-filter-campaign",
+    items.map((item) => item.campaignName).filter(Boolean),
+    "All Campaigns"
+  );
 
-    populateSelectFromValues(
-      "utm-filter-source",
-      items.map((item) => item.source).filter(Boolean),
-      "All Sources"
-    );
+  populateSelectFromValues(
+    "utm-filter-source",
+    items.map((item) => item.source).filter(Boolean),
+    "All Sources"
+  );
+}
+  
+function bindUtmRegistryFilters() {
+  ["utm-filter-campaign", "utm-filter-source", "utm-filter-status"].forEach((id) => {
+    const el = document.getElementById(id);
+    if (el) el.addEventListener("change", applyUtmRegistryFilters);
+  });
 
-    populateSelectFromValues(
-      "utm-filter-medium",
-      items.map((item) => item.medium).filter(Boolean),
-      "All Mediums"
-    );
-  }
+  document.getElementById("utm-search")?.addEventListener("input", applyUtmRegistryFilters);
+  document.getElementById("utm-reset-filters")?.addEventListener("click", resetUtmRegistryFilters);
+}
+  
+function applyUtmRegistryFilters() {
+  const campaignFilter = document.getElementById("utm-filter-campaign")?.value || "all";
+  const sourceFilter = document.getElementById("utm-filter-source")?.value || "all";
+  const statusFilter = document.getElementById("utm-filter-status")?.value || "all";
+  const searchValue = (document.getElementById("utm-search")?.value || "").trim().toLowerCase();
 
-  function bindUtmRegistryFilters() {
-    ["utm-filter-campaign", "utm-filter-source", "utm-filter-medium", "utm-filter-status"].forEach((id) => {
-      const el = document.getElementById(id);
-      if (el) el.addEventListener("change", applyUtmRegistryFilters);
-    });
+  const filtered = currentRegistryItems.filter((item) => {
+    const campaignName = String(item.campaignName || "").trim();
+    const normalizedCampaignName = campaignName.replace(/\s+/g, "_");
+    const source = String(item.source || "").trim().toLowerCase();
 
-    document.getElementById("utm-search")?.addEventListener("input", applyUtmRegistryFilters);
-    document.getElementById("utm-reset-filters")?.addEventListener("click", resetUtmRegistryFilters);
-  }
+    const hasCleanNaming = /^[A-Za-z0-9]+(?:_[A-Za-z0-9]+)+$/.test(normalizedCampaignName);
+    const reviewStatus = hasCleanNaming ? "clean" : "needs review";
 
-  function applyUtmRegistryFilters() {
-    const campaignFilter = document.getElementById("utm-filter-campaign")?.value || "all";
-    const sourceFilter = document.getElementById("utm-filter-source")?.value || "all";
-    const mediumFilter = document.getElementById("utm-filter-medium")?.value || "all";
-    const statusFilter = document.getElementById("utm-filter-status")?.value || "all";
-    const searchValue = (document.getElementById("utm-search")?.value || "").trim().toLowerCase();
+    const matchesCampaign = campaignFilter === "all" || campaignName === campaignFilter;
+    const matchesSource = sourceFilter === "all" || source === sourceFilter;
+    const matchesStatus =
+      statusFilter === "all" ||
+      (statusFilter === "flagged" && reviewStatus === "needs review") ||
+      (statusFilter === "clean" && reviewStatus === "clean");
 
-    const filtered = currentRegistryItems.filter((item) => {
-      const campaignName = String(item.campaignName || "").trim();
-      const normalizedCampaignName = campaignName.replace(/\s+/g, "_");
-      const source = String(item.source || "").trim().toLowerCase();
-      const medium = String(item.medium || "").trim().toLowerCase();
+    const haystack = [
+      item.campaignName,
+      item.source,
+      item.channel,
+      item.term,
+      item.content,
+      item.landingPage,
+      item.destinationUrl,
+      item.fullUtmLink,
+      item.notes
+    ].join(" ").toLowerCase();
 
-      const hasCleanNaming = /^[A-Za-z0-9]+(?:_[A-Za-z0-9]+)+$/.test(normalizedCampaignName);
-      const reviewStatus = hasCleanNaming ? "clean" : "needs review";
+    const matchesSearch = !searchValue || haystack.includes(searchValue);
 
-      const matchesCampaign = campaignFilter === "all" || campaignName === campaignFilter;
-      const matchesSource = sourceFilter === "all" || source === sourceFilter;
-      const matchesMedium = mediumFilter === "all" || medium === mediumFilter;
-      const matchesStatus =
-        statusFilter === "all" ||
-        (statusFilter === "flagged" && reviewStatus === "needs review") ||
-        (statusFilter === "clean" && reviewStatus === "clean");
+    return matchesCampaign && matchesSource && matchesStatus && matchesSearch;
+  });
 
-      const haystack = [
-        item.campaignName,
-        item.source,
-        item.medium,
-        item.channel,
-        item.term,
-        item.content,
-        item.landingPage,
-        item.destinationUrl,
-        item.fullUtmLink,
-        item.notes
-      ].join(" ").toLowerCase();
+  renderRegistry(filtered);
+}
 
-      const matchesSearch = !searchValue || haystack.includes(searchValue);
+  function getRegistrySessionsValue(item) {
+  const raw =
+    item.sessions ??
+    item.sessionCount ??
+    item.gaSessions ??
+    item.totalSessions ??
+    0;
 
-      return matchesCampaign && matchesSource && matchesMedium && matchesStatus && matchesSearch;
-    });
+  const num = Number(raw);
+  return Number.isFinite(num) ? num : 0;
+}
 
-    renderRegistry(filtered);
-  }
+function getRegistrySessionsMarkup(item) {
+  return `<span class="text-xs text-gray-300">${formatNumber(getRegistrySessionsValue(item))} sessions</span>`;
+}
 
   function buildDisplayLink(item) {
     const full = String(item.fullUtmLink || "").trim();
@@ -1649,78 +1637,78 @@
     return `${mm}/${dd}/${yy}`;
   }
 
-  function renderRegistry(items) {
-    const tbody = document.getElementById("registry-tbody");
-    if (!tbody) return;
+function renderRegistry(items) {
+  const tbody = document.getElementById("registry-tbody");
+  if (!tbody) return;
 
-    if (!items.length) {
-      tbody.innerHTML = `
-        <tr>
-          <td colspan="4" class="text-sm text-gray-400">No tracking links found yet.</td>
-        </tr>
-      `;
-      return;
-    }
-
-    tbody.innerHTML = items.map((item) => {
-      const campaignName = String(item.campaignName || item.campaign || item.campaignId || "").trim();
-      const normalizedCampaignName = campaignName.replace(/\s+/g, "_");
-      const hasCleanNaming = /^[A-Za-z0-9]+(?:_[A-Za-z0-9]+)+$/.test(normalizedCampaignName);
-      const rawLink = buildDisplayLink(item);
-
-      const reviewBadge = hasCleanNaming
-        ? `<span class="badge badge-emerald ml-2">Clean</span>`
-        : `<span class="badge badge-gold ml-2">Needs Review</span>`;
-
-      return `
-        <tr>
-          <td>
-            <div class="font-medium text-white mb-0.5 flex items-center flex-wrap">
-              ${escapeHtml(campaignName)}
-              ${reviewBadge}
-            </div>
-            ${getRegistryLinkMarkup(item)}
-          </td>
-          <td>
-            <span class="badge ${getBadgeColor(item.source)}">${escapeHtml(item.source || "")}</span>
-            <span class="text-gray-600 mx-1">/</span>
-            <span class="text-xs text-gray-400">${escapeHtml(item.medium || "")}</span>
-          </td>
-          <td>
-            <div class="text-xs text-gray-400">${escapeHtml(formatShortSlashDate(item.dateCreated))}</div>
-          </td>
-          <td>
-            <button
-              type="button"
-              class="registry-copy-btn text-gray-500 hover:text-purple-400 transition-colors"
-              data-copy-value="${escapeHtml(rawLink)}"
-              title="Copy link"
-            >
-              <i class="ph-bold ph-copy"></i>
-            </button>
-          </td>
-        </tr>
-      `;
-    }).join("");
-
-    tbody.querySelectorAll(".registry-copy-btn").forEach((button) => {
-      button.addEventListener("click", async () => {
-        const value = decodeHtmlEntities(button.getAttribute("data-copy-value") || "").trim();
-        if (!value) {
-          showToast("No Link", "This row does not have a saved link yet.", "ph-warning", "text-amber-400");
-          return;
-        }
-
-        try {
-          await copyTextToClipboard(value);
-          showToast("Copied!", "Registry link copied to clipboard.", "ph-copy");
-        } catch (error) {
-          console.error(error);
-          showToast("Copy Error", "Could not copy registry link.", "ph-warning", "text-amber-400");
-        }
-      });
-    });
+  if (!items.length) {
+    tbody.innerHTML = `
+      <tr>
+        <td colspan="4" class="text-sm text-gray-400">No tracking links found yet.</td>
+      </tr>
+    `;
+    return;
   }
+
+  tbody.innerHTML = items.map((item) => {
+    const campaignName = String(item.campaignName || item.campaign || item.campaignId || "").trim();
+    const normalizedCampaignName = campaignName.replace(/\s+/g, "_");
+    const hasCleanNaming = /^[A-Za-z0-9]+(?:_[A-Za-z0-9]+)+$/.test(normalizedCampaignName);
+    const rawLink = buildDisplayLink(item);
+
+    const reviewBadge = hasCleanNaming
+      ? `<span class="badge badge-emerald ml-2">Clean</span>`
+      : `<span class="badge badge-gold ml-2">Needs Review</span>`;
+
+    return `
+      <tr>
+        <td>
+          <div class="font-medium text-white mb-0.5 flex items-center flex-wrap">
+            ${escapeHtml(campaignName)}
+            ${reviewBadge}
+          </div>
+          ${getRegistryLinkMarkup(item)}
+        </td>
+        <td>
+          <span class="badge ${getBadgeColor(item.source)}">${escapeHtml(item.source || "")}</span>
+          <span class="text-gray-600 mx-1">/</span>
+          ${getRegistrySessionsMarkup(item)}
+        </td>
+        <td>
+          <div class="text-xs text-gray-400">${escapeHtml(formatShortSlashDate(item.dateCreated))}</div>
+        </td>
+        <td>
+          <button
+            type="button"
+            class="registry-copy-btn text-gray-500 hover:text-purple-400 transition-colors"
+            data-copy-value="${escapeHtml(rawLink)}"
+            title="Copy link"
+          >
+            <i class="ph-bold ph-copy"></i>
+          </button>
+        </td>
+      </tr>
+    `;
+  }).join("");
+
+  tbody.querySelectorAll(".registry-copy-btn").forEach((button) => {
+    button.addEventListener("click", async () => {
+      const value = decodeHtmlEntities(button.getAttribute("data-copy-value") || "").trim();
+      if (!value) {
+        showToast("No Link", "This row does not have a saved link yet.", "ph-warning", "text-amber-400");
+        return;
+      }
+
+      try {
+        await copyTextToClipboard(value);
+        showToast("Copied!", "Registry link copied to clipboard.", "ph-copy");
+      } catch (error) {
+        console.error(error);
+        showToast("Copy Error", "Could not copy registry link.", "ph-warning", "text-amber-400");
+      }
+    });
+  });
+}
 
   function renderHomeRecentUtmLinks(items) {
     const table = document.querySelector("#view-home .xl\\:col-span-2 table tbody");
@@ -1971,18 +1959,18 @@
     pill.textContent = labelMap[value] || "Last 30 Days";
   }
 
-  function bindReportFilters() {
-    ["filter-date-range", "filter-campaign", "filter-source", "filter-medium", "filter-landing"].forEach((id) => {
-      const el = document.getElementById(id);
-      if (el) {
-        el.addEventListener("change", applyReportFilters);
-      }
-    });
+function bindReportFilters() {
+  ["filter-date-range", "filter-campaign", "filter-source", "filter-landing"].forEach((id) => {
+    const el = document.getElementById(id);
+    if (el) {
+      el.addEventListener("change", applyReportFilters);
+    }
+  });
 
-    document.getElementById("reset-report-filters")?.addEventListener("click", resetReportFilters);
-    document.getElementById("refresh-reports-button")?.addEventListener("click", refreshReportsData);
-    document.getElementById("export-reports-button")?.addEventListener("click", exportCurrentReportCsv);
-  }
+  document.getElementById("reset-report-filters")?.addEventListener("click", resetReportFilters);
+  document.getElementById("refresh-reports-button")?.addEventListener("click", refreshReportsData);
+  document.getElementById("export-reports-button")?.addEventListener("click", exportCurrentReportCsv);
+}
 
   function exportCurrentReportCsv() {
     const rows = Array.isArray(currentPerformanceTrend) ? currentPerformanceTrend : [];
@@ -2065,23 +2053,22 @@
     }
   }
 
-  function resetReportFilters() {
-    const defaults = {
-      "filter-date-range": "30",
-      "filter-campaign": "all",
-      "filter-source": "all",
-      "filter-medium": "all",
-      "filter-landing": "all"
-    };
+function resetReportFilters() {
+  const defaults = {
+    "filter-date-range": "30",
+    "filter-campaign": "all",
+    "filter-source": "all",
+    "filter-landing": "all"
+  };
 
-    Object.entries(defaults).forEach(([id, value]) => {
-      const el = document.getElementById(id);
-      if (el) el.value = value;
-    });
+  Object.entries(defaults).forEach(([id, value]) => {
+    const el = document.getElementById(id);
+    if (el) el.value = value;
+  });
 
-    applyReportFilters();
-  }
-
+  applyReportFilters();
+}
+  
   async function syncPerformanceData(days = 30, options = {}) {
     const { silent = false } = options;
 
@@ -2419,12 +2406,25 @@
     });
   }
 
-  function populateReportFilterOptionsFromRegistry() {
-    populateSelectFromValues("filter-campaign", currentRegistryItems.map((item) => item.campaignName).filter(Boolean), "All Campaigns");
-    populateSelectFromValues("filter-source", currentRegistryItems.map((item) => item.source).filter(Boolean), "All Sources");
-    populateSelectFromValues("filter-medium", currentRegistryItems.map((item) => item.medium).filter(Boolean), "All");
-    populateSelectFromValues("filter-landing", currentRegistryItems.map((item) => item.landingPage).filter(Boolean), "All Pages");
-  }
+function populateReportFilterOptionsFromRegistry() {
+  populateSelectFromValues(
+    "filter-campaign",
+    currentRegistryItems.map((item) => item.campaignName).filter(Boolean),
+    "All Campaigns"
+  );
+
+  populateSelectFromValues(
+    "filter-source",
+    currentRegistryItems.map((item) => item.source).filter(Boolean),
+    "All Sources"
+  );
+
+  populateSelectFromValues(
+    "filter-landing",
+    currentRegistryItems.map((item) => item.landingPage).filter(Boolean),
+    "All Pages"
+  );
+}
 
   function populateUxPageOptionsFromClarityRows(rows) {
     const values = (rows || []).map((row) => row.page).filter(Boolean);

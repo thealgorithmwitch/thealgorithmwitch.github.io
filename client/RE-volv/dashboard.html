@@ -1576,7 +1576,12 @@ function switchView(viewId, updateHash = true) {
       const term = document.getElementById("utm-term")?.value.trim() || "";
       const content = document.getElementById("utm-content")?.value.trim() || "";
 
-      const url = new URL(urlValue);
+      let urlInput = urlValue;
+      if (!/^https?:\/\//i.test(urlInput)) {
+        urlInput = "https://" + urlInput;
+      }
+      
+      const url = new URL(urlInput);
       if (source) url.searchParams.set("utm_source", source.toLowerCase());
       if (medium) url.searchParams.set("utm_medium", medium.toLowerCase());
       if (campaign) url.searchParams.set("utm_campaign", campaign.replace(/\s+/g, "_"));

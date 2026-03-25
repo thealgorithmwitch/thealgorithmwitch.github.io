@@ -1069,14 +1069,15 @@
     AUTO_SYNC_CLARITY_ON_LOAD: false
   };
 
-  let PORTAL_CONFIG = {
-    clientName: "Loading...",
-    clientLogoIcon: "ph-sun-horizon",
-    themeColor: "#ffd700",
-    lookerStudioUrl: "",
-    clarityUrl: "",
-    backendType: "Google Sheets"
-  };
+let PORTAL_CONFIG = {
+  clientName: "Loading...",
+  clientLogoIcon: "ph-sun-horizon",
+  themeColor: "#ffd700",
+  lookerStudioUrl: "",
+  clarityUrl: "",
+  primaryDomain: "https://re-volv.org",
+  backendType: "Google Sheets"
+};
 
   const VALID_VIEWS = ["home", "reports", "utm", "ux", "audit"];
 
@@ -1216,17 +1217,18 @@ document.addEventListener("DOMContentLoaded", async () => {
   }
 });
 
-  async function loadSettingsFromSheet() {
-    const data = await apiGet("getSettings");
-    if (!data.ok) throw new Error(data.error || "Failed to load settings");
+async function loadSettingsFromSheet() {
+  const data = await apiGet("getSettings");
+  if (!data.ok) throw new Error(data.error || "Failed to load settings");
 
-    PORTAL_CONFIG.clientName = data.settings?.clientName || "Client";
-    PORTAL_CONFIG.clarityUrl = data.settings?.clarityUrl || "";
-    PORTAL_CONFIG.lookerStudioUrl = data.settings?.lookerEmbedUrl || "";
+  PORTAL_CONFIG.clientName = data.settings?.clientName || "Client";
+  PORTAL_CONFIG.clarityUrl = data.settings?.clarityUrl || "";
+  PORTAL_CONFIG.lookerStudioUrl = data.settings?.lookerEmbedUrl || "";
+  PORTAL_CONFIG.primaryDomain = data.settings?.primaryDomain || "https://re-volv.org";
 
-    applyConfig();
-  }
-
+  applyConfig();
+}
+  
   async function loadRegistryFromSheet(query = "") {
     const data = await apiGet("getRegistry", { q: query });
     if (!data.ok) throw new Error(data.error || "Failed to load registry");
@@ -1619,15 +1621,32 @@ function getRegistrySessionsMarkup(item) {
   return `<span class="text-xs text-gray-300">${formatNumber(getRegistrySessionsValue(item))} sessions</span>`;
 }
 
-  function buildDisplayLink(item) {
-    const full = String(item.fullUtmLink || "").trim();
-    if (full) return full;
+function buildDisplayLink(item) {
+  const full = String(item.fullUtmLink || "").trim();
+  if (full) return full;
 
-    const dest = String(item.destinationUrl || "").trim();
-    if (dest) return dest;
+  const dest = String(item.destinationUrl || "").trim();
+  if (dest) return dest;
 
-    return "";
+  const landing =
+    String(item.landingPage || item.landing_page || "").trim();
+
+  if (!landing) return "";
+
+  if (/^https?:\/\//i.test(landing)) {
+    return landing;
   }
+
+  const baseDomain =
+    String(PORTAL_CONFIG.primaryDomain || "").trim() ||
+    "https://re-volv.org";
+
+  const normalizedBase = baseDomain.replace(/\/+$/, "");
+  const normalizedPath = landing.startsWith("/") ? landing : `/${landing}`;
+
+  return `${normalizedBase}${normalizedPath}`;
+}
+
 
   function getRegistryLinkMarkup(item) {
     const link = buildDisplayLink(item);

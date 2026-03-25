@@ -1511,12 +1511,9 @@ async function loadPerformanceFromSheet() {
   const params = getCurrentReportFilterParams();
   const data = await apiGet("getPerformanceSummary", params);
 
-  if (!data || typeof data !== "object") {
-    throw new Error("Performance summary response was empty");
-  }
+  if (!data.ok) throw new Error(data.error || "Failed to load performance summary");
 
-  const summary = data.summary || data;
-  currentPerformanceSummary = summary || {};
+  currentPerformanceSummary = data.summary || {};
   renderPerformanceSummary(currentPerformanceSummary);
 }
 
@@ -1524,30 +1521,19 @@ async function loadPerformanceTrendFromSheet() {
   const params = getCurrentReportFilterParams();
   const data = await apiGet("getPerformanceTrend", params);
 
-  if (!data || typeof data !== "object") {
-    throw new Error("Performance trend response was empty");
-  }
+  if (!data.ok) throw new Error(data.error || "Failed to load performance trend");
 
-  currentPerformanceTrend = Array.isArray(data.trend)
-    ? data.trend
-    : Array.isArray(data.rows)
-    ? data.rows
-    : Array.isArray(data.data)
-    ? data.data
-    : [];
-
+  currentPerformanceTrend = Array.isArray(data.trend) ? data.trend : [];
   renderPerformanceTrendCharts(currentPerformanceTrend);
 }
-  
+
 async function loadPerformanceComparisonFromSheet() {
   const params = getCurrentReportFilterParams();
   const data = await apiGet("getPerformanceComparison", params);
 
-  if (!data || typeof data !== "object") {
-    throw new Error("Performance comparison response was empty");
-  }
+  if (!data.ok) throw new Error(data.error || "Failed to load performance comparison");
 
-  currentPerformanceComparison = data.comparison || data || null;
+  currentPerformanceComparison = data.comparison || null;
   renderPerformanceComparison(currentPerformanceComparison);
 }
 
@@ -1580,11 +1566,16 @@ async function loadHomeSnapshot() {
     apiGet("getPerformanceComparison", params)
   ]);
 
-  const summary = summaryData.summary || summaryData || {};
-  const comparison = comparisonData.comparison || comparisonData || null;
+  if (!summaryData.ok) {
+    throw new Error(summaryData.error || "Failed to load home summary");
+  }
 
-  currentHomeSummary = summary;
-  currentHomeComparison = comparison;
+  if (!comparisonData.ok) {
+    throw new Error(comparisonData.error || "Failed to load home comparison");
+  }
+
+  currentHomeSummary = summaryData.summary || {};
+  currentHomeComparison = comparisonData.comparison || null;
 
   renderHomeOverviewSnapshot(currentHomeSummary, currentHomeComparison);
 }

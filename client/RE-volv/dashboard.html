@@ -1213,15 +1213,15 @@
     AUTO_SYNC_CLARITY_ON_LOAD: false
   };
 
-let PORTAL_CONFIG = {
-  clientName: "Loading...",
-  clientLogoIcon: "ph-sun-horizon",
-  themeColor: "#ffd700",
-  lookerStudioUrl: "",
-  clarityUrl: "",
-  backendType: "Google Sheets",
-  siteUrl: "https://re-volv.org"
-};
+  let PORTAL_CONFIG = {
+    clientName: "Loading...",
+    clientLogoIcon: "ph-sun-horizon",
+    themeColor: "#ffd700",
+    lookerStudioUrl: "",
+    clarityUrl: "",
+    backendType: "Google Sheets",
+    siteUrl: "https://re-volv.org"
+  };
 
   const VALID_VIEWS = ["home", "reports", "utm", "ux", "audit"];
 
@@ -1273,121 +1273,124 @@ let PORTAL_CONFIG = {
   let currentPerformanceComparison = null;
   let currentHomeSummary = {};
   let currentHomeComparison = null;
-
   let currentRecentRegistryLinks = [];
 
-async function loadRecentRegistryLinks() {
-  const data = await apiGet("getRecentRegistryLinks", {
-    range_type: "30",
-    rangeType: "30"
+  document.addEventListener("DOMContentLoaded", async () => {
+    applyConfig();
+    initStars();
+    bindNavigation();
+    bindExternalButtons();
+    bindUTMEvents();
+    bindUtmRegistryFilters();
+    bindReportFilters();
+    bindUXFilters();
+    bindAuditFilters();
+    bindWorkspaceDropdown();
+
+    updateLocalSyncTime();
+    switchView(getInitialView(), false);
+
+    renderRegistry([]);
+    renderHomeRecentUtmLinks([]);
+    renderLoadingPerformanceState();
+    renderEmptyUxState();
+    renderHomeLoadingState();
+    setDataStatus("loading", "Loading 30 day overview data...");
+
+    try {
+      await loadSettingsFromSheet();
+      applyWorkspaceConfig();
+
+      await Promise.all([
+        loadRegistryFromSheet(),
+        loadAuditFromSheet(),
+        loadResourcesFromSheet()
+      ]);
+
+      populateReportFilterOptionsFromRegistry();
+      populateUxPageOptionsFromClarityRows([]);
+
+      if (APP_CONFIG.AUTO_SYNC_PERFORMANCE_ON_LOAD) {
+        try {
+          await syncPerformanceData(365, { silent: true });
+        } catch (error) {
+          console.error("Initial GA sync failed:", error);
+        }
+      }
+
+      const reportRange = document.getElementById("filter-date-range");
+      if (reportRange) reportRange.value = "30";
+      updateHeaderDatePillForView("home");
+
+      await Promise.all([
+        loadHomeSnapshot(),
+        loadRecentRegistryLinks(),
+        loadPerformanceFromSheet(),
+        loadPerformanceTrendFromSheet(),
+        loadPerformanceComparisonFromSheet()
+      ]);
+
+      setDataStatus("loaded", "30 day overview data loaded successfully.");
+
+      if (APP_CONFIG.AUTO_SYNC_CLARITY_ON_LOAD) {
+        try {
+          await syncClarityData({ silent: true });
+        } catch (error) {
+          console.error("Initial Clarity sync failed:", error);
+        }
+      } else {
+        await loadClarityFromSheet();
+      }
+    } catch (error) {
+      setDataStatus("error", "Could not load overview data.");
+      console.error(error);
+      showToast(
+        "Connection Error",
+        error?.message || "Could not load portal data.",
+        "ph-warning-circle",
+        "text-amber-400"
+      );
+    }
   });
 
-  if (!data.ok) throw new Error(data.error || "Failed to load recent links");
+  window.addEventListener("hashchange", () => {
+    switchView(getInitialView(), false);
+  });
 
-  currentRecentRegistryLinks = Array.isArray(data.links) ? data.links : [];
-  renderHomeRecentUtmLinks(currentRecentRegistryLinks);
-}
+  async function loadRecentRegistryLinks() {
+    const data = await apiGet("getRecentRegistryLinks", {
+      range_type: "30",
+      rangeType: "30"
+    });
 
-document.addEventListener("DOMContentLoaded", async () => {
-  applyConfig();
-  initStars();
-  bindNavigation();
-  bindExternalButtons();
-  bindUTMEvents();
-  bindUtmRegistryFilters();
-  bindReportFilters();
-  bindUXFilters();
-  bindAuditFilters();
-  bindWorkspaceDropdown();
+    if (!data.ok) throw new Error(data.error || "Failed to load recent links");
 
-  updateLocalSyncTime();
-  switchView(getInitialView(), false);
-
-  renderRegistry([]);
-  renderHomeRecentUtmLinks([]);
-  renderLoadingPerformanceState();
-  renderEmptyUxState();
-  renderHomeLoadingState();
-  setDataStatus("loading", "Loading 30 day overview data...");
-
-  try {
-    await loadSettingsFromSheet();
-    applyWorkspaceConfig();
-
-    await Promise.all([
-      loadRegistryFromSheet(),
-      loadAuditFromSheet(),
-      loadResourcesFromSheet()
-    ]);
-
-    populateReportFilterOptionsFromRegistry();
-    populateUxPageOptionsFromClarityRows([]);
-
-    if (APP_CONFIG.AUTO_SYNC_PERFORMANCE_ON_LOAD) {
-      try {
-        await syncPerformanceData(365, { silent: true });
-      } catch (error) {
-        console.error("Initial GA sync failed:", error);
-      }
-    }
-
-  const reportRange = document.getElementById("filter-date-range");
-  if (reportRange) reportRange.value = "30";
-  updateHeaderDatePillForView("home");
-
-    await Promise.all([
-      loadHomeSnapshot(),
-      loadRecentRegistryLinks(),
-      loadPerformanceFromSheet(),
-      loadPerformanceTrendFromSheet(),
-      loadPerformanceComparisonFromSheet()
-    ]);
-
-    setDataStatus("loaded", "30 day overview data loaded successfully.");
-
-    if (APP_CONFIG.AUTO_SYNC_CLARITY_ON_LOAD) {
-      try {
-        await syncClarityData({ silent: true });
-      } catch (error) {
-        console.error("Initial Clarity sync failed:", error);
-      }
-    } else {
-      await loadClarityFromSheet();
-    }
-  } catch (error) {
-    setDataStatus("error", "Could not load overview data.");
-    console.error(error);
-    showToast(
-      "Connection Error",
-      error?.message || "Could not load portal data.",
-      "ph-warning-circle",
-      "text-amber-400"
-    );
+    currentRecentRegistryLinks = Array.isArray(data.links) ? data.links : [];
+    renderHomeRecentUtmLinks(currentRecentRegistryLinks);
   }
-});
 
-async function loadSettingsFromSheet() {
-  const data = await apiGet("getSettings");
-  if (!data.ok) throw new Error(data.error || "Failed to load settings");
+  async function loadSettingsFromSheet() {
+    const data = await apiGet("getSettings");
+    if (!data.ok) throw new Error(data.error || "Failed to load settings");
 
-  PORTAL_CONFIG.clientName = data.settings?.clientName || "Client";
-  PORTAL_CONFIG.clarityUrl = data.settings?.clarityUrl || "";
-  PORTAL_CONFIG.lookerStudioUrl = data.settings?.lookerEmbedUrl || "";
-  PORTAL_CONFIG.primaryDomain = data.settings?.primaryDomain || "https://re-volv.org";
-  PORTAL_CONFIG.siteUrl = data.settings?.siteUrl || "https://re-volv.org";
+    PORTAL_CONFIG.clientName = data.settings?.clientName || "Client";
+    PORTAL_CONFIG.clarityUrl = data.settings?.clarityUrl || "";
+    PORTAL_CONFIG.lookerStudioUrl = data.settings?.lookerEmbedUrl || "";
+    PORTAL_CONFIG.primaryDomain = data.settings?.primaryDomain || "https://re-volv.org";
+    PORTAL_CONFIG.siteUrl = data.settings?.siteUrl || "https://re-volv.org";
 
-  applyConfig();
-}
-  
+    applyConfig();
+  }
+
   async function loadRegistryFromSheet(query = "") {
     const data = await apiGet("getRegistry", { q: query });
     if (!data.ok) throw new Error(data.error || "Failed to load registry");
-  
+
     currentRegistryItems = Array.isArray(data.registry) ? data.registry : [];
     populateUtmFilterOptions(currentRegistryItems);
     applyUtmRegistryFilters();
   }
-  
+
   async function loadAuditFromSheet(status = "all") {
     const data = await apiGet("getAuditNotes", { status });
     if (!data.ok) throw new Error(data.error || "Failed to load audit notes");
@@ -1446,17 +1449,45 @@ async function loadSettingsFromSheet() {
     populateUxPageOptionsFromClarityRows(currentClaritySummary.rows || []);
   }
 
-function getCurrentReportFilterParams() {
-  const rangeValue = document.getElementById("filter-date-range")?.value || "30";
+  async function loadHomeSnapshot() {
+    const params = {
+      source: "all",
+      campaign: "all",
+      landing_page: "all",
+      range_type: "30",
+      rangeType: "30"
+    };
 
-  return {
-    source: document.getElementById("filter-source")?.value || "all",
-    campaign: document.getElementById("filter-campaign")?.value || "all",
-    landing_page: document.getElementById("filter-landing")?.value || "all",
-    range_type: rangeValue,
-    rangeType: rangeValue
-  };
-}
+    const [summaryData, comparisonData] = await Promise.all([
+      apiGet("getPerformanceSummary", params),
+      apiGet("getPerformanceComparison", params)
+    ]);
+
+    if (!summaryData.ok) {
+      throw new Error(summaryData.error || "Failed to load home summary");
+    }
+
+    if (!comparisonData.ok) {
+      throw new Error(comparisonData.error || "Failed to load home comparison");
+    }
+
+    currentHomeSummary = summaryData.summary || {};
+    currentHomeComparison = comparisonData.comparison || null;
+
+    renderHomeOverviewSnapshot(currentHomeSummary, currentHomeComparison);
+  }
+
+  function getCurrentReportFilterParams() {
+    const rangeValue = document.getElementById("filter-date-range")?.value || "30";
+
+    return {
+      source: document.getElementById("filter-source")?.value || "all",
+      campaign: document.getElementById("filter-campaign")?.value || "all",
+      landing_page: document.getElementById("filter-landing")?.value || "all",
+      range_type: rangeValue,
+      rangeType: rangeValue
+    };
+  }
 
   function applyConfig() {
     const clientName = document.getElementById("client-name");
@@ -1467,6 +1498,41 @@ function getCurrentReportFilterParams() {
 
     if (clientLogo) {
       clientLogo.className = `ph-fill ${PORTAL_CONFIG.clientLogoIcon} text-[var(--client-color)] text-lg`;
+    }
+  }
+
+  function applyWorkspaceConfig() {
+    const clientName = document.getElementById("client-name");
+    const clientLogo = document.getElementById("client-logo");
+
+    if (clientName) clientName.textContent = WORKSPACE_CONFIG.label;
+    document.documentElement.style.setProperty("--client-color", WORKSPACE_CONFIG.themeColor);
+
+    if (clientLogo) {
+      clientLogo.className = `ph-fill ${WORKSPACE_CONFIG.icon} text-[var(--client-color)] text-lg`;
+    }
+
+    const projectItem = document.getElementById("workspace-item-project");
+    const revolvItem = document.getElementById("workspace-item-revolv");
+
+    [projectItem, revolvItem].forEach((item) => {
+      if (!item) return;
+      item.classList.remove("bg-purple-500/10", "border", "border-purple-500/20");
+      const check = item.querySelector(".workspace-option-check, .workspace-check");
+      if (check) check.classList.add("hidden");
+    });
+
+    const activeItem =
+      WORKSPACE_CONFIG.activeWorkspace === "project"
+        ? projectItem
+        : WORKSPACE_CONFIG.activeWorkspace === "revolv"
+        ? revolvItem
+        : null;
+
+    if (activeItem) {
+      activeItem.classList.add("bg-purple-500/10", "border", "border-purple-500/20");
+      const check = activeItem.querySelector(".workspace-check, .workspace-option-check");
+      if (check) check.classList.remove("hidden");
     }
   }
 
@@ -1492,38 +1558,38 @@ function getCurrentReportFilterParams() {
     });
   }
 
-function switchView(viewId, updateHash = true) {
-  if (!VALID_VIEWS.includes(viewId)) return;
+  function switchView(viewId, updateHash = true) {
+    if (!VALID_VIEWS.includes(viewId)) return;
 
-  const nextNav = document.getElementById(`nav-${viewId}`);
-  const nextView = document.getElementById(`view-${viewId}`);
-  const headerTitle = document.getElementById("header-title");
-  const scrollWrap = document.getElementById("content-scroll");
+    const nextNav = document.getElementById(`nav-${viewId}`);
+    const nextView = document.getElementById(`view-${viewId}`);
+    const headerTitle = document.getElementById("header-title");
+    const scrollWrap = document.getElementById("content-scroll");
 
-  if (!nextNav || !nextView) return;
+    if (!nextNav || !nextView) return;
 
-  document.querySelectorAll(".nav-item").forEach((el) => {
-    el.classList.remove("active");
-    el.setAttribute("aria-current", "false");
-  });
+    document.querySelectorAll(".nav-item").forEach((el) => {
+      el.classList.remove("active");
+      el.setAttribute("aria-current", "false");
+    });
 
-  document.querySelectorAll(".view-section").forEach((el) => {
-    el.classList.remove("active");
-    el.hidden = true;
-  });
+    document.querySelectorAll(".view-section").forEach((el) => {
+      el.classList.remove("active");
+      el.hidden = true;
+    });
 
-  nextNav.classList.add("active");
-  nextNav.setAttribute("aria-current", "page");
-  nextView.hidden = false;
-  nextView.classList.add("active");
+    nextNav.classList.add("active");
+    nextNav.setAttribute("aria-current", "page");
+    nextView.hidden = false;
+    nextView.classList.add("active");
 
-  if (headerTitle) headerTitle.textContent = VIEW_TITLES[viewId] || "Workspace";
-  updateHeaderDatePillForView(viewId);
+    if (headerTitle) headerTitle.textContent = VIEW_TITLES[viewId] || "Workspace";
+    updateHeaderDatePillForView(viewId);
 
-  if (updateHash) history.replaceState(null, "", `#${viewId}`);
-  if (scrollWrap) scrollWrap.scrollTo({ top: 0, behavior: "smooth" });
-}
-  
+    if (updateHash) history.replaceState(null, "", `#${viewId}`);
+    if (scrollWrap) scrollWrap.scrollTo({ top: 0, behavior: "smooth" });
+  }
+
   function bindExternalButtons() {
     document.addEventListener("click", (event) => {
       const trigger = event.target.closest("[data-open-url]");
@@ -1580,8 +1646,9 @@ function switchView(viewId, updateHash = true) {
       if (!/^https?:\/\//i.test(urlInput)) {
         urlInput = "https://" + urlInput;
       }
-      
+
       const url = new URL(urlInput);
+
       if (source) url.searchParams.set("utm_source", source.toLowerCase());
       if (medium) url.searchParams.set("utm_medium", medium.toLowerCase());
       if (campaign) {
@@ -1595,10 +1662,6 @@ function switchView(viewId, updateHash = true) {
       }
       if (term) url.searchParams.set("utm_term", term);
       if (content) url.searchParams.set("utm_content", content);
-
-      if (urlValue && source && medium && campaign) {
-      copyTextToClipboard(result.value).catch(() => {});
-    }
 
       result.value = url.toString();
     } catch {
@@ -1640,9 +1703,9 @@ function switchView(viewId, updateHash = true) {
   async function copyUTM() {
     const value = document.getElementById("utm-result")?.value?.trim() || "";
     if (!value || value.startsWith("Waiting")) {
-    showToast("Nothing to copy", "Generate a valid link first.", "ph-warning", "text-amber-400");
-    return;
-  }
+      showToast("Nothing to copy", "Generate a valid link first.", "ph-warning", "text-amber-400");
+      return;
+    }
 
     try {
       await copyTextToClipboard(value);
@@ -1691,134 +1754,126 @@ function switchView(viewId, updateHash = true) {
     }
   }
 
-function resetUtmRegistryFilters() {
-  const defaults = {
-    "utm-filter-campaign": "all",
-    "utm-filter-source": "all",
-    "utm-filter-status": "all",
-    "utm-search": ""
-  };
+  function resetUtmRegistryFilters() {
+    const defaults = {
+      "utm-filter-campaign": "all",
+      "utm-filter-source": "all",
+      "utm-filter-status": "all",
+      "utm-search": ""
+    };
 
-  Object.entries(defaults).forEach(([id, value]) => {
-    const el = document.getElementById(id);
-    if (el) el.value = value;
-  });
+    Object.entries(defaults).forEach(([id, value]) => {
+      const el = document.getElementById(id);
+      if (el) el.value = value;
+    });
 
-  applyUtmRegistryFilters();
-}
+    applyUtmRegistryFilters();
+  }
 
-function populateUtmFilterOptions(items) {
-  populateSelectFromValues(
-    "utm-filter-campaign",
-    items.map((item) => item.campaignName).filter(Boolean),
-    "All Campaigns"
-  );
+  function populateUtmFilterOptions(items) {
+    populateSelectFromValues(
+      "utm-filter-campaign",
+      items.map((item) => item.campaignName).filter(Boolean),
+      "All Campaigns"
+    );
 
-  populateSelectFromValues(
-    "utm-filter-source",
-    items.map((item) => item.source).filter(Boolean),
-    "All Sources"
-  );
-}
-  
-function bindUtmRegistryFilters() {
-  ["utm-filter-campaign", "utm-filter-source", "utm-filter-status"].forEach((id) => {
-    const el = document.getElementById(id);
-    if (el) el.addEventListener("change", applyUtmRegistryFilters);
-  });
+    populateSelectFromValues(
+      "utm-filter-source",
+      items.map((item) => item.source).filter(Boolean),
+      "All Sources"
+    );
+  }
 
-  document.getElementById("utm-search")?.addEventListener("input", applyUtmRegistryFilters);
-  document.getElementById("utm-reset-filters")?.addEventListener("click", resetUtmRegistryFilters);
-}
-  
-function applyUtmRegistryFilters() {
-  const campaignFilter = document.getElementById("utm-filter-campaign")?.value || "all";
-  const sourceFilter = document.getElementById("utm-filter-source")?.value || "all";
-  const statusFilter = document.getElementById("utm-filter-status")?.value || "all";
-  const searchValue = (document.getElementById("utm-search")?.value || "").trim().toLowerCase();
+  function bindUtmRegistryFilters() {
+    ["utm-filter-campaign", "utm-filter-source", "utm-filter-status"].forEach((id) => {
+      const el = document.getElementById(id);
+      if (el) el.addEventListener("change", applyUtmRegistryFilters);
+    });
 
-  const filtered = currentRegistryItems.filter((item) => {
-    const campaignName = String(item.campaignName || "").trim();
-    const normalizedCampaignName = campaignName.replace(/\s+/g, "_");
-    const source = String(item.source || "").trim().toLowerCase();
+    document.getElementById("utm-search")?.addEventListener("input", applyUtmRegistryFilters);
+    document.getElementById("utm-reset-filters")?.addEventListener("click", resetUtmRegistryFilters);
+  }
 
-    const hasCleanNaming = /^[A-Za-z0-9]+(?:_[A-Za-z0-9]+)+$/.test(normalizedCampaignName);
-    const reviewStatus = hasCleanNaming ? "clean" : "needs review";
+  function applyUtmRegistryFilters() {
+    const campaignFilter = document.getElementById("utm-filter-campaign")?.value || "all";
+    const sourceFilter = document.getElementById("utm-filter-source")?.value || "all";
+    const statusFilter = document.getElementById("utm-filter-status")?.value || "all";
+    const searchValue = (document.getElementById("utm-search")?.value || "").trim().toLowerCase();
 
-    const matchesCampaign = campaignFilter === "all" || campaignName === campaignFilter;
-    const matchesSource = sourceFilter === "all" || source === sourceFilter;
-    const matchesStatus =
-      statusFilter === "all" ||
-      (statusFilter === "flagged" && reviewStatus === "needs review") ||
-      (statusFilter === "clean" && reviewStatus === "clean");
+    const filtered = currentRegistryItems.filter((item) => {
+      const campaignName = String(item.campaignName || "").trim();
+      const normalizedCampaignName = campaignName.replace(/\s+/g, "_");
+      const source = String(item.source || "").trim().toLowerCase();
 
-    const haystack = [
-      item.campaignName,
-      item.source,
-      item.channel,
-      item.term,
-      item.content,
-      item.landingPage,
-      item.destinationUrl,
-      item.fullUtmLink,
-      item.notes
-    ].join(" ").toLowerCase();
+      const hasCleanNaming = /^[A-Za-z0-9]+(?:_[A-Za-z0-9]+)+$/.test(normalizedCampaignName);
+      const reviewStatus = hasCleanNaming ? "clean" : "needs review";
 
-    const matchesSearch = !searchValue || haystack.includes(searchValue);
+      const matchesCampaign = campaignFilter === "all" || campaignName === campaignFilter;
+      const matchesSource = sourceFilter === "all" || source === sourceFilter;
+      const matchesStatus =
+        statusFilter === "all" ||
+        (statusFilter === "flagged" && reviewStatus === "needs review") ||
+        (statusFilter === "clean" && reviewStatus === "clean");
 
-    return matchesCampaign && matchesSource && matchesStatus && matchesSearch;
-  });
+      const haystack = [
+        item.campaignName,
+        item.source,
+        item.channel,
+        item.term,
+        item.content,
+        item.landingPage,
+        item.destinationUrl,
+        item.fullUtmLink,
+        item.notes
+      ].join(" ").toLowerCase();
 
-  renderRegistry(filtered);
-}
+      const matchesSearch = !searchValue || haystack.includes(searchValue);
 
-function getRegistrySessionsValue(item) {
-  const raw =
-    item.sessions30d ??
-    item.totalSessions ??
-    item.sessions ??
-    item.sessionCount ??
-    item.gaSessions ??
-    0;
+      return matchesCampaign && matchesSource && matchesStatus && matchesSearch;
+    });
 
-  const num = Number(raw);
-  return Number.isFinite(num) ? num : 0;
-}
+    renderRegistry(filtered);
+  }
 
-function getRegistrySessionsMarkup(item) {
-  return `<span class="text-xs text-gray-300">${formatNumber(getRegistrySessionsValue(item))} sessions</span>`;
-}
+  function getRegistrySessionsValue(item) {
+    const raw =
+      item.sessions30d ??
+      item.totalSessions ??
+      item.sessions ??
+      item.sessionCount ??
+      item.gaSessions ??
+      0;
 
-function buildDisplayLink(item) {
-  const full = String(item.fullUtmLink || item.full_utm_link || "").trim();
-  if (full) return full;
+    const num = Number(raw);
+    return Number.isFinite(num) ? num : 0;
+  }
 
-  const dest = String(item.destinationUrl || item.destination_url || "").trim();
-  if (dest) return dest;
+  function getRegistrySessionsMarkup(item) {
+    return `<span class="text-xs text-gray-300">${formatNumber(getRegistrySessionsValue(item))} sessions</span>`;
+  }
 
-  const landing =
-    String(
-      item.landingPage ||
-      item.landing_page ||
-      ""
-    ).trim();
+  function buildDisplayLink(item) {
+    const full = String(item.fullUtmLink || item.full_utm_link || "").trim();
+    if (full) return full;
 
-  if (!landing) return "";
+    const dest = String(item.destinationUrl || item.destination_url || "").trim();
+    if (dest) return dest;
 
-  if (/^https?:\/\//i.test(landing)) return landing;
+    const landing = String(item.landingPage || item.landing_page || "").trim();
+    if (!landing) return "";
 
-  const base =
-    String(
+    if (/^https?:\/\//i.test(landing)) return landing;
+
+    const base = String(
       item.siteUrl ||
       item.site_url ||
       PORTAL_CONFIG.siteUrl ||
       "https://re-volv.org"
     ).replace(/\/+$/, "");
 
-  const normalizedPath = landing.startsWith("/") ? landing : `/${landing}`;
-  return `${base}${normalizedPath}`;
-}
-
+    const normalizedPath = landing.startsWith("/") ? landing : `/${landing}`;
+    return `${base}${normalizedPath}`;
+  }
 
   function getRegistryLinkMarkup(item) {
     const link = buildDisplayLink(item);
@@ -1846,114 +1901,114 @@ function buildDisplayLink(item) {
     return `${mm}/${dd}/${yy}`;
   }
 
-function renderRegistry(items) {
-  const tbody = document.getElementById("registry-tbody");
-  if (!tbody) return;
+  function renderRegistry(items) {
+    const tbody = document.getElementById("registry-tbody");
+    if (!tbody) return;
 
-  if (!items.length) {
-    tbody.innerHTML = `
-      <tr>
-        <td colspan="4" class="text-sm text-gray-400">No tracking links found yet.</td>
-      </tr>
-    `;
-    return;
+    if (!items.length) {
+      tbody.innerHTML = `
+        <tr>
+          <td colspan="4" class="text-sm text-gray-400">No tracking links found yet.</td>
+        </tr>
+      `;
+      return;
+    }
+
+    tbody.innerHTML = items.map((item) => {
+      const campaignName = String(item.campaignName || item.campaign || item.campaignId || "").trim();
+      const normalizedCampaignName = campaignName.replace(/\s+/g, "_");
+      const hasCleanNaming = /^[A-Za-z0-9]+(?:_[A-Za-z0-9]+)+$/.test(normalizedCampaignName);
+      const rawLink = buildDisplayLink(item);
+
+      const reviewBadge = hasCleanNaming
+        ? `<span class="badge badge-emerald ml-2">Clean</span>`
+        : `<span class="badge badge-gold ml-2">Needs Review</span>`;
+
+      return `
+        <tr>
+          <td>
+            <div class="font-medium text-white mb-0.5 flex items-center flex-wrap">
+              ${escapeHtml(campaignName)}
+              ${reviewBadge}
+            </div>
+            ${getRegistryLinkMarkup(item)}
+          </td>
+          <td>
+            <span class="badge ${getBadgeColor(item.source)}">${escapeHtml(item.source || "")}</span>
+            <span class="text-gray-600 mx-1">/</span>
+            ${getRegistrySessionsMarkup(item)}
+          </td>
+          <td>
+            <div class="text-xs text-gray-400">${escapeHtml(formatShortSlashDate(item.dateCreated))}</div>
+          </td>
+          <td>
+            <button
+              type="button"
+              class="registry-copy-btn text-gray-500 hover:text-purple-400 transition-colors"
+              data-copy-value="${escapeHtml(rawLink)}"
+              title="Copy link"
+            >
+              <i class="ph-bold ph-copy"></i>
+            </button>
+          </td>
+        </tr>
+      `;
+    }).join("");
+
+    tbody.querySelectorAll(".registry-copy-btn").forEach((button) => {
+      button.addEventListener("click", async () => {
+        const value = decodeHtmlEntities(button.getAttribute("data-copy-value") || "").trim();
+        if (!value) {
+          showToast("No Link", "This row does not have a saved link yet.", "ph-warning", "text-amber-400");
+          return;
+        }
+
+        try {
+          await copyTextToClipboard(value);
+          showToast("Copied!", "Registry link copied to clipboard.", "ph-copy");
+        } catch (error) {
+          console.error(error);
+          showToast("Copy Error", "Could not copy registry link.", "ph-warning", "text-amber-400");
+        }
+      });
+    });
   }
 
-  tbody.innerHTML = items.map((item) => {
-    const campaignName = String(item.campaignName || item.campaign || item.campaignId || "").trim();
-    const normalizedCampaignName = campaignName.replace(/\s+/g, "_");
-    const hasCleanNaming = /^[A-Za-z0-9]+(?:_[A-Za-z0-9]+)+$/.test(normalizedCampaignName);
-    const rawLink = buildDisplayLink(item);
+  function renderHomeRecentUtmLinks(items) {
+    const table = document.getElementById("home-recent-utm-tbody");
+    if (!table) return;
 
-    const reviewBadge = hasCleanNaming
-      ? `<span class="badge badge-emerald ml-2">Clean</span>`
-      : `<span class="badge badge-gold ml-2">Needs Review</span>`;
+    const rows = Array.isArray(items) ? items.slice(0, 3) : [];
 
-    return `
+    if (!rows.length) {
+      table.innerHTML = `
+        <tr>
+          <td colspan="3" class="text-sm text-gray-400">No recent UTM links yet.</td>
+        </tr>
+      `;
+      return;
+    }
+
+    table.innerHTML = rows.map((item) => `
       <tr>
         <td>
-          <div class="font-medium text-white mb-0.5 flex items-center flex-wrap">
-            ${escapeHtml(campaignName)}
-            ${reviewBadge}
+          <div class="font-medium text-white mb-0.5">
+            ${escapeHtml(item.campaignName || item.campaign || item.campaignId || "")}
           </div>
           ${getRegistryLinkMarkup(item)}
         </td>
         <td>
           <span class="badge ${getBadgeColor(item.source)}">${escapeHtml(item.source || "")}</span>
           <span class="text-gray-600 mx-1">/</span>
-          ${getRegistrySessionsMarkup(item)}
+          <span class="text-xs text-gray-300">${formatNumber(getRegistrySessionsValue(item))} sessions</span>
         </td>
         <td>
           <div class="text-xs text-gray-400">${escapeHtml(formatShortSlashDate(item.dateCreated))}</div>
         </td>
-        <td>
-          <button
-            type="button"
-            class="registry-copy-btn text-gray-500 hover:text-purple-400 transition-colors"
-            data-copy-value="${escapeHtml(rawLink)}"
-            title="Copy link"
-          >
-            <i class="ph-bold ph-copy"></i>
-          </button>
-        </td>
       </tr>
-    `;
-  }).join("");
-
-  tbody.querySelectorAll(".registry-copy-btn").forEach((button) => {
-    button.addEventListener("click", async () => {
-      const value = decodeHtmlEntities(button.getAttribute("data-copy-value") || "").trim();
-      if (!value) {
-        showToast("No Link", "This row does not have a saved link yet.", "ph-warning", "text-amber-400");
-        return;
-      }
-
-      try {
-        await copyTextToClipboard(value);
-        showToast("Copied!", "Registry link copied to clipboard.", "ph-copy");
-      } catch (error) {
-        console.error(error);
-        showToast("Copy Error", "Could not copy registry link.", "ph-warning", "text-amber-400");
-      }
-    });
-  });
-}
-
-function renderHomeRecentUtmLinks(items) {
-  const table = document.getElementById("home-recent-utm-tbody");
-  if (!table) return;
-  
-  const rows = Array.isArray(items) ? items.slice(0, 3) : [];
-
-  if (!rows.length) {
-    table.innerHTML = `
-      <tr>
-        <td colspan="3" class="text-sm text-gray-400">No recent UTM links yet.</td>
-      </tr>
-    `;
-    return;
+    `).join("");
   }
 
-  table.innerHTML = rows.map((item) => `
-    <tr>
-      <td>
-        <div class="font-medium text-white mb-0.5">
-          ${escapeHtml(item.campaignName || item.campaign || item.campaignId || "")}
-        </div>
-        ${getRegistryLinkMarkup(item)}
-      </td>
-      <td>
-        <span class="badge ${getBadgeColor(item.source)}">${escapeHtml(item.source || "")}</span>
-        <span class="text-gray-600 mx-1">/</span>
-        <span class="text-xs text-gray-300">${formatNumber(getRegistrySessionsValue(item))} sessions</span>
-      </td>
-      <td>
-        <div class="text-xs text-gray-400">${escapeHtml(formatShortSlashDate(item.dateCreated))}</div>
-      </td>
-    </tr>
-  `).join("");
-}
-  
   function renderPerformanceSummary(summary) {
     const sessionsEl = document.getElementById("kpi-sessions");
     const usersEl = document.getElementById("kpi-users");
@@ -1977,94 +2032,38 @@ function renderHomeRecentUtmLinks(items) {
     }
   }
 
-  function renderHomePerformanceSnapshot(summary) {
-    const cards = document.querySelectorAll("#view-home .grid.grid-cols-1.md\\:grid-cols-2.xl\\:grid-cols-4.gap-5 .glass-card, #view-home .grid.grid-cols-1.md\\:grid-cols-2.xl\\:grid-cols-4.gap-5 button");
-    if (cards.length < 4) return;
+  function renderPerformanceComparison(comparison) {
+    const delta = comparison?.delta || {};
+    const reportCards = document.querySelectorAll("#view-reports .grid.grid-cols-2.md\\:grid-cols-3.xl\\:grid-cols-6.gap-5 .glass-card");
 
-    const sessionsCard = cards[0].querySelector(".text-2xl");
-    const rateCard = cards[1].querySelector(".text-2xl");
-    const activeCard = cards[2].querySelector(".text-2xl");
+    updateDeltaText(reportCards[0], delta.sessionsPct, "vs previous period");
+    updateDeltaText(reportCards[1], delta.usersPct, "vs previous period");
+    updateDeltaText(reportCards[2], delta.conversionsPct, "vs previous period");
+    updateDeltaText(reportCards[3], delta.conversionRatePct, "vs previous period");
+    updateDurationDeltaText(reportCards[4], comparison);
+  }
 
-    if (sessionsCard) sessionsCard.textContent = formatNumber(summary.sessions || 0);
-    if (rateCard) rateCard.textContent = formatPercent(summary.conversionRate || 0);
+  function renderHomeOverviewSnapshot(summary, comparison) {
+    const sessionsValue = document.getElementById("home-kpi-sessions");
+    const sessionsDelta = document.getElementById("home-kpi-sessions-delta");
+    const rateValue = document.getElementById("home-kpi-rate");
+    const rateDelta = document.getElementById("home-kpi-rate-delta");
+    const activeValue = document.getElementById("home-kpi-active");
+
+    if (sessionsValue) sessionsValue.textContent = formatNumber(summary.sessions || 0);
+    if (rateValue) rateValue.textContent = formatPercent(summary.conversionRate || 0);
 
     const activeCount = currentRegistryItems.filter((item) => {
       const status = String(item.status || "").toLowerCase();
       return status === "active" || status === "detected";
     }).length;
 
-    if (activeCard) activeCard.textContent = formatNumber(activeCount);
+    if (activeValue) activeValue.textContent = formatNumber(activeCount);
+
+    const delta = comparison?.delta || {};
+    updateStandaloneDeltaText(sessionsDelta, delta.sessionsPct, "vs last mo");
+    updateStandaloneDeltaText(rateDelta, delta.conversionRatePct, "vs last mo");
   }
-
-  function renderEmptyPerformanceState() {
-    renderPerformanceSummary({
-      sessions: 0,
-      users: 0,
-      conversions: 0,
-      conversionRate: 0,
-      avgSessionDurationSeconds: 0,
-      topSource: "-"
-    });
-    renderPerformanceTrendCharts([]);
-  }
-
-function renderHomeOverviewSnapshot(summary, comparison) {
-  const sessionsValue = document.getElementById("home-kpi-sessions");
-  const sessionsDelta = document.getElementById("home-kpi-sessions-delta");
-  const rateValue = document.getElementById("home-kpi-rate");
-  const rateDelta = document.getElementById("home-kpi-rate-delta");
-  const activeValue = document.getElementById("home-kpi-active");
-
-  if (sessionsValue) sessionsValue.textContent = formatNumber(summary.sessions || 0);
-  if (rateValue) rateValue.textContent = formatPercent(summary.conversionRate || 0);
-
-  const activeCount = currentRegistryItems.filter((item) => {
-    const status = String(item.status || "").toLowerCase();
-    return status === "active" || status === "detected";
-  }).length;
-
-  if (activeValue) activeValue.textContent = formatNumber(activeCount);
-
-  const delta = comparison?.delta || {};
-
-  updateStandaloneDeltaText(sessionsDelta, delta.sessionsPct, "vs last mo");
-  updateStandaloneDeltaText(rateDelta, delta.conversionRatePct, "vs last mo");
-}
-
-  function updateStandaloneDeltaText(el, pct, suffix) {
-  if (!el) return;
-
-  const value = Number(pct || 0);
-  const isUp = value >= 0;
-  const icon = isUp ? "ph-trend-up" : "ph-trend-down";
-  const color = isUp ? "text-emerald-400" : "text-rose-400";
-  const sign = isUp ? "+" : "";
-
-  el.className = `text-xs ${color} flex items-center gap-1 font-medium`;
-  el.innerHTML = `<i class="ph-bold ${icon}"></i> ${sign}${(value * 100).toFixed(1)}% <span class="text-gray-600">${escapeHtml(suffix)}</span>`;
-}
-
-  function renderHomeLoadingState() {
-  const sessionsValue = document.getElementById("home-kpi-sessions");
-  const sessionsDelta = document.getElementById("home-kpi-sessions-delta");
-  const rateValue = document.getElementById("home-kpi-rate");
-  const rateDelta = document.getElementById("home-kpi-rate-delta");
-  const activeValue = document.getElementById("home-kpi-active");
-
-  if (sessionsValue) sessionsValue.textContent = "--";
-  if (rateValue) rateValue.textContent = "--";
-  if (activeValue) activeValue.textContent = "--";
-
-  if (sessionsDelta) {
-    sessionsDelta.className = "text-xs text-gray-500 flex items-center gap-1 font-medium";
-    sessionsDelta.textContent = "Loading 30 day comparison...";
-  }
-
-  if (rateDelta) {
-    rateDelta.className = "text-xs text-gray-500 flex items-center gap-1 font-medium";
-    rateDelta.textContent = "Loading 30 day comparison...";
-  }
-}
 
   function renderLoadingPerformanceState() {
     const loadingSummary = {
@@ -2082,88 +2081,36 @@ function renderHomeOverviewSnapshot(summary, comparison) {
     renderPerformanceTrendCharts([]);
   }
 
-  function bindWorkspaceDropdown() {
-    const toggle = document.getElementById("workspace-dropdown-toggle");
-    const dropdown = document.getElementById("workspace-dropdown");
-    const caret = document.getElementById("workspace-caret");
+  function renderHomeLoadingState() {
+    const sessionsValue = document.getElementById("home-kpi-sessions");
+    const sessionsDelta = document.getElementById("home-kpi-sessions-delta");
+    const rateValue = document.getElementById("home-kpi-rate");
+    const rateDelta = document.getElementById("home-kpi-rate-delta");
+    const activeValue = document.getElementById("home-kpi-active");
 
-    if (!toggle || !dropdown || !caret) return;
+    if (sessionsValue) sessionsValue.textContent = "--";
+    if (rateValue) rateValue.textContent = "--";
+    if (activeValue) activeValue.textContent = "--";
 
-    toggle.addEventListener("click", (event) => {
-      event.stopPropagation();
-      dropdown.classList.toggle("hidden");
-      caret.classList.toggle("rotate-180");
-    });
-
-    document.addEventListener("click", (event) => {
-      if (!toggle.contains(event.target) && !dropdown.contains(event.target)) {
-        dropdown.classList.add("hidden");
-        caret.classList.remove("rotate-180");
-      }
-    });
-  }
-
-async function loadHomeSnapshot() {
-  const params = {
-    source: "all",
-    campaign: "all",
-    landing_page: "all",
-    range_type: "30",
-    rangeType: "30"
-  };
-
-  const [summaryData, comparisonData] = await Promise.all([
-    apiGet("getPerformanceSummary", params),
-    apiGet("getPerformanceComparison", params)
-  ]);
-
-  if (!summaryData.ok) {
-    throw new Error(summaryData.error || "Failed to load home summary");
-  }
-
-  if (!comparisonData.ok) {
-    throw new Error(comparisonData.error || "Failed to load home comparison");
-  }
-
-  currentHomeSummary = summaryData.summary || {};
-  currentHomeComparison = comparisonData.comparison || null;
-
-  renderHomeOverviewSnapshot(currentHomeSummary, currentHomeComparison);
-}
-  
-  function applyWorkspaceConfig() {
-    const clientName = document.getElementById("client-name");
-    const clientLogo = document.getElementById("client-logo");
-
-    if (clientName) clientName.textContent = WORKSPACE_CONFIG.label;
-    document.documentElement.style.setProperty("--client-color", WORKSPACE_CONFIG.themeColor);
-
-    if (clientLogo) {
-      clientLogo.className = `ph-fill ${WORKSPACE_CONFIG.icon} text-[var(--client-color)] text-lg`;
+    if (sessionsDelta) {
+      sessionsDelta.className = "text-xs text-gray-500 flex items-center gap-1 font-medium";
+      sessionsDelta.textContent = "Loading 30 day comparison...";
     }
 
-    const projectItem = document.getElementById("workspace-item-project");
-    const revolvItem = document.getElementById("workspace-item-revolv");
-
-    [projectItem, revolvItem].forEach((item) => {
-      if (!item) return;
-      item.classList.remove("bg-purple-500/10", "border", "border-purple-500/20");
-      const check = item.querySelector(".workspace-option-check, .workspace-check");
-      if (check) check.classList.add("hidden");
-    });
-
-    const activeItem =
-      WORKSPACE_CONFIG.activeWorkspace === "project"
-        ? projectItem
-        : WORKSPACE_CONFIG.activeWorkspace === "revolv"
-        ? revolvItem
-        : null;
-
-    if (activeItem) {
-      activeItem.classList.add("bg-purple-500/10", "border", "border-purple-500/20");
-      const check = activeItem.querySelector(".workspace-check");
-      if (check) check.classList.remove("hidden");
+    if (rateDelta) {
+      rateDelta.className = "text-xs text-gray-500 flex items-center gap-1 font-medium";
+      rateDelta.textContent = "Loading 30 day comparison...";
     }
+  }
+
+  function renderEmptyUxState() {
+    renderClaritySummary({
+      rageClicks: 0,
+      deadClicks: 0,
+      avgScrollDepth: 0,
+      avgEngagementTimeSeconds: 0,
+      rows: []
+    });
   }
 
   function renderPerformanceTrendCharts(trend) {
@@ -2238,175 +2185,91 @@ async function loadHomeSnapshot() {
     `;
   }
 
-function bindReportFilters() {
-  ["filter-date-range", "filter-campaign", "filter-source", "filter-landing"].forEach((id) => {
-    const el = document.getElementById(id);
-    if (el) {
-      el.addEventListener("change", applyReportFilters);
+  function bindReportFilters() {
+    ["filter-date-range", "filter-campaign", "filter-source", "filter-landing"].forEach((id) => {
+      const el = document.getElementById(id);
+      if (el) el.addEventListener("change", applyReportFilters);
+    });
+
+    document.getElementById("reset-report-filters")?.addEventListener("click", resetReportFilters);
+    document.getElementById("refresh-reports-button")?.addEventListener("click", refreshReportsData);
+    document.getElementById("export-reports-button")?.addEventListener("click", exportCurrentReportCsv);
+  }
+
+  async function applyReportFilters() {
+    const updated = document.getElementById("reports-last-updated");
+    if (updated) updated.textContent = "Updating...";
+
+    updateHeaderDatePillForView("reports");
+
+    try {
+      await Promise.all([
+        loadPerformanceFromSheet(),
+        loadPerformanceTrendFromSheet(),
+        loadPerformanceComparisonFromSheet()
+      ]);
+
+      if (updated) updated.textContent = "Updated: Just now";
+    } catch (error) {
+      console.error("applyReportFilters failed:", error);
+      if (updated) updated.textContent = "Update failed";
+      showToast(
+        "Load Error",
+        error?.message || "Could not refresh report data.",
+        "ph-warning-circle",
+        "text-amber-400"
+      );
     }
-  });
+  }
 
-  document.getElementById("reset-report-filters")?.addEventListener("click", resetReportFilters);
-  document.getElementById("refresh-reports-button")?.addEventListener("click", refreshReportsData);
-  document.getElementById("export-reports-button")?.addEventListener("click", exportCurrentReportCsv);
-}
+  function resetReportFilters() {
+    const defaults = {
+      "filter-date-range": "30",
+      "filter-campaign": "all",
+      "filter-source": "all",
+      "filter-landing": "all"
+    };
 
-  function setDataStatus(state, message) {
-  const box = document.getElementById("data-status-box");
-  const indicator = document.getElementById("data-status-indicator");
-  const label = document.getElementById("data-status-label");
-  const text = document.getElementById("data-status-text");
+    Object.entries(defaults).forEach(([id, value]) => {
+      const el = document.getElementById(id);
+      if (el) el.value = value;
+    });
 
-  if (!box || !indicator || !label || !text) return;
+    applyReportFilters();
+  }
 
-  const states = {
-    loading: {
-      boxClass: "border-amber-400/20",
-      dot: "bg-amber-400",
-      labelText: "Data Loading"
-    },
-    loaded: {
-      boxClass: "border-emerald-400/20",
-      dot: "bg-emerald-400",
-      labelText: "Data Loaded"
-    },
-    error: {
-      boxClass: "border-rose-400/20",
-      dot: "bg-rose-400",
-      labelText: "Data Error"
-    }
-  };
+  function updateReportDatePill() {
+    const pill = document.getElementById("header-date-pill");
+    if (!pill) return;
 
-  const config = states[state] || states.loading;
+    const value = String(document.getElementById("filter-date-range")?.value || "30");
+    const labelMap = {
+      "30": "Last 30 Days",
+      "90": "Last 90 Days",
+      "quarter": "This Quarter",
+      "ytd": "Year to Date"
+    };
 
-  box.className = `bg-black/20 rounded-lg p-3 border flex items-start gap-3 ${config.boxClass}`;
-  indicator.innerHTML = `
-    <span class="animate-ping absolute inline-flex h-full w-full rounded-full ${config.dot} opacity-75"></span>
-    <span class="relative inline-flex rounded-full h-2.5 w-2.5 ${config.dot}"></span>
-  `;
-  label.textContent = config.labelText;
-  text.textContent = message || "";
-}
+    pill.textContent = labelMap[value] || "Last 30 Days";
+  }
 
-  function exportCurrentReportCsv() {
-    const rows = Array.isArray(currentPerformanceTrend) ? currentPerformanceTrend : [];
+  function updateHeaderDatePillForView(viewId) {
+    const pill = document.getElementById("header-date-pill");
+    if (!pill) return;
 
-    if (!rows.length) {
-      showToast("No Data", "There is no report data to export.", "ph-warning", "text-amber-400");
+    if (viewId === "home") {
+      pill.textContent = "Last 30 Days";
       return;
     }
 
-    const headers = ["date", "sessions", "users", "conversions", "conversion_rate"];
-    const csvRows = [
-      headers.join(","),
-      ...rows.map((row) => {
-        return [
-          csvEscape(row.date),
-          csvEscape(row.sessions),
-          csvEscape(row.users),
-          csvEscape(row.conversions),
-          csvEscape(row.conversionRate)
-        ].join(",");
-      })
-    ];
-
-    const blob = new Blob([csvRows.join("\n")], { type: "text/csv;charset=utf-8;" });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    const dateLabel = new Date().toISOString().slice(0, 10);
-
-    link.href = url;
-    link.download = `analytics-report-${dateLabel}.csv`;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    URL.revokeObjectURL(url);
-
-    showToast("Export Ready", "Report CSV downloaded.", "ph-download-simple");
-  }
-
-  function csvEscape(value) {
-    const str = String(value ?? "");
-    if (/[",\n]/.test(str)) {
-      return `"${str.replace(/"/g, '""')}"`;
+    if (viewId === "reports") {
+      updateReportDatePill();
+      return;
     }
-    return str;
+
+    pill.textContent = "Last 30 Days";
   }
 
-  function getPerformanceDaysFromUi() {
-    const value = String(document.getElementById("filter-date-range")?.value || "30").toLowerCase();
-    if (value === "30") return 30;
-    if (value === "90") return 90;
-    if (value === "quarter") return 90;
-    if (value === "ytd") return 365;
-    const numeric = Number(value);
-    return Number.isFinite(numeric) && numeric > 0 ? numeric : 30;
-  }
-
-async function applyReportFilters() {
-  const updated = document.getElementById("reports-last-updated");
-  if (updated) updated.textContent = "Updating...";
-
-  updateHeaderDatePillForView("reports");
-
-  try {
-    await Promise.all([
-      loadPerformanceFromSheet(),
-      loadPerformanceTrendFromSheet(),
-      loadPerformanceComparisonFromSheet()
-    ]);
-
-    if (updated) updated.textContent = "Updated: Just now";
-  } catch (error) {
-    console.error("applyReportFilters failed:", error);
-    if (updated) updated.textContent = "Update failed";
-    showToast(
-      "Load Error",
-      error?.message || "Could not refresh report data.",
-      "ph-warning-circle",
-      "text-amber-400"
-    );
-  }
-}
-
-  const value = String(document.getElementById("filter-date-range")?.value || "30");
-  const labelMap = {
-    "30": "Last 30 Days",
-    "90": "Last 90 Days",
-    "quarter": "This Quarter",
-    "ytd": "Year to Date"
-  };
-
-  pill.textContent = labelMap[value] || "Last 30 Days";
-}
-
-  const value = String(document.getElementById("filter-date-range")?.value || "30");
-  const labelMap = {
-    "30": "Last 30 Days",
-    "90": "Last 90 Days",
-    "quarter": "This Quarter",
-    "ytd": "Year to Date"
-  };
-
-  pill.textContent = labelMap[value] || "Last 30 Days";
-}
-
-function resetReportFilters() {
-  const defaults = {
-    "filter-date-range": "30",
-    "filter-campaign": "all",
-    "filter-source": "all",
-    "filter-landing": "all"
-  };
-
-  Object.entries(defaults).forEach(([id, value]) => {
-    const el = document.getElementById(id);
-    if (el) el.value = value;
-  });
-
-  applyReportFilters();
-}
-  
   async function syncPerformanceData(days = 30, options = {}) {
     const { silent = false } = options;
 
@@ -2435,66 +2298,34 @@ function resetReportFilters() {
     }
   }
 
-function updateReportDatePill() {
-  const pill = document.getElementById("header-date-pill");
-  if (!pill) return;
+  async function refreshReportsData() {
+    const updated = document.getElementById("reports-last-updated");
+    if (updated) updated.textContent = "Updating...";
 
-  const value = String(document.getElementById("filter-date-range")?.value || "30");
-  const labelMap = {
-    "30": "Last 30 Days",
-    "90": "Last 90 Days",
-    "quarter": "This Quarter",
-    "ytd": "Year to Date"
-  };
+    try {
+      await syncPerformanceData(365, { silent: true });
 
-  pill.textContent = labelMap[value] || "Last 30 Days";
-}
+      await Promise.all([
+        loadPerformanceFromSheet(),
+        loadPerformanceTrendFromSheet(),
+        loadPerformanceComparisonFromSheet()
+      ]);
 
-function updateHeaderDatePillForView(viewId) {
-  const pill = document.getElementById("header-date-pill");
-  if (!pill) return;
+      updateHeaderDatePillForView("reports");
 
-  if (viewId === "home") {
-    pill.textContent = "Last 30 Days";
-    return;
+      if (updated) updated.textContent = "Updated: Just now";
+      showToast("Sync Complete", "Google Analytics data refreshed.", "ph-check-circle");
+    } catch (error) {
+      console.error("refreshReportsData failed:", error);
+      if (updated) updated.textContent = "Update failed";
+      showToast(
+        "Sync Error",
+        error?.message || "Could not sync Google Analytics data.",
+        "ph-warning-circle",
+        "text-amber-400"
+      );
+    }
   }
-
-  if (viewId === "reports") {
-    updateReportDatePill();
-    return;
-  }
-
-  pill.textContent = "Last 30 Days";
-}
-
-async function refreshReportsData() {
-  const updated = document.getElementById("reports-last-updated");
-  if (updated) updated.textContent = "Updating...";
-
-  try {
-    await syncPerformanceData(365, { silent: true });
-
-    await Promise.all([
-      loadPerformanceFromSheet(),
-      loadPerformanceTrendFromSheet(),
-      loadPerformanceComparisonFromSheet()
-    ]);
-
-    updateHeaderDatePillForView("reports");
-
-    if (updated) updated.textContent = "Updated: Just now";
-    showToast("Sync Complete", "Google Analytics data refreshed.", "ph-check-circle");
-  } catch (error) {
-    console.error("refreshReportsData failed:", error);
-    if (updated) updated.textContent = "Update failed";
-    showToast(
-      "Sync Error",
-      error?.message || "Could not sync Google Analytics data.",
-      "ph-warning-circle",
-      "text-amber-400"
-    );
-  }
-}
 
   function bindUXFilters() {
     ["ux-filter-date", "ux-filter-page", "ux-filter-device"].forEach((id) => {
@@ -2615,16 +2446,6 @@ async function refreshReportsData() {
     }
   }
 
-  function renderEmptyUxState() {
-    renderClaritySummary({
-      rageClicks: 0,
-      deadClicks: 0,
-      avgScrollDepth: 0,
-      avgEngagementTimeSeconds: 0,
-      rows: []
-    });
-  }
-
   function bindAuditFilters() {
     document.querySelectorAll(".audit-filter-btn").forEach((btn) => {
       btn.addEventListener("click", async () => {
@@ -2692,7 +2513,6 @@ async function refreshReportsData() {
 
     const target = resourceCard.querySelector(".space-y-3");
     if (!target) return;
-
     if (!items.length) return;
 
     target.innerHTML = items.slice(0, 6).map((item) => {
@@ -2776,25 +2596,25 @@ async function refreshReportsData() {
     });
   }
 
-function populateReportFilterOptionsFromRegistry() {
-  populateSelectFromValues(
-    "filter-campaign",
-    currentRegistryItems.map((item) => item.campaignName).filter(Boolean),
-    "All Campaigns"
-  );
+  function populateReportFilterOptionsFromRegistry() {
+    populateSelectFromValues(
+      "filter-campaign",
+      currentRegistryItems.map((item) => item.campaignName).filter(Boolean),
+      "All Campaigns"
+    );
 
-  populateSelectFromValues(
-    "filter-source",
-    currentRegistryItems.map((item) => item.source).filter(Boolean),
-    "All Sources"
-  );
+    populateSelectFromValues(
+      "filter-source",
+      currentRegistryItems.map((item) => item.source).filter(Boolean),
+      "All Sources"
+    );
 
-  populateSelectFromValues(
-    "filter-landing",
-    currentRegistryItems.map((item) => item.landingPage).filter(Boolean),
-    "All Pages"
-  );
-}
+    populateSelectFromValues(
+      "filter-landing",
+      currentRegistryItems.map((item) => item.landingPage).filter(Boolean),
+      "All Pages"
+    );
+  }
 
   function populateUxPageOptionsFromClarityRows(rows) {
     const values = (rows || []).map((row) => row.page).filter(Boolean);
@@ -2806,7 +2626,9 @@ function populateReportFilterOptionsFromRegistry() {
     if (!select) return;
 
     const currentValue = select.value || "all";
-    const uniqueValues = Array.from(new Set(values.map((v) => String(v).trim()).filter(Boolean))).sort((a, b) => a.localeCompare(b));
+    const uniqueValues = Array.from(
+      new Set(values.map((v) => String(v).trim()).filter(Boolean))
+    ).sort((a, b) => a.localeCompare(b));
 
     select.innerHTML = "";
     const defaultOpt = document.createElement("option");
@@ -2824,30 +2646,30 @@ function populateReportFilterOptionsFromRegistry() {
     select.value = uniqueValues.includes(currentValue) || currentValue === "all" ? currentValue : "all";
   }
 
-async function apiGet(action, params = {}) {
-  const url = new URL(APP_CONFIG.APPS_SCRIPT_URL);
-  url.searchParams.set("action", action);
+  async function apiGet(action, params = {}) {
+    const url = new URL(APP_CONFIG.APPS_SCRIPT_URL);
+    url.searchParams.set("action", action);
 
-  Object.entries(params).forEach(([key, value]) => {
-    if (value !== undefined && value !== null && value !== "") {
-      url.searchParams.set(key, value);
+    Object.entries(params).forEach(([key, value]) => {
+      if (value !== undefined && value !== null && value !== "") {
+        url.searchParams.set(key, value);
+      }
+    });
+
+    const response = await fetch(url.toString(), { method: "GET" });
+    const text = await response.text();
+
+    if (!response.ok) {
+      throw new Error(`GET ${action} failed`);
     }
-  });
 
-  const response = await fetch(url.toString(), { method: "GET" });
-  const text = await response.text();
-
-  if (!response.ok) {
-    throw new Error(`GET ${action} failed`);
+    try {
+      return JSON.parse(text);
+    } catch (error) {
+      console.error("Non-JSON GET response for", action, text);
+      throw new Error(`GET ${action} returned invalid JSON`);
+    }
   }
-
-  try {
-    return JSON.parse(text);
-  } catch (error) {
-    console.error("Non-JSON GET response for", action, text);
-    throw new Error(`GET ${action} returned invalid JSON`);
-  }
-}
 
   async function apiPost(action, payload = {}) {
     const response = await fetch(APP_CONFIG.APPS_SCRIPT_URL, {
@@ -2948,18 +2770,6 @@ async function apiGet(action, params = {}) {
     return "badge-gold";
   }
 
-function renderPerformanceComparison(comparison) {
-  const delta = comparison?.delta || {};
-
-  const reportCards = document.querySelectorAll("#view-reports .grid.grid-cols-2.md\\:grid-cols-3.xl\\:grid-cols-6.gap-5 .glass-card");
-
-  updateDeltaText(reportCards[0], delta.sessionsPct, "vs previous period");
-  updateDeltaText(reportCards[1], delta.usersPct, "vs previous period");
-  updateDeltaText(reportCards[2], delta.conversionsPct, "vs previous period");
-  updateDeltaText(reportCards[3], delta.conversionRatePct, "vs previous period");
-  updateDurationDeltaText(reportCards[4], comparison);
-}
-
   function updateDeltaText(card, pct, suffix) {
     if (!card) return;
     const deltaEl = card.querySelector(".text-xs");
@@ -2976,6 +2786,19 @@ function renderPerformanceComparison(comparison) {
     if (suffix) {
       deltaEl.innerHTML += ` <span class="text-gray-600">${escapeHtml(suffix)}</span>`;
     }
+  }
+
+  function updateStandaloneDeltaText(el, pct, suffix) {
+    if (!el) return;
+
+    const value = Number(pct || 0);
+    const isUp = value >= 0;
+    const icon = isUp ? "ph-trend-up" : "ph-trend-down";
+    const color = isUp ? "text-emerald-400" : "text-rose-400";
+    const sign = isUp ? "+" : "";
+
+    el.className = `text-xs ${color} flex items-center gap-1 font-medium`;
+    el.innerHTML = `<i class="ph-bold ${icon}"></i> ${sign}${(value * 100).toFixed(1)}% <span class="text-gray-600">${escapeHtml(suffix)}</span>`;
   }
 
   function updateDurationDeltaText(card, comparison) {
@@ -3004,6 +2827,88 @@ function renderPerformanceComparison(comparison) {
       hs_email: "badge-cyan",
       facebook: "badge-rose"
     }[String(source || "").toLowerCase()] || "badge-gold";
+  }
+
+  function setDataStatus(state, message) {
+    const box = document.getElementById("data-status-box");
+    const indicator = document.getElementById("data-status-indicator");
+    const label = document.getElementById("data-status-label");
+    const text = document.getElementById("data-status-text");
+
+    if (!box || !indicator || !label || !text) return;
+
+    const states = {
+      loading: {
+        boxClass: "border-amber-400/20",
+        dot: "bg-amber-400",
+        labelText: "Data Loading"
+      },
+      loaded: {
+        boxClass: "border-emerald-400/20",
+        dot: "bg-emerald-400",
+        labelText: "Data Loaded"
+      },
+      error: {
+        boxClass: "border-rose-400/20",
+        dot: "bg-rose-400",
+        labelText: "Data Error"
+      }
+    };
+
+    const config = states[state] || states.loading;
+
+    box.className = `bg-black/20 rounded-lg p-3 border flex items-start gap-3 ${config.boxClass}`;
+    indicator.innerHTML = `
+      <span class="animate-ping absolute inline-flex h-full w-full rounded-full ${config.dot} opacity-75"></span>
+      <span class="relative inline-flex rounded-full h-2.5 w-2.5 ${config.dot}"></span>
+    `;
+    label.textContent = config.labelText;
+    text.textContent = message || "";
+  }
+
+  function exportCurrentReportCsv() {
+    const rows = Array.isArray(currentPerformanceTrend) ? currentPerformanceTrend : [];
+
+    if (!rows.length) {
+      showToast("No Data", "There is no report data to export.", "ph-warning", "text-amber-400");
+      return;
+    }
+
+    const headers = ["date", "sessions", "users", "conversions", "conversion_rate"];
+    const csvRows = [
+      headers.join(","),
+      ...rows.map((row) => {
+        return [
+          csvEscape(row.date),
+          csvEscape(row.sessions),
+          csvEscape(row.users),
+          csvEscape(row.conversions),
+          csvEscape(row.conversionRate)
+        ].join(",");
+      })
+    ];
+
+    const blob = new Blob([csvRows.join("\n")], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    const dateLabel = new Date().toISOString().slice(0, 10);
+
+    link.href = url;
+    link.download = `analytics-report-${dateLabel}.csv`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+
+    showToast("Export Ready", "Report CSV downloaded.", "ph-download-simple");
+  }
+
+  function csvEscape(value) {
+    const str = String(value ?? "");
+    if (/[",\n]/.test(str)) {
+      return `"${str.replace(/"/g, '""')}"`;
+    }
+    return str;
   }
 
   function showToast(title, message, iconClass, colorClass = "text-emerald-400") {

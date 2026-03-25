@@ -1275,75 +1275,71 @@
   let currentHomeComparison = null;
   let currentRecentRegistryLinks = [];
 
-document.addEventListener("DOMContentLoaded", async () => {
-  try { applyConfig(); } catch (error) { console.error("applyConfig failed:", error); }
-  try { initStars(); } catch (error) { console.error("initStars failed:", error); }
-  try { bindNavigation(); } catch (error) { console.error("bindNavigation failed:", error); }
-  try { bindExternalButtons(); } catch (error) { console.error("bindExternalButtons failed:", error); }
-  try { bindUTMEvents(); } catch (error) { console.error("bindUTMEvents failed:", error); }
-  try { bindUtmRegistryFilters(); } catch (error) { console.error("bindUtmRegistryFilters failed:", error); }
-  try { bindReportFilters(); } catch (error) { console.error("bindReportFilters failed:", error); }
-  try { bindUXFilters(); } catch (error) { console.error("bindUXFilters failed:", error); }
-  try { bindAuditFilters(); } catch (error) { console.error("bindAuditFilters failed:", error); }
-  try { bindWorkspaceDropdown(); } catch (error) { console.error("bindWorkspaceDropdown failed:", error); }
-
-  updateLocalSyncTime();
-  switchView(getInitialView(), false);
-
-  renderRegistry([]);
-  renderHomeRecentUtmLinks([]);
-  renderLoadingPerformanceState();
-  renderEmptyUxState();
-  renderHomeLoadingState();
-  setDataStatus("loading", "Loading 30 day overview data...");
-
-  try {
-    await loadSettingsFromSheet();
-    applyWorkspaceConfig();
-
-    await Promise.all([
-      loadRegistryFromSheet(),
-      loadAuditFromSheet(),
-      loadResourcesFromSheet()
-    ]);
-
-    populateReportFilterOptionsFromRegistry();
-    populateUxPageOptionsFromClarityRows([]);
-
-    const reportRange = document.getElementById("filter-date-range");
-    if (reportRange) reportRange.value = "30";
-    updateHeaderDatePillForView("home");
-
-    await Promise.all([
-      loadHomeSnapshot(),
-      loadRecentRegistryLinks(),
-      loadPerformanceFromSheet(),
-      loadPerformanceTrendFromSheet(),
-      loadPerformanceComparisonFromSheet()
-    ]);
-
-    setDataStatus("loaded", "30 day overview data loaded successfully.");
-
-    if (APP_CONFIG.AUTO_SYNC_CLARITY_ON_LOAD) {
-      try {
-        await syncClarityData({ silent: true });
-      } catch (error) {
-        console.error("Initial Clarity sync failed:", error);
-      }
-    } else {
-      await loadClarityFromSheet();
-    }
-  } catch (error) {
-    setDataStatus("error", "Could not load overview data.");
-    console.error(error);
-    showToast(
-      "Connection Error",
-      error?.message || "Could not load portal data.",
-      "ph-warning-circle",
-      "text-amber-400"
-    );
+  function normalizeText(value) {
+    return String(value || "")
+      .trim()
+      .toLowerCase()
+      .replace(/\s+/g, " ")
+      .replace(/[_-]+/g, "-");
   }
-});
+
+  function normalizeAuditStatus(value) {
+    const v = String(value || "")
+      .trim()
+      .toLowerCase()
+      .replace(/[_\s]+/g, "-");
+
+    if (!v) return "new";
+    if (v === "inprogress") return "in-progress";
+    if (v === "in-progress") return "in-progress";
+    if (v === "new") return "new";
+    if (v === "resolved") return "resolved";
+    if (v === "complete") return "resolved";
+    if (v === "completed") return "resolved";
+    if (v === "done") return "resolved";
+    if (v === "closed") return "resolved";
+    return v;
+  }
+
+  function formatAuditStatusLabel(value) {
+    const normalized = normalizeAuditStatus(value);
+    if (normalized === "in-progress") return "In Progress";
+    if (normalized === "resolved") return "Resolved";
+    if (normalized === "new") return "New";
+
+    return normalized
+      .split("-")
+      .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+      .join(" ");
+  }
+
+  function normalizeCampaignValue(value) {
+    return String(value || "")
+      .trim()
+      .toLowerCase()
+      .replace(/\s+/g, "_");
+  }
+
+  function normalizeSourceValue(value) {
+    return String(value || "")
+      .trim()
+      .toLowerCase();
+  }
+
+  function normalizeLandingValue(value) {
+    const str = String(value || "").trim();
+    if (!str || str.toLowerCase() === "all") return "all";
+
+    try {
+      if (/^https?:\/\//i.test(str)) {
+        const url = new URL(str);
+        return (url.pathname || "/").split("?")[0].toLowerCase();
+      }
+    } catch (error) {}
+
+    const path = str.startsWith("/") ? str : `/${str}`;
+    return path.split("?")[0].toLowerCase();
+  }
 
   async function loadRecentRegistryLinks() {
     const data = await apiGet("getRecentRegistryLinks", {
@@ -1379,13 +1375,22 @@ document.addEventListener("DOMContentLoaded", async () => {
     applyUtmRegistryFilters();
   }
 
-  async function loadAuditFromSheet(status = "all") {
-    const data = await apiGet("getAuditNotes", { status });
-    if (!data.ok) throw new Error(data.error || "Failed to load audit notes");
+async function loadAuditFromSheet(status = "all") {
+  const normalizedStatus = normalizeAuditStatus(status) === "all" ? "all" : normalizeAuditStatus(status);
 
-    currentAuditItems = Array.isArray(data.notes) ? data.notes : [];
-    renderAuditTable(currentAuditItems);
-  }
+  const data = await apiGet("getAuditNotes", {
+    status: normalizedStatus === "all" ? "all" : normalizedStatus
+  });
+
+  if (!data.ok) throw new Error(data.error || "Failed to load audit notes");
+
+  currentAuditItems = (Array.isArray(data.notes) ? data.notes : []).map((item) => ({
+    ...item,
+    status: normalizeAuditStatus(item.status)
+  }));
+
+  renderAuditTable(currentAuditItems, normalizedStatus);
+}
 
   async function loadResourcesFromSheet() {
     const data = await apiGet("getResourceLinks");
@@ -1465,17 +1470,21 @@ document.addEventListener("DOMContentLoaded", async () => {
     renderHomeOverviewSnapshot(currentHomeSummary, currentHomeComparison);
   }
 
-  function getCurrentReportFilterParams() {
-    const rangeValue = document.getElementById("filter-date-range")?.value || "30";
+function getCurrentReportFilterParams() {
+  const rangeValue = document.getElementById("filter-date-range")?.value || "30";
 
-    return {
-      source: document.getElementById("filter-source")?.value || "all",
-      campaign: document.getElementById("filter-campaign")?.value || "all",
-      landing_page: document.getElementById("filter-landing")?.value || "all",
-      range_type: rangeValue,
-      rangeType: rangeValue
-    };
-  }
+  const sourceValue = document.getElementById("filter-source")?.value || "all";
+  const campaignValue = document.getElementById("filter-campaign")?.value || "all";
+  const landingValue = document.getElementById("filter-landing")?.value || "all";
+
+  return {
+    source: sourceValue === "all" ? "all" : normalizeSourceValue(sourceValue),
+    campaign: campaignValue === "all" ? "all" : String(campaignValue).trim(),
+    landing_page: landingValue === "all" ? "all" : normalizeLandingValue(landingValue),
+    range_type: rangeValue,
+    rangeType: rangeValue
+  };
+}
 
   function applyConfig() {
     const clientName = document.getElementById("client-name");
@@ -1772,46 +1781,56 @@ document.addEventListener("DOMContentLoaded", async () => {
     document.getElementById("utm-reset-filters")?.addEventListener("click", resetUtmRegistryFilters);
   }
 
-  function applyUtmRegistryFilters() {
-    const campaignFilter = document.getElementById("utm-filter-campaign")?.value || "all";
-    const sourceFilter = document.getElementById("utm-filter-source")?.value || "all";
-    const statusFilter = document.getElementById("utm-filter-status")?.value || "all";
-    const searchValue = (document.getElementById("utm-search")?.value || "").trim().toLowerCase();
+function applyUtmRegistryFilters() {
+  const campaignFilter = document.getElementById("utm-filter-campaign")?.value || "all";
+  const sourceFilter = document.getElementById("utm-filter-source")?.value || "all";
+  const statusFilter = document.getElementById("utm-filter-status")?.value || "all";
+  const searchValue = normalizeText(document.getElementById("utm-search")?.value || "");
 
-    const filtered = currentRegistryItems.filter((item) => {
-      const campaignName = String(item.campaignName || "").trim();
-      const normalizedCampaignName = campaignName.replace(/\s+/g, "_");
-      const source = String(item.source || "").trim().toLowerCase();
+  const normalizedCampaignFilter = campaignFilter === "all" ? "all" : normalizeCampaignValue(campaignFilter);
+  const normalizedSourceFilter = sourceFilter === "all" ? "all" : normalizeSourceValue(sourceFilter);
+  const normalizedStatusFilter = normalizeText(statusFilter);
 
-      const hasCleanNaming = /^[A-Za-z0-9]+(?:_[A-Za-z0-9]+)+$/.test(normalizedCampaignName);
-      const reviewStatus = hasCleanNaming ? "clean" : "needs review";
+  const filtered = currentRegistryItems.filter((item) => {
+    const campaignName = String(item.campaignName || "").trim();
+    const normalizedCampaignName = normalizeCampaignValue(campaignName);
+    const source = normalizeSourceValue(item.source || "");
 
-      const matchesCampaign = campaignFilter === "all" || campaignName === campaignFilter;
-      const matchesSource = sourceFilter === "all" || source === sourceFilter;
-      const matchesStatus =
-        statusFilter === "all" ||
-        (statusFilter === "flagged" && reviewStatus === "needs review") ||
-        (statusFilter === "clean" && reviewStatus === "clean");
+    const namingFlag = normalizeText(item.namingFlag || item.naming_flag || "");
+    const hasCleanNaming = !namingFlag || namingFlag === "ok";
+    const registryStatus = hasCleanNaming ? "clean" : "flagged";
 
-      const haystack = [
-        item.campaignName,
-        item.source,
-        item.channel,
-        item.term,
-        item.content,
-        item.landingPage,
-        item.destinationUrl,
-        item.fullUtmLink,
-        item.notes
-      ].join(" ").toLowerCase();
+    const matchesCampaign =
+      normalizedCampaignFilter === "all" ||
+      normalizedCampaignName === normalizedCampaignFilter;
 
-      const matchesSearch = !searchValue || haystack.includes(searchValue);
+    const matchesSource =
+      normalizedSourceFilter === "all" ||
+      source === normalizedSourceFilter;
 
-      return matchesCampaign && matchesSource && matchesStatus && matchesSearch;
-    });
+    const matchesStatus =
+      normalizedStatusFilter === "all" ||
+      registryStatus === normalizedStatusFilter;
 
-    renderRegistry(filtered);
-  }
+    const haystack = normalizeText([
+      item.campaignName,
+      item.source,
+      item.channel,
+      item.term,
+      item.content,
+      item.landingPage,
+      item.destinationUrl,
+      item.fullUtmLink,
+      item.notes
+    ].join(" "));
+
+    const matchesSearch = !searchValue || haystack.includes(searchValue);
+
+    return matchesCampaign && matchesSource && matchesStatus && matchesSearch;
+  });
+
+  renderRegistry(filtered);
+}
 
   function getRegistrySessionsValue(item) {
     const raw =
@@ -2432,53 +2451,68 @@ async function refreshReportsData() {
     });
   }
 
-  async function filterAuditByStatus(status) {
-    document.querySelectorAll(".audit-filter-btn").forEach((btn) => {
-      const isActive = btn.getAttribute("data-audit-status") === status;
-      btn.className = isActive
-        ? "audit-filter-btn px-3 py-1 rounded text-xs bg-purple-500/20 text-purple-300 border border-purple-500/30"
-        : "audit-filter-btn px-3 py-1 rounded text-xs bg-black/30 text-gray-400 border border-white/10 hover:bg-white/5";
-    });
+async function filterAuditByStatus(status) {
+  const normalizedStatus = status === "all" ? "all" : normalizeAuditStatus(status);
 
-    try {
-      await loadAuditFromSheet(status);
-    } catch (error) {
-      console.error(error);
-      showToast("Load Error", "Could not refresh audit notes.", "ph-warning", "text-amber-400");
-    }
+  document.querySelectorAll(".audit-filter-btn").forEach((btn) => {
+    const btnStatus = btn.getAttribute("data-audit-status") || "all";
+    const normalizedBtnStatus = btnStatus === "all" ? "all" : normalizeAuditStatus(btnStatus);
+
+    const isActive = normalizedBtnStatus === normalizedStatus;
+
+    btn.className = isActive
+      ? "audit-filter-btn px-3 py-1 rounded text-xs bg-purple-500/20 text-purple-300 border border-purple-500/30"
+      : "audit-filter-btn px-3 py-1 rounded text-xs bg-black/30 text-gray-400 border border-white/10 hover:bg-white/5";
+  });
+
+  try {
+    await loadAuditFromSheet(normalizedStatus);
+  } catch (error) {
+    console.error(error);
+    showToast("Load Error", "Could not refresh audit notes.", "ph-warning", "text-amber-400");
   }
+}
 
-  function renderAuditTable(items) {
-    const tbody = document.querySelector("#audit-recommendations-table tbody");
-    if (!tbody) return;
+function renderAuditTable(items, activeStatus = "all") {
+  const tbody = document.querySelector("#audit-recommendations-table tbody");
+  if (!tbody) return;
 
-    if (!items.length) {
-      tbody.innerHTML = `
-        <tr>
-          <td colspan="6" class="text-sm text-gray-400">No audit notes found.</td>
-        </tr>
-      `;
-      showAuditDetail(null);
-      return;
-    }
+  const normalizedItems = (items || []).map((item) => ({
+    ...item,
+    status: normalizeAuditStatus(item.status)
+  }));
 
-    tbody.innerHTML = items.map((item) => `
-      <tr data-status="${escapeHtml(item.status || "")}" data-audit-id="${escapeHtml(item.noteId || "")}">
-        <td><div class="w-2 h-2 rounded-full ${priorityDotClass(item.priority)}"></div></td>
-        <td class="font-medium text-white text-sm">${escapeHtml(item.title || "")}</td>
-        <td><span class="badge ${categoryBadgeClass(item.category)}">${escapeHtml(item.category || "")}</span></td>
-        <td><span class="badge ${priorityBadgeClass(item.priority)}">${escapeHtml(item.priority || "")}</span></td>
-        <td><span class="text-xs text-gray-300">${escapeHtml(item.status || "")}</span></td>
-        <td class="text-xs text-gray-400">${escapeHtml(item.linkedLandingPage || item.linkedCampaignId || "")}</td>
+  const filteredItems = activeStatus === "all"
+    ? normalizedItems
+    : normalizedItems.filter((item) => item.status === activeStatus);
+
+  if (!filteredItems.length) {
+    tbody.innerHTML = `
+      <tr>
+        <td colspan="6" class="text-sm text-gray-400">No audit notes found.</td>
       </tr>
-    `).join("");
-
-    tbody.querySelectorAll("tr[data-audit-id]").forEach((row) => {
-      row.addEventListener("click", () => showAuditDetail(row.getAttribute("data-audit-id")));
-    });
-
-    showAuditDetail(items[0].noteId);
+    `;
+    showAuditDetail(null);
+    return;
   }
+
+  tbody.innerHTML = filteredItems.map((item) => `
+    <tr data-status="${escapeHtml(item.status || "")}" data-audit-id="${escapeHtml(item.noteId || "")}">
+      <td><div class="w-2 h-2 rounded-full ${priorityDotClass(item.priority)}"></div></td>
+      <td class="font-medium text-white text-sm">${escapeHtml(item.title || "")}</td>
+      <td><span class="badge ${categoryBadgeClass(item.category)}">${escapeHtml(item.category || "")}</span></td>
+      <td><span class="badge ${priorityBadgeClass(item.priority)}">${escapeHtml(item.priority || "")}</span></td>
+      <td><span class="text-xs text-gray-300">${escapeHtml(formatAuditStatusLabel(item.status))}</span></td>
+      <td class="text-xs text-gray-400">${escapeHtml(item.linkedLandingPage || item.linkedCampaignId || "")}</td>
+    </tr>
+  `).join("");
+
+  tbody.querySelectorAll("tr[data-audit-id]").forEach((row) => {
+    row.addEventListener("click", () => showAuditDetail(row.getAttribute("data-audit-id")));
+  });
+
+  showAuditDetail(filteredItems[0].noteId);
+}
 
   function renderResourceLinks(items) {
     const resourceCard = Array.from(document.querySelectorAll("#view-audit .glass-card")).find((card) => {
@@ -2525,46 +2559,46 @@ async function refreshReportsData() {
     }).join("");
   }
 
-  function showAuditDetail(id) {
-    const panel = document.getElementById("audit-detail-panel");
-    if (!panel) return;
+function showAuditDetail(id) {
+  const panel = document.getElementById("audit-detail-panel");
+  if (!panel) return;
 
-    if (!id) {
-      panel.innerHTML = `
-        <div class="p-4 bg-black/20 rounded border border-white/5">
-          <p class="text-sm text-gray-400">Select a recommendation to view details.</p>
-        </div>
-      `;
-      return;
-    }
-
-    const liveItem = currentAuditItems.find((note) => String(note.noteId) === String(id));
-    if (liveItem) {
-      panel.innerHTML = `
-        <div class="p-4 bg-black/20 rounded border border-white/5">
-          <h4 class="text-xs font-bold text-cyan-300 mb-2 uppercase tracking-wider">${escapeHtml(liveItem.title || "")}</h4>
-          <p class="text-xs text-gray-400 mb-3">${escapeHtml(liveItem.finding || "")}</p>
-          <div class="text-xs text-gray-500 bg-black/40 p-2 rounded border border-white/10">${escapeHtml(liveItem.recommendation || "")}</div>
-        </div>
-      `;
-      return;
-    }
-
-    const detail = AUDIT_FALLBACK.recommendations[id];
-    if (!detail) return;
-
+  if (!id) {
     panel.innerHTML = `
       <div class="p-4 bg-black/20 rounded border border-white/5">
-        <h4 class="text-xs font-bold text-cyan-300 mb-2 uppercase tracking-wider">${escapeHtml(detail.title)}</h4>
-        <p class="text-xs text-gray-400 mb-3">${escapeHtml(detail.finding)}</p>
-        <div class="text-xs text-gray-500 font-mono bg-black/40 p-2 rounded border border-white/10">${escapeHtml(detail.steps)}</div>
-      </div>
-      <div class="p-4 bg-black/20 rounded border border-white/5">
-        <h4 class="text-xs font-bold text-cyan-300 mb-2 uppercase tracking-wider">Impact Assessment</h4>
-        <p class="text-xs text-gray-400">${escapeHtml(detail.impact)}</p>
+        <p class="text-sm text-gray-400">Select a recommendation to view details.</p>
       </div>
     `;
+    return;
   }
+
+  const liveItem = currentAuditItems.find((note) => String(note.noteId || "") === String(id || ""));
+  if (liveItem) {
+    panel.innerHTML = `
+      <div class="p-4 bg-black/20 rounded border border-white/5">
+        <h4 class="text-xs font-bold text-cyan-300 mb-2 uppercase tracking-wider">${escapeHtml(liveItem.title || "")}</h4>
+        <p class="text-xs text-gray-400 mb-3">${escapeHtml(liveItem.finding || "")}</p>
+        <div class="text-xs text-gray-500 bg-black/40 p-2 rounded border border-white/10">${escapeHtml(liveItem.recommendation || "")}</div>
+      </div>
+    `;
+    return;
+  }
+
+  const detail = AUDIT_FALLBACK.recommendations[id];
+  if (!detail) return;
+
+  panel.innerHTML = `
+    <div class="p-4 bg-black/20 rounded border border-white/5">
+      <h4 class="text-xs font-bold text-cyan-300 mb-2 uppercase tracking-wider">${escapeHtml(detail.title)}</h4>
+      <p class="text-xs text-gray-400 mb-3">${escapeHtml(detail.finding)}</p>
+      <div class="text-xs text-gray-500 font-mono bg-black/40 p-2 rounded border border-white/10">${escapeHtml(detail.steps)}</div>
+    </div>
+    <div class="p-4 bg-black/20 rounded border border-white/5">
+      <h4 class="text-xs font-bold text-cyan-300 mb-2 uppercase tracking-wider">Impact Assessment</h4>
+      <p class="text-xs text-gray-400">${escapeHtml(detail.impact)}</p>
+    </div>
+  `;
+}
 
   function populateRegistry(query = "") {
     loadRegistryFromSheet(String(query || "").trim()).catch((error) => {
@@ -2598,31 +2632,67 @@ async function refreshReportsData() {
     populateSelectFromValues("ux-filter-page", values, "All Pages");
   }
 
-  function populateSelectFromValues(selectId, values, allLabel) {
-    const select = document.getElementById(selectId);
-    if (!select) return;
+function populateSelectFromValues(selectId, values, allLabel) {
+  const select = document.getElementById(selectId);
+  if (!select) return;
 
-    const currentValue = select.value || "all";
-    const uniqueValues = Array.from(
-      new Set(values.map((v) => String(v).trim()).filter(Boolean))
-    ).sort((a, b) => a.localeCompare(b));
+  const currentValue = select.value || "all";
 
-    select.innerHTML = "";
-    const defaultOpt = document.createElement("option");
-    defaultOpt.value = "all";
-    defaultOpt.textContent = allLabel;
-    select.appendChild(defaultOpt);
+  const uniqueMap = new Map();
 
-    uniqueValues.forEach((value) => {
-      const opt = document.createElement("option");
-      opt.value = value;
-      opt.textContent = value;
-      select.appendChild(opt);
+  values
+    .map((v) => String(v || "").trim())
+    .filter(Boolean)
+    .forEach((value) => {
+      const normalized =
+        selectId.includes("landing")
+          ? normalizeLandingValue(value)
+          : selectId.includes("source")
+          ? normalizeSourceValue(value)
+          : selectId.includes("campaign")
+          ? normalizeCampaignValue(value)
+          : normalizeText(value);
+
+      if (!uniqueMap.has(normalized)) {
+        uniqueMap.set(normalized, value);
+      }
     });
 
-    select.value = uniqueValues.includes(currentValue) || currentValue === "all" ? currentValue : "all";
-  }
+  const entries = Array.from(uniqueMap.entries()).sort((a, b) => a[1].localeCompare(b[1]));
 
+  select.innerHTML = "";
+
+  const defaultOpt = document.createElement("option");
+  defaultOpt.value = "all";
+  defaultOpt.textContent = allLabel;
+  select.appendChild(defaultOpt);
+
+  entries.forEach(([normalizedValue, label]) => {
+    const opt = document.createElement("option");
+    opt.value =
+      selectId.includes("landing") ? normalizeLandingValue(label) :
+      selectId.includes("source") ? normalizeSourceValue(label) :
+      selectId.includes("campaign") ? label :
+      normalizedValue;
+    opt.textContent = label;
+    select.appendChild(opt);
+  });
+
+  const normalizedCurrent =
+    currentValue === "all"
+      ? "all"
+      : selectId.includes("landing")
+      ? normalizeLandingValue(currentValue)
+      : selectId.includes("source")
+      ? normalizeSourceValue(currentValue)
+      : selectId.includes("campaign")
+      ? currentValue
+      : normalizeText(currentValue);
+
+  const validValues = [...select.options].map((opt) => opt.value);
+  select.value = validValues.includes(normalizedCurrent) ? normalizedCurrent : "all";
+}
+  
   async function apiGet(action, params = {}) {
     const url = new URL(APP_CONFIG.APPS_SCRIPT_URL);
     url.searchParams.set("action", action);
@@ -2725,27 +2795,42 @@ async function refreshReportsData() {
     return textarea.value;
   }
 
-  function priorityDotClass(priority) {
-    const p = String(priority || "").toLowerCase();
-    if (p === "high") return "bg-rose-500";
-    if (p === "medium") return "bg-amber-500";
-    return "bg-emerald-500";
-  }
+function normalizePriority(value) {
+  return String(value || "")
+    .trim()
+    .toLowerCase()
+    .replace(/[_\s]+/g, "-");
+}
 
-  function priorityBadgeClass(priority) {
-    const p = String(priority || "").toLowerCase();
-    if (p === "high") return "badge-rose";
-    if (p === "medium") return "badge-gold";
-    return "badge-emerald";
-  }
+function priorityDotClass(priority) {
+  const p = normalizePriority(priority);
+  if (p === "high" || p === "critical") return "bg-rose-500";
+  if (p === "medium") return "bg-amber-500";
+  return "bg-emerald-500";
+}
 
-  function categoryBadgeClass(category) {
-    const c = String(category || "").toLowerCase();
-    if (c === "tracking") return "badge-cyan";
-    if (c === "campaign" || c === "campaigns") return "badge-purple";
-    if (c === "ux") return "badge-rose";
-    return "badge-gold";
-  }
+function priorityBadgeClass(priority) {
+  const p = normalizePriority(priority);
+  if (p === "high" || p === "critical") return "badge-rose";
+  if (p === "medium") return "badge-gold";
+  return "badge-emerald";
+}
+
+function normalizeCategory(value) {
+  return String(value || "")
+    .trim()
+    .toLowerCase()
+    .replace(/[_-]+/g, " ");
+}
+
+function categoryBadgeClass(category) {
+  const c = normalizeCategory(category);
+
+  if (c === "tracking") return "badge-cyan";
+  if (c === "campaign" || c === "campaigns") return "badge-purple";
+  if (c === "ux") return "badge-rose";
+  return "badge-gold";
+}
 
   function updateDeltaText(card, pct, suffix) {
     if (!card) return;

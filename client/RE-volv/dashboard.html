@@ -575,9 +575,9 @@
                 <button type="button" id="refresh-reports-button" class="btn-secondary px-4 py-2 rounded-lg text-xs flex items-center gap-2">
                   <i class="ph-bold ph-arrows-clockwise"></i> Refresh
                 </button>
-                  <button type="button" id="export-reports-button" class="btn-secondary px-4 py-2 rounded-lg text-xs flex items-center gap-2">
-                    <i class="ph-bold ph-download-simple"></i> Export
-                  </button>
+                <button type="button" class="btn-secondary px-4 py-2 rounded-lg text-xs flex items-center gap-2">
+                  <i class="ph-bold ph-download-simple"></i> Export
+                </button>
               </div>
             </div>
 
@@ -1543,14 +1543,23 @@ async function copyUTM() {
   if (!value || value.startsWith("Waiting")) return;
 
   try {
-    await copyTextToClipboard(value);
+    await navigator.clipboard.writeText(value);
     showToast("Copied!", "Link copied to clipboard.", "ph-copy");
   } catch (error) {
-    console.error(error);
-    showToast("Copy Error", "Could not copy link.", "ph-warning", "text-amber-400");
+    const textarea = document.getElementById("utm-result");
+    if (textarea) {
+      textarea.removeAttribute("readonly");
+      textarea.select();
+      textarea.setSelectionRange(0, textarea.value.length);
+      document.execCommand("copy");
+      textarea.setAttribute("readonly", "readonly");
+      showToast("Copied!", "Link copied to clipboard.", "ph-copy");
+    } else {
+      showToast("Copy Error", "Could not copy link.", "ph-warning", "text-amber-400");
+    }
   }
 }
-  
+
   async function saveUTM() {
     const destinationUrl = document.getElementById("utm-url")?.value.trim() || "";
     const source = document.getElementById("utm-source")?.value || "";
@@ -1606,66 +1615,6 @@ function renderRegistry(items) {
     const campaignName = String(item.campaignName || item.campaign || item.campaignId || "").trim();
     const normalizedCampaignName = campaignName.replace(/\s+/g, "_");
     const hasCleanNaming = /^[A-Za-z0-9]+(?:_[A-Za-z0-9]+)+$/.test(normalizedCampaignName);
-    const rawLink = buildDisplayLink(item);
-
-    const reviewBadge = hasCleanNaming
-      ? `<span class="badge badge-emerald ml-2">Clean</span>`
-      : `<span class="badge badge-gold ml-2">Needs Review</span>`;
-
-    return `
-      <tr>
-        <td>
-          <div class="font-medium text-white mb-0.5 flex items-center flex-wrap">
-            ${escapeHtml(campaignName)}
-            ${reviewBadge}
-          </div>
-          ${getRegistryLinkMarkup(item)}
-        </td>
-        <td>
-          <span class="badge ${getBadgeColor(item.source)}">${escapeHtml(item.source || "")}</span>
-          <span class="text-gray-600 mx-1">/</span>
-          <span class="text-xs text-gray-400">${escapeHtml(item.medium || "")}</span>
-        </td>
-        <td>
-          <div class="text-xs text-gray-400">${escapeHtml(formatShortSlashDate(item.dateCreated))}</div>
-        </td>
-        <td>
-          <button
-            type="button"
-            class="registry-copy-btn text-gray-500 hover:text-purple-400 transition-colors"
-            data-copy-value="${escapeHtml(rawLink)}"
-            title="Copy link"
-          >
-            <i class="ph-bold ph-copy"></i>
-          </button>
-        </td>
-      </tr>
-    `;
-  }).join("");
-
-  tbody.querySelectorAll(".registry-copy-btn").forEach((button) => {
-    button.addEventListener("click", async () => {
-      const value = decodeHtmlEntities(button.getAttribute("data-copy-value") || "").trim();
-      if (!value) {
-        showToast("No Link", "This row does not have a saved link yet.", "ph-warning", "text-amber-400");
-        return;
-      }
-
-      try {
-        await copyTextToClipboard(value);
-        showToast("Copied!", "Registry link copied to clipboard.", "ph-copy");
-      } catch (error) {
-        console.error(error);
-        showToast("Copy Error", "Could not copy registry link.", "ph-warning", "text-amber-400");
-      }
-    });
-  });
-}
-
-  tbody.innerHTML = items.map((item) => {
-    const campaignName = String(item.campaignName || item.campaign || item.campaignId || "").trim();
-    const normalizedCampaignName = campaignName.replace(/\s+/g, "_");
-    const hasCleanNaming = /^[A-Za-z0-9]+(?:_[A-Za-z0-9]+)+$/.test(normalizedCampaignName);
 
     const reviewBadge = hasCleanNaming
       ? `<span class="badge badge-emerald ml-2">Clean</span>`
@@ -1707,23 +1656,19 @@ function renderRegistry(items) {
     `;
   }).join("");
 
-tbody.querySelectorAll(".registry-copy-btn").forEach((button) => {
-  button.addEventListener("click", async () => {
-    const value = decodeHtmlEntities(button.getAttribute("data-copy-value") || "").trim();
-    if (!value) {
-      showToast("No Link", "This row does not have a saved link yet.", "ph-warning", "text-amber-400");
-      return;
-    }
+  tbody.querySelectorAll(".registry-copy-btn").forEach((button) => {
+    button.addEventListener("click", async () => {
+      const value = decodeHtmlEntities(button.getAttribute("data-copy-value") || "").trim();
+      if (!value) return;
 
-    try {
-      await copyTextToClipboard(value);
-      showToast("Copied!", "Registry link copied to clipboard.", "ph-copy");
-    } catch (error) {
-      console.error(error);
-      showToast("Copy Error", "Could not copy registry link.", "ph-warning", "text-amber-400");
-    }
+      try {
+        await navigator.clipboard.writeText(value);
+        showToast("Copied!", "Registry link copied to clipboard.", "ph-copy");
+      } catch (error) {
+        showToast("Copy Error", "Could not copy registry link.", "ph-warning", "text-amber-400");
+      }
+    });
   });
-});
 }
 
   function formatShortSlashDate(value) {
@@ -1765,54 +1710,16 @@ function renderHomeRecentUtmLinks(items) {
     <tr>
       <td>
         <div class="font-medium text-white mb-0.5">${escapeHtml(item.campaignName || item.campaign || item.campaignId || "")}</div>
-        ${getRegistryLinkMarkup(item)}
+        <div class="text-[11px] text-gray-500 font-normal truncate max-w-[260px] mt-1">${escapeHtml(item.fullUtmLink || item.destinationUrl || "")}</div>
       </td>
       <td>
         <span class="badge ${getBadgeColor(item.source)}">${escapeHtml(item.source || "")}</span>
         <span class="text-gray-600 mx-1">/</span>
         <span class="text-xs text-gray-400">${escapeHtml(item.medium || "")}</span>
       </td>
-      <td>
-        <div class="text-xs text-gray-400">${escapeHtml(formatShortSlashDate(item.dateCreated))}</div>
-      </td>
+      <td><div class="text-xs text-gray-400">${escapeHtml(formatShortSlashDate(item.dateCreated))}</div></td>
     </tr>
   `).join("");
-}
-  
-  function buildDisplayLink(item) {
-  const full = String(item.fullUtmLink || "").trim();
-  if (full) return full;
-
-  const dest = String(item.destinationUrl || "").trim();
-  if (dest) return dest;
-
-  return "";
-}
-
-function getRegistryLinkMarkup(item) {
-  const link = buildDisplayLink(item);
-
-  if (!link) {
-    return `<div class="text-[11px] text-gray-600 mt-1">No saved link</div>`;
-  }
-
-  return `<div class="text-[11px] text-gray-500 font-normal truncate max-w-[420px] mt-1">${escapeHtml(link)}</div>`;
-}
-
-function formatShortSlashDate(value) {
-  if (!value) return "-";
-
-  const date = Object.prototype.toString.call(value) === "[object Date]"
-    ? value
-    : new Date(value);
-
-  if (Number.isNaN(date.getTime())) return String(value);
-
-  const mm = String(date.getMonth() + 1).padStart(2, "0");
-  const dd = String(date.getDate()).padStart(2, "0");
-  const yy = String(date.getFullYear()).slice(-2);
-
-  return `${mm}/${dd}/${yy}`;
 }
 
   function renderPerformanceSummary(summary) {
@@ -2062,37 +1969,6 @@ function renderHomePerformanceSnapshot(summary) {
     }
   }
 
-  async function copyTextToClipboard(text) {
-  const value = String(text || "").trim();
-  if (!value) throw new Error("Nothing to copy");
-
-  if (navigator.clipboard && window.isSecureContext) {
-    await navigator.clipboard.writeText(value);
-    return true;
-  }
-
-  const temp = document.createElement("textarea");
-  temp.value = value;
-  temp.setAttribute("readonly", "");
-  temp.style.position = "fixed";
-  temp.style.top = "-9999px";
-  temp.style.left = "-9999px";
-  document.body.appendChild(temp);
-
-  temp.focus();
-  temp.select();
-  temp.setSelectionRange(0, temp.value.length);
-
-  const success = document.execCommand("copy");
-  document.body.removeChild(temp);
-
-  if (!success) {
-    throw new Error("Copy command failed");
-  }
-
-  return true;
-}
-
   function renderEmptyUxState() {
     renderClaritySummary({
       rageClicks: 0,
@@ -2274,52 +2150,6 @@ function bindReportFilters() {
 
   document.getElementById("reset-report-filters")?.addEventListener("click", resetReportFilters);
   document.getElementById("refresh-reports-button")?.addEventListener("click", refreshReportsData);
-  document.getElementById("export-reports-button")?.addEventListener("click", exportCurrentReportCsv);
-}
-
-  function exportCurrentReportCsv() {
-  const rows = Array.isArray(currentPerformanceTrend) ? currentPerformanceTrend : [];
-
-  if (!rows.length) {
-    showToast("No Data", "There is no report data to export.", "ph-warning", "text-amber-400");
-    return;
-  }
-
-  const headers = ["date", "sessions", "users", "conversions", "conversion_rate"];
-  const csvRows = [
-    headers.join(","),
-    ...rows.map((row) => {
-      return [
-        csvEscape(row.date),
-        csvEscape(row.sessions),
-        csvEscape(row.users),
-        csvEscape(row.conversions),
-        csvEscape(row.conversionRate)
-      ].join(",");
-    })
-  ];
-
-  const blob = new Blob([csvRows.join("\n")], { type: "text/csv;charset=utf-8;" });
-  const url = URL.createObjectURL(blob);
-  const link = document.createElement("a");
-  const dateLabel = new Date().toISOString().slice(0, 10);
-
-  link.href = url;
-  link.download = `analytics-report-${dateLabel}.csv`;
-  document.body.appendChild(link);
-  link.click();
-  document.body.removeChild(link);
-  URL.revokeObjectURL(url);
-
-  showToast("Export Ready", "Report CSV downloaded.", "ph-download-simple");
-}
-
-function csvEscape(value) {
-  const str = String(value ?? "");
-  if (/[",\n]/.test(str)) {
-    return `"${str.replace(/"/g, '""')}"`;
-  }
-  return str;
 }
 
   function getPerformanceDaysFromUi() {

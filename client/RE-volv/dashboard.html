@@ -1283,11 +1283,17 @@ document.addEventListener("DOMContentLoaded", async () => {
   const setupResults = await Promise.allSettled([
     loadRegistryFromSheet(),
     loadAuditFromSheet(),
-    loadResourcesFromSheet()
+    loadResourcesFromSheet(),
+    loadAuditHighlights()
   ]);
 
   setupResults.forEach((result, index) => {
-    const names = ["loadRegistryFromSheet", "loadAuditFromSheet", "loadResourcesFromSheet"];
+    const names = [
+      "loadRegistryFromSheet",
+      "loadAuditFromSheet",
+      "loadResourcesFromSheet",
+      "loadAuditHighlights"
+    ];
     if (result.status === "rejected") {
       console.error(`${names[index]} failed:`, result.reason);
     }
@@ -1325,53 +1331,35 @@ document.addEventListener("DOMContentLoaded", async () => {
     "loadPerformanceComparisonFromSheet"
   ];
 
-    const setupResults = await Promise.allSettled([
-    loadRegistryFromSheet(),
-    loadAuditFromSheet(),
-    loadResourcesFromSheet(),
-    loadAuditHighlights()
-  ]);
+  const overviewFailures = [];
 
-async function loadAuditHighlights() {
-  const data = await apiGet("getAuditHighlights");
-  if (!data.ok) throw new Error(data.error || "Failed to load audit highlights");
+  overviewResults.forEach((result, index) => {
+    if (result.status === "rejected") {
+      overviewFailures.push(overviewNames[index]);
+      console.error(`${overviewNames[index]} failed:`, result.reason);
+    }
+  });
 
-  renderAuditHighlights(data.highlights || {});
-}
-
-function renderAuditHighlights(highlights) {
-  const workingEl = document.getElementById("audit-whats-working-list");
-  const attentionEl = document.getElementById("audit-needs-attention-list");
-  const nextActionEl = document.getElementById("audit-next-action-text");
-
-  if (workingEl) {
-    const items = Array.isArray(highlights.whatsWorking) ? highlights.whatsWorking : [];
-    workingEl.innerHTML = items.length
-      ? items.map((item) => `
-          <li class="flex items-start gap-2">
-            <i class="ph-bold ph-check text-emerald-400 mt-0.5"></i>
-            <span>${escapeHtml(item)}</span>
-          </li>
-        `).join("")
-      : `<li class="text-gray-500">No resolved wins yet.</li>`;
+  if (overviewFailures.length) {
+    setDataStatus("error", `Some dashboard data failed to load: ${overviewFailures.join(", ")}`);
+  } else {
+    setDataStatus("loaded", "30 day overview data loaded successfully.");
   }
 
-  if (attentionEl) {
-    const items = Array.isArray(highlights.needsAttention) ? highlights.needsAttention : [];
-    attentionEl.innerHTML = items.length
-      ? items.map((item) => `
-          <li class="flex items-start gap-2">
-            <i class="ph-bold ph-warning text-amber-400 mt-0.5"></i>
-            <span>${escapeHtml(item)}</span>
-          </li>
-        `).join("")
-      : `<li class="text-gray-500">No active issues.</li>`;
+  if (APP_CONFIG.AUTO_SYNC_CLARITY_ON_LOAD) {
+    try {
+      await syncClarityData({ silent: true });
+    } catch (error) {
+      console.error("Initial Clarity sync failed:", error);
+    }
+  } else {
+    try {
+      await loadClarityFromSheet();
+    } catch (error) {
+      console.error("Initial Clarity load failed:", error);
+    }
   }
-
-  if (nextActionEl) {
-    nextActionEl.textContent = highlights.nextAction || "No next action available.";
-  }
-}
+});
 
   function normalizeText(value) {
     return String(value || "")
@@ -1431,6 +1419,13 @@ function renderAuditHighlights(highlights) {
   if (nextActionEl) {
     nextActionEl.textContent = highlights.nextAction || "No next action available.";
   }
+}
+
+  async function loadAuditHighlights() {
+  const data = await apiGet("getAuditHighlights");
+  if (!data.ok) throw new Error(data.error || "Failed to load audit highlights");
+
+  renderAuditHighlights(data.highlights || {});
 }
 
   function formatAuditStatusLabel(value) {

@@ -1599,10 +1599,15 @@ async function loadHomeSnapshot() {
     rangeType: "30"
   };
 
+  console.log("loadHomeSnapshot params:", params);
+
   const [summaryData, comparisonData] = await Promise.all([
     apiGet("getPerformanceSummary", params),
     apiGet("getPerformanceComparison", params)
   ]);
+
+  console.log("loadHomeSnapshot summaryData:", summaryData);
+  console.log("loadHomeSnapshot comparisonData:", comparisonData);
 
   if (!summaryData.ok) {
     throw new Error(summaryData.error || "Failed to load home summary");
@@ -1615,7 +1620,12 @@ async function loadHomeSnapshot() {
   currentHomeSummary = summaryData.summary || {};
   currentHomeComparison = comparisonData.comparison || null;
 
-  renderHomeOverviewSnapshot(currentHomeSummary, currentHomeComparison);
+  try {
+    renderHomeOverviewSnapshot(currentHomeSummary, currentHomeComparison);
+  } catch (error) {
+    console.error("renderHomeOverviewSnapshot failed:", error);
+    throw error;
+  }
 }
 
 function getCurrentReportFilterParams() {
@@ -2228,27 +2238,32 @@ function applyUtmRegistryFilters() {
     updateDurationDeltaText(reportCards[4], comparison);
   }
 
-  function renderHomeOverviewSnapshot(summary, comparison) {
-    const sessionsValue = document.getElementById("home-kpi-sessions");
-    const sessionsDelta = document.getElementById("home-kpi-sessions-delta");
-    const rateValue = document.getElementById("home-kpi-rate");
-    const rateDelta = document.getElementById("home-kpi-rate-delta");
-    const activeValue = document.getElementById("home-kpi-active");
+function renderHomeOverviewSnapshot(summary, comparison) {
+  const sessionsValue = document.getElementById("home-kpi-sessions");
+  const sessionsDelta = document.getElementById("home-kpi-sessions-delta");
+  const rateValue = document.getElementById("home-kpi-rate");
+  const rateDelta = document.getElementById("home-kpi-rate-delta");
+  const activeValue = document.getElementById("home-kpi-active");
 
-    if (sessionsValue) sessionsValue.textContent = formatNumber(summary.sessions || 0);
-    if (rateValue) rateValue.textContent = formatPercent(summary.conversionRate || 0);
+  console.log("renderHomeOverviewSnapshot summary:", summary);
+  console.log("renderHomeOverviewSnapshot comparison:", comparison);
 
-    const activeCount = currentRegistryItems.filter((item) => {
-      const status = String(item.status || "").toLowerCase();
-      return status === "active" || status === "detected";
-    }).length;
+  if (sessionsValue) sessionsValue.textContent = formatNumber(summary?.sessions || 0);
+  if (rateValue) rateValue.textContent = formatPercent(summary?.conversionRate || 0);
 
-    if (activeValue) activeValue.textContent = formatNumber(activeCount);
+  const activeCount = Array.isArray(currentRegistryItems)
+    ? currentRegistryItems.filter((item) => {
+        const status = String(item?.status || "").toLowerCase();
+        return status === "active" || status === "detected";
+      }).length
+    : 0;
 
-    const delta = comparison?.delta || {};
-    updateStandaloneDeltaText(sessionsDelta, delta.sessionsPct, "vs last mo");
-    updateStandaloneDeltaText(rateDelta, delta.conversionRatePct, "vs last mo");
-  }
+  if (activeValue) activeValue.textContent = formatNumber(activeCount);
+
+  const delta = comparison?.delta || {};
+  updateStandaloneDeltaText(sessionsDelta, delta.sessionsPct, "vs last mo");
+  updateStandaloneDeltaText(rateDelta, delta.conversionRatePct, "vs last mo");
+}
 
   function renderLoadingPerformanceState() {
     const loadingSummary = {

@@ -250,7 +250,7 @@
     /* MOBILE PRESENTATION MODE */
 @media (max-width: 768px) {
     body {
-        font-size: 14px;
+        font-size: 15px;
     }
 
     .glass-panel {
@@ -280,20 +280,23 @@
 
     #page-presentation {
         height: 100dvh;
+        min-height: 100dvh;
     }
 
     .slide {
-        padding: 0.35rem;
-        align-items: center;
-        justify-content: center;
+        padding: 1rem 1rem 5.5rem;
+        align-items: flex-start;
+        justify-content: flex-start;
+        overflow-y: auto;
+        -webkit-overflow-scrolling: touch;
     }
 
     .content-container {
-        width: 188vw;
-        max-width: none;
+        width: 100%;
+        max-width: 100%;
         max-height: none;
-        transform: scale(0.50);
-        transform-origin: center center;
+        transform: none;
+        justify-content: flex-start;
     }
 
     .nav-btn {
@@ -305,7 +308,7 @@
         gap: 0.85rem;
         padding: 0.55rem 0.9rem;
         max-width: calc(100vw - 1rem);
-        width: auto;
+        width: calc(100vw - 1rem);
     }
 
     .slide-counter {
@@ -340,9 +343,8 @@
     .slide .gap-8  { gap: 0.8rem !important; }
     .slide .gap-6  { gap: 0.65rem !important; }
 
-    /* SERVICE MENU: keep very wide 2-col cards */
     .service-grid {
-        grid-template-columns: repeat(2, minmax(0, 1fr));
+        grid-template-columns: 1fr;
         gap: 0.65rem;
         width: 100%;
     }
@@ -355,10 +357,9 @@
         grid-column: 1 / -1;
     }
 
-    /* Demystifying: 3 columns on mobile */
     .slide[data-theme="fuchsia"] .grid.lg\:grid-cols-12 {
         display: grid !important;
-        grid-template-columns: 1.3fr 0.85fr 0.85fr !important;
+        grid-template-columns: 1fr !important;
         gap: 0.7rem !important;
         align-items: stretch !important;
     }
@@ -374,10 +375,9 @@
         gap: 0.65rem !important;
     }
 
-    /* Grimoire: true 3-column mobile layout */
     .slide[data-theme="purple"] .grid.md\:grid-cols-3 {
         display: grid !important;
-        grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+        grid-template-columns: 1fr !important;
         gap: 0.65rem !important;
         align-items: stretch !important;
     }
@@ -414,16 +414,33 @@
     .slide[data-theme="fuchsia"] h2 {
         line-height: 1.08;
     }
+
+    .slide .grid,
+    .slide .grid-cols-2,
+    .slide .md\:grid-cols-2,
+    .slide .md\:grid-cols-3,
+    .slide .lg\:grid-cols-12 {
+        grid-template-columns: 1fr !important;
+    }
+
+    .slide .md\:flex-row,
+    .slide .lg\:flex-row {
+        flex-direction: column !important;
+    }
+
+    .slide .text-8xl { font-size: 3rem !important; line-height: 1.05 !important; }
+    .slide .text-7xl { font-size: 2.75rem !important; line-height: 1.05 !important; }
+    .slide .text-6xl { font-size: 2.3rem !important; line-height: 1.08 !important; }
+    .slide .text-5xl { font-size: 2rem !important; line-height: 1.08 !important; }
+    .slide .text-4xl { font-size: 1.6rem !important; line-height: 1.12 !important; }
+    .slide .text-3xl { font-size: 1.35rem !important; line-height: 1.15 !important; }
+    .slide .text-2xl { font-size: 1.1rem !important; line-height: 1.45 !important; }
+    .slide .text-xl { font-size: 1rem !important; line-height: 1.45 !important; }
 }
 
 @media (max-width: 480px) {
     .slide {
-        padding: 0.2rem;
-    }
-
-    .content-container {
-        width: 225vw;
-        transform: scale(0.40);
+        padding: 0.85rem 0.85rem 5.25rem;
     }
 
     .presentation-controls {
@@ -432,17 +449,17 @@
     }
 
     .service-grid {
-        grid-template-columns: repeat(2, minmax(0, 1fr));
+        grid-template-columns: 1fr;
         gap: 0.5rem;
     }
 
     .slide[data-theme="fuchsia"] .grid.lg\:grid-cols-12 {
-        grid-template-columns: 1.25fr 0.85fr 0.85fr !important;
+        grid-template-columns: 1fr !important;
         gap: 0.55rem !important;
     }
 
     .slide[data-theme="purple"] .grid.md\:grid-cols-3 {
-        grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+        grid-template-columns: 1fr !important;
         gap: 0.5rem !important;
     }
 

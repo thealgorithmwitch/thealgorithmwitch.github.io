@@ -1222,7 +1222,7 @@
 
 <script>
   const APP_CONFIG = {
-    APPS_SCRIPT_URL: "https://script.google.com/macros/s/AKfycbyrFN4XN0ReBKUU4ejzIUeZAXszMw5OiwIVu6ebx4kgnJjZcOQbJJYvZfFhq7nRIkY/exec",
+    APPS_SCRIPT_URL: "https://script.google.com/macros/s/AKfycbw_j9hry_um0Z1ssk8-KSC17rK0tFkH8CgjJVX7zfssgHgCxRMct_yZM8C9kB6ATka0/exec",
     AUTO_SYNC_PERFORMANCE_ON_LOAD: false,
     AUTO_SYNC_CLARITY_ON_LOAD: false
   };
@@ -1350,8 +1350,16 @@ document.addEventListener("DOMContentLoaded", async () => {
     console.error("populateUxPageOptionsFromClarityRows failed:", error);
   }
 
-  const reportRange = document.getElementById("filter-date-range");
-  if (reportRange) reportRange.value = "30";
+  const reportDefaults = {
+    "filter-date-range": "30",
+    "filter-campaign": "all",
+    "filter-source": "all",
+    "filter-landing": "all"
+  };
+  Object.entries(reportDefaults).forEach(([id, value]) => {
+    const el = document.getElementById(id);
+    if (el) el.value = value;
+  });
   updateHeaderDatePillForView("home");
 
   const overviewResults = await Promise.allSettled([
@@ -1377,18 +1385,11 @@ document.addEventListener("DOMContentLoaded", async () => {
     setDataStatus("loaded", "30 day overview data loaded successfully.");
   }
 
-  const reportPrefetchResults = await Promise.allSettled([
-    loadPerformanceFromSheet(),
-    loadPerformanceTrendFromSheet(),
-    loadPerformanceComparisonFromSheet()
-  ]);
-
-  ["loadPerformanceFromSheet", "loadPerformanceTrendFromSheet", "loadPerformanceComparisonFromSheet"]
-    .forEach((name, index) => {
-      if (reportPrefetchResults[index].status === "rejected") {
-        console.error(`${name} failed:`, reportPrefetchResults[index].reason);
-      }
-    });
+  try {
+    await loadReportsSnapshot({ updatedText: "Updated: Just now" });
+  } catch (error) {
+    console.error("Initial Visual Intelligence load failed:", error);
+  }
 
   if (APP_CONFIG.AUTO_SYNC_CLARITY_ON_LOAD) {
     try {
@@ -2622,6 +2623,46 @@ function renderHomeOverviewSnapshot(summary, comparison) {
     `;
   }
 
+  async function loadReportsSnapshot(options = {}) {
+    const {
+      updatedText = "Updated: Just now"
+    } = options;
+
+    const updated = document.getElementById("reports-last-updated");
+    if (updated) updated.textContent = "Updating...";
+
+    const results = await Promise.allSettled([
+      loadPerformanceFromSheet(),
+      loadPerformanceTrendFromSheet(),
+      loadPerformanceComparisonFromSheet()
+    ]);
+
+    const names = [
+      "loadPerformanceFromSheet",
+      "loadPerformanceTrendFromSheet",
+      "loadPerformanceComparisonFromSheet"
+    ];
+
+    const failures = [];
+
+    results.forEach((result, index) => {
+      if (result.status === "rejected") {
+        failures.push(names[index]);
+        console.error(`${names[index]} failed:`, result.reason);
+      }
+    });
+
+    if (failures.length) {
+      if (updated) updated.textContent = "Update failed";
+      throw new Error(`Could not refresh: ${failures.join(", ")}`);
+    }
+
+    if (updated) updated.textContent = updatedText;
+    return {
+      ok: true
+    };
+  }
+
   function bindReportFilters() {
     ["filter-date-range", "filter-campaign", "filter-source", "filter-landing"].forEach((id) => {
       const el = document.getElementById(id);
@@ -2634,44 +2675,17 @@ function renderHomeOverviewSnapshot(summary, comparison) {
   }
 
 async function applyReportFilters() {
-  const updated = document.getElementById("reports-last-updated");
-  if (updated) updated.textContent = "Updating...";
-
   updateHeaderDatePillForView("reports");
-
-  const results = await Promise.allSettled([
-    loadPerformanceFromSheet(),
-    loadPerformanceTrendFromSheet(),
-    loadPerformanceComparisonFromSheet()
-  ]);
-
-  const names = [
-    "loadPerformanceFromSheet",
-    "loadPerformanceTrendFromSheet",
-    "loadPerformanceComparisonFromSheet"
-  ];
-
-  const failures = [];
-
-  results.forEach((result, index) => {
-    if (result.status === "rejected") {
-      failures.push(names[index]);
-      console.error(`${names[index]} failed:`, result.reason);
-    }
-  });
-
-  if (failures.length) {
-    if (updated) updated.textContent = "Update failed";
+  try {
+    await loadReportsSnapshot({ updatedText: "Updated: Just now" });
+  } catch (error) {
     showToast(
       "Load Error",
-      `Could not refresh: ${failures.join(", ")}`,
+      error?.message || "Could not refresh report data.",
       "ph-warning-circle",
       "text-amber-400"
     );
-    return;
   }
-
-  if (updated) updated.textContent = "Updated: Just now";
 }
 
   function resetReportFilters() {
@@ -2751,46 +2765,19 @@ async function applyReportFilters() {
   }
 
 async function refreshReportsData() {
-  const updated = document.getElementById("reports-last-updated");
-  if (updated) updated.textContent = "Updating...";
-
-  const results = await Promise.allSettled([
-    loadPerformanceFromSheet(),
-    loadPerformanceTrendFromSheet(),
-    loadPerformanceComparisonFromSheet()
-  ]);
-
-  const names = [
-    "loadPerformanceFromSheet",
-    "loadPerformanceTrendFromSheet",
-    "loadPerformanceComparisonFromSheet"
-  ];
-
-  const failures = [];
-
-  results.forEach((result, index) => {
-    if (result.status === "rejected") {
-      failures.push(names[index]);
-      console.error(`${names[index]} failed:`, result.reason);
-    }
-  });
-
-  if (failures.length) {
-    if (updated) updated.textContent = "Update failed";
+  try {
+    await loadReportsSnapshot({ updatedText: "Updated: Just now" });
+    updateHeaderDatePillForView("reports");
+    updateLocalSyncTime();
+    showToast("Refresh Complete", "Report data reloaded from sheet.", "ph-check-circle");
+  } catch (error) {
     showToast(
       "Refresh Error",
-      `Could not refresh: ${failures.join(", ")}`,
+      error?.message || "Could not refresh report data.",
       "ph-warning-circle",
       "text-amber-400"
     );
-    return;
   }
-
-  updateHeaderDatePillForView("reports");
-  updateLocalSyncTime();
-
-  if (updated) updated.textContent = "Updated: Just now";
-  showToast("Refresh Complete", "Report data reloaded from sheet.", "ph-check-circle");
 }
   
   function bindUXFilters() {

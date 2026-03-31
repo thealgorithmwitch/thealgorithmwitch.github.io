@@ -448,8 +448,8 @@
                 <i class="ph-fill ph-lightbulb text-amber-400 text-xl"></i>
               </div>
               <div>
-                <h3 class="text-sm font-bold text-amber-300 mb-1 uppercase tracking-wider">Strategic Note</h3>
-                <p class="text-sm text-gray-300 leading-relaxed">LinkedIn campaigns for "Solar Savings" are outperforming Meta by 40% in conversion rate this month. Recommend reallocating 20% of remaining Q4 budget to the top-performing LinkedIn ad set.</p>
+                <h3 id="home-strategic-note-title" class="text-sm font-bold text-amber-300 mb-1 uppercase tracking-wider">Strategic Note</h3>
+                <p id="home-strategic-note-body" class="text-sm text-gray-300 leading-relaxed">Loading live recommendation...</p>
               </div>
             </div>
 
@@ -540,6 +540,14 @@
                 <div class="glass-card p-5">
                   <h3 class="text-sm font-bold text-white mb-4">Quick Actions</h3>
                   <div class="space-y-3">
+                    <button type="button" data-view="audit" id="home-gtm-status-card" class="w-full text-left p-3 rounded-lg bg-black/20 hover:bg-black/40 border border-white/5 hover:border-cyan-500/30 transition-all flex items-center gap-3 group">
+                      <div id="home-gtm-status-icon-wrap" class="w-8 h-8 rounded bg-cyan-900/30 flex items-center justify-center text-cyan-400 group-hover:text-cyan-300"><i id="home-gtm-status-icon" class="ph-duotone ph-plugs-connected text-lg"></i></div>
+                      <div>
+                        <div id="home-gtm-status-title" class="text-sm font-medium text-gray-200 group-hover:text-white">Tracking Health</div>
+                        <div id="home-gtm-status-body" class="text-[10px] text-gray-500">Loading GTM checks...</div>
+                      </div>
+                    </button>
+
                     <button type="button" data-view="utm" class="w-full text-left p-3 rounded-lg bg-black/20 hover:bg-black/40 border border-white/5 hover:border-purple-500/30 transition-all flex items-center gap-3 group">
                       <div class="w-8 h-8 rounded bg-purple-900/30 flex items-center justify-center text-purple-400 group-hover:text-purple-300"><i class="ph-duotone ph-link text-lg"></i></div>
                       <div>
@@ -552,7 +560,7 @@
                       <div class="w-8 h-8 rounded bg-amber-900/30 flex items-center justify-center text-amber-400 group-hover:text-amber-300"><i class="ph-duotone ph-clipboard-text text-lg"></i></div>
                       <div>
                         <div class="text-sm font-medium text-gray-200 group-hover:text-white">Review Audit Notes</div>
-                        <div class="text-[10px] text-gray-500">2 priority items pending</div>
+                        <div id="home-audit-summary-text" class="text-[10px] text-gray-500">Loading live audit summary...</div>
                       </div>
                     </button>
 
@@ -1184,7 +1192,7 @@
 
 <script>
   const APP_CONFIG = {
-    APPS_SCRIPT_URL: "https://script.google.com/macros/s/AKfycbwvX8dbXYqSQcAwSy0qoDkwLjC2SKCdRc9UGsp-TNKxTnWWtGF62Ev2njlG_f05ig/exec",
+    APPS_SCRIPT_URL: "https://script.google.com/macros/s/AKfycbx0tkoY9Vh-PxHL38eQJ1f70kzoNUEcdPdiMhf3Y19T3uNuZuEBIJIJ702a7I1G9OBD/exec",
     AUTO_SYNC_PERFORMANCE_ON_LOAD: false,
     AUTO_SYNC_CLARITY_ON_LOAD: false
   };
@@ -1250,6 +1258,7 @@
   let currentHomeSummary = {};
   let currentHomeComparison = null;
   let currentRecentRegistryLinks = [];
+  let currentHomeInsights = null;
 
 document.addEventListener("DOMContentLoaded", async () => {
   try { applyConfig(); } catch (error) { console.error("applyConfig failed:", error); }
@@ -1622,37 +1631,22 @@ async function loadPerformanceComparisonFromSheet() {
   }
 
 async function loadHomeSnapshot() {
-  const params = {
-    source: "all",
-    campaign: "all",
-    landing_page: "all",
-    range_type: "30",
-    rangeType: "30"
-  };
-
-  console.log("loadHomeSnapshot params:", params);
-
-  const [summaryData, comparisonData] = await Promise.all([
-    apiGet("getPerformanceSummary", params),
-    apiGet("getPerformanceComparison", params)
-  ]);
-
-  console.log("loadHomeSnapshot summaryData:", summaryData);
-  console.log("loadHomeSnapshot comparisonData:", comparisonData);
-
-  if (!summaryData.ok) {
-    throw new Error(summaryData.error || "Failed to load home summary");
+  const data = await apiGet("getHomeInsights");
+  if (!data.ok) {
+    throw new Error(data.error || "Failed to load home insights");
   }
 
-  if (!comparisonData.ok) {
-    throw new Error(comparisonData.error || "Failed to load home comparison");
-  }
-
-  currentHomeSummary = summaryData.summary || {};
-  currentHomeComparison = comparisonData.comparison || null;
+  currentHomeInsights = data.insights || {};
+  currentHomeSummary = currentHomeInsights.summary || {};
+  currentHomeComparison = currentHomeInsights.comparison || null;
+  currentRecentRegistryLinks = Array.isArray(currentHomeInsights.recentLinks) ? currentHomeInsights.recentLinks : currentRecentRegistryLinks;
 
   try {
     renderHomeOverviewSnapshot(currentHomeSummary, currentHomeComparison);
+    renderHomeStrategicNote(currentHomeInsights.strategicNote || {});
+    renderHomeGtmStatus(currentHomeInsights.gtmSummary || {});
+    renderHomeRecentUtmLinks(currentRecentRegistryLinks);
+    renderAuditHighlights(currentHomeInsights.auditHighlights || {});
   } catch (error) {
     console.error("renderHomeOverviewSnapshot failed:", error);
     throw error;
@@ -2329,6 +2323,61 @@ function renderHomeOverviewSnapshot(summary, comparison) {
   updateStandaloneDeltaText(rateDelta, delta.conversionRatePct, "vs last mo");
 }
 
+  function renderHomeStrategicNote(note) {
+    const titleEl = document.getElementById("home-strategic-note-title");
+    const bodyEl = document.getElementById("home-strategic-note-body");
+    const auditSummaryEl = document.getElementById("home-audit-summary-text");
+    const attentionItems = Array.isArray(currentHomeInsights?.auditHighlights?.needsAttention)
+      ? currentHomeInsights.auditHighlights.needsAttention
+      : [];
+
+    if (titleEl) titleEl.textContent = note?.title || "Strategic Note";
+    if (bodyEl) bodyEl.textContent = note?.body || "No strong pattern detected yet.";
+
+    if (auditSummaryEl) {
+      if (attentionItems.length) {
+        auditSummaryEl.textContent = `${attentionItems.length} current attention items`;
+      } else {
+        auditSummaryEl.textContent = "No active high-priority issues";
+      }
+    }
+  }
+
+  function renderHomeGtmStatus(summary) {
+    const titleEl = document.getElementById("home-gtm-status-title");
+    const bodyEl = document.getElementById("home-gtm-status-body");
+    const iconWrap = document.getElementById("home-gtm-status-icon-wrap");
+    const icon = document.getElementById("home-gtm-status-icon");
+
+    const totalChecks = Number(summary?.totalChecks || 0);
+    const failCount = Number(summary?.failCount || 0);
+    const topIssue = String(summary?.topIssue || "").trim();
+
+    if (titleEl) {
+      titleEl.textContent = failCount > 0 ? "Tracking Issues Detected" : "Tracking Health";
+    }
+
+    if (bodyEl) {
+      bodyEl.textContent = failCount > 0
+        ? `${failCount} failing GTM checks${topIssue ? ` • ${topIssue}` : ""}`
+        : totalChecks > 0
+        ? `${totalChecks} GTM checks passed in the latest scan`
+        : "No GTM check data yet";
+    }
+
+    if (iconWrap) {
+      iconWrap.className = failCount > 0
+        ? "w-8 h-8 rounded bg-rose-900/30 flex items-center justify-center text-rose-400 group-hover:text-rose-300"
+        : "w-8 h-8 rounded bg-cyan-900/30 flex items-center justify-center text-cyan-400 group-hover:text-cyan-300";
+    }
+
+    if (icon) {
+      icon.className = failCount > 0
+        ? "ph-duotone ph-warning-octagon text-lg"
+        : "ph-duotone ph-plugs-connected text-lg";
+    }
+  }
+
   function renderLoadingPerformanceState() {
     const loadingSummary = {
       sessions: 0,
@@ -2351,10 +2400,16 @@ function renderHomeOverviewSnapshot(summary, comparison) {
     const rateValue = document.getElementById("home-kpi-rate");
     const rateDelta = document.getElementById("home-kpi-rate-delta");
     const activeValue = document.getElementById("home-kpi-active");
+    const strategicTitle = document.getElementById("home-strategic-note-title");
+    const strategicBody = document.getElementById("home-strategic-note-body");
+    const gtmBody = document.getElementById("home-gtm-status-body");
 
     if (sessionsValue) sessionsValue.textContent = "--";
     if (rateValue) rateValue.textContent = "--";
     if (activeValue) activeValue.textContent = "--";
+    if (strategicTitle) strategicTitle.textContent = "Strategic Note";
+    if (strategicBody) strategicBody.textContent = "Loading live recommendation...";
+    if (gtmBody) gtmBody.textContent = "Loading GTM checks...";
 
     if (sessionsDelta) {
       sessionsDelta.className = "text-xs text-gray-500 flex items-center gap-1 font-medium";

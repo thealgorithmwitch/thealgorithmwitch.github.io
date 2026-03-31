@@ -1192,7 +1192,7 @@
 
 <script>
   const APP_CONFIG = {
-    APPS_SCRIPT_URL: "https://script.google.com/macros/s/AKfycbw0aqIGMdDYebtuy-47AheLVG6GDjSGk-gMYQD4wGPtiNfg8q6XKQeKOlKHAe0m1Xd1/exec",
+    APPS_SCRIPT_URL: "https://script.google.com/macros/s/AKfycbzX-yPHymZRshjuJZRUrwS62eWEwmS3prL1so_pJSPkMTD_6cSPGERtwPkASw_unhWb/exec",
     AUTO_SYNC_PERFORMANCE_ON_LOAD: false,
     AUTO_SYNC_CLARITY_ON_LOAD: false
   };
@@ -1410,18 +1410,32 @@ document.addEventListener("DOMContentLoaded", async () => {
     const detail = String(item?.detail || "").trim();
     const metricLabel = String(item?.metricLabel || "").trim();
     const metricValue = String(item?.metricValue || "").trim();
+    const label = String(item?.label || "").trim();
+    const sourceType = String(item?.sourceType || "").trim();
+    const priority = String(item?.priority || item?.severity || "").trim();
+    const recommendation = String(item?.recommendation || "").trim();
+    const chips = [label, sourceType ? sourceType.replace(/_/g, " ") : "", priority]
+      .filter(Boolean)
+      .map((value) => `
+        <span class="inline-flex items-center rounded-full border border-white/10 bg-white/5 px-2 py-0.5 text-[10px] uppercase tracking-wide text-gray-400">
+          ${escapeHtml(value)}
+        </span>
+      `)
+      .join("");
 
     return `
       <li class="flex items-start gap-3">
         <i class="ph-bold ${iconClass} ${colorClass} mt-1"></i>
         <div class="min-w-0">
           <div class="text-sm text-white font-medium">${escapeHtml(title || "Highlight")}</div>
+          ${chips ? `<div class="flex flex-wrap gap-1 mt-1">${chips}</div>` : ""}
           <div class="text-xs text-gray-400 leading-relaxed mt-1">${escapeHtml(detail || "No detail available.")}</div>
           ${metricLabel || metricValue ? `
             <div class="text-[11px] text-gray-500 mt-1 uppercase tracking-wide">
               ${escapeHtml(metricLabel)}${metricLabel && metricValue ? ": " : ""}${escapeHtml(metricValue)}
             </div>
           ` : ""}
+          ${recommendation ? `<div class="text-[11px] text-gray-500 mt-1">${escapeHtml(recommendation)}</div>` : ""}
         </div>
       </li>
     `;
@@ -1641,16 +1655,21 @@ async function loadHomeSnapshot() {
   currentHomeComparison = currentHomeInsights.comparison || null;
   currentRecentRegistryLinks = Array.isArray(currentHomeInsights.recentLinks) ? currentHomeInsights.recentLinks : currentRecentRegistryLinks;
 
-  try {
-    renderHomeOverviewSnapshot(currentHomeSummary, currentHomeComparison);
-    renderHomeStrategicNote(currentHomeInsights.strategicNote || {});
-    renderHomeGtmStatus(currentHomeInsights.gtmSummary || {});
-    renderHomeRecentUtmLinks(currentRecentRegistryLinks);
-    renderAuditHighlights(currentHomeInsights.auditHighlights || {});
-  } catch (error) {
-    console.error("renderHomeOverviewSnapshot failed:", error);
-    throw error;
-  }
+  const renderSteps = [
+    ["renderHomeOverviewSnapshot", () => renderHomeOverviewSnapshot(currentHomeSummary, currentHomeComparison)],
+    ["renderHomeStrategicNote", () => renderHomeStrategicNote(currentHomeInsights.strategicNote || {})],
+    ["renderHomeGtmStatus", () => renderHomeGtmStatus(currentHomeInsights.gtmSummary || {})],
+    ["renderHomeRecentUtmLinks", () => renderHomeRecentUtmLinks(currentRecentRegistryLinks)],
+    ["renderAuditHighlights", () => renderAuditHighlights(currentHomeInsights.auditHighlights || {})]
+  ];
+
+  renderSteps.forEach(([label, renderFn]) => {
+    try {
+      renderFn();
+    } catch (error) {
+      console.error(`${label} failed:`, error);
+    }
+  });
 }
 
 function getCurrentReportFilterParams() {

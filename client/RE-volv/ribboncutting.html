@@ -1,0 +1,2522 @@
+
+<html lang="en" vid="0"><head vid="1">
+    <meta charset="UTF-8" vid="2">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" vid="3">
+    <title vid="4">Measuring Impact Beyond Attendance | Event Alchemy</title>
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com" vid="6">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="" vid="7">
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@400;700;900&amp;family=Inter:wght@300;400;500;600&amp;family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&amp;display=swap" rel="stylesheet" vid="8">
+    <script src="https://unpkg.com/@phosphor-icons/web" vid="9"></script>
+    <style vid="10">
+        :root {
+            --color-bg: #030014;
+            --color-card: rgba(20, 15, 45, 0.6);
+            --color-purple: #a855f7;
+            --color-gold: #fde047;
+            --color-cyan: #06b6d4;
+            --color-amber: #f59e0b;
+            --color-emerald: #10b981;
+            --color-fuchsia: #d946ef;
+        }
+
+        body {
+            background-color: var(--color-bg);
+            color: #e2e8f0;
+            font-family: 'Inter', sans-serif;
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            width: 100vw;
+            height: 100vh;
+        }
+
+        .font-magical { font-family: 'Cinzel Decorative', cursive; }
+        .font-serif-heading { font-family: 'Playfair Display', serif; }
+
+        .stars {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            pointer-events: none; z-index: 0;
+        }
+        .star {
+            position: absolute;
+            background: white;
+            border-radius: 50%;
+            opacity: 0;
+            animation: twinkle var(--duration) ease-in-out infinite;
+            animation-delay: var(--delay);
+        }
+        @keyframes twinkle {
+            0% { opacity: 0; transform: scale(0.5); }
+            50% { opacity: var(--opacity); transform: scale(1.2); box-shadow: 0 0 4px rgba(255, 255, 255, 0.8); }
+            100% { opacity: 0; transform: scale(0.5); }
+        }
+
+        .glass-panel {
+            background: rgba(13, 12, 34, 0.6);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+        
+        .glass-card {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(10px);
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .glass-card::before {
+            content: ''; position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background: radial-gradient(600px circle at var(--mouse-x) var(--mouse-y), rgba(255, 255, 255, 0.08), transparent 40%);
+            opacity: 0; transition: opacity 0.5s; pointer-events: none;
+        }
+        .glass-card:hover::before { opacity: 1; }
+        .glass-card:hover { transform: translateY(-5px); }
+
+        .text-gradient-gold { background: linear-gradient(to right, #fef9c3, #fbbf24, #fef9c3); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-size: 200% auto; animation: shine 8s linear infinite; }
+        .text-gradient-cyan { background: linear-gradient(to right, #cffafe, #06b6d4, #cffafe); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-size: 200% auto; animation: shine 8s linear infinite; }
+        .text-gradient-emerald { background: linear-gradient(to right, #d1fae5, #10b981, #d1fae5); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-size: 200% auto; animation: shine 8s linear infinite; }
+        
+        @keyframes shine { to { background-position: 200% center; } }
+        .float { animation: float 6s ease-in-out infinite; }
+        @keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-15px); } }
+
+        #page-presentation { width: 100vw; height: 100vh; overflow: hidden; position: relative; }
+        .ambient-glow { position: fixed; border-radius: 50%; filter: blur(120px); opacity: 0.4; pointer-events: none; z-index: 0; transition: all 1s ease-in-out; }
+        
+        .slide { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; opacity: 0; transform: translateY(40px) scale(0.98); transition: all 0.8s cubic-bezier(0.4, 0, 0.2, 1); pointer-events: none; z-index: 0; padding: 4rem; }
+        .slide.active { opacity: 1; transform: translateY(0) scale(1); pointer-events: auto; z-index: 10; }
+        .slide.previous { transform: translateY(-40px) scale(0.98); }
+        
+        .nav-btn { position: fixed; top: 50%; transform: translateY(-50%); z-index: 50; width: 48px; height: 48px; border-radius: 50%; background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1); color: rgba(255, 255, 255, 0.5); display: flex; align-items: center; justify-content: center; cursor: pointer; backdrop-filter: blur(8px); transition: all 0.3s ease; }
+        .nav-btn:hover { background: rgba(255, 255, 255, 0.1); color: white; border-color: rgba(168, 85, 247, 0.5); box-shadow: 0 0 20px rgba(168, 85, 247, 0.3); }
+        .nav-btn:active { transform: translateY(-50%) scale(0.95); }
+        .nav-prev { left: 2rem; }
+        .nav-next { right: 2rem; }
+        
+        .presentation-controls { position: fixed; bottom: 2rem; left: 50%; transform: translateX(-50%); z-index: 50; display: flex; align-items: center; gap: 2rem; padding: 0.75rem 2rem; border-radius: 9999px; background: rgba(0, 0, 0, 0.4); border: 1px solid rgba(255, 255, 255, 0.1); backdrop-filter: blur(12px); }
+        .dots-container { display: flex; gap: 0.75rem; }
+        .dot { width: 8px; height: 8px; border-radius: 50%; background: rgba(255, 255, 255, 0.2); cursor: pointer; transition: all 0.3s ease; }
+        .dot:hover { background: rgba(255, 255, 255, 0.5); }
+        .dot.active { background: var(--color-purple); transform: scale(1.5); box-shadow: 0 0 10px var(--color-purple); }
+        
+        .slide-counter { font-family: 'Inter', sans-serif; font-size: 0.75rem; letter-spacing: 0.2em; color: rgba(255, 255, 255, 0.5); font-weight: 600; }
+        .content-container { width: 100%; max-width: 1200px; max-height: 100%; display: flex; flex-direction: column; justify-content: center; }
+        
+        .glow-border-purple:hover { border-color: rgba(168, 85, 247, 0.4); box-shadow: 0 10px 40px -10px rgba(168, 85, 247, 0.2); }
+        .glow-border-cyan:hover { border-color: rgba(6, 182, 212, 0.4); box-shadow: 0 10px 40px -10px rgba(6, 182, 212, 0.2); }
+        .glow-border-emerald:hover { border-color: rgba(16, 185, 129, 0.4); box-shadow: 0 10px 40px -10px rgba(16, 185, 129, 0.2); }
+        .glow-border-amber:hover { border-color: rgba(245, 158, 11, 0.4); box-shadow: 0 10px 40px -10px rgba(245, 158, 11, 0.2); }
+    </style>
+
+  <style type="text/css">
+*, ::before, ::after {
+  --tw-border-spacing-x: 0;
+  --tw-border-spacing-y: 0;
+  --tw-translate-x: 0;
+  --tw-translate-y: 0;
+  --tw-rotate: 0;
+  --tw-skew-x: 0;
+  --tw-skew-y: 0;
+  --tw-scale-x: 1;
+  --tw-scale-y: 1;
+  --tw-pan-x:  ;
+  --tw-pan-y:  ;
+  --tw-pinch-zoom:  ;
+  --tw-scroll-snap-strictness: proximity;
+  --tw-gradient-from-position:  ;
+  --tw-gradient-via-position:  ;
+  --tw-gradient-to-position:  ;
+  --tw-ordinal:  ;
+  --tw-slashed-zero:  ;
+  --tw-numeric-figure:  ;
+  --tw-numeric-spacing:  ;
+  --tw-numeric-fraction:  ;
+  --tw-ring-inset:  ;
+  --tw-ring-offset-width: 0px;
+  --tw-ring-offset-color: #fff;
+  --tw-ring-color: rgb(59 130 246 / 0.5);
+  --tw-ring-offset-shadow: 0 0 #0000;
+  --tw-ring-shadow: 0 0 #0000;
+  --tw-shadow: 0 0 #0000;
+  --tw-shadow-colored: 0 0 #0000;
+  --tw-blur:  ;
+  --tw-brightness:  ;
+  --tw-contrast:  ;
+  --tw-grayscale:  ;
+  --tw-hue-rotate:  ;
+  --tw-invert:  ;
+  --tw-saturate:  ;
+  --tw-sepia:  ;
+  --tw-drop-shadow:  ;
+  --tw-backdrop-blur:  ;
+  --tw-backdrop-brightness:  ;
+  --tw-backdrop-contrast:  ;
+  --tw-backdrop-grayscale:  ;
+  --tw-backdrop-hue-rotate:  ;
+  --tw-backdrop-invert:  ;
+  --tw-backdrop-opacity:  ;
+  --tw-backdrop-saturate:  ;
+  --tw-backdrop-sepia:  ;
+  --tw-contain-size:  ;
+  --tw-contain-layout:  ;
+  --tw-contain-paint:  ;
+  --tw-contain-style:  ;
+}
+
+::backdrop {
+  --tw-border-spacing-x: 0;
+  --tw-border-spacing-y: 0;
+  --tw-translate-x: 0;
+  --tw-translate-y: 0;
+  --tw-rotate: 0;
+  --tw-skew-x: 0;
+  --tw-skew-y: 0;
+  --tw-scale-x: 1;
+  --tw-scale-y: 1;
+  --tw-pan-x:  ;
+  --tw-pan-y:  ;
+  --tw-pinch-zoom:  ;
+  --tw-scroll-snap-strictness: proximity;
+  --tw-gradient-from-position:  ;
+  --tw-gradient-via-position:  ;
+  --tw-gradient-to-position:  ;
+  --tw-ordinal:  ;
+  --tw-slashed-zero:  ;
+  --tw-numeric-figure:  ;
+  --tw-numeric-spacing:  ;
+  --tw-numeric-fraction:  ;
+  --tw-ring-inset:  ;
+  --tw-ring-offset-width: 0px;
+  --tw-ring-offset-color: #fff;
+  --tw-ring-color: rgb(59 130 246 / 0.5);
+  --tw-ring-offset-shadow: 0 0 #0000;
+  --tw-ring-shadow: 0 0 #0000;
+  --tw-shadow: 0 0 #0000;
+  --tw-shadow-colored: 0 0 #0000;
+  --tw-blur:  ;
+  --tw-brightness:  ;
+  --tw-contrast:  ;
+  --tw-grayscale:  ;
+  --tw-hue-rotate:  ;
+  --tw-invert:  ;
+  --tw-saturate:  ;
+  --tw-sepia:  ;
+  --tw-drop-shadow:  ;
+  --tw-backdrop-blur:  ;
+  --tw-backdrop-brightness:  ;
+  --tw-backdrop-contrast:  ;
+  --tw-backdrop-grayscale:  ;
+  --tw-backdrop-hue-rotate:  ;
+  --tw-backdrop-invert:  ;
+  --tw-backdrop-opacity:  ;
+  --tw-backdrop-saturate:  ;
+  --tw-backdrop-sepia:  ;
+  --tw-contain-size:  ;
+  --tw-contain-layout:  ;
+  --tw-contain-paint:  ;
+  --tw-contain-style:  ;
+}/*
+! tailwindcss v3.4.17 | MIT License | https://tailwindcss.com
+*//*
+1. Prevent padding and border from affecting element width. (https://github.com/mozdevs/cssremedy/issues/4)
+2. Allow adding a border to an element by just adding a border-width. (https://github.com/tailwindcss/tailwindcss/pull/116)
+*/
+
+*,
+::before,
+::after {
+  box-sizing: border-box; /* 1 */
+  border-width: 0; /* 2 */
+  border-style: solid; /* 2 */
+  border-color: #e5e7eb; /* 2 */
+}
+
+::before,
+::after {
+  --tw-content: '';
+}
+
+/*
+1. Use a consistent sensible line-height in all browsers.
+2. Prevent adjustments of font size after orientation changes in iOS.
+3. Use a more readable tab size.
+4. Use the user's configured `sans` font-family by default.
+5. Use the user's configured `sans` font-feature-settings by default.
+6. Use the user's configured `sans` font-variation-settings by default.
+7. Disable tap highlights on iOS
+*/
+
+html,
+:host {
+  line-height: 1.5; /* 1 */
+  -webkit-text-size-adjust: 100%; /* 2 */
+  -moz-tab-size: 4; /* 3 */
+  tab-size: 4; /* 3 */
+  font-family: ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji"; /* 4 */
+  font-feature-settings: normal; /* 5 */
+  font-variation-settings: normal; /* 6 */
+  -webkit-tap-highlight-color: transparent; /* 7 */
+}
+
+/*
+1. Remove the margin in all browsers.
+2. Inherit line-height from `html` so users can set them as a class directly on the `html` element.
+*/
+
+body {
+  margin: 0; /* 1 */
+  line-height: inherit; /* 2 */
+}
+
+/*
+1. Add the correct height in Firefox.
+2. Correct the inheritance of border color in Firefox. (https://bugzilla.mozilla.org/show_bug.cgi?id=190655)
+3. Ensure horizontal rules are visible by default.
+*/
+
+hr {
+  height: 0; /* 1 */
+  color: inherit; /* 2 */
+  border-top-width: 1px; /* 3 */
+}
+
+/*
+Add the correct text decoration in Chrome, Edge, and Safari.
+*/
+
+abbr:where([title]) {
+  text-decoration: underline dotted;
+}
+
+/*
+Remove the default font size and weight for headings.
+*/
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  font-size: inherit;
+  font-weight: inherit;
+}
+
+/*
+Reset links to optimize for opt-in styling instead of opt-out.
+*/
+
+a {
+  color: inherit;
+  text-decoration: inherit;
+}
+
+/*
+Add the correct font weight in Edge and Safari.
+*/
+
+b,
+strong {
+  font-weight: bolder;
+}
+
+/*
+1. Use the user's configured `mono` font-family by default.
+2. Use the user's configured `mono` font-feature-settings by default.
+3. Use the user's configured `mono` font-variation-settings by default.
+4. Correct the odd `em` font sizing in all browsers.
+*/
+
+code,
+kbd,
+samp,
+pre {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; /* 1 */
+  font-feature-settings: normal; /* 2 */
+  font-variation-settings: normal; /* 3 */
+  font-size: 1em; /* 4 */
+}
+
+/*
+Add the correct font size in all browsers.
+*/
+
+small {
+  font-size: 80%;
+}
+
+/*
+Prevent `sub` and `sup` elements from affecting the line height in all browsers.
+*/
+
+sub,
+sup {
+  font-size: 75%;
+  line-height: 0;
+  position: relative;
+  vertical-align: baseline;
+}
+
+sub {
+  bottom: -0.25em;
+}
+
+sup {
+  top: -0.5em;
+}
+
+/*
+1. Remove text indentation from table contents in Chrome and Safari. (https://bugs.chromium.org/p/chromium/issues/detail?id=999088, https://bugs.webkit.org/show_bug.cgi?id=201297)
+2. Correct table border color inheritance in all Chrome and Safari. (https://bugs.chromium.org/p/chromium/issues/detail?id=935729, https://bugs.webkit.org/show_bug.cgi?id=195016)
+3. Remove gaps between table borders by default.
+*/
+
+table {
+  text-indent: 0; /* 1 */
+  border-color: inherit; /* 2 */
+  border-collapse: collapse; /* 3 */
+}
+
+/*
+1. Change the font styles in all browsers.
+2. Remove the margin in Firefox and Safari.
+3. Remove default padding in all browsers.
+*/
+
+button,
+input,
+optgroup,
+select,
+textarea {
+  font-family: inherit; /* 1 */
+  font-feature-settings: inherit; /* 1 */
+  font-variation-settings: inherit; /* 1 */
+  font-size: 100%; /* 1 */
+  font-weight: inherit; /* 1 */
+  line-height: inherit; /* 1 */
+  letter-spacing: inherit; /* 1 */
+  color: inherit; /* 1 */
+  margin: 0; /* 2 */
+  padding: 0; /* 3 */
+}
+
+/*
+Remove the inheritance of text transform in Edge and Firefox.
+*/
+
+button,
+select {
+  text-transform: none;
+}
+
+/*
+1. Correct the inability to style clickable types in iOS and Safari.
+2. Remove default button styles.
+*/
+
+button,
+input:where([type='button']),
+input:where([type='reset']),
+input:where([type='submit']) {
+  -webkit-appearance: button; /* 1 */
+  background-color: transparent; /* 2 */
+  background-image: none; /* 2 */
+}
+
+/*
+Use the modern Firefox focus style for all focusable elements.
+*/
+
+:-moz-focusring {
+  outline: auto;
+}
+
+/*
+Remove the additional `:invalid` styles in Firefox. (https://github.com/mozilla/gecko-dev/blob/2f9eacd9d3d995c937b4251a5557d95d494c9be1/layout/style/res/forms.css#L728-L737)
+*/
+
+:-moz-ui-invalid {
+  box-shadow: none;
+}
+
+/*
+Add the correct vertical alignment in Chrome and Firefox.
+*/
+
+progress {
+  vertical-align: baseline;
+}
+
+/*
+Correct the cursor style of increment and decrement buttons in Safari.
+*/
+
+::-webkit-inner-spin-button,
+::-webkit-outer-spin-button {
+  height: auto;
+}
+
+/*
+1. Correct the odd appearance in Chrome and Safari.
+2. Correct the outline style in Safari.
+*/
+
+[type='search'] {
+  -webkit-appearance: textfield; /* 1 */
+  outline-offset: -2px; /* 2 */
+}
+
+/*
+Remove the inner padding in Chrome and Safari on macOS.
+*/
+
+::-webkit-search-decoration {
+  -webkit-appearance: none;
+}
+
+/*
+1. Correct the inability to style clickable types in iOS and Safari.
+2. Change font properties to `inherit` in Safari.
+*/
+
+::-webkit-file-upload-button {
+  -webkit-appearance: button; /* 1 */
+  font: inherit; /* 2 */
+}
+
+/*
+Add the correct display in Chrome and Safari.
+*/
+
+summary {
+  display: list-item;
+}
+
+/*
+Removes the default spacing and border for appropriate elements.
+*/
+
+blockquote,
+dl,
+dd,
+h1,
+h2,
+h3,
+h4,
+h5,
+h6,
+hr,
+figure,
+p,
+pre {
+  margin: 0;
+}
+
+fieldset {
+  margin: 0;
+  padding: 0;
+}
+
+legend {
+  padding: 0;
+}
+
+ol,
+ul,
+menu {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+/*
+Reset default styling for dialogs.
+*/
+dialog {
+  padding: 0;
+}
+
+/*
+Prevent resizing textareas horizontally by default.
+*/
+
+textarea {
+  resize: vertical;
+}
+
+/*
+1. Reset the default placeholder opacity in Firefox. (https://github.com/tailwindlabs/tailwindcss/issues/3300)
+2. Set the default placeholder color to the user's configured gray 400 color.
+*/
+
+input::placeholder,
+textarea::placeholder {
+  opacity: 1; /* 1 */
+  color: #9ca3af; /* 2 */
+}
+
+/*
+Set the default cursor for buttons.
+*/
+
+button,
+[role="button"] {
+  cursor: pointer;
+}
+
+/*
+Make sure disabled buttons don't get the pointer cursor.
+*/
+:disabled {
+  cursor: default;
+}
+
+/*
+1. Make replaced elements `display: block` by default. (https://github.com/mozdevs/cssremedy/issues/14)
+2. Add `vertical-align: middle` to align replaced elements more sensibly by default. (https://github.com/jensimmons/cssremedy/issues/14#issuecomment-634934210)
+   This can trigger a poorly considered lint error in some tools but is included by design.
+*/
+
+img,
+svg,
+video,
+canvas,
+audio,
+iframe,
+embed,
+object {
+  display: block; /* 1 */
+  vertical-align: middle; /* 2 */
+}
+
+/*
+Constrain images and videos to the parent width and preserve their intrinsic aspect ratio. (https://github.com/mozdevs/cssremedy/issues/14)
+*/
+
+img,
+video {
+  max-width: 100%;
+  height: auto;
+}
+
+/* Make elements with the HTML hidden attribute stay hidden by default */
+[hidden]:where(:not([hidden="until-found"])) {
+  display: none;
+}
+.pointer-events-none {
+  pointer-events: none;
+}
+.fixed {
+  position: fixed;
+}
+.absolute {
+  position: absolute;
+}
+.relative {
+  position: relative;
+}
+.-inset-2 {
+  inset: -0.5rem;
+}
+.inset-0 {
+  inset: 0px;
+}
+.-right-2 {
+  right: -0.5rem;
+}
+.-right-6 {
+  right: -1.5rem;
+}
+.-top-1 {
+  top: -0.25rem;
+}
+.bottom-1\/3 {
+  bottom: 33.333333%;
+}
+.bottom-10 {
+  bottom: 2.5rem;
+}
+.bottom-8 {
+  bottom: 2rem;
+}
+.bottom-\[-10\%\] {
+  bottom: -10%;
+}
+.left-1\/2 {
+  left: 50%;
+}
+.left-1\/4 {
+  left: 25%;
+}
+.left-10 {
+  left: 2.5rem;
+}
+.left-8 {
+  left: 2rem;
+}
+.left-\[-10\%\] {
+  left: -10%;
+}
+.right-0 {
+  right: 0px;
+}
+.right-1\/3 {
+  right: 33.333333%;
+}
+.right-1\/4 {
+  right: 25%;
+}
+.right-10 {
+  right: 2.5rem;
+}
+.right-\[-10\%\] {
+  right: -10%;
+}
+.top-0 {
+  top: 0px;
+}
+.top-1\/2 {
+  top: 50%;
+}
+.top-1\/4 {
+  top: 25%;
+}
+.top-6 {
+  top: 1.5rem;
+}
+.top-\[-20\%\] {
+  top: -20%;
+}
+.z-0 {
+  z-index: 0;
+}
+.z-10 {
+  z-index: 10;
+}
+.z-20 {
+  z-index: 20;
+}
+.z-50 {
+  z-index: 50;
+}
+.mx-auto {
+  margin-left: auto;
+  margin-right: auto;
+}
+.mb-1 {
+  margin-bottom: 0.25rem;
+}
+.mb-10 {
+  margin-bottom: 2.5rem;
+}
+.mb-12 {
+  margin-bottom: 3rem;
+}
+.mb-16 {
+  margin-bottom: 4rem;
+}
+.mb-2 {
+  margin-bottom: 0.5rem;
+}
+.mb-3 {
+  margin-bottom: 0.75rem;
+}
+.mb-4 {
+  margin-bottom: 1rem;
+}
+.mb-6 {
+  margin-bottom: 1.5rem;
+}
+.mb-8 {
+  margin-bottom: 2rem;
+}
+.ml-1 {
+  margin-left: 0.25rem;
+}
+.ml-auto {
+  margin-left: auto;
+}
+.mr-1 {
+  margin-right: 0.25rem;
+}
+.mt-1 {
+  margin-top: 0.25rem;
+}
+.mt-2 {
+  margin-top: 0.5rem;
+}
+.mt-4 {
+  margin-top: 1rem;
+}
+.mt-6 {
+  margin-top: 1.5rem;
+}
+.mt-8 {
+  margin-top: 2rem;
+}
+.mt-auto {
+  margin-top: auto;
+}
+.block {
+  display: block;
+}
+.inline-block {
+  display: inline-block;
+}
+.flex {
+  display: flex;
+}
+.inline-flex {
+  display: inline-flex;
+}
+.grid {
+  display: grid;
+}
+.hidden {
+  display: none;
+}
+.aspect-square {
+  aspect-ratio: 1 / 1;
+}
+.h-1 {
+  height: 0.25rem;
+}
+.h-10 {
+  height: 2.5rem;
+}
+.h-14 {
+  height: 3.5rem;
+}
+.h-16 {
+  height: 4rem;
+}
+.h-20 {
+  height: 5rem;
+}
+.h-3 {
+  height: 0.75rem;
+}
+.h-32 {
+  height: 8rem;
+}
+.h-4 {
+  height: 1rem;
+}
+.h-40 {
+  height: 10rem;
+}
+.h-5 {
+  height: 1.25rem;
+}
+.h-6 {
+  height: 1.5rem;
+}
+.h-64 {
+  height: 16rem;
+}
+.h-8 {
+  height: 2rem;
+}
+.h-\[500px\] {
+  height: 500px;
+}
+.h-\[600px\] {
+  height: 600px;
+}
+.h-\[800px\] {
+  height: 800px;
+}
+.h-full {
+  height: 100%;
+}
+.h-px {
+  height: 1px;
+}
+.w-1\/3 {
+  width: 33.333333%;
+}
+.w-10 {
+  width: 2.5rem;
+}
+.w-12 {
+  width: 3rem;
+}
+.w-14 {
+  width: 3.5rem;
+}
+.w-16 {
+  width: 4rem;
+}
+.w-20 {
+  width: 5rem;
+}
+.w-24 {
+  width: 6rem;
+}
+.w-3\/4 {
+  width: 75%;
+}
+.w-32 {
+  width: 8rem;
+}
+.w-4 {
+  width: 1rem;
+}
+.w-40 {
+  width: 10rem;
+}
+.w-5 {
+  width: 1.25rem;
+}
+.w-5\/6 {
+  width: 83.333333%;
+}
+.w-6 {
+  width: 1.5rem;
+}
+.w-64 {
+  width: 16rem;
+}
+.w-8 {
+  width: 2rem;
+}
+.w-\[600px\] {
+  width: 600px;
+}
+.w-\[80\%\] {
+  width: 80%;
+}
+.w-\[800px\] {
+  width: 800px;
+}
+.w-full {
+  width: 100%;
+}
+.w-px {
+  width: 1px;
+}
+.max-w-2xl {
+  max-width: 42rem;
+}
+.max-w-3xl {
+  max-width: 48rem;
+}
+.max-w-4xl {
+  max-width: 56rem;
+}
+.max-w-5xl {
+  max-width: 64rem;
+}
+.flex-1 {
+  flex: 1 1 0%;
+}
+.shrink-0 {
+  flex-shrink: 0;
+}
+.flex-grow {
+  flex-grow: 1;
+}
+.-translate-x-1\/2 {
+  --tw-translate-x: -50%;
+  transform: translate(var(--tw-translate-x), var(--tw-translate-y)) rotate(var(--tw-rotate)) skewX(var(--tw-skew-x)) skewY(var(--tw-skew-y)) scaleX(var(--tw-scale-x)) scaleY(var(--tw-scale-y));
+}
+.transform {
+  transform: translate(var(--tw-translate-x), var(--tw-translate-y)) rotate(var(--tw-rotate)) skewX(var(--tw-skew-x)) skewY(var(--tw-skew-y)) scaleX(var(--tw-scale-x)) scaleY(var(--tw-scale-y));
+}
+@keyframes pulse {
+
+  50% {
+    opacity: .5;
+  }
+}
+.animate-pulse {
+  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+.grid-cols-2 {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+.flex-col {
+  flex-direction: column;
+}
+.flex-wrap {
+  flex-wrap: wrap;
+}
+.items-start {
+  align-items: flex-start;
+}
+.items-center {
+  align-items: center;
+}
+.justify-center {
+  justify-content: center;
+}
+.justify-between {
+  justify-content: space-between;
+}
+.gap-10 {
+  gap: 2.5rem;
+}
+.gap-12 {
+  gap: 3rem;
+}
+.gap-2 {
+  gap: 0.5rem;
+}
+.gap-3 {
+  gap: 0.75rem;
+}
+.gap-4 {
+  gap: 1rem;
+}
+.gap-6 {
+  gap: 1.5rem;
+}
+.gap-8 {
+  gap: 2rem;
+}
+.space-y-2 > :not([hidden]) ~ :not([hidden]) {
+  --tw-space-y-reverse: 0;
+  margin-top: calc(0.5rem * calc(1 - var(--tw-space-y-reverse)));
+  margin-bottom: calc(0.5rem * var(--tw-space-y-reverse));
+}
+.space-y-3 > :not([hidden]) ~ :not([hidden]) {
+  --tw-space-y-reverse: 0;
+  margin-top: calc(0.75rem * calc(1 - var(--tw-space-y-reverse)));
+  margin-bottom: calc(0.75rem * var(--tw-space-y-reverse));
+}
+.space-y-4 > :not([hidden]) ~ :not([hidden]) {
+  --tw-space-y-reverse: 0;
+  margin-top: calc(1rem * calc(1 - var(--tw-space-y-reverse)));
+  margin-bottom: calc(1rem * var(--tw-space-y-reverse));
+}
+.space-y-5 > :not([hidden]) ~ :not([hidden]) {
+  --tw-space-y-reverse: 0;
+  margin-top: calc(1.25rem * calc(1 - var(--tw-space-y-reverse)));
+  margin-bottom: calc(1.25rem * var(--tw-space-y-reverse));
+}
+.space-y-6 > :not([hidden]) ~ :not([hidden]) {
+  --tw-space-y-reverse: 0;
+  margin-top: calc(1.5rem * calc(1 - var(--tw-space-y-reverse)));
+  margin-bottom: calc(1.5rem * var(--tw-space-y-reverse));
+}
+.space-y-8 > :not([hidden]) ~ :not([hidden]) {
+  --tw-space-y-reverse: 0;
+  margin-top: calc(2rem * calc(1 - var(--tw-space-y-reverse)));
+  margin-bottom: calc(2rem * var(--tw-space-y-reverse));
+}
+.overflow-hidden {
+  overflow: hidden;
+}
+.whitespace-nowrap {
+  white-space: nowrap;
+}
+.rounded-2xl {
+  border-radius: 1rem;
+}
+.rounded-3xl {
+  border-radius: 1.5rem;
+}
+.rounded-\[2\.5rem\] {
+  border-radius: 2.5rem;
+}
+.rounded-\[2rem\] {
+  border-radius: 2rem;
+}
+.rounded-\[3rem\] {
+  border-radius: 3rem;
+}
+.rounded-full {
+  border-radius: 9999px;
+}
+.rounded-lg {
+  border-radius: 0.5rem;
+}
+.rounded-md {
+  border-radius: 0.375rem;
+}
+.rounded-xl {
+  border-radius: 0.75rem;
+}
+.border {
+  border-width: 1px;
+}
+.border-2 {
+  border-width: 2px;
+}
+.border-4 {
+  border-width: 4px;
+}
+.border-b {
+  border-bottom-width: 1px;
+}
+.border-l-2 {
+  border-left-width: 2px;
+}
+.border-l-4 {
+  border-left-width: 4px;
+}
+.border-t {
+  border-top-width: 1px;
+}
+.border-t-2 {
+  border-top-width: 2px;
+}
+.border-t-4 {
+  border-top-width: 4px;
+}
+.border-amber-500\/20 {
+  border-color: rgb(245 158 11 / 0.2);
+}
+.border-amber-500\/30 {
+  border-color: rgb(245 158 11 / 0.3);
+}
+.border-black {
+  --tw-border-opacity: 1;
+  border-color: rgb(0 0 0 / var(--tw-border-opacity, 1));
+}
+.border-cyan-500\/20 {
+  border-color: rgb(6 182 212 / 0.2);
+}
+.border-cyan-500\/30 {
+  border-color: rgb(6 182 212 / 0.3);
+}
+.border-cyan-500\/40 {
+  border-color: rgb(6 182 212 / 0.4);
+}
+.border-emerald-500\/30 {
+  border-color: rgb(16 185 129 / 0.3);
+}
+.border-emerald-500\/40 {
+  border-color: rgb(16 185 129 / 0.4);
+}
+.border-fuchsia-500\/50 {
+  border-color: rgb(217 70 239 / 0.5);
+}
+.border-purple-500\/20 {
+  border-color: rgb(168 85 247 / 0.2);
+}
+.border-purple-500\/30 {
+  border-color: rgb(168 85 247 / 0.3);
+}
+.border-purple-500\/50 {
+  border-color: rgb(168 85 247 / 0.5);
+}
+.border-white\/10 {
+  border-color: rgb(255 255 255 / 0.1);
+}
+.border-white\/5 {
+  border-color: rgb(255 255 255 / 0.05);
+}
+.border-yellow-500\/30 {
+  border-color: rgb(234 179 8 / 0.3);
+}
+.border-yellow-500\/40 {
+  border-color: rgb(234 179 8 / 0.4);
+}
+.border-l-amber-500 {
+  --tw-border-opacity: 1;
+  border-left-color: rgb(245 158 11 / var(--tw-border-opacity, 1));
+}
+.border-l-emerald-500 {
+  --tw-border-opacity: 1;
+  border-left-color: rgb(16 185 129 / var(--tw-border-opacity, 1));
+}
+.border-l-purple-500 {
+  --tw-border-opacity: 1;
+  border-left-color: rgb(168 85 247 / var(--tw-border-opacity, 1));
+}
+.border-l-yellow-400 {
+  --tw-border-opacity: 1;
+  border-left-color: rgb(250 204 21 / var(--tw-border-opacity, 1));
+}
+.border-t-cyan-500\/30 {
+  border-top-color: rgb(6 182 212 / 0.3);
+}
+.border-t-cyan-500\/40 {
+  border-top-color: rgb(6 182 212 / 0.4);
+}
+.border-t-fuchsia-500\/30 {
+  border-top-color: rgb(217 70 239 / 0.3);
+}
+.border-t-purple-500\/30 {
+  border-top-color: rgb(168 85 247 / 0.3);
+}
+.border-t-purple-500\/40 {
+  border-top-color: rgb(168 85 247 / 0.4);
+}
+.border-t-purple-500\/50 {
+  border-top-color: rgb(168 85 247 / 0.5);
+}
+.border-t-yellow-400 {
+  --tw-border-opacity: 1;
+  border-top-color: rgb(250 204 21 / var(--tw-border-opacity, 1));
+}
+.bg-\[\#0a0520\] {
+  --tw-bg-opacity: 1;
+  background-color: rgb(10 5 32 / var(--tw-bg-opacity, 1));
+}
+.bg-amber-600\/10 {
+  background-color: rgb(217 119 6 / 0.1);
+}
+.bg-amber-950\/50 {
+  background-color: rgb(69 26 3 / 0.5);
+}
+.bg-black\/20 {
+  background-color: rgb(0 0 0 / 0.2);
+}
+.bg-black\/30 {
+  background-color: rgb(0 0 0 / 0.3);
+}
+.bg-cyan-500 {
+  --tw-bg-opacity: 1;
+  background-color: rgb(6 182 212 / var(--tw-bg-opacity, 1));
+}
+.bg-cyan-500\/10 {
+  background-color: rgb(6 182 212 / 0.1);
+}
+.bg-cyan-500\/20 {
+  background-color: rgb(6 182 212 / 0.2);
+}
+.bg-cyan-500\/50 {
+  background-color: rgb(6 182 212 / 0.5);
+}
+.bg-cyan-600\/10 {
+  background-color: rgb(8 145 178 / 0.1);
+}
+.bg-cyan-900\/40 {
+  background-color: rgb(22 78 99 / 0.4);
+}
+.bg-emerald-500\/20 {
+  background-color: rgb(16 185 129 / 0.2);
+}
+.bg-emerald-900\/40 {
+  background-color: rgb(6 78 59 / 0.4);
+}
+.bg-fuchsia-500 {
+  --tw-bg-opacity: 1;
+  background-color: rgb(217 70 239 / var(--tw-bg-opacity, 1));
+}
+.bg-fuchsia-900\/30 {
+  background-color: rgb(112 26 117 / 0.3);
+}
+.bg-indigo-900\/20 {
+  background-color: rgb(49 46 129 / 0.2);
+}
+.bg-purple-500\/20 {
+  background-color: rgb(168 85 247 / 0.2);
+}
+.bg-purple-600\/10 {
+  background-color: rgb(147 51 234 / 0.1);
+}
+.bg-purple-900\/10 {
+  background-color: rgb(88 28 135 / 0.1);
+}
+.bg-purple-900\/30 {
+  background-color: rgb(88 28 135 / 0.3);
+}
+.bg-purple-900\/50 {
+  background-color: rgb(88 28 135 / 0.5);
+}
+.bg-purple-950\/50 {
+  background-color: rgb(59 7 100 / 0.5);
+}
+.bg-white\/10 {
+  background-color: rgb(255 255 255 / 0.1);
+}
+.bg-white\/20 {
+  background-color: rgb(255 255 255 / 0.2);
+}
+.bg-white\/5 {
+  background-color: rgb(255 255 255 / 0.05);
+}
+.bg-yellow-400 {
+  --tw-bg-opacity: 1;
+  background-color: rgb(250 204 21 / var(--tw-bg-opacity, 1));
+}
+.bg-yellow-500\/10 {
+  background-color: rgb(234 179 8 / 0.1);
+}
+.bg-yellow-900\/10 {
+  background-color: rgb(113 63 18 / 0.1);
+}
+.bg-yellow-900\/40 {
+  background-color: rgb(113 63 18 / 0.4);
+}
+.bg-gradient-to-b {
+  background-image: linear-gradient(to bottom, var(--tw-gradient-stops));
+}
+.bg-gradient-to-r {
+  background-image: linear-gradient(to right, var(--tw-gradient-stops));
+}
+.from-amber-500\/5 {
+  --tw-gradient-from: rgb(245 158 11 / 0.05) var(--tw-gradient-from-position);
+  --tw-gradient-to: rgb(245 158 11 / 0) var(--tw-gradient-to-position);
+  --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to);
+}
+.from-emerald-900\/40 {
+  --tw-gradient-from: rgb(6 78 59 / 0.4) var(--tw-gradient-from-position);
+  --tw-gradient-to: rgb(6 78 59 / 0) var(--tw-gradient-to-position);
+  --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to);
+}
+.from-purple-500\/5 {
+  --tw-gradient-from: rgb(168 85 247 / 0.05) var(--tw-gradient-from-position);
+  --tw-gradient-to: rgb(168 85 247 / 0) var(--tw-gradient-to-position);
+  --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to);
+}
+.from-purple-600 {
+  --tw-gradient-from: #9333ea var(--tw-gradient-from-position);
+  --tw-gradient-to: rgb(147 51 234 / 0) var(--tw-gradient-to-position);
+  --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to);
+}
+.from-purple-900\/20 {
+  --tw-gradient-from: rgb(88 28 135 / 0.2) var(--tw-gradient-from-position);
+  --tw-gradient-to: rgb(88 28 135 / 0) var(--tw-gradient-to-position);
+  --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to);
+}
+.from-transparent {
+  --tw-gradient-from: transparent var(--tw-gradient-from-position);
+  --tw-gradient-to: rgb(0 0 0 / 0) var(--tw-gradient-to-position);
+  --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to);
+}
+.via-emerald-500 {
+  --tw-gradient-to: rgb(16 185 129 / 0)  var(--tw-gradient-to-position);
+  --tw-gradient-stops: var(--tw-gradient-from), #10b981 var(--tw-gradient-via-position), var(--tw-gradient-to);
+}
+.via-fuchsia-500 {
+  --tw-gradient-to: rgb(217 70 239 / 0)  var(--tw-gradient-to-position);
+  --tw-gradient-stops: var(--tw-gradient-from), #d946ef var(--tw-gradient-via-position), var(--tw-gradient-to);
+}
+.to-cyan-900\/40 {
+  --tw-gradient-to: rgb(22 78 99 / 0.4) var(--tw-gradient-to-position);
+}
+.to-indigo-600 {
+  --tw-gradient-to: #4f46e5 var(--tw-gradient-to-position);
+}
+.to-transparent {
+  --tw-gradient-to: transparent var(--tw-gradient-to-position);
+}
+.p-10 {
+  padding: 2.5rem;
+}
+.p-12 {
+  padding: 3rem;
+}
+.p-4 {
+  padding: 1rem;
+}
+.p-6 {
+  padding: 1.5rem;
+}
+.p-8 {
+  padding: 2rem;
+}
+.px-2 {
+  padding-left: 0.5rem;
+  padding-right: 0.5rem;
+}
+.px-3 {
+  padding-left: 0.75rem;
+  padding-right: 0.75rem;
+}
+.px-4 {
+  padding-left: 1rem;
+  padding-right: 1rem;
+}
+.px-6 {
+  padding-left: 1.5rem;
+  padding-right: 1.5rem;
+}
+.py-1 {
+  padding-top: 0.25rem;
+  padding-bottom: 0.25rem;
+}
+.py-2 {
+  padding-top: 0.5rem;
+  padding-bottom: 0.5rem;
+}
+.py-3 {
+  padding-top: 0.75rem;
+  padding-bottom: 0.75rem;
+}
+.pb-4 {
+  padding-bottom: 1rem;
+}
+.pt-4 {
+  padding-top: 1rem;
+}
+.pt-6 {
+  padding-top: 1.5rem;
+}
+.pt-8 {
+  padding-top: 2rem;
+}
+.text-left {
+  text-align: left;
+}
+.text-center {
+  text-align: center;
+}
+.font-mono {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+}
+.text-2xl {
+  font-size: 1.5rem;
+  line-height: 2rem;
+}
+.text-3xl {
+  font-size: 1.875rem;
+  line-height: 2.25rem;
+}
+.text-4xl {
+  font-size: 2.25rem;
+  line-height: 2.5rem;
+}
+.text-5xl {
+  font-size: 3rem;
+  line-height: 1;
+}
+.text-6xl {
+  font-size: 3.75rem;
+  line-height: 1;
+}
+.text-9xl {
+  font-size: 8rem;
+  line-height: 1;
+}
+.text-base {
+  font-size: 1rem;
+  line-height: 1.5rem;
+}
+.text-lg {
+  font-size: 1.125rem;
+  line-height: 1.75rem;
+}
+.text-sm {
+  font-size: 0.875rem;
+  line-height: 1.25rem;
+}
+.text-xl {
+  font-size: 1.25rem;
+  line-height: 1.75rem;
+}
+.text-xs {
+  font-size: 0.75rem;
+  line-height: 1rem;
+}
+.font-bold {
+  font-weight: 700;
+}
+.font-light {
+  font-weight: 300;
+}
+.font-medium {
+  font-weight: 500;
+}
+.uppercase {
+  text-transform: uppercase;
+}
+.italic {
+  font-style: italic;
+}
+.leading-\[1\.1\] {
+  line-height: 1.1;
+}
+.leading-relaxed {
+  line-height: 1.625;
+}
+.leading-tight {
+  line-height: 1.25;
+}
+.tracking-\[0\.2em\] {
+  letter-spacing: 0.2em;
+}
+.tracking-\[0\.3em\] {
+  letter-spacing: 0.3em;
+}
+.tracking-widest {
+  letter-spacing: 0.1em;
+}
+.text-amber-400 {
+  --tw-text-opacity: 1;
+  color: rgb(251 191 36 / var(--tw-text-opacity, 1));
+}
+.text-amber-500\/60 {
+  color: rgb(245 158 11 / 0.6);
+}
+.text-cyan-200 {
+  --tw-text-opacity: 1;
+  color: rgb(165 243 252 / var(--tw-text-opacity, 1));
+}
+.text-cyan-300 {
+  --tw-text-opacity: 1;
+  color: rgb(103 232 249 / var(--tw-text-opacity, 1));
+}
+.text-cyan-400 {
+  --tw-text-opacity: 1;
+  color: rgb(34 211 238 / var(--tw-text-opacity, 1));
+}
+.text-emerald-100\/70 {
+  color: rgb(209 250 229 / 0.7);
+}
+.text-emerald-100\/80 {
+  color: rgb(209 250 229 / 0.8);
+}
+.text-emerald-300 {
+  --tw-text-opacity: 1;
+  color: rgb(110 231 183 / var(--tw-text-opacity, 1));
+}
+.text-emerald-400 {
+  --tw-text-opacity: 1;
+  color: rgb(52 211 153 / var(--tw-text-opacity, 1));
+}
+.text-emerald-500 {
+  --tw-text-opacity: 1;
+  color: rgb(16 185 129 / var(--tw-text-opacity, 1));
+}
+.text-fuchsia-300 {
+  --tw-text-opacity: 1;
+  color: rgb(240 171 252 / var(--tw-text-opacity, 1));
+}
+.text-fuchsia-400 {
+  --tw-text-opacity: 1;
+  color: rgb(232 121 249 / var(--tw-text-opacity, 1));
+}
+.text-gray-200 {
+  --tw-text-opacity: 1;
+  color: rgb(229 231 235 / var(--tw-text-opacity, 1));
+}
+.text-gray-300 {
+  --tw-text-opacity: 1;
+  color: rgb(209 213 219 / var(--tw-text-opacity, 1));
+}
+.text-gray-400 {
+  --tw-text-opacity: 1;
+  color: rgb(156 163 175 / var(--tw-text-opacity, 1));
+}
+.text-gray-500 {
+  --tw-text-opacity: 1;
+  color: rgb(107 114 128 / var(--tw-text-opacity, 1));
+}
+.text-purple-100 {
+  --tw-text-opacity: 1;
+  color: rgb(243 232 255 / var(--tw-text-opacity, 1));
+}
+.text-purple-100\/90 {
+  color: rgb(243 232 255 / 0.9);
+}
+.text-purple-200 {
+  --tw-text-opacity: 1;
+  color: rgb(233 213 255 / var(--tw-text-opacity, 1));
+}
+.text-purple-300 {
+  --tw-text-opacity: 1;
+  color: rgb(216 180 254 / var(--tw-text-opacity, 1));
+}
+.text-purple-400 {
+  --tw-text-opacity: 1;
+  color: rgb(192 132 252 / var(--tw-text-opacity, 1));
+}
+.text-purple-500 {
+  --tw-text-opacity: 1;
+  color: rgb(168 85 247 / var(--tw-text-opacity, 1));
+}
+.text-purple-500\/60 {
+  color: rgb(168 85 247 / 0.6);
+}
+.text-white {
+  --tw-text-opacity: 1;
+  color: rgb(255 255 255 / var(--tw-text-opacity, 1));
+}
+.text-yellow-300 {
+  --tw-text-opacity: 1;
+  color: rgb(253 224 71 / var(--tw-text-opacity, 1));
+}
+.text-yellow-400 {
+  --tw-text-opacity: 1;
+  color: rgb(250 204 21 / var(--tw-text-opacity, 1));
+}
+.text-yellow-500 {
+  --tw-text-opacity: 1;
+  color: rgb(234 179 8 / var(--tw-text-opacity, 1));
+}
+.antialiased {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+.opacity-0 {
+  opacity: 0;
+}
+.opacity-30 {
+  opacity: 0.3;
+}
+.opacity-50 {
+  opacity: 0.5;
+}
+.opacity-80 {
+  opacity: 0.8;
+}
+.mix-blend-screen {
+  mix-blend-mode: screen;
+}
+.shadow-\[0_0_15px_rgba\(250\2c 204\2c 21\2c 0\.8\)\] {
+  --tw-shadow: 0 0 15px rgba(250,204,21,0.8);
+  --tw-shadow-colored: 0 0 15px var(--tw-shadow-color);
+  box-shadow: var(--tw-ring-offset-shadow, 0 0 #0000), var(--tw-ring-shadow, 0 0 #0000), var(--tw-shadow);
+}
+.shadow-\[0_0_20px_rgba\(168\2c 85\2c 247\2c 0\.4\)\] {
+  --tw-shadow: 0 0 20px rgba(168,85,247,0.4);
+  --tw-shadow-colored: 0 0 20px var(--tw-shadow-color);
+  box-shadow: var(--tw-ring-offset-shadow, 0 0 #0000), var(--tw-ring-shadow, 0 0 #0000), var(--tw-shadow);
+}
+.shadow-\[0_0_30px_rgba\(250\2c 204\2c 21\2c 0\.2\)\] {
+  --tw-shadow: 0 0 30px rgba(250,204,21,0.2);
+  --tw-shadow-colored: 0 0 30px var(--tw-shadow-color);
+  box-shadow: var(--tw-ring-offset-shadow, 0 0 #0000), var(--tw-ring-shadow, 0 0 #0000), var(--tw-shadow);
+}
+.shadow-\[0_0_40px_-10px_rgba\(16\2c 185\2c 129\2c 0\.5\)\] {
+  --tw-shadow: 0 0 40px -10px rgba(16,185,129,0.5);
+  --tw-shadow-colored: 0 0 40px -10px var(--tw-shadow-color);
+  box-shadow: var(--tw-ring-offset-shadow, 0 0 #0000), var(--tw-ring-shadow, 0 0 #0000), var(--tw-shadow);
+}
+.shadow-\[0_20px_40px_-10px_rgba\(168\2c 85\2c 247\2c 0\.2\)\] {
+  --tw-shadow: 0 20px 40px -10px rgba(168,85,247,0.2);
+  --tw-shadow-colored: 0 20px 40px -10px var(--tw-shadow-color);
+  box-shadow: var(--tw-ring-offset-shadow, 0 0 #0000), var(--tw-ring-shadow, 0 0 #0000), var(--tw-shadow);
+}
+.shadow-lg {
+  --tw-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+  --tw-shadow-colored: 0 10px 15px -3px var(--tw-shadow-color), 0 4px 6px -4px var(--tw-shadow-color);
+  box-shadow: var(--tw-ring-offset-shadow, 0 0 #0000), var(--tw-ring-shadow, 0 0 #0000), var(--tw-shadow);
+}
+.blur {
+  --tw-blur: blur(8px);
+  filter: var(--tw-blur) var(--tw-brightness) var(--tw-contrast) var(--tw-grayscale) var(--tw-hue-rotate) var(--tw-invert) var(--tw-saturate) var(--tw-sepia) var(--tw-drop-shadow);
+}
+.blur-\[40px\] {
+  --tw-blur: blur(40px);
+  filter: var(--tw-blur) var(--tw-brightness) var(--tw-contrast) var(--tw-grayscale) var(--tw-hue-rotate) var(--tw-invert) var(--tw-saturate) var(--tw-sepia) var(--tw-drop-shadow);
+}
+.blur-\[50px\] {
+  --tw-blur: blur(50px);
+  filter: var(--tw-blur) var(--tw-brightness) var(--tw-contrast) var(--tw-grayscale) var(--tw-hue-rotate) var(--tw-invert) var(--tw-saturate) var(--tw-sepia) var(--tw-drop-shadow);
+}
+.blur-\[60px\] {
+  --tw-blur: blur(60px);
+  filter: var(--tw-blur) var(--tw-brightness) var(--tw-contrast) var(--tw-grayscale) var(--tw-hue-rotate) var(--tw-invert) var(--tw-saturate) var(--tw-sepia) var(--tw-drop-shadow);
+}
+.blur-\[80px\] {
+  --tw-blur: blur(80px);
+  filter: var(--tw-blur) var(--tw-brightness) var(--tw-contrast) var(--tw-grayscale) var(--tw-hue-rotate) var(--tw-invert) var(--tw-saturate) var(--tw-sepia) var(--tw-drop-shadow);
+}
+.drop-shadow-2xl {
+  --tw-drop-shadow: drop-shadow(0 25px 25px rgb(0 0 0 / 0.15));
+  filter: var(--tw-blur) var(--tw-brightness) var(--tw-contrast) var(--tw-grayscale) var(--tw-hue-rotate) var(--tw-invert) var(--tw-saturate) var(--tw-sepia) var(--tw-drop-shadow);
+}
+.filter {
+  filter: var(--tw-blur) var(--tw-brightness) var(--tw-contrast) var(--tw-grayscale) var(--tw-hue-rotate) var(--tw-invert) var(--tw-saturate) var(--tw-sepia) var(--tw-drop-shadow);
+}
+.backdrop-filter {
+  -webkit-backdrop-filter: var(--tw-backdrop-blur) var(--tw-backdrop-brightness) var(--tw-backdrop-contrast) var(--tw-backdrop-grayscale) var(--tw-backdrop-hue-rotate) var(--tw-backdrop-invert) var(--tw-backdrop-opacity) var(--tw-backdrop-saturate) var(--tw-backdrop-sepia);
+  backdrop-filter: var(--tw-backdrop-blur) var(--tw-backdrop-brightness) var(--tw-backdrop-contrast) var(--tw-backdrop-grayscale) var(--tw-backdrop-hue-rotate) var(--tw-backdrop-invert) var(--tw-backdrop-opacity) var(--tw-backdrop-saturate) var(--tw-backdrop-sepia);
+}
+.transition {
+  transition-property: color, background-color, border-color, text-decoration-color, fill, stroke, opacity, box-shadow, transform, filter, backdrop-filter;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  transition-duration: 150ms;
+}
+.transition-all {
+  transition-property: all;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  transition-duration: 150ms;
+}
+.transition-colors {
+  transition-property: color, background-color, border-color, text-decoration-color, fill, stroke;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  transition-duration: 150ms;
+}
+.transition-transform {
+  transition-property: transform;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  transition-duration: 150ms;
+}
+.duration-500 {
+  transition-duration: 500ms;
+}
+.ease-in-out {
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+}
+.selection\:bg-purple-600 *::selection {
+  --tw-bg-opacity: 1;
+  background-color: rgb(147 51 234 / var(--tw-bg-opacity, 1));
+}
+.selection\:text-white *::selection {
+  --tw-text-opacity: 1;
+  color: rgb(255 255 255 / var(--tw-text-opacity, 1));
+}
+.selection\:bg-purple-600::selection {
+  --tw-bg-opacity: 1;
+  background-color: rgb(147 51 234 / var(--tw-bg-opacity, 1));
+}
+.selection\:text-white::selection {
+  --tw-text-opacity: 1;
+  color: rgb(255 255 255 / var(--tw-text-opacity, 1));
+}
+.hover\:border-fuchsia-500\/50:hover {
+  border-color: rgb(217 70 239 / 0.5);
+}
+.group:hover .group-hover\:scale-110 {
+  --tw-scale-x: 1.1;
+  --tw-scale-y: 1.1;
+  transform: translate(var(--tw-translate-x), var(--tw-translate-y)) rotate(var(--tw-rotate)) skewX(var(--tw-skew-x)) skewY(var(--tw-skew-y)) scaleX(var(--tw-scale-x)) scaleY(var(--tw-scale-y));
+}
+.group:hover .group-hover\:bg-amber-500\/20 {
+  background-color: rgb(245 158 11 / 0.2);
+}
+.group:hover .group-hover\:bg-purple-500\/20 {
+  background-color: rgb(168 85 247 / 0.2);
+}
+@media (min-width: 768px) {
+
+  .md\:col-span-5 {
+    grid-column: span 5 / span 5;
+  }
+
+  .md\:col-span-7 {
+    grid-column: span 7 / span 7;
+  }
+
+  .md\:translate-y-8 {
+    --tw-translate-y: 2rem;
+    transform: translate(var(--tw-translate-x), var(--tw-translate-y)) rotate(var(--tw-rotate)) skewX(var(--tw-skew-x)) skewY(var(--tw-skew-y)) scaleX(var(--tw-scale-x)) scaleY(var(--tw-scale-y));
+  }
+
+  .md\:grid-cols-12 {
+    grid-template-columns: repeat(12, minmax(0, 1fr));
+  }
+
+  .md\:grid-cols-2 {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .md\:grid-cols-3 {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .md\:flex-row {
+    flex-direction: row;
+  }
+
+  .md\:gap-8 {
+    gap: 2rem;
+  }
+
+  .md\:p-16 {
+    padding: 4rem;
+  }
+
+  .md\:text-2xl {
+    font-size: 1.5rem;
+    line-height: 2rem;
+  }
+
+  .md\:text-3xl {
+    font-size: 1.875rem;
+    line-height: 2.25rem;
+  }
+
+  .md\:text-4xl {
+    font-size: 2.25rem;
+    line-height: 2.5rem;
+  }
+
+  .md\:text-6xl {
+    font-size: 3.75rem;
+    line-height: 1;
+  }
+
+  .md\:text-7xl {
+    font-size: 4.5rem;
+    line-height: 1;
+  }
+}
+@media (min-width: 1024px) {
+
+  .lg\:text-8xl {
+    font-size: 6rem;
+    line-height: 1;
+  }
+}* {
+      -ms-overflow-style: none !important;
+      scrollbar-width: none !important;
+    }
+
+    *::-webkit-scrollbar {
+      display: none !important;
+      width: 0 !important;
+      height: 0 !important;
+    }
+  </style></head>
+<body class="selection:bg-purple-600 selection:text-white antialiased text-base" vid="11">
+
+    <div id="star-container" class="stars" vid="12"></div>
+
+    <div id="page-presentation" class="w-full h-full" vid="13">
+        <div id="ambient-1" class="ambient-glow w-[800px] h-[800px] top-[-20%] left-[-10%] bg-purple-900/30 mix-blend-screen" vid="14"></div>
+        <div id="ambient-2" class="ambient-glow w-[600px] h-[600px] bottom-[-10%] right-[-10%] bg-indigo-900/20 mix-blend-screen" vid="15"></div>
+
+        <div class="fixed top-6 left-8 z-50 flex items-center gap-3" vid="16">
+            <div class="relative" vid="17">
+                <i class="ph-fill ph-sparkle text-purple-400 text-2xl" vid="18"></i>
+                <i class="ph-fill ph-star-four text-yellow-300 text-xs absolute -top-1 -right-2 animate-pulse" vid="19"></i>
+            </div>
+            <span class="font-magical text-xl text-white tracking-widest opacity-80 uppercase text-sm" vid="20">Event Alchemy</span>
+        </div>
+
+        <button id="btn-prev" class="nav-btn nav-prev" aria-label="Previous Slide" vid="21">
+            <i class="ph-bold ph-caret-left text-xl" vid="22"></i>
+        </button>
+        <button id="btn-next" class="nav-btn nav-next" aria-label="Next Slide" vid="23">
+            <i class="ph-bold ph-caret-right text-xl" vid="24"></i>
+        </button>
+
+        <div class="presentation-controls" vid="25">
+            <div class="dots-container" id="dots-container" vid="26"></div>
+            <div class="w-px h-4 bg-white/20" vid="27"></div>
+            <div class="slide-counter" id="slide-counter" vid="28">1 / 10</div>
+        </div>
+
+        <main id="slides-container" class="relative w-full h-full" vid="29">
+
+            
+            <section class="slide active" data-ambient="bg-purple-900/30,bg-indigo-900/20" vid="30">
+                <div class="content-container items-center text-center" vid="31">
+                    <div class="mb-8 relative inline-block float" vid="32">
+                        <div class="absolute -inset-2 bg-gradient-to-r from-purple-600 via-fuchsia-500 to-indigo-600 rounded-full blur opacity-30" vid="33"></div>
+                        <div class="relative px-6 py-2 bg-[#0a0520] rounded-full border border-purple-500/30 text-purple-200 text-xs font-medium uppercase tracking-[0.2em] flex items-center gap-2" vid="34">
+                            <i class="ph-fill ph-target text-yellow-400" vid="35"></i> Framing the Goal
+                        </div>
+                    </div>
+                    <h1 class="font-magical text-6xl md:text-7xl lg:text-8xl mb-8 leading-[1.1] drop-shadow-2xl" vid="36">
+                        <span class="text-white block" vid="37">Measuring Impact</span>
+                        <span class="text-gradient-gold block mt-2" vid="38">Beyond Attendance</span>
+                    </h1>
+                    <p class="font-serif-heading text-2xl md:text-3xl text-purple-100/90 max-w-4xl mx-auto leading-relaxed font-light italic mt-4 mb-12" vid="39">
+                        "Ribbon cutting events are not just moments. They are entry points into awareness, trust, and participation."
+                    </p>
+                    
+                    <div class="glass-panel p-8 rounded-3xl max-w-3xl mx-auto border-t-2 border-t-purple-500/50 shadow-[0_20px_40px_-10px_rgba(168,85,247,0.2)]" vid="40">
+                        <p class="text-purple-300 text-sm uppercase tracking-widest mb-6 font-bold" vid="41">This measurement approach focuses on:</p>
+                        <div class="grid grid-cols-2 gap-6 text-left" vid="42">
+                            <div class="flex items-center gap-4" vid="43">
+                                <div class="w-10 h-10 rounded-full bg-purple-900/50 flex items-center justify-center border border-purple-500/30" vid="44">
+                                    <i class="ph-fill ph-users text-purple-300" vid="45"></i>
+                                </div>
+                                <span class="text-lg text-gray-200" vid="46">Who shows up</span>
+                            </div>
+                            <div class="flex items-center gap-4" vid="47">
+                                <div class="w-10 h-10 rounded-full bg-purple-900/50 flex items-center justify-center border border-purple-500/30" vid="48">
+                                    <i class="ph-fill ph-compass text-purple-300" vid="49"></i>
+                                </div>
+                                <span class="text-lg text-gray-200" vid="50">How they found you</span>
+                            </div>
+                            <div class="flex items-center gap-4" vid="51">
+                                <div class="w-10 h-10 rounded-full bg-purple-900/50 flex items-center justify-center border border-purple-500/30" vid="52">
+                                    <i class="ph-fill ph-person-simple-walk text-purple-300" vid="53"></i>
+                                </div>
+                                <span class="text-lg text-gray-200" vid="54">What they do next</span>
+                            </div>
+                            <div class="flex items-center gap-4" vid="55">
+                                <div class="w-10 h-10 rounded-full bg-purple-900/50 flex items-center justify-center border border-purple-500/30" vid="56">
+                                    <i class="ph-fill ph-waves text-purple-300" vid="57"></i>
+                                </div>
+                                <span class="text-lg text-gray-200" vid="58">How far the impact travels</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            
+            <section class="slide" data-ambient="bg-cyan-900/20,bg-purple-900/20" vid="59">
+                <div class="content-container" vid="60">
+                    <div class="flex items-center gap-4 mb-12" vid="61">
+                        <span class="h-px w-12 bg-cyan-500" vid="62"></span>
+                        <h2 class="font-magical text-4xl text-white uppercase tracking-widest" vid="63">Core Success Metrics</h2>
+                    </div>
+                    
+                    <div class="grid md:grid-cols-2 gap-8 h-full" vid="64">
+                        <div class="glass-card glow-border-cyan p-10 rounded-3xl flex flex-col border-t-2 border-t-cyan-500/40 relative" vid="65">
+                            <div class="absolute top-0 right-0 w-32 h-32 bg-cyan-600/10 blur-[40px] rounded-full" vid="66"></div>
+                            <h3 class="font-magical text-3xl text-white mb-2" vid="67">Baseline <span class="text-cyan-400" vid="68">+</span> Access</h3>
+                            <p class="font-serif-heading text-gray-400 italic mb-8" vid="69">Establishing the foundational metrics of presence.</p>
+                            
+                            <div class="space-y-6" vid="70">
+                                <div class="glass-panel p-6 rounded-2xl flex items-center gap-6" vid="71">
+                                    <i class="ph-duotone ph-users-three text-4xl text-cyan-300" vid="72"></i>
+                                    <div vid="73">
+                                        <div class="text-white text-xl font-medium mb-1" vid="74">Total Attendees</div>
+                                        <div class="text-sm text-gray-400" vid="75">Absolute volume of physical presence.</div>
+                                    </div>
+                                </div>
+                                <div class="glass-panel p-6 rounded-2xl flex items-center gap-6" vid="76">
+                                    <i class="ph-duotone ph-map-pin text-4xl text-cyan-300" vid="77"></i>
+                                    <div vid="78">
+                                        <div class="text-white text-xl font-medium mb-1" vid="79">% from Immediate Geography</div>
+                                        <div class="text-sm text-gray-400" vid="80">Captured via simple zip code entry.</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="glass-card glow-border-purple p-10 rounded-3xl flex flex-col border-t-2 border-t-purple-500/40 relative transform md:translate-y-8" vid="81">
+                            <div class="absolute top-0 right-0 w-32 h-32 bg-purple-600/10 blur-[40px] rounded-full" vid="82"></div>
+                            <h3 class="font-magical text-3xl text-white mb-2" vid="83">Access Pathways</h3>
+                            <p class="font-serif-heading text-purple-300 italic mb-8" vid="84">The Key Insight Layer: "How did you hear about this?"</p>
+                            
+                            <ul class="space-y-5 flex-grow" vid="85">
+                                <li class="flex items-start gap-4" vid="86">
+                                    <div class="w-8 h-8 rounded-full bg-purple-500/20 flex items-center justify-center shrink-0 mt-1" vid="87">
+                                        <i class="ph-bold ph-signpost text-purple-400" vid="88"></i>
+                                    </div>
+                                    <div vid="89">
+                                        <strong class="text-gray-200 block" vid="90">Physical</strong>
+                                        <span class="text-sm text-gray-400" vid="91">Lawn signs / on-site signage</span>
+                                    </div>
+                                </li>
+                                <li class="flex items-start gap-4" vid="92">
+                                    <div class="w-8 h-8 rounded-full bg-purple-500/20 flex items-center justify-center shrink-0 mt-1" vid="93">
+                                        <i class="ph-bold ph-chats text-purple-400" vid="94"></i>
+                                    </div>
+                                    <div vid="95">
+                                        <strong class="text-gray-200 block" vid="96">Social</strong>
+                                        <span class="text-sm text-gray-400" vid="97">Word of mouth / personal network</span>
+                                    </div>
+                                </li>
+                                <li class="flex items-start gap-4" vid="98">
+                                    <div class="w-8 h-8 rounded-full bg-purple-500/20 flex items-center justify-center shrink-0 mt-1" vid="99">
+                                        <i class="ph-bold ph-device-mobile text-purple-400" vid="100"></i>
+                                    </div>
+                                    <div vid="101">
+                                        <strong class="text-gray-200 block" vid="102">Digital</strong>
+                                        <span class="text-sm text-gray-400" vid="103">Email, social media, paid ads</span>
+                                    </div>
+                                </li>
+                            </ul>
+                            
+                            <div class="mt-6 p-4 bg-purple-900/30 rounded-xl border border-purple-500/20 flex items-start gap-3" vid="104">
+                                <i class="ph-fill ph-arrow-circle-right text-purple-400 mt-1" vid="105"></i>
+                                <p class="text-sm text-purple-100 italic" vid="106">This creates a clearer picture of who your outreach is actually reaching.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            
+            <section class="slide" data-ambient="bg-emerald-900/20,bg-yellow-900/20" vid="107">
+                <div class="content-container" vid="108">
+                    <div class="text-center mb-16" vid="109">
+                        <span class="text-emerald-400 uppercase tracking-[0.3em] text-xs font-bold mb-3 block" vid="110">Expanding the Idea</span>
+                        <h2 class="font-magical text-5xl md:text-6xl text-white mb-6" vid="111">Physical Visibility as a <span class="text-gradient-emerald" vid="112">Measurable Channel</span></h2>
+                        <div class="w-24 h-1 bg-gradient-to-r from-transparent via-emerald-500 to-transparent mx-auto opacity-50" vid="113"></div>
+                    </div>
+
+                    <div class="grid md:grid-cols-12 gap-12 items-center" vid="114">
+                        <div class="md:col-span-5 relative" vid="115">
+                            <div class="absolute inset-0 bg-emerald-500/20 blur-[80px] rounded-full" vid="116"></div>
+                            <div class="glass-card p-8 rounded-full aspect-square flex items-center justify-center border-4 border-emerald-500/30 relative z-10" vid="117">
+                                <i class="ph-duotone ph-map-trifold text-9xl text-emerald-400" vid="118"></i>
+                                <div class="absolute top-1/4 right-1/4 w-6 h-6 bg-yellow-400 rounded-full border-2 border-black shadow-[0_0_15px_rgba(250,204,21,0.8)] animate-pulse" vid="119"></div>
+                                <div class="absolute bottom-1/3 left-1/4 w-4 h-4 bg-yellow-400 rounded-full border-2 border-black shadow-[0_0_15px_rgba(250,204,21,0.8)] animate-pulse" style="animation-delay: 1s" vid="120"></div>
+                                <div class="absolute top-1/2 right-1/3 w-5 h-5 bg-yellow-400 rounded-full border-2 border-black shadow-[0_0_15px_rgba(250,204,21,0.8)] animate-pulse" style="animation-delay: 2s" vid="121"></div>
+                            </div>
+                        </div>
+                        
+                        <div class="md:col-span-7 space-y-8" vid="122">
+                            <div class="space-y-6" vid="123">
+                                <div class="flex items-start gap-4" vid="124">
+                                    <i class="ph-fill ph-check-circle text-emerald-400 text-2xl mt-1" vid="125"></i>
+                                    <div vid="126">
+                                        <h4 class="text-xl text-white font-magical mb-1" vid="127">Track Geographical Placements</h4>
+                                        <p class="text-gray-400" vid="128">Log where every lawn sign is distributed in the community.</p>
+                                    </div>
+                                </div>
+                                <div class="flex items-start gap-4" vid="129">
+                                    <i class="ph-fill ph-check-circle text-emerald-400 text-2xl mt-1" vid="130"></i>
+                                    <div vid="131">
+                                        <h4 class="text-xl text-white font-magical mb-1" vid="132">Create a Distribution Map</h4>
+                                        <p class="text-gray-400" vid="133">Visualize the physical spread of your message locally.</p>
+                                    </div>
+                                </div>
+                                <div class="flex items-start gap-4" vid="134">
+                                    <i class="ph-fill ph-check-circle text-emerald-400 text-2xl mt-1" vid="135"></i>
+                                    <div vid="136">
+                                        <h4 class="text-xl text-white font-magical mb-1" vid="137">Community Participation</h4>
+                                        <p class="text-gray-400" vid="138">Optional: Ask attendees to "Mark your sign on the map" to show how solar is spreading locally.</p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="glass-panel p-6 rounded-2xl border-l-4 border-l-yellow-400 mt-8" vid="139">
+                                <h4 class="text-yellow-400 text-sm uppercase tracking-widest font-bold mb-3" vid="140">The Outcome</h4>
+                                <ul class="space-y-2 text-gray-200" vid="141">
+                                    <li class="flex items-center gap-2" vid="142"><i class="ph-bold ph-caret-right text-yellow-500" vid="143"></i> Turns signage into a trackable access &amp; community signal.</li>
+                                    <li class="flex items-center gap-2" vid="144"><i class="ph-bold ph-caret-right text-yellow-500" vid="145"></i> Helps optimize future placement and outreach.</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            
+            <section class="slide" data-ambient="bg-fuchsia-900/20,bg-cyan-900/20" vid="146">
+                <div class="content-container" vid="147">
+                    <div class="flex items-center gap-4 mb-12 justify-center" vid="148">
+                        <span class="h-px w-12 bg-fuchsia-500" vid="149"></span>
+                        <h2 class="font-magical text-4xl text-white uppercase tracking-widest" vid="150">Engagement Tracking at the Event</h2>
+                        <span class="h-px w-12 bg-fuchsia-500" vid="151"></span>
+                    </div>
+
+                    <div class="text-center mb-12" vid="152">
+                        <div class="inline-flex items-center justify-center w-20 h-20 rounded-2xl bg-fuchsia-900/30 border border-fuchsia-500/50 mb-6" vid="153">
+                            <i class="ph-duotone ph-qr-code text-5xl text-fuchsia-400" vid="154"></i>
+                        </div>
+                        <h3 class="font-magical text-3xl text-white" vid="155">QR Code System</h3>
+                    </div>
+
+                    <div class="grid md:grid-cols-3 gap-6" vid="156">
+                        <div class="glass-card glow-border-fuchsia p-8 rounded-3xl border-t border-t-fuchsia-500/30" vid="157">
+                            <h4 class="text-fuchsia-300 font-bold uppercase tracking-widest text-sm mb-6 border-b border-white/10 pb-4" vid="158">Place Codes At</h4>
+                            <ul class="space-y-4 text-gray-300" vid="159">
+                                <li class="flex items-center gap-3" vid="160"><i class="ph-fill ph-door text-fuchsia-400 text-xl" vid="161"></i> Entry points</li>
+                                <li class="flex items-center gap-3" vid="162"><i class="ph-fill ph-info text-fuchsia-400 text-xl" vid="163"></i> Key info stations</li>
+                                <li class="flex items-center gap-3" vid="164"><i class="ph-fill ph-camera text-fuchsia-400 text-xl" vid="165"></i> Photo moments</li>
+                            </ul>
+                        </div>
+                        
+                        <div class="glass-card glow-border-cyan p-8 rounded-3xl border-t border-t-cyan-500/30" vid="166">
+                            <h4 class="text-cyan-300 font-bold uppercase tracking-widest text-sm mb-6 border-b border-white/10 pb-4" vid="167">Use Them For</h4>
+                            <ul class="space-y-4 text-gray-300" vid="168">
+                                <li class="flex items-center gap-3" vid="169"><i class="ph-fill ph-folder text-cyan-400 text-xl" vid="170"></i> Resource access</li>
+                                <li class="flex items-center gap-3" vid="171"><i class="ph-fill ph-hand-tap text-cyan-400 text-xl" vid="172"></i> Participation prompts</li>
+                                <li class="flex items-center gap-3" vid="173"><i class="ph-fill ph-share-network text-cyan-400 text-xl" vid="174"></i> Social sharing <span class="text-xs text-gray-500 ml-1" vid="175">(optional incentive)</span></li>
+                            </ul>
+                        </div>
+
+                        <div class="glass-card glow-border-purple p-8 rounded-3xl border-t border-t-purple-500/30 bg-purple-900/10" vid="176">
+                            <h4 class="text-purple-300 font-bold uppercase tracking-widest text-sm mb-6 border-b border-white/10 pb-4" vid="177">Measure Results</h4>
+                            <ul class="space-y-4 text-gray-300" vid="178">
+                                <li class="flex items-start gap-3" vid="179">
+                                    <i class="ph-fill ph-chart-line-up text-purple-400 text-xl mt-1" vid="180"></i> 
+                                    <span vid="181">QR scans by location or purpose</span>
+                                </li>
+                                <li class="flex items-start gap-3" vid="182">
+                                    <i class="ph-fill ph-target text-purple-400 text-xl mt-1" vid="183"></i> 
+                                    <span vid="184">Identify which touchpoints drive most interaction</span>
+                                </li>
+                            </ul>
+                            <div class="mt-6 pt-4 border-t border-purple-500/30 text-xs text-purple-200 italic" vid="185">
+                                👉 Identify which strategy drives engagement → repeat and scale
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            
+            <section class="slide" data-ambient="bg-amber-900/20,bg-orange-900/20" vid="186">
+                <div class="content-container" vid="187">
+                    <div class="text-center mb-16" vid="188">
+                        <span class="text-amber-400 uppercase tracking-[0.3em] text-xs font-bold mb-3 block" vid="189">Post-Event Behavior</span>
+                        <h2 class="font-magical text-5xl md:text-6xl text-white mb-6" vid="190">Where Impact <span class="text-gradient-gold" vid="191">Shows Up</span></h2>
+                    </div>
+
+                    <div class="grid md:grid-cols-2 gap-10" vid="192">
+                        <div class="glass-card p-10 rounded-[2.5rem] border-l-4 border-l-amber-500 bg-gradient-to-r from-amber-500/5 to-transparent relative overflow-hidden group" vid="193">
+                            <div class="absolute top-0 right-0 w-40 h-40 bg-amber-600/10 blur-[50px] rounded-full group-hover:bg-amber-500/20 transition-all duration-500" vid="194"></div>
+                            <div class="flex items-center gap-4 mb-8 relative z-10" vid="195">
+                                <div class="w-14 h-14 rounded-2xl bg-amber-950/50 border border-amber-500/30 flex items-center justify-center" vid="196">
+                                    <i class="ph-duotone ph-lightning text-3xl text-amber-400" vid="197"></i>
+                                </div>
+                                <h3 class="font-magical text-2xl text-white" vid="198">Immediate Signals</h3>
+                                <span class="ml-auto text-xs font-mono text-amber-500/60 border border-amber-500/20 px-2 py-1 rounded-md" vid="199">48–72 HOURS</span>
+                            </div>
+                            
+                            <ul class="space-y-6 relative z-10" vid="200">
+                                <li class="flex items-start gap-4" vid="201">
+                                    <i class="ph-fill ph-mouse-left text-amber-400 text-xl mt-1" vid="202"></i>
+                                    <div vid="203">
+                                        <div class="text-gray-200 font-medium" vid="204">Direct Traffic</div>
+                                        <div class="text-sm text-gray-500" vid="205">Visits to the specific event landing page.</div>
+                                    </div>
+                                </li>
+                                <li class="flex items-start gap-4" vid="206">
+                                    <i class="ph-fill ph-magnifying-glass text-amber-400 text-xl mt-1" vid="207"></i>
+                                    <div vid="208">
+                                        <div class="text-gray-200 font-medium" vid="209">Search Increases</div>
+                                        <div class="text-sm text-gray-500" vid="210">Spikes in brand or topic-related search terms.</div>
+                                    </div>
+                                </li>
+                                <li class="flex items-start gap-4" vid="211">
+                                    <i class="ph-fill ph-bookmark-simple text-amber-400 text-xl mt-1" vid="212"></i>
+                                    <div vid="213">
+                                        <div class="text-gray-200 font-medium" vid="214">Social Action</div>
+                                        <div class="text-sm text-gray-500" vid="215">Saves and shares of event-related posts.</div>
+                                    </div>
+                                </li>
+                            </ul>
+                        </div>
+
+                        <div class="glass-card p-10 rounded-[2.5rem] border-l-4 border-l-purple-500 bg-gradient-to-r from-purple-500/5 to-transparent relative overflow-hidden group" vid="216">
+                            <div class="absolute top-0 right-0 w-40 h-40 bg-purple-600/10 blur-[50px] rounded-full group-hover:bg-purple-500/20 transition-all duration-500" vid="217"></div>
+                            <div class="flex items-center gap-4 mb-8 relative z-10" vid="218">
+                                <div class="w-14 h-14 rounded-2xl bg-purple-950/50 border border-purple-500/30 flex items-center justify-center" vid="219">
+                                    <i class="ph-duotone ph-infinity text-3xl text-purple-400" vid="220"></i>
+                                </div>
+                                <h3 class="font-magical text-2xl text-white" vid="221">Ongoing Signals</h3>
+                                <span class="ml-auto text-xs font-mono text-purple-500/60 border border-purple-500/20 px-2 py-1 rounded-md" vid="222">LONG TERM</span>
+                            </div>
+                            
+                            <ul class="space-y-6 relative z-10" vid="223">
+                                <li class="flex items-start gap-4" vid="224">
+                                    <i class="ph-fill ph-envelope-open text-purple-400 text-xl mt-1" vid="225"></i>
+                                    <div vid="226">
+                                        <div class="text-gray-200 font-medium" vid="227">Email Open Rate</div>
+                                        <div class="text-sm text-gray-500" vid="228">Performance of event-related follow-up sends.</div>
+                                    </div>
+                                </li>
+                                <li class="flex items-start gap-4" vid="229">
+                                    <i class="ph-fill ph-cursor-click text-purple-400 text-xl mt-1" vid="230"></i>
+                                    <div vid="231">
+                                        <div class="text-gray-200 font-medium" vid="232">Click Rate</div>
+                                        <div class="text-sm text-gray-500" vid="233">Engagement with recap content and next steps.</div>
+                                    </div>
+                                </li>
+                            </ul>
+                            
+                            <div class="absolute bottom-10 left-10 right-10 pt-6 border-t border-purple-500/20 flex items-start gap-3" vid="234">
+                                <i class="ph-fill ph-arrow-circle-right text-purple-400 mt-1" vid="235"></i>
+                                <p class="text-sm text-purple-200 italic leading-relaxed" vid="236">This shows whether the event extends beyond the room and translates into lasting connection.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            
+            <section class="slide" data-ambient="bg-cyan-900/20,bg-emerald-900/20" vid="237">
+                <div class="content-container items-center" vid="238">
+                    <div class="text-center mb-12" vid="239">
+                        <span class="text-cyan-400 uppercase tracking-[0.3em] text-xs font-bold mb-3 block" vid="240">Digital Infrastructure</span>
+                        <h2 class="font-magical text-5xl text-white mb-4" vid="241">Event Landing Page Strategy</h2>
+                        <div class="inline-block px-4 py-1 rounded-full bg-cyan-900/40 border border-cyan-500/30 text-cyan-200 text-sm font-serif-heading italic" vid="242">
+                            Create a Dedicated Page for Every Event
+                        </div>
+                    </div>
+
+                    <div class="flex flex-col md:flex-row gap-12 items-center w-full max-w-5xl" vid="243">
+                        <div class="relative w-64 h-[500px] shrink-0" vid="244">
+                            <div class="absolute inset-0 bg-cyan-500/20 blur-[50px] rounded-[3rem]" vid="245"></div>
+                            <div class="glass-panel w-full h-full rounded-[2.5rem] border-4 border-cyan-500/30 relative z-10 flex flex-col items-center pt-8 overflow-hidden" vid="246">
+                                <div class="w-1/3 h-1 bg-cyan-500/50 rounded-full mb-8" vid="247"></div>
+                                <i class="ph-duotone ph-browser text-6xl text-cyan-400 mb-6" vid="248"></i>
+                                <div class="text-center px-4 w-full" vid="249">
+                                    <div class="h-4 bg-white/10 rounded-full w-3/4 mx-auto mb-3" vid="250"></div>
+                                    <div class="h-3 bg-white/5 rounded-full w-full mb-2" vid="251"></div>
+                                    <div class="h-3 bg-white/5 rounded-full w-5/6 mx-auto mb-8" vid="252"></div>
+                                    
+                                    <div class="grid grid-cols-2 gap-2 mb-4 w-full" vid="253">
+                                        <div class="h-16 bg-cyan-500/10 rounded-xl border border-cyan-500/20" vid="254"></div>
+                                        <div class="h-16 bg-cyan-500/10 rounded-xl border border-cyan-500/20" vid="255"></div>
+                                    </div>
+                                    <div class="h-10 bg-emerald-500/20 rounded-xl border border-emerald-500/30 w-full mt-auto absolute bottom-8 left-1/2 -translate-x-1/2 w-[80%]" vid="256"></div>
+                                </div>
+                            </div>
+                            <div class="absolute -right-6 top-1/4 glass-panel px-4 py-2 rounded-lg text-xs font-bold text-cyan-300 border border-cyan-500/40 z-20 whitespace-nowrap shadow-lg" vid="257">
+                                Mobile-First Design
+                            </div>
+                        </div>
+
+                        <div class="flex-1 space-y-8" vid="258">
+                            <p class="text-xl text-gray-300 font-light leading-relaxed" vid="259">
+                                Designed for dual purpose: <strong class="text-white" vid="260">promotion</strong> before the event and <strong class="text-white" vid="261">engagement + tracking</strong> after.
+                            </p>
+                            
+                            <div class="grid grid-cols-2 gap-4" vid="262">
+                                <div class="glass-card p-4 rounded-xl flex items-center gap-3" vid="263">
+                                    <i class="ph-fill ph-check-circle text-cyan-400" vid="264"></i>
+                                    <span class="text-sm text-gray-200" vid="265">Event details &amp; location</span>
+                                </div>
+                                <div class="glass-card p-4 rounded-xl flex items-center gap-3" vid="266">
+                                    <i class="ph-fill ph-check-circle text-cyan-400" vid="267"></i>
+                                    <span class="text-sm text-gray-200" vid="268">Ways to get involved</span>
+                                </div>
+                                <div class="glass-card p-4 rounded-xl flex items-center gap-3" vid="269">
+                                    <i class="ph-fill ph-check-circle text-cyan-400" vid="270"></i>
+                                    <span class="text-sm text-gray-200" vid="271">QR-linked actions</span>
+                                </div>
+                                <div class="glass-card p-4 rounded-xl flex items-center gap-3" vid="272">
+                                    <i class="ph-fill ph-check-circle text-cyan-400" vid="273"></i>
+                                    <span class="text-sm text-gray-200" vid="274">Post-event recap content</span>
+                                </div>
+                            </div>
+
+                            <div class="p-6 bg-gradient-to-r from-emerald-900/40 to-cyan-900/40 rounded-2xl border border-emerald-500/30" vid="275">
+                                <h4 class="font-magical text-emerald-300 text-lg mb-3" vid="276">System Outcomes</h4>
+                                <ul class="flex flex-wrap gap-4 text-sm font-medium text-emerald-100/80" vid="277">
+                                    <li class="bg-black/30 px-3 py-1 rounded-full" vid="278"><i class="ph-bold ph-trend-up mr-1" vid="279"></i> Stronger promotion</li>
+                                    <li class="bg-black/30 px-3 py-1 rounded-full" vid="280"><i class="ph-bold ph-crosshair mr-1" vid="281"></i> Centralized tracking</li>
+                                    <li class="bg-black/30 px-3 py-1 rounded-full" vid="282"><i class="ph-bold ph-arrows-clockwise mr-1" vid="283"></i> Reusable system</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            
+            <section class="slide" data-ambient="bg-yellow-900/20,bg-amber-900/20" vid="284">
+                <div class="content-container" vid="285">
+                    <div class="glass-panel p-12 md:p-16 rounded-[3rem] border-t-4 border-t-yellow-400 relative overflow-hidden" vid="286">
+                        <div class="absolute top-0 right-0 w-64 h-64 bg-yellow-500/10 blur-[60px] rounded-full pointer-events-none" vid="287"></div>
+                        
+                        <div class="flex items-center gap-4 mb-8" vid="288">
+                            <div class="w-16 h-16 rounded-2xl bg-yellow-900/40 border border-yellow-500/40 flex items-center justify-center shadow-[0_0_30px_rgba(250,204,21,0.2)]" vid="289">
+                                <i class="ph-duotone ph-sun text-4xl text-yellow-400" vid="290"></i>
+                            </div>
+                            <div vid="291">
+                                <span class="text-yellow-400 uppercase tracking-widest text-xs font-bold block mb-1" vid="292">High-Intent Opportunity</span>
+                                <h2 class="font-magical text-4xl text-white" vid="293">Solar Maintenance</h2>
+                            </div>
+                        </div>
+
+                        <p class="text-xl text-gray-300 font-light mb-10 max-w-3xl" vid="294">
+                            Leverage existing search demand. Solar panel cleaning and maintenance is a <strong class="text-yellow-300 font-medium" vid="295">high-search topic</strong> that captures people already close to decision or ownership.
+                        </p>
+
+                        <div class="grid md:grid-cols-2 gap-8" vid="296">
+                            <div class="glass-card p-8 rounded-2xl bg-black/20 border-white/5" vid="297">
+                                <h3 class="font-magical text-xl text-yellow-400 mb-6 flex items-center gap-2" vid="298"><i class="ph-fill ph-strategy" vid="299"></i> The Strategy</h3>
+                                <ul class="space-y-4 text-gray-300" vid="300">
+                                    <li class="flex gap-3 items-start" vid="301"><span class="text-yellow-500 font-bold" vid="302">1.</span> Create a comprehensive maintenance guide.</li>
+                                    <li class="flex gap-3 items-start" vid="303"><span class="text-yellow-500 font-bold" vid="304">2.</span> Promote through event materials and targeted ads.</li>
+                                    <li class="flex gap-3 items-start" vid="305"><span class="text-yellow-500 font-bold" vid="306">3.</span> Collaborate with partners offering physical services.</li>
+                                </ul>
+                            </div>
+                            
+                            <div class="glass-card p-8 rounded-2xl bg-black/20 border-white/5" vid="307">
+                                <h3 class="font-magical text-xl text-emerald-400 mb-6 flex items-center gap-2" vid="308"><i class="ph-fill ph-ruler" vid="309"></i> How to Measure</h3>
+                                <ul class="space-y-4 text-gray-300" vid="310">
+                                    <li class="flex items-center gap-3" vid="311"><i class="ph-bold ph-caret-right text-emerald-500" vid="312"></i> Traffic specifically to maintenance content.</li>
+                                    <li class="flex items-center gap-3" vid="313"><i class="ph-bold ph-caret-right text-emerald-500" vid="314"></i> Engagement metrics (time on page, downloads).</li>
+                                    <li class="flex items-center gap-3" vid="315"><i class="ph-bold ph-caret-right text-emerald-500" vid="316"></i> Downstream conversions to partners.</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            
+            <section class="slide" data-ambient="bg-emerald-900/20,bg-teal-900/20" vid="317">
+                <div class="content-container text-center items-center" vid="318">
+                    <div class="w-20 h-20 rounded-full bg-emerald-900/40 border border-emerald-500/40 flex items-center justify-center mb-8 shadow-[0_0_40px_-10px_rgba(16,185,129,0.5)]" vid="319">
+                        <i class="ph-duotone ph-currency-dollar text-4xl text-emerald-400" vid="320"></i>
+                    </div>
+                    <span class="text-emerald-400 uppercase tracking-widest text-xs font-bold block mb-4" vid="321">Efficiency Metric</span>
+                    <h2 class="font-magical text-5xl md:text-6xl text-white mb-6" vid="322">Cost per Meaningful Interaction</h2>
+                    <p class="font-serif-heading text-xl md:text-2xl text-emerald-100/70 italic mb-16" vid="323">
+                        "Move beyond calculating cost merely per attendee."
+                    </p>
+
+                    <div class="grid md:grid-cols-2 gap-12 w-full max-w-4xl text-left" vid="324">
+                        <div vid="325">
+                            <h3 class="font-magical text-2xl text-white mb-6 border-b border-emerald-500/30 pb-4" vid="326">What to Track</h3>
+                            <ul class="space-y-5" vid="327">
+                                <li class="glass-card p-4 rounded-xl flex items-center justify-between border-l-2 border-l-emerald-500" vid="328">
+                                    <span class="text-gray-200" vid="329">Cost per QR scan</span>
+                                    <i class="ph-bold ph-qr-code text-emerald-400" vid="330"></i>
+                                </li>
+                                <li class="glass-card p-4 rounded-xl flex items-center justify-between border-l-2 border-l-emerald-500" vid="331">
+                                    <span class="text-gray-200 flex flex-col" vid="332">
+                                        <span vid="333">Cost per signup</span>
+                                        <span class="text-xs text-gray-500" vid="334">Newsletter, nonprofit, consultation</span>
+                                    </span>
+                                    <i class="ph-bold ph-user-plus text-emerald-400" vid="335"></i>
+                                </li>
+                                <li class="glass-card p-4 rounded-xl flex items-center justify-between border-l-2 border-l-emerald-500" vid="336">
+                                    <span class="text-gray-200" vid="337">Cost per engaged local participant</span>
+                                    <i class="ph-bold ph-map-pin text-emerald-400" vid="338"></i>
+                                </li>
+                            </ul>
+                        </div>
+                        
+                        <div class="flex flex-col justify-center" vid="339">
+                            <h3 class="font-magical text-2xl text-white mb-6 border-b border-cyan-500/30 pb-4" vid="340">How to Use This Data</h3>
+                            <div class="space-y-6" vid="341">
+                                <div class="flex gap-4 items-start" vid="342">
+                                    <i class="ph-fill ph-check-circle text-cyan-400 text-xl mt-1" vid="343"></i>
+                                    <p class="text-gray-300" vid="344">Evaluate true <strong class="text-white" vid="345">event performance</strong> beyond vanity headcount.</p>
+                                </div>
+                                <div class="flex gap-4 items-start" vid="346">
+                                    <i class="ph-fill ph-check-circle text-cyan-400 text-xl mt-1" vid="347"></i>
+                                    <p class="text-gray-300" vid="348">Evaluate <strong class="text-white" vid="349">ad performance</strong> and promotional efficiency.</p>
+                                </div>
+                                <div class="flex gap-4 items-start" vid="350">
+                                    <i class="ph-fill ph-check-circle text-cyan-400 text-xl mt-1" vid="351"></i>
+                                    <p class="text-gray-300" vid="352">Guide intelligent <strong class="text-white" vid="353">future investment</strong> in similar community events.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            
+            <section class="slide" data-ambient="bg-fuchsia-900/20,bg-gold-900/10" vid="354">
+                <div class="content-container" vid="355">
+                    <div class="text-center mb-16" vid="356">
+                        <span class="text-fuchsia-400 uppercase tracking-[0.3em] text-xs font-bold mb-3 block" vid="357">Conversion Signals</span>
+                        <h2 class="font-magical text-5xl text-white" vid="358">What Counts as a <span class="text-fuchsia-300" vid="359">Meaningful Outcome</span></h2>
+                    </div>
+
+                    <div class="grid md:grid-cols-3 gap-6 mb-16" vid="360">
+                        <div class="glass-card p-8 rounded-[2rem] text-center group hover:border-fuchsia-500/50 transition-colors" vid="361">
+                            <div class="w-16 h-16 mx-auto bg-fuchsia-900/30 rounded-full flex items-center justify-center mb-6 text-fuchsia-400 group-hover:scale-110 transition-transform" vid="362">
+                                <i class="ph-fill ph-handshake text-3xl" vid="363"></i>
+                            </div>
+                            <h3 class="font-magical text-xl text-white mb-3" vid="364">Nonprofit Sign-ups</h3>
+                            <p class="text-sm text-gray-400" vid="365">Direct commitments to organizational causes.</p>
+                        </div>
+                        
+                        <div class="glass-card p-8 rounded-[2rem] text-center group hover:border-fuchsia-500/50 transition-colors" vid="366">
+                            <div class="w-16 h-16 mx-auto bg-fuchsia-900/30 rounded-full flex items-center justify-center mb-6 text-fuchsia-400 group-hover:scale-110 transition-transform" vid="367">
+                                <i class="ph-fill ph-envelope-simple-open text-3xl" vid="368"></i>
+                            </div>
+                            <h3 class="font-magical text-xl text-white mb-3" vid="369">Newsletter Subs</h3>
+                            <p class="text-sm text-gray-400" vid="370">Opt-ins for ongoing digital communication.</p>
+                        </div>
+                        
+                        <div class="glass-card p-8 rounded-[2rem] text-center group hover:border-fuchsia-500/50 transition-colors" vid="371">
+                            <div class="w-16 h-16 mx-auto bg-fuchsia-900/30 rounded-full flex items-center justify-center mb-6 text-fuchsia-400 group-hover:scale-110 transition-transform" vid="372">
+                                <i class="ph-fill ph-chats-circle text-3xl" vid="373"></i>
+                            </div>
+                            <h3 class="font-magical text-xl text-white mb-3" vid="374">Partner Interest</h3>
+                            <p class="text-sm text-gray-400" vid="375">Consultation requests or B2B connections.</p>
+                        </div>
+                    </div>
+
+                    <div class="glass-panel p-6 rounded-2xl max-w-3xl mx-auto border border-yellow-500/30 bg-yellow-900/10 flex items-center gap-6" vid="376">
+                        <i class="ph-duotone ph-warning-circle text-4xl text-yellow-400 shrink-0" vid="377"></i>
+                        <div vid="378">
+                            <p class="text-gray-200 font-medium mb-1" vid="379">Crucial Requirement:</p>
+                            <p class="text-sm text-gray-400" vid="380">These actions must be tied to <strong class="text-yellow-300" vid="381">event-specific tracking</strong> (UTMs, unique QR codes) and clearly defined internally as success actions before the event begins.</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            
+            <section class="slide" data-ambient="bg-purple-900/30,bg-cyan-900/20" vid="382">
+                <div class="content-container items-center text-center" vid="383">
+                    <h2 class="font-magical text-5xl md:text-6xl text-white mb-4" vid="384">Beyond <br vid="385"> <span class="text-purple-400" vid="386">Event Tracking</span></h2>
+                    <p class="font-serif-heading text-xl text-gray-400 italic mb-16 max-w-2xl mx-auto" vid="387">
+                        This approach transforms isolated occurrences into a continuous cycle of intelligence.
+                    </p>
+
+                    <div class="glass-card p-10 rounded-[3rem] w-full max-w-4xl border-t border-t-purple-500/40 mb-16 relative" vid="388">
+                        <div class="absolute inset-0 bg-gradient-to-b from-purple-900/20 to-transparent pointer-events-none rounded-[3rem]" vid="389"></div>
+                        <h3 class="font-magical text-2xl text-white mb-8 text-left" vid="390">This framework builds:</h3>
+                        <div class="grid md:grid-cols-3 gap-6 text-left relative z-10" vid="391">
+                            <div class="space-y-3" vid="392">
+                                <i class="ph-fill ph-stack text-3xl text-purple-400" vid="393"></i>
+                                <div class="text-gray-200 font-medium leading-tight" vid="394">A repeatable measurement system</div>
+                            </div>
+                            <div class="space-y-3" vid="395">
+                                <i class="ph-fill ph-scales text-3xl text-cyan-400" vid="396"></i>
+                                <div class="text-gray-200 font-medium leading-tight" vid="397">A clearer understanding of access and equity</div>
+                            </div>
+                            <div class="space-y-3" vid="398">
+                                <i class="ph-fill ph-bridge text-3xl text-emerald-400" vid="399"></i>
+                                <div class="text-gray-200 font-medium leading-tight" vid="400">A bridge between offline and digital behavior</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="flex flex-col items-center" vid="401">
+                        <span class="text-sm uppercase tracking-widest text-purple-300 font-bold mb-8" vid="402">Each event improves the next</span>
+                        <div class="flex flex-wrap justify-center items-center gap-4 md:gap-8 font-magical text-2xl md:text-4xl text-white" vid="403">
+                            <div class="px-6 py-3 rounded-full bg-white/5 border border-white/10" vid="404">Test</div>
+                            <i class="ph-bold ph-arrow-right text-purple-500" vid="405"></i>
+                            <div class="px-6 py-3 rounded-full bg-white/5 border border-white/10" vid="406">Measure</div>
+                            <i class="ph-bold ph-arrow-right text-purple-500" vid="407"></i>
+                            <div class="px-6 py-3 rounded-full bg-white/5 border border-white/10" vid="408">Refine</div>
+                            <i class="ph-bold ph-arrow-right text-purple-500" vid="409"></i>
+                            <div class="px-6 py-3 rounded-full bg-purple-900/50 border border-purple-500/50 text-purple-200 shadow-[0_0_20px_rgba(168,85,247,0.4)]" vid="410">Repeat</div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+        </main>
+    </div>
+
+    <script vid="411">
+        document.addEventListener('DOMContentLoaded', () => {
+            
+            const starContainer = document.getElementById('star-container');
+            const starCount = 150;
+            for (let i = 0; i < starCount; i++) {
+                const star = document.createElement('div');
+                star.classList.add('star');
+                star.style.left = `${Math.random() * 100}%`;
+                star.style.top = `${Math.random() * 100}%`;
+                const size = Math.random() < 0.1 ? 3 : (Math.random() < 0.4 ? 2 : 1);
+                star.style.width = `${size}px`;
+                star.style.height = `${size}px`;
+                star.style.setProperty('--duration', `${2 + Math.random() * 4}s`);
+                star.style.setProperty('--delay', `${Math.random() * 5}s`);
+                star.style.setProperty('--opacity', 0.2 + Math.random() * 0.6);
+                starContainer.appendChild(star);
+            }
+
+            
+            document.addEventListener('mousemove', e => {
+                document.querySelectorAll('.glass-card').forEach(card => {
+                    const rect = card.getBoundingClientRect();
+                    card.style.setProperty('--mouse-x', `${e.clientX - rect.left}px`);
+                    card.style.setProperty('--mouse-y', `${e.clientY - rect.top}px`);
+                });
+            });
+
+            
+            const slides = document.querySelectorAll('.slide');
+            const totalSlides = slides.length;
+            let currentSlide = 0;
+            let isAnimating = false;
+            
+            const btnPrev = document.getElementById('btn-prev');
+            const btnNext = document.getElementById('btn-next');
+            const counterEl = document.getElementById('slide-counter');
+            const dotsContainer = document.getElementById('dots-container');
+            const ambient1 = document.getElementById('ambient-1');
+            const ambient2 = document.getElementById('ambient-2');
+
+            
+            for (let i = 0; i < totalSlides; i++) {
+                const dot = document.createElement('div');
+                dot.classList.add('dot');
+                if(i === 0) dot.classList.add('active');
+                dot.addEventListener('click', () => goToSlide(i));
+                dotsContainer.appendChild(dot);
+            }
+            const dots = document.querySelectorAll('.dot');
+            
+            
+            counterEl.innerText = `1 / ${totalSlides}`;
+
+            function updateAmbientGlow() {
+                const currentThemeData = slides[currentSlide].getAttribute('data-ambient');
+                if(currentThemeData) {
+                    const classes = currentThemeData.split(',');
+                    ambient1.className = `ambient-glow w-[800px] h-[800px] top-[-20%] left-[-10%] mix-blend-screen ${classes[0]}`;
+                    ambient2.className = `ambient-glow w-[600px] h-[600px] bottom-[-10%] right-[-10%] mix-blend-screen ${classes[1] || classes[0]}`;
+                }
+            }
+
+            function updateSlides(newIndex, direction) {
+                if (isAnimating || newIndex === currentSlide) return;
+                isAnimating = true;
+
+                const currentEl = slides[currentSlide];
+                const nextEl = slides[newIndex];
+
+                nextEl.classList.remove('opacity-0', 'pointer-events-none', 'z-0', 'active', 'previous');
+                
+                if (direction === 'next') {
+                    nextEl.style.transform = 'translateY(40px) scale(0.98)';
+                    currentEl.style.transform = 'translateY(-40px) scale(0.98)';
+                } else {
+                    nextEl.style.transform = 'translateY(-40px) scale(0.98)';
+                    currentEl.style.transform = 'translateY(40px) scale(0.98)';
+                }
+
+                void nextEl.offsetWidth; 
+
+                currentEl.classList.remove('active');
+                currentEl.classList.add('opacity-0', 'pointer-events-none', 'z-0');
+                
+                nextEl.style.transform = ''; 
+                nextEl.classList.add('active');
+
+                dots[currentSlide].classList.remove('active');
+                dots[newIndex].classList.add('active');
+                currentSlide = newIndex;
+                counterEl.innerText = `${currentSlide + 1} / ${totalSlides}`;
+                
+                updateAmbientGlow();
+
+                setTimeout(() => {
+                    currentEl.style.transform = ''; 
+                    isAnimating = false;
+                }, 800);
+            }
+
+            function nextSlide() {
+                if (currentSlide < totalSlides - 1) updateSlides(currentSlide + 1, 'next');
+            }
+
+            function prevSlide() {
+                if (currentSlide > 0) updateSlides(currentSlide - 1, 'prev');
+            }
+
+            function goToSlide(index) {
+                if(index > currentSlide) {
+                    updateSlides(index, 'next');
+                } else if (index < currentSlide) {
+                    updateSlides(index, 'prev');
+                }
+            }
+
+            btnNext.addEventListener('click', nextSlide);
+            btnPrev.addEventListener('click', prevSlide);
+
+            
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'ArrowRight' || e.key === 'ArrowDown' || e.key === ' ') {
+                    e.preventDefault();
+                    nextSlide();
+                } else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
+                    e.preventDefault();
+                    prevSlide();
+                }
+            });
+
+            
+            let wheelTimeout;
+            document.addEventListener('wheel', (e) => {
+                if (isAnimating) return;
+                if (Math.abs(e.deltaY) < 40) return; 
+                
+                clearTimeout(wheelTimeout);
+                wheelTimeout = setTimeout(() => {
+                    if (e.deltaY > 0) {
+                        nextSlide();
+                    } else {
+                        prevSlide();
+                    }
+                }, 50);
+            }, { passive: false });
+
+            
+            updateAmbientGlow();
+        });
+    </script>
+
+</body></html>

@@ -1192,7 +1192,7 @@
 
 <script>
   const APP_CONFIG = {
-    APPS_SCRIPT_URL: "https://script.google.com/macros/s/AKfycbx0tkoY9Vh-PxHL38eQJ1f70kzoNUEcdPdiMhf3Y19T3uNuZuEBIJIJ702a7I1G9OBD/exec",
+    APPS_SCRIPT_URL: "https://script.google.com/macros/s/AKfycbw0aqIGMdDYebtuy-47AheLVG6GDjSGk-gMYQD4wGPtiNfg8q6XKQeKOlKHAe0m1Xd1/exec",
     AUTO_SYNC_PERFORMANCE_ON_LOAD: false,
     AUTO_SYNC_CLARITY_ON_LOAD: false
   };
@@ -2330,9 +2330,15 @@ function renderHomeOverviewSnapshot(summary, comparison) {
     const attentionItems = Array.isArray(currentHomeInsights?.auditHighlights?.needsAttention)
       ? currentHomeInsights.auditHighlights.needsAttention
       : [];
+    const noteTitle = typeof note === "string"
+      ? "Strategic Note"
+      : note?.title || "Strategic Note";
+    const noteBody = typeof note === "string"
+      ? note
+      : note?.body || "No strong pattern detected yet.";
 
-    if (titleEl) titleEl.textContent = note?.title || "Strategic Note";
-    if (bodyEl) bodyEl.textContent = note?.body || "No strong pattern detected yet.";
+    if (titleEl) titleEl.textContent = noteTitle;
+    if (bodyEl) bodyEl.textContent = noteBody;
 
     if (auditSummaryEl) {
       if (attentionItems.length) {

@@ -1184,7 +1184,7 @@
 
 <script>
   const APP_CONFIG = {
-    APPS_SCRIPT_URL: "https://script.google.com/macros/s/AKfycbxpR7osXykLihr0b_Kovo93WsspWxgz2_OJfb0vIE6m2qpYONGplr3_mvH7K46mQc_1/exec",
+    APPS_SCRIPT_URL: "https://script.google.com/macros/s/AKfycbwvX8dbXYqSQcAwSy0qoDkwLjC2SKCdRc9UGsp-TNKxTnWWtGF62Ev2njlG_f05ig/exec",
     AUTO_SYNC_PERFORMANCE_ON_LOAD: false,
     AUTO_SYNC_CLARITY_ON_LOAD: false
   };
@@ -1387,6 +1387,37 @@ document.addEventListener("DOMContentLoaded", async () => {
     return v;
   }
 
+  function renderHighlightListItem(item, iconClass, colorClass) {
+    if (typeof item === "string") {
+      return `
+        <li class="flex items-start gap-2">
+          <i class="ph-bold ${iconClass} ${colorClass} mt-0.5"></i>
+          <span>${escapeHtml(item)}</span>
+        </li>
+      `;
+    }
+
+    const title = String(item?.title || "").trim();
+    const detail = String(item?.detail || "").trim();
+    const metricLabel = String(item?.metricLabel || "").trim();
+    const metricValue = String(item?.metricValue || "").trim();
+
+    return `
+      <li class="flex items-start gap-3">
+        <i class="ph-bold ${iconClass} ${colorClass} mt-1"></i>
+        <div class="min-w-0">
+          <div class="text-sm text-white font-medium">${escapeHtml(title || "Highlight")}</div>
+          <div class="text-xs text-gray-400 leading-relaxed mt-1">${escapeHtml(detail || "No detail available.")}</div>
+          ${metricLabel || metricValue ? `
+            <div class="text-[11px] text-gray-500 mt-1 uppercase tracking-wide">
+              ${escapeHtml(metricLabel)}${metricLabel && metricValue ? ": " : ""}${escapeHtml(metricValue)}
+            </div>
+          ` : ""}
+        </div>
+      </li>
+    `;
+  }
+
   function renderAuditHighlights(highlights) {
   const workingEl = document.getElementById("audit-whats-working-list");
   const attentionEl = document.getElementById("audit-needs-attention-list");
@@ -1395,29 +1426,29 @@ document.addEventListener("DOMContentLoaded", async () => {
   if (workingEl) {
     const items = Array.isArray(highlights.whatsWorking) ? highlights.whatsWorking : [];
     workingEl.innerHTML = items.length
-      ? items.map((item) => `
-          <li class="flex items-start gap-2">
-            <i class="ph-bold ph-check text-emerald-400 mt-0.5"></i>
-            <span>${escapeHtml(item)}</span>
-          </li>
-        `).join("")
+      ? items.map((item) => renderHighlightListItem(item, "ph-check", "text-emerald-400")).join("")
       : `<li class="text-gray-500">No resolved wins yet.</li>`;
   }
 
   if (attentionEl) {
     const items = Array.isArray(highlights.needsAttention) ? highlights.needsAttention : [];
     attentionEl.innerHTML = items.length
-      ? items.map((item) => `
-          <li class="flex items-start gap-2">
-            <i class="ph-bold ph-warning text-amber-400 mt-0.5"></i>
-            <span>${escapeHtml(item)}</span>
-          </li>
-        `).join("")
+      ? items.map((item) => renderHighlightListItem(item, "ph-warning", "text-amber-400")).join("")
       : `<li class="text-gray-500">No active issues.</li>`;
   }
 
   if (nextActionEl) {
-    nextActionEl.textContent = highlights.nextAction || "No next action available.";
+    const nextAction = highlights.nextAction;
+    if (typeof nextAction === "string") {
+      nextActionEl.textContent = nextAction || "No next action available.";
+    } else if (nextAction && (nextAction.title || nextAction.detail)) {
+      nextActionEl.innerHTML = `
+        <span class="text-white font-medium">${escapeHtml(nextAction.title || "Next action")}</span>
+        <span class="block text-gray-400 mt-1">${escapeHtml(nextAction.detail || "")}</span>
+      `;
+    } else {
+      nextActionEl.textContent = "No next action available.";
+    }
   }
 }
 
@@ -2080,6 +2111,35 @@ function applyUtmRegistryFilters() {
     return `<div class="text-[11px] text-gray-500 font-normal truncate max-w-[420px] mt-1">${escapeHtml(link)}</div>`;
   }
 
+  function getRegistryVariantDetails(item) {
+    const parts = [];
+    const medium = String(item.medium || "").trim();
+    const content = String(item.content || "").trim();
+    const term = String(item.term || "").trim();
+    const landingPage = String(item.landingPage || item.landing_page || "").trim();
+
+    if (medium) parts.push(medium);
+    if (content) parts.push(`content: ${content}`);
+    if (term) parts.push(`term: ${term}`);
+    if (landingPage) parts.push(`page: ${landingPage}`);
+
+    return parts.join(" • ");
+  }
+
+  function getRegistryAdsDetails(item) {
+    const clicks = Number(item.adsClicks || 0);
+    const cost = Number(item.adsCost || 0);
+    const conversions = Number(item.adsConversions || 0);
+
+    if (!clicks && !cost && !conversions) return "";
+
+    const parts = [];
+    if (clicks) parts.push(`${formatNumber(clicks)} ad clicks`);
+    if (cost) parts.push(`${formatCurrency(cost)} spend`);
+    if (conversions) parts.push(`${formatNumber(conversions)} ad conv`);
+    return parts.join(" • ");
+  }
+
   function formatShortSlashDate(value) {
     if (!value) return "-";
 
@@ -2126,6 +2186,8 @@ function applyUtmRegistryFilters() {
               ${escapeHtml(campaignName)}
               ${reviewBadge}
             </div>
+            <div class="text-[11px] text-gray-500">${escapeHtml(getRegistryVariantDetails(item) || "Variant details unavailable")}</div>
+            ${getRegistryAdsDetails(item) ? `<div class="text-[11px] text-gray-500">${escapeHtml(getRegistryAdsDetails(item))}</div>` : ""}
             ${getRegistryLinkMarkup(item)}
           </td>
           <td>
@@ -2190,6 +2252,8 @@ function applyUtmRegistryFilters() {
           <div class="font-medium text-white mb-0.5">
             ${escapeHtml(item.campaignName || item.campaign || item.campaignId || "")}
           </div>
+          <div class="text-[11px] text-gray-500">${escapeHtml(getRegistryVariantDetails(item) || "Variant details unavailable")}</div>
+          ${getRegistryAdsDetails(item) ? `<div class="text-[11px] text-gray-500">${escapeHtml(getRegistryAdsDetails(item))}</div>` : ""}
           ${getRegistryLinkMarkup(item)}
         </td>
         <td>
@@ -2485,7 +2549,7 @@ async function applyReportFilters() {
     pill.textContent = "Last 30 Days";
   }
 
-  async function syncPerformanceData(days = 30, options = {}) {
+  async function syncPerformanceData(days = 1, options = {}) {
     const { silent = false } = options;
 
     try {
@@ -3098,6 +3162,10 @@ function populateSelectFromValues(selectId, values, allLabel) {
 
   function formatNumber(value) {
     return Number(value || 0).toLocaleString();
+  }
+
+  function formatCurrency(value) {
+    return `$${Number(value || 0).toFixed(2)}`;
   }
 
   function formatPercent(value) {

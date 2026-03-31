@@ -660,6 +660,14 @@
               </div>
             </div>
 
+            <div id="reports-status-box" class="glass-card p-3 flex items-center justify-between gap-3 border border-white/5">
+              <div class="min-w-0">
+                <div class="text-[10px] uppercase tracking-wider text-gray-500 font-bold">Visual Intelligence Status</div>
+                <div id="reports-status-text" class="text-sm text-gray-300 mt-1">Loading 30 day report snapshot...</div>
+              </div>
+              <div id="reports-status-pill" class="inline-flex items-center rounded-full px-2.5 py-1 text-[10px] uppercase tracking-wide bg-white/5 text-gray-400 border border-white/10">Loading</div>
+            </div>
+
             <div class="grid grid-cols-2 md:grid-cols-4 xl:grid-cols-7 gap-5">
               <div class="glass-card p-4">
                 <div class="text-[10px] uppercase tracking-wider text-gray-500 font-bold mb-2">Sessions</div>
@@ -1222,7 +1230,7 @@
 
 <script>
   const APP_CONFIG = {
-    APPS_SCRIPT_URL: "https://script.google.com/macros/s/AKfycbyhiWWr9aGs1gwmOuM2jEQ2JDiKoQ15zfRBEivUgrjvmUgjc0z8Oybv9Ne5kwJMEN8/exec",
+    APPS_SCRIPT_URL: "https://script.google.com/macros/s/AKfycbzRGS0LX-pAEcfuBun_pG_lXqG6I1a3o2pFX0iDFks5KTRpPk5efEoSv9fDCMz4_ejm/exec",
     AUTO_SYNC_PERFORMANCE_ON_LOAD: false,
     AUTO_SYNC_CLARITY_ON_LOAD: false
   };
@@ -1285,10 +1293,16 @@
   let currentPerformanceSummary = {};
   let currentPerformanceTrend = [];
   let currentPerformanceComparison = null;
+  let currentReportsLoaded = false;
   let currentHomeSummary = {};
   let currentHomeComparison = null;
   let currentRecentRegistryLinks = [];
   let currentHomeInsights = null;
+  let currentAuditHighlights = {
+    whatsWorking: [],
+    needsAttention: [],
+    nextAction: null
+  };
 
 document.addEventListener("DOMContentLoaded", async () => {
   try { applyConfig(); } catch (error) { console.error("applyConfig failed:", error); }
@@ -1478,26 +1492,27 @@ document.addEventListener("DOMContentLoaded", async () => {
   }
 
   function renderAuditHighlights(highlights) {
+  const normalized = normalizeAuditHighlightsPayload(highlights);
   const workingEl = document.getElementById("audit-whats-working-list");
   const attentionEl = document.getElementById("audit-needs-attention-list");
   const nextActionEl = document.getElementById("audit-next-action-text");
 
   if (workingEl) {
-    const items = Array.isArray(highlights.whatsWorking) ? highlights.whatsWorking : [];
+    const items = Array.isArray(normalized.whatsWorking) ? normalized.whatsWorking : [];
     workingEl.innerHTML = items.length
       ? items.map((item) => renderHighlightListItem(item, "ph-check", "text-emerald-400")).join("")
       : `<li class="text-gray-500">No resolved wins yet.</li>`;
   }
 
   if (attentionEl) {
-    const items = Array.isArray(highlights.needsAttention) ? highlights.needsAttention : [];
+    const items = Array.isArray(normalized.needsAttention) ? normalized.needsAttention : [];
     attentionEl.innerHTML = items.length
       ? items.map((item) => renderHighlightListItem(item, "ph-warning", "text-amber-400")).join("")
       : `<li class="text-gray-500">No active issues.</li>`;
   }
 
   if (nextActionEl) {
-    const nextAction = highlights.nextAction;
+    const nextAction = normalized.nextAction;
     if (typeof nextAction === "string") {
       nextActionEl.textContent = nextAction || "No next action available.";
     } else if (nextAction && (nextAction.title || nextAction.detail)) {
@@ -1515,7 +1530,8 @@ document.addEventListener("DOMContentLoaded", async () => {
   const data = await apiGet("getAuditHighlights");
   if (!data.ok) throw new Error(data.error || "Failed to load audit highlights");
 
-  renderAuditHighlights(data.highlights || {});
+  currentAuditHighlights = normalizeAuditHighlightsPayload(data.highlights || {});
+  renderAuditHighlights(currentAuditHighlights);
 }
 
   function formatAuditStatusLabel(value) {
@@ -1701,17 +1717,23 @@ async function loadHomeSnapshot() {
     summary: currentHomeSummary,
     comparison: currentHomeComparison,
     recentLinks: currentRecentRegistryLinks,
-    auditHighlights: highlightsRes.status === "fulfilled" && highlightsRes.value?.ok ? (highlightsRes.value.highlights || {}) : {},
+    auditHighlights: highlightsRes.status === "fulfilled" && highlightsRes.value?.ok
+      ? normalizeAuditHighlightsPayload(highlightsRes.value.highlights || {})
+      : currentAuditHighlights,
     strategicNote: noteRes.status === "fulfilled" && noteRes.value?.ok ? (noteRes.value.note || {}) : {},
     gtmSummary: gtmRes.status === "fulfilled" && gtmRes.value?.ok ? (gtmRes.value.summary || {}) : {}
   };
+
+  if (highlightsRes.status === "fulfilled" && highlightsRes.value?.ok) {
+    currentAuditHighlights = normalizeAuditHighlightsPayload(highlightsRes.value.highlights || {});
+  }
 
   [
     ["renderHomeOverviewSnapshot", () => renderHomeOverviewSnapshot(currentHomeSummary, currentHomeComparison)],
     ["renderHomeStrategicNote", () => renderHomeStrategicNote(currentHomeInsights.strategicNote || {})],
     ["renderHomeGtmStatus", () => renderHomeGtmStatus(currentHomeInsights.gtmSummary || {})],
     ["renderHomeRecentUtmLinks", () => renderHomeRecentUtmLinks(currentRecentRegistryLinks)],
-    ["renderAuditHighlights", () => renderAuditHighlights(currentHomeInsights.auditHighlights || {})]
+    ["renderAuditHighlights", () => renderAuditHighlights(currentAuditHighlights)]
   ].forEach(([label, renderFn]) => {
     try {
       renderFn();
@@ -1831,6 +1853,12 @@ function getCurrentReportFilterParams() {
 
     if (headerTitle) headerTitle.textContent = VIEW_TITLES[viewId] || "Workspace";
     updateHeaderDatePillForView(viewId);
+
+    if (viewId === "reports" && !currentReportsLoaded) {
+      loadReportsSnapshot({ updatedText: "Updated: Just now" }).catch((error) => {
+        console.error("Deferred Visual Intelligence load failed:", error);
+      });
+    }
 
     if (updateHash) history.replaceState(null, "", `#${viewId}`);
     if (scrollWrap) scrollWrap.scrollTo({ top: 0, behavior: "smooth" });
@@ -2623,6 +2651,48 @@ function renderHomeOverviewSnapshot(summary, comparison) {
     `;
   }
 
+  function normalizeAuditHighlightsPayload(highlights) {
+    const candidate = highlights && typeof highlights === "object" ? highlights : {};
+    const normalized = {
+      whatsWorking: Array.isArray(candidate.whatsWorking) ? candidate.whatsWorking : [],
+      needsAttention: Array.isArray(candidate.needsAttention) ? candidate.needsAttention : [],
+      nextAction: candidate.nextAction || null
+    };
+
+    const hasAnyData = normalized.whatsWorking.length || normalized.needsAttention.length || normalized.nextAction;
+    return hasAnyData ? normalized : currentAuditHighlights;
+  }
+
+  function setReportsStatus(state, message) {
+    const textEl = document.getElementById("reports-status-text");
+    const pillEl = document.getElementById("reports-status-pill");
+    if (textEl) textEl.textContent = message || "";
+    if (!pillEl) return;
+
+    const map = {
+      loading: {
+        text: "Loading",
+        className: "inline-flex items-center rounded-full px-2.5 py-1 text-[10px] uppercase tracking-wide bg-cyan-500/10 text-cyan-300 border border-cyan-500/20"
+      },
+      ready: {
+        text: "Ready",
+        className: "inline-flex items-center rounded-full px-2.5 py-1 text-[10px] uppercase tracking-wide bg-emerald-500/10 text-emerald-300 border border-emerald-500/20"
+      },
+      empty: {
+        text: "Empty",
+        className: "inline-flex items-center rounded-full px-2.5 py-1 text-[10px] uppercase tracking-wide bg-amber-500/10 text-amber-300 border border-amber-500/20"
+      },
+      error: {
+        text: "Failed",
+        className: "inline-flex items-center rounded-full px-2.5 py-1 text-[10px] uppercase tracking-wide bg-rose-500/10 text-rose-300 border border-rose-500/20"
+      }
+    };
+
+    const resolved = map[state] || map.loading;
+    pillEl.textContent = resolved.text;
+    pillEl.className = resolved.className;
+  }
+
   async function loadReportsSnapshot(options = {}) {
     const {
       updatedText = "Updated: Just now"
@@ -2630,6 +2700,7 @@ function renderHomeOverviewSnapshot(summary, comparison) {
 
     const updated = document.getElementById("reports-last-updated");
     if (updated) updated.textContent = "Updating...";
+    setReportsStatus("loading", "Loading Visual Intelligence for the current report filters...");
 
     const results = await Promise.allSettled([
       loadPerformanceFromSheet(),
@@ -2654,10 +2725,23 @@ function renderHomeOverviewSnapshot(summary, comparison) {
 
     if (failures.length) {
       if (updated) updated.textContent = "Update failed";
+      setReportsStatus("error", `Could not load: ${failures.join(", ")}`);
       throw new Error(`Could not refresh: ${failures.join(", ")}`);
     }
 
+    const hasReportData =
+      Number(currentPerformanceSummary?.sessions || 0) > 0 ||
+      Number(currentPerformanceSummary?.conversions || 0) > 0 ||
+      Number(currentPerformanceSummary?.paidCost || 0) > 0;
+
     if (updated) updated.textContent = updatedText;
+    setReportsStatus(
+      hasReportData ? "ready" : "empty",
+      hasReportData
+        ? "Visual Intelligence is showing the current 30 day report snapshot."
+        : "No report data was found for the current filters."
+    );
+    currentReportsLoaded = true;
     return {
       ok: true
     };

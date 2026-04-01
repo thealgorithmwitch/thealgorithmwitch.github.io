@@ -249,6 +249,11 @@
 
     /* MOBILE PRESENTATION MODE */
 @media (max-width: 768px) {
+    :root {
+        --mobile-top-offset: 4.75rem;
+        --mobile-bottom-offset: 4.75rem;
+    }
+
     body {
         font-size: 15px;
     }
@@ -281,10 +286,14 @@
     #page-presentation {
         height: 100dvh;
         min-height: 100dvh;
+        overflow: hidden;
     }
 
     .slide {
-        padding: 1rem 1rem 5.5rem;
+        box-sizing: border-box;
+        height: 100dvh;
+        max-height: 100dvh;
+        padding: var(--mobile-top-offset) 1rem var(--mobile-bottom-offset);
         align-items: flex-start;
         justify-content: flex-start;
         overflow-y: auto;
@@ -294,9 +303,11 @@
     .content-container {
         width: 100%;
         max-width: 100%;
-        max-height: none;
+        max-height: calc(100dvh - var(--mobile-top-offset) - var(--mobile-bottom-offset));
         transform: none;
         justify-content: flex-start;
+        overflow-y: auto;
+        overscroll-behavior: contain;
     }
 
     .nav-btn {
@@ -439,8 +450,13 @@
 }
 
 @media (max-width: 480px) {
+    :root {
+        --mobile-top-offset: 4.25rem;
+        --mobile-bottom-offset: 4.35rem;
+    }
+
     .slide {
-        padding: 0.85rem 0.85rem 5.25rem;
+        padding: var(--mobile-top-offset) 0.85rem var(--mobile-bottom-offset);
     }
 
     .presentation-controls {

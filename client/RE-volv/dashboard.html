@@ -1230,7 +1230,7 @@
 
 <script>
   const APP_CONFIG = {
-    APPS_SCRIPT_URL: "https://script.google.com/macros/s/AKfycbw9e4Wo_h7peQlP4QvgzRii8kdY4MvhWTgbOsvyvwtrXx_m7XqzudXBJWNTY4Ka6ibA/exec",
+    APPS_SCRIPT_URL: "https://script.google.com/macros/s/AKfycbyOGl76BD_BbHlzcxwMoEJEBZnbWWCeWRCVCvJjhkRl5JjTdmjTJ3oeNPA6nXRL8AMx/exec",
     AUTO_SYNC_PERFORMANCE_ON_LOAD: false,
     AUTO_SYNC_CLARITY_ON_LOAD: false
   };
@@ -1298,11 +1298,15 @@
   let currentHomeComparison = null;
   let currentRecentRegistryLinks = [];
   let currentHomeInsights = null;
-  let currentAuditHighlights = {
-    whatsWorking: [],
-    needsAttention: [],
-    nextAction: null
-  };
+  let currentAuditHighlights = createEmptyAuditHighlights();
+
+  function createEmptyAuditHighlights() {
+    return {
+      whatsWorking: [],
+      needsAttention: [],
+      nextAction: null
+    };
+  }
 
 document.addEventListener("DOMContentLoaded", async () => {
   try { applyConfig(); } catch (error) { console.error("applyConfig failed:", error); }
@@ -1677,7 +1681,11 @@ async function loadPerformanceComparisonFromSheet() {
 
   if (!data.ok) throw new Error(data.error || "Failed to load performance comparison");
 
-  currentPerformanceComparison = data.comparison || null;
+  currentPerformanceComparison = data.comparison || {
+    current: {},
+    previous: {},
+    delta: {}
+  };
   renderPerformanceComparison(currentPerformanceComparison);
 }
 
@@ -1908,10 +1916,20 @@ function bindUTMEvents() {
   if (form) {
     form.addEventListener("input", generateUTM);
     form.addEventListener("change", generateUTM);
+    form.addEventListener("submit", async (event) => {
+      event.preventDefault();
+      await saveUTM();
+    });
   }
 
-  document.getElementById("toggle-optional-fields")?.addEventListener("click", () => {
-    document.getElementById("optional-fields")?.classList.toggle("hidden");
+  document.getElementById("toggle-optional-fields")?.addEventListener("click", (event) => {
+    const target = document.getElementById("optional-fields");
+    if (!target) return;
+    target.classList.toggle("hidden");
+    const isHidden = target.classList.contains("hidden");
+    event.currentTarget.innerHTML = isHidden
+      ? `<i class="ph-bold ph-plus-circle"></i> Show Optional Fields`
+      : `<i class="ph-bold ph-minus-circle"></i> Hide Optional Fields`;
   });
 
   document.getElementById("copy-utm-button")?.addEventListener("click", copyUTM);
@@ -1977,9 +1995,11 @@ function generateUTM() {
     if (content) url.searchParams.set("utm_content", content);
 
     result.value = url.toString();
+    result.dataset.generatedLink = result.value;
   } catch (error) {
     console.error("generateUTM failed:", error);
     result.value = "Waiting for valid URL format (include https://)...";
+    delete result.dataset.generatedLink;
   }
 }
 
@@ -2032,8 +2052,8 @@ function generateUTM() {
 
   async function saveUTM() {
     const destinationUrl = document.getElementById("utm-url")?.value.trim() || "";
-    const source = document.getElementById("utm-source")?.value || "";
-    const medium = document.getElementById("utm-medium")?.value || "";
+    const source = (document.getElementById("utm-source")?.value || "").trim();
+    const medium = (document.getElementById("utm-medium")?.value || "").trim();
     const campaign = document.getElementById("utm-campaign")?.value.trim() || "";
     const content = document.getElementById("utm-content")?.value.trim() || "";
     const term = document.getElementById("utm-term")?.value.trim() || "";
@@ -2059,8 +2079,48 @@ function generateUTM() {
 
       if (!response.ok) throw new Error(response.error || "Save failed");
 
-      await loadRegistryFromSheet();
-      generateUTM();
+      const saved = response.saved || {};
+      const savedLink = String(saved.fullUtmLink || result || "").trim();
+
+      if (savedLink) {
+        const resultField = document.getElementById("utm-result");
+        if (resultField) {
+          resultField.value = savedLink;
+          resultField.dataset.generatedLink = savedLink;
+        }
+      }
+
+      if (saved && Object.keys(saved).length) {
+        const savedVariantKey = [
+          String(saved.source || "").trim().toLowerCase(),
+          String(saved.medium || "").trim().toLowerCase(),
+          String(saved.campaignName || saved.campaign || "").trim().toLowerCase(),
+          String(saved.landingPage || "").trim().toLowerCase(),
+          String(saved.content || "").trim().toLowerCase(),
+          String(saved.term || "").trim().toLowerCase()
+        ].join("|");
+        currentRegistryItems = [saved].concat(
+          currentRegistryItems.filter((item) => {
+            const itemVariantKey = [
+              String(item.source || "").trim().toLowerCase(),
+              String(item.medium || "").trim().toLowerCase(),
+              String(item.campaignName || item.campaign || "").trim().toLowerCase(),
+              String(item.landingPage || "").trim().toLowerCase(),
+              String(item.content || "").trim().toLowerCase(),
+              String(item.term || "").trim().toLowerCase()
+            ].join("|");
+            return itemVariantKey !== savedVariantKey;
+          })
+        );
+        populateUtmFilterOptions(currentRegistryItems);
+        applyUtmRegistryFilters();
+      } else {
+        await loadRegistryFromSheet();
+      }
+
+      loadRegistryFromSheet().catch((error) => {
+        console.error("Background registry refresh failed:", error);
+      });
       showToast("Saved Successfully", "Link added to registry.", "ph-check-circle");
     } catch (error) {
       console.error(error);
@@ -2653,14 +2713,11 @@ function renderHomeOverviewSnapshot(summary, comparison) {
 
   function normalizeAuditHighlightsPayload(highlights) {
     const candidate = highlights && typeof highlights === "object" ? highlights : {};
-    const normalized = {
+    return {
       whatsWorking: Array.isArray(candidate.whatsWorking) ? candidate.whatsWorking : [],
       needsAttention: Array.isArray(candidate.needsAttention) ? candidate.needsAttention : [],
       nextAction: candidate.nextAction || null
     };
-
-    const hasAnyData = normalized.whatsWorking.length || normalized.needsAttention.length || normalized.nextAction;
-    return hasAnyData ? normalized : currentAuditHighlights;
   }
 
   function setReportsStatus(state, message) {
@@ -3031,7 +3088,7 @@ function renderAuditTable(items, activeStatus = "all") {
   if (!filteredItems.length) {
     tbody.innerHTML = `
       <tr>
-        <td colspan="6" class="text-sm text-gray-500">Loading audit notes...</td>
+        <td colspan="6" class="text-sm text-gray-500">No audit notes found for this filter.</td>
       </tr>
     `;
     showAuditDetail(null);
@@ -3364,8 +3421,16 @@ function populateSelectFromValues(selectId, values, allLabel) {
       body: JSON.stringify({ action, payload })
     });
 
+    const text = await response.text();
+
     if (!response.ok) throw new Error(`POST ${action} failed`);
-    return response.json();
+
+    try {
+      return JSON.parse(text);
+    } catch (error) {
+      console.error("Non-JSON POST response for", action, text);
+      throw new Error(`POST ${action} returned invalid JSON`);
+    }
   }
 
   function buildTrendLabels(labels) {

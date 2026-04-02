@@ -112,34 +112,68 @@
         .glow-border-emerald:hover { border-color: rgba(16, 185, 129, 0.4); box-shadow: 0 10px 40px -10px rgba(16, 185, 129, 0.2); }
         .glow-border-amber:hover { border-color: rgba(245, 158, 11, 0.4); box-shadow: 0 10px 40px -10px rgba(245, 158, 11, 0.2); }
 
+        .mobile-swipe-text,
+        .mobile-read-hint {
+            display: none;
+        }
+
         @media (max-width: 768px) {
+            :root {
+                --mobile-top-offset: 5.5rem;
+                --mobile-bottom-offset: 6.5rem;
+            }
+
             body {
                 width: 100%;
-                height: auto;
+                height: 100dvh;
                 min-height: 100dvh;
                 overflow-x: hidden;
-                overflow-y: auto;
+                overflow-y: hidden;
             }
 
             #page-presentation {
                 width: 100%;
                 height: 100dvh;
                 min-height: 100dvh;
+                overflow: hidden;
+                touch-action: pan-x pinch-zoom;
             }
 
             .slide {
-                padding: 1rem 1rem 5.5rem;
-                align-items: flex-start;
-                justify-content: flex-start;
+                box-sizing: border-box;
+                height: 100dvh;
+                max-height: 100dvh;
+                padding: var(--mobile-top-offset) 1rem var(--mobile-bottom-offset);
+                align-items: stretch;
+                justify-content: center;
                 overflow-y: auto;
                 -webkit-overflow-scrolling: touch;
+                overscroll-behavior-y: contain;
+                scroll-padding-top: var(--mobile-top-offset);
+                scroll-padding-bottom: var(--mobile-bottom-offset);
+                touch-action: pan-y pinch-zoom;
             }
 
             .content-container {
                 width: 100%;
                 max-width: 100%;
-                max-height: none;
-                justify-content: flex-start;
+                min-height: calc(100dvh - var(--mobile-top-offset) - var(--mobile-bottom-offset));
+                max-height: calc(100dvh - var(--mobile-top-offset) - var(--mobile-bottom-offset));
+                justify-content: center;
+                overflow-y: auto;
+                overscroll-behavior: contain;
+            }
+
+            .mobile-home-link {
+                top: 1rem !important;
+                left: 1rem !important;
+                right: 1rem;
+                gap: 0.65rem;
+            }
+
+            .mobile-home-link .font-magical {
+                font-size: 0.9rem;
+                line-height: 1.1;
             }
 
             .nav-btn {
@@ -152,6 +186,44 @@
                 padding: 0.6rem 0.9rem;
                 width: calc(100vw - 1rem);
                 max-width: calc(100vw - 1rem);
+                justify-content: center;
+            }
+
+            .mobile-swipe-text {
+                display: block;
+                font-size: 0.58rem;
+                letter-spacing: 0.14em;
+                text-transform: uppercase;
+                color: rgba(255, 255, 255, 0.55);
+                white-space: nowrap;
+            }
+
+            .mobile-read-hint {
+                position: fixed;
+                left: 50%;
+                bottom: 4.9rem;
+                transform: translateX(-50%);
+                z-index: 55;
+                width: 4.15rem;
+                height: 4.15rem;
+                border-radius: 9999px;
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                justify-content: center;
+                gap: 0.2rem;
+                background: rgba(0, 0, 0, 0.38);
+                border: 1px solid rgba(255, 255, 255, 0.12);
+                backdrop-filter: blur(10px);
+                color: rgba(255, 255, 255, 0.72);
+                pointer-events: none;
+            }
+
+            .mobile-read-hint span {
+                font-size: 0.5rem;
+                letter-spacing: 0.12em;
+                text-transform: uppercase;
+                line-height: 1;
             }
 
             .slide-counter {
@@ -1862,13 +1934,13 @@ video {
         <div id="ambient-1" class="ambient-glow w-[800px] h-[800px] top-[-20%] left-[-10%] bg-purple-900/30 mix-blend-screen" vid="14"></div>
         <div id="ambient-2" class="ambient-glow w-[600px] h-[600px] bottom-[-10%] right-[-10%] bg-indigo-900/20 mix-blend-screen" vid="15"></div>
 
-        <div class="fixed top-6 left-8 z-50 flex items-center gap-3" vid="16">
+        <a href="/" class="mobile-home-link fixed top-6 left-8 z-50 flex items-center gap-3" aria-label="Return to homepage" vid="16">
             <div class="relative" vid="17">
                 <i class="ph-fill ph-sparkle text-purple-400 text-2xl" vid="18"></i>
                 <i class="ph-fill ph-star-four text-yellow-300 text-xs absolute -top-1 -right-2 animate-pulse" vid="19"></i>
             </div>
             <span class="font-magical text-xl text-white tracking-widest opacity-80 uppercase text-sm" vid="20">The Algorithm Witch</span>
-        </div>
+        </a>
 
         <button id="btn-prev" class="nav-btn nav-prev" aria-label="Previous Slide" vid="21">
             <i class="ph-bold ph-caret-left text-xl" vid="22"></i>
@@ -1877,8 +1949,14 @@ video {
             <i class="ph-bold ph-caret-right text-xl" vid="24"></i>
         </button>
 
+        <div class="mobile-read-hint" aria-hidden="true">
+            <i class="ph-bold ph-arrow-down"></i>
+            <span>Read More</span>
+        </div>
+
         <div class="presentation-controls" vid="25">
             <div class="dots-container" id="dots-container" vid="26"></div>
+            <div class="mobile-swipe-text">Swipe left/right</div>
             <div class="w-px h-4 bg-white/20" vid="27"></div>
             <div class="slide-counter" id="slide-counter" vid="28">1 / 10</div>
         </div>
@@ -2500,6 +2578,7 @@ video {
             const dotsContainer = document.getElementById('dots-container');
             const ambient1 = document.getElementById('ambient-1');
             const ambient2 = document.getElementById('ambient-2');
+            const presentationPage = document.getElementById('page-presentation');
 
             
             for (let i = 0; i < totalSlides; i++) {
@@ -2606,6 +2685,66 @@ video {
                     }
                 }, 50);
             }, { passive: false });
+
+            let touchStartX = 0;
+            let touchStartY = 0;
+            let touchEndX = 0;
+            let touchEndY = 0;
+            let touchActive = false;
+
+            function isMobilePresentation() {
+                return window.matchMedia('(max-width: 768px)').matches;
+            }
+
+            function activeSlideCanScroll() {
+                const activeSlide = slides[currentSlide];
+                return activeSlide && activeSlide.scrollHeight > activeSlide.clientHeight + 4;
+            }
+
+            presentationPage.addEventListener('touchstart', (e) => {
+                if (!isMobilePresentation()) return;
+                if (!e.touches || e.touches.length !== 1) return;
+
+                touchActive = true;
+                touchStartX = e.touches[0].clientX;
+                touchStartY = e.touches[0].clientY;
+                touchEndX = touchStartX;
+                touchEndY = touchStartY;
+            }, { passive: true });
+
+            presentationPage.addEventListener('touchmove', (e) => {
+                if (!touchActive || !e.touches || e.touches.length !== 1) return;
+                touchEndX = e.touches[0].clientX;
+                touchEndY = e.touches[0].clientY;
+            }, { passive: true });
+
+            presentationPage.addEventListener('touchend', () => {
+                if (!touchActive || isAnimating || !isMobilePresentation()) {
+                    touchActive = false;
+                    return;
+                }
+
+                const deltaX = touchEndX - touchStartX;
+                const deltaY = touchEndY - touchStartY;
+                const absX = Math.abs(deltaX);
+                const absY = Math.abs(deltaY);
+                const threshold = 40;
+
+                if (absX < threshold && absY < threshold) {
+                    touchActive = false;
+                    return;
+                }
+
+                if (absX > absY) {
+                    if (deltaX < 0) nextSlide();
+                    else prevSlide();
+                } else if (!activeSlideCanScroll()) {
+                    if (deltaY < 0) nextSlide();
+                    else prevSlide();
+                }
+
+                touchActive = false;
+            }, { passive: true });
 
             
             updateAmbientGlow();

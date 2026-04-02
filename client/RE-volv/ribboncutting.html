@@ -136,6 +136,7 @@
                 height: 100dvh;
                 min-height: 100dvh;
                 overflow: hidden;
+                overscroll-behavior: contain;
                 touch-action: pan-x pinch-zoom;
             }
 
@@ -2540,9 +2541,12 @@ video {
 
     <script vid="411">
         document.addEventListener('DOMContentLoaded', () => {
-            
+            const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+            const isSmallScreen = window.matchMedia('(max-width: 768px)').matches;
+            const canHover = window.matchMedia('(hover: hover) and (pointer: fine)').matches;
+
             const starContainer = document.getElementById('star-container');
-            const starCount = 150;
+            const starCount = prefersReducedMotion ? 0 : (isSmallScreen ? 18 : 150);
             for (let i = 0; i < starCount; i++) {
                 const star = document.createElement('div');
                 star.classList.add('star');
@@ -2557,14 +2561,15 @@ video {
                 starContainer.appendChild(star);
             }
 
-            
-            document.addEventListener('mousemove', e => {
-                document.querySelectorAll('.glass-card').forEach(card => {
-                    const rect = card.getBoundingClientRect();
-                    card.style.setProperty('--mouse-x', `${e.clientX - rect.left}px`);
-                    card.style.setProperty('--mouse-y', `${e.clientY - rect.top}px`);
+            if (canHover) {
+                document.addEventListener('mousemove', e => {
+                    document.querySelectorAll('.glass-card').forEach(card => {
+                        const rect = card.getBoundingClientRect();
+                        card.style.setProperty('--mouse-x', `${e.clientX - rect.left}px`);
+                        card.style.setProperty('--mouse-y', `${e.clientY - rect.top}px`);
+                    });
                 });
-            });
+            }
 
             
             const slides = document.querySelectorAll('.slide');
@@ -2673,6 +2678,7 @@ video {
             
             let wheelTimeout;
             document.addEventListener('wheel', (e) => {
+                if (isMobilePresentation()) return;
                 if (isAnimating) return;
                 if (Math.abs(e.deltaY) < 40) return; 
                 
@@ -2694,11 +2700,6 @@ video {
 
             function isMobilePresentation() {
                 return window.matchMedia('(max-width: 768px)').matches;
-            }
-
-            function activeSlideCanScroll() {
-                const activeSlide = slides[currentSlide];
-                return activeSlide && activeSlide.scrollHeight > activeSlide.clientHeight + 4;
             }
 
             presentationPage.addEventListener('touchstart', (e) => {
@@ -2737,9 +2738,6 @@ video {
 
                 if (absX > absY) {
                     if (deltaX < 0) nextSlide();
-                    else prevSlide();
-                } else if (!activeSlideCanScroll()) {
-                    if (deltaY < 0) nextSlide();
                     else prevSlide();
                 }
 

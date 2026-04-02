@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en" vid="0"><head vid="1">
+<html lang="en" style="background:#030014;color:#e2e8f0" vid="0"><head vid="1">
     <script>
         document.documentElement.classList.add('js');
     </script>
@@ -135,6 +135,24 @@
         .mobile-swipe-text,
         .mobile-read-hint {
             display: none;
+        }
+
+        body.preload .ambient-glow {
+            filter: blur(72px);
+            opacity: 0.14;
+            transition: none;
+        }
+
+        body.preload .star {
+            animation: none;
+            opacity: 0;
+        }
+
+        body.preload .slide,
+        body.preload .glass-card,
+        body.preload .nav-btn,
+        body.preload .dot {
+            transition: none !important;
         }
 
         @media (max-width: 768px) {
@@ -1954,7 +1972,7 @@ video {
       height: 0 !important;
     }
   </style></head>
-<body class="selection:bg-purple-600 selection:text-white antialiased text-base" vid="11">
+<body class="preload selection:bg-purple-600 selection:text-white antialiased text-base" style="background:#030014;color:#e2e8f0" vid="11">
 
     <div id="star-container" class="stars" vid="12"></div>
 
@@ -2576,6 +2594,7 @@ video {
         }
 
         function initRibbonCuttingPresentation() {
+            document.body.classList.remove('preload');
             const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
             const isSmallScreen = window.matchMedia('(max-width: 768px)').matches;
             const canHover = window.matchMedia('(hover: hover) and (pointer: fine)').matches;

@@ -299,6 +299,7 @@
         height: 100dvh;
         min-height: 100dvh;
         overflow: hidden;
+        overscroll-behavior: contain;
         touch-action: pan-x pinch-zoom;
     }
 
@@ -1992,6 +1993,7 @@
         let wheelTimeout;
         document.addEventListener('wheel', (e) => {
             if (!presentationPage.classList.contains('active')) return;
+            if (isMobilePresentation()) return;
             if (isAnimating) return;
             if (Math.abs(e.deltaY) < 40) return;
 
@@ -2011,11 +2013,6 @@
 
         function isMobilePresentation() {
             return window.matchMedia('(max-width: 768px)').matches;
-        }
-
-        function activeSlideCanScroll() {
-            const activeSlide = slides[currentSlide];
-            return activeSlide && activeSlide.scrollHeight > activeSlide.clientHeight + 4;
         }
 
         presentationPage.addEventListener('touchstart', (e) => {
@@ -2058,9 +2055,6 @@
                 } else {
                     prevSlide();
                 }
-            } else if (!activeSlideCanScroll()) {
-                if (deltaY < 0) nextSlide();
-                else prevSlide();
             }
 
             touchActive = false;

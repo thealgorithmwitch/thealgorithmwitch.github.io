@@ -1,13 +1,23 @@
-
+<!DOCTYPE html>
 <html lang="en" vid="0"><head vid="1">
+    <script>
+        document.documentElement.classList.add('js');
+    </script>
     <meta charset="UTF-8" vid="2">
     <meta name="viewport" content="width=device-width, initial-scale=1.0" vid="3">
+    <meta name="theme-color" content="#030014">
+    <meta name="color-scheme" content="dark">
     <title vid="4">Measuring Impact Beyond Attendance | Event Alchemy</title>
     
     <link rel="preconnect" href="https://fonts.googleapis.com" vid="6">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="" vid="7">
-    <link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@400;700;900&amp;family=Inter:wght@300;400;500;600&amp;family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&amp;display=swap" rel="stylesheet" vid="8">
-    <script src="https://unpkg.com/@phosphor-icons/web" vid="9"></script>
+    <style>
+        html, body { background:#030014; margin:0; padding:0; }
+        body { color:#e2e8f0; font-family:system-ui, -apple-system, Segoe UI, Roboto, Inter, Arial, sans-serif; }
+    </style>
+    <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@400;700;900&amp;family=Inter:wght@300;400;500;600&amp;family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&amp;display=swap" onload="this.onload=null;this.rel='stylesheet'" vid="8">
+    <noscript><link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@400;700;900&amp;family=Inter:wght@300;400;500;600&amp;family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&amp;display=swap" rel="stylesheet"></noscript>
+    <script defer src="https://unpkg.com/@phosphor-icons/web" vid="9"></script>
     <style vid="10">
         :root {
             --color-bg: #030014;
@@ -20,6 +30,14 @@
             --color-fuchsia: #d946ef;
         }
 
+        html,
+        body {
+            width: 100%;
+            min-height: 100%;
+            overflow-x: hidden;
+            -webkit-text-size-adjust: 100%;
+        }
+
         body {
             background-color: var(--color-bg);
             color: #e2e8f0;
@@ -27,8 +45,9 @@
             margin: 0;
             padding: 0;
             overflow: hidden;
-            width: 100vw;
-            height: 100vh;
+            width: 100%;
+            height: 100dvh;
+            min-height: 100vh;
         }
 
         .font-magical { font-family: 'Cinzel Decorative', cursive; }
@@ -67,6 +86,7 @@
             transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
             position: relative;
             overflow: hidden;
+            contain: layout paint;
         }
         
         .glass-card::before {
@@ -115,6 +135,13 @@
         .mobile-swipe-text,
         .mobile-read-hint {
             display: none;
+        }
+
+        @media (max-width: 768px) {
+            .ambient-glow {
+                filter: blur(90px);
+                opacity: 0.18;
+            }
         }
 
         @media (max-width: 768px) {
@@ -2540,35 +2567,65 @@ video {
     </div>
 
     <script vid="411">
-        document.addEventListener('DOMContentLoaded', () => {
+        function scheduleNonCritical(task) {
+            if ('requestIdleCallback' in window) {
+                window.requestIdleCallback(task, { timeout: 600 });
+            } else {
+                window.setTimeout(task, 1);
+            }
+        }
+
+        function initRibbonCuttingPresentation() {
             const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
             const isSmallScreen = window.matchMedia('(max-width: 768px)').matches;
             const canHover = window.matchMedia('(hover: hover) and (pointer: fine)').matches;
 
             const starContainer = document.getElementById('star-container');
-            const starCount = prefersReducedMotion ? 0 : (isSmallScreen ? 18 : 150);
-            for (let i = 0; i < starCount; i++) {
-                const star = document.createElement('div');
-                star.classList.add('star');
-                star.style.left = `${Math.random() * 100}%`;
-                star.style.top = `${Math.random() * 100}%`;
-                const size = Math.random() < 0.1 ? 3 : (Math.random() < 0.4 ? 2 : 1);
-                star.style.width = `${size}px`;
-                star.style.height = `${size}px`;
-                star.style.setProperty('--duration', `${2 + Math.random() * 4}s`);
-                star.style.setProperty('--delay', `${Math.random() * 5}s`);
-                star.style.setProperty('--opacity', 0.2 + Math.random() * 0.6);
-                starContainer.appendChild(star);
-            }
+            scheduleNonCritical(() => {
+                if (!starContainer || starContainer.dataset.built) return;
+                starContainer.dataset.built = 'true';
+
+                const starCount = prefersReducedMotion ? 0 : (isSmallScreen ? 18 : 120);
+                const frag = document.createDocumentFragment();
+
+                for (let i = 0; i < starCount; i++) {
+                    const star = document.createElement('div');
+                    star.classList.add('star');
+                    star.style.left = `${Math.random() * 100}%`;
+                    star.style.top = `${Math.random() * 100}%`;
+                    const size = Math.random() < 0.1 ? 3 : (Math.random() < 0.4 ? 2 : 1);
+                    star.style.width = `${size}px`;
+                    star.style.height = `${size}px`;
+                    star.style.setProperty('--duration', `${2 + Math.random() * 4}s`);
+                    star.style.setProperty('--delay', `${Math.random() * 5}s`);
+                    star.style.setProperty('--opacity', 0.2 + Math.random() * 0.6);
+                    frag.appendChild(star);
+                }
+
+                starContainer.appendChild(frag);
+            });
 
             if (canHover) {
-                document.addEventListener('mousemove', e => {
-                    document.querySelectorAll('.glass-card').forEach(card => {
-                        const rect = card.getBoundingClientRect();
-                        card.style.setProperty('--mouse-x', `${e.clientX - rect.left}px`);
-                        card.style.setProperty('--mouse-y', `${e.clientY - rect.top}px`);
+                const cards = Array.from(document.querySelectorAll('.glass-card'));
+                let rafPending = false;
+                let lastX = 0;
+                let lastY = 0;
+
+                document.addEventListener('mousemove', (e) => {
+                    lastX = e.clientX;
+                    lastY = e.clientY;
+                    if (rafPending) return;
+                    rafPending = true;
+
+                    requestAnimationFrame(() => {
+                        cards.forEach((card) => {
+                            const rect = card.getBoundingClientRect();
+                            card.style.setProperty('--mouse-x', `${lastX - rect.left}px`);
+                            card.style.setProperty('--mouse-y', `${lastY - rect.top}px`);
+                        });
+                        rafPending = false;
                     });
-                });
+                }, { passive: true });
             }
 
             
@@ -2746,7 +2803,13 @@ video {
 
             
             updateAmbientGlow();
-        });
+        }
+
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', () => requestAnimationFrame(initRibbonCuttingPresentation), { once: true });
+        } else {
+            requestAnimationFrame(initRibbonCuttingPresentation);
+        }
     </script>
 
 </body></html>

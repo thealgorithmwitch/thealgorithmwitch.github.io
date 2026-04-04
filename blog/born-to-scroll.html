@@ -46,7 +46,7 @@
         document.head.appendChild(s);
         return;
       }
-      window.addEventListener('load', () => {
+      window.addEventListener('load', function () {
         document.head.appendChild(s);
       }, { once: true });
     })();
@@ -54,15 +54,19 @@
   <style>
     :root {
       --bg: #05020a;
-      --panel: rgba(10, 5, 32, 0.78);
-      --panel-strong: #0d0718;
+      --panel: rgba(10, 5, 32, 0.82);
+      --panel-strong: rgba(13, 7, 24, 0.96);
       --line: rgba(168, 85, 247, 0.18);
-      --line-strong: rgba(168, 85, 247, 0.32);
+      --line-strong: rgba(168, 85, 247, 0.34);
       --purple: #a855f7;
-      --purple-soft: rgba(168, 85, 247, 0.14);
-      --gold: #f4d47d;
+      --cyan: #67e8f9;
+      --amber: #f4d47d;
+      --fuchsia: #f0abfc;
       --text: #e5e7eb;
-      --text-soft: #94a3b8;
+      --text-soft: #a7b2c4;
+      --text-faint: #748094;
+      --quote: rgba(221, 214, 254, 0.9);
+      --shadow: 0 22px 54px rgba(0, 0, 0, 0.32);
     }
 
     * { box-sizing: border-box; }
@@ -121,10 +125,7 @@
       to { transform: translate3d(36px, -24px, 0) scale(1.08); }
     }
 
-    .site-shell {
-      position: relative;
-      z-index: 1;
-    }
+    .site-shell { position: relative; z-index: 1; }
 
     .topbar {
       position: sticky;
@@ -139,7 +140,7 @@
     .hero-shell,
     .content-shell,
     .site-footer {
-      width: min(1400px, calc(100% - 2rem));
+      width: min(1460px, calc(100% - 2rem));
       margin: 0 auto;
     }
 
@@ -166,11 +167,7 @@
       flex-shrink: 0;
     }
 
-    .brand-glyph .sparkle {
-      font-size: 1.45rem;
-      color: #a855f7;
-    }
-
+    .brand-glyph .sparkle { font-size: 1.45rem; color: var(--purple); }
     .brand-glyph .star {
       position: absolute;
       top: -0.05rem;
@@ -181,7 +178,7 @@
 
     .brand-word {
       font-family: "Cinzel Decorative", ui-serif, Georgia, serif;
-      font-size: 1.1rem;
+      font-size: 1.08rem;
       letter-spacing: 0.12em;
       color: white;
       transition: color 0.24s ease;
@@ -192,11 +189,9 @@
     .micro-nav,
     .micro-link,
     .micro-label,
-    .micro-chip,
-    .meta-line,
-    .caption-label,
-    .toc-link,
     .utility-text,
+    .tag-chip,
+    .toc-link,
     .button-link {
       font-size: 0.72rem;
       letter-spacing: 0.18em;
@@ -260,6 +255,7 @@
       background: var(--panel);
       border: 1px solid var(--line);
       overflow: visible;
+      box-shadow: var(--shadow);
     }
 
     .panel::before {
@@ -272,9 +268,8 @@
 
     .hero-shell {
       display: grid;
-      grid-template-columns: minmax(0, 1.04fr) minmax(360px, 0.96fr);
+      grid-template-columns: minmax(340px, 0.88fr) minmax(440px, 1.12fr);
       gap: 2rem;
-      min-height: min(74vh, 820px);
       align-items: stretch;
       padding-top: 3.5rem;
       padding-bottom: 2rem;
@@ -282,131 +277,123 @@
 
     .hero-copy,
     .hero-media,
-    .sidebar-stack,
+    .panel-body,
     .article-cta,
-    .post-nav a,
-    .post-nav span,
-    .related-card {
-      min-width: 0;
+    .dispatch-rail,
+    .related-section {
+      padding: 1.4rem;
     }
 
     .hero-copy {
-      padding: clamp(2rem, 5vw, 4rem);
-      display: flex;
-      flex-direction: column;
-      justify-content: space-between;
-      gap: 1.4rem;
+      display: grid;
+      gap: 1.2rem;
+      align-content: start;
+      min-width: 0;
     }
 
-    .hero-copy::after {
-      content: '';
-      position: absolute;
-      right: -4rem;
-      top: -4rem;
-      width: 16rem;
-      height: 16rem;
-      background: radial-gradient(circle, rgba(168, 85, 247, 0.18), transparent 68%);
-      filter: blur(28px);
-    }
-
-    .eyebrow {
-      display: inline-flex;
-      align-items: center;
-      gap: 0.7rem;
-      color: #c4b5fd;
-    }
-
-    .eyebrow::before {
-      content: '';
-      width: 2.4rem;
-      height: 1px;
-      background: rgba(244, 212, 125, 0.7);
-    }
+    .eyebrow { color: #c4b5fd; }
 
     .post-title {
       margin: 0;
-      font-family: "Cinzel Decorative", ui-serif, Georgia, serif;
-      font-size: clamp(2.7rem, 6vw, 5.3rem);
-      line-height: 1.04;
+      font-family: "Playfair Display", ui-serif, Georgia, serif;
+      font-weight: 400;
+      font-size: clamp(2.8rem, 5vw, 5.4rem);
+      line-height: 0.96;
+      letter-spacing: -0.03em;
       color: white;
-      text-shadow: 0 0 18px rgba(168, 85, 247, 0.36);
     }
 
     .post-title-accent {
       display: block;
-      margin-top: 0.45rem;
-      color: var(--gold);
+      color: #ddd6fe;
       font-style: italic;
     }
 
     .post-excerpt {
       margin: 0;
-      padding: 1rem 0 1rem 1.5rem;
-      border-left: 4px solid rgba(168, 85, 247, 0.58);
-      background: linear-gradient(to right, rgba(168, 85, 247, 0.10), transparent);
-      font-family: "Playfair Display", ui-serif, Georgia, serif;
-      font-size: clamp(1.12rem, 1.9vw, 1.45rem);
-      font-style: italic;
-      line-height: 1.8;
-      color: #ddd6fe;
+      color: var(--text-soft);
+      font-size: clamp(1.05rem, 1.4vw, 1.22rem);
+      line-height: 1.9;
+      max-width: 42rem;
+    }
+
+    .hero-tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.55rem;
+    }
+
+    .tag-chip {
+      display: inline-flex;
+      align-items: center;
+      min-height: 2rem;
+      padding: 0 0.85rem;
+      border-radius: 999px;
+      border: 1px solid rgba(168, 85, 247, 0.22);
+      background: rgba(255, 255, 255, 0.03);
+      color: #d8ddef;
     }
 
     .hero-meta {
       display: flex;
       flex-wrap: wrap;
+      gap: 0.75rem;
       align-items: center;
-      gap: 0.85rem;
-      color: var(--text-soft);
+      color: var(--text-faint);
+      font-size: 0.84rem;
     }
 
-    .meta-line { color: #7c3aed; }
+    .meta-line { color: rgba(168, 85, 247, 0.46); }
 
     .hero-media {
-      padding: 1.1rem;
       display: flex;
       align-items: center;
       justify-content: center;
+      min-width: 0;
     }
 
     .hero-media-frame {
       width: 100%;
-      border: 1px solid rgba(168, 85, 247, 0.2);
-      background: rgba(0, 0, 0, 0.28);
-      padding: 0.8rem;
-      box-shadow: 0 28px 80px rgba(0, 0, 0, 0.26);
+      border: 1px solid rgba(168, 85, 247, 0.16);
+      background: rgba(255, 255, 255, 0.02);
+      overflow: hidden;
     }
 
-    .hero-media-frame img {
+    .hero-media-frame img,
+    .hero-media-frame iframe {
       width: 100%;
       height: auto;
-      border: 1px solid rgba(168, 85, 247, 0.16);
+      min-height: 0;
+      display: block;
+      object-fit: contain;
+      background: #090411;
     }
 
     .hero-media-placeholder {
-      width: 100%;
-      aspect-ratio: 16 / 10;
+      min-height: 26rem;
       display: grid;
       place-items: center;
-      color: rgba(168, 85, 247, 0.55);
-      border: 1px solid rgba(168, 85, 247, 0.16);
-      background: radial-gradient(circle at center, rgba(168, 85, 247, 0.14), transparent 58%);
-      font-size: 4rem;
+      color: rgba(221, 214, 254, 0.66);
+      font-size: 3rem;
     }
 
     .content-shell {
       display: grid;
-      grid-template-columns: minmax(250px, 290px) minmax(0, 1fr);
+      grid-template-columns: minmax(250px, 0.72fr) minmax(0, 1.28fr);
       gap: 2rem;
       align-items: start;
-      padding-bottom: 5rem;
+      padding-bottom: 4rem;
     }
 
     .sidebar-stack {
       position: sticky;
-      top: 6.1rem;
+      top: 6rem;
       display: grid;
-      gap: 1.15rem;
+      gap: 1rem;
+      min-width: 0;
     }
+
+    .panel-body { min-width: 0; }
 
     .panel-title {
       margin: 0 0 1rem;
@@ -414,40 +401,74 @@
       align-items: center;
       justify-content: space-between;
       gap: 0.8rem;
-      color: white;
-      padding-bottom: 0.9rem;
+      padding-bottom: 0.85rem;
       border-bottom: 1px solid rgba(168, 85, 247, 0.18);
+      color: white;
     }
 
     .panel-title .left {
       display: inline-flex;
-      align-items: center;
       gap: 0.7rem;
+      align-items: center;
     }
 
-    .panel-title i { color: var(--gold); }
+    .panel-title i { color: var(--amber); }
 
-    .panel-body {
-      padding: 1.2rem;
+    .signal-panel p,
+    .subscription-copy {
+      margin: 0;
+      color: var(--text-soft);
+      line-height: 1.72;
+      font-size: 0.95rem;
+    }
+
+    .signal-excerpt {
+      margin-bottom: 1rem;
+      padding-bottom: 1rem;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    }
+
+    .signal-quote {
+      margin: 0;
+      padding-left: 1rem;
+      border-left: 2px solid rgba(168, 85, 247, 0.28);
+      color: var(--quote);
+      font-family: "Playfair Display", ui-serif, Georgia, serif;
+      font-size: 1rem;
+      line-height: 1.8;
     }
 
     .toc-links {
       display: grid;
-      gap: 0.45rem;
+      gap: 0.35rem;
     }
 
     .toc-link {
-      display: block;
-      color: var(--text-soft);
-      padding: 0.68rem 0.9rem;
-      border-left: 1px solid rgba(168, 85, 247, 0.22);
-      transition: color 0.2s ease, background-color 0.2s ease, border-color 0.2s ease;
+      display: grid;
+      grid-template-columns: auto 1fr;
+      gap: 0.65rem;
+      align-items: center;
+      min-height: 2.5rem;
+      padding: 0.6rem 0.75rem;
+      border-left: 1px solid rgba(168, 85, 247, 0.2);
+      color: #cbd5e1;
+      transition: border-color 0.2s ease, background-color 0.2s ease, color 0.2s ease;
     }
 
     .toc-link:hover {
-      color: white;
-      border-left-color: var(--gold);
+      border-left-color: rgba(168, 85, 247, 0.6);
+      background: linear-gradient(to right, rgba(168, 85, 247, 0.06), transparent);
+    }
+
+    .toc-link.active {
+      color: var(--amber);
+      border-left-color: var(--amber);
       background: linear-gradient(to right, rgba(244, 212, 125, 0.08), transparent);
+    }
+
+    .toc-link-number {
+      color: rgba(168, 85, 247, 0.8);
+      min-width: 2ch;
     }
 
     .visions-grid {
@@ -464,15 +485,27 @@
       align-items: center;
       justify-content: center;
       position: relative;
-      transition: border-color 0.24s ease, background-color 0.24s ease;
+      overflow: hidden;
+      transition: border-color 0.24s ease, background-color 0.24s ease, transform 0.24s ease;
     }
 
     .vision-link:hover {
       border-color: rgba(34, 211, 238, 0.55);
       background: rgba(10, 5, 32, 0.88);
+      transform: translateY(-2px);
     }
 
-    .vision-link i { color: rgba(168, 85, 247, 0.5); font-size: 1.35rem; }
+    .vision-link img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      opacity: 0.88;
+    }
+
+    .vision-link i {
+      color: rgba(168, 85, 247, 0.5);
+      font-size: 1.35rem;
+    }
 
     .vision-tag {
       position: absolute;
@@ -481,20 +514,33 @@
       font-size: 0.58rem;
       letter-spacing: 0.16em;
       text-transform: uppercase;
-      color: rgba(148, 163, 184, 0.72);
-    }
-
-    .subscription-copy {
-      margin: 0 0 1rem;
-      color: var(--text-soft);
-      font-size: 0.92rem;
-      line-height: 1.75;
+      color: rgba(236, 240, 250, 0.82);
+      z-index: 1;
+      padding: 0.2rem 0.34rem;
+      background: rgba(5, 2, 10, 0.72);
     }
 
     .substack-embed-wrap {
-      border: 1px solid rgba(168, 85, 247, 0.18);
-      background: rgba(0, 0, 0, 0.24);
+      margin-top: 1rem;
+      border: 1px solid rgba(168, 85, 247, 0.2);
+      background:
+        linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.01)),
+        rgba(0, 0, 0, 0.24);
       overflow: hidden;
+    }
+
+    .substack-embed-chrome {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+      min-height: 3rem;
+      padding: 0.8rem 0.9rem;
+      border-bottom: 1px solid rgba(168, 85, 247, 0.14);
+      color: #d8ddef;
+      font-size: 0.76rem;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
     }
 
     .substack-embed {
@@ -502,6 +548,7 @@
       min-height: 320px;
       border: 0;
       background: transparent;
+      color-scheme: dark;
     }
 
     .substack-fallback {
@@ -516,219 +563,298 @@
       text-underline-offset: 0.16em;
     }
 
-    .article-column {
-      min-width: 0;
-    }
+    .article-column { min-width: 0; }
 
     .share-row {
       display: flex;
-      justify-content: flex-end;
-      gap: 0.6rem;
-      margin-bottom: 1.4rem;
+      flex-wrap: wrap;
+      gap: 0.8rem;
+      justify-content: flex-start;
+      margin-bottom: 1rem;
     }
 
     .share-row a,
     .share-row button {
-      width: 2.6rem;
-      height: 2.6rem;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      border: 1px solid rgba(168, 85, 247, 0.22);
-      background: rgba(13, 7, 24, 0.78);
-      color: var(--text-soft);
+      width: 2.8rem;
+      height: 2.8rem;
+      border-radius: 999px;
+      border: 1px solid rgba(168, 85, 247, 0.2);
+      background: rgba(255, 255, 255, 0.03);
+      color: #e5e7eb;
+      display: grid;
+      place-items: center;
       cursor: pointer;
-      transition: border-color 0.24s ease, background-color 0.24s ease, color 0.24s ease;
+      transition: transform 0.24s ease, border-color 0.24s ease, background-color 0.24s ease;
     }
 
     .share-row a:hover,
     .share-row button:hover {
-      color: white;
-      border-color: rgba(168, 85, 247, 0.55);
-      background: rgba(168, 85, 247, 0.12);
+      transform: translateY(-2px);
+      border-color: rgba(168, 85, 247, 0.44);
+      background: rgba(168, 85, 247, 0.08);
     }
 
     .article-body {
-      min-width: 0;
-      color: #d7dbea;
-      font-size: 1.05rem;
-      line-height: 1.82;
-      overflow-wrap: anywhere;
+      display: grid;
+      gap: 0;
     }
 
-    .article-body > :first-child { margin-top: 0; }
-    .article-body p { margin: 0 0 1.55rem; }
-    .article-body h2,
-    .article-body h3,
-    .article-body h4 {
-      margin: 3rem 0 1rem;
-      line-height: 1.22;
-      color: white;
+    .article-body p,
+    .article-body li,
+    .article-body blockquote {
+      font-size: 1.08rem;
+      line-height: 1.95;
+      color: var(--text-soft);
     }
 
-    .article-body h2 {
-      font-family: "Cinzel Decorative", ui-serif, Georgia, serif;
-      font-size: clamp(1.8rem, 3vw, 2.45rem);
-      padding-bottom: 0.8rem;
-      border-bottom: 1px solid rgba(168, 85, 247, 0.16);
-      scroll-margin-top: 6rem;
+    .article-body strong { color: white; font-weight: 500; }
+    .article-body a {
+      color: #ddd6fe;
+      text-decoration: underline;
+      text-underline-offset: 0.18em;
     }
 
-    .article-body h3 {
-      font-family: "Playfair Display", ui-serif, Georgia, serif;
-      font-size: clamp(1.32rem, 2.1vw, 1.75rem);
-      color: var(--gold);
+    .article-section {
+      position: relative;
+      padding: 2rem 0 2rem 2.6rem;
+      border-top: 1px solid rgba(255, 255, 255, 0.05);
+      transition: background-color 0.24s ease, border-color 0.24s ease, box-shadow 0.24s ease;
     }
 
-    .article-body h4 {
-      font-size: 0.8rem;
+    .article-section::before {
+      content: attr(data-number);
+      position: absolute;
+      left: 0;
+      top: 2rem;
+      font-size: 0.74rem;
       letter-spacing: 0.18em;
       text-transform: uppercase;
-      color: #c4b5fd;
+      color: rgba(168, 85, 247, 0.72);
     }
 
-    .article-body ul,
-    .article-body ol {
-      margin: 0 0 1.55rem 1.2rem;
-      padding: 0;
+    .article-section.is-active {
+      background: linear-gradient(to right, rgba(168, 85, 247, 0.06), transparent 55%);
+      border-top-color: rgba(168, 85, 247, 0.16);
+      box-shadow: inset 3px 0 0 rgba(168, 85, 247, 0.42);
     }
 
-    .article-body li { margin-bottom: 0.75rem; }
-    .article-body strong { color: white; }
-    .article-body em { color: #ddd6fe; }
-    .article-body a {
-      color: #c4b5fd;
-      text-decoration: underline;
-      text-decoration-color: rgba(168, 85, 247, 0.45);
-      text-underline-offset: 0.15em;
+    .article-section.theme-cyan.is-active {
+      background: linear-gradient(to right, rgba(34, 211, 238, 0.06), transparent 55%);
+      box-shadow: inset 3px 0 0 rgba(34, 211, 238, 0.42);
     }
 
-    .article-body a:hover { color: var(--gold); }
+    .article-section.theme-amber.is-active {
+      background: linear-gradient(to right, rgba(244, 212, 125, 0.07), transparent 55%);
+      box-shadow: inset 3px 0 0 rgba(244, 212, 125, 0.42);
+    }
 
-    .article-body figure {
-      margin: 2.2rem 0;
-      padding: 0.9rem;
-      background: rgba(13, 7, 24, 0.82);
+    .article-section.theme-fuchsia.is-active {
+      background: linear-gradient(to right, rgba(240, 171, 252, 0.06), transparent 55%);
+      box-shadow: inset 3px 0 0 rgba(240, 171, 252, 0.42);
+    }
+
+    .section-heading {
+      display: grid;
+      grid-template-columns: auto 1fr;
+      gap: 1rem;
+      align-items: start;
+      margin: 0 0 1.2rem;
+      font-family: "Playfair Display", ui-serif, Georgia, serif;
+      font-weight: 400;
+      font-size: clamp(1.8rem, 2.5vw, 2.5rem);
+      line-height: 1.08;
+      color: white;
+      scroll-margin-top: 120px;
+    }
+
+    .section-number {
+      color: rgba(168, 85, 247, 0.82);
+      font-size: 0.78rem;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      transform: translateY(0.45rem);
+    }
+
+    .theme-cyan .section-number { color: rgba(34, 211, 238, 0.82); }
+    .theme-amber .section-number { color: rgba(244, 212, 125, 0.84); }
+    .theme-fuchsia .section-number { color: rgba(240, 171, 252, 0.82); }
+
+    .article-figure {
+      margin: 1.8rem 0 2rem;
       border: 1px solid rgba(168, 85, 247, 0.16);
-      overflow: visible;
+      background: rgba(255, 255, 255, 0.02);
     }
 
-    .article-body img {
+    .article-figure img,
+    .article-figure iframe {
       width: 100%;
       height: auto;
-      border: 1px solid rgba(168, 85, 247, 0.14);
-    }
-
-    .article-body iframe {
-      width: 100%;
-      aspect-ratio: 16 / 9;
+      display: block;
+      background: #090411;
       border: 0;
-      background: black;
     }
 
-    .article-body figcaption {
-      margin-top: 0.9rem;
-      color: var(--text-soft);
+    .article-figure iframe {
+      min-height: 22rem;
+    }
+
+    .article-figure figcaption {
+      display: grid;
+      gap: 0.35rem;
+      padding: 0.95rem 1.05rem 1.1rem;
+      border-top: 1px solid rgba(255, 255, 255, 0.05);
+      background: rgba(0, 0, 0, 0.18);
+    }
+
+    .figure-caption-index {
+      color: rgba(168, 85, 247, 0.82);
+      font-size: 0.7rem;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+    }
+
+    .theme-cyan .figure-caption-index { color: rgba(34, 211, 238, 0.82); }
+    .theme-amber .figure-caption-index { color: rgba(244, 212, 125, 0.84); }
+    .theme-fuchsia .figure-caption-index { color: rgba(240, 171, 252, 0.82); }
+
+    .figure-caption-text {
+      color: var(--text-faint);
       font-size: 0.9rem;
       line-height: 1.7;
     }
 
-    .article-body blockquote {
-      margin: 2.2rem 0;
-      padding: 1.3rem 1.5rem;
-      border-left: 4px solid rgba(168, 85, 247, 0.48);
-      background: linear-gradient(to right, rgba(168, 85, 247, 0.10), transparent);
-      color: #ede9fe;
+    blockquote {
+      margin: 1.8rem 0;
+      padding: 1rem 0 1rem 1.15rem;
+      border-left: 2px solid rgba(168, 85, 247, 0.34);
+      color: var(--quote);
       font-family: "Playfair Display", ui-serif, Georgia, serif;
-      font-size: 1.18rem;
       font-style: italic;
+      font-size: 1.15rem;
+      line-height: 1.8;
     }
 
-    .article-cta {
-      margin-top: 3rem;
-      padding: 1.55rem;
+    .article-cta,
+    .dispatch-rail,
+    .related-section {
+      margin-top: 1.4rem;
+      border: 1px solid var(--line);
+      background: var(--panel);
+      box-shadow: var(--shadow);
     }
 
     .article-cta h2,
     .related-section h2 {
-      margin: 0 0 0.7rem;
-      font-family: "Cinzel Decorative", ui-serif, Georgia, serif;
-      font-size: clamp(1.45rem, 3vw, 2.2rem);
+      margin: 0 0 0.8rem;
+      font-family: "Playfair Display", ui-serif, Georgia, serif;
+      font-size: clamp(1.8rem, 2.4vw, 2.4rem);
+      font-weight: 400;
       color: white;
     }
 
-    .article-cta p {
-      margin: 0 0 1rem;
+    .article-cta p,
+    .related-section p {
       color: var(--text-soft);
-      line-height: 1.75;
+      line-height: 1.8;
     }
 
     .cta-buttons {
       display: flex;
       flex-wrap: wrap;
-      gap: 0.8rem;
+      gap: 0.75rem;
+      margin-top: 1rem;
     }
 
-    .post-nav {
-      margin-top: 2.8rem;
+    .dispatch-rail {
       display: grid;
-      grid-template-columns: repeat(2, minmax(0, 1fr));
+      grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
       gap: 1rem;
+      align-items: center;
     }
 
-    .post-nav a,
-    .post-nav span {
-      padding: 1.2rem 1.3rem;
+    .dispatch-link,
+    .dispatch-empty {
+      min-width: 0;
       display: grid;
-      gap: 0.45rem;
-      border: 1px solid var(--line);
-      background: var(--panel);
+      gap: 0.35rem;
+      color: var(--text-soft);
     }
 
-    .post-nav a:hover {
-      border-color: var(--line-strong);
-      background: rgba(10, 5, 32, 0.88);
+    .dispatch-link strong,
+    .dispatch-empty strong {
+      color: white;
+      font-family: "Playfair Display", ui-serif, Georgia, serif;
+      font-weight: 400;
+      line-height: 1.35;
     }
 
-    .post-nav span { color: rgba(148, 163, 184, 0.58); }
+    .dispatch-link.next,
+    .dispatch-empty.next { text-align: right; }
 
-    .related-section {
-      margin-top: 3rem;
+    .dispatch-socials {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.65rem;
+    }
+
+    .dispatch-socials a {
+      width: 2.55rem;
+      height: 2.55rem;
+      border-radius: 999px;
+      border: 1px solid rgba(168, 85, 247, 0.22);
+      background: rgba(255, 255, 255, 0.03);
       display: grid;
-      gap: 1rem;
+      place-items: center;
+      color: #ddd6fe;
+      transition: transform 0.24s ease, border-color 0.24s ease, background-color 0.24s ease;
+    }
+
+    .dispatch-socials a:hover {
+      transform: translateY(-2px);
+      border-color: rgba(168, 85, 247, 0.46);
+      background: rgba(168, 85, 247, 0.08);
     }
 
     .related-grid {
       display: grid;
       grid-template-columns: repeat(3, minmax(0, 1fr));
-      gap: 1rem;
+      gap: 1px;
+      background: rgba(255, 255, 255, 0.06);
+      margin-top: 1rem;
     }
 
     .related-card {
-      padding: 1.1rem;
-      border: 1px solid var(--line);
-      background: var(--panel);
-      transition: transform 0.24s ease, border-color 0.24s ease, background-color 0.24s ease;
+      padding: 1.2rem;
+      background: var(--panel-strong);
+      border-top: 2px solid rgba(168, 85, 247, 0.44);
+      min-width: 0;
+      transition: background-color 0.24s ease, transform 0.24s ease, border-color 0.24s ease;
     }
+
+    .related-card.theme-cyan { border-top-color: rgba(34, 211, 238, 0.54); }
+    .related-card.theme-amber { border-top-color: rgba(244, 212, 125, 0.56); }
+    .related-card.theme-fuchsia { border-top-color: rgba(240, 171, 252, 0.54); }
 
     .related-card:hover {
       transform: translateY(-3px);
-      border-color: var(--line-strong);
-      background: rgba(10, 5, 32, 0.88);
+      background: rgba(15, 10, 32, 0.98);
     }
 
     .related-card h3 {
-      margin: 0.5rem 0;
+      margin: 0.55rem 0 0.6rem;
       font-family: "Playfair Display", ui-serif, Georgia, serif;
-      font-size: 1.08rem;
+      font-weight: 400;
+      font-size: 1.35rem;
+      line-height: 1.25;
       color: white;
+      overflow-wrap: anywhere;
     }
 
     .related-card p {
       margin: 0;
       font-size: 0.95rem;
-      line-height: 1.72;
-      color: var(--text-soft);
+      line-height: 1.75;
     }
 
     .site-footer {
@@ -742,43 +868,67 @@
       font-size: 0.86rem;
     }
 
-    @media (max-width: 1120px) {
+    @media (max-width: 1180px) {
       .hero-shell,
       .content-shell {
         grid-template-columns: 1fr;
       }
       .sidebar-stack {
         position: static;
+        order: 2;
+      }
+      .article-column {
+        order: 1;
       }
       .micro-nav { display: none; }
       .related-grid { grid-template-columns: 1fr; }
     }
 
-    @media (max-width: 760px) {
+    @media (max-width: 780px) {
       .topbar-inner,
       .hero-shell,
       .content-shell,
       .site-footer {
-        width: min(100% - 1.2rem, 1400px);
+        width: min(100% - 1.2rem, 1460px);
       }
       .topbar-inner { min-height: 72px; }
-      .button-link {
-        min-height: 2.5rem;
-        padding-inline: 0.95rem;
-      }
+      .hero-shell { padding-top: 2.25rem; }
       .hero-copy,
-      .panel-body,
       .hero-media,
+      .panel-body,
       .article-cta,
-      .post-nav a,
-      .post-nav span,
-      .related-card {
+      .dispatch-rail,
+      .related-section {
         padding-left: 1rem;
         padding-right: 1rem;
       }
-      .share-row { justify-content: flex-start; }
-      .post-nav { grid-template-columns: 1fr; }
-      .site-footer { flex-direction: column; align-items: flex-start; }
+      .article-section {
+        padding-left: 0;
+      }
+      .article-section::before {
+        position: static;
+        display: block;
+        margin-bottom: 0.9rem;
+      }
+      .section-heading {
+        grid-template-columns: 1fr;
+        gap: 0.5rem;
+      }
+      .section-number { transform: none; }
+      .dispatch-rail {
+        grid-template-columns: 1fr;
+      }
+      .dispatch-link.next,
+      .dispatch-empty.next {
+        text-align: left;
+      }
+      .dispatch-socials {
+        justify-content: flex-start;
+      }
+      .site-footer {
+        flex-direction: column;
+        align-items: flex-start;
+      }
     }
   </style>
 </head>
@@ -812,11 +962,10 @@
     <main>
       <section class="hero-shell">
         <div class="panel hero-copy">
-          <div>
-            <div class="micro-label eyebrow">Platforms</div>
-            <h1 class="post-title">Born to Scroll</h1>
-          </div>
+          <div class="micro-label eyebrow">Platforms</div>
+          <h1 class="post-title">Born to Scroll</h1>
           <p class="post-excerpt">Since 2018, platforms like TikTok, Instagram, and Twitter trained billions of people to navigate information through continuous vertical motion. By Cassandre Arkema</p>
+          <div class="hero-tags"><span class="tag-chip">Platforms</span><span class="tag-chip">born</span><span class="tag-chip">scroll</span></div>
           <div class="hero-meta">
             <span>March 10, 2026</span>
             <span class="meta-line">•</span>
@@ -841,8 +990,18 @@
                 <span class="left"><i class="ph-fill ph-book-bookmark"></i><span>Index</span></span>
               </h2>
               <nav class="toc-links">
-                <a class="toc-link" href="#feedcom">Feed.com</a><a class="toc-link" href="#design-for-the-scroll">Design for the scroll</a><a class="toc-link" href="#feed-within-a-feed">Feed within a feed</a><a class="toc-link" href="#the-scroll-changed-everything">The scroll changed everything</a>
+                <a class="toc-link" href="#feedcom" data-theme="purple"><span class="toc-link-number">01</span><span>Feed.com</span></a><a class="toc-link" href="#design-for-the-scroll" data-theme="cyan"><span class="toc-link-number">02</span><span>Design for the scroll</span></a><a class="toc-link" href="#feed-within-a-feed" data-theme="amber"><span class="toc-link-number">03</span><span>Feed within a feed</span></a><a class="toc-link" href="#the-scroll-changed-everything" data-theme="fuchsia"><span class="toc-link-number">04</span><span>The scroll changed everything</span></a>
               </nav>
+            </div>
+          </div>
+
+          <div class="panel signal-panel">
+            <div class="panel-body">
+              <h2 class="panel-title micro-label">
+                <span class="left"><i class="ph-duotone ph-waveform"></i><span>Dispatch Signal</span></span>
+              </h2>
+              <p class="signal-excerpt">Since 2018, platforms like TikTok, Instagram, and Twitter trained billions of people to navigate information through continuous vertical motion. By Cassandre Arkema</p>
+              <blockquote class="signal-quote">&amp;#127926; Born to scroll the endless feed &amp;#127926;</blockquote>
             </div>
           </div>
 
@@ -855,12 +1014,12 @@
               <div class="visions-grid">
                 
     <a class="vision-link" href="#vision-1">
-      <i class="ph-duotone ph-image"></i>
+      <img src="https://substackcdn.com/image/fetch/$s_!47XC!,w_1456,c_limit,f_auto,q_auto:good,fl_progressive:steep/https%3A%2F%2Fsubstack-post-media.s3.amazonaws.com%2Fpublic%2Fimages%2F74b57aa4-3aed-452c-8634-c684a2056927_1600x900.png" alt="F1">
       <span class="vision-tag">F1</span>
     </a>
   
     <a class="vision-link" href="#vision-2">
-      <i class="ph-duotone ph-image"></i>
+      <img src="https://substackcdn.com/image/fetch/$s_!sD1I!,w_1456,c_limit,f_auto,q_auto:good,fl_progressive:steep/https%3A%2F%2Fsubstack-post-media.s3.amazonaws.com%2Fpublic%2Fimages%2Fdf2fdb8d-4d0a-455a-ba36-f1819c5c9e7e_1600x900.png" alt="F2">
       <span class="vision-tag">F2</span>
     </a>
   
@@ -875,9 +1034,13 @@
               </h2>
               <p class="subscription-copy">Receive encrypted dispatches, strategy notes, and fresh writing without leaving the archive.</p>
               <div class="substack-embed-wrap">
+                <div class="substack-embed-chrome">
+                  <span>Signal Intake</span>
+                  <span>Embedded Substack</span>
+                </div>
                 <iframe class="substack-embed" src="https://thealgorithmwitch.substack.com/embed" loading="lazy" scrolling="no" frameborder="0" title="Subscribe to The Algorithm Witch on Substack"></iframe>
               </div>
-              <p class="substack-fallback">If the embed is blocked, <a href="https://thealgorithmwitch.substack.com/" target="_blank" rel="noopener noreferrer">subscribe directly on Substack</a>.</p>
+              <p class="substack-fallback">If the embed is blocked, <a href="https://thealgorithmwitch.substack.com/p/born-to-scroll" target="_blank" rel="noopener noreferrer">view the original dispatch</a> or <a href="https://thealgorithmwitch.substack.com/" target="_blank" rel="noopener noreferrer">subscribe directly on Substack</a>.</p>
             </div>
           </div>
         </aside>
@@ -889,41 +1052,51 @@
             <button type="button" data-copy-link="https://thealgorithmwitch.com/blog/born-to-scroll.html" aria-label="Copy link"><i class="ph-bold ph-link"></i></button>
           </div>
 
-          <article class="article-body">
-            <p>&#127926; Born to scroll the endless feed &#127926; </p><p>Clicking was the standard way to navigate the web. Scrolling was considered bad or risky design. Early usability research warned about the &#8220;below the fold&#8221; problem, because users historically paid much more attention to content at the top of a page. Jakob Nielsen and other usability researchers emphasized placing important information immediately on page load, <a href="https://www.nngroup.com/articles/scrolling-and-attention/">since early studies showed around 80% of viewing time happened above the fold</a>. That guidance reflected how websites functioned at the time. Pages were living documents where users scanned, evaluated links, and clicked to decide where to go next, like turning pages in an encyclopedia.</p><p>Modern research shows that behavior has evolved. In <a href="https://www.nngroup.com/articles/scrolling-and-attention/">Nielsen Norman Group&#8217;s 2018 study</a>, 57% of viewing time still occurred above the fold, but attention below the fold had increased significantly. Roughly <strong>43% of viewing time now happens further down the page</strong>, meaning users are interacting far more with content that requires scrolling than they did in earlier studies. </p><p>Enter: the feed. Since 2018, platforms like TikTok, Instagram, and Twitter trained billions of people to navigate information through continuous vertical motion. Short-form video accelerated this dramatically. TikTok in particular turned scrolling into a <a href="/blog/recommendation-engine-learned-where-you-live.html">continuous discovery mechanism</a>. Media scholar <a href="https://www.researchgate.net/publication/327186182_Custodians_of_the_internet_Platforms_content_moderation_and_the_hidden_decisions_that_shape_social_media">Tarleton Gillespie (2018) argues that platforms do not simply host content but actively organize and shape how participation unfolds online, structuring visibility and public discourse through their systems.</a> We lost interest in turning the page and we learned to explore interfaces by scrolling. <strong>The</strong> <strong><a href="https://agentestudio.com/blog/infinite-scroll-tutorial">gesture became the default</a> way people move through digital space.</strong></p><p>Today the long scroll page has become an increasingly common website structure on the internet. Organizations can present their story through a single vertically structured surface that guides visitors through the core narrative as they move down the page. From my perspective building sites and studying how people actually navigate them, the most effective approach is a hybrid structure: treat the homepage as a guided scroll, then connect it to deeper pages where people can explore programs, research, or ways to participate. <a href="https://www.nngroup.com/articles/infinite-scrolling/">Usability research still shows that attention drops after the first screenful</a>, which is why the most important ideas should appear early in the page while deeper content lives behind clear navigation for visitors who want to go further.</p><p>Collections like <a href="https://onepagelove.com">One Page Love</a> curate thousands of examples of websites where an entire digital presence lives inside a single narrative scroll. Browsing through them can be useful for understanding how sections are sequenced, where calls to action appear, and how organizations guide attention without relying on complex navigation.</p><p>For nonprofit organizations considering a website redesign, the long scroll can be a practical structure that reflects how people already move through information online.</p><h2 id="feedcom">Feed.com</h2><p>Is a modern homepage just another social timeline? I think yes.</p><figure id="vision-1"><img src="https://substackcdn.com/image/fetch/$s_!47XC!,w_1456,c_limit,f_auto,q_auto:good,fl_progressive:steep/https%3A%2F%2Fsubstack-post-media.s3.amazonaws.com%2Fpublic%2Fimages%2F74b57aa4-3aed-452c-8634-c684a2056927_1600x900.png" alt=""></figure><p>I see more organizations blurring the boundary between their website and their social presence. A TikTok profile can function like a miniature media hub. A communications director&#8217;s LinkedIn page can become a living archive of an organization&#8217;s expertise. In certain contexts these spaces behave like or even replace websites themselves.</p><p><strong><a href="https://uxdesign.cc/how-and-should-we-stop-the-infinite-scroll-66141fcb0768">There are still important differences.</a></strong> Ownership, indexing, and long-term stability remain fundamentally stronger on the open web. <a href="/blog/recommendation-engine-learned-where-you-live.html">I wrote about those platform dynamics in my previous article</a> on how different social systems rank and distribute content, where I explain why each platform incentivizes different kinds of behavior.</p><p>At the interface level the logic of websites and social platforms is converging. Scrolling has become the common language through which we navigate both.</p><h2 id="design-for-the-scroll">Design for the scroll</h2><p>When I build websites now, I often start from a simple structure.</p><figure id="vision-2"><img src="https://substackcdn.com/image/fetch/$s_!sD1I!,w_1456,c_limit,f_auto,q_auto:good,fl_progressive:steep/https%3A%2F%2Fsubstack-post-media.s3.amazonaws.com%2Fpublic%2Fimages%2Fdf2fdb8d-4d0a-455a-ba36-f1819c5c9e7e_1600x900.png" alt=""></figure><p>Instead of forcing users to navigate through a complicated menu, the homepage becomes a guided journey. Key ideas appear in sequence. Each section introduces another layer of context. If someone wants deeper detail they can branch into the underlying pages.</p><p>The goal is to integrate structure into the scrolling experience. In practice this means designing your homepage the same way platforms design feeds. Each section should carry a clear idea. Visual rhythm means information density needs variation so attention does not collapse halfway down the page. Assume your website visitors will scroll and make that behavior the interface.</p><h2 id="feed-within-a-feed">Feed within a feed</h2><p>If I haven&#8217;t convinced you yet, let me convincingly deploy some inception: most people arrive at websites through feeds. <strong><a href="https://www.pewresearch.org/journalism/fact-sheet/social-media-and-news-fact-sheet/">Social media is a top news source for most Americans.</a></strong> That means we are primed, ready, and already scrolling from our phones. It&#8217;s likely that the most intentional users of your site will be visitors acquire from platforms like TikTok. You need to stop the scroll and move them from that platform to yours. They click from Instagram, LinkedIn, TikTok or follow a link from a newsletter. The entry point is already part of a scrolling environment. A page that continues that motion feels frictionless.</p><p>This has created new variations of the traditional marketing funnel. Organizations now maintain multiple entry points connected to different feeds. A TikTok audience may land on a simplified landing page designed for fast comprehension. A LinkedIn audience may arrive through a research article or long-form analysis. A newsletter reader may enter through a deep blog post.</p><p>The website becomes the center that connects those streams. Each feed delivers attention in a slightly different way. Your site absorbs that attention and gives it structure.</p><h2 id="the-scroll-changed-everything">The scroll changed everything</h2><p>Scrolling is now the default motion of the internet. Feeds changed the way people move through information. Your website needs to adapt. Marketing is now fundamentally multi-channel. <a href="https://www.hubspot.com/state-of-marketing">HubSpot (2026) reports</a> that 75% of teams operate across five or more platforms, while social media, websites, and search remain the highest-performing channels by ROI. In practice, this means organizations no longer operate a single digital presence but an ecosystem of interconnected surfaces.</p><p>The long-scroll page is an architectural response to the behavioral patterns platforms trained us to follow. In other words, the web learned how to scroll. Designing with that reality in mind means arranging information so it unfolds naturally inside the gesture people already use to explore digital space. </p>
+          <article class="article-body" id="top">
+            <section class="article-section article-section-intro theme-purple" data-section-id="top" data-number="00"><p>&#127926; Born to scroll the endless feed &#127926; </p><p>Clicking was the standard way to navigate the web. Scrolling was considered bad or risky design. Early usability research warned about the &#8220;below the fold&#8221; problem, because users historically paid much more attention to content at the top of a page. Jakob Nielsen and other usability researchers emphasized placing important information immediately on page load, <a href="https://www.nngroup.com/articles/scrolling-and-attention/">since early studies showed around 80% of viewing time happened above the fold</a>. That guidance reflected how websites functioned at the time. Pages were living documents where users scanned, evaluated links, and clicked to decide where to go next, like turning pages in an encyclopedia.</p><p>Modern research shows that behavior has evolved. In <a href="https://www.nngroup.com/articles/scrolling-and-attention/">Nielsen Norman Group&#8217;s 2018 study</a>, 57% of viewing time still occurred above the fold, but attention below the fold had increased significantly. Roughly <strong>43% of viewing time now happens further down the page</strong>, meaning users are interacting far more with content that requires scrolling than they did in earlier studies. </p><p>Enter: the feed. Since 2018, platforms like TikTok, Instagram, and Twitter trained billions of people to navigate information through continuous vertical motion. Short-form video accelerated this dramatically. TikTok in particular turned scrolling into a <a href="/blog/recommendation-engine-learned-where-you-live.html">continuous discovery mechanism</a>. Media scholar <a href="https://www.researchgate.net/publication/327186182_Custodians_of_the_internet_Platforms_content_moderation_and_the_hidden_decisions_that_shape_social_media">Tarleton Gillespie (2018) argues that platforms do not simply host content but actively organize and shape how participation unfolds online, structuring visibility and public discourse through their systems.</a> We lost interest in turning the page and we learned to explore interfaces by scrolling. <strong>The</strong> <strong><a href="https://agentestudio.com/blog/infinite-scroll-tutorial">gesture became the default</a> way people move through digital space.</strong></p><p>Today the long scroll page has become an increasingly common website structure on the internet. Organizations can present their story through a single vertically structured surface that guides visitors through the core narrative as they move down the page. From my perspective building sites and studying how people actually navigate them, the most effective approach is a hybrid structure: treat the homepage as a guided scroll, then connect it to deeper pages where people can explore programs, research, or ways to participate. <a href="https://www.nngroup.com/articles/infinite-scrolling/">Usability research still shows that attention drops after the first screenful</a>, which is why the most important ideas should appear early in the page while deeper content lives behind clear navigation for visitors who want to go further.</p><p>Collections like <a href="https://onepagelove.com">One Page Love</a> curate thousands of examples of websites where an entire digital presence lives inside a single narrative scroll. Browsing through them can be useful for understanding how sections are sequenced, where calls to action appear, and how organizations guide attention without relying on complex navigation.</p><p>For nonprofit organizations considering a website redesign, the long scroll can be a practical structure that reflects how people already move through information online.</p></section>
+<section class="article-section theme-purple" data-section-id="feedcom" data-number="01" data-theme="purple"><h2 id="feedcom" class="section-heading"><span class="section-number">01</span><span class="section-heading-text">Feed.com</span></h2><p>Is a modern homepage just another social timeline? I think yes.</p><figure id="vision-1" class="article-figure theme-purple"><img src="https://substackcdn.com/image/fetch/$s_!47XC!,w_1456,c_limit,f_auto,q_auto:good,fl_progressive:steep/https%3A%2F%2Fsubstack-post-media.s3.amazonaws.com%2Fpublic%2Fimages%2F74b57aa4-3aed-452c-8634-c684a2056927_1600x900.png" alt=""><figcaption><span class="figure-caption-index">Figure 01</span><span class="figure-caption-text">Visual reference</span></figcaption></figure><p>I see more organizations blurring the boundary between their website and their social presence. A TikTok profile can function like a miniature media hub. A communications director&#8217;s LinkedIn page can become a living archive of an organization&#8217;s expertise. In certain contexts these spaces behave like or even replace websites themselves.</p><p><strong><a href="https://uxdesign.cc/how-and-should-we-stop-the-infinite-scroll-66141fcb0768">There are still important differences.</a></strong> Ownership, indexing, and long-term stability remain fundamentally stronger on the open web. <a href="/blog/recommendation-engine-learned-where-you-live.html">I wrote about those platform dynamics in my previous article</a> on how different social systems rank and distribute content, where I explain why each platform incentivizes different kinds of behavior.</p><p>At the interface level the logic of websites and social platforms is converging. Scrolling has become the common language through which we navigate both.</p></section>
+<section class="article-section theme-cyan" data-section-id="design-for-the-scroll" data-number="02" data-theme="cyan"><h2 id="design-for-the-scroll" class="section-heading"><span class="section-number">02</span><span class="section-heading-text">Design for the scroll</span></h2><p>When I build websites now, I often start from a simple structure.</p><figure id="vision-2" class="article-figure theme-cyan"><img src="https://substackcdn.com/image/fetch/$s_!sD1I!,w_1456,c_limit,f_auto,q_auto:good,fl_progressive:steep/https%3A%2F%2Fsubstack-post-media.s3.amazonaws.com%2Fpublic%2Fimages%2Fdf2fdb8d-4d0a-455a-ba36-f1819c5c9e7e_1600x900.png" alt=""><figcaption><span class="figure-caption-index">Figure 02</span><span class="figure-caption-text">Visual reference</span></figcaption></figure><p>Instead of forcing users to navigate through a complicated menu, the homepage becomes a guided journey. Key ideas appear in sequence. Each section introduces another layer of context. If someone wants deeper detail they can branch into the underlying pages.</p><p>The goal is to integrate structure into the scrolling experience. In practice this means designing your homepage the same way platforms design feeds. Each section should carry a clear idea. Visual rhythm means information density needs variation so attention does not collapse halfway down the page. Assume your website visitors will scroll and make that behavior the interface.</p></section>
+<section class="article-section theme-amber" data-section-id="feed-within-a-feed" data-number="03" data-theme="amber"><h2 id="feed-within-a-feed" class="section-heading"><span class="section-number">03</span><span class="section-heading-text">Feed within a feed</span></h2><p>If I haven&#8217;t convinced you yet, let me convincingly deploy some inception: most people arrive at websites through feeds. <strong><a href="https://www.pewresearch.org/journalism/fact-sheet/social-media-and-news-fact-sheet/">Social media is a top news source for most Americans.</a></strong> That means we are primed, ready, and already scrolling from our phones. It&#8217;s likely that the most intentional users of your site will be visitors acquire from platforms like TikTok. You need to stop the scroll and move them from that platform to yours. They click from Instagram, LinkedIn, TikTok or follow a link from a newsletter. The entry point is already part of a scrolling environment. A page that continues that motion feels frictionless.</p><p>This has created new variations of the traditional marketing funnel. Organizations now maintain multiple entry points connected to different feeds. A TikTok audience may land on a simplified landing page designed for fast comprehension. A LinkedIn audience may arrive through a research article or long-form analysis. A newsletter reader may enter through a deep blog post.</p><p>The website becomes the center that connects those streams. Each feed delivers attention in a slightly different way. Your site absorbs that attention and gives it structure.</p></section>
+<section class="article-section theme-fuchsia" data-section-id="the-scroll-changed-everything" data-number="04" data-theme="fuchsia"><h2 id="the-scroll-changed-everything" class="section-heading"><span class="section-number">04</span><span class="section-heading-text">The scroll changed everything</span></h2><p>Scrolling is now the default motion of the internet. Feeds changed the way people move through information. Your website needs to adapt. Marketing is now fundamentally multi-channel. <a href="https://www.hubspot.com/state-of-marketing">HubSpot (2026) reports</a> that 75% of teams operate across five or more platforms, while social media, websites, and search remain the highest-performing channels by ROI. In practice, this means organizations no longer operate a single digital presence but an ecosystem of interconnected surfaces.</p><p>The long-scroll page is an architectural response to the behavioral patterns platforms trained us to follow. In other words, the web learned how to scroll. Designing with that reality in mind means arranging information so it unfolds naturally inside the gesture people already use to explore digital space. </p></section>
           </article>
 
-          <section class="panel article-cta">
+          <section class="article-cta">
             <h2>Keep the Grimoire Open.</h2>
             <p>Stay close to future essays through Substack, support the archive with a paid membership, or bring the same clarity into your own communications system.</p>
             <div class="cta-buttons">
               <a class="button-link" href="https://thealgorithmwitch.substack.com/" target="_blank" rel="noopener noreferrer">Subscribe on Substack</a>
               <a class="button-link" href="https://thealgorithmwitch.substack.com/" target="_blank" rel="noopener noreferrer">Become a Paid Member</a>
-              <a class="button-link" href="https://thealgorithmwitch.com/summon.html">Book a Consultation</a>
+              <a class="button-link" href="/summon.html">Book a Consultation</a>
             </div>
           </section>
 
-          <nav class="post-nav" aria-label="More posts">
-            <a href="/blog/posting-less-wont-save-you.html"><div class="micro-label">Newer</div><strong>Posting Less Won’t Save You</strong></a><a href="/blog/recommendation-engine-learned-where-you-live.html"><div class="micro-label">Older</div><strong>The Recommendation Engine Learned Where You Live</strong></a>
+          <nav class="dispatch-rail" aria-label="More dispatches">
+            <a class="dispatch-link older" href="/blog/recommendation-engine-learned-where-you-live.html"><div class="micro-label">Older Dispatch</div><strong>The Recommendation Engine Learned Where You Live</strong></a>
+    <div class="dispatch-socials" aria-label="Social links">
+      <a href="https://www.linkedin.com/in/cassandrearkema/" target="_blank" rel="noopener noreferrer" aria-label="LinkedIn"><i class="ph-fill ph-linkedin-logo"></i></a>
+      <a href="https://substack.com/@thealgorithmwitch" target="_blank" rel="noopener noreferrer" aria-label="Substack"><i class="ph-fill ph-substack-logo"></i></a>
+      <a href="https://www.instagram.com/thealgorithmwitch" target="_blank" rel="noopener noreferrer" aria-label="Instagram"><i class="ph-fill ph-instagram-logo"></i></a>
+    </div>
+  <a class="dispatch-link next" href="/blog/posting-less-wont-save-you.html"><div class="micro-label">Newer Dispatch</div><strong>Posting Less Won’t Save You</strong></a>
           </nav>
 
           <section class="related-section">
             <h2>Related Dispatches</h2>
             <div class="related-grid">
               
-      <a class="related-card" href="/blog/ethics-of-algorithmic-visibility.html">
+      <a class="related-card theme-purple" href="/blog/ethics-of-algorithmic-visibility.html">
         <div class="micro-label">Ethics</div>
         <h3>The Ethics of Algorithmic Visibility</h3>
         <p>Breaking down how the Meta and Google verdict changes the conversation around trust, attention, and building power online.</p>
       </a>
     
-      <a class="related-card" href="/blog/future-is-community-led.html">
+      <a class="related-card theme-cyan" href="/blog/future-is-community-led.html">
         <div class="micro-label">Community</div>
         <h3>The Future Is Community-Led</h3>
         <p>What 320 climate websites and four platforms revealed about where this movement is going.</p>
       </a>
     
-      <a class="related-card" href="/blog/posting-less-wont-save-you.html">
+      <a class="related-card theme-amber" href="/blog/posting-less-wont-save-you.html">
         <div class="micro-label">Dispatch</div>
         <h3>Posting Less Won’t Save You</h3>
         <p>aligning content to find its people | algorithm lore + digital patterns 🧄</p>
@@ -948,19 +1121,57 @@
   </div>
 
   <script>
-    document.querySelectorAll('[data-copy-link]').forEach((button) => {
-      button.addEventListener('click', async () => {
-        const value = button.getAttribute('data-copy-link');
+    document.querySelectorAll('[data-copy-link]').forEach(function (button) {
+      button.addEventListener('click', async function () {
+        var value = button.getAttribute('data-copy-link');
         try {
           await navigator.clipboard.writeText(value);
-          const original = button.innerHTML;
+          var original = button.innerHTML;
           button.innerHTML = '<i class="ph-bold ph-check"></i>';
-          setTimeout(() => { button.innerHTML = original; }, 1200);
+          setTimeout(function () { button.innerHTML = original; }, 1200);
         } catch (error) {
           window.open(value, '_blank', 'noopener');
         }
       });
     });
+
+    var tocLinks = Array.prototype.slice.call(document.querySelectorAll('.toc-link[href^="#"]'));
+    var sections = Array.prototype.slice.call(document.querySelectorAll('.article-section[data-section-id]'));
+
+    function setActiveSection(id) {
+      sections.forEach(function (section) {
+        section.classList.toggle('is-active', section.getAttribute('data-section-id') === id);
+      });
+      tocLinks.forEach(function (link) {
+        link.classList.toggle('active', link.getAttribute('href') === '#' + id);
+      });
+    }
+
+    tocLinks.forEach(function (link) {
+      link.addEventListener('click', function () {
+        var id = link.getAttribute('href').slice(1);
+        setActiveSection(id);
+      });
+    });
+
+    var observer = new IntersectionObserver(function (entries) {
+      var visible = entries
+        .filter(function (entry) { return entry.isIntersecting; })
+        .sort(function (a, b) { return b.intersectionRatio - a.intersectionRatio; })[0];
+      if (!visible) return;
+      setActiveSection(visible.target.getAttribute('data-section-id'));
+    }, {
+      rootMargin: '-22% 0px -46% 0px',
+      threshold: [0.12, 0.35, 0.6]
+    });
+
+    sections.forEach(function (section) {
+      observer.observe(section);
+    });
+
+    if (sections.length) {
+      setActiveSection(sections[0].getAttribute('data-section-id'));
+    }
   </script>
 </body>
 </html>

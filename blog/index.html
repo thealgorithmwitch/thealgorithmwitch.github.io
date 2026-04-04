@@ -33,8 +33,8 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="preload" as="image" href="https://substack-post-media.s3.amazonaws.com/public/images/40bd0dfc-356b-4dea-9299-bd908965027d_1600x900.png">
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@400;700;900&family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@100..800&display=swap" media="print" onload="this.media='all'">
-  <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@400;700;900&family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@100..800&display=swap"></noscript>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@400;700&family=Inter:wght@300;400;500;600&family=Playfair+Display:ital,wght@0,400;0,500;1,400&display=swap" media="print" onload="this.media='all'">
+  <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@400;700&family=Inter:wght@300;400;500;600&family=Playfair+Display:ital,wght@0,400;0,500;1,400&display=swap"></noscript>
   <script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"Blog","@id":"https://thealgorithmwitch.com/blog/#blog","url":"https://thealgorithmwitch.com/blog/","name":"The Algorithm Witch Archive","description":"Digital strategy essays and archive writing for climate, clean energy, advocacy, and nonprofit teams.","publisher":{"@id":"https://thealgorithmwitch.com/#person"}},{"@type":"CollectionPage","@id":"https://thealgorithmwitch.com/blog/#webpage","url":"https://thealgorithmwitch.com/blog/","name":"The Archive | The Algorithm Witch","description":"Archive of strategy essays, digital alchemy notes, and long-form writing by The Algorithm Witch.","isPartOf":{"@id":"https://thealgorithmwitch.com/blog/#blog"},"primaryImageOfPage":{"@type":"ImageObject","url":"https://substack-post-media.s3.amazonaws.com/public/images/40bd0dfc-356b-4dea-9299-bd908965027d_1600x900.png"}},{"@type":"Person","@id":"https://thealgorithmwitch.com/#person","name":"Cassandre Arkema","alternateName":"The Algorithm Witch","url":"https://thealgorithmwitch.com/","sameAs":["https://www.linkedin.com/in/cassandrearkema/","https://www.instagram.com/thealgorithmwitch","https://substack.com/@thealgorithmwitch"]}]}</script>
   <script>
     (function () {
@@ -53,387 +53,663 @@
   </script>
   <style>
     :root {
-      --bg-base: #02000a;
-      --bg-surface: #0a0618;
-      --accent-purple: #a855f7;
-      --accent-cyan: #06b6d4;
-      --accent-amber: #f59e0b;
-      --accent-fuchsia: #d946ef;
+      --bg: #05020a;
+      --panel: rgba(10, 5, 32, 0.78);
+      --line: rgba(168, 85, 247, 0.18);
+      --line-strong: rgba(168, 85, 247, 0.32);
+      --purple: #a855f7;
+      --gold: #f4d47d;
+      --text: #e5e7eb;
+      --text-soft: #94a3b8;
     }
+    * { box-sizing: border-box; }
     body {
       margin: 0;
-      background-color: var(--bg-base);
-      color: #e2e8f0;
-      font-family: 'Inter', sans-serif;
-      overflow-x: hidden;
-      scroll-behavior: smooth;
+      min-height: 100vh;
+      background:
+        radial-gradient(circle at 18% 18%, rgba(168, 85, 247, 0.16), transparent 26%),
+        radial-gradient(circle at 80% 12%, rgba(245, 212, 125, 0.08), transparent 22%),
+        radial-gradient(circle at 56% 76%, rgba(34, 211, 238, 0.08), transparent 20%),
+        #05020a;
+      color: var(--text);
+      font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+      overflow-x: clip;
+      -webkit-font-smoothing: antialiased;
     }
     a { color: inherit; text-decoration: none; }
-    .font-cinzel { font-family: 'Cinzel Decorative', cursive; }
-    .font-mono-tech { font-family: 'JetBrains Mono', monospace; }
-    .stars-container {
+    img { display: block; max-width: 100%; }
+    .bg-grid {
       position: fixed;
       inset: 0;
       z-index: 0;
       pointer-events: none;
-      background: radial-gradient(circle at 50% 0%, #150a30 0%, var(--bg-base) 70%);
+      background-image:
+        linear-gradient(to right, rgba(168, 85, 247, 0.03) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(168, 85, 247, 0.03) 1px, transparent 1px);
+      background-size: 40px 40px;
+    }
+    .atmosphere {
+      position: fixed;
+      inset: 0;
+      z-index: 0;
+      pointer-events: none;
+      background: radial-gradient(circle at 50% 0%, #150a30 0%, transparent 55%);
     }
     .orb {
       position: fixed;
-      border-radius: 50%;
-      filter: blur(120px);
-      opacity: 0.15;
+      border-radius: 999px;
+      filter: blur(110px);
+      opacity: 0.14;
       pointer-events: none;
       z-index: 0;
-      animation: float-orb 20s infinite ease-in-out alternate;
+      animation: floatOrb 18s ease-in-out infinite alternate;
     }
-    @keyframes float-orb {
-      0% { transform: translate(0, 0) scale(1); }
-      100% { transform: translate(50px, -50px) scale(1.1); }
+    @keyframes floatOrb {
+      from { transform: translate3d(0, 0, 0) scale(1); }
+      to { transform: translate3d(36px, -24px, 0) scale(1.08); }
     }
-    .spell-card {
+    .site-shell { position: relative; z-index: 1; }
+    .topbar {
+      position: sticky;
+      top: 0;
+      z-index: 30;
+      backdrop-filter: blur(18px);
+      background: rgba(5, 2, 10, 0.82);
+      border-bottom: 1px solid rgba(168, 85, 247, 0.12);
+    }
+    .topbar-inner,
+    .archive-shell,
+    .site-footer {
+      width: min(1400px, calc(100% - 2rem));
+      margin: 0 auto;
+    }
+    .topbar-inner {
+      min-height: 82px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+    }
+    .brand-lockup {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.8rem;
+    }
+    .brand-glyph {
       position: relative;
-      background: var(--bg-surface);
-      border: 1px solid rgba(255,255,255,0.05);
-      transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
-      z-index: 10;
+      display: inline-grid;
+      place-items: center;
+      width: 1.8rem;
+      height: 1.8rem;
+      flex-shrink: 0;
     }
-    .spell-card::before {
+    .brand-glyph .sparkle { font-size: 1.45rem; color: #a855f7; }
+    .brand-glyph .star {
+      position: absolute;
+      top: -0.05rem;
+      right: -0.15rem;
+      font-size: 0.65rem;
+      color: #fde047;
+    }
+    .brand-word {
+      font-family: "Cinzel Decorative", ui-serif, Georgia, serif;
+      font-size: 1.1rem;
+      letter-spacing: 0.12em;
+      color: white;
+    }
+    .micro-nav, .micro-link, .micro-label {
+      font-size: 0.72rem;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      font-weight: 500;
+    }
+    .micro-nav {
+      display: flex;
+      align-items: center;
+      gap: 2rem;
+      color: #d1d5db;
+    }
+    .micro-link {
+      position: relative;
+      padding-bottom: 0.15rem;
+    }
+    .micro-link::after {
       content: '';
       position: absolute;
-      inset: 6px;
-      border: 1px solid rgba(255,255,255,0.03);
-      border-radius: inherit;
-      pointer-events: none;
-      transition: all 0.5s ease;
-    }
-    .spell-card:hover {
-      transform: translateY(-8px);
-      background: #0d0822;
-    }
-    .card-purple:hover { border-color: rgba(168, 85, 247, 0.4); box-shadow: 0 20px 40px -10px rgba(168, 85, 247, 0.15); }
-    .card-purple:hover::before { border-color: rgba(168, 85, 247, 0.2); }
-    .card-cyan:hover { border-color: rgba(6, 182, 212, 0.4); box-shadow: 0 20px 40px -10px rgba(6, 182, 212, 0.15); }
-    .card-cyan:hover::before { border-color: rgba(6, 182, 212, 0.2); }
-    .card-amber:hover { border-color: rgba(245, 158, 11, 0.4); box-shadow: 0 20px 40px -10px rgba(245, 158, 11, 0.15); }
-    .card-amber:hover::before { border-color: rgba(245, 158, 11, 0.2); }
-    .card-fuchsia:hover { border-color: rgba(217, 70, 239, 0.4); box-shadow: 0 20px 40px -10px rgba(217, 70, 239, 0.15); }
-    .card-fuchsia:hover::before { border-color: rgba(217, 70, 239, 0.2); }
-    .text-glow-gold {
-      background: linear-gradient(135deg, #fde047 0%, #b45309 100%);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-    }
-    .nav-item { position: relative; }
-    .nav-item::after {
-      content: '';
-      position: absolute;
-      width: 0;
-      height: 1px;
-      bottom: -4px;
       left: 0;
-      background: var(--accent-purple);
-      transition: width 0.3s ease;
+      bottom: 0;
+      width: 100%;
+      height: 1px;
+      background: #a855f7;
+      transform: scaleX(0);
+      transform-origin: right;
+      transition: transform 0.24s ease;
     }
-    .nav-item:hover::after, .nav-item.active::after { width: 100%; }
-    .fade-in-up {
-      opacity: 0;
-      transform: translateY(30px);
-      transition: opacity 0.8s ease-out, transform 0.8s ease-out;
+    .micro-link:hover::after, .micro-link.active::after {
+      transform: scaleX(1);
+      transform-origin: left;
     }
-    .fade-in-up.is-visible {
-      opacity: 1;
-      transform: translateY(0);
+    .button-link {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 2.75rem;
+      padding: 0 1.15rem;
+      border-radius: 999px;
+      border: 1px solid rgba(168, 85, 247, 0.3);
+      background: rgba(168, 85, 247, 0.08);
+      color: white;
+      font-size: 0.72rem;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      font-weight: 500;
+      transition: transform 0.24s ease, border-color 0.24s ease, background-color 0.24s ease;
+    }
+    .button-link:hover {
+      transform: translateY(-2px);
+      background: rgba(168, 85, 247, 0.16);
+      border-color: rgba(168, 85, 247, 0.5);
+    }
+    .panel {
+      position: relative;
+      background: var(--panel);
+      border: 1px solid var(--line);
+      overflow: visible;
+    }
+    .panel::before {
+      content: '';
+      position: absolute;
+      inset: 0.55rem;
+      border: 1px solid rgba(168, 85, 247, 0.08);
+      pointer-events: none;
+    }
+    .archive-shell {
+      padding-top: 3.5rem;
+      padding-bottom: 5rem;
+      display: grid;
+      grid-template-columns: minmax(260px, 320px) minmax(0, 1fr);
+      gap: 2rem;
+      align-items: start;
+    }
+    .archive-sidebar {
+      position: sticky;
+      top: 6rem;
+      display: grid;
+      gap: 1.15rem;
+      min-width: 0;
+    }
+    .panel-body { padding: 1.25rem; min-width: 0; }
+    .panel-title {
+      margin: 0 0 1rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.8rem;
+      padding-bottom: 0.9rem;
+      border-bottom: 1px solid rgba(168, 85, 247, 0.18);
+      color: white;
+    }
+    .panel-title .left { display: inline-flex; gap: 0.7rem; align-items: center; }
+    .panel-title i { color: #f4d47d; }
+    .archive-hero p,
+    .subscription-copy {
+      margin: 0;
+      color: var(--text-soft);
+      font-size: 0.95rem;
+      line-height: 1.72;
+    }
+    .archive-hero h1 {
+      margin: 0.35rem 0 0.8rem;
+      font-family: "Cinzel Decorative", ui-serif, Georgia, serif;
+      font-size: clamp(2.6rem, 5vw, 4.2rem);
+      line-height: 0.98;
+      color: white;
+      text-shadow: 0 0 18px rgba(168, 85, 247, 0.36);
+    }
+    .visions-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 0.7rem;
+    }
+    .vision-link {
+      aspect-ratio: 1;
+      border: 1px solid rgba(168, 85, 247, 0.2);
+      background: rgba(0, 0, 0, 0.3);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      overflow: hidden;
+      transition: border-color 0.24s ease, background-color 0.24s ease;
+    }
+    .vision-link:hover {
+      border-color: rgba(34, 211, 238, 0.55);
+      background: rgba(10, 5, 32, 0.88);
+    }
+    .vision-link i { color: rgba(168, 85, 247, 0.5); font-size: 1.35rem; }
+    .vision-tag {
+      position: absolute;
+      right: 0.35rem;
+      bottom: 0.3rem;
+      font-size: 0.58rem;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      color: rgba(148, 163, 184, 0.72);
+      z-index: 1;
+    }
+    .substack-embed-wrap {
+      border: 1px solid rgba(168, 85, 247, 0.18);
+      background: rgba(0, 0, 0, 0.24);
+      overflow: hidden;
+      margin-top: 1rem;
+    }
+    .substack-embed {
+      width: 100%;
+      min-height: 320px;
+      border: 0;
+      background: transparent;
+    }
+    .substack-fallback {
+      margin-top: 0.85rem;
+      color: var(--text-soft);
+      font-size: 0.88rem;
+    }
+    .substack-fallback a {
+      color: #ddd6fe;
+      text-decoration: underline;
+      text-underline-offset: 0.16em;
+    }
+    .archive-main { min-width: 0; }
+    .archive-head {
+      display: flex;
+      align-items: end;
+      justify-content: space-between;
+      gap: 1rem;
+      flex-wrap: wrap;
+      margin-bottom: 1.25rem;
+    }
+    .archive-head h2 {
+      margin: 0.3rem 0 0;
+      font-family: "Cinzel Decorative", ui-serif, Georgia, serif;
+      font-size: clamp(1.8rem, 3vw, 3rem);
+      color: white;
+    }
+    .archive-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 1rem;
+      align-items: stretch;
+    }
+    .archive-card {
+      position: relative;
+      background: rgba(10, 5, 32, 0.78);
+      border: 1px solid rgba(255,255,255,0.05);
+      transition: transform 0.3s ease, border-color 0.3s ease, background-color 0.3s ease;
+      min-width: 0;
+    }
+    .archive-card::before {
+      content: '';
+      position: absolute;
+      inset: 0.5rem;
+      border: 1px solid rgba(255,255,255,0.03);
+      pointer-events: none;
+    }
+    .archive-card:hover {
+      transform: translateY(-6px);
+      background: rgba(13, 8, 34, 0.96);
+    }
+    .archive-card.card-purple:hover { border-color: rgba(168, 85, 247, 0.4); box-shadow: 0 20px 40px -10px rgba(168, 85, 247, 0.15); }
+    .archive-card.card-cyan:hover { border-color: rgba(6, 182, 212, 0.4); box-shadow: 0 20px 40px -10px rgba(6, 182, 212, 0.15); }
+    .archive-card.card-amber:hover { border-color: rgba(245, 158, 11, 0.4); box-shadow: 0 20px 40px -10px rgba(245, 158, 11, 0.15); }
+    .archive-card.card-fuchsia:hover { border-color: rgba(217, 70, 239, 0.4); box-shadow: 0 20px 40px -10px rgba(217, 70, 239, 0.15); }
+    .archive-card-link {
+      display: flex;
+      flex-direction: column;
+      min-height: 100%;
+      padding: 1.6rem;
+      gap: 1rem;
+    }
+    .archive-card-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: start;
+      gap: 1rem;
+    }
+    .icon-chip {
+      width: 3rem;
+      height: 3rem;
+      display: grid;
+      place-items: center;
+      border-radius: 0.95rem;
+      background: rgba(168, 85, 247, 0.1);
+      border: 1px solid rgba(168, 85, 247, 0.2);
+      box-shadow: 0 0 15px rgba(168, 85, 247, 0.08);
+      flex-shrink: 0;
+    }
+    .icon-chip i { font-size: 1.45rem; }
+    .icon-chip.purple { color: #c084fc; }
+    .icon-chip.cyan { color: #67e8f9; background: rgba(6,182,212,0.1); border-color: rgba(6,182,212,0.2); }
+    .icon-chip.amber { color: #fcd34d; background: rgba(245,158,11,0.1); border-color: rgba(245,158,11,0.2); }
+    .icon-chip.fuchsia { color: #f0abfc; background: rgba(217,70,239,0.1); border-color: rgba(217,70,239,0.2); }
+    .archive-index { color: rgba(148, 163, 184, 0.7); }
+    .archive-card-copy { min-width: 0; }
+    .archive-card-copy h2 {
+      margin: 0.45rem 0 0.7rem;
+      font-family: "Cinzel Decorative", ui-serif, Georgia, serif;
+      font-size: 1.2rem;
+      line-height: 1.34;
+      color: white;
+      overflow-wrap: anywhere;
+    }
+    .archive-card-copy p {
+      margin: 0;
+      color: var(--text-soft);
+      line-height: 1.7;
+      font-size: 0.96rem;
+    }
+    .archive-kicker.purple { color: #c084fc; }
+    .archive-kicker.cyan { color: #67e8f9; }
+    .archive-kicker.amber { color: #fcd34d; }
+    .archive-kicker.fuchsia { color: #f0abfc; }
+    .archive-card-meta {
+      margin-top: auto;
+      padding-top: 1rem;
+      border-top: 1px solid rgba(255,255,255,0.05);
+      display: flex;
+      justify-content: space-between;
+      gap: 1rem;
+    }
+    .archive-card-meta div { display: grid; gap: 0.2rem; min-width: 0; }
+    .archive-card-meta strong { color: white; font-size: 0.86rem; }
+    .align-right { text-align: right; }
+    .site-footer {
+      padding: 1.5rem 0 3rem;
+      display: flex;
+      justify-content: space-between;
+      gap: 1rem;
+      align-items: center;
+      border-top: 1px solid rgba(168, 85, 247, 0.12);
+      color: var(--text-soft);
+      font-size: 0.86rem;
+    }
+    @media (max-width: 1120px) {
+      .archive-shell { grid-template-columns: 1fr; }
+      .archive-sidebar { position: static; }
+      .micro-nav { display: none; }
+    }
+    @media (max-width: 760px) {
+      .topbar-inner, .archive-shell, .site-footer {
+        width: min(100% - 1.2rem, 1400px);
+      }
+      .topbar-inner { min-height: 72px; }
+      .site-footer { flex-direction: column; align-items: flex-start; }
     }
   </style>
-  <script src="https://cdn.tailwindcss.com/3.4.17"></script>
 </head>
-<body class="min-h-screen">
-  <div class="stars-container"></div>
-  <div class="orb bg-purple-600 w-[320px] h-[320px] top-[8%] left-[4%]"></div>
-  <div class="orb bg-cyan-500 w-[280px] h-[280px] bottom-[18%] right-[8%]" style="animation-delay: -6s;"></div>
-  <div class="orb bg-fuchsia-500 w-[240px] h-[240px] top-[36%] right-[20%]" style="animation-delay: -11s;"></div>
+<body>
+  <div class="bg-grid" aria-hidden="true"></div>
+  <div class="atmosphere" aria-hidden="true"></div>
+  <div class="orb" style="width:18rem;height:18rem;top:8%;left:6%;background:rgba(168,85,247,0.54);"></div>
+  <div class="orb" style="width:15rem;height:15rem;right:10%;top:16%;background:rgba(244,212,125,0.32);animation-delay:-5s;"></div>
+  <div class="orb" style="width:14rem;height:14rem;right:16%;bottom:10%;background:rgba(34,211,238,0.2);animation-delay:-10s;"></div>
 
-  <div class="relative z-10">
-    <header class="sticky top-0 z-30 border-b border-white/10 bg-[#05020a]/85 backdrop-blur-xl">
-      <div class="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between gap-4">
-        <a href="/" class="flex items-center gap-3 font-cinzel text-white text-sm uppercase tracking-[0.26em]">
-          <i class="ph ph-stars-four text-purple-400 text-xl"></i>
-          <span>The Algorithm Witch</span>
+  <div class="site-shell">
+    <header class="topbar">
+      <div class="topbar-inner">
+        <a href="/" class="brand-lockup" aria-label="The Algorithm Witch home">
+          <span class="brand-glyph">
+            <i class="ph-fill ph-sparkle sparkle"></i>
+            <i class="ph-fill ph-star-four star"></i>
+          </span>
+          <span class="brand-word">Algorithm Witch</span>
         </a>
-        <nav class="hidden md:flex items-center gap-8 font-mono-tech text-[11px] uppercase tracking-[0.18em] text-slate-300">
-          <a class="nav-item" href="/#origins">Origins</a>
-          <a class="nav-item" href="/#grimoire">Grimoire</a>
-          <a class="nav-item active" href="/blog/">Writings</a>
-          <a class="nav-item" href="/services/">Focus</a>
+        <nav class="micro-nav" aria-label="Primary">
+          <a class="micro-link" href="/#origins">Origins</a>
+          <a class="micro-link" href="/#grimoire">Grimoire</a>
+          <a class="micro-link active" href="/blog/">Writings</a>
+          <a class="micro-link" href="/services/">Focus</a>
         </nav>
-        <a href="/summon.html" class="inline-flex items-center gap-2 px-5 py-2.5 bg-white/5 hover:bg-purple-500/20 border border-white/10 hover:border-purple-500/50 rounded-lg font-mono-tech text-[10px] uppercase tracking-widest text-white transition-all group">
-          <i class="ph ph-terminal-window text-lg text-purple-400 group-hover:text-white"></i>
-          <span>Summon</span>
-        </a>
+        <a href="/summon.html" class="button-link">Summon Me</a>
       </div>
     </header>
 
-    <main class="max-w-7xl mx-auto px-6 py-16 lg:py-24">
-      <section class="grid xl:grid-cols-[320px_minmax(0,1fr)] gap-10 items-start mb-16">
-        <aside class="space-y-6">
-          <div class="relative bg-gradient-to-b from-[#110a24] to-[#0a0618] border border-white/10 rounded-2xl p-8 overflow-hidden">
-            <div class="absolute top-0 right-0 w-36 h-36 bg-purple-500/10 rounded-full blur-3xl translate-x-1/3 -translate-y-1/3"></div>
-            <p class="font-mono-tech text-[10px] uppercase tracking-[0.22em] text-purple-300 mb-4">Archive Status</p>
-            <h1 class="font-cinzel text-5xl lg:text-6xl text-white leading-none text-glow-gold drop-shadow-lg mb-4">Archive</h1>
-            <p class="text-sm text-slate-400 leading-relaxed">Imported from Substack and rebuilt into a static branded archive for long-form strategy writing, search visibility, and durable discoverability.</p>
+    <main class="archive-shell">
+      <aside class="archive-sidebar">
+        <div class="panel archive-hero">
+          <div class="panel-body">
+            <div class="micro-label" style="color:#c4b5fd;">Archive Status</div>
+            <h1>Archive</h1>
+            <p>Imported from Substack and rebuilt into a static branded archive for long-form strategy writing, search visibility, and durable discoverability.</p>
           </div>
-          <div class="relative bg-gradient-to-b from-[#110a24] to-[#0a0618] border border-white/10 rounded-2xl p-6 overflow-hidden">
-            <i class="ph-duotone ph-envelope-open text-3xl text-purple-400 mb-4"></i>
-            <h2 class="font-cinzel text-xl text-white mb-2">Join the Coven</h2>
-            <p class="text-xs text-gray-400 mb-6 font-light">Monthly dispatches on strategy, visibility, and digital systems.</p>
-            <div class="flex flex-col gap-3">
-              <a href="https://thealgorithmwitch.substack.com/" target="_blank" rel="noopener noreferrer" class="bg-white/10 hover:bg-purple-500/20 text-white border border-white/5 hover:border-purple-500/50 rounded-lg py-3 text-[11px] font-mono-tech uppercase tracking-widest transition-all text-center">Free Signup</a>
-              <a href="https://thealgorithmwitch.com/summon.html" class="bg-transparent hover:bg-white/5 text-slate-200 border border-white/10 rounded-lg py-3 text-[11px] font-mono-tech uppercase tracking-widest transition-all text-center">Consultation</a>
-            </div>
-          </div>
-        </aside>
+        </div>
 
-        <section>
-          <div class="flex items-end justify-between gap-6 mb-8 flex-wrap">
-            <div>
-              <p class="font-mono-tech text-[10px] uppercase tracking-[0.2em] text-purple-300 mb-3">Newest first</p>
-              <h2 class="font-cinzel text-3xl lg:text-4xl text-white">Published Dispatches</h2>
-            </div>
-            <p class="font-mono-tech text-[11px] uppercase tracking-[0.16em] text-slate-400">8 imported posts</p>
+        <div class="panel">
+          <div class="panel-body">
+            <h2 class="panel-title micro-label">
+              <span class="left"><i class="ph-fill ph-aperture"></i><span>Visions</span></span>
+              <span>8 files</span>
+            </h2>
+            <div class="visions-grid">
+    <a class="vision-link" href="/blog/ethics-of-algorithmic-visibility.html" aria-label="The Ethics of Algorithmic Visibility">
+      <img src="https://substack-post-media.s3.amazonaws.com/public/images/40bd0dfc-356b-4dea-9299-bd908965027d_1600x900.png" alt="The Ethics of Algorithmic Visibility" style="width:100%;height:100%;object-fit:cover;opacity:0.82;">
+      <span class="vision-tag">P1</span>
+    </a>
+  
+    <a class="vision-link" href="/blog/future-is-community-led.html" aria-label="The Future Is Community-Led">
+      <img src="https://substack-post-media.s3.amazonaws.com/public/images/2c486e88-a2ad-4f0b-9aba-d6a1000c33ce_1600x900.png" alt="The Future Is Community-Led" style="width:100%;height:100%;object-fit:cover;opacity:0.82;">
+      <span class="vision-tag">P2</span>
+    </a>
+  
+    <a class="vision-link" href="/blog/posting-less-wont-save-you.html" aria-label="Posting Less Won’t Save You">
+      <img src="https://substack-post-media.s3.amazonaws.com/public/images/ff7f7a14-8176-45b8-a644-675528c39b63_1600x900.png" alt="Posting Less Won’t Save You" style="width:100%;height:100%;object-fit:cover;opacity:0.82;">
+      <span class="vision-tag">P3</span>
+    </a>
+  
+    <a class="vision-link" href="/blog/born-to-scroll.html" aria-label="Born to Scroll">
+      <img src="https://substack-post-media.s3.amazonaws.com/public/images/1cd77a81-b702-4e6b-9041-dc4162f3f560_1600x900.png" alt="Born to Scroll" style="width:100%;height:100%;object-fit:cover;opacity:0.82;">
+      <span class="vision-tag">P4</span>
+    </a>
+  </div>
           </div>
-          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            
-      <article class="spell-card card-purple rounded-2xl p-8 flex flex-col min-h-[420px] fade-in-up group" style="transition-delay: 0ms;">
-        <a href="/blog/ethics-of-algorithmic-visibility.html" class="contents">
-          <div class="flex justify-between items-start mb-8">
-            <div class="w-12 h-12 rounded-xl bg-purple-500/10 border border-purple-500/20 flex items-center justify-center group-hover:scale-110 transition-transform duration-500 shadow-[0_0_15px_rgba(168,85,247,0.1)]">
-              <i class="ph-duotone ph-chess-knight text-2xl text-purple-400"></i>
+        </div>
+
+        <div class="panel">
+          <div class="panel-body">
+            <h2 class="panel-title micro-label">
+              <span class="left"><i class="ph-duotone ph-envelope-open"></i><span>Initiate Subscription</span></span>
+            </h2>
+            <p class="subscription-copy">Receive encrypted dispatches, strategy notes, and fresh writing without leaving the archive.</p>
+            <div class="substack-embed-wrap">
+              <iframe class="substack-embed" src="https://thealgorithmwitch.substack.com/embed" loading="lazy" scrolling="no" frameborder="0" title="Subscribe to The Algorithm Witch on Substack"></iframe>
             </div>
-            <span class="font-mono-tech text-[10px] text-gray-500 px-2 py-1 bg-white/5 rounded border border-white/5">01</span>
+            <p class="substack-fallback">If the embed is blocked, <a href="https://thealgorithmwitch.substack.com/" target="_blank" rel="noopener noreferrer">subscribe directly on Substack</a>.</p>
           </div>
-          <div class="mb-4">
-            <span class="font-mono-tech text-[10px] uppercase tracking-[0.2em] text-purple-400 mb-3 block">Ethics</span>
-            <h2 class="font-cinzel text-xl text-white leading-snug group-hover:text-purple-200 transition-colors">The Ethics of Algorithmic Visibility</h2>
+        </div>
+      </aside>
+
+      <section class="archive-main">
+        <div class="archive-head">
+          <div>
+            <div class="micro-label" style="color:#c4b5fd;">Newest first</div>
+            <h2>Published Dispatches</h2>
           </div>
-          <p class="text-sm text-gray-400 leading-relaxed font-light mb-8 flex-grow">Breaking down how the Meta and Google verdict changes the conversation around trust, attention, and building power online.</p>
-          <div class="mt-auto pt-4 border-t border-white/5 flex items-center justify-between font-mono-tech text-[10px] text-gray-500 uppercase tracking-wider">
-            <div class="flex flex-col gap-1">
-              <span class="text-white/40">Date</span>
-              <span>Mar 31, 2026</span>
+          <div class="micro-label" style="color:#94a3b8;">8 imported posts</div>
+        </div>
+        <div class="archive-grid">
+      <article class="archive-card card-purple">
+        <a href="/blog/ethics-of-algorithmic-visibility.html" class="archive-card-link">
+          <div class="archive-card-top">
+            <div class="icon-chip purple">
+              <i class="ph-duotone ph-flask"></i>
             </div>
-            <div class="flex flex-col gap-1 text-right">
-              <span class="text-white/40">Time</span>
-              <span class="text-purple-400">10 Min Read</span>
-            </div>
+            <span class="micro-label archive-index">01</span>
+          </div>
+          <div class="archive-card-copy">
+            <span class="micro-label archive-kicker purple">Ethics</span>
+            <h2>The Ethics of Algorithmic Visibility</h2>
+            <p>Breaking down how the Meta and Google verdict changes the conversation around trust, attention, and building power online.</p>
+          </div>
+          <div class="archive-card-meta">
+            <div><span class="micro-label">Date</span><strong>Mar 31, 2026</strong></div>
+            <div class="align-right"><span class="micro-label">Time</span><strong>10 Min Read</strong></div>
           </div>
         </a>
       </article>
     
-      <article class="spell-card card-cyan rounded-2xl p-8 flex flex-col min-h-[420px] fade-in-up group" style="transition-delay: 90ms;">
-        <a href="/blog/future-is-community-led.html" class="contents">
-          <div class="flex justify-between items-start mb-8">
-            <div class="w-12 h-12 rounded-xl bg-cyan-500/10 border border-cyan-500/20 flex items-center justify-center group-hover:scale-110 transition-transform duration-500 shadow-[0_0_15px_rgba(168,85,247,0.1)]">
-              <i class="ph-duotone ph-chart-polar text-2xl text-cyan-400"></i>
+      <article class="archive-card card-cyan">
+        <a href="/blog/future-is-community-led.html" class="archive-card-link">
+          <div class="archive-card-top">
+            <div class="icon-chip cyan">
+              <i class="ph-duotone ph-chart-polar"></i>
             </div>
-            <span class="font-mono-tech text-[10px] text-gray-500 px-2 py-1 bg-white/5 rounded border border-white/5">02</span>
+            <span class="micro-label archive-index">02</span>
           </div>
-          <div class="mb-4">
-            <span class="font-mono-tech text-[10px] uppercase tracking-[0.2em] text-cyan-400 mb-3 block">Community</span>
-            <h2 class="font-cinzel text-xl text-white leading-snug group-hover:text-cyan-200 transition-colors">The Future Is Community-Led</h2>
+          <div class="archive-card-copy">
+            <span class="micro-label archive-kicker cyan">Community</span>
+            <h2>The Future Is Community-Led</h2>
+            <p>What 320 climate websites and four platforms revealed about where this movement is going.</p>
           </div>
-          <p class="text-sm text-gray-400 leading-relaxed font-light mb-8 flex-grow">What 320 climate websites and four platforms revealed about where this movement is going.</p>
-          <div class="mt-auto pt-4 border-t border-white/5 flex items-center justify-between font-mono-tech text-[10px] text-gray-500 uppercase tracking-wider">
-            <div class="flex flex-col gap-1">
-              <span class="text-white/40">Date</span>
-              <span>Mar 24, 2026</span>
-            </div>
-            <div class="flex flex-col gap-1 text-right">
-              <span class="text-white/40">Time</span>
-              <span class="text-cyan-400">10 Min Read</span>
-            </div>
+          <div class="archive-card-meta">
+            <div><span class="micro-label">Date</span><strong>Mar 24, 2026</strong></div>
+            <div class="align-right"><span class="micro-label">Time</span><strong>10 Min Read</strong></div>
           </div>
         </a>
       </article>
     
-      <article class="spell-card card-amber rounded-2xl p-8 flex flex-col min-h-[420px] fade-in-up group" style="transition-delay: 180ms;">
-        <a href="/blog/posting-less-wont-save-you.html" class="contents">
-          <div class="flex justify-between items-start mb-8">
-            <div class="w-12 h-12 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center group-hover:scale-110 transition-transform duration-500 shadow-[0_0_15px_rgba(168,85,247,0.1)]">
-              <i class="ph-duotone ph-magnifying-glass text-2xl text-amber-400"></i>
+      <article class="archive-card card-amber">
+        <a href="/blog/posting-less-wont-save-you.html" class="archive-card-link">
+          <div class="archive-card-top">
+            <div class="icon-chip amber">
+              <i class="ph-duotone ph-magnifying-glass"></i>
             </div>
-            <span class="font-mono-tech text-[10px] text-gray-500 px-2 py-1 bg-white/5 rounded border border-white/5">03</span>
+            <span class="micro-label archive-index">03</span>
           </div>
-          <div class="mb-4">
-            <span class="font-mono-tech text-[10px] uppercase tracking-[0.2em] text-amber-400 mb-3 block">Dispatch</span>
-            <h2 class="font-cinzel text-xl text-white leading-snug group-hover:text-amber-200 transition-colors">Posting Less Won’t Save You</h2>
+          <div class="archive-card-copy">
+            <span class="micro-label archive-kicker amber">Dispatch</span>
+            <h2>Posting Less Won’t Save You</h2>
+            <p>aligning content to find its people | algorithm lore + digital patterns 🧄</p>
           </div>
-          <p class="text-sm text-gray-400 leading-relaxed font-light mb-8 flex-grow">aligning content to find its people | algorithm lore + digital patterns 🧄</p>
-          <div class="mt-auto pt-4 border-t border-white/5 flex items-center justify-between font-mono-tech text-[10px] text-gray-500 uppercase tracking-wider">
-            <div class="flex flex-col gap-1">
-              <span class="text-white/40">Date</span>
-              <span>Mar 17, 2026</span>
-            </div>
-            <div class="flex flex-col gap-1 text-right">
-              <span class="text-white/40">Time</span>
-              <span class="text-amber-400">15 Min Read</span>
-            </div>
+          <div class="archive-card-meta">
+            <div><span class="micro-label">Date</span><strong>Mar 17, 2026</strong></div>
+            <div class="align-right"><span class="micro-label">Time</span><strong>15 Min Read</strong></div>
           </div>
         </a>
       </article>
     
-      <article class="spell-card card-fuchsia rounded-2xl p-8 flex flex-col min-h-[420px] fade-in-up group" style="transition-delay: 0ms;">
-        <a href="/blog/born-to-scroll.html" class="contents">
-          <div class="flex justify-between items-start mb-8">
-            <div class="w-12 h-12 rounded-xl bg-fuchsia-500/10 border border-fuchsia-500/20 flex items-center justify-center group-hover:scale-110 transition-transform duration-500 shadow-[0_0_15px_rgba(168,85,247,0.1)]">
-              <i class="ph-duotone ph-shooting-star text-2xl text-fuchsia-400"></i>
+      <article class="archive-card card-fuchsia">
+        <a href="/blog/born-to-scroll.html" class="archive-card-link">
+          <div class="archive-card-top">
+            <div class="icon-chip fuchsia">
+              <i class="ph-duotone ph-broadcast"></i>
             </div>
-            <span class="font-mono-tech text-[10px] text-gray-500 px-2 py-1 bg-white/5 rounded border border-white/5">04</span>
+            <span class="micro-label archive-index">04</span>
           </div>
-          <div class="mb-4">
-            <span class="font-mono-tech text-[10px] uppercase tracking-[0.2em] text-fuchsia-400 mb-3 block">Platforms</span>
-            <h2 class="font-cinzel text-xl text-white leading-snug group-hover:text-fuchsia-200 transition-colors">Born to Scroll</h2>
+          <div class="archive-card-copy">
+            <span class="micro-label archive-kicker fuchsia">Platforms</span>
+            <h2>Born to Scroll</h2>
+            <p>Since 2018, platforms like TikTok, Instagram, and Twitter trained billions of people to navigate information through continuous vertical motion. By Cassandre Arkema</p>
           </div>
-          <p class="text-sm text-gray-400 leading-relaxed font-light mb-8 flex-grow">Since 2018, platforms like TikTok, Instagram, and Twitter trained billions of people to navigate information through continuous vertical motion. By Cassandre Arkema</p>
-          <div class="mt-auto pt-4 border-t border-white/5 flex items-center justify-between font-mono-tech text-[10px] text-gray-500 uppercase tracking-wider">
-            <div class="flex flex-col gap-1">
-              <span class="text-white/40">Date</span>
-              <span>Mar 10, 2026</span>
-            </div>
-            <div class="flex flex-col gap-1 text-right">
-              <span class="text-white/40">Time</span>
-              <span class="text-fuchsia-400">5 Min Read</span>
-            </div>
+          <div class="archive-card-meta">
+            <div><span class="micro-label">Date</span><strong>Mar 10, 2026</strong></div>
+            <div class="align-right"><span class="micro-label">Time</span><strong>5 Min Read</strong></div>
           </div>
         </a>
       </article>
     
-      <article class="spell-card card-purple rounded-2xl p-8 flex flex-col min-h-[420px] fade-in-up group" style="transition-delay: 90ms;">
-        <a href="/blog/recommendation-engine-learned-where-you-live.html" class="contents">
-          <div class="flex justify-between items-start mb-8">
-            <div class="w-12 h-12 rounded-xl bg-purple-500/10 border border-purple-500/20 flex items-center justify-center group-hover:scale-110 transition-transform duration-500 shadow-[0_0_15px_rgba(168,85,247,0.1)]">
-              <i class="ph-duotone ph-chess-knight text-2xl text-purple-400"></i>
+      <article class="archive-card card-purple">
+        <a href="/blog/recommendation-engine-learned-where-you-live.html" class="archive-card-link">
+          <div class="archive-card-top">
+            <div class="icon-chip purple">
+              <i class="ph-duotone ph-flask"></i>
             </div>
-            <span class="font-mono-tech text-[10px] text-gray-500 px-2 py-1 bg-white/5 rounded border border-white/5">05</span>
+            <span class="micro-label archive-index">05</span>
           </div>
-          <div class="mb-4">
-            <span class="font-mono-tech text-[10px] uppercase tracking-[0.2em] text-purple-400 mb-3 block">Discovery</span>
-            <h2 class="font-cinzel text-xl text-white leading-snug group-hover:text-purple-200 transition-colors">The Recommendation Engine Learned Where You Live</h2>
+          <div class="archive-card-copy">
+            <span class="micro-label archive-kicker purple">Discovery</span>
+            <h2>The Recommendation Engine Learned Where You Live</h2>
+            <p>The feed has come alive. Neighborhood businesses surface without a search and in your city creators appear with uncanny frequency.</p>
           </div>
-          <p class="text-sm text-gray-400 leading-relaxed font-light mb-8 flex-grow">The feed has come alive. Neighborhood businesses surface without a search and in your city creators appear with uncanny frequency.</p>
-          <div class="mt-auto pt-4 border-t border-white/5 flex items-center justify-between font-mono-tech text-[10px] text-gray-500 uppercase tracking-wider">
-            <div class="flex flex-col gap-1">
-              <span class="text-white/40">Date</span>
-              <span>Mar 3, 2026</span>
-            </div>
-            <div class="flex flex-col gap-1 text-right">
-              <span class="text-white/40">Time</span>
-              <span class="text-purple-400">16 Min Read</span>
-            </div>
+          <div class="archive-card-meta">
+            <div><span class="micro-label">Date</span><strong>Mar 3, 2026</strong></div>
+            <div class="align-right"><span class="micro-label">Time</span><strong>16 Min Read</strong></div>
           </div>
         </a>
       </article>
     
-      <article class="spell-card card-cyan rounded-2xl p-8 flex flex-col min-h-[420px] fade-in-up group" style="transition-delay: 180ms;">
-        <a href="/blog/short-form-video-market-oversaturated.html" class="contents">
-          <div class="flex justify-between items-start mb-8">
-            <div class="w-12 h-12 rounded-xl bg-cyan-500/10 border border-cyan-500/20 flex items-center justify-center group-hover:scale-110 transition-transform duration-500 shadow-[0_0_15px_rgba(168,85,247,0.1)]">
-              <i class="ph-duotone ph-chart-polar text-2xl text-cyan-400"></i>
+      <article class="archive-card card-cyan">
+        <a href="/blog/short-form-video-market-oversaturated.html" class="archive-card-link">
+          <div class="archive-card-top">
+            <div class="icon-chip cyan">
+              <i class="ph-duotone ph-chart-polar"></i>
             </div>
-            <span class="font-mono-tech text-[10px] text-gray-500 px-2 py-1 bg-white/5 rounded border border-white/5">06</span>
+            <span class="micro-label archive-index">06</span>
           </div>
-          <div class="mb-4">
-            <span class="font-mono-tech text-[10px] uppercase tracking-[0.2em] text-cyan-400 mb-3 block">Platforms</span>
-            <h2 class="font-cinzel text-xl text-white leading-snug group-hover:text-cyan-200 transition-colors">Is the Short-Form Video Market Oversaturated?</h2>
+          <div class="archive-card-copy">
+            <span class="micro-label archive-kicker cyan">Platforms</span>
+            <h2>Is the Short-Form Video Market Oversaturated?</h2>
+            <p>aligning content to find its people | algorithm lore + digital patterns 🧄</p>
           </div>
-          <p class="text-sm text-gray-400 leading-relaxed font-light mb-8 flex-grow">aligning content to find its people | algorithm lore + digital patterns 🧄</p>
-          <div class="mt-auto pt-4 border-t border-white/5 flex items-center justify-between font-mono-tech text-[10px] text-gray-500 uppercase tracking-wider">
-            <div class="flex flex-col gap-1">
-              <span class="text-white/40">Date</span>
-              <span>Feb 24, 2026</span>
-            </div>
-            <div class="flex flex-col gap-1 text-right">
-              <span class="text-white/40">Time</span>
-              <span class="text-cyan-400">10 Min Read</span>
-            </div>
+          <div class="archive-card-meta">
+            <div><span class="micro-label">Date</span><strong>Feb 24, 2026</strong></div>
+            <div class="align-right"><span class="micro-label">Time</span><strong>10 Min Read</strong></div>
           </div>
         </a>
       </article>
     
-      <article class="spell-card card-amber rounded-2xl p-8 flex flex-col min-h-[420px] fade-in-up group" style="transition-delay: 0ms;">
-        <a href="/blog/are-hashtags-dead.html" class="contents">
-          <div class="flex justify-between items-start mb-8">
-            <div class="w-12 h-12 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center group-hover:scale-110 transition-transform duration-500 shadow-[0_0_15px_rgba(168,85,247,0.1)]">
-              <i class="ph-duotone ph-magnifying-glass text-2xl text-amber-400"></i>
+      <article class="archive-card card-amber">
+        <a href="/blog/are-hashtags-dead.html" class="archive-card-link">
+          <div class="archive-card-top">
+            <div class="icon-chip amber">
+              <i class="ph-duotone ph-magnifying-glass"></i>
             </div>
-            <span class="font-mono-tech text-[10px] text-gray-500 px-2 py-1 bg-white/5 rounded border border-white/5">07</span>
+            <span class="micro-label archive-index">07</span>
           </div>
-          <div class="mb-4">
-            <span class="font-mono-tech text-[10px] uppercase tracking-[0.2em] text-amber-400 mb-3 block">Visibility</span>
-            <h2 class="font-cinzel text-xl text-white leading-snug group-hover:text-amber-200 transition-colors">Are hashtags dead?</h2>
-          </div>
-          <p class="text-sm text-gray-400 leading-relaxed font-light mb-8 flex-grow">In 2007, a single character reorganized the internet.
+          <div class="archive-card-copy">
+            <span class="micro-label archive-kicker amber">Visibility</span>
+            <h2>Are hashtags dead?</h2>
+            <p>In 2007, a single character reorganized the internet.
 By: Cassandre Arkema</p>
-          <div class="mt-auto pt-4 border-t border-white/5 flex items-center justify-between font-mono-tech text-[10px] text-gray-500 uppercase tracking-wider">
-            <div class="flex flex-col gap-1">
-              <span class="text-white/40">Date</span>
-              <span>Feb 17, 2026</span>
-            </div>
-            <div class="flex flex-col gap-1 text-right">
-              <span class="text-white/40">Time</span>
-              <span class="text-amber-400">9 Min Read</span>
-            </div>
+          </div>
+          <div class="archive-card-meta">
+            <div><span class="micro-label">Date</span><strong>Feb 17, 2026</strong></div>
+            <div class="align-right"><span class="micro-label">Time</span><strong>9 Min Read</strong></div>
           </div>
         </a>
       </article>
     
-      <article class="spell-card card-fuchsia rounded-2xl p-8 flex flex-col min-h-[420px] fade-in-up group" style="transition-delay: 90ms;">
-        <a href="/blog/how-search-is-changing-ai.html" class="contents">
-          <div class="flex justify-between items-start mb-8">
-            <div class="w-12 h-12 rounded-xl bg-fuchsia-500/10 border border-fuchsia-500/20 flex items-center justify-center group-hover:scale-110 transition-transform duration-500 shadow-[0_0_15px_rgba(168,85,247,0.1)]">
-              <i class="ph-duotone ph-shooting-star text-2xl text-fuchsia-400"></i>
+      <article class="archive-card card-fuchsia">
+        <a href="/blog/how-search-is-changing-ai.html" class="archive-card-link">
+          <div class="archive-card-top">
+            <div class="icon-chip fuchsia">
+              <i class="ph-duotone ph-broadcast"></i>
             </div>
-            <span class="font-mono-tech text-[10px] text-gray-500 px-2 py-1 bg-white/5 rounded border border-white/5">08</span>
+            <span class="micro-label archive-index">08</span>
           </div>
-          <div class="mb-4">
-            <span class="font-mono-tech text-[10px] uppercase tracking-[0.2em] text-fuchsia-400 mb-3 block">Search</span>
-            <h2 class="font-cinzel text-xl text-white leading-snug group-hover:text-fuchsia-200 transition-colors">How Search Is Changing in the Age of AI</h2>
+          <div class="archive-card-copy">
+            <span class="micro-label archive-kicker fuchsia">Search</span>
+            <h2>How Search Is Changing in the Age of AI</h2>
+            <p>You’ve probably noticed that you don’t search the internet the way you used to.</p>
           </div>
-          <p class="text-sm text-gray-400 leading-relaxed font-light mb-8 flex-grow">You’ve probably noticed that you don’t search the internet the way you used to.</p>
-          <div class="mt-auto pt-4 border-t border-white/5 flex items-center justify-between font-mono-tech text-[10px] text-gray-500 uppercase tracking-wider">
-            <div class="flex flex-col gap-1">
-              <span class="text-white/40">Date</span>
-              <span>Feb 13, 2026</span>
-            </div>
-            <div class="flex flex-col gap-1 text-right">
-              <span class="text-white/40">Time</span>
-              <span class="text-fuchsia-400">5 Min Read</span>
-            </div>
+          <div class="archive-card-meta">
+            <div><span class="micro-label">Date</span><strong>Feb 13, 2026</strong></div>
+            <div class="align-right"><span class="micro-label">Time</span><strong>5 Min Read</strong></div>
           </div>
         </a>
       </article>
-    
-          </div>
-        </section>
+    </div>
       </section>
     </main>
 
-    <footer class="max-w-7xl mx-auto px-6 py-8 border-t border-white/10 flex flex-col md:flex-row gap-4 justify-between text-slate-400 text-sm">
-      <a href="/" class="flex items-center gap-3 font-cinzel text-white text-xs uppercase tracking-[0.24em]">
-        <i class="ph ph-stars-four text-purple-400 text-lg"></i>
-        <span>The Algorithm Witch</span>
+    <footer class="site-footer">
+      <a href="/" class="brand-lockup" aria-label="The Algorithm Witch home">
+        <span class="brand-glyph">
+          <i class="ph-fill ph-sparkle sparkle"></i>
+          <i class="ph-fill ph-star-four star"></i>
+        </span>
+        <span class="brand-word">Algorithm Witch</span>
       </a>
       <div>Signal, structure, and strategic writing for climate, clean energy, and advocacy.</div>
     </footer>
   </div>
-
-  <script>
-    const observer = new IntersectionObserver((entries) => {
-      entries.forEach((entry) => {
-        if (entry.isIntersecting) entry.target.classList.add('is-visible');
-      });
-    }, { threshold: 0.12 });
-    document.querySelectorAll('.fade-in-up').forEach((element) => observer.observe(element));
-  </script>
 </body>
 </html>

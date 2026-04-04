@@ -33,36 +33,36 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="preload" as="image" href="https://substack-post-media.s3.amazonaws.com/public/images/3494eca4-5f34-4484-a391-d4ce2a484fc6_1600x900.png">
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@400;700;900&family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;700&family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&display=swap" media="print" onload="this.media='all'">
-  <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@400;700;900&family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;700&family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&display=swap"></noscript>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@400;700&family=Inter:wght@300;400;500;600&family=Playfair+Display:ital,wght@0,400;0,500;1,400&display=swap" media="print" onload="this.media='all'">
+  <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@400;700&family=Inter:wght@300;400;500;600&family=Playfair+Display:ital,wght@0,400;0,500;1,400&display=swap"></noscript>
   <script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"BlogPosting","@id":"https://thealgorithmwitch.com/blog/recommendation-engine-learned-where-you-live.html#article","headline":"The Recommendation Engine Learned Where You Live","description":"The feed has come alive. Neighborhood businesses surface without a search and in your city creators appear with uncanny frequency.","url":"https://thealgorithmwitch.com/blog/recommendation-engine-learned-where-you-live.html","datePublished":"2026-03-03","dateModified":"2026-03-03","author":{"@id":"https://thealgorithmwitch.com/#person"},"publisher":{"@id":"https://thealgorithmwitch.com/#person"},"mainEntityOfPage":{"@id":"https://thealgorithmwitch.com/blog/recommendation-engine-learned-where-you-live.html#webpage"},"image":{"@type":"ImageObject","url":"https://substack-post-media.s3.amazonaws.com/public/images/3494eca4-5f34-4484-a391-d4ce2a484fc6_1600x900.png"},"articleSection":"Discovery"},{"@type":"WebPage","@id":"https://thealgorithmwitch.com/blog/recommendation-engine-learned-where-you-live.html#webpage","url":"https://thealgorithmwitch.com/blog/recommendation-engine-learned-where-you-live.html","name":"The Recommendation Engine Learned Where You Live | The Algorithm Witch","isPartOf":{"@id":"https://thealgorithmwitch.com/blog/#blog"}},{"@type":"Blog","@id":"https://thealgorithmwitch.com/blog/#blog","url":"https://thealgorithmwitch.com/blog/","name":"The Algorithm Witch Archive"},{"@type":"Person","@id":"https://thealgorithmwitch.com/#person","name":"Cassandre Arkema","alternateName":"The Algorithm Witch","url":"https://thealgorithmwitch.com/"}]}</script>
   <script>
     (function () {
       const isSmallScreen = window.matchMedia('(max-width: 768px)').matches;
-      const script = document.createElement('script');
-      script.src = 'https://unpkg.com/@phosphor-icons/web';
-      script.defer = true;
+      const s = document.createElement('script');
+      s.src = 'https://unpkg.com/@phosphor-icons/web';
+      s.defer = true;
       if (!isSmallScreen) {
-        document.head.appendChild(script);
+        document.head.appendChild(s);
         return;
       }
       window.addEventListener('load', () => {
-        document.head.appendChild(script);
+        document.head.appendChild(s);
       }, { once: true });
     })();
   </script>
   <style>
     :root {
-      --bg-base: #05020a;
-      --bg-panel: #0d0718;
-      --bg-panel-soft: rgba(13, 7, 24, 0.72);
-      --text-main: #d1d5db;
-      --text-soft: #94a3b8;
-      --line: rgba(168, 85, 247, 0.2);
+      --bg: #05020a;
+      --panel: rgba(10, 5, 32, 0.78);
+      --panel-strong: #0d0718;
+      --line: rgba(168, 85, 247, 0.18);
+      --line-strong: rgba(168, 85, 247, 0.32);
       --purple: #a855f7;
-      --purple-soft: rgba(168, 85, 247, 0.15);
-      --gold: #fbbf24;
-      --cyan: #22d3ee;
+      --purple-soft: rgba(168, 85, 247, 0.14);
+      --gold: #f4d47d;
+      --text: #e5e7eb;
+      --text-soft: #94a3b8;
     }
 
     * { box-sizing: border-box; }
@@ -71,50 +71,54 @@
       margin: 0;
       min-height: 100vh;
       background:
-        radial-gradient(circle at 15% 18%, rgba(168, 85, 247, 0.16), transparent 28%),
-        radial-gradient(circle at 82% 12%, rgba(251, 191, 36, 0.10), transparent 24%),
-        radial-gradient(circle at 50% 78%, rgba(34, 211, 238, 0.08), transparent 24%),
-        var(--bg-base);
-      color: var(--text-main);
-      font-family: 'Inter', sans-serif;
-      overflow-x: hidden;
+        radial-gradient(circle at 18% 18%, rgba(168, 85, 247, 0.16), transparent 26%),
+        radial-gradient(circle at 80% 12%, rgba(245, 212, 125, 0.08), transparent 22%),
+        radial-gradient(circle at 56% 76%, rgba(34, 211, 238, 0.08), transparent 20%),
+        var(--bg);
+      color: var(--text);
+      font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+      overflow-x: clip;
+      -webkit-font-smoothing: antialiased;
     }
 
     a { color: inherit; text-decoration: none; }
     img { display: block; max-width: 100%; }
 
+    .font-magical { font-family: "Cinzel Decorative", ui-serif, Georgia, serif; }
+    .font-serif { font-family: "Playfair Display", ui-serif, Georgia, serif; }
+
     .bg-grid {
       position: fixed;
       inset: 0;
-      pointer-events: none;
       z-index: 0;
+      pointer-events: none;
       background-image:
         linear-gradient(to right, rgba(168, 85, 247, 0.03) 1px, transparent 1px),
         linear-gradient(to bottom, rgba(168, 85, 247, 0.03) 1px, transparent 1px);
       background-size: 40px 40px;
     }
 
-    .stars {
+    .atmosphere {
       position: fixed;
       inset: 0;
-      z-index: 0;
       pointer-events: none;
-      background: radial-gradient(circle at 50% 0%, #150a30 0%, var(--bg-base) 68%);
+      z-index: 0;
+      background: radial-gradient(circle at 50% 0%, #150a30 0%, transparent 55%);
     }
 
     .orb {
       position: fixed;
       border-radius: 999px;
       filter: blur(110px);
-      opacity: 0.13;
+      opacity: 0.14;
       pointer-events: none;
       z-index: 0;
-      animation: float-orb 18s ease-in-out infinite alternate;
+      animation: floatOrb 18s ease-in-out infinite alternate;
     }
 
-    @keyframes float-orb {
+    @keyframes floatOrb {
       from { transform: translate3d(0, 0, 0) scale(1); }
-      to { transform: translate3d(40px, -30px, 0) scale(1.08); }
+      to { transform: translate3d(36px, -24px, 0) scale(1.08); }
     }
 
     .site-shell {
@@ -125,58 +129,94 @@
     .topbar {
       position: sticky;
       top: 0;
-      z-index: 20;
+      z-index: 30;
       backdrop-filter: blur(18px);
       background: rgba(5, 2, 10, 0.82);
       border-bottom: 1px solid rgba(168, 85, 247, 0.12);
     }
 
-    .topbar-inner {
+    .topbar-inner,
+    .hero-shell,
+    .content-shell,
+    .site-footer {
       width: min(1400px, calc(100% - 2rem));
       margin: 0 auto;
-      min-height: 76px;
+    }
+
+    .topbar-inner {
+      min-height: 82px;
       display: flex;
       align-items: center;
       justify-content: space-between;
       gap: 1rem;
     }
 
-    .brand,
-    .top-links,
-    .cta-link {
+    .brand-lockup {
       display: inline-flex;
       align-items: center;
-      gap: 0.7rem;
+      gap: 0.8rem;
     }
 
-    .brand {
-      font-family: 'Cinzel Decorative', serif;
-      font-size: 1rem;
+    .brand-glyph {
+      position: relative;
+      display: inline-grid;
+      place-items: center;
+      width: 1.8rem;
+      height: 1.8rem;
+      flex-shrink: 0;
+    }
+
+    .brand-glyph .sparkle {
+      font-size: 1.45rem;
+      color: #a855f7;
+    }
+
+    .brand-glyph .star {
+      position: absolute;
+      top: -0.05rem;
+      right: -0.15rem;
+      font-size: 0.65rem;
+      color: #fde047;
+    }
+
+    .brand-word {
+      font-family: "Cinzel Decorative", ui-serif, Georgia, serif;
+      font-size: 1.1rem;
+      letter-spacing: 0.12em;
+      color: white;
+      transition: color 0.24s ease;
+    }
+
+    .brand-lockup:hover .brand-word { color: #ddd6fe; }
+
+    .micro-nav,
+    .micro-link,
+    .micro-label,
+    .micro-chip,
+    .meta-line,
+    .caption-label,
+    .toc-link,
+    .utility-text,
+    .button-link {
+      font-size: 0.72rem;
       letter-spacing: 0.18em;
       text-transform: uppercase;
-      color: #f5d68a;
+      font-weight: 500;
     }
 
-    .brand i,
-    .cta-link i {
-      color: var(--purple);
+    .micro-nav {
+      display: flex;
+      align-items: center;
+      gap: 2rem;
+      color: #d1d5db;
     }
 
-    .top-links {
-      gap: 1.4rem;
-      font-family: 'JetBrains Mono', monospace;
-      font-size: 0.72rem;
-      letter-spacing: 0.16em;
-      text-transform: uppercase;
-      color: var(--text-soft);
-    }
-
-    .nav-item {
+    .micro-link {
       position: relative;
-      padding-bottom: 0.2rem;
+      padding-bottom: 0.15rem;
     }
 
-    .nav-item::after {
+    .micro-link::after {
       content: '';
       position: absolute;
       left: 0;
@@ -189,61 +229,65 @@
       transition: transform 0.24s ease;
     }
 
-    .nav-item:hover::after,
-    .nav-item.active::after {
+    .micro-link:hover::after,
+    .micro-link.active::after {
       transform: scaleX(1);
       transform-origin: left;
     }
 
-    .cta-link {
-      border: 1px solid rgba(168, 85, 247, 0.55);
-      padding: 0.78rem 1rem;
-      font-family: 'JetBrains Mono', monospace;
-      font-size: 0.72rem;
-      letter-spacing: 0.16em;
-      text-transform: uppercase;
-      color: #c4b5fd;
-      transition: background-color 0.24s ease, color 0.24s ease, border-color 0.24s ease;
+    .button-link {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.6rem;
+      min-height: 2.75rem;
+      padding: 0 1.15rem;
+      border-radius: 999px;
+      border: 1px solid rgba(168, 85, 247, 0.3);
+      background: rgba(168, 85, 247, 0.08);
+      color: white;
+      transition: transform 0.24s ease, border-color 0.24s ease, background-color 0.24s ease;
     }
 
-    .cta-link:hover {
-      background: rgba(168, 85, 247, 0.18);
-      color: white;
+    .button-link:hover {
+      transform: translateY(-2px);
+      background: rgba(168, 85, 247, 0.16);
+      border-color: rgba(168, 85, 247, 0.5);
+    }
+
+    .panel {
+      position: relative;
+      background: var(--panel);
+      border: 1px solid var(--line);
+      overflow: visible;
+    }
+
+    .panel::before {
+      content: '';
+      position: absolute;
+      inset: 0.55rem;
+      border: 1px solid rgba(168, 85, 247, 0.08);
+      pointer-events: none;
     }
 
     .hero-shell {
-      width: min(1400px, calc(100% - 2rem));
-      margin: 0 auto;
       display: grid;
-      grid-template-columns: minmax(0, 1fr) minmax(300px, 520px);
+      grid-template-columns: minmax(0, 1.04fr) minmax(360px, 0.96fr);
       gap: 2rem;
-      min-height: min(72vh, 760px);
+      min-height: min(74vh, 820px);
       align-items: stretch;
-      padding: 4rem 0 2rem;
+      padding-top: 3.5rem;
+      padding-bottom: 2rem;
     }
 
     .hero-copy,
     .hero-media,
-    .panel,
+    .sidebar-stack,
     .article-cta,
     .post-nav a,
+    .post-nav span,
     .related-card {
-      background: var(--bg-panel-soft);
-      border: 1px solid var(--line);
-      position: relative;
-    }
-
-    .hero-copy::before,
-    .hero-media::before,
-    .panel::before,
-    .article-cta::before,
-    .post-nav a::before,
-    .related-card::before {
-      content: '';
-      position: absolute;
-      inset: 0.6rem;
-      border: 1px solid rgba(168, 85, 247, 0.08);
-      pointer-events: none;
+      min-width: 0;
     }
 
     .hero-copy {
@@ -251,8 +295,7 @@
       display: flex;
       flex-direction: column;
       justify-content: space-between;
-      gap: 1.6rem;
-      overflow: hidden;
+      gap: 1.4rem;
     }
 
     .hero-copy::after {
@@ -263,91 +306,80 @@
       width: 16rem;
       height: 16rem;
       background: radial-gradient(circle, rgba(168, 85, 247, 0.18), transparent 68%);
-      filter: blur(24px);
-    }
-
-    .eyebrow,
-    .meta-line,
-    .toc-title,
-    .caption-label,
-    .mini-label {
-      font-family: 'JetBrains Mono', monospace;
-      letter-spacing: 0.16em;
-      text-transform: uppercase;
+      filter: blur(28px);
     }
 
     .eyebrow {
       display: inline-flex;
       align-items: center;
       gap: 0.7rem;
-      color: #c084fc;
-      font-size: 0.72rem;
+      color: #c4b5fd;
     }
 
     .eyebrow::before {
       content: '';
-      width: 2.5rem;
+      width: 2.4rem;
       height: 1px;
-      background: rgba(251, 191, 36, 0.65);
+      background: rgba(244, 212, 125, 0.7);
     }
 
     .post-title {
       margin: 0;
-      font-family: 'Cinzel Decorative', serif;
-      font-size: clamp(2.8rem, 6vw, 5.4rem);
-      line-height: 1.02;
+      font-family: "Cinzel Decorative", ui-serif, Georgia, serif;
+      font-size: clamp(2.7rem, 6vw, 5.3rem);
+      line-height: 1.04;
       color: white;
-      text-shadow: 0 0 18px rgba(168, 85, 247, 0.35);
+      text-shadow: 0 0 18px rgba(168, 85, 247, 0.36);
     }
 
     .post-title-accent {
       display: block;
-      color: #fbbf24;
-      margin-top: 0.4rem;
+      margin-top: 0.45rem;
+      color: var(--gold);
       font-style: italic;
     }
 
     .post-excerpt {
       margin: 0;
-      padding-left: 1.4rem;
-      border-left: 4px solid rgba(168, 85, 247, 0.65);
-      font-family: 'Playfair Display', serif;
-      font-style: italic;
-      font-size: clamp(1.15rem, 2vw, 1.55rem);
-      line-height: 1.75;
-      color: rgba(233, 213, 255, 0.92);
+      padding: 1rem 0 1rem 1.5rem;
+      border-left: 4px solid rgba(168, 85, 247, 0.58);
       background: linear-gradient(to right, rgba(168, 85, 247, 0.10), transparent);
+      font-family: "Playfair Display", ui-serif, Georgia, serif;
+      font-size: clamp(1.12rem, 1.9vw, 1.45rem);
+      font-style: italic;
+      line-height: 1.8;
+      color: #ddd6fe;
     }
 
     .hero-meta {
       display: flex;
-      align-items: center;
-      gap: 1rem;
       flex-wrap: wrap;
+      align-items: center;
+      gap: 0.85rem;
       color: var(--text-soft);
-      font-size: 0.95rem;
     }
 
-    .meta-line {
-      font-size: 0.68rem;
-      color: #a78bfa;
-    }
+    .meta-line { color: #7c3aed; }
 
     .hero-media {
-      min-height: 360px;
-      padding: 1.2rem;
+      padding: 1.1rem;
       display: flex;
       align-items: center;
       justify-content: center;
-      overflow: hidden;
     }
 
-    .hero-media img {
+    .hero-media-frame {
       width: 100%;
-      height: 100%;
-      object-fit: cover;
       border: 1px solid rgba(168, 85, 247, 0.2);
-      box-shadow: 0 30px 80px rgba(0, 0, 0, 0.3);
+      background: rgba(0, 0, 0, 0.28);
+      padding: 0.8rem;
+      box-shadow: 0 28px 80px rgba(0, 0, 0, 0.26);
+    }
+
+    .hero-media-frame img {
+      width: 100%;
+      height: auto;
+      border: 1px solid rgba(168, 85, 247, 0.16);
     }
 
     .hero-media-placeholder {
@@ -355,81 +387,133 @@
       aspect-ratio: 16 / 10;
       display: grid;
       place-items: center;
-      border: 1px solid rgba(168, 85, 247, 0.22);
       color: rgba(168, 85, 247, 0.55);
-      background:
-        radial-gradient(circle at center, rgba(168, 85, 247, 0.12), transparent 55%),
-        rgba(0, 0, 0, 0.22);
+      border: 1px solid rgba(168, 85, 247, 0.16);
+      background: radial-gradient(circle at center, rgba(168, 85, 247, 0.14), transparent 58%);
       font-size: 4rem;
     }
 
     .content-shell {
-      width: min(1400px, calc(100% - 2rem));
-      margin: 0 auto;
       display: grid;
-      grid-template-columns: 280px minmax(0, 1fr);
+      grid-template-columns: minmax(250px, 290px) minmax(0, 1fr);
       gap: 2rem;
-      padding: 2rem 0 5rem;
+      align-items: start;
+      padding-bottom: 5rem;
     }
 
-    .panel {
-      padding: 1.4rem;
+    .sidebar-stack {
+      position: sticky;
+      top: 6.1rem;
+      display: grid;
+      gap: 1.15rem;
     }
 
-    .toc-title {
-      color: white;
-      font-size: 0.78rem;
+    .panel-title {
       margin: 0 0 1rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.8rem;
+      color: white;
+      padding-bottom: 0.9rem;
+      border-bottom: 1px solid rgba(168, 85, 247, 0.18);
+    }
+
+    .panel-title .left {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.7rem;
+    }
+
+    .panel-title i { color: var(--gold); }
+
+    .panel-body {
+      padding: 1.2rem;
     }
 
     .toc-links {
       display: grid;
-      gap: 0.5rem;
+      gap: 0.45rem;
     }
 
-    .toc-links a {
+    .toc-link {
       display: block;
-      padding: 0.7rem 0.9rem;
-      border-left: 1px solid rgba(168, 85, 247, 0.25);
       color: var(--text-soft);
-      font-family: 'JetBrains Mono', monospace;
-      font-size: 0.74rem;
-      letter-spacing: 0.05em;
-      transition: border-color 0.2s ease, background-color 0.2s ease, color 0.2s ease;
+      padding: 0.68rem 0.9rem;
+      border-left: 1px solid rgba(168, 85, 247, 0.22);
+      transition: color 0.2s ease, background-color 0.2s ease, border-color 0.2s ease;
     }
 
-    .toc-links a:hover {
-      border-left-color: #fbbf24;
-      background: linear-gradient(to right, rgba(251, 191, 36, 0.08), transparent);
+    .toc-link:hover {
       color: white;
+      border-left-color: var(--gold);
+      background: linear-gradient(to right, rgba(244, 212, 125, 0.08), transparent);
     }
 
-    .side-cta {
+    .visions-grid {
       display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
       gap: 0.7rem;
     }
 
-    .side-cta a,
-    .cta-buttons a {
-      display: inline-flex;
+    .vision-link {
+      aspect-ratio: 1;
+      border: 1px solid rgba(168, 85, 247, 0.2);
+      background: rgba(0, 0, 0, 0.3);
+      display: flex;
       align-items: center;
       justify-content: center;
-      gap: 0.6rem;
-      min-height: 2.9rem;
-      padding: 0.85rem 1rem;
-      border: 1px solid rgba(168, 85, 247, 0.35);
-      font-family: 'JetBrains Mono', monospace;
-      font-size: 0.72rem;
-      letter-spacing: 0.14em;
-      text-transform: uppercase;
-      transition: transform 0.24s ease, background-color 0.24s ease, border-color 0.24s ease;
+      position: relative;
+      transition: border-color 0.24s ease, background-color 0.24s ease;
     }
 
-    .side-cta a:hover,
-    .cta-buttons a:hover {
-      transform: translateY(-2px);
-      background: rgba(168, 85, 247, 0.12);
-      border-color: rgba(168, 85, 247, 0.65);
+    .vision-link:hover {
+      border-color: rgba(34, 211, 238, 0.55);
+      background: rgba(10, 5, 32, 0.88);
+    }
+
+    .vision-link i { color: rgba(168, 85, 247, 0.5); font-size: 1.35rem; }
+
+    .vision-tag {
+      position: absolute;
+      right: 0.35rem;
+      bottom: 0.3rem;
+      font-size: 0.58rem;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      color: rgba(148, 163, 184, 0.72);
+    }
+
+    .subscription-copy {
+      margin: 0 0 1rem;
+      color: var(--text-soft);
+      font-size: 0.92rem;
+      line-height: 1.75;
+    }
+
+    .substack-embed-wrap {
+      border: 1px solid rgba(168, 85, 247, 0.18);
+      background: rgba(0, 0, 0, 0.24);
+      overflow: hidden;
+    }
+
+    .substack-embed {
+      width: 100%;
+      min-height: 320px;
+      border: 0;
+      background: transparent;
+    }
+
+    .substack-fallback {
+      margin-top: 0.85rem;
+      color: var(--text-soft);
+      font-size: 0.88rem;
+    }
+
+    .substack-fallback a {
+      color: #ddd6fe;
+      text-decoration: underline;
+      text-underline-offset: 0.16em;
     }
 
     .article-column {
@@ -440,7 +524,7 @@
       display: flex;
       justify-content: flex-end;
       gap: 0.6rem;
-      margin-bottom: 1.5rem;
+      margin-bottom: 1.4rem;
     }
 
     .share-row a,
@@ -450,24 +534,26 @@
       display: inline-flex;
       align-items: center;
       justify-content: center;
-      background: rgba(13, 7, 24, 0.8);
-      color: var(--text-soft);
       border: 1px solid rgba(168, 85, 247, 0.22);
+      background: rgba(13, 7, 24, 0.78);
+      color: var(--text-soft);
       cursor: pointer;
-      transition: border-color 0.24s ease, color 0.24s ease, background-color 0.24s ease;
+      transition: border-color 0.24s ease, background-color 0.24s ease, color 0.24s ease;
     }
 
     .share-row a:hover,
     .share-row button:hover {
       color: white;
-      border-color: rgba(168, 85, 247, 0.65);
-      background: rgba(168, 85, 247, 0.15);
+      border-color: rgba(168, 85, 247, 0.55);
+      background: rgba(168, 85, 247, 0.12);
     }
 
     .article-body {
-      font-size: 1.06rem;
+      min-width: 0;
       color: #d7dbea;
+      font-size: 1.05rem;
       line-height: 1.82;
+      overflow-wrap: anywhere;
     }
 
     .article-body > :first-child { margin-top: 0; }
@@ -475,31 +561,30 @@
     .article-body h2,
     .article-body h3,
     .article-body h4 {
-      margin: 3.3rem 0 1.1rem;
-      line-height: 1.2;
+      margin: 3rem 0 1rem;
+      line-height: 1.22;
       color: white;
     }
 
     .article-body h2 {
-      font-family: 'Cinzel Decorative', serif;
-      font-size: clamp(1.8rem, 3vw, 2.55rem);
+      font-family: "Cinzel Decorative", ui-serif, Georgia, serif;
+      font-size: clamp(1.8rem, 3vw, 2.45rem);
       padding-bottom: 0.8rem;
-      border-bottom: 1px solid rgba(168, 85, 247, 0.18);
+      border-bottom: 1px solid rgba(168, 85, 247, 0.16);
       scroll-margin-top: 6rem;
     }
 
     .article-body h3 {
-      font-family: 'Playfair Display', serif;
-      font-size: clamp(1.35rem, 2.2vw, 1.8rem);
-      color: #f5d68a;
+      font-family: "Playfair Display", ui-serif, Georgia, serif;
+      font-size: clamp(1.32rem, 2.1vw, 1.75rem);
+      color: var(--gold);
     }
 
     .article-body h4 {
-      font-family: 'JetBrains Mono', monospace;
-      font-size: 0.95rem;
+      font-size: 0.8rem;
+      letter-spacing: 0.18em;
       text-transform: uppercase;
-      letter-spacing: 0.14em;
-      color: #c084fc;
+      color: #c4b5fd;
     }
 
     .article-body ul,
@@ -510,28 +595,22 @@
 
     .article-body li { margin-bottom: 0.75rem; }
     .article-body strong { color: white; }
-    .article-body em { color: #e9d5ff; }
-
+    .article-body em { color: #ddd6fe; }
     .article-body a {
       color: #c4b5fd;
       text-decoration: underline;
-      text-decoration-color: rgba(168, 85, 247, 0.5);
-      text-underline-offset: 0.14em;
+      text-decoration-color: rgba(168, 85, 247, 0.45);
+      text-underline-offset: 0.15em;
     }
 
-    .article-body a:hover { color: #f5d68a; }
+    .article-body a:hover { color: var(--gold); }
 
     .article-body figure {
       margin: 2.2rem 0;
-      padding: 0.8rem;
+      padding: 0.9rem;
       background: rgba(13, 7, 24, 0.82);
-      border: 1px solid rgba(168, 85, 247, 0.18);
-    }
-
-    .article-body figcaption {
-      margin-top: 0.9rem;
-      color: var(--text-soft);
-      font-size: 0.9rem;
+      border: 1px solid rgba(168, 85, 247, 0.16);
+      overflow: visible;
     }
 
     .article-body img {
@@ -544,37 +623,44 @@
       width: 100%;
       aspect-ratio: 16 / 9;
       border: 0;
+      background: black;
+    }
+
+    .article-body figcaption {
+      margin-top: 0.9rem;
+      color: var(--text-soft);
+      font-size: 0.9rem;
+      line-height: 1.7;
     }
 
     .article-body blockquote {
       margin: 2.2rem 0;
-      padding: 1.4rem 1.5rem;
-      border-left: 4px solid rgba(168, 85, 247, 0.5);
+      padding: 1.3rem 1.5rem;
+      border-left: 4px solid rgba(168, 85, 247, 0.48);
       background: linear-gradient(to right, rgba(168, 85, 247, 0.10), transparent);
       color: #ede9fe;
-      font-family: 'Playfair Display', serif;
-      font-size: 1.2rem;
+      font-family: "Playfair Display", ui-serif, Georgia, serif;
+      font-size: 1.18rem;
       font-style: italic;
     }
 
     .article-cta {
       margin-top: 3rem;
-      padding: 1.7rem;
-      display: grid;
-      gap: 1rem;
+      padding: 1.55rem;
     }
 
     .article-cta h2,
     .related-section h2 {
-      margin: 0;
-      font-family: 'Cinzel Decorative', serif;
-      font-size: clamp(1.5rem, 3vw, 2.4rem);
+      margin: 0 0 0.7rem;
+      font-family: "Cinzel Decorative", ui-serif, Georgia, serif;
+      font-size: clamp(1.45rem, 3vw, 2.2rem);
       color: white;
     }
 
     .article-cta p {
-      margin: 0;
+      margin: 0 0 1rem;
       color: var(--text-soft);
+      line-height: 1.75;
     }
 
     .cta-buttons {
@@ -583,19 +669,8 @@
       gap: 0.8rem;
     }
 
-    .cta-primary {
-      background: rgba(168, 85, 247, 0.16);
-      color: white;
-    }
-
-    .cta-secondary {
-      background: rgba(251, 191, 36, 0.10);
-      border-color: rgba(251, 191, 36, 0.35) !important;
-      color: #f5d68a;
-    }
-
     .post-nav {
-      margin-top: 3rem;
+      margin-top: 2.8rem;
       display: grid;
       grid-template-columns: repeat(2, minmax(0, 1fr));
       gap: 1rem;
@@ -603,26 +678,24 @@
 
     .post-nav a,
     .post-nav span {
-      min-height: 100%;
       padding: 1.2rem 1.3rem;
       display: grid;
-      gap: 0.5rem;
+      gap: 0.45rem;
+      border: 1px solid var(--line);
+      background: var(--panel);
     }
 
-    .post-nav span {
-      border: 1px solid rgba(168, 85, 247, 0.12);
-      color: rgba(148, 163, 184, 0.45);
+    .post-nav a:hover {
+      border-color: var(--line-strong);
+      background: rgba(10, 5, 32, 0.88);
     }
 
-    .mini-label {
-      font-size: 0.72rem;
-      color: #a78bfa;
-    }
+    .post-nav span { color: rgba(148, 163, 184, 0.58); }
 
     .related-section {
-      margin-top: 3.5rem;
+      margin-top: 3rem;
       display: grid;
-      gap: 1.1rem;
+      gap: 1rem;
     }
 
     .related-grid {
@@ -632,53 +705,52 @@
     }
 
     .related-card {
-      padding: 1.2rem;
-      display: grid;
-      gap: 0.7rem;
+      padding: 1.1rem;
+      border: 1px solid var(--line);
+      background: var(--panel);
       transition: transform 0.24s ease, border-color 0.24s ease, background-color 0.24s ease;
     }
 
     .related-card:hover {
       transform: translateY(-3px);
-      border-color: rgba(168, 85, 247, 0.45);
-      background: rgba(20, 10, 36, 0.88);
+      border-color: var(--line-strong);
+      background: rgba(10, 5, 32, 0.88);
     }
 
     .related-card h3 {
-      margin: 0;
-      font-size: 1.1rem;
-      font-family: 'Playfair Display', serif;
+      margin: 0.5rem 0;
+      font-family: "Playfair Display", ui-serif, Georgia, serif;
+      font-size: 1.08rem;
       color: white;
     }
 
     .related-card p {
       margin: 0;
-      color: var(--text-soft);
       font-size: 0.95rem;
-      line-height: 1.7;
+      line-height: 1.72;
+      color: var(--text-soft);
     }
 
     .site-footer {
-      width: min(1400px, calc(100% - 2rem));
-      margin: 0 auto;
-      padding: 1.4rem 0 3rem;
+      padding: 1.5rem 0 3rem;
       display: flex;
       justify-content: space-between;
       gap: 1rem;
       align-items: center;
-      color: var(--text-soft);
-      font-size: 0.82rem;
       border-top: 1px solid rgba(168, 85, 247, 0.12);
+      color: var(--text-soft);
+      font-size: 0.86rem;
     }
 
-    @media (max-width: 1100px) {
+    @media (max-width: 1120px) {
       .hero-shell,
       .content-shell {
         grid-template-columns: 1fr;
       }
-      .top-links { display: none; }
-      .hero-shell { min-height: auto; }
-      .content-shell { padding-top: 1rem; }
+      .sidebar-stack {
+        position: static;
+      }
+      .micro-nav { display: none; }
       .related-grid { grid-template-columns: 1fr; }
     }
 
@@ -689,96 +761,138 @@
       .site-footer {
         width: min(100% - 1.2rem, 1400px);
       }
-      .topbar-inner {
-        min-height: 68px;
-      }
-      .cta-link {
-        padding: 0.75rem 0.9rem;
-        font-size: 0.65rem;
+      .topbar-inner { min-height: 72px; }
+      .button-link {
+        min-height: 2.5rem;
+        padding-inline: 0.95rem;
       }
       .hero-copy,
+      .panel-body,
       .hero-media,
-      .panel,
-      .article-cta {
+      .article-cta,
+      .post-nav a,
+      .post-nav span,
+      .related-card {
         padding-left: 1rem;
         padding-right: 1rem;
       }
-      .share-row {
-        justify-content: flex-start;
-      }
-      .post-nav {
-        grid-template-columns: 1fr;
-      }
-      .site-footer {
-        flex-direction: column;
-        align-items: flex-start;
-      }
+      .share-row { justify-content: flex-start; }
+      .post-nav { grid-template-columns: 1fr; }
+      .site-footer { flex-direction: column; align-items: flex-start; }
     }
   </style>
 </head>
 <body>
   <div class="bg-grid" aria-hidden="true"></div>
-  <div class="stars" aria-hidden="true"></div>
-  <div class="orb" style="width: 18rem; height: 18rem; top: 7%; left: 6%; background: rgba(168, 85, 247, 0.55);"></div>
-  <div class="orb" style="width: 15rem; height: 15rem; right: 10%; top: 18%; background: rgba(251, 191, 36, 0.35);"></div>
-  <div class="orb" style="width: 16rem; height: 16rem; right: 12%; bottom: 12%; background: rgba(34, 211, 238, 0.22);"></div>
+  <div class="atmosphere" aria-hidden="true"></div>
+  <div class="orb" style="width:18rem;height:18rem;top:8%;left:6%;background:rgba(168,85,247,0.54);"></div>
+  <div class="orb" style="width:15rem;height:15rem;right:10%;top:16%;background:rgba(244,212,125,0.32);animation-delay:-5s;"></div>
+  <div class="orb" style="width:14rem;height:14rem;right:16%;bottom:10%;background:rgba(34,211,238,0.2);animation-delay:-10s;"></div>
 
   <div class="site-shell">
     <header class="topbar">
       <div class="topbar-inner">
-        <a href="/" class="brand" aria-label="The Algorithm Witch home">
-          <i class="ph ph-stars-four"></i>
-          <span>The Algorithm Witch</span>
+        <a href="/" class="brand-lockup" aria-label="The Algorithm Witch home">
+          <span class="brand-glyph">
+            <i class="ph-fill ph-sparkle sparkle"></i>
+            <i class="ph-fill ph-star-four star"></i>
+          </span>
+          <span class="brand-word">Algorithm Witch</span>
         </a>
-        <nav class="top-links" aria-label="Primary">
-          <a class="nav-item" href="/#origins">Origins</a>
-          <a class="nav-item" href="/#grimoire">Grimoire</a>
-          <a class="nav-item active" href="/blog/">Writings</a>
-          <a class="nav-item" href="/services/">Focus</a>
+        <nav class="micro-nav" aria-label="Primary">
+          <a class="micro-link" href="/#origins">Origins</a>
+          <a class="micro-link" href="/#grimoire">Grimoire</a>
+          <a class="micro-link active" href="/blog/">Writings</a>
+          <a class="micro-link" href="/services/">Focus</a>
         </nav>
-        <a href="/summon.html" class="cta-link">
-          <i class="ph ph-terminal-window"></i>
-          <span>Summon</span>
-        </a>
+        <a href="/summon.html" class="button-link">Summon Me</a>
       </div>
     </header>
 
     <main>
       <section class="hero-shell">
-        <div class="hero-copy">
+        <div class="panel hero-copy">
           <div>
-            <div class="eyebrow">Discovery</div>
-            <h1 class="post-title">The Recommendation Engine<span class="post-title-accent">Learned Where You Live</span></h1>
+            <div class="micro-label eyebrow">Discovery</div>
+            <h1 class="post-title">The Recommendation Engine Learned<span class="post-title-accent">Where You Live</span></h1>
           </div>
           <p class="post-excerpt">The feed has come alive. Neighborhood businesses surface without a search and in your city creators appear with uncanny frequency.</p>
           <div class="hero-meta">
             <span>March 3, 2026</span>
             <span class="meta-line">•</span>
-            <span>16 min read</span>
+            <span class="utility-text">16 min read</span>
             <span class="meta-line">•</span>
-            <span>Originally published on Substack</span>
+            <span class="utility-text">Originally published on Substack</span>
           </div>
         </div>
-        <div class="hero-media">
-          <img src="https://substack-post-media.s3.amazonaws.com/public/images/3494eca4-5f34-4484-a391-d4ce2a484fc6_1600x900.png" alt="The Recommendation Engine Learned Where You Live" loading="eager">
+
+        <div class="panel hero-media">
+          <div class="hero-media-frame">
+            <img src="https://substack-post-media.s3.amazonaws.com/public/images/3494eca4-5f34-4484-a391-d4ce2a484fc6_1600x900.png" alt="The Recommendation Engine Learned Where You Live" loading="eager">
+          </div>
         </div>
       </section>
 
       <section class="content-shell">
-        <aside>
+        <aside class="sidebar-stack">
           <div class="panel">
-            <h2 class="toc-title">On This Page</h2>
-            <nav class="toc-links">
-              <a href="#location-discovery-is-officially-here">Location Discovery Is Officially Here</a><a href="#how-each-platform-actually-works">How Each Platform Actually Works</a><a href="#tiktok">TikTok</a><a href="#retention-and-testing">Retention and Testing</a><a href="#instagram">Instagram</a><a href="#interest-modeling-social-graph">Interest Modeling + Social Graph</a><a href="#threads">Threads</a><a href="#linkedin">LinkedIn</a><a href="#engagement-probability-dwell-time">Engagement Probability + Dwell Time</a><a href="#youtube">YouTube</a><a href="#search-session-duration">Search + Session Duration</a><a href="#bluesky">Bluesky</a><a href="#protocol-driven-discovery">Protocol-Driven Discovery</a><a href="#twitter">Twitter</a><a href="#the-strategy-incentives">The Strategy Incentives</a><a href="#128205you-are-here">&amp;#128205;You Are Here</a><a href="#privacy-power-and-control">Privacy, Power, and Control</a><a href="#invest-in-your-website-today">Invest in Your Website Today</a><a href="#focus-on-what-lasts">Focus on What Lasts</a>
-            </nav>
+            <div class="panel-body">
+              <h2 class="panel-title micro-label">
+                <span class="left"><i class="ph-fill ph-book-bookmark"></i><span>Index</span></span>
+              </h2>
+              <nav class="toc-links">
+                <a class="toc-link" href="#location-discovery-is-officially-here">Location Discovery Is Officially Here</a><a class="toc-link" href="#how-each-platform-actually-works">How Each Platform Actually Works</a><a class="toc-link" href="#tiktok">TikTok</a><a class="toc-link" href="#retention-and-testing">Retention and Testing</a><a class="toc-link" href="#instagram">Instagram</a><a class="toc-link" href="#interest-modeling-social-graph">Interest Modeling + Social Graph</a><a class="toc-link" href="#threads">Threads</a><a class="toc-link" href="#linkedin">LinkedIn</a><a class="toc-link" href="#engagement-probability-dwell-time">Engagement Probability + Dwell Time</a><a class="toc-link" href="#youtube">YouTube</a><a class="toc-link" href="#search-session-duration">Search + Session Duration</a><a class="toc-link" href="#bluesky">Bluesky</a><a class="toc-link" href="#protocol-driven-discovery">Protocol-Driven Discovery</a><a class="toc-link" href="#twitter">Twitter</a><a class="toc-link" href="#the-strategy-incentives">The Strategy Incentives</a><a class="toc-link" href="#128205you-are-here">&amp;#128205;You Are Here</a><a class="toc-link" href="#privacy-power-and-control">Privacy, Power, and Control</a><a class="toc-link" href="#invest-in-your-website-today">Invest in Your Website Today</a><a class="toc-link" href="#focus-on-what-lasts">Focus on What Lasts</a>
+              </nav>
+            </div>
           </div>
+
           <div class="panel">
-            <h2 class="toc-title">Continue the Thread</h2>
-            <div class="side-cta">
-              <a href="https://thealgorithmwitch.substack.com/p/the-recommendation-engine-learned" target="_blank" rel="noopener noreferrer">Open Original Post</a>
-              <a href="https://thealgorithmwitch.substack.com/" target="_blank" rel="noopener noreferrer">Free Substack Signup</a>
-              <a href="https://thealgorithmwitch.substack.com/" target="_blank" rel="noopener noreferrer">Paid Membership</a>
-              <a href="https://thealgorithmwitch.com/summon.html">Consultation</a>
+            <div class="panel-body">
+              <h2 class="panel-title micro-label">
+                <span class="left"><i class="ph-fill ph-aperture"></i><span>Visions</span></span>
+                <span class="utility-text">5 files</span>
+              </h2>
+              <div class="visions-grid">
+                
+    <a class="vision-link" href="#vision-1">
+      <i class="ph-duotone ph-image"></i>
+      <span class="vision-tag">F1</span>
+    </a>
+  
+    <a class="vision-link" href="#vision-2">
+      <i class="ph-duotone ph-image"></i>
+      <span class="vision-tag">F2</span>
+    </a>
+  
+    <a class="vision-link" href="#vision-3">
+      <i class="ph-duotone ph-image"></i>
+      <span class="vision-tag">F3</span>
+    </a>
+  
+    <a class="vision-link" href="#vision-4">
+      <i class="ph-duotone ph-image"></i>
+      <span class="vision-tag">F4</span>
+    </a>
+  
+    <a class="vision-link" href="#vision-5">
+      <i class="ph-duotone ph-image"></i>
+      <span class="vision-tag">F5</span>
+    </a>
+  
+              </div>
+            </div>
+          </div>
+
+          <div class="panel">
+            <div class="panel-body">
+              <h2 class="panel-title micro-label">
+                <span class="left"><i class="ph-duotone ph-envelope-open"></i><span>Initiate Subscription</span></span>
+              </h2>
+              <p class="subscription-copy">Receive encrypted dispatches, strategy notes, and fresh writing without leaving the archive.</p>
+              <div class="substack-embed-wrap">
+                <iframe class="substack-embed" src="https://thealgorithmwitch.substack.com/embed" loading="lazy" scrolling="no" frameborder="0" title="Subscribe to The Algorithm Witch on Substack"></iframe>
+              </div>
+              <p class="substack-fallback">If the embed is blocked, <a href="https://thealgorithmwitch.substack.com/" target="_blank" rel="noopener noreferrer">subscribe directly on Substack</a>.</p>
             </div>
           </div>
         </aside>
@@ -791,21 +905,21 @@
           </div>
 
           <article class="article-body">
-            <p>You may have noticed something over the past few years. Creators in your city appear more often. Small businesses near you surface without you searching for them. Community events, neighborhood commentary, and regional creators circulate more heavily inside your recommendations. Geographic relevance is becoming part of the architecture of distribution, layered on top of interest graphs as a probability engine that helps platforms anchor attention in physical proximity. </p><p>Location is becoming a stronger signal inside ranking systems. Feeds are learning <strong>where</strong> you are.</p><p>As platforms mature and markets (over)saturate, geographic relevance becomes valuable infrastructure. It improves ad targeting, increases real-world conversion, and strengthens retention by anchoring content in physical proximity.</p><p>Before <strong><a href="https://newsroom.tiktok.com/en-us/introducing-the-local-feed">fully location-weighted feeds emerged</a></strong>, platforms (<a href="https://ads.tiktok.com/help/article/location-targeting">TikTok</a>, <a href="https://www.facebook.com/business/help/202297959811696?id=176276233019487">Meta</a>) quietly expanded geo-based targeting in ads. Now we are seeing stronger local signals in organic distribution as well. If you live in Austin, you are more likely to see Austin creators than someone living in New York. Interest graphs are being layered with geographic probability.</p><figure><img src="https://substackcdn.com/image/fetch/$s_!_34l!,w_1456,c_limit,f_auto,q_auto:good,fl_progressive:steep/https%3A%2F%2Fsubstack-post-media.s3.amazonaws.com%2Fpublic%2Fimages%2F311c628e-4c0e-4466-8820-43a64ed65b96_1600x900.png" alt=""></figure><h2 id="location-discovery-is-officially-here">Location Discovery Is Officially Here</h2><p>In early 2026, <strong><a href="https://newsroom.tiktok.com/introducing-the-local-feed">TikTok rolled out a new Local Feed in the U.S.</a></strong>, a dedicated discovery surface that curates content from creators, small businesses, and events near your physical location. The feature appears as a tab on the TikTok home screen and surfaces posts <a href="https://www.theverge.com/tech/877161/tiktok-us-launches-local-feeds">based on your location</a>, topic relevance, and recency. Users must opt in to share precise GPS location data for that feed, and it is off by default, but once enabled it shows organic nearby content separate from the traditional For You recommendations. A video tagged with a local place or referencing community events can be shown to nearby users through the Local Feed, <a href="https://storrito.com/resources/how-tiktoks-local-feeds-work-and-what-location-based-discovery-changes-for-content-teams">creating a new organic surface for visibility and potential conversion without paid ads</a>, especially valuable for physical businesses and nonprofit outreach.</p><p>This is the <a href="https://metricool.com/tiktok-nearby-launches/">first major rollout</a> of a location-based content surface in the U.S. since TikTok unveiled &#8220;Nearby Feeds&#8221; in Europe, where posts are shown based on location, topic, and posting time.</p><p>Instagram has also introduced earlier <a href="https://www.wired.com/story/instagram-lets-you-pick-what-shows-up-in-reels/">features that lean into locality</a> and user-selected personalization, including optional location sharing and tools that let users influence what shows up in their Reels feed, signaling a broader industry trend toward local and personalized discovery systems.</p><figure><img src="https://substackcdn.com/image/fetch/$s_!E5dJ!,w_1456,c_limit,f_auto,q_auto:good,fl_progressive:steep/https%3A%2F%2Fsubstack-post-media.s3.amazonaws.com%2Fpublic%2Fimages%2F7ca8294b-64b8-4ff1-907b-57859108ac18_3024x2038.jpeg" alt=""><figcaption>I used this research to brew a quiz that helps nonprofits match their workflow to find where they should focus energy online.</figcaption></figure><p><a href="https://thealgorithmwitch.github.io/align"><span>Take the Quiz</span></a></p><h2 id="how-each-platform-actually-works">How Each Platform Actually Works</h2><p>Location signals have added to behavioral ranking. Geographic proximity now operates alongside watch time, engagement velocity, semantic clarity, and predicted interest. The feed is still governed by probabilistic modeling. What has changed is the number of contextual layers influencing that model.</p><p>To understand how location interacts with distribution, we need to look at how each platform actually ranks content.</p><h2 id="tiktok">TikTok</h2><h3 id="retention-and-testing">Retention and Testing</h3><p>TikTok&#8217;s For You feed is driven by a <a href="https://newsroom.tiktok.com/en-us/how-tiktok-recommends-videos-for-you">recommendation system that predicts user interest</a> based on interactions, video information, and watch behavior. <a href="https://newsroom.tiktok.com/en-us/how-tiktok-recommends-videos-for-you">According to TikTok&#8217;s own documentation</a>, ranking considers metrics such as watch time, completion rate, replays, likes, comments, and shares. The system evaluates how long viewers stay and whether they engage, then uses those signals <a href="https://www.tiktok.com/creators/creator-portal/en-us/how-tiktok-works/how-videos-get-on-the-for-you-page/">to determine whether a video should be shown to broader audiences</a>.</p><p>Videos are <a href="https://www.tiktok.com/transparency/en-us/recommendation-system/">distributed in waves</a>. Early performance data informs whether content is <a href="https://www.theverge.com/2021/6/21/22543598/tiktok-algorithm-for-you-page-explained%5C">tested with larger groups</a>. If retention remains strong and interaction compounds, distribution expands.</p><p><a href="/blog/are-hashtags-dead.html">Hashtags can clarify context, but TikTok confirms they are only one of several signals under &#8220;video information.&#8221;</a> Retention and engagement carry greater structural weight in determining scale.</p><p>In January 2026, <a href="https://www.theverge.com/tech/866437/tiktok-usds-bytedance-sale-oracle-mgx">TikTok&#8217;s U.S. operations formally transitioned into a new entity, TikTok USDS Joint Venture LLC</a>. The joint venture has stated it will retrain, test, and update the content recommendation algorithm on U.S. user data. While TikTok continues to describe the core signals that shape ranking, the precise structure and weighting of the algorithm remain proprietary and may evolve under this new governance model.</p><p>TikTok indexes caption text, on-screen text, and spoken audio through automated transcription. Clear keyword usage across these layers strengthens semantic classification more effectively than stacking trending hashtags without topical coherence. TikTok is optimized for velocity and attention density. Content that sustains watch time relative to length is more likely to move beyond its initial audience.</p><p>TikTok is a strong fit for nonprofit teams that can translate their work into culturally fluent short-form storytelling, whether that means staff who understand how to adapt trends like <a href="https://www.instagram.com/reel/DPMP9Yxjrk1/?igsh=dWVhN253ZjRkNWhvhttps%3A%2F%2F">Southern Alliance for Clean Energy</a>&#8217;s &#8220;<a href="https://www.wired.com/story/tiktoks-latest-trend-lets-gen-z-write-the-marketing-script/">when the Gen Z social team writes the script</a>,&#8221; team members who are can chill out and &#8220;<a href="https://www.tiktok.com/@bonusfootage/video/7609053949122907423">yap</a>&#8221; directly to camera, or internal creators willing to grow into full &#8220;<a href="https://www.fastcompany.com/91495470/staples-baddie-gen-z-employee-what-the-retailer-is-doing-about-internet-fame">Staples baddie</a>&#8221; energy and carry the voice of the organization consistently on-screen.</p><h2 id="instagram">Instagram</h2><h3 id="interest-modeling-social-graph">Interest Modeling + Social Graph</h3><p><a href="https://about.instagram.com/blog/announcements/shedding-more-light-on-how-instagram-works">Instagram blends interest-based recommendation with social proximity</a>. Feed and Stories stay relationship-weighted, so accounts you regularly interact with keep getting priority, while Reels and Explore lean harder on predicted interest and recommended distribution. Instagram&#8217;s own guidance describes ranking as a set of prediction systems that estimate which posts you are likely to spend time on and engage with, including signals such as time spent, likes, comments, shares, and other actions. Internal Meta engineering documentation has repeatedly identified &#8220;time spent&#8221; and &#8220;meaningful interactions&#8221; as core ranking inputs across surfaces.</p><p>Reels distribution is especially sensitive to watch behavior and sharing. Mosseri has described sharing as a central outcome Instagram optimizes for, and <a href="https://www.instagram.com/p/DOQ-n9qDHAy/">reporting on his comments highlights &#8220;sends&#8221; as a high-value signal for Reels</a> ranking and reach beyond followers. Reels compete through watch time and saves.</p><p>Stories reinforce relationship scoring through the actions that look like real connection, including replies, DMs, and repeated profile behavior. Instagram&#8217;s public materials repeatedly frame ranking as prediction around the actions people actually take, and private sharing fits that logic because it signals strong intent and relationship depth.</p><p>Carousel posts extend dwell time through swipe behavior, which increases time spent per post and often correlates with higher save rates.</p><p>Stories reinforce relationship signals. Direct messages, replies, profile taps, and sticker interactions feed proximity scoring that influences future visibility in Feed and Stories placement.</p><p>Direct messaging has become increasingly central to growth mechanics. Instagram&#8217;s prompts encouraging users to send a message after following and the platform&#8217;s broader emphasis on private sharing reflect a prioritization of one-to-one interaction. DMs, shares to friends, story replies, and profile taps feed proximity modeling. When users message or privately share content, the system interprets that as a strong relationship signal, increasing the likelihood that future posts from that account surface in Feed and Stories. Many creators and brands are now layering automation tools like <a href="https://manychat.com/product/instagram">ManyChat</a> into this dynamic, triggering keyword-based auto-responses in DMs to deliver resources, links, or follow-ups at scale. For nonprofits, this is worth considering carefully: automated direct response systems can help capture interest and distribute information quickly, but they must be aligned with voice, trust, and capacity to respond thoughtfully in an environment where private interaction increasingly shapes visibility.</p><p><a href="https://open.substack.com/pub/thealgorithmwitch/p/are-hashtags-dead?utm_campaign=post-expanded-share&amp;utm_medium=web">Hashtags can contribute categorization.</a> Meta has stated that hashtags help the system understand context, but they are not a primary distribution lever. Ranking weight sits in predicted engagement, saves, shares, profile actions, and behavioral consistency across posts.</p><p>Aesthetic coherence is central. <a href="https://journals.sagepub.com/doi/10.1177/20539517211022370">Instagram&#8217;s computer vision systems analyze visual patterns, and repeated topic signals across posts strengthen classification confidence</a>. Consistent subject matter and recognizable framing increase the probability that content is shown to similar audiences again.</p><p>Instagram rewards recognizable positioning. Nonprofits that perform well on Instagram tend to share a few structural characteristics. They curate a clean and consistent visual language. Their website positioning is clear enough that captions can echo it without confusion. Their SEO foundation produces stable keyword architecture that translates naturally into posts and Reels. They maintain a strong internal database of language, research, and resources, allowing them to repurpose credible information into save-worthy carousels and shareable explainer videos. When brand clarity, research fluency, and visual coherence align, Instagram becomes an extension of existing authority rather than a separate performance channel.</p><h3 id="threads">Threads</h3><p>Threads uses a recommendation model that blends interest-based ranking with Instagram <a href="https://about.fb.com/news/2023/07/introducing-threads-new-app-text-sharing/">graph proximity</a>, while placing heavier emphasis on conversation and reply depth. Meta has described Threads ranking as <a href="https://www.theverge.com/2024/11/21/24302400/threads-algorithm-focus-people-you-follow">prioritizing posts likely to generate replies, engagement, and time spent, with Instagram network signals informing early distribution</a>. In February 2026, <a href="https://www.theverge.com/tech/876610/meta-threads-dear-algo-algorithm">Meta introduced a feature</a> called &#8220;Dear Algo,&#8221; allowing users to explicitly request more or less of certain topics in their feed. The adjustment temporarily influences recommendation weighting, signaling a shift toward more visible, participatory personalization layered on top of engagement modeling. Compared to Instagram, Threads favors text density, conversational velocity, and topical clustering more than visual coherence.</p><p>Threads works best for organizations that already produce strong long-form content and consistent Instagram output. If your team has excess capacity and a clear voice, Threads can function as a conversational extension, directing audiences toward blog posts, research, webinars, and Reels. It rewards organizations that can sustain dialogue, respond quickly, and participate in ongoing topic threads rather than simply broadcast announcements.</p><h2 id="linkedin">LinkedIn</h2><h3 id="engagement-probability-dwell-time">Engagement Probability + Dwell Time</h3><p>LinkedIn&#8217;s engineering team has publicly described a feed ranking system built on predicted engagement probability and network effects. Models estimate the <a href="https://www.linkedin.com/blog/engineering/feed/understanding-feed-dwell-time">likelihood of clicks, reactions, comments, and shares, along with expected downstream amplification and upstream value</a> to the author. In 2020, LinkedIn detailed how <a href="https://www.linkedin.com/blog/engineering/feed/understanding-feed-dwell-time">dwell time</a> and &#8220;<a href="https://www.linkedin.com/blog/engineering/feed/understanding-feed-dwell-time">skip probability</a>&#8221; were incorporated into feed ranking to reduce low-interest posts and surface content members actually spend time with.</p><p>Early comment activity influences expansion beyond first-degree connections. When interaction compounds quickly, posts are more likely to be introduced to broader networks based on predicted relevance.</p><p>In November 2025, LinkedIn engineers clarified that Feed visibility <a href="https://www.linkedin.com/blog/engineering/feed/putting-members-first-testing-and-measuring-how-content-appears-in-your-feed">relies on behavioral signals derived from member activity, network proximity, and engagement patterns</a>. The same update acknowledged that content creation volume on LinkedIn has grown rapidly over the past year, increasing competition for attention.</p><p>Hashtags help connect posts to topics. <a href="/blog/are-hashtags-dead.html">Distribution itself is governed by engagement probability, dwell time modeling, and network effects.</a></p><p>LinkedIn rewards value density and conversation. Posts that prompt sustained reading and meaningful comments generate stronger dwell signals and are more likely to circulate beyond immediate connections.</p><p>Independent analysis from <a href="https://www.theshieldindex.com/">Shield Index</a> tracking approximately 50,000 LinkedIn posts shows that breakout behavior varies significantly by account size. Smaller accounts can experience reach multiples many times larger than their follower base on top-performing posts, while larger accounts tend to see narrower variation between typical and breakout posts.</p><p>LinkedIn is structurally advantaged for industry long-haulers. Professionals who have been in their field for a decade or more, founders, executive directors, policy staff, and small business contractors often perform best because the platform weights credibility signals embedded in profile data, network proximity, and industry relevance. When someone with established tenure posts, the system already has rich behavioral context about who might care.</p><p>This is also the platform where life events amplify reach. LinkedIn explicitly surfaces milestones such as new roles, launches, promotions, layoffs, and funding announcements. Public reporting has documented how posts tied to job transitions and layoffs frequently generate unusually high engagement, driven by network notification mechanics and heightened social relevance. The platform <strong><a href="https://www.linkedin.com/help/linkedin/answer/a529062/share-profile-updates-with-your-network">notifies connections of role changes and highlights milestones in-feed</a></strong>, creating built-in distribution advantages for posts attached to those moments. For nonprofit leaders, this is the key. Executive transitions, major grant announcements, organizational launches, coalition formations, and campaign milestones align naturally with LinkedIn&#8217;s amplification structure. When those moments are paired with authentic internal perspectives, engagement probability increases because the post invites conversation and community. In this environment, fluency often outperforms trend adaptation.</p><h2 id="youtube">YouTube </h2><h3 id="search-session-duration">Search + Session Duration</h3><figure><iframe src="https://www.youtube-nocookie.com/embed/9Fn79qJa2Fc?rel=0&amp;autoplay=0&amp;showinfo=0&amp;enablejsapi=0" frameborder="0" loading="lazy" gesture="media" allow="autoplay; fullscreen" allowautoplay="true" allowfullscreen="true"></iframe></figure><p>YouTube operates simultaneously as a <a href="https://www.youtube.com/playlist?list=PLPovbLc3QOY8TfVHn1huenSRYT78-MoB8">recommendation and a search engine</a>. Videos surface through homepage recommendations, suggested video modeling, and search indexing. Owned by Google, YouTube also benefits from <a href="https://open.substack.com/pub/thealgorithmwitch/p/how-search-is-changing-in-the-age?utm_campaign=post-expanded-share&amp;utm_medium=post%20viewer">deep integration with the broader search ecosystem</a>, where videos frequently appear in Google results, featured snippets, and video carousels. Discovery and authority are layered rather than separate systems, with performance inside YouTube reinforcing visibility across Google&#8217;s search infrastructure.</p><p>YouTube Shorts now generate more than <a href="https://digiday.com/marketing/as-youtube-shorts-reaches-200-billion-views-advertisers-increase-their-investment/">200 billion views</a> per day globally, serving as a high-velocity discovery layer. Shorts introduce viewers to channels, topics, and creators. However, durable authority is still driven by long-form watch time, session duration, transcript language, and channel consistency. YouTube&#8217;s ranking systems prioritize <a href="https://blog.youtube/inside-youtube/on-youtubes-recommendation-system/">viewer satisfaction signals, including average view duration, relative retention, and the likelihood that a video contributes to longer session time</a> on the platform.</p><p>Titles, descriptions, chapters, captions, and spoken words are indexed. <a href="https://developers.google.com/search/docs/appearance/video">YouTube&#8217;s automatic transcription system feeds directly into search visibility.</a> Clear topic alignment across video metadata and on-screen language strengthens classification confidence. Retention compounds visibility; videos that sustain watch time relative to length are more likely to be recommended again.</p><p>YouTube is structurally advantageous for nonprofit teams that already produce long-form content. Webinars, research briefings, conference panels, town halls, educational series, and recorded events translate naturally into long-form video libraries. Organizations that maintain consistent programming schedules and topic architecture can build search authority over time.</p><p>Shorts provide a bridge. Clips extracted from webinars, keynote moments, research highlights, or policy explainers can function as entry points that route viewers into longer videos. When short-form discovery is paired with structured long-form libraries, the channel compounds visibility rather than chasing isolated viral moments. Channels that treat YouTube as a knowledge infrastructure tend to build sustainable reach.</p><h2 id="bluesky">Bluesky</h2><h3 id="protocol-driven-discovery">Protocol-Driven Discovery</h3><p>Bluesky operates differently from centralized ranking platforms. Built on the <a href="https://atproto.com/">AT Protocol</a>, it allows users to select or create <a href="https://bsky.social/about/blog/03-30-2023-algorithmic-choice">custom feeds</a> rather than relying on a single opaque recommendation system. Feeds can be organized around topics, communities, moderation preferences, or curated lists, shifting discovery toward feed selection and network clustering rather than engagement prediction.</p><p><a href="https://bsky.social/about/blog/3-30-2023-algorithmic-choice">Visibility depends on which feeds include your content and how your account is integrated into community graphs.</a> Engagement is still important, but distribution is less driven by velocity modeling and more influenced by participation within defined discourse networks.</p><p>For nonprofits, Bluesky can function as a relationship platform. Organizations that need to be connected with reporters, policy analysts, researchers, and niche industry communities may find it structurally useful. <a href="https://www.reuters.com/technology/social-media/journalists-flock-bluesky-amid-x-changes-2024-02-15/">Journalists and media workers</a> have adopted Bluesky in significant numbers following changes to X, and topic-specific feeds allow nonprofits to surface directly inside professional conversations. Bluesky rewards clarity of expertise, consistent participation, and network presence.</p><h2 id="twitter">Twitter</h2><figure><iframe src="https://www.youtube-nocookie.com/embed/p7ZG_xWYLzI?rel=0&amp;autoplay=0&amp;showinfo=0&amp;enablejsapi=0" frameborder="0" loading="lazy" gesture="media" allow="autoplay; fullscreen" allowautoplay="true" allowfullscreen="true"></iframe></figure><p>Monetization on X has fundamentally changed distribution. Accounts with paid blue checkmarks receive algorithmic prioritization in replies and visibility, creating a pay-for-amplification dynamic that has altered how timelines feel and function. </p><p>Reporting has shown growth among paid accounts while many legacy institutional voices saw volatility in reach, and <a href="https://www.jalopnik.com/elon-musk-s-x-posts-are-showing-up-on-your-feed-whether-1851686438/">user experiments have documented instances where Elon Musk&#8217;s own account appeared with disproportionate frequency in feeds</a>. The platform&#8217;s revenue model increasingly ties visibility to subscription and creator payouts, blending engagement ranking with financial incentives.</p><p>I cannot recommend that nonprofits or mission driven brands treat X as a primary channel.</p><h2 id="the-strategy-incentives">The Strategy Incentives</h2><p>Retention TikTok is engineered around retention curves and attention density. Distribution expands when watch time compounds and early interaction signals hold. Velocity determines testing. Testing determines scale.</p><p>Relationship Instagram organizes visibility through relationship modeling layered with predicted engagement. Proximity, private interaction, aesthetic coherence, and behavioral consistency reinforce classification confidence.</p><p>Authority LinkedIn ranks through engagement probability, dwell time, and network effects. Professional proximity and comment depth influence expansion beyond first-degree connections.</p><p>Search YouTube compounds authority through session duration and search indexing. Long-form watch time, transcript clarity, and channel consistency accumulate over time inside Google&#8217;s broader search infrastructure.</p><p>Community Bluesky distributes through feed choice and community clustering. Inclusion inside the right feed ecosystems determines visibility more than velocity modeling.</p><p>Choosing a platform means choosing the behavioral logic you are willing to operate inside, the signals you are prepared to produce consistently, and the type of institutional strength you want to build. The question is which incentive structure aligns with how your organization actually operates.</p><h2 id="128205you-are-here">&#128205;You Are Here</h2><p>Location feeds move discovery logic towards place-based relevance. As location becomes a stronger ranking variable, organizations should consider where their work is meant to land.</p><ul><li><p>Are you based in a city, state, or region?</p></li><li><p>Are you trying to scale nationally or internationally?</p></li><li><p>Does your work depend on geographic trust?</p></li><li><p>Are your audiences physically clustered?</p></li></ul><p>Local density can amplify, or limit, visibility. A nonprofit operating in Chicago may see stronger exposure among Chicago-based users as proximity weighting increases. Expansion beyond that region requires intentional effort rather than accidental spillover.</p><p>As geography becomes embedded in ranking systems, content can surface based on where someone is at the moment of discovery, not only what they have previously engaged with.</p><p>Every algorithmic layer that incorporates location means your content may be surfaced based on where people are not just what they historically engage with, but where they&#8217;re physically situated at the moment of discovery. For mission-driven organizations, location now influences how efficiently content translates into turnout, attendance, membership, or conversion.</p><h2 id="privacy-power-and-control">Privacy, Power, and Control</h2><p>Location-based ranking introduces a new layer of convenience and a new layer of vulnerability. It is reasonable to question what it means to share increasingly precise geographic data with technology companies whose governance structures continue to shift, whose moderation systems are partially automated, and whose cooperation with governments varies by jurisdiction.</p><p>Opt-in systems are framed as optional. But when location becomes structurally advantageous for distribution, a quiet pressure can emerge. Does declining to share location reduce visibility? Does withholding proximity signals create subtle ranking friction? Platforms do not explicitly state penalties, but incentive structures shape behavior over time.</p><p>If digital feeds begin continue to mirror physical reality then <strong><a href="https://nationalpartnership.org/influencing-change-closing-the-pay-gap-for-black-creators-in-beauty/">online environments will inevitably continue to replicate and perpetuate offline patterns of segregation</a></strong>. Cities are stratified by race, income, and access. If geographic clustering becomes a dominant discovery layer, digital visibility may increasingly reflect those same divides. As we see in physical environments, location can be leveraged to tighten the loop between community and conversion or narrow the radius of exposure.</p><p>For organizations, the question is how much proximity you are willing to trade for reach, and what kind of digital public sphere you want to participate in.</p><h2 id="invest-in-your-website-today">Invest in Your Website Today</h2><p>This evolution has two strategic implications:</p><ol><li><p>Audience Proximity: Content designed for a regional audience may perform better in localized surfaces than generic global content, even if overall format and retention signals are strong.</p></li><li><p>AI, SEO, and Social SEO: Location signals strengthen when your content also reinforces keyword relevance tied to places (e.g., &#8220;Chicago nonprofit volunteer opportunities,&#8221; &#8220;Brooklyn community event&#8221;). These terms then feed both web search and social search logic, increasing discoverability everywhere</p></li></ol><p>Social platforms interpret you, but your website belongs to you. </p><p>On social, reach is probabilistic. You can optimize for retention, engagement velocity, and semantic clarity. You can test formats and measure performance. Even with expertise, prediction is imperfect as ranking systems update and recalibrate. </p><p>On the web, you control structure. Search engines index full pages. You determine title architecture, define keywords, and decide internal linking. Website build topic continuity over time.</p><p>Long-form blogs and YouTube deepen semantic authority. Keywords can be carried consistently across pages, transcripts, captions, and newsletters. That continuity strengthens discoverability across systems.</p><p>Web and long-form infrastructure compounds, while social reach will always fluctuate. Organizations that anchor their strategy in owned platforms while using social for distribution reduce volatility and increase durability.</p><h2 id="focus-on-what-lasts">Focus on What Lasts</h2><figure><img src="https://substackcdn.com/image/fetch/$s_!4yl4!,w_1456,c_limit,f_auto,q_auto:good,fl_progressive:steep/https%3A%2F%2Fsubstack-post-media.s3.amazonaws.com%2Fpublic%2Fimages%2Fb62c709c-06c6-4b27-9d40-2d30b09089da_1600x900.png" alt=""></figure><p>Choose your terms carefully and carry them across your website, your videos, your captions, your newsletters. Let your vocabulary become a spine that runs through everything you publish. Let it mean something each time it appears.</p><p>Measure retention and watch where attention drops. Authority accumulates from coherence sustained across surfaces and coherence compounds most reliably where you own the structure, the archive, and the terms by which you are discovered.</p>
+            <p>You may have noticed something over the past few years. Creators in your city appear more often. Small businesses near you surface without you searching for them. Community events, neighborhood commentary, and regional creators circulate more heavily inside your recommendations. Geographic relevance is becoming part of the architecture of distribution, layered on top of interest graphs as a probability engine that helps platforms anchor attention in physical proximity. </p><p>Location is becoming a stronger signal inside ranking systems. Feeds are learning <strong>where</strong> you are.</p><p>As platforms mature and markets (over)saturate, geographic relevance becomes valuable infrastructure. It improves ad targeting, increases real-world conversion, and strengthens retention by anchoring content in physical proximity.</p><p>Before <strong><a href="https://newsroom.tiktok.com/en-us/introducing-the-local-feed">fully location-weighted feeds emerged</a></strong>, platforms (<a href="https://ads.tiktok.com/help/article/location-targeting">TikTok</a>, <a href="https://www.facebook.com/business/help/202297959811696?id=176276233019487">Meta</a>) quietly expanded geo-based targeting in ads. Now we are seeing stronger local signals in organic distribution as well. If you live in Austin, you are more likely to see Austin creators than someone living in New York. Interest graphs are being layered with geographic probability.</p><figure id="vision-1"><img src="https://substackcdn.com/image/fetch/$s_!_34l!,w_1456,c_limit,f_auto,q_auto:good,fl_progressive:steep/https%3A%2F%2Fsubstack-post-media.s3.amazonaws.com%2Fpublic%2Fimages%2F311c628e-4c0e-4466-8820-43a64ed65b96_1600x900.png" alt=""></figure><h2 id="location-discovery-is-officially-here">Location Discovery Is Officially Here</h2><p>In early 2026, <strong><a href="https://newsroom.tiktok.com/introducing-the-local-feed">TikTok rolled out a new Local Feed in the U.S.</a></strong>, a dedicated discovery surface that curates content from creators, small businesses, and events near your physical location. The feature appears as a tab on the TikTok home screen and surfaces posts <a href="https://www.theverge.com/tech/877161/tiktok-us-launches-local-feeds">based on your location</a>, topic relevance, and recency. Users must opt in to share precise GPS location data for that feed, and it is off by default, but once enabled it shows organic nearby content separate from the traditional For You recommendations. A video tagged with a local place or referencing community events can be shown to nearby users through the Local Feed, <a href="https://storrito.com/resources/how-tiktoks-local-feeds-work-and-what-location-based-discovery-changes-for-content-teams">creating a new organic surface for visibility and potential conversion without paid ads</a>, especially valuable for physical businesses and nonprofit outreach.</p><p>This is the <a href="https://metricool.com/tiktok-nearby-launches/">first major rollout</a> of a location-based content surface in the U.S. since TikTok unveiled &#8220;Nearby Feeds&#8221; in Europe, where posts are shown based on location, topic, and posting time.</p><p>Instagram has also introduced earlier <a href="https://www.wired.com/story/instagram-lets-you-pick-what-shows-up-in-reels/">features that lean into locality</a> and user-selected personalization, including optional location sharing and tools that let users influence what shows up in their Reels feed, signaling a broader industry trend toward local and personalized discovery systems.</p><figure id="vision-2"><img src="https://substackcdn.com/image/fetch/$s_!E5dJ!,w_1456,c_limit,f_auto,q_auto:good,fl_progressive:steep/https%3A%2F%2Fsubstack-post-media.s3.amazonaws.com%2Fpublic%2Fimages%2F7ca8294b-64b8-4ff1-907b-57859108ac18_3024x2038.jpeg" alt=""><figcaption>I used this research to brew a quiz that helps nonprofits match their workflow to find where they should focus energy online.</figcaption></figure><p><a href="https://thealgorithmwitch.github.io/align"><span>Take the Quiz</span></a></p><h2 id="how-each-platform-actually-works">How Each Platform Actually Works</h2><p>Location signals have added to behavioral ranking. Geographic proximity now operates alongside watch time, engagement velocity, semantic clarity, and predicted interest. The feed is still governed by probabilistic modeling. What has changed is the number of contextual layers influencing that model.</p><p>To understand how location interacts with distribution, we need to look at how each platform actually ranks content.</p><h2 id="tiktok">TikTok</h2><h3 id="retention-and-testing">Retention and Testing</h3><p>TikTok&#8217;s For You feed is driven by a <a href="https://newsroom.tiktok.com/en-us/how-tiktok-recommends-videos-for-you">recommendation system that predicts user interest</a> based on interactions, video information, and watch behavior. <a href="https://newsroom.tiktok.com/en-us/how-tiktok-recommends-videos-for-you">According to TikTok&#8217;s own documentation</a>, ranking considers metrics such as watch time, completion rate, replays, likes, comments, and shares. The system evaluates how long viewers stay and whether they engage, then uses those signals <a href="https://www.tiktok.com/creators/creator-portal/en-us/how-tiktok-works/how-videos-get-on-the-for-you-page/">to determine whether a video should be shown to broader audiences</a>.</p><p>Videos are <a href="https://www.tiktok.com/transparency/en-us/recommendation-system/">distributed in waves</a>. Early performance data informs whether content is <a href="https://www.theverge.com/2021/6/21/22543598/tiktok-algorithm-for-you-page-explained%5C">tested with larger groups</a>. If retention remains strong and interaction compounds, distribution expands.</p><p><a href="/blog/are-hashtags-dead.html">Hashtags can clarify context, but TikTok confirms they are only one of several signals under &#8220;video information.&#8221;</a> Retention and engagement carry greater structural weight in determining scale.</p><p>In January 2026, <a href="https://www.theverge.com/tech/866437/tiktok-usds-bytedance-sale-oracle-mgx">TikTok&#8217;s U.S. operations formally transitioned into a new entity, TikTok USDS Joint Venture LLC</a>. The joint venture has stated it will retrain, test, and update the content recommendation algorithm on U.S. user data. While TikTok continues to describe the core signals that shape ranking, the precise structure and weighting of the algorithm remain proprietary and may evolve under this new governance model.</p><p>TikTok indexes caption text, on-screen text, and spoken audio through automated transcription. Clear keyword usage across these layers strengthens semantic classification more effectively than stacking trending hashtags without topical coherence. TikTok is optimized for velocity and attention density. Content that sustains watch time relative to length is more likely to move beyond its initial audience.</p><p>TikTok is a strong fit for nonprofit teams that can translate their work into culturally fluent short-form storytelling, whether that means staff who understand how to adapt trends like <a href="https://www.instagram.com/reel/DPMP9Yxjrk1/?igsh=dWVhN253ZjRkNWhvhttps%3A%2F%2F">Southern Alliance for Clean Energy</a>&#8217;s &#8220;<a href="https://www.wired.com/story/tiktoks-latest-trend-lets-gen-z-write-the-marketing-script/">when the Gen Z social team writes the script</a>,&#8221; team members who are can chill out and &#8220;<a href="https://www.tiktok.com/@bonusfootage/video/7609053949122907423">yap</a>&#8221; directly to camera, or internal creators willing to grow into full &#8220;<a href="https://www.fastcompany.com/91495470/staples-baddie-gen-z-employee-what-the-retailer-is-doing-about-internet-fame">Staples baddie</a>&#8221; energy and carry the voice of the organization consistently on-screen.</p><h2 id="instagram">Instagram</h2><h3 id="interest-modeling-social-graph">Interest Modeling + Social Graph</h3><p><a href="https://about.instagram.com/blog/announcements/shedding-more-light-on-how-instagram-works">Instagram blends interest-based recommendation with social proximity</a>. Feed and Stories stay relationship-weighted, so accounts you regularly interact with keep getting priority, while Reels and Explore lean harder on predicted interest and recommended distribution. Instagram&#8217;s own guidance describes ranking as a set of prediction systems that estimate which posts you are likely to spend time on and engage with, including signals such as time spent, likes, comments, shares, and other actions. Internal Meta engineering documentation has repeatedly identified &#8220;time spent&#8221; and &#8220;meaningful interactions&#8221; as core ranking inputs across surfaces.</p><p>Reels distribution is especially sensitive to watch behavior and sharing. Mosseri has described sharing as a central outcome Instagram optimizes for, and <a href="https://www.instagram.com/p/DOQ-n9qDHAy/">reporting on his comments highlights &#8220;sends&#8221; as a high-value signal for Reels</a> ranking and reach beyond followers. Reels compete through watch time and saves.</p><p>Stories reinforce relationship scoring through the actions that look like real connection, including replies, DMs, and repeated profile behavior. Instagram&#8217;s public materials repeatedly frame ranking as prediction around the actions people actually take, and private sharing fits that logic because it signals strong intent and relationship depth.</p><p>Carousel posts extend dwell time through swipe behavior, which increases time spent per post and often correlates with higher save rates.</p><p>Stories reinforce relationship signals. Direct messages, replies, profile taps, and sticker interactions feed proximity scoring that influences future visibility in Feed and Stories placement.</p><p>Direct messaging has become increasingly central to growth mechanics. Instagram&#8217;s prompts encouraging users to send a message after following and the platform&#8217;s broader emphasis on private sharing reflect a prioritization of one-to-one interaction. DMs, shares to friends, story replies, and profile taps feed proximity modeling. When users message or privately share content, the system interprets that as a strong relationship signal, increasing the likelihood that future posts from that account surface in Feed and Stories. Many creators and brands are now layering automation tools like <a href="https://manychat.com/product/instagram">ManyChat</a> into this dynamic, triggering keyword-based auto-responses in DMs to deliver resources, links, or follow-ups at scale. For nonprofits, this is worth considering carefully: automated direct response systems can help capture interest and distribute information quickly, but they must be aligned with voice, trust, and capacity to respond thoughtfully in an environment where private interaction increasingly shapes visibility.</p><p><a href="https://open.substack.com/pub/thealgorithmwitch/p/are-hashtags-dead?utm_campaign=post-expanded-share&amp;utm_medium=web">Hashtags can contribute categorization.</a> Meta has stated that hashtags help the system understand context, but they are not a primary distribution lever. Ranking weight sits in predicted engagement, saves, shares, profile actions, and behavioral consistency across posts.</p><p>Aesthetic coherence is central. <a href="https://journals.sagepub.com/doi/10.1177/20539517211022370">Instagram&#8217;s computer vision systems analyze visual patterns, and repeated topic signals across posts strengthen classification confidence</a>. Consistent subject matter and recognizable framing increase the probability that content is shown to similar audiences again.</p><p>Instagram rewards recognizable positioning. Nonprofits that perform well on Instagram tend to share a few structural characteristics. They curate a clean and consistent visual language. Their website positioning is clear enough that captions can echo it without confusion. Their SEO foundation produces stable keyword architecture that translates naturally into posts and Reels. They maintain a strong internal database of language, research, and resources, allowing them to repurpose credible information into save-worthy carousels and shareable explainer videos. When brand clarity, research fluency, and visual coherence align, Instagram becomes an extension of existing authority rather than a separate performance channel.</p><h3 id="threads">Threads</h3><p>Threads uses a recommendation model that blends interest-based ranking with Instagram <a href="https://about.fb.com/news/2023/07/introducing-threads-new-app-text-sharing/">graph proximity</a>, while placing heavier emphasis on conversation and reply depth. Meta has described Threads ranking as <a href="https://www.theverge.com/2024/11/21/24302400/threads-algorithm-focus-people-you-follow">prioritizing posts likely to generate replies, engagement, and time spent, with Instagram network signals informing early distribution</a>. In February 2026, <a href="https://www.theverge.com/tech/876610/meta-threads-dear-algo-algorithm">Meta introduced a feature</a> called &#8220;Dear Algo,&#8221; allowing users to explicitly request more or less of certain topics in their feed. The adjustment temporarily influences recommendation weighting, signaling a shift toward more visible, participatory personalization layered on top of engagement modeling. Compared to Instagram, Threads favors text density, conversational velocity, and topical clustering more than visual coherence.</p><p>Threads works best for organizations that already produce strong long-form content and consistent Instagram output. If your team has excess capacity and a clear voice, Threads can function as a conversational extension, directing audiences toward blog posts, research, webinars, and Reels. It rewards organizations that can sustain dialogue, respond quickly, and participate in ongoing topic threads rather than simply broadcast announcements.</p><h2 id="linkedin">LinkedIn</h2><h3 id="engagement-probability-dwell-time">Engagement Probability + Dwell Time</h3><p>LinkedIn&#8217;s engineering team has publicly described a feed ranking system built on predicted engagement probability and network effects. Models estimate the <a href="https://www.linkedin.com/blog/engineering/feed/understanding-feed-dwell-time">likelihood of clicks, reactions, comments, and shares, along with expected downstream amplification and upstream value</a> to the author. In 2020, LinkedIn detailed how <a href="https://www.linkedin.com/blog/engineering/feed/understanding-feed-dwell-time">dwell time</a> and &#8220;<a href="https://www.linkedin.com/blog/engineering/feed/understanding-feed-dwell-time">skip probability</a>&#8221; were incorporated into feed ranking to reduce low-interest posts and surface content members actually spend time with.</p><p>Early comment activity influences expansion beyond first-degree connections. When interaction compounds quickly, posts are more likely to be introduced to broader networks based on predicted relevance.</p><p>In November 2025, LinkedIn engineers clarified that Feed visibility <a href="https://www.linkedin.com/blog/engineering/feed/putting-members-first-testing-and-measuring-how-content-appears-in-your-feed">relies on behavioral signals derived from member activity, network proximity, and engagement patterns</a>. The same update acknowledged that content creation volume on LinkedIn has grown rapidly over the past year, increasing competition for attention.</p><p>Hashtags help connect posts to topics. <a href="/blog/are-hashtags-dead.html">Distribution itself is governed by engagement probability, dwell time modeling, and network effects.</a></p><p>LinkedIn rewards value density and conversation. Posts that prompt sustained reading and meaningful comments generate stronger dwell signals and are more likely to circulate beyond immediate connections.</p><p>Independent analysis from <a href="https://www.theshieldindex.com/">Shield Index</a> tracking approximately 50,000 LinkedIn posts shows that breakout behavior varies significantly by account size. Smaller accounts can experience reach multiples many times larger than their follower base on top-performing posts, while larger accounts tend to see narrower variation between typical and breakout posts.</p><p>LinkedIn is structurally advantaged for industry long-haulers. Professionals who have been in their field for a decade or more, founders, executive directors, policy staff, and small business contractors often perform best because the platform weights credibility signals embedded in profile data, network proximity, and industry relevance. When someone with established tenure posts, the system already has rich behavioral context about who might care.</p><p>This is also the platform where life events amplify reach. LinkedIn explicitly surfaces milestones such as new roles, launches, promotions, layoffs, and funding announcements. Public reporting has documented how posts tied to job transitions and layoffs frequently generate unusually high engagement, driven by network notification mechanics and heightened social relevance. The platform <strong><a href="https://www.linkedin.com/help/linkedin/answer/a529062/share-profile-updates-with-your-network">notifies connections of role changes and highlights milestones in-feed</a></strong>, creating built-in distribution advantages for posts attached to those moments. For nonprofit leaders, this is the key. Executive transitions, major grant announcements, organizational launches, coalition formations, and campaign milestones align naturally with LinkedIn&#8217;s amplification structure. When those moments are paired with authentic internal perspectives, engagement probability increases because the post invites conversation and community. In this environment, fluency often outperforms trend adaptation.</p><h2 id="youtube">YouTube </h2><h3 id="search-session-duration">Search + Session Duration</h3><figure id="vision-3"><iframe src="https://www.youtube-nocookie.com/embed/9Fn79qJa2Fc?rel=0&amp;autoplay=0&amp;showinfo=0&amp;enablejsapi=0" frameborder="0" gesture="media" allow="autoplay; fullscreen" allowautoplay="true" allowfullscreen="true"></iframe></figure><p>YouTube operates simultaneously as a <a href="https://www.youtube.com/playlist?list=PLPovbLc3QOY8TfVHn1huenSRYT78-MoB8">recommendation and a search engine</a>. Videos surface through homepage recommendations, suggested video modeling, and search indexing. Owned by Google, YouTube also benefits from <a href="https://open.substack.com/pub/thealgorithmwitch/p/how-search-is-changing-in-the-age?utm_campaign=post-expanded-share&amp;utm_medium=post%20viewer">deep integration with the broader search ecosystem</a>, where videos frequently appear in Google results, featured snippets, and video carousels. Discovery and authority are layered rather than separate systems, with performance inside YouTube reinforcing visibility across Google&#8217;s search infrastructure.</p><p>YouTube Shorts now generate more than <a href="https://digiday.com/marketing/as-youtube-shorts-reaches-200-billion-views-advertisers-increase-their-investment/">200 billion views</a> per day globally, serving as a high-velocity discovery layer. Shorts introduce viewers to channels, topics, and creators. However, durable authority is still driven by long-form watch time, session duration, transcript language, and channel consistency. YouTube&#8217;s ranking systems prioritize <a href="https://blog.youtube/inside-youtube/on-youtubes-recommendation-system/">viewer satisfaction signals, including average view duration, relative retention, and the likelihood that a video contributes to longer session time</a> on the platform.</p><p>Titles, descriptions, chapters, captions, and spoken words are indexed. <a href="https://developers.google.com/search/docs/appearance/video">YouTube&#8217;s automatic transcription system feeds directly into search visibility.</a> Clear topic alignment across video metadata and on-screen language strengthens classification confidence. Retention compounds visibility; videos that sustain watch time relative to length are more likely to be recommended again.</p><p>YouTube is structurally advantageous for nonprofit teams that already produce long-form content. Webinars, research briefings, conference panels, town halls, educational series, and recorded events translate naturally into long-form video libraries. Organizations that maintain consistent programming schedules and topic architecture can build search authority over time.</p><p>Shorts provide a bridge. Clips extracted from webinars, keynote moments, research highlights, or policy explainers can function as entry points that route viewers into longer videos. When short-form discovery is paired with structured long-form libraries, the channel compounds visibility rather than chasing isolated viral moments. Channels that treat YouTube as a knowledge infrastructure tend to build sustainable reach.</p></form></div><h2 id="bluesky">Bluesky</h2><h3 id="protocol-driven-discovery">Protocol-Driven Discovery</h3><p>Bluesky operates differently from centralized ranking platforms. Built on the <a href="https://atproto.com/">AT Protocol</a>, it allows users to select or create <a href="https://bsky.social/about/blog/03-30-2023-algorithmic-choice">custom feeds</a> rather than relying on a single opaque recommendation system. Feeds can be organized around topics, communities, moderation preferences, or curated lists, shifting discovery toward feed selection and network clustering rather than engagement prediction.</p><p><a href="https://bsky.social/about/blog/3-30-2023-algorithmic-choice">Visibility depends on which feeds include your content and how your account is integrated into community graphs.</a> Engagement is still important, but distribution is less driven by velocity modeling and more influenced by participation within defined discourse networks.</p><p>For nonprofits, Bluesky can function as a relationship platform. Organizations that need to be connected with reporters, policy analysts, researchers, and niche industry communities may find it structurally useful. <a href="https://www.reuters.com/technology/social-media/journalists-flock-bluesky-amid-x-changes-2024-02-15/">Journalists and media workers</a> have adopted Bluesky in significant numbers following changes to X, and topic-specific feeds allow nonprofits to surface directly inside professional conversations. Bluesky rewards clarity of expertise, consistent participation, and network presence.</p><h2 id="twitter">Twitter</h2><figure id="vision-4"><iframe src="https://www.youtube-nocookie.com/embed/p7ZG_xWYLzI?rel=0&amp;autoplay=0&amp;showinfo=0&amp;enablejsapi=0" frameborder="0" gesture="media" allow="autoplay; fullscreen" allowautoplay="true" allowfullscreen="true"></iframe></figure><p>Monetization on X has fundamentally changed distribution. Accounts with paid blue checkmarks receive algorithmic prioritization in replies and visibility, creating a pay-for-amplification dynamic that has altered how timelines feel and function. </p><p>Reporting has shown growth among paid accounts while many legacy institutional voices saw volatility in reach, and <a href="https://www.jalopnik.com/elon-musk-s-x-posts-are-showing-up-on-your-feed-whether-1851686438/">user experiments have documented instances where Elon Musk&#8217;s own account appeared with disproportionate frequency in feeds</a>. The platform&#8217;s revenue model increasingly ties visibility to subscription and creator payouts, blending engagement ranking with financial incentives.</p><p>I cannot recommend that nonprofits or mission driven brands treat X as a primary channel.</p><h2 id="the-strategy-incentives">The Strategy Incentives</h2><p>Retention TikTok is engineered around retention curves and attention density. Distribution expands when watch time compounds and early interaction signals hold. Velocity determines testing. Testing determines scale.</p><p>Relationship Instagram organizes visibility through relationship modeling layered with predicted engagement. Proximity, private interaction, aesthetic coherence, and behavioral consistency reinforce classification confidence.</p><p>Authority LinkedIn ranks through engagement probability, dwell time, and network effects. Professional proximity and comment depth influence expansion beyond first-degree connections.</p><p>Search YouTube compounds authority through session duration and search indexing. Long-form watch time, transcript clarity, and channel consistency accumulate over time inside Google&#8217;s broader search infrastructure.</p><p>Community Bluesky distributes through feed choice and community clustering. Inclusion inside the right feed ecosystems determines visibility more than velocity modeling.</p><p>Choosing a platform means choosing the behavioral logic you are willing to operate inside, the signals you are prepared to produce consistently, and the type of institutional strength you want to build. The question is which incentive structure aligns with how your organization actually operates.</p><h2 id="128205you-are-here">&#128205;You Are Here</h2><p>Location feeds move discovery logic towards place-based relevance. As location becomes a stronger ranking variable, organizations should consider where their work is meant to land.</p><ul><li><p>Are you based in a city, state, or region?</p></li><li><p>Are you trying to scale nationally or internationally?</p></li><li><p>Does your work depend on geographic trust?</p></li><li><p>Are your audiences physically clustered?</p></li></ul><p>Local density can amplify, or limit, visibility. A nonprofit operating in Chicago may see stronger exposure among Chicago-based users as proximity weighting increases. Expansion beyond that region requires intentional effort rather than accidental spillover.</p><p>As geography becomes embedded in ranking systems, content can surface based on where someone is at the moment of discovery, not only what they have previously engaged with.</p><p>Every algorithmic layer that incorporates location means your content may be surfaced based on where people are not just what they historically engage with, but where they&#8217;re physically situated at the moment of discovery. For mission-driven organizations, location now influences how efficiently content translates into turnout, attendance, membership, or conversion.</p><h2 id="privacy-power-and-control">Privacy, Power, and Control</h2><p>Location-based ranking introduces a new layer of convenience and a new layer of vulnerability. It is reasonable to question what it means to share increasingly precise geographic data with technology companies whose governance structures continue to shift, whose moderation systems are partially automated, and whose cooperation with governments varies by jurisdiction.</p><p>Opt-in systems are framed as optional. But when location becomes structurally advantageous for distribution, a quiet pressure can emerge. Does declining to share location reduce visibility? Does withholding proximity signals create subtle ranking friction? Platforms do not explicitly state penalties, but incentive structures shape behavior over time.</p><p>If digital feeds begin continue to mirror physical reality then <strong><a href="https://nationalpartnership.org/influencing-change-closing-the-pay-gap-for-black-creators-in-beauty/">online environments will inevitably continue to replicate and perpetuate offline patterns of segregation</a></strong>. Cities are stratified by race, income, and access. If geographic clustering becomes a dominant discovery layer, digital visibility may increasingly reflect those same divides. As we see in physical environments, location can be leveraged to tighten the loop between community and conversion or narrow the radius of exposure.</p><p>For organizations, the question is how much proximity you are willing to trade for reach, and what kind of digital public sphere you want to participate in.</p><h2 id="invest-in-your-website-today">Invest in Your Website Today</h2><p>This evolution has two strategic implications:</p><ol><li><p>Audience Proximity: Content designed for a regional audience may perform better in localized surfaces than generic global content, even if overall format and retention signals are strong.</p></li><li><p>AI, SEO, and Social SEO: Location signals strengthen when your content also reinforces keyword relevance tied to places (e.g., &#8220;Chicago nonprofit volunteer opportunities,&#8221; &#8220;Brooklyn community event&#8221;). These terms then feed both web search and social search logic, increasing discoverability everywhere</p></li></ol><p>Social platforms interpret you, but your website belongs to you. </p><p>On social, reach is probabilistic. You can optimize for retention, engagement velocity, and semantic clarity. You can test formats and measure performance. Even with expertise, prediction is imperfect as ranking systems update and recalibrate. </p><p>On the web, you control structure. Search engines index full pages. You determine title architecture, define keywords, and decide internal linking. Website build topic continuity over time.</p><p>Long-form blogs and YouTube deepen semantic authority. Keywords can be carried consistently across pages, transcripts, captions, and newsletters. That continuity strengthens discoverability across systems.</p><p>Web and long-form infrastructure compounds, while social reach will always fluctuate. Organizations that anchor their strategy in owned platforms while using social for distribution reduce volatility and increase durability.</p><h2 id="focus-on-what-lasts">Focus on What Lasts</h2><figure id="vision-5"><img src="https://substackcdn.com/image/fetch/$s_!4yl4!,w_1456,c_limit,f_auto,q_auto:good,fl_progressive:steep/https%3A%2F%2Fsubstack-post-media.s3.amazonaws.com%2Fpublic%2Fimages%2Fb62c709c-06c6-4b27-9d40-2d30b09089da_1600x900.png" alt=""></figure><p>Choose your terms carefully and carry them across your website, your videos, your captions, your newsletters. Let your vocabulary become a spine that runs through everything you publish. Let it mean something each time it appears.</p><p>Measure retention and watch where attention drops. Authority accumulates from coherence sustained across surfaces and coherence compounds most reliably where you own the structure, the archive, and the terms by which you are discovered.</p>
           </article>
 
-          <section class="article-cta">
+          <section class="panel article-cta">
             <h2>Keep the Grimoire Open.</h2>
-            <p>Get future essays through Substack, support the archive with a paid membership, or bring the same strategic clarity into your own communications system.</p>
+            <p>Stay close to future essays through Substack, support the archive with a paid membership, or bring the same clarity into your own communications system.</p>
             <div class="cta-buttons">
-              <a class="cta-primary" href="https://thealgorithmwitch.substack.com/" target="_blank" rel="noopener noreferrer">Subscribe on Substack</a>
-              <a class="cta-secondary" href="https://thealgorithmwitch.substack.com/" target="_blank" rel="noopener noreferrer">Become a Paid Member</a>
-              <a href="https://thealgorithmwitch.com/summon.html">Book a Consultation</a>
+              <a class="button-link" href="https://thealgorithmwitch.substack.com/" target="_blank" rel="noopener noreferrer">Subscribe on Substack</a>
+              <a class="button-link" href="https://thealgorithmwitch.substack.com/" target="_blank" rel="noopener noreferrer">Become a Paid Member</a>
+              <a class="button-link" href="https://thealgorithmwitch.com/summon.html">Book a Consultation</a>
             </div>
           </section>
 
           <nav class="post-nav" aria-label="More posts">
-            <a href="/blog/born-to-scroll.html"><div class="mini-label">Newer</div><strong>Born to Scroll</strong></a><a href="/blog/short-form-video-market-oversaturated.html"><div class="mini-label">Older</div><strong>Is the Short-Form Video Market Oversaturated?</strong></a>
+            <a href="/blog/born-to-scroll.html"><div class="micro-label">Newer</div><strong>Born to Scroll</strong></a><a href="/blog/short-form-video-market-oversaturated.html"><div class="micro-label">Older</div><strong>Is the Short-Form Video Market Oversaturated?</strong></a>
           </nav>
 
           <section class="related-section">
@@ -813,19 +927,19 @@
             <div class="related-grid">
               
       <a class="related-card" href="/blog/ethics-of-algorithmic-visibility.html">
-        <div class="mini-label">Ethics</div>
+        <div class="micro-label">Ethics</div>
         <h3>The Ethics of Algorithmic Visibility</h3>
         <p>Breaking down how the Meta and Google verdict changes the conversation around trust, attention, and building power online.</p>
       </a>
     
       <a class="related-card" href="/blog/future-is-community-led.html">
-        <div class="mini-label">Community</div>
+        <div class="micro-label">Community</div>
         <h3>The Future Is Community-Led</h3>
         <p>What 320 climate websites and four platforms revealed about where this movement is going.</p>
       </a>
     
       <a class="related-card" href="/blog/posting-less-wont-save-you.html">
-        <div class="mini-label">Dispatch</div>
+        <div class="micro-label">Dispatch</div>
         <h3>Posting Less Won’t Save You</h3>
         <p>aligning content to find its people | algorithm lore + digital patterns 🧄</p>
       </a>
@@ -837,9 +951,12 @@
     </main>
 
     <footer class="site-footer">
-      <a href="/" class="brand" aria-label="The Algorithm Witch home">
-        <i class="ph ph-stars-four"></i>
-        <span>The Algorithm Witch</span>
+      <a href="/" class="brand-lockup" aria-label="The Algorithm Witch home">
+        <span class="brand-glyph">
+          <i class="ph-fill ph-sparkle sparkle"></i>
+          <i class="ph-fill ph-star-four star"></i>
+        </span>
+        <span class="brand-word">Algorithm Witch</span>
       </a>
       <div>Signal, structure, and long-form strategy for climate, clean energy, and advocacy.</div>
     </footer>
@@ -862,4 +979,3 @@
   </script>
 </body>
 </html>
-

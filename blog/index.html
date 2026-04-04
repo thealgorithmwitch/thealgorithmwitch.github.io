@@ -378,6 +378,7 @@
         .archive-sidebar {
             gap: 2.5rem;
             padding-bottom: 2rem;
+            align-self: flex-start;
         }
 
         .archive-intro {
@@ -435,6 +436,13 @@
             letter-spacing: 0.16em;
             text-transform: uppercase;
             color: #94a3b8;
+        }
+
+        .archive-card-excerpt {
+            display: -webkit-box;
+            -webkit-box-orient: vertical;
+            -webkit-line-clamp: 5;
+            overflow: hidden;
         }
 
         .show-more-button {
@@ -549,11 +557,10 @@
         }
 
         .archive-meta-footer {
-            display: flex;
-            flex-direction: column;
+            display: grid;
+            grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
             gap: 1.7rem;
             align-items: center;
-            justify-content: center;
             padding-top: 2.4rem;
             border-top: 2px solid rgba(255,255,255,0.12);
             margin-top: 3rem;
@@ -564,6 +571,8 @@
             letter-spacing: 0.3em;
             text-transform: uppercase;
             font-size: 0.68rem;
+            justify-self: end;
+            text-align: right;
         }
 
         @media (max-width: 1100px) {
@@ -585,6 +594,11 @@
             .archive-main-shell {
                 width: min(100% - 2rem, 80rem);
                 gap: 3rem;
+            }
+            .archive-sidebar {
+                position: static;
+                max-height: none;
+                overflow: visible;
             }
             .archive-offerings-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
         }
@@ -620,7 +634,12 @@
             .archive-offerings-inner { padding: 1.75rem; }
             .archive-offerings-grid { grid-template-columns: 1fr; }
             .archive-meta-footer {
+                grid-template-columns: 1fr;
                 gap: 1.25rem;
+            }
+            .archive-footer-copy {
+                justify-self: center;
+                text-align: center;
             }
         }
     </style>
@@ -1883,7 +1902,7 @@ video {
     <div class="relative z-10 archive-main-shell flex flex-col xl:flex-row" vid="30">
         
         
-        <aside class="archive-sidebar xl:w-1/4 xl:flex-shrink-0 flex flex-col xl:sticky xl:top-32 xl:h-[calc(100vh-8rem)] hide-scrollbar overflow-y-auto" vid="31">
+        <aside class="archive-sidebar xl:w-1/4 xl:flex-shrink-0 flex flex-col" vid="31">
             
             
             <div class="fade-in-up archive-intro" vid="32">
@@ -1891,7 +1910,7 @@ video {
                     <div class="h-[1px] w-8 bg-purple-500/50" vid="34"></div>
                     <span class="font-mono-tech text-[10px] text-purple-400 uppercase tracking-[0.3em]" vid="35">INTRO</span>
                 </div>
-                <h1 class="font-cinzel text-6xl lg:text-7xl text-white mb-4 leading-none text-glow-gold drop-shadow-lg" vid="36">Archive</h1>
+                <h1 class="font-cinzel text-5xl lg:text-6xl text-white mb-4 leading-[1.05] text-glow-gold drop-shadow-lg" vid="36">Archive</h1>
                 <p class="text-gray-400 text-sm leading-relaxed font-light" vid="37">
                     A collection of spells, strategies, and deep scrying into the algorithmic mechanisms that govern our digital presence.
                 </p>
@@ -2060,7 +2079,6 @@ video {
                     Crafted in the Ether
                 </div>
             </div>
-        </div>
         </footer>
     </div>
 
@@ -2276,8 +2294,8 @@ video {
         function cardMarkup(post, index) {
             const theme = themeForCategory(post.category);
             return `
-                <article class="spell-card ${theme.card} rounded-2xl p-8 flex flex-col min-h-[420px] fade-in-up group" data-category="${post.category}">
-                    <a href="/blog/${post.website_slug}.html" class="flex flex-col min-h-[420px] text-inherit">
+                <article class="spell-card ${theme.card} rounded-2xl p-8 flex flex-col h-full min-h-[360px] fade-in-up group" data-category="${post.category}">
+                    <a href="/blog/${post.website_slug}.html" class="flex flex-col h-full text-inherit">
                         <div class="flex justify-between items-start mb-8">
                             <div class="w-12 h-12 rounded-xl ${theme.iconFrame} flex items-center justify-center group-hover:scale-110 transition-transform duration-500 shadow-[0_0_15px_rgba(168,85,247,0.1)]">
                                 <i class="ph-duotone ${theme.icon} text-2xl ${theme.iconColor}"></i>
@@ -2288,7 +2306,7 @@ video {
                             <span class="font-mono-tech text-[10px] uppercase tracking-[0.2em] ${theme.categoryText} mb-3 block">${post.category}</span>
                             <h3 class="font-cinzel text-xl text-white leading-snug ${theme.titleHover} transition-colors">${post.title}</h3>
                         </div>
-                        <p class="text-sm text-gray-400 leading-relaxed font-light mb-8 flex-grow">${post.excerpt}</p>
+                        <p class="archive-card-excerpt text-sm text-gray-400 leading-relaxed font-light mb-8 flex-grow">${post.excerpt}</p>
                         <div class="mt-auto pt-4 border-t border-white/5 flex items-center justify-between font-mono-tech text-[10px] text-gray-500 uppercase tracking-wider">
                             <div class="flex flex-col gap-1">
                                 <span class="text-white/40">Date</span>

@@ -46,7 +46,7 @@
         document.head.appendChild(s);
         return;
       }
-      window.addEventListener('load', () => {
+      window.addEventListener('load', function () {
         document.head.appendChild(s);
       }, { once: true });
     })();
@@ -54,15 +54,19 @@
   <style>
     :root {
       --bg: #05020a;
-      --panel: rgba(10, 5, 32, 0.78);
-      --panel-strong: #0d0718;
+      --panel: rgba(10, 5, 32, 0.82);
+      --panel-strong: rgba(13, 7, 24, 0.96);
       --line: rgba(168, 85, 247, 0.18);
-      --line-strong: rgba(168, 85, 247, 0.32);
+      --line-strong: rgba(168, 85, 247, 0.34);
       --purple: #a855f7;
-      --purple-soft: rgba(168, 85, 247, 0.14);
-      --gold: #f4d47d;
+      --cyan: #67e8f9;
+      --amber: #f4d47d;
+      --fuchsia: #f0abfc;
       --text: #e5e7eb;
-      --text-soft: #94a3b8;
+      --text-soft: #a7b2c4;
+      --text-faint: #748094;
+      --quote: rgba(221, 214, 254, 0.9);
+      --shadow: 0 22px 54px rgba(0, 0, 0, 0.32);
     }
 
     * { box-sizing: border-box; }
@@ -121,10 +125,7 @@
       to { transform: translate3d(36px, -24px, 0) scale(1.08); }
     }
 
-    .site-shell {
-      position: relative;
-      z-index: 1;
-    }
+    .site-shell { position: relative; z-index: 1; }
 
     .topbar {
       position: sticky;
@@ -139,7 +140,7 @@
     .hero-shell,
     .content-shell,
     .site-footer {
-      width: min(1400px, calc(100% - 2rem));
+      width: min(1460px, calc(100% - 2rem));
       margin: 0 auto;
     }
 
@@ -166,11 +167,7 @@
       flex-shrink: 0;
     }
 
-    .brand-glyph .sparkle {
-      font-size: 1.45rem;
-      color: #a855f7;
-    }
-
+    .brand-glyph .sparkle { font-size: 1.45rem; color: var(--purple); }
     .brand-glyph .star {
       position: absolute;
       top: -0.05rem;
@@ -181,7 +178,7 @@
 
     .brand-word {
       font-family: "Cinzel Decorative", ui-serif, Georgia, serif;
-      font-size: 1.1rem;
+      font-size: 1.08rem;
       letter-spacing: 0.12em;
       color: white;
       transition: color 0.24s ease;
@@ -192,11 +189,9 @@
     .micro-nav,
     .micro-link,
     .micro-label,
-    .micro-chip,
-    .meta-line,
-    .caption-label,
-    .toc-link,
     .utility-text,
+    .tag-chip,
+    .toc-link,
     .button-link {
       font-size: 0.72rem;
       letter-spacing: 0.18em;
@@ -260,6 +255,7 @@
       background: var(--panel);
       border: 1px solid var(--line);
       overflow: visible;
+      box-shadow: var(--shadow);
     }
 
     .panel::before {
@@ -272,9 +268,8 @@
 
     .hero-shell {
       display: grid;
-      grid-template-columns: minmax(0, 1.04fr) minmax(360px, 0.96fr);
+      grid-template-columns: minmax(340px, 0.88fr) minmax(440px, 1.12fr);
       gap: 2rem;
-      min-height: min(74vh, 820px);
       align-items: stretch;
       padding-top: 3.5rem;
       padding-bottom: 2rem;
@@ -282,131 +277,123 @@
 
     .hero-copy,
     .hero-media,
-    .sidebar-stack,
+    .panel-body,
     .article-cta,
-    .post-nav a,
-    .post-nav span,
-    .related-card {
-      min-width: 0;
+    .dispatch-rail,
+    .related-section {
+      padding: 1.4rem;
     }
 
     .hero-copy {
-      padding: clamp(2rem, 5vw, 4rem);
-      display: flex;
-      flex-direction: column;
-      justify-content: space-between;
-      gap: 1.4rem;
+      display: grid;
+      gap: 1.2rem;
+      align-content: start;
+      min-width: 0;
     }
 
-    .hero-copy::after {
-      content: '';
-      position: absolute;
-      right: -4rem;
-      top: -4rem;
-      width: 16rem;
-      height: 16rem;
-      background: radial-gradient(circle, rgba(168, 85, 247, 0.18), transparent 68%);
-      filter: blur(28px);
-    }
-
-    .eyebrow {
-      display: inline-flex;
-      align-items: center;
-      gap: 0.7rem;
-      color: #c4b5fd;
-    }
-
-    .eyebrow::before {
-      content: '';
-      width: 2.4rem;
-      height: 1px;
-      background: rgba(244, 212, 125, 0.7);
-    }
+    .eyebrow { color: #c4b5fd; }
 
     .post-title {
       margin: 0;
-      font-family: "Cinzel Decorative", ui-serif, Georgia, serif;
-      font-size: clamp(2.7rem, 6vw, 5.3rem);
-      line-height: 1.04;
+      font-family: "Playfair Display", ui-serif, Georgia, serif;
+      font-weight: 400;
+      font-size: clamp(2.8rem, 5vw, 5.4rem);
+      line-height: 0.96;
+      letter-spacing: -0.03em;
       color: white;
-      text-shadow: 0 0 18px rgba(168, 85, 247, 0.36);
     }
 
     .post-title-accent {
       display: block;
-      margin-top: 0.45rem;
-      color: var(--gold);
+      color: #ddd6fe;
       font-style: italic;
     }
 
     .post-excerpt {
       margin: 0;
-      padding: 1rem 0 1rem 1.5rem;
-      border-left: 4px solid rgba(168, 85, 247, 0.58);
-      background: linear-gradient(to right, rgba(168, 85, 247, 0.10), transparent);
-      font-family: "Playfair Display", ui-serif, Georgia, serif;
-      font-size: clamp(1.12rem, 1.9vw, 1.45rem);
-      font-style: italic;
-      line-height: 1.8;
-      color: #ddd6fe;
+      color: var(--text-soft);
+      font-size: clamp(1.05rem, 1.4vw, 1.22rem);
+      line-height: 1.9;
+      max-width: 42rem;
+    }
+
+    .hero-tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.55rem;
+    }
+
+    .tag-chip {
+      display: inline-flex;
+      align-items: center;
+      min-height: 2rem;
+      padding: 0 0.85rem;
+      border-radius: 999px;
+      border: 1px solid rgba(168, 85, 247, 0.22);
+      background: rgba(255, 255, 255, 0.03);
+      color: #d8ddef;
     }
 
     .hero-meta {
       display: flex;
       flex-wrap: wrap;
+      gap: 0.75rem;
       align-items: center;
-      gap: 0.85rem;
-      color: var(--text-soft);
+      color: var(--text-faint);
+      font-size: 0.84rem;
     }
 
-    .meta-line { color: #7c3aed; }
+    .meta-line { color: rgba(168, 85, 247, 0.46); }
 
     .hero-media {
-      padding: 1.1rem;
       display: flex;
       align-items: center;
       justify-content: center;
+      min-width: 0;
     }
 
     .hero-media-frame {
       width: 100%;
-      border: 1px solid rgba(168, 85, 247, 0.2);
-      background: rgba(0, 0, 0, 0.28);
-      padding: 0.8rem;
-      box-shadow: 0 28px 80px rgba(0, 0, 0, 0.26);
+      border: 1px solid rgba(168, 85, 247, 0.16);
+      background: rgba(255, 255, 255, 0.02);
+      overflow: hidden;
     }
 
-    .hero-media-frame img {
+    .hero-media-frame img,
+    .hero-media-frame iframe {
       width: 100%;
       height: auto;
-      border: 1px solid rgba(168, 85, 247, 0.16);
+      min-height: 0;
+      display: block;
+      object-fit: contain;
+      background: #090411;
     }
 
     .hero-media-placeholder {
-      width: 100%;
-      aspect-ratio: 16 / 10;
+      min-height: 26rem;
       display: grid;
       place-items: center;
-      color: rgba(168, 85, 247, 0.55);
-      border: 1px solid rgba(168, 85, 247, 0.16);
-      background: radial-gradient(circle at center, rgba(168, 85, 247, 0.14), transparent 58%);
-      font-size: 4rem;
+      color: rgba(221, 214, 254, 0.66);
+      font-size: 3rem;
     }
 
     .content-shell {
       display: grid;
-      grid-template-columns: minmax(250px, 290px) minmax(0, 1fr);
+      grid-template-columns: minmax(250px, 0.72fr) minmax(0, 1.28fr);
       gap: 2rem;
       align-items: start;
-      padding-bottom: 5rem;
+      padding-bottom: 4rem;
     }
 
     .sidebar-stack {
       position: sticky;
-      top: 6.1rem;
+      top: 6rem;
       display: grid;
-      gap: 1.15rem;
+      gap: 1rem;
+      min-width: 0;
     }
+
+    .panel-body { min-width: 0; }
 
     .panel-title {
       margin: 0 0 1rem;
@@ -414,40 +401,74 @@
       align-items: center;
       justify-content: space-between;
       gap: 0.8rem;
-      color: white;
-      padding-bottom: 0.9rem;
+      padding-bottom: 0.85rem;
       border-bottom: 1px solid rgba(168, 85, 247, 0.18);
+      color: white;
     }
 
     .panel-title .left {
       display: inline-flex;
-      align-items: center;
       gap: 0.7rem;
+      align-items: center;
     }
 
-    .panel-title i { color: var(--gold); }
+    .panel-title i { color: var(--amber); }
 
-    .panel-body {
-      padding: 1.2rem;
+    .signal-panel p,
+    .subscription-copy {
+      margin: 0;
+      color: var(--text-soft);
+      line-height: 1.72;
+      font-size: 0.95rem;
+    }
+
+    .signal-excerpt {
+      margin-bottom: 1rem;
+      padding-bottom: 1rem;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    }
+
+    .signal-quote {
+      margin: 0;
+      padding-left: 1rem;
+      border-left: 2px solid rgba(168, 85, 247, 0.28);
+      color: var(--quote);
+      font-family: "Playfair Display", ui-serif, Georgia, serif;
+      font-size: 1rem;
+      line-height: 1.8;
     }
 
     .toc-links {
       display: grid;
-      gap: 0.45rem;
+      gap: 0.35rem;
     }
 
     .toc-link {
-      display: block;
-      color: var(--text-soft);
-      padding: 0.68rem 0.9rem;
-      border-left: 1px solid rgba(168, 85, 247, 0.22);
-      transition: color 0.2s ease, background-color 0.2s ease, border-color 0.2s ease;
+      display: grid;
+      grid-template-columns: auto 1fr;
+      gap: 0.65rem;
+      align-items: center;
+      min-height: 2.5rem;
+      padding: 0.6rem 0.75rem;
+      border-left: 1px solid rgba(168, 85, 247, 0.2);
+      color: #cbd5e1;
+      transition: border-color 0.2s ease, background-color 0.2s ease, color 0.2s ease;
     }
 
     .toc-link:hover {
-      color: white;
-      border-left-color: var(--gold);
+      border-left-color: rgba(168, 85, 247, 0.6);
+      background: linear-gradient(to right, rgba(168, 85, 247, 0.06), transparent);
+    }
+
+    .toc-link.active {
+      color: var(--amber);
+      border-left-color: var(--amber);
       background: linear-gradient(to right, rgba(244, 212, 125, 0.08), transparent);
+    }
+
+    .toc-link-number {
+      color: rgba(168, 85, 247, 0.8);
+      min-width: 2ch;
     }
 
     .visions-grid {
@@ -464,15 +485,27 @@
       align-items: center;
       justify-content: center;
       position: relative;
-      transition: border-color 0.24s ease, background-color 0.24s ease;
+      overflow: hidden;
+      transition: border-color 0.24s ease, background-color 0.24s ease, transform 0.24s ease;
     }
 
     .vision-link:hover {
       border-color: rgba(34, 211, 238, 0.55);
       background: rgba(10, 5, 32, 0.88);
+      transform: translateY(-2px);
     }
 
-    .vision-link i { color: rgba(168, 85, 247, 0.5); font-size: 1.35rem; }
+    .vision-link img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      opacity: 0.88;
+    }
+
+    .vision-link i {
+      color: rgba(168, 85, 247, 0.5);
+      font-size: 1.35rem;
+    }
 
     .vision-tag {
       position: absolute;
@@ -481,20 +514,33 @@
       font-size: 0.58rem;
       letter-spacing: 0.16em;
       text-transform: uppercase;
-      color: rgba(148, 163, 184, 0.72);
-    }
-
-    .subscription-copy {
-      margin: 0 0 1rem;
-      color: var(--text-soft);
-      font-size: 0.92rem;
-      line-height: 1.75;
+      color: rgba(236, 240, 250, 0.82);
+      z-index: 1;
+      padding: 0.2rem 0.34rem;
+      background: rgba(5, 2, 10, 0.72);
     }
 
     .substack-embed-wrap {
-      border: 1px solid rgba(168, 85, 247, 0.18);
-      background: rgba(0, 0, 0, 0.24);
+      margin-top: 1rem;
+      border: 1px solid rgba(168, 85, 247, 0.2);
+      background:
+        linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.01)),
+        rgba(0, 0, 0, 0.24);
       overflow: hidden;
+    }
+
+    .substack-embed-chrome {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+      min-height: 3rem;
+      padding: 0.8rem 0.9rem;
+      border-bottom: 1px solid rgba(168, 85, 247, 0.14);
+      color: #d8ddef;
+      font-size: 0.76rem;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
     }
 
     .substack-embed {
@@ -502,6 +548,7 @@
       min-height: 320px;
       border: 0;
       background: transparent;
+      color-scheme: dark;
     }
 
     .substack-fallback {
@@ -516,219 +563,298 @@
       text-underline-offset: 0.16em;
     }
 
-    .article-column {
-      min-width: 0;
-    }
+    .article-column { min-width: 0; }
 
     .share-row {
       display: flex;
-      justify-content: flex-end;
-      gap: 0.6rem;
-      margin-bottom: 1.4rem;
+      flex-wrap: wrap;
+      gap: 0.8rem;
+      justify-content: flex-start;
+      margin-bottom: 1rem;
     }
 
     .share-row a,
     .share-row button {
-      width: 2.6rem;
-      height: 2.6rem;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      border: 1px solid rgba(168, 85, 247, 0.22);
-      background: rgba(13, 7, 24, 0.78);
-      color: var(--text-soft);
+      width: 2.8rem;
+      height: 2.8rem;
+      border-radius: 999px;
+      border: 1px solid rgba(168, 85, 247, 0.2);
+      background: rgba(255, 255, 255, 0.03);
+      color: #e5e7eb;
+      display: grid;
+      place-items: center;
       cursor: pointer;
-      transition: border-color 0.24s ease, background-color 0.24s ease, color 0.24s ease;
+      transition: transform 0.24s ease, border-color 0.24s ease, background-color 0.24s ease;
     }
 
     .share-row a:hover,
     .share-row button:hover {
-      color: white;
-      border-color: rgba(168, 85, 247, 0.55);
-      background: rgba(168, 85, 247, 0.12);
+      transform: translateY(-2px);
+      border-color: rgba(168, 85, 247, 0.44);
+      background: rgba(168, 85, 247, 0.08);
     }
 
     .article-body {
-      min-width: 0;
-      color: #d7dbea;
-      font-size: 1.05rem;
-      line-height: 1.82;
-      overflow-wrap: anywhere;
+      display: grid;
+      gap: 0;
     }
 
-    .article-body > :first-child { margin-top: 0; }
-    .article-body p { margin: 0 0 1.55rem; }
-    .article-body h2,
-    .article-body h3,
-    .article-body h4 {
-      margin: 3rem 0 1rem;
-      line-height: 1.22;
-      color: white;
+    .article-body p,
+    .article-body li,
+    .article-body blockquote {
+      font-size: 1.08rem;
+      line-height: 1.95;
+      color: var(--text-soft);
     }
 
-    .article-body h2 {
-      font-family: "Cinzel Decorative", ui-serif, Georgia, serif;
-      font-size: clamp(1.8rem, 3vw, 2.45rem);
-      padding-bottom: 0.8rem;
-      border-bottom: 1px solid rgba(168, 85, 247, 0.16);
-      scroll-margin-top: 6rem;
+    .article-body strong { color: white; font-weight: 500; }
+    .article-body a {
+      color: #ddd6fe;
+      text-decoration: underline;
+      text-underline-offset: 0.18em;
     }
 
-    .article-body h3 {
-      font-family: "Playfair Display", ui-serif, Georgia, serif;
-      font-size: clamp(1.32rem, 2.1vw, 1.75rem);
-      color: var(--gold);
+    .article-section {
+      position: relative;
+      padding: 2rem 0 2rem 2.6rem;
+      border-top: 1px solid rgba(255, 255, 255, 0.05);
+      transition: background-color 0.24s ease, border-color 0.24s ease, box-shadow 0.24s ease;
     }
 
-    .article-body h4 {
-      font-size: 0.8rem;
+    .article-section::before {
+      content: attr(data-number);
+      position: absolute;
+      left: 0;
+      top: 2rem;
+      font-size: 0.74rem;
       letter-spacing: 0.18em;
       text-transform: uppercase;
-      color: #c4b5fd;
+      color: rgba(168, 85, 247, 0.72);
     }
 
-    .article-body ul,
-    .article-body ol {
-      margin: 0 0 1.55rem 1.2rem;
-      padding: 0;
+    .article-section.is-active {
+      background: linear-gradient(to right, rgba(168, 85, 247, 0.06), transparent 55%);
+      border-top-color: rgba(168, 85, 247, 0.16);
+      box-shadow: inset 3px 0 0 rgba(168, 85, 247, 0.42);
     }
 
-    .article-body li { margin-bottom: 0.75rem; }
-    .article-body strong { color: white; }
-    .article-body em { color: #ddd6fe; }
-    .article-body a {
-      color: #c4b5fd;
-      text-decoration: underline;
-      text-decoration-color: rgba(168, 85, 247, 0.45);
-      text-underline-offset: 0.15em;
+    .article-section.theme-cyan.is-active {
+      background: linear-gradient(to right, rgba(34, 211, 238, 0.06), transparent 55%);
+      box-shadow: inset 3px 0 0 rgba(34, 211, 238, 0.42);
     }
 
-    .article-body a:hover { color: var(--gold); }
+    .article-section.theme-amber.is-active {
+      background: linear-gradient(to right, rgba(244, 212, 125, 0.07), transparent 55%);
+      box-shadow: inset 3px 0 0 rgba(244, 212, 125, 0.42);
+    }
 
-    .article-body figure {
-      margin: 2.2rem 0;
-      padding: 0.9rem;
-      background: rgba(13, 7, 24, 0.82);
+    .article-section.theme-fuchsia.is-active {
+      background: linear-gradient(to right, rgba(240, 171, 252, 0.06), transparent 55%);
+      box-shadow: inset 3px 0 0 rgba(240, 171, 252, 0.42);
+    }
+
+    .section-heading {
+      display: grid;
+      grid-template-columns: auto 1fr;
+      gap: 1rem;
+      align-items: start;
+      margin: 0 0 1.2rem;
+      font-family: "Playfair Display", ui-serif, Georgia, serif;
+      font-weight: 400;
+      font-size: clamp(1.8rem, 2.5vw, 2.5rem);
+      line-height: 1.08;
+      color: white;
+      scroll-margin-top: 120px;
+    }
+
+    .section-number {
+      color: rgba(168, 85, 247, 0.82);
+      font-size: 0.78rem;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      transform: translateY(0.45rem);
+    }
+
+    .theme-cyan .section-number { color: rgba(34, 211, 238, 0.82); }
+    .theme-amber .section-number { color: rgba(244, 212, 125, 0.84); }
+    .theme-fuchsia .section-number { color: rgba(240, 171, 252, 0.82); }
+
+    .article-figure {
+      margin: 1.8rem 0 2rem;
       border: 1px solid rgba(168, 85, 247, 0.16);
-      overflow: visible;
+      background: rgba(255, 255, 255, 0.02);
     }
 
-    .article-body img {
+    .article-figure img,
+    .article-figure iframe {
       width: 100%;
       height: auto;
-      border: 1px solid rgba(168, 85, 247, 0.14);
-    }
-
-    .article-body iframe {
-      width: 100%;
-      aspect-ratio: 16 / 9;
+      display: block;
+      background: #090411;
       border: 0;
-      background: black;
     }
 
-    .article-body figcaption {
-      margin-top: 0.9rem;
-      color: var(--text-soft);
+    .article-figure iframe {
+      min-height: 22rem;
+    }
+
+    .article-figure figcaption {
+      display: grid;
+      gap: 0.35rem;
+      padding: 0.95rem 1.05rem 1.1rem;
+      border-top: 1px solid rgba(255, 255, 255, 0.05);
+      background: rgba(0, 0, 0, 0.18);
+    }
+
+    .figure-caption-index {
+      color: rgba(168, 85, 247, 0.82);
+      font-size: 0.7rem;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+    }
+
+    .theme-cyan .figure-caption-index { color: rgba(34, 211, 238, 0.82); }
+    .theme-amber .figure-caption-index { color: rgba(244, 212, 125, 0.84); }
+    .theme-fuchsia .figure-caption-index { color: rgba(240, 171, 252, 0.82); }
+
+    .figure-caption-text {
+      color: var(--text-faint);
       font-size: 0.9rem;
       line-height: 1.7;
     }
 
-    .article-body blockquote {
-      margin: 2.2rem 0;
-      padding: 1.3rem 1.5rem;
-      border-left: 4px solid rgba(168, 85, 247, 0.48);
-      background: linear-gradient(to right, rgba(168, 85, 247, 0.10), transparent);
-      color: #ede9fe;
+    blockquote {
+      margin: 1.8rem 0;
+      padding: 1rem 0 1rem 1.15rem;
+      border-left: 2px solid rgba(168, 85, 247, 0.34);
+      color: var(--quote);
       font-family: "Playfair Display", ui-serif, Georgia, serif;
-      font-size: 1.18rem;
       font-style: italic;
+      font-size: 1.15rem;
+      line-height: 1.8;
     }
 
-    .article-cta {
-      margin-top: 3rem;
-      padding: 1.55rem;
+    .article-cta,
+    .dispatch-rail,
+    .related-section {
+      margin-top: 1.4rem;
+      border: 1px solid var(--line);
+      background: var(--panel);
+      box-shadow: var(--shadow);
     }
 
     .article-cta h2,
     .related-section h2 {
-      margin: 0 0 0.7rem;
-      font-family: "Cinzel Decorative", ui-serif, Georgia, serif;
-      font-size: clamp(1.45rem, 3vw, 2.2rem);
+      margin: 0 0 0.8rem;
+      font-family: "Playfair Display", ui-serif, Georgia, serif;
+      font-size: clamp(1.8rem, 2.4vw, 2.4rem);
+      font-weight: 400;
       color: white;
     }
 
-    .article-cta p {
-      margin: 0 0 1rem;
+    .article-cta p,
+    .related-section p {
       color: var(--text-soft);
-      line-height: 1.75;
+      line-height: 1.8;
     }
 
     .cta-buttons {
       display: flex;
       flex-wrap: wrap;
-      gap: 0.8rem;
+      gap: 0.75rem;
+      margin-top: 1rem;
     }
 
-    .post-nav {
-      margin-top: 2.8rem;
+    .dispatch-rail {
       display: grid;
-      grid-template-columns: repeat(2, minmax(0, 1fr));
+      grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
       gap: 1rem;
+      align-items: center;
     }
 
-    .post-nav a,
-    .post-nav span {
-      padding: 1.2rem 1.3rem;
+    .dispatch-link,
+    .dispatch-empty {
+      min-width: 0;
       display: grid;
-      gap: 0.45rem;
-      border: 1px solid var(--line);
-      background: var(--panel);
+      gap: 0.35rem;
+      color: var(--text-soft);
     }
 
-    .post-nav a:hover {
-      border-color: var(--line-strong);
-      background: rgba(10, 5, 32, 0.88);
+    .dispatch-link strong,
+    .dispatch-empty strong {
+      color: white;
+      font-family: "Playfair Display", ui-serif, Georgia, serif;
+      font-weight: 400;
+      line-height: 1.35;
     }
 
-    .post-nav span { color: rgba(148, 163, 184, 0.58); }
+    .dispatch-link.next,
+    .dispatch-empty.next { text-align: right; }
 
-    .related-section {
-      margin-top: 3rem;
+    .dispatch-socials {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.65rem;
+    }
+
+    .dispatch-socials a {
+      width: 2.55rem;
+      height: 2.55rem;
+      border-radius: 999px;
+      border: 1px solid rgba(168, 85, 247, 0.22);
+      background: rgba(255, 255, 255, 0.03);
       display: grid;
-      gap: 1rem;
+      place-items: center;
+      color: #ddd6fe;
+      transition: transform 0.24s ease, border-color 0.24s ease, background-color 0.24s ease;
+    }
+
+    .dispatch-socials a:hover {
+      transform: translateY(-2px);
+      border-color: rgba(168, 85, 247, 0.46);
+      background: rgba(168, 85, 247, 0.08);
     }
 
     .related-grid {
       display: grid;
       grid-template-columns: repeat(3, minmax(0, 1fr));
-      gap: 1rem;
+      gap: 1px;
+      background: rgba(255, 255, 255, 0.06);
+      margin-top: 1rem;
     }
 
     .related-card {
-      padding: 1.1rem;
-      border: 1px solid var(--line);
-      background: var(--panel);
-      transition: transform 0.24s ease, border-color 0.24s ease, background-color 0.24s ease;
+      padding: 1.2rem;
+      background: var(--panel-strong);
+      border-top: 2px solid rgba(168, 85, 247, 0.44);
+      min-width: 0;
+      transition: background-color 0.24s ease, transform 0.24s ease, border-color 0.24s ease;
     }
+
+    .related-card.theme-cyan { border-top-color: rgba(34, 211, 238, 0.54); }
+    .related-card.theme-amber { border-top-color: rgba(244, 212, 125, 0.56); }
+    .related-card.theme-fuchsia { border-top-color: rgba(240, 171, 252, 0.54); }
 
     .related-card:hover {
       transform: translateY(-3px);
-      border-color: var(--line-strong);
-      background: rgba(10, 5, 32, 0.88);
+      background: rgba(15, 10, 32, 0.98);
     }
 
     .related-card h3 {
-      margin: 0.5rem 0;
+      margin: 0.55rem 0 0.6rem;
       font-family: "Playfair Display", ui-serif, Georgia, serif;
-      font-size: 1.08rem;
+      font-weight: 400;
+      font-size: 1.35rem;
+      line-height: 1.25;
       color: white;
+      overflow-wrap: anywhere;
     }
 
     .related-card p {
       margin: 0;
       font-size: 0.95rem;
-      line-height: 1.72;
-      color: var(--text-soft);
+      line-height: 1.75;
     }
 
     .site-footer {
@@ -742,43 +868,67 @@
       font-size: 0.86rem;
     }
 
-    @media (max-width: 1120px) {
+    @media (max-width: 1180px) {
       .hero-shell,
       .content-shell {
         grid-template-columns: 1fr;
       }
       .sidebar-stack {
         position: static;
+        order: 2;
+      }
+      .article-column {
+        order: 1;
       }
       .micro-nav { display: none; }
       .related-grid { grid-template-columns: 1fr; }
     }
 
-    @media (max-width: 760px) {
+    @media (max-width: 780px) {
       .topbar-inner,
       .hero-shell,
       .content-shell,
       .site-footer {
-        width: min(100% - 1.2rem, 1400px);
+        width: min(100% - 1.2rem, 1460px);
       }
       .topbar-inner { min-height: 72px; }
-      .button-link {
-        min-height: 2.5rem;
-        padding-inline: 0.95rem;
-      }
+      .hero-shell { padding-top: 2.25rem; }
       .hero-copy,
-      .panel-body,
       .hero-media,
+      .panel-body,
       .article-cta,
-      .post-nav a,
-      .post-nav span,
-      .related-card {
+      .dispatch-rail,
+      .related-section {
         padding-left: 1rem;
         padding-right: 1rem;
       }
-      .share-row { justify-content: flex-start; }
-      .post-nav { grid-template-columns: 1fr; }
-      .site-footer { flex-direction: column; align-items: flex-start; }
+      .article-section {
+        padding-left: 0;
+      }
+      .article-section::before {
+        position: static;
+        display: block;
+        margin-bottom: 0.9rem;
+      }
+      .section-heading {
+        grid-template-columns: 1fr;
+        gap: 0.5rem;
+      }
+      .section-number { transform: none; }
+      .dispatch-rail {
+        grid-template-columns: 1fr;
+      }
+      .dispatch-link.next,
+      .dispatch-empty.next {
+        text-align: left;
+      }
+      .dispatch-socials {
+        justify-content: flex-start;
+      }
+      .site-footer {
+        flex-direction: column;
+        align-items: flex-start;
+      }
     }
   </style>
 </head>
@@ -812,11 +962,10 @@
     <main>
       <section class="hero-shell">
         <div class="panel hero-copy">
-          <div>
-            <div class="micro-label eyebrow">Platforms</div>
-            <h1 class="post-title">Is the Short-Form<span class="post-title-accent">Video Market Oversaturated?</span></h1>
-          </div>
+          <div class="micro-label eyebrow">Platforms</div>
+          <h1 class="post-title">Is the Short-Form<span class="post-title-accent">Video Market Oversaturated?</span></h1>
           <p class="post-excerpt">aligning content to find its people | algorithm lore + digital patterns 🧄</p>
+          <div class="hero-tags"><span class="tag-chip">Platforms</span><span class="tag-chip">short-form</span><span class="tag-chip">video</span><span class="tag-chip">market</span></div>
           <div class="hero-meta">
             <span>February 24, 2026</span>
             <span class="meta-line">•</span>
@@ -841,8 +990,18 @@
                 <span class="left"><i class="ph-fill ph-book-bookmark"></i><span>Index</span></span>
               </h2>
               <nav class="toc-links">
-                <a class="toc-link" href="#the-end-of-the-aspirational-influencer-era">The End of the Aspirational Influencer Era</a><a class="toc-link" href="#what-the-data-shows-about-compression">What the Data Shows About Compression</a><a class="toc-link" href="#youtube-shorts">YouTube Shorts</a><a class="toc-link" href="#tiktok">TikTok</a><a class="toc-link" href="#instagram-reels">Instagram Reels</a><a class="toc-link" href="#facebook-reels">Facebook Reels</a><a class="toc-link" href="#linkedin">LinkedIn</a><a class="toc-link" href="#oversaturation-is-a-distribution-constraint">Oversaturation Is a Distribution Constraint</a><a class="toc-link" href="#why-image-formats-could-be-gaining-strength">Why Image Formats Could Be Gaining Strength</a><a class="toc-link" href="#the-post-sale-shock-and-instagrams-aesthetic-constraint">The Post-Sale Shock and Instagram’s Aesthetic Constraint</a><a class="toc-link" href="#ai-search-and-the-authority-layer">AI Search and the Authority Layer</a><a class="toc-link" href="#youtube-long-form-depth-and-the-short-to-long-pipeline">YouTube, Long-Form Depth, and the Short-to-Long Pipeline</a><a class="toc-link" href="#what-nonprofits-can-do-now">What Nonprofits Can Do Now</a><a class="toc-link" href="#clarify-the-expertise">Clarify the Expertise</a><a class="toc-link" href="#anchor-content-in-recognizable-structures">Anchor Content in Recognizable Structures</a><a class="toc-link" href="#integrate-production-into-real-work">Integrate Production Into Real Work</a><a class="toc-link" href="#connect-short-form-to-depth">Connect Short Form to Depth</a><a class="toc-link" href="#maintain-terminology-consistency">Maintain Terminology Consistency</a><a class="toc-link" href="#measure-retention-signals">Measure Retention Signals</a><a class="toc-link" href="#publish-on-a-sustainable-rhythm">Publish on a Sustainable Rhythm</a><a class="toc-link" href="#is-the-short-form-video-market-oversaturated">Is the Short-Form Video Market Oversaturated?</a>
+                <a class="toc-link" href="#the-end-of-the-aspirational-influencer-era" data-theme="purple"><span class="toc-link-number">01</span><span>The End of the Aspirational Influencer Era</span></a><a class="toc-link" href="#what-the-data-shows-about-compression" data-theme="cyan"><span class="toc-link-number">02</span><span>What the Data Shows About Compression</span></a><a class="toc-link" href="#oversaturation-is-a-distribution-constraint" data-theme="amber"><span class="toc-link-number">03</span><span>Oversaturation Is a Distribution Constraint</span></a><a class="toc-link" href="#why-image-formats-could-be-gaining-strength" data-theme="fuchsia"><span class="toc-link-number">04</span><span>Why Image Formats Could Be Gaining Strength</span></a><a class="toc-link" href="#the-post-sale-shock-and-instagrams-aesthetic-constraint" data-theme="purple"><span class="toc-link-number">05</span><span>The Post-Sale Shock and Instagram’s Aesthetic Constraint</span></a><a class="toc-link" href="#ai-search-and-the-authority-layer" data-theme="cyan"><span class="toc-link-number">06</span><span>AI Search and the Authority Layer</span></a><a class="toc-link" href="#youtube-long-form-depth-and-the-short-to-long-pipeline" data-theme="amber"><span class="toc-link-number">07</span><span>YouTube, Long-Form Depth, and the Short-to-Long Pipeline</span></a><a class="toc-link" href="#what-nonprofits-can-do-now" data-theme="fuchsia"><span class="toc-link-number">08</span><span>What Nonprofits Can Do Now</span></a><a class="toc-link" href="#is-the-short-form-video-market-oversaturated" data-theme="purple"><span class="toc-link-number">09</span><span>Is the Short-Form Video Market Oversaturated?</span></a>
               </nav>
+            </div>
+          </div>
+
+          <div class="panel signal-panel">
+            <div class="panel-body">
+              <h2 class="panel-title micro-label">
+                <span class="left"><i class="ph-duotone ph-waveform"></i><span>Dispatch Signal</span></span>
+              </h2>
+              <p class="signal-excerpt">aligning content to find its people | algorithm lore + digital patterns 🧄</p>
+              <blockquote class="signal-quote">professionals explaining their work, scientists documenting field research, policy staff sharing context, nonprofit leaders walking through decisions, engineers breaking down systems, local organizers offering lived insight.</blockquote>
             </div>
           </div>
 
@@ -855,12 +1014,12 @@
               <div class="visions-grid">
                 
     <a class="vision-link" href="#vision-1">
-      <i class="ph-duotone ph-image"></i>
+      <img src="https://substackcdn.com/image/fetch/$s_!WeWZ!,w_1456,c_limit,f_auto,q_auto:good,fl_progressive:steep/https%3A%2F%2Fsubstack-post-media.s3.amazonaws.com%2Fpublic%2Fimages%2F35d1f537-1ce3-496e-9fd4-ac726b39da70_1600x900.png" alt="F1">
       <span class="vision-tag">F1</span>
     </a>
   
     <a class="vision-link" href="#vision-2">
-      <i class="ph-duotone ph-image"></i>
+      <img src="https://substackcdn.com/image/fetch/$s_!B970!,w_1456,c_limit,f_auto,q_auto:good,fl_progressive:steep/https%3A%2F%2Fsubstack-post-media.s3.amazonaws.com%2Fpublic%2Fimages%2Fa80bbafa-9673-4b17-844e-1086c9a46fca_1600x900.png" alt="F2">
       <span class="vision-tag">F2</span>
     </a>
   
@@ -875,9 +1034,13 @@
               </h2>
               <p class="subscription-copy">Receive encrypted dispatches, strategy notes, and fresh writing without leaving the archive.</p>
               <div class="substack-embed-wrap">
+                <div class="substack-embed-chrome">
+                  <span>Signal Intake</span>
+                  <span>Embedded Substack</span>
+                </div>
                 <iframe class="substack-embed" src="https://thealgorithmwitch.substack.com/embed" loading="lazy" scrolling="no" frameborder="0" title="Subscribe to The Algorithm Witch on Substack"></iframe>
               </div>
-              <p class="substack-fallback">If the embed is blocked, <a href="https://thealgorithmwitch.substack.com/" target="_blank" rel="noopener noreferrer">subscribe directly on Substack</a>.</p>
+              <p class="substack-fallback">If the embed is blocked, <a href="https://thealgorithmwitch.substack.com/p/is-the-short-form-video-market-oversaturated" target="_blank" rel="noopener noreferrer">view the original dispatch</a> or <a href="https://thealgorithmwitch.substack.com/" target="_blank" rel="noopener noreferrer">subscribe directly on Substack</a>.</p>
             </div>
           </div>
         </aside>
@@ -889,41 +1052,56 @@
             <button type="button" data-copy-link="https://thealgorithmwitch.com/blog/short-form-video-market-oversaturated.html" aria-label="Copy link"><i class="ph-bold ph-link"></i></button>
           </div>
 
-          <article class="article-body">
-            <p>What began on a single app that penetrated culture so deeply the format borrowed its name now anchors digital communication across nearly every major platform. Short-form video carries professional commentary on LinkedIn, organizing strategy on TikTok, brand storytelling on Instagram, and podcast distribution on YouTube Shorts within the same vertical frame.</p><figure id="vision-1"><img src="https://substackcdn.com/image/fetch/$s_!WeWZ!,w_1456,c_limit,f_auto,q_auto:good,fl_progressive:steep/https%3A%2F%2Fsubstack-post-media.s3.amazonaws.com%2Fpublic%2Fimages%2F35d1f537-1ce3-496e-9fd4-ac726b39da70_1600x900.png" alt=""></figure><p>In 2025, short-form video continued its rapid expansion. According to the <strong><a href="https://metricool.com/social-media-short-video-report-2025/">Metricool 2025 State of Short-Form Video Report</a></strong>, short-form publishing volume increased by roughly 71 percent year over year, while the number of accounts using the format rose approximately 51 percent, with TikTok video output growing by more than 150 percent. In 2024, YouTube Shorts averaged around <strong><a href="https://blog.youtube/inside-youtube/shorts-revenue-sharing-update/">70 billion daily views</a></strong>, reflecting its scale as a distribution layer for vertical video. <strong><a href="https://news.linkedin.com/2024/July/LinkedIn_Business_Highlights_from_FY24_Q4_Earnings">LinkedIn reported</a></strong> that video uploads increased by more than 20 percent, with views rising 34 percent year over year since 2024. Meta stated that Reels across Instagram and Facebook operate at roughly a <strong><a href="https://www.wsj.com/tech/meta-reels-revenue-ade4179e?gaa_at=eafs&amp;gaa_n=AWEtsqf06X9MjwENwZnHUkvRfqDBgUIq36f1Rgw_99DEUlsiEzxWvSU7aSihF-HHYzI%3D&amp;gaa_ts=699b9ef4&amp;gaa_sig=8Aayqj25LHUs8P2rrBk_-OdgPWDnzssK1pXV40FwMuhJsua1PF4VxZhvgYJ37GIZko9kZjS4PAJN6YKI1zt1iw%3D%3D">$50 billion annual revenue run rate</a></strong>, underscoring the business centrality of short-form video by the end of 2025. Industry estimates place TikTok&#8217;s annual advertising revenue above <strong><a href="https://www.demandsage.com/tiktok-ad-revenue/">$30 billion</a></strong>, reinforcing its continued economic weight in the ecosystem.</p><p>Participation has scaled at extraordinary speed. At the same time, something more subtle has shifted inside the content itself.</p><h3 id="the-end-of-the-aspirational-influencer-era">The End of the Aspirational Influencer Era</h3><p>For much of the 2010s, short-form content revolved around <em><strong>aspiration</strong></em>. Influencer culture centered on lifestyle aesthetics, curated consumption, and performative success. Brand partnerships mirrored that tone. Glossy travel, luxury routines, product unboxings, and highly stylized personal branding dominated feed visibility. Audience behavior has recalibrated what influence means in 2026.</p><p>Trust surveys over the last three years show where authority is consolidating. <strong><a href="https://www.edelman.com/trust/2026/trust-barometer">Edelman&#8217;s 2026 Trust Barometer reports</a></strong> that scientists (76%) and teachers (73%) rank among the most trusted voices globally. This reaffirms a trend visible across digital platforms since 2023, <strong><a href="https://pro.morningconsult.com/analyst-reports/influencer-marketing-trends-report">Morning Consult&#8217;s research</a></strong> found that while trust in influencers among younger audiences increased, the traits respondents valued most were intelligence, knowledge, and authenticity rather than follower count or aesthetics.</p><p>Educational and &#8220;explain this to me&#8221; content has grown rapidly across TikTok and YouTube. Searches for &#8220;how does this work,&#8221; &#8220;explained,&#8221; and &#8220;day in the life&#8221; formats continue to rise. Recent <strong><a href="https://pro.morningconsult.com/analyst-reports/brands-guide-influencers-2026-ai">creator economy research</a></strong> indicates that audiences are spending more time with niche experts who provide practical knowledge rather than aspirational imagery.</p><p>The algorithmic layer reinforces this shift. Content that demonstrates domain clarity and topic consistency is easier to classify and distribute than generalized lifestyle posting. Systems reward coherence.</p><blockquote>professionals explaining their work,<br>scientists documenting field research,<br>policy staff sharing context,<br>nonprofit leaders walking through decisions,<br>engineers breaking down systems,<br>local organizers offering lived insight.</blockquote><p>Mission-driven organizations have structural advantage here. Their teams already hold expertise. Their work already intersects with public questions. When that expertise is surfaced clearly, it travels differently than branded aspiration. The market is crowded with performance. It is less crowded with fluency.</p><h3 id="what-the-data-shows-about-compression">What the Data Shows About Compression</h3><p>When publishing accelerates at this level, platform-wide view totals are less revealing than per-post performance.</p><p><strong><a href="https://metricool.com/social-media-short-video-report-2025/">Metricool&#8217;s 2025 analysis</a></strong> of nearly six million short-form videos across TikTok, Instagram Reels, YouTube Shorts, and Facebook Reels in 2025 show consistent tightening in reach per post. The data I refer to spans 2023 through 2025 and reflects a progression that began in the early 2020s as vertical video adoption accelerated across platforms. Publishing volume has increased faster than average exposure per post.</p><p><strong>Operating under the theory that short-form consumption behaves as a cross-platform market, increased production and distribution shifts on one platform can affect attention patterns on another.</strong> If short-form output surges on TikTok while Instagram adjusts distribution, or if YouTube Shorts scales aggressively while Reels absorbs migration, audience consumption habits do not reset per app. They compound. In that environment, exposure thresholds rise and retention standards tighten across the ecosystem, not just within a single feed.</p><h4 id="youtube-shorts">YouTube Shorts</h4><p>On YouTube, short-form video feels like a spark cast into a much older fire, where visibility ignites quickly but authority builds through time, depth, and sustained attention.</p><ul><li><p>Average brand publishing frequency exceeds 16 Shorts per month</p></li><li><p>Likes declined approximately 47 percent year over year</p></li><li><p>Engagement dropped by 36 percent</p></li><li><p>Reach decreased by 31 percent</p></li></ul><h4 id="tiktok">TikTok</h4><p>On TikTok, the feed moves like a current, and only content that grips within the first breath is carried outward into scale.</p><ul><li><p>Publishing volume increased by more than 150 percent</p></li><li><p>Average reach declined roughly 47 percent</p></li><li><p>Engagement rate remains near 8.24 percent</p></li><li><p>Average watch duration is approximately 3.75 seconds</p></li><li><p>Average video length is around 41 seconds</p></li><li><p>Full completion rates hover near 4 percent</p></li></ul><h4 id="instagram-reels">Instagram Reels</h4><p>On Instagram, short-form video circulates inside a social web shaped by familiarity, identity, and habit, where distribution responds to behavioral signals more than volume alone.</p><ul><li><p>Publishing volume increased over 34 percent</p></li><li><p>Larger accounts experienced substantial view declines</p></li><li><p>Smaller accounts under 1,000 followers saw improved reach and interactions</p></li></ul><h4 id="facebook-reels">Facebook Reels</h4><p>On Facebook, short-form video moves through a system still redistributing attention, where reach can stretch wider because the density has not yet hardened.</p><ul><li><p>Views increased by approximately 24 percent</p></li><li><p>Interactions rose over 22 percent</p></li><li><p>Highest average reach per video among major platforms</p></li></ul><h4 id="linkedin">LinkedIn</h4><p><strong><a href="https://news.linkedin.com/2024/July/LinkedIn_Business_Highlights_from_FY24_Q4_Earnings">On LinkedIn</a></strong>, video travels along lines of professional proximity, and its reach expands when early engagement signals confirm relevance within trusted networks.</p><ul><li><p>Video uploads increased by 20 percent in 2024</p></li><li><p>Video views increased by 34 percent in 2024</p></li></ul><p>Short-form video has multiplied faster than attention can expand, and the compression becomes visible when you look at what happens to each individual post.</p><h3 id="oversaturation-is-a-distribution-constraint">Oversaturation Is a Distribution Constraint</h3><p>Feeds operate within finite session time. As the number of eligible posts expands, recommendation systems tighten exposure criteria: watch duration thresholds rise, early engagement velocity carries more weight, and topic consistency strengthens classification.</p><p>Short-form video now competes inside its own density. Increasing output inside a compressed system rarely restores reach unless clarity increases alongside it.</p><p>This is where the expert influencer has taken over. Content anchored in real expertise holds attention longer. It produces saves. It invites comments framed as questions rather than reactions. These behaviors feed distribution loops more effectively than passive scrolling.</p><p>In early 2026, many creators began reporting stronger performance from carousel posts relative to single-image posts and, in some cases, relative to Reels. On LinkedIn, concise commentary, document uploads, and insider reflections have gained noticeable traction in creator reporting and industry analysis.</p><p>As short-form publishing density increases, platforms distribute attention across formats that create varied interaction rhythms. What appears as a format resurgence is likely retention optimization inside a saturated system.</p><h3 id="why-image-formats-could-be-gaining-strength">Why Image Formats Could Be Gaining Strength</h3><p>In early 2026, many creators began reporting stronger performance from carousel and memes, in some cases, relative to short-form. On LinkedIn, memes, concise commentary, document uploads, and carousels have gained noticeable traction in creator reporting and industry analysis.</p><p>There is not yet sufficient platform-level data to confirm a structural shift toward image formats. What may be happening instead is retention optimization inside a saturated system. <a href="https://buffer.com/resources/instagram-algorithms/">Swipe-based posts extend dwell time through layered information. </a>Document uploads and carousels generate saves. Memes invite discussion without requiring continuous video completion. As short-form publishing density increases, platforms appear to be distributing attention across formats that create varied interaction rhythms. If Instagram&#8217;s algorithm currently classifies and distributes carousels more efficiently within its existing engagement architecture, that alone could account for the performance creators are observing.</p><h3 id="the-post-sale-shock-and-instagrams-aesthetic-constraint">The Post-Sale Shock and Instagram&#8217;s Aesthetic Constraint</h3><p><strong><a href="https://www.axios.com/2026/01/28/ice-trump-tiktok-censorship-oracle">Immediately following TikTok&#8217;s U.S. ownership transition in early 2026</a></strong>, creators reported sharp reach declines, search interruptions, inconsistent visibility, and noticeable shifts in how content surfaced. Major outlets documented instability during the transition, while the company attributed disruptions to infrastructure and technical changes. Whatever the cause, distribution patterns changed abruptly. For creators and nonprofits who rely on predictable visibility, that kind of algorithmic volatility functions as suppression in practice because it interrupts planning, forecasting, and revenue assumptions. As confidence eroded, cross-posting intensified and teams diversified toward Instagram Reels and YouTube Shorts to reduce platform dependency.</p><p>Instagram absorbed that migration within a structurally different attention system. TikTok&#8217;s recommendation engine historically prioritized behavioral discovery, pushing content beyond follower networks when watch time and interaction patterns signaled interest. Instagram developed around social graph proximity and visual coherence, where identity signaling and aesthetic norms continue to shape interaction. </p><p>As expert-led and informational short-form video migrated into Instagram&#8217;s ecosystem, publishing density increased without proportional expansion in distribution capacity. If short-form production shifts across platforms, audiences may also experience changes in the type and quality of video they are shown. </p><p>When algorithmic matching becomes less precise or more crowded, engagement fatigue can follow. In that environment, carousels and memes may gain strength not as a rejection of video, but as a response to how Instagram distributes and surfaces content within its own structural logic.</p><h3 id="ai-search-and-the-authority-layer">AI Search and the Authority Layer</h3><p>Short-form video expanded at the same time discovery began shifting toward conversational interfaces. Users now ask full, contextual questions inside AI systems and receive synthesized responses rather than scrolling through links. AI Overviews and chat-based answers cite a limited number of sources per query, concentrating visibility among content that is structured, attributable, and semantically clear.</p><p>Clarity and terminology now influence discoverability beyond the feed. Systems rely on transcripts, structured language, consistent domain framing, and retrievable context to generate answers. Content that can be summarized cleanly and mapped to a defined topic is more likely to be surfaced in AI responses.</p><p>Expert-led short-form video contributes to awareness, but authority accumulates in content that can be indexed, cited, and retrieved. Mission-driven organizations that articulate their expertise consistently across captions, transcripts, blog posts, and FAQs strengthen their presence in this emerging search layer.</p><h3 id="youtube-long-form-depth-and-the-short-to-long-pipeline">YouTube, Long-Form Depth, and the Short-to-Long Pipeline</h3><p>YouTube occupies a distinct position in this shift because its infrastructure is built around searchable transcripts, metadata depth, and session watch time. Shorts generate awareness, but long-form video builds sustained authority and search longevity. When short-form content is connected to deeper explainers, interviews, or panel discussions, organizations create a pipeline rather than isolated posts.</p><p>For nonprofits navigating short-form saturation, YouTube can function as a second home rather than a mirror. Cross-posting Shorts extends reach, but pairing them with long-form breakdowns strengthens retention, AI retrievability, and domain credibility. A short-to-long pipeline allows teams to capture attention in vertical feeds and then consolidate authority in structured, searchable depth.</p><p>In an environment where distribution compresses and AI systems prioritize clarity, organizations that connect short-form energy to long-form substance are better positioned to sustain visibility over time.</p><h3 id="what-nonprofits-can-do-now">What Nonprofits Can Do Now</h3><p>Short-form video remains valuable. The strategy must reflect both feed density and search evolution.</p><figure id="vision-2"><img src="https://substackcdn.com/image/fetch/$s_!B970!,w_1456,c_limit,f_auto,q_auto:good,fl_progressive:steep/https%3A%2F%2Fsubstack-post-media.s3.amazonaws.com%2Fpublic%2Fimages%2Fa80bbafa-9673-4b17-844e-1086c9a46fca_1600x900.png" alt=""></figure><h4 id="clarify-the-expertise">Clarify the Expertise</h4><p>Define the specific domain your organization should be associated with. Encourage staff who hold that expertise to speak directly to it.</p><h4 id="anchor-content-in-recognizable-structures">Anchor Content in Recognizable Structures</h4><p>Use formats that audiences already understand. &#8220;Day in the life,&#8221; insider walkthroughs, quick policy explainers, and contextual commentary provide clarity for both viewers and algorithms.</p><h4 id="integrate-production-into-real-work">Integrate Production Into Real Work</h4><p>Film during existing meetings, site visits, interviews, and events. Authentic context increases credibility and sustainability.</p><h4 id="connect-short-form-to-depth">Connect Short Form to Depth</h4><p>Link videos to structured blog posts, reports, or transcripts. This strengthens AI retrievability and reinforces authority.</p><h4 id="maintain-terminology-consistency">Maintain Terminology Consistency</h4><p>Use aligned language across captions, transcripts, newsletters, and web content. Semantic alignment improves classification.</p><h4 id="measure-retention-signals">Measure Retention Signals</h4><p>Track watch duration, saves, and shares. These behaviors influence distribution more than raw impressions in dense ecosystems.</p><h4 id="publish-on-a-sustainable-rhythm">Publish on a Sustainable Rhythm</h4><p>Consistency builds recognition. Recognition strengthens distribution loops.</p></form></div><h3 id="is-the-short-form-video-market-oversaturated">Is the Short-Form Video Market Oversaturated?</h3><p>Publishing density has surged, filling the feed with more content than attention can sustain. Exposure per post has tightened across major platforms, and visibility no longer flows as easily as it once did. Trust is settling around people who know what they are talking about. Authority is accumulating where language is precise and ideas are structured clearly enough for both humans and machines to understand.</p><p>Short-form video still anchors digital communication, but it now lives inside systems shaped by retention, prediction, and AI classification. The terrain has shifted. The advantage belongs to organizations that speak with fluency, maintain coherence across formats, and connect short bursts of attention to deeper reservoirs of knowledge. That is where mission-driven work can claim ground and lead</p>
+          <article class="article-body" id="top">
+            <section class="article-section article-section-intro theme-purple" data-section-id="top" data-number="00"><p>What began on a single app that penetrated culture so deeply the format borrowed its name now anchors digital communication across nearly every major platform. Short-form video carries professional commentary on LinkedIn, organizing strategy on TikTok, brand storytelling on Instagram, and podcast distribution on YouTube Shorts within the same vertical frame.</p><figure id="vision-1" class="article-figure theme-purple"><img src="https://substackcdn.com/image/fetch/$s_!WeWZ!,w_1456,c_limit,f_auto,q_auto:good,fl_progressive:steep/https%3A%2F%2Fsubstack-post-media.s3.amazonaws.com%2Fpublic%2Fimages%2F35d1f537-1ce3-496e-9fd4-ac726b39da70_1600x900.png" alt=""><figcaption><span class="figure-caption-index">Figure 01</span><span class="figure-caption-text">Visual reference</span></figcaption></figure><p>In 2025, short-form video continued its rapid expansion. According to the <strong><a href="https://metricool.com/social-media-short-video-report-2025/">Metricool 2025 State of Short-Form Video Report</a></strong>, short-form publishing volume increased by roughly 71 percent year over year, while the number of accounts using the format rose approximately 51 percent, with TikTok video output growing by more than 150 percent. In 2024, YouTube Shorts averaged around <strong><a href="https://blog.youtube/inside-youtube/shorts-revenue-sharing-update/">70 billion daily views</a></strong>, reflecting its scale as a distribution layer for vertical video. <strong><a href="https://news.linkedin.com/2024/July/LinkedIn_Business_Highlights_from_FY24_Q4_Earnings">LinkedIn reported</a></strong> that video uploads increased by more than 20 percent, with views rising 34 percent year over year since 2024. Meta stated that Reels across Instagram and Facebook operate at roughly a <strong><a href="https://www.wsj.com/tech/meta-reels-revenue-ade4179e?gaa_at=eafs&amp;gaa_n=AWEtsqf06X9MjwENwZnHUkvRfqDBgUIq36f1Rgw_99DEUlsiEzxWvSU7aSihF-HHYzI%3D&amp;gaa_ts=699b9ef4&amp;gaa_sig=8Aayqj25LHUs8P2rrBk_-OdgPWDnzssK1pXV40FwMuhJsua1PF4VxZhvgYJ37GIZko9kZjS4PAJN6YKI1zt1iw%3D%3D">$50 billion annual revenue run rate</a></strong>, underscoring the business centrality of short-form video by the end of 2025. Industry estimates place TikTok&#8217;s annual advertising revenue above <strong><a href="https://www.demandsage.com/tiktok-ad-revenue/">$30 billion</a></strong>, reinforcing its continued economic weight in the ecosystem.</p><p>Participation has scaled at extraordinary speed. At the same time, something more subtle has shifted inside the content itself.</p></section>
+<section class="article-section theme-purple" data-section-id="the-end-of-the-aspirational-influencer-era" data-number="01" data-theme="purple"><h3 id="the-end-of-the-aspirational-influencer-era" class="section-heading"><span class="section-number">01</span><span class="section-heading-text">The End of the Aspirational Influencer Era</span></h3><p>For much of the 2010s, short-form content revolved around <em><strong>aspiration</strong></em>. Influencer culture centered on lifestyle aesthetics, curated consumption, and performative success. Brand partnerships mirrored that tone. Glossy travel, luxury routines, product unboxings, and highly stylized personal branding dominated feed visibility. Audience behavior has recalibrated what influence means in 2026.</p><p>Trust surveys over the last three years show where authority is consolidating. <strong><a href="https://www.edelman.com/trust/2026/trust-barometer">Edelman&#8217;s 2026 Trust Barometer reports</a></strong> that scientists (76%) and teachers (73%) rank among the most trusted voices globally. This reaffirms a trend visible across digital platforms since 2023, <strong><a href="https://pro.morningconsult.com/analyst-reports/influencer-marketing-trends-report">Morning Consult&#8217;s research</a></strong> found that while trust in influencers among younger audiences increased, the traits respondents valued most were intelligence, knowledge, and authenticity rather than follower count or aesthetics.</p><p>Educational and &#8220;explain this to me&#8221; content has grown rapidly across TikTok and YouTube. Searches for &#8220;how does this work,&#8221; &#8220;explained,&#8221; and &#8220;day in the life&#8221; formats continue to rise. Recent <strong><a href="https://pro.morningconsult.com/analyst-reports/brands-guide-influencers-2026-ai">creator economy research</a></strong> indicates that audiences are spending more time with niche experts who provide practical knowledge rather than aspirational imagery.</p><p>The algorithmic layer reinforces this shift. Content that demonstrates domain clarity and topic consistency is easier to classify and distribute than generalized lifestyle posting. Systems reward coherence.</p><blockquote>professionals explaining their work,<br>scientists documenting field research,<br>policy staff sharing context,<br>nonprofit leaders walking through decisions,<br>engineers breaking down systems,<br>local organizers offering lived insight.</blockquote><p>Mission-driven organizations have structural advantage here. Their teams already hold expertise. Their work already intersects with public questions. When that expertise is surfaced clearly, it travels differently than branded aspiration. The market is crowded with performance. It is less crowded with fluency.</p></section>
+<section class="article-section theme-cyan" data-section-id="what-the-data-shows-about-compression" data-number="02" data-theme="cyan"><h3 id="what-the-data-shows-about-compression" class="section-heading"><span class="section-number">02</span><span class="section-heading-text">What the Data Shows About Compression</span></h3><p>When publishing accelerates at this level, platform-wide view totals are less revealing than per-post performance.</p><p><strong><a href="https://metricool.com/social-media-short-video-report-2025/">Metricool&#8217;s 2025 analysis</a></strong> of nearly six million short-form videos across TikTok, Instagram Reels, YouTube Shorts, and Facebook Reels in 2025 show consistent tightening in reach per post. The data I refer to spans 2023 through 2025 and reflects a progression that began in the early 2020s as vertical video adoption accelerated across platforms. Publishing volume has increased faster than average exposure per post.</p><p><strong>Operating under the theory that short-form consumption behaves as a cross-platform market, increased production and distribution shifts on one platform can affect attention patterns on another.</strong> If short-form output surges on TikTok while Instagram adjusts distribution, or if YouTube Shorts scales aggressively while Reels absorbs migration, audience consumption habits do not reset per app. They compound. In that environment, exposure thresholds rise and retention standards tighten across the ecosystem, not just within a single feed.</p><h4 id="youtube-shorts">YouTube Shorts</h4><p>On YouTube, short-form video feels like a spark cast into a much older fire, where visibility ignites quickly but authority builds through time, depth, and sustained attention.</p><ul><li><p>Average brand publishing frequency exceeds 16 Shorts per month</p></li><li><p>Likes declined approximately 47 percent year over year</p></li><li><p>Engagement dropped by 36 percent</p></li><li><p>Reach decreased by 31 percent</p></li></ul><h4 id="tiktok">TikTok</h4><p>On TikTok, the feed moves like a current, and only content that grips within the first breath is carried outward into scale.</p><ul><li><p>Publishing volume increased by more than 150 percent</p></li><li><p>Average reach declined roughly 47 percent</p></li><li><p>Engagement rate remains near 8.24 percent</p></li><li><p>Average watch duration is approximately 3.75 seconds</p></li><li><p>Average video length is around 41 seconds</p></li><li><p>Full completion rates hover near 4 percent</p></li></ul><h4 id="instagram-reels">Instagram Reels</h4><p>On Instagram, short-form video circulates inside a social web shaped by familiarity, identity, and habit, where distribution responds to behavioral signals more than volume alone.</p><ul><li><p>Publishing volume increased over 34 percent</p></li><li><p>Larger accounts experienced substantial view declines</p></li><li><p>Smaller accounts under 1,000 followers saw improved reach and interactions</p></li></ul><h4 id="facebook-reels">Facebook Reels</h4><p>On Facebook, short-form video moves through a system still redistributing attention, where reach can stretch wider because the density has not yet hardened.</p><ul><li><p>Views increased by approximately 24 percent</p></li><li><p>Interactions rose over 22 percent</p></li><li><p>Highest average reach per video among major platforms</p></li></ul><h4 id="linkedin">LinkedIn</h4><p><strong><a href="https://news.linkedin.com/2024/July/LinkedIn_Business_Highlights_from_FY24_Q4_Earnings">On LinkedIn</a></strong>, video travels along lines of professional proximity, and its reach expands when early engagement signals confirm relevance within trusted networks.</p><ul><li><p>Video uploads increased by 20 percent in 2024</p></li><li><p>Video views increased by 34 percent in 2024</p></li></ul><p>Short-form video has multiplied faster than attention can expand, and the compression becomes visible when you look at what happens to each individual post.</p></section>
+<section class="article-section theme-amber" data-section-id="oversaturation-is-a-distribution-constraint" data-number="03" data-theme="amber"><h3 id="oversaturation-is-a-distribution-constraint" class="section-heading"><span class="section-number">03</span><span class="section-heading-text">Oversaturation Is a Distribution Constraint</span></h3><p>Feeds operate within finite session time. As the number of eligible posts expands, recommendation systems tighten exposure criteria: watch duration thresholds rise, early engagement velocity carries more weight, and topic consistency strengthens classification.</p><p>Short-form video now competes inside its own density. Increasing output inside a compressed system rarely restores reach unless clarity increases alongside it.</p><p>This is where the expert influencer has taken over. Content anchored in real expertise holds attention longer. It produces saves. It invites comments framed as questions rather than reactions. These behaviors feed distribution loops more effectively than passive scrolling.</p><p>In early 2026, many creators began reporting stronger performance from carousel posts relative to single-image posts and, in some cases, relative to Reels. On LinkedIn, concise commentary, document uploads, and insider reflections have gained noticeable traction in creator reporting and industry analysis.</p><p>As short-form publishing density increases, platforms distribute attention across formats that create varied interaction rhythms. What appears as a format resurgence is likely retention optimization inside a saturated system.</p></section>
+<section class="article-section theme-fuchsia" data-section-id="why-image-formats-could-be-gaining-strength" data-number="04" data-theme="fuchsia"><h3 id="why-image-formats-could-be-gaining-strength" class="section-heading"><span class="section-number">04</span><span class="section-heading-text">Why Image Formats Could Be Gaining Strength</span></h3><p>In early 2026, many creators began reporting stronger performance from carousel and memes, in some cases, relative to short-form. On LinkedIn, memes, concise commentary, document uploads, and carousels have gained noticeable traction in creator reporting and industry analysis.</p><p>There is not yet sufficient platform-level data to confirm a structural shift toward image formats. What may be happening instead is retention optimization inside a saturated system. <a href="https://buffer.com/resources/instagram-algorithms/">Swipe-based posts extend dwell time through layered information. </a>Document uploads and carousels generate saves. Memes invite discussion without requiring continuous video completion. As short-form publishing density increases, platforms appear to be distributing attention across formats that create varied interaction rhythms. If Instagram&#8217;s algorithm currently classifies and distributes carousels more efficiently within its existing engagement architecture, that alone could account for the performance creators are observing.</p></section>
+<section class="article-section theme-purple" data-section-id="the-post-sale-shock-and-instagrams-aesthetic-constraint" data-number="05" data-theme="purple"><h3 id="the-post-sale-shock-and-instagrams-aesthetic-constraint" class="section-heading"><span class="section-number">05</span><span class="section-heading-text">The Post-Sale Shock and Instagram&#8217;s Aesthetic Constraint</span></h3><p><strong><a href="https://www.axios.com/2026/01/28/ice-trump-tiktok-censorship-oracle">Immediately following TikTok&#8217;s U.S. ownership transition in early 2026</a></strong>, creators reported sharp reach declines, search interruptions, inconsistent visibility, and noticeable shifts in how content surfaced. Major outlets documented instability during the transition, while the company attributed disruptions to infrastructure and technical changes. Whatever the cause, distribution patterns changed abruptly. For creators and nonprofits who rely on predictable visibility, that kind of algorithmic volatility functions as suppression in practice because it interrupts planning, forecasting, and revenue assumptions. As confidence eroded, cross-posting intensified and teams diversified toward Instagram Reels and YouTube Shorts to reduce platform dependency.</p><p>Instagram absorbed that migration within a structurally different attention system. TikTok&#8217;s recommendation engine historically prioritized behavioral discovery, pushing content beyond follower networks when watch time and interaction patterns signaled interest. Instagram developed around social graph proximity and visual coherence, where identity signaling and aesthetic norms continue to shape interaction. </p><p>As expert-led and informational short-form video migrated into Instagram&#8217;s ecosystem, publishing density increased without proportional expansion in distribution capacity. If short-form production shifts across platforms, audiences may also experience changes in the type and quality of video they are shown. </p><p>When algorithmic matching becomes less precise or more crowded, engagement fatigue can follow. In that environment, carousels and memes may gain strength not as a rejection of video, but as a response to how Instagram distributes and surfaces content within its own structural logic.</p></section>
+<section class="article-section theme-cyan" data-section-id="ai-search-and-the-authority-layer" data-number="06" data-theme="cyan"><h3 id="ai-search-and-the-authority-layer" class="section-heading"><span class="section-number">06</span><span class="section-heading-text">AI Search and the Authority Layer</span></h3><p>Short-form video expanded at the same time discovery began shifting toward conversational interfaces. Users now ask full, contextual questions inside AI systems and receive synthesized responses rather than scrolling through links. AI Overviews and chat-based answers cite a limited number of sources per query, concentrating visibility among content that is structured, attributable, and semantically clear.</p><p>Clarity and terminology now influence discoverability beyond the feed. Systems rely on transcripts, structured language, consistent domain framing, and retrievable context to generate answers. Content that can be summarized cleanly and mapped to a defined topic is more likely to be surfaced in AI responses.</p><p>Expert-led short-form video contributes to awareness, but authority accumulates in content that can be indexed, cited, and retrieved. Mission-driven organizations that articulate their expertise consistently across captions, transcripts, blog posts, and FAQs strengthen their presence in this emerging search layer.</p></section>
+<section class="article-section theme-amber" data-section-id="youtube-long-form-depth-and-the-short-to-long-pipeline" data-number="07" data-theme="amber"><h3 id="youtube-long-form-depth-and-the-short-to-long-pipeline" class="section-heading"><span class="section-number">07</span><span class="section-heading-text">YouTube, Long-Form Depth, and the Short-to-Long Pipeline</span></h3><p>YouTube occupies a distinct position in this shift because its infrastructure is built around searchable transcripts, metadata depth, and session watch time. Shorts generate awareness, but long-form video builds sustained authority and search longevity. When short-form content is connected to deeper explainers, interviews, or panel discussions, organizations create a pipeline rather than isolated posts.</p><p>For nonprofits navigating short-form saturation, YouTube can function as a second home rather than a mirror. Cross-posting Shorts extends reach, but pairing them with long-form breakdowns strengthens retention, AI retrievability, and domain credibility. A short-to-long pipeline allows teams to capture attention in vertical feeds and then consolidate authority in structured, searchable depth.</p><p>In an environment where distribution compresses and AI systems prioritize clarity, organizations that connect short-form energy to long-form substance are better positioned to sustain visibility over time.</p></section>
+<section class="article-section theme-fuchsia" data-section-id="what-nonprofits-can-do-now" data-number="08" data-theme="fuchsia"><h3 id="what-nonprofits-can-do-now" class="section-heading"><span class="section-number">08</span><span class="section-heading-text">What Nonprofits Can Do Now</span></h3><p>Short-form video remains valuable. The strategy must reflect both feed density and search evolution.</p><figure id="vision-2" class="article-figure theme-cyan"><img src="https://substackcdn.com/image/fetch/$s_!B970!,w_1456,c_limit,f_auto,q_auto:good,fl_progressive:steep/https%3A%2F%2Fsubstack-post-media.s3.amazonaws.com%2Fpublic%2Fimages%2Fa80bbafa-9673-4b17-844e-1086c9a46fca_1600x900.png" alt=""><figcaption><span class="figure-caption-index">Figure 02</span><span class="figure-caption-text">Visual reference</span></figcaption></figure><h4 id="clarify-the-expertise">Clarify the Expertise</h4><p>Define the specific domain your organization should be associated with. Encourage staff who hold that expertise to speak directly to it.</p><h4 id="anchor-content-in-recognizable-structures">Anchor Content in Recognizable Structures</h4><p>Use formats that audiences already understand. &#8220;Day in the life,&#8221; insider walkthroughs, quick policy explainers, and contextual commentary provide clarity for both viewers and algorithms.</p><h4 id="integrate-production-into-real-work">Integrate Production Into Real Work</h4><p>Film during existing meetings, site visits, interviews, and events. Authentic context increases credibility and sustainability.</p><h4 id="connect-short-form-to-depth">Connect Short Form to Depth</h4><p>Link videos to structured blog posts, reports, or transcripts. This strengthens AI retrievability and reinforces authority.</p><h4 id="maintain-terminology-consistency">Maintain Terminology Consistency</h4><p>Use aligned language across captions, transcripts, newsletters, and web content. Semantic alignment improves classification.</p><h4 id="measure-retention-signals">Measure Retention Signals</h4><p>Track watch duration, saves, and shares. These behaviors influence distribution more than raw impressions in dense ecosystems.</p><h4 id="publish-on-a-sustainable-rhythm">Publish on a Sustainable Rhythm</h4><p>Consistency builds recognition. Recognition strengthens distribution loops.</p></section>
+<section class="article-section theme-purple" data-section-id="is-the-short-form-video-market-oversaturated" data-number="09" data-theme="purple"><h3 id="is-the-short-form-video-market-oversaturated" class="section-heading"><span class="section-number">09</span><span class="section-heading-text">Is the Short-Form Video Market Oversaturated?</span></h3><p>Publishing density has surged, filling the feed with more content than attention can sustain. Exposure per post has tightened across major platforms, and visibility no longer flows as easily as it once did. Trust is settling around people who know what they are talking about. Authority is accumulating where language is precise and ideas are structured clearly enough for both humans and machines to understand.</p><p>Short-form video still anchors digital communication, but it now lives inside systems shaped by retention, prediction, and AI classification. The terrain has shifted. The advantage belongs to organizations that speak with fluency, maintain coherence across formats, and connect short bursts of attention to deeper reservoirs of knowledge. That is where mission-driven work can claim ground and lead</p></section>
           </article>
 
-          <section class="panel article-cta">
+          <section class="article-cta">
             <h2>Keep the Grimoire Open.</h2>
             <p>Stay close to future essays through Substack, support the archive with a paid membership, or bring the same clarity into your own communications system.</p>
             <div class="cta-buttons">
               <a class="button-link" href="https://thealgorithmwitch.substack.com/" target="_blank" rel="noopener noreferrer">Subscribe on Substack</a>
               <a class="button-link" href="https://thealgorithmwitch.substack.com/" target="_blank" rel="noopener noreferrer">Become a Paid Member</a>
-              <a class="button-link" href="https://thealgorithmwitch.com/summon.html">Book a Consultation</a>
+              <a class="button-link" href="/summon.html">Book a Consultation</a>
             </div>
           </section>
 
-          <nav class="post-nav" aria-label="More posts">
-            <a href="/blog/recommendation-engine-learned-where-you-live.html"><div class="micro-label">Newer</div><strong>The Recommendation Engine Learned Where You Live</strong></a><a href="/blog/are-hashtags-dead.html"><div class="micro-label">Older</div><strong>Are hashtags dead?</strong></a>
+          <nav class="dispatch-rail" aria-label="More dispatches">
+            <a class="dispatch-link older" href="/blog/are-hashtags-dead.html"><div class="micro-label">Older Dispatch</div><strong>Are hashtags dead?</strong></a>
+    <div class="dispatch-socials" aria-label="Social links">
+      <a href="https://www.linkedin.com/in/cassandrearkema/" target="_blank" rel="noopener noreferrer" aria-label="LinkedIn"><i class="ph-fill ph-linkedin-logo"></i></a>
+      <a href="https://substack.com/@thealgorithmwitch" target="_blank" rel="noopener noreferrer" aria-label="Substack"><i class="ph-fill ph-substack-logo"></i></a>
+      <a href="https://www.instagram.com/thealgorithmwitch" target="_blank" rel="noopener noreferrer" aria-label="Instagram"><i class="ph-fill ph-instagram-logo"></i></a>
+    </div>
+  <a class="dispatch-link next" href="/blog/recommendation-engine-learned-where-you-live.html"><div class="micro-label">Newer Dispatch</div><strong>The Recommendation Engine Learned Where You Live</strong></a>
           </nav>
 
           <section class="related-section">
             <h2>Related Dispatches</h2>
             <div class="related-grid">
               
-      <a class="related-card" href="/blog/ethics-of-algorithmic-visibility.html">
+      <a class="related-card theme-purple" href="/blog/ethics-of-algorithmic-visibility.html">
         <div class="micro-label">Ethics</div>
         <h3>The Ethics of Algorithmic Visibility</h3>
         <p>Breaking down how the Meta and Google verdict changes the conversation around trust, attention, and building power online.</p>
       </a>
     
-      <a class="related-card" href="/blog/future-is-community-led.html">
+      <a class="related-card theme-cyan" href="/blog/future-is-community-led.html">
         <div class="micro-label">Community</div>
         <h3>The Future Is Community-Led</h3>
         <p>What 320 climate websites and four platforms revealed about where this movement is going.</p>
       </a>
     
-      <a class="related-card" href="/blog/posting-less-wont-save-you.html">
+      <a class="related-card theme-amber" href="/blog/posting-less-wont-save-you.html">
         <div class="micro-label">Dispatch</div>
         <h3>Posting Less Won’t Save You</h3>
         <p>aligning content to find its people | algorithm lore + digital patterns 🧄</p>
@@ -948,19 +1126,57 @@
   </div>
 
   <script>
-    document.querySelectorAll('[data-copy-link]').forEach((button) => {
-      button.addEventListener('click', async () => {
-        const value = button.getAttribute('data-copy-link');
+    document.querySelectorAll('[data-copy-link]').forEach(function (button) {
+      button.addEventListener('click', async function () {
+        var value = button.getAttribute('data-copy-link');
         try {
           await navigator.clipboard.writeText(value);
-          const original = button.innerHTML;
+          var original = button.innerHTML;
           button.innerHTML = '<i class="ph-bold ph-check"></i>';
-          setTimeout(() => { button.innerHTML = original; }, 1200);
+          setTimeout(function () { button.innerHTML = original; }, 1200);
         } catch (error) {
           window.open(value, '_blank', 'noopener');
         }
       });
     });
+
+    var tocLinks = Array.prototype.slice.call(document.querySelectorAll('.toc-link[href^="#"]'));
+    var sections = Array.prototype.slice.call(document.querySelectorAll('.article-section[data-section-id]'));
+
+    function setActiveSection(id) {
+      sections.forEach(function (section) {
+        section.classList.toggle('is-active', section.getAttribute('data-section-id') === id);
+      });
+      tocLinks.forEach(function (link) {
+        link.classList.toggle('active', link.getAttribute('href') === '#' + id);
+      });
+    }
+
+    tocLinks.forEach(function (link) {
+      link.addEventListener('click', function () {
+        var id = link.getAttribute('href').slice(1);
+        setActiveSection(id);
+      });
+    });
+
+    var observer = new IntersectionObserver(function (entries) {
+      var visible = entries
+        .filter(function (entry) { return entry.isIntersecting; })
+        .sort(function (a, b) { return b.intersectionRatio - a.intersectionRatio; })[0];
+      if (!visible) return;
+      setActiveSection(visible.target.getAttribute('data-section-id'));
+    }, {
+      rootMargin: '-22% 0px -46% 0px',
+      threshold: [0.12, 0.35, 0.6]
+    });
+
+    sections.forEach(function (section) {
+      observer.observe(section);
+    });
+
+    if (sections.length) {
+      setActiveSection(sections[0].getAttribute('data-section-id'));
+    }
   </script>
 </body>
 </html>

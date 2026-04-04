@@ -46,7 +46,7 @@
         document.head.appendChild(s);
         return;
       }
-      window.addEventListener('load', () => {
+      window.addEventListener('load', function () {
         document.head.appendChild(s);
       }, { once: true });
     })();
@@ -54,15 +54,19 @@
   <style>
     :root {
       --bg: #05020a;
-      --panel: rgba(10, 5, 32, 0.78);
-      --panel-strong: #0d0718;
+      --panel: rgba(10, 5, 32, 0.82);
+      --panel-strong: rgba(13, 7, 24, 0.96);
       --line: rgba(168, 85, 247, 0.18);
-      --line-strong: rgba(168, 85, 247, 0.32);
+      --line-strong: rgba(168, 85, 247, 0.34);
       --purple: #a855f7;
-      --purple-soft: rgba(168, 85, 247, 0.14);
-      --gold: #f4d47d;
+      --cyan: #67e8f9;
+      --amber: #f4d47d;
+      --fuchsia: #f0abfc;
       --text: #e5e7eb;
-      --text-soft: #94a3b8;
+      --text-soft: #a7b2c4;
+      --text-faint: #748094;
+      --quote: rgba(221, 214, 254, 0.9);
+      --shadow: 0 22px 54px rgba(0, 0, 0, 0.32);
     }
 
     * { box-sizing: border-box; }
@@ -121,10 +125,7 @@
       to { transform: translate3d(36px, -24px, 0) scale(1.08); }
     }
 
-    .site-shell {
-      position: relative;
-      z-index: 1;
-    }
+    .site-shell { position: relative; z-index: 1; }
 
     .topbar {
       position: sticky;
@@ -139,7 +140,7 @@
     .hero-shell,
     .content-shell,
     .site-footer {
-      width: min(1400px, calc(100% - 2rem));
+      width: min(1460px, calc(100% - 2rem));
       margin: 0 auto;
     }
 
@@ -166,11 +167,7 @@
       flex-shrink: 0;
     }
 
-    .brand-glyph .sparkle {
-      font-size: 1.45rem;
-      color: #a855f7;
-    }
-
+    .brand-glyph .sparkle { font-size: 1.45rem; color: var(--purple); }
     .brand-glyph .star {
       position: absolute;
       top: -0.05rem;
@@ -181,7 +178,7 @@
 
     .brand-word {
       font-family: "Cinzel Decorative", ui-serif, Georgia, serif;
-      font-size: 1.1rem;
+      font-size: 1.08rem;
       letter-spacing: 0.12em;
       color: white;
       transition: color 0.24s ease;
@@ -192,11 +189,9 @@
     .micro-nav,
     .micro-link,
     .micro-label,
-    .micro-chip,
-    .meta-line,
-    .caption-label,
-    .toc-link,
     .utility-text,
+    .tag-chip,
+    .toc-link,
     .button-link {
       font-size: 0.72rem;
       letter-spacing: 0.18em;
@@ -260,6 +255,7 @@
       background: var(--panel);
       border: 1px solid var(--line);
       overflow: visible;
+      box-shadow: var(--shadow);
     }
 
     .panel::before {
@@ -272,9 +268,8 @@
 
     .hero-shell {
       display: grid;
-      grid-template-columns: minmax(0, 1.04fr) minmax(360px, 0.96fr);
+      grid-template-columns: minmax(340px, 0.88fr) minmax(440px, 1.12fr);
       gap: 2rem;
-      min-height: min(74vh, 820px);
       align-items: stretch;
       padding-top: 3.5rem;
       padding-bottom: 2rem;
@@ -282,131 +277,123 @@
 
     .hero-copy,
     .hero-media,
-    .sidebar-stack,
+    .panel-body,
     .article-cta,
-    .post-nav a,
-    .post-nav span,
-    .related-card {
-      min-width: 0;
+    .dispatch-rail,
+    .related-section {
+      padding: 1.4rem;
     }
 
     .hero-copy {
-      padding: clamp(2rem, 5vw, 4rem);
-      display: flex;
-      flex-direction: column;
-      justify-content: space-between;
-      gap: 1.4rem;
+      display: grid;
+      gap: 1.2rem;
+      align-content: start;
+      min-width: 0;
     }
 
-    .hero-copy::after {
-      content: '';
-      position: absolute;
-      right: -4rem;
-      top: -4rem;
-      width: 16rem;
-      height: 16rem;
-      background: radial-gradient(circle, rgba(168, 85, 247, 0.18), transparent 68%);
-      filter: blur(28px);
-    }
-
-    .eyebrow {
-      display: inline-flex;
-      align-items: center;
-      gap: 0.7rem;
-      color: #c4b5fd;
-    }
-
-    .eyebrow::before {
-      content: '';
-      width: 2.4rem;
-      height: 1px;
-      background: rgba(244, 212, 125, 0.7);
-    }
+    .eyebrow { color: #c4b5fd; }
 
     .post-title {
       margin: 0;
-      font-family: "Cinzel Decorative", ui-serif, Georgia, serif;
-      font-size: clamp(2.7rem, 6vw, 5.3rem);
-      line-height: 1.04;
+      font-family: "Playfair Display", ui-serif, Georgia, serif;
+      font-weight: 400;
+      font-size: clamp(2.8rem, 5vw, 5.4rem);
+      line-height: 0.96;
+      letter-spacing: -0.03em;
       color: white;
-      text-shadow: 0 0 18px rgba(168, 85, 247, 0.36);
     }
 
     .post-title-accent {
       display: block;
-      margin-top: 0.45rem;
-      color: var(--gold);
+      color: #ddd6fe;
       font-style: italic;
     }
 
     .post-excerpt {
       margin: 0;
-      padding: 1rem 0 1rem 1.5rem;
-      border-left: 4px solid rgba(168, 85, 247, 0.58);
-      background: linear-gradient(to right, rgba(168, 85, 247, 0.10), transparent);
-      font-family: "Playfair Display", ui-serif, Georgia, serif;
-      font-size: clamp(1.12rem, 1.9vw, 1.45rem);
-      font-style: italic;
-      line-height: 1.8;
-      color: #ddd6fe;
+      color: var(--text-soft);
+      font-size: clamp(1.05rem, 1.4vw, 1.22rem);
+      line-height: 1.9;
+      max-width: 42rem;
+    }
+
+    .hero-tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.55rem;
+    }
+
+    .tag-chip {
+      display: inline-flex;
+      align-items: center;
+      min-height: 2rem;
+      padding: 0 0.85rem;
+      border-radius: 999px;
+      border: 1px solid rgba(168, 85, 247, 0.22);
+      background: rgba(255, 255, 255, 0.03);
+      color: #d8ddef;
     }
 
     .hero-meta {
       display: flex;
       flex-wrap: wrap;
+      gap: 0.75rem;
       align-items: center;
-      gap: 0.85rem;
-      color: var(--text-soft);
+      color: var(--text-faint);
+      font-size: 0.84rem;
     }
 
-    .meta-line { color: #7c3aed; }
+    .meta-line { color: rgba(168, 85, 247, 0.46); }
 
     .hero-media {
-      padding: 1.1rem;
       display: flex;
       align-items: center;
       justify-content: center;
+      min-width: 0;
     }
 
     .hero-media-frame {
       width: 100%;
-      border: 1px solid rgba(168, 85, 247, 0.2);
-      background: rgba(0, 0, 0, 0.28);
-      padding: 0.8rem;
-      box-shadow: 0 28px 80px rgba(0, 0, 0, 0.26);
+      border: 1px solid rgba(168, 85, 247, 0.16);
+      background: rgba(255, 255, 255, 0.02);
+      overflow: hidden;
     }
 
-    .hero-media-frame img {
+    .hero-media-frame img,
+    .hero-media-frame iframe {
       width: 100%;
       height: auto;
-      border: 1px solid rgba(168, 85, 247, 0.16);
+      min-height: 0;
+      display: block;
+      object-fit: contain;
+      background: #090411;
     }
 
     .hero-media-placeholder {
-      width: 100%;
-      aspect-ratio: 16 / 10;
+      min-height: 26rem;
       display: grid;
       place-items: center;
-      color: rgba(168, 85, 247, 0.55);
-      border: 1px solid rgba(168, 85, 247, 0.16);
-      background: radial-gradient(circle at center, rgba(168, 85, 247, 0.14), transparent 58%);
-      font-size: 4rem;
+      color: rgba(221, 214, 254, 0.66);
+      font-size: 3rem;
     }
 
     .content-shell {
       display: grid;
-      grid-template-columns: minmax(250px, 290px) minmax(0, 1fr);
+      grid-template-columns: minmax(250px, 0.72fr) minmax(0, 1.28fr);
       gap: 2rem;
       align-items: start;
-      padding-bottom: 5rem;
+      padding-bottom: 4rem;
     }
 
     .sidebar-stack {
       position: sticky;
-      top: 6.1rem;
+      top: 6rem;
       display: grid;
-      gap: 1.15rem;
+      gap: 1rem;
+      min-width: 0;
     }
+
+    .panel-body { min-width: 0; }
 
     .panel-title {
       margin: 0 0 1rem;
@@ -414,40 +401,74 @@
       align-items: center;
       justify-content: space-between;
       gap: 0.8rem;
-      color: white;
-      padding-bottom: 0.9rem;
+      padding-bottom: 0.85rem;
       border-bottom: 1px solid rgba(168, 85, 247, 0.18);
+      color: white;
     }
 
     .panel-title .left {
       display: inline-flex;
-      align-items: center;
       gap: 0.7rem;
+      align-items: center;
     }
 
-    .panel-title i { color: var(--gold); }
+    .panel-title i { color: var(--amber); }
 
-    .panel-body {
-      padding: 1.2rem;
+    .signal-panel p,
+    .subscription-copy {
+      margin: 0;
+      color: var(--text-soft);
+      line-height: 1.72;
+      font-size: 0.95rem;
+    }
+
+    .signal-excerpt {
+      margin-bottom: 1rem;
+      padding-bottom: 1rem;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    }
+
+    .signal-quote {
+      margin: 0;
+      padding-left: 1rem;
+      border-left: 2px solid rgba(168, 85, 247, 0.28);
+      color: var(--quote);
+      font-family: "Playfair Display", ui-serif, Georgia, serif;
+      font-size: 1rem;
+      line-height: 1.8;
     }
 
     .toc-links {
       display: grid;
-      gap: 0.45rem;
+      gap: 0.35rem;
     }
 
     .toc-link {
-      display: block;
-      color: var(--text-soft);
-      padding: 0.68rem 0.9rem;
-      border-left: 1px solid rgba(168, 85, 247, 0.22);
-      transition: color 0.2s ease, background-color 0.2s ease, border-color 0.2s ease;
+      display: grid;
+      grid-template-columns: auto 1fr;
+      gap: 0.65rem;
+      align-items: center;
+      min-height: 2.5rem;
+      padding: 0.6rem 0.75rem;
+      border-left: 1px solid rgba(168, 85, 247, 0.2);
+      color: #cbd5e1;
+      transition: border-color 0.2s ease, background-color 0.2s ease, color 0.2s ease;
     }
 
     .toc-link:hover {
-      color: white;
-      border-left-color: var(--gold);
+      border-left-color: rgba(168, 85, 247, 0.6);
+      background: linear-gradient(to right, rgba(168, 85, 247, 0.06), transparent);
+    }
+
+    .toc-link.active {
+      color: var(--amber);
+      border-left-color: var(--amber);
       background: linear-gradient(to right, rgba(244, 212, 125, 0.08), transparent);
+    }
+
+    .toc-link-number {
+      color: rgba(168, 85, 247, 0.8);
+      min-width: 2ch;
     }
 
     .visions-grid {
@@ -464,15 +485,27 @@
       align-items: center;
       justify-content: center;
       position: relative;
-      transition: border-color 0.24s ease, background-color 0.24s ease;
+      overflow: hidden;
+      transition: border-color 0.24s ease, background-color 0.24s ease, transform 0.24s ease;
     }
 
     .vision-link:hover {
       border-color: rgba(34, 211, 238, 0.55);
       background: rgba(10, 5, 32, 0.88);
+      transform: translateY(-2px);
     }
 
-    .vision-link i { color: rgba(168, 85, 247, 0.5); font-size: 1.35rem; }
+    .vision-link img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      opacity: 0.88;
+    }
+
+    .vision-link i {
+      color: rgba(168, 85, 247, 0.5);
+      font-size: 1.35rem;
+    }
 
     .vision-tag {
       position: absolute;
@@ -481,20 +514,33 @@
       font-size: 0.58rem;
       letter-spacing: 0.16em;
       text-transform: uppercase;
-      color: rgba(148, 163, 184, 0.72);
-    }
-
-    .subscription-copy {
-      margin: 0 0 1rem;
-      color: var(--text-soft);
-      font-size: 0.92rem;
-      line-height: 1.75;
+      color: rgba(236, 240, 250, 0.82);
+      z-index: 1;
+      padding: 0.2rem 0.34rem;
+      background: rgba(5, 2, 10, 0.72);
     }
 
     .substack-embed-wrap {
-      border: 1px solid rgba(168, 85, 247, 0.18);
-      background: rgba(0, 0, 0, 0.24);
+      margin-top: 1rem;
+      border: 1px solid rgba(168, 85, 247, 0.2);
+      background:
+        linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.01)),
+        rgba(0, 0, 0, 0.24);
       overflow: hidden;
+    }
+
+    .substack-embed-chrome {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+      min-height: 3rem;
+      padding: 0.8rem 0.9rem;
+      border-bottom: 1px solid rgba(168, 85, 247, 0.14);
+      color: #d8ddef;
+      font-size: 0.76rem;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
     }
 
     .substack-embed {
@@ -502,6 +548,7 @@
       min-height: 320px;
       border: 0;
       background: transparent;
+      color-scheme: dark;
     }
 
     .substack-fallback {
@@ -516,219 +563,298 @@
       text-underline-offset: 0.16em;
     }
 
-    .article-column {
-      min-width: 0;
-    }
+    .article-column { min-width: 0; }
 
     .share-row {
       display: flex;
-      justify-content: flex-end;
-      gap: 0.6rem;
-      margin-bottom: 1.4rem;
+      flex-wrap: wrap;
+      gap: 0.8rem;
+      justify-content: flex-start;
+      margin-bottom: 1rem;
     }
 
     .share-row a,
     .share-row button {
-      width: 2.6rem;
-      height: 2.6rem;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      border: 1px solid rgba(168, 85, 247, 0.22);
-      background: rgba(13, 7, 24, 0.78);
-      color: var(--text-soft);
+      width: 2.8rem;
+      height: 2.8rem;
+      border-radius: 999px;
+      border: 1px solid rgba(168, 85, 247, 0.2);
+      background: rgba(255, 255, 255, 0.03);
+      color: #e5e7eb;
+      display: grid;
+      place-items: center;
       cursor: pointer;
-      transition: border-color 0.24s ease, background-color 0.24s ease, color 0.24s ease;
+      transition: transform 0.24s ease, border-color 0.24s ease, background-color 0.24s ease;
     }
 
     .share-row a:hover,
     .share-row button:hover {
-      color: white;
-      border-color: rgba(168, 85, 247, 0.55);
-      background: rgba(168, 85, 247, 0.12);
+      transform: translateY(-2px);
+      border-color: rgba(168, 85, 247, 0.44);
+      background: rgba(168, 85, 247, 0.08);
     }
 
     .article-body {
-      min-width: 0;
-      color: #d7dbea;
-      font-size: 1.05rem;
-      line-height: 1.82;
-      overflow-wrap: anywhere;
+      display: grid;
+      gap: 0;
     }
 
-    .article-body > :first-child { margin-top: 0; }
-    .article-body p { margin: 0 0 1.55rem; }
-    .article-body h2,
-    .article-body h3,
-    .article-body h4 {
-      margin: 3rem 0 1rem;
-      line-height: 1.22;
-      color: white;
+    .article-body p,
+    .article-body li,
+    .article-body blockquote {
+      font-size: 1.08rem;
+      line-height: 1.95;
+      color: var(--text-soft);
     }
 
-    .article-body h2 {
-      font-family: "Cinzel Decorative", ui-serif, Georgia, serif;
-      font-size: clamp(1.8rem, 3vw, 2.45rem);
-      padding-bottom: 0.8rem;
-      border-bottom: 1px solid rgba(168, 85, 247, 0.16);
-      scroll-margin-top: 6rem;
+    .article-body strong { color: white; font-weight: 500; }
+    .article-body a {
+      color: #ddd6fe;
+      text-decoration: underline;
+      text-underline-offset: 0.18em;
     }
 
-    .article-body h3 {
-      font-family: "Playfair Display", ui-serif, Georgia, serif;
-      font-size: clamp(1.32rem, 2.1vw, 1.75rem);
-      color: var(--gold);
+    .article-section {
+      position: relative;
+      padding: 2rem 0 2rem 2.6rem;
+      border-top: 1px solid rgba(255, 255, 255, 0.05);
+      transition: background-color 0.24s ease, border-color 0.24s ease, box-shadow 0.24s ease;
     }
 
-    .article-body h4 {
-      font-size: 0.8rem;
+    .article-section::before {
+      content: attr(data-number);
+      position: absolute;
+      left: 0;
+      top: 2rem;
+      font-size: 0.74rem;
       letter-spacing: 0.18em;
       text-transform: uppercase;
-      color: #c4b5fd;
+      color: rgba(168, 85, 247, 0.72);
     }
 
-    .article-body ul,
-    .article-body ol {
-      margin: 0 0 1.55rem 1.2rem;
-      padding: 0;
+    .article-section.is-active {
+      background: linear-gradient(to right, rgba(168, 85, 247, 0.06), transparent 55%);
+      border-top-color: rgba(168, 85, 247, 0.16);
+      box-shadow: inset 3px 0 0 rgba(168, 85, 247, 0.42);
     }
 
-    .article-body li { margin-bottom: 0.75rem; }
-    .article-body strong { color: white; }
-    .article-body em { color: #ddd6fe; }
-    .article-body a {
-      color: #c4b5fd;
-      text-decoration: underline;
-      text-decoration-color: rgba(168, 85, 247, 0.45);
-      text-underline-offset: 0.15em;
+    .article-section.theme-cyan.is-active {
+      background: linear-gradient(to right, rgba(34, 211, 238, 0.06), transparent 55%);
+      box-shadow: inset 3px 0 0 rgba(34, 211, 238, 0.42);
     }
 
-    .article-body a:hover { color: var(--gold); }
+    .article-section.theme-amber.is-active {
+      background: linear-gradient(to right, rgba(244, 212, 125, 0.07), transparent 55%);
+      box-shadow: inset 3px 0 0 rgba(244, 212, 125, 0.42);
+    }
 
-    .article-body figure {
-      margin: 2.2rem 0;
-      padding: 0.9rem;
-      background: rgba(13, 7, 24, 0.82);
+    .article-section.theme-fuchsia.is-active {
+      background: linear-gradient(to right, rgba(240, 171, 252, 0.06), transparent 55%);
+      box-shadow: inset 3px 0 0 rgba(240, 171, 252, 0.42);
+    }
+
+    .section-heading {
+      display: grid;
+      grid-template-columns: auto 1fr;
+      gap: 1rem;
+      align-items: start;
+      margin: 0 0 1.2rem;
+      font-family: "Playfair Display", ui-serif, Georgia, serif;
+      font-weight: 400;
+      font-size: clamp(1.8rem, 2.5vw, 2.5rem);
+      line-height: 1.08;
+      color: white;
+      scroll-margin-top: 120px;
+    }
+
+    .section-number {
+      color: rgba(168, 85, 247, 0.82);
+      font-size: 0.78rem;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      transform: translateY(0.45rem);
+    }
+
+    .theme-cyan .section-number { color: rgba(34, 211, 238, 0.82); }
+    .theme-amber .section-number { color: rgba(244, 212, 125, 0.84); }
+    .theme-fuchsia .section-number { color: rgba(240, 171, 252, 0.82); }
+
+    .article-figure {
+      margin: 1.8rem 0 2rem;
       border: 1px solid rgba(168, 85, 247, 0.16);
-      overflow: visible;
+      background: rgba(255, 255, 255, 0.02);
     }
 
-    .article-body img {
+    .article-figure img,
+    .article-figure iframe {
       width: 100%;
       height: auto;
-      border: 1px solid rgba(168, 85, 247, 0.14);
-    }
-
-    .article-body iframe {
-      width: 100%;
-      aspect-ratio: 16 / 9;
+      display: block;
+      background: #090411;
       border: 0;
-      background: black;
     }
 
-    .article-body figcaption {
-      margin-top: 0.9rem;
-      color: var(--text-soft);
+    .article-figure iframe {
+      min-height: 22rem;
+    }
+
+    .article-figure figcaption {
+      display: grid;
+      gap: 0.35rem;
+      padding: 0.95rem 1.05rem 1.1rem;
+      border-top: 1px solid rgba(255, 255, 255, 0.05);
+      background: rgba(0, 0, 0, 0.18);
+    }
+
+    .figure-caption-index {
+      color: rgba(168, 85, 247, 0.82);
+      font-size: 0.7rem;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+    }
+
+    .theme-cyan .figure-caption-index { color: rgba(34, 211, 238, 0.82); }
+    .theme-amber .figure-caption-index { color: rgba(244, 212, 125, 0.84); }
+    .theme-fuchsia .figure-caption-index { color: rgba(240, 171, 252, 0.82); }
+
+    .figure-caption-text {
+      color: var(--text-faint);
       font-size: 0.9rem;
       line-height: 1.7;
     }
 
-    .article-body blockquote {
-      margin: 2.2rem 0;
-      padding: 1.3rem 1.5rem;
-      border-left: 4px solid rgba(168, 85, 247, 0.48);
-      background: linear-gradient(to right, rgba(168, 85, 247, 0.10), transparent);
-      color: #ede9fe;
+    blockquote {
+      margin: 1.8rem 0;
+      padding: 1rem 0 1rem 1.15rem;
+      border-left: 2px solid rgba(168, 85, 247, 0.34);
+      color: var(--quote);
       font-family: "Playfair Display", ui-serif, Georgia, serif;
-      font-size: 1.18rem;
       font-style: italic;
+      font-size: 1.15rem;
+      line-height: 1.8;
     }
 
-    .article-cta {
-      margin-top: 3rem;
-      padding: 1.55rem;
+    .article-cta,
+    .dispatch-rail,
+    .related-section {
+      margin-top: 1.4rem;
+      border: 1px solid var(--line);
+      background: var(--panel);
+      box-shadow: var(--shadow);
     }
 
     .article-cta h2,
     .related-section h2 {
-      margin: 0 0 0.7rem;
-      font-family: "Cinzel Decorative", ui-serif, Georgia, serif;
-      font-size: clamp(1.45rem, 3vw, 2.2rem);
+      margin: 0 0 0.8rem;
+      font-family: "Playfair Display", ui-serif, Georgia, serif;
+      font-size: clamp(1.8rem, 2.4vw, 2.4rem);
+      font-weight: 400;
       color: white;
     }
 
-    .article-cta p {
-      margin: 0 0 1rem;
+    .article-cta p,
+    .related-section p {
       color: var(--text-soft);
-      line-height: 1.75;
+      line-height: 1.8;
     }
 
     .cta-buttons {
       display: flex;
       flex-wrap: wrap;
-      gap: 0.8rem;
+      gap: 0.75rem;
+      margin-top: 1rem;
     }
 
-    .post-nav {
-      margin-top: 2.8rem;
+    .dispatch-rail {
       display: grid;
-      grid-template-columns: repeat(2, minmax(0, 1fr));
+      grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
       gap: 1rem;
+      align-items: center;
     }
 
-    .post-nav a,
-    .post-nav span {
-      padding: 1.2rem 1.3rem;
+    .dispatch-link,
+    .dispatch-empty {
+      min-width: 0;
       display: grid;
-      gap: 0.45rem;
-      border: 1px solid var(--line);
-      background: var(--panel);
+      gap: 0.35rem;
+      color: var(--text-soft);
     }
 
-    .post-nav a:hover {
-      border-color: var(--line-strong);
-      background: rgba(10, 5, 32, 0.88);
+    .dispatch-link strong,
+    .dispatch-empty strong {
+      color: white;
+      font-family: "Playfair Display", ui-serif, Georgia, serif;
+      font-weight: 400;
+      line-height: 1.35;
     }
 
-    .post-nav span { color: rgba(148, 163, 184, 0.58); }
+    .dispatch-link.next,
+    .dispatch-empty.next { text-align: right; }
 
-    .related-section {
-      margin-top: 3rem;
+    .dispatch-socials {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.65rem;
+    }
+
+    .dispatch-socials a {
+      width: 2.55rem;
+      height: 2.55rem;
+      border-radius: 999px;
+      border: 1px solid rgba(168, 85, 247, 0.22);
+      background: rgba(255, 255, 255, 0.03);
       display: grid;
-      gap: 1rem;
+      place-items: center;
+      color: #ddd6fe;
+      transition: transform 0.24s ease, border-color 0.24s ease, background-color 0.24s ease;
+    }
+
+    .dispatch-socials a:hover {
+      transform: translateY(-2px);
+      border-color: rgba(168, 85, 247, 0.46);
+      background: rgba(168, 85, 247, 0.08);
     }
 
     .related-grid {
       display: grid;
       grid-template-columns: repeat(3, minmax(0, 1fr));
-      gap: 1rem;
+      gap: 1px;
+      background: rgba(255, 255, 255, 0.06);
+      margin-top: 1rem;
     }
 
     .related-card {
-      padding: 1.1rem;
-      border: 1px solid var(--line);
-      background: var(--panel);
-      transition: transform 0.24s ease, border-color 0.24s ease, background-color 0.24s ease;
+      padding: 1.2rem;
+      background: var(--panel-strong);
+      border-top: 2px solid rgba(168, 85, 247, 0.44);
+      min-width: 0;
+      transition: background-color 0.24s ease, transform 0.24s ease, border-color 0.24s ease;
     }
+
+    .related-card.theme-cyan { border-top-color: rgba(34, 211, 238, 0.54); }
+    .related-card.theme-amber { border-top-color: rgba(244, 212, 125, 0.56); }
+    .related-card.theme-fuchsia { border-top-color: rgba(240, 171, 252, 0.54); }
 
     .related-card:hover {
       transform: translateY(-3px);
-      border-color: var(--line-strong);
-      background: rgba(10, 5, 32, 0.88);
+      background: rgba(15, 10, 32, 0.98);
     }
 
     .related-card h3 {
-      margin: 0.5rem 0;
+      margin: 0.55rem 0 0.6rem;
       font-family: "Playfair Display", ui-serif, Georgia, serif;
-      font-size: 1.08rem;
+      font-weight: 400;
+      font-size: 1.35rem;
+      line-height: 1.25;
       color: white;
+      overflow-wrap: anywhere;
     }
 
     .related-card p {
       margin: 0;
       font-size: 0.95rem;
-      line-height: 1.72;
-      color: var(--text-soft);
+      line-height: 1.75;
     }
 
     .site-footer {
@@ -742,43 +868,67 @@
       font-size: 0.86rem;
     }
 
-    @media (max-width: 1120px) {
+    @media (max-width: 1180px) {
       .hero-shell,
       .content-shell {
         grid-template-columns: 1fr;
       }
       .sidebar-stack {
         position: static;
+        order: 2;
+      }
+      .article-column {
+        order: 1;
       }
       .micro-nav { display: none; }
       .related-grid { grid-template-columns: 1fr; }
     }
 
-    @media (max-width: 760px) {
+    @media (max-width: 780px) {
       .topbar-inner,
       .hero-shell,
       .content-shell,
       .site-footer {
-        width: min(100% - 1.2rem, 1400px);
+        width: min(100% - 1.2rem, 1460px);
       }
       .topbar-inner { min-height: 72px; }
-      .button-link {
-        min-height: 2.5rem;
-        padding-inline: 0.95rem;
-      }
+      .hero-shell { padding-top: 2.25rem; }
       .hero-copy,
-      .panel-body,
       .hero-media,
+      .panel-body,
       .article-cta,
-      .post-nav a,
-      .post-nav span,
-      .related-card {
+      .dispatch-rail,
+      .related-section {
         padding-left: 1rem;
         padding-right: 1rem;
       }
-      .share-row { justify-content: flex-start; }
-      .post-nav { grid-template-columns: 1fr; }
-      .site-footer { flex-direction: column; align-items: flex-start; }
+      .article-section {
+        padding-left: 0;
+      }
+      .article-section::before {
+        position: static;
+        display: block;
+        margin-bottom: 0.9rem;
+      }
+      .section-heading {
+        grid-template-columns: 1fr;
+        gap: 0.5rem;
+      }
+      .section-number { transform: none; }
+      .dispatch-rail {
+        grid-template-columns: 1fr;
+      }
+      .dispatch-link.next,
+      .dispatch-empty.next {
+        text-align: left;
+      }
+      .dispatch-socials {
+        justify-content: flex-start;
+      }
+      .site-footer {
+        flex-direction: column;
+        align-items: flex-start;
+      }
     }
   </style>
 </head>
@@ -812,11 +962,10 @@
     <main>
       <section class="hero-shell">
         <div class="panel hero-copy">
-          <div>
-            <div class="micro-label eyebrow">Ethics</div>
-            <h1 class="post-title">The Ethics<span class="post-title-accent">of Algorithmic Visibility</span></h1>
-          </div>
+          <div class="micro-label eyebrow">Ethics</div>
+          <h1 class="post-title">The Ethics<span class="post-title-accent">of Algorithmic Visibility</span></h1>
           <p class="post-excerpt">Breaking down how the Meta and Google verdict changes the conversation around trust, attention, and building power online.</p>
+          <div class="hero-tags"><span class="tag-chip">Ethics</span><span class="tag-chip">ethics</span><span class="tag-chip">algorithmic</span><span class="tag-chip">visibility</span></div>
           <div class="hero-meta">
             <span>March 31, 2026</span>
             <span class="meta-line">•</span>
@@ -841,8 +990,18 @@
                 <span class="left"><i class="ph-fill ph-book-bookmark"></i><span>Index</span></span>
               </h2>
               <nav class="toc-links">
-                <a class="toc-link" href="#the-enshttification">The Enshttification</a><a class="toc-link" href="#the-translation-gap-and-the-distortion-norm">The Translation Gap and The Distortion Norm</a><a class="toc-link" href="#vanity-metrics-trust-and-how-to-talk-to-leadership">Vanity metrics, trust, and how to talk to leadership</a><a class="toc-link" href="#what-platforms-might-do-next">What platforms might do next</a>
+                <a class="toc-link" href="#the-enshttification" data-theme="purple"><span class="toc-link-number">01</span><span>The Ensh*ttification</span></a><a class="toc-link" href="#the-translation-gap-and-the-distortion-norm" data-theme="cyan"><span class="toc-link-number">02</span><span>The Translation Gap and The Distortion Norm</span></a><a class="toc-link" href="#vanity-metrics-trust-and-how-to-talk-to-leadership" data-theme="amber"><span class="toc-link-number">03</span><span>Vanity metrics, trust, and how to talk to leadership</span></a><a class="toc-link" href="#what-platforms-might-do-next" data-theme="fuchsia"><span class="toc-link-number">04</span><span>What platforms might do next</span></a>
               </nav>
+            </div>
+          </div>
+
+          <div class="panel signal-panel">
+            <div class="panel-body">
+              <h2 class="panel-title micro-label">
+                <span class="left"><i class="ph-duotone ph-waveform"></i><span>Dispatch Signal</span></span>
+              </h2>
+              <p class="signal-excerpt">Breaking down how the Meta and Google verdict changes the conversation around trust, attention, and building power online.</p>
+              <blockquote class="signal-quote">For as long as I have been online, I have believed that social and digital media could function as infrastructure for collective power.</blockquote>
             </div>
           </div>
 
@@ -855,27 +1014,27 @@
               <div class="visions-grid">
                 
     <a class="vision-link" href="#vision-1">
-      <i class="ph-duotone ph-image"></i>
+      <img src="https://substackcdn.com/image/fetch/$s_!yrIC!,w_1456,c_limit,f_auto,q_auto:good,fl_progressive:steep/https%3A%2F%2Fsubstack-post-media.s3.amazonaws.com%2Fpublic%2Fimages%2Fe399c98a-aa4a-4506-979f-63304599b96d_1600x900.png" alt="F1">
       <span class="vision-tag">F1</span>
     </a>
   
     <a class="vision-link" href="#vision-2">
-      <i class="ph-duotone ph-image"></i>
+      <i class="ph-duotone ph-play-circle"></i>
       <span class="vision-tag">F2</span>
     </a>
   
     <a class="vision-link" href="#vision-3">
-      <i class="ph-duotone ph-image"></i>
+      <img src="https://substackcdn.com/image/fetch/$s_!4cPg!,w_1456,c_limit,f_auto,q_auto:good,fl_progressive:steep/https%3A%2F%2Fsubstack-post-media.s3.amazonaws.com%2Fpublic%2Fimages%2F654ee122-aed2-431f-901e-7369bd98329b_1488x837.png" alt="F3">
       <span class="vision-tag">F3</span>
     </a>
   
     <a class="vision-link" href="#vision-4">
-      <i class="ph-duotone ph-image"></i>
+      <img src="https://substackcdn.com/image/fetch/$s_!I58G!,w_1456,c_limit,f_auto,q_auto:good,fl_progressive:steep/https%3A%2F%2Fsubstack-post-media.s3.amazonaws.com%2Fpublic%2Fimages%2Fe51c2dd3-0cb2-451a-bdf5-b2d90b1f7bd0_1600x900.png" alt="F4">
       <span class="vision-tag">F4</span>
     </a>
   
     <a class="vision-link" href="#vision-5">
-      <i class="ph-duotone ph-image"></i>
+      <img src="https://substackcdn.com/image/fetch/$s_!cYlU!,w_1456,c_limit,f_auto,q_auto:good,fl_progressive:steep/https%3A%2F%2Fsubstack-post-media.s3.amazonaws.com%2Fpublic%2Fimages%2F2922c19a-73b7-4a04-89ea-e03551b864bd_1600x900.png" alt="F5">
       <span class="vision-tag">F5</span>
     </a>
   
@@ -890,9 +1049,13 @@
               </h2>
               <p class="subscription-copy">Receive encrypted dispatches, strategy notes, and fresh writing without leaving the archive.</p>
               <div class="substack-embed-wrap">
+                <div class="substack-embed-chrome">
+                  <span>Signal Intake</span>
+                  <span>Embedded Substack</span>
+                </div>
                 <iframe class="substack-embed" src="https://thealgorithmwitch.substack.com/embed" loading="lazy" scrolling="no" frameborder="0" title="Subscribe to The Algorithm Witch on Substack"></iframe>
               </div>
-              <p class="substack-fallback">If the embed is blocked, <a href="https://thealgorithmwitch.substack.com/" target="_blank" rel="noopener noreferrer">subscribe directly on Substack</a>.</p>
+              <p class="substack-fallback">If the embed is blocked, <a href="https://thealgorithmwitch.substack.com/p/the-ethics-of-algorithmic-visibility" target="_blank" rel="noopener noreferrer">view the original dispatch</a> or <a href="https://thealgorithmwitch.substack.com/" target="_blank" rel="noopener noreferrer">subscribe directly on Substack</a>.</p>
             </div>
           </div>
         </aside>
@@ -904,41 +1067,51 @@
             <button type="button" data-copy-link="https://thealgorithmwitch.com/blog/ethics-of-algorithmic-visibility.html" aria-label="Copy link"><i class="ph-bold ph-link"></i></button>
           </div>
 
-          <article class="article-body">
-            <p>For as long as I have been online, I have believed that social and digital media could function as infrastructure for collective power. I have dreamed of a world where people can recognize themselves in an issue, understand how to participate, and find others doing the same work with ease. But I also interrogate that belief, and how it holds up against the systems that shape how information moves in reality. I find that my dreams are fundamentally at odds with the companies that built the systems that distribute information, systems deliberately designed to optimize for attention patterns that undermine how complex, trust-based learning develops over time.</p><p>Platform design is at the center of how content travels, because the same systems that surface content also shape what kinds of messages can survive long enough to be understood. The <strong><a href="https://www.reuters.com/legal/litigation/jury-reaches-verdict-meta-google-trial-social-media-addiction-2026-03-25/">recent jury verdict holding Meta and Google liable for harm tied to addictive design</a></strong> makes clear that platforms are deliberately structured to distribute information in ways that reinforce compulsive engagement.</p><p>In March 2026, A <strong><a href="https://apnews.com/article/social-media-addiction-trial-la-5e54075023d837ccdc76c4ca512e925d">California jury evaluated a case involving a young user who began using YouTube at age six and Instagram at age nine</a></strong>. The first trial of its kind to focus on <strong>platform design as a source of harm</strong>, this changes the conversation around building collective power online as we reconcile how platforms determine what is repeatedly shown, amplified, and reinforced over time.</p><p>Distribution operates through accumulation, where repeated signals train both the user and the model. <strong><a href="/blog/posting-less-wont-save-you.html">Platforms require consistent input to classify and expand reach.</a></strong> Meaning, visibility is produced, not guaranteed, through sustained interaction between content and the platform.</p><figure id="vision-1"><img src="https://substackcdn.com/image/fetch/$s_!yrIC!,w_1456,c_limit,f_auto,q_auto:good,fl_progressive:steep/https%3A%2F%2Fsubstack-post-media.s3.amazonaws.com%2Fpublic%2Fimages%2Fe399c98a-aa4a-4506-979f-63304599b96d_1600x900.png" alt=""></figure><p>The ethical question begins inside the attention loop. Algorithms reinforce the behaviors that sustain attention, where emotional intensity, simplicity, and immediacy generate stronger signals than context-heavy or slower-moving information. Across platform data, <strong><a href="/blog/short-form-video-market-oversaturated.html">content supply has expanded faster than attention capacity due to AI-generated production</a></strong>, creating denser feeds that require stronger filtering and prediction platforms. In turn, platforms prioritize signals that can be measured quickly such as watch time, completion, and interaction velocity. As density increases, distribution thresholds tighten, and the kinds of content that travel most efficiently are those that resolve quickly for both the platform and the viewer. <strong><a href="/blog/short-form-video-market-oversaturated.html">Short-form video shows how this compression operates across the market</a></strong>, where publishing volume increased by over 70% while reach per post declined. More content enters the platform without expanding the amount of attention available to absorb it. This dynamic creates <strong>a translation gap</strong> for work that depends on cumulative understanding, sustained trust, and layered context. Climate, clean energy, and advocacy topics don&#8217;t always compress cleanly into high-velocity signals, and the language required to explain them often loses coherence as it moves through platforms designed for rapid classification and retention.</p><p>As content volume increases and attention remains fixed, the threshold for visibility rises. Clarity becomes a classification advantage, because platforms are more likely to distribute content that can be mapped cleanly to a topic. Ambiguity or complexity reduces the probability of expansion, which reinforces the attention loop, by simplifying narratives to travel further and shape audience expectations. This loop continues to shape how people encounter issues for the first time. <strong><a href="/blog/future-is-community-led.html">Language tied to lived experience carries more weight in early attention, while institutional framing organizes the work internally but does not always translate into participation externally, creating a translation gap between recognition and entry.</a></strong></p><p>The recent Meta and Youtube verdicts brings the translation gap into the conversation around platform design, because if platforms can be evaluated based on the behavioral outcomes they produce, then the distribution platforms shaping public understanding of social issues become part of that same ethical landscape.</p><p>The ethics of algorithmic visibility emerge from how that landscape is constructed, each decision about framing, pacing, and format influences whether someone can locate themselves inside the issue, whether they can trust what they are seeing, and whether there is a visible way to act on it. In this environment, ethical strategy starts with designing language and structure that can survive inside these platforms while preserving the pathways to understanding and participation that collective power depends on.</p><h2 id="the-enshttification">The Ensh*ttification</h2><figure id="vision-2"><iframe src="https://www.youtube-nocookie.com/embed/T4Upf_B9RLQ?rel=0&amp;autoplay=0&amp;showinfo=0&amp;enablejsapi=0" frameborder="0" gesture="media" allow="autoplay; fullscreen" allowautoplay="true" allowfullscreen="true"></iframe></figure><p>We must also consider the economic incentives shaping these platforms. Cory Doctorow has described the results of these incentives as <strong><a href="https://www.newyorker.com/culture/infinite-scroll/the-age-of-enshittification">Ensh*ttification</a></strong>, where platforms stop optimizing for user experience and switch to extracting increasing value from attention. Over time, this lifecycle has reshaped how feeds prioritize and distribute content.</p><figure id="vision-3"><img src="https://substackcdn.com/image/fetch/$s_!4cPg!,w_1456,c_limit,f_auto,q_auto:good,fl_progressive:steep/https%3A%2F%2Fsubstack-post-media.s3.amazonaws.com%2Fpublic%2Fimages%2F654ee122-aed2-431f-901e-7369bd98329b_1488x837.png" alt=""></figure><p>As economic incentives grow, the same mechanisms that drive engagement also function as extraction, prioritizing content that sustains attention even when it compresses complexity. This explains why we have platforms engineered to create compulsive behavior and reinforce content that aligns with economic incentives. Users are left to fend for themselves across platforms that make it impossible to meaningfully distinguish between what users would chose to engage with and what has been engineered to hold their attention.</p><h3 id="the-translation-gap-and-the-distortion-norm">The Translation Gap and The Distortion Norm</h3><p>The translation gap is formed when ideas are compressed as they enter platforms. Translation allows a message to align with the pace and structure of a feed while maintaining its internal coherence. Distortion is when the message itself is reshaped to fit the signals a platform rewards. This becomes the norm when platforms reward high-velocity reaction over retention.</p><figure id="vision-4"><img src="https://substackcdn.com/image/fetch/$s_!I58G!,w_1456,c_limit,f_auto,q_auto:good,fl_progressive:steep/https%3A%2F%2Fsubstack-post-media.s3.amazonaws.com%2Fpublic%2Fimages%2Fe51c2dd3-0cb2-451a-bdf5-b2d90b1f7bd0_1600x900.png" alt=""></figure><p>Every platform imposes constraints that require translation: short-form video compresses time, feeds prioritize immediacy, and ranking platforms depend on early interaction signals. This does require that information <strong>be structured in ways that can be recognized quickly</strong>. This process <strong>can</strong> still preserve the pathways someone needs to follow the issue further, <strong><a href="/blog/short-form-video-market-oversaturated.html">especially when it connects to deeper context across formats</a></strong>. Distortion becomes normalized when the structure of the platform determines the substance of the message, which appears in practices that generate signals without building understanding, including rage-bait, performative controversy, and false urgency.</p><p>Rage-bait aligns directly with how ranking platforms operate, because replies, shares, and rapid interaction loops act as distribution inputs. <strong><a href="/blog/posting-less-wont-save-you.html">Conversation signals increasingly influence reach across platforms</a></strong>, which creates a direct incentive to produce content that generates immediate response even if that response does not deepen comprehension. The same pattern extends into performative controversy and false urgency, where stakes are elevated to accelerate attention cycles, allowing content to pass through algorithmic thresholds more quickly, while the underlying issue becomes secondary to the reaction it produces, which shifts the role of communication from informing participation to sustaining visibility. Repeated exposure to reactive framing establishes expectations about how an issue should be encountered, which then influences how future content is interpreted, shared, and engaged with, reinforcing an attention loop where simplification becomes the dominant entry point.</p><p>Platforms that reward retention and interaction at scale create conditions where distortion can operate as an effective growth strategy, even as it narrows the range of understanding available to the audience. The consequence appears in the type of community that forms, where entry points built on reaction tend to produce participation that remains at the level of response, limiting the ability to carry people from awareness into sustained involvement with complex issues. For organizations working on long-term challenges, the way an issue is introduced determines whether someone can locate themselves within it and whether the next step is visible, which ties participation in your broader work directly to how your language maps across platforms and access.</p><p>An ethical strategy operates within these constraints by adapting in support of recognition while preserving the structure needed for action, ensuring that translation maintains coherence rather than reorganizing the issue around the signals required for visibility.</p></form></div><h3 id="vanity-metrics-trust-and-how-to-talk-to-leadership">Vanity metrics, trust, and how to talk to leadership</h3><p>This becomes visible in how metrics are interpreted once content enters reporting structures, because likes, views, and reach are often treated as outcomes when they are actually traces of different kinds of behavior occurring inside a platform that measures interaction more easily than understanding.</p><figure id="vision-5"><img src="https://substackcdn.com/image/fetch/$s_!cYlU!,w_1456,c_limit,f_auto,q_auto:good,fl_progressive:steep/https%3A%2F%2Fsubstack-post-media.s3.amazonaws.com%2Fpublic%2Fimages%2F2922c19a-73b7-4a04-89ea-e03551b864bd_1600x900.png" alt=""></figure><p>Each metric carries a distinct function tied to how platforms organize visibility. Where a like reflects recognition within an existing network, a share or send reflects relevance strong enough to pass into someone else&#8217;s immediate context, and a comment reflects an entry into conversation that can carry agreement, disagreement, or curiosity. Overall, these signals describe movement inside the feed instead of comprehension outside the platform.</p><p>Platform design separates interaction from interpretation, allowing content to accumulate high visibility through signals that don&#8217;t require someone to fully process what they are seeing. This is intensified in environments where attention is fragmented and exposure happens in rapid sequence, which reinforces the translation gap between what travels and what lands. Platforms also increasingly rely on behavioral signals like replies, dwell time, and engagement probability to determine distribution, which means the metrics available to organizations are optimized for what the platform can observe rather than what the organization ultimately needs to know about participation or understanding.</p><p>The most useful way to frame metrics is in terms of the type of behavior they capture. Network signals such as likes indicate support among people already proximate to the organization. Distribution signals such as reach indicate how far content traveled through recommendation platforms. Neither of these alone confirms whether someone can locate themselves within the issue or understand what to do next. This is where platform logic reinforces the need for translation. Platforms differentiate between content that circulates within known networks and content that expands into new audiences, and those two forms of movement produce different kinds of feedback that cannot be collapsed into a single measure of success.</p><p>Ethical visibility appears when these metrics are used as proxies for trust or action, because equating interaction with impact obscures whether the communication is actually enabling participation, which is the outcome most mission-driven organizations are trying to achieve. Reframe metrics as signals tied to specific roles within the platform, where likes indicate recognition, shares indicate peer-level relevance, comments indicate conversational entry, and actions such as clicks, signups, replies, or event participation indicate movement beyond the platform into forms of engagement that require higher levels of understanding. This situates vanity metrics within a broader structure which is advantageous because they remain necessary inputs for distribution and provide early feedback on how content is being received. To align vanity metrics with participation, shift from how content performed inside the platform to how communication functions across platforms, where the central question becomes whether the audience can recognize their place within the issue and whether the next step is visible once that recognition occurs.</p><h3 id="what-platforms-might-do-next">What platforms might do next</h3><p>Across platforms, the ethics of algorithmic visibility continues to resolve through user behavior, where attention follows what feels immediately legible within a feed and trust forms through proximity to people, communities, or experiences that already carry meaning, which creates an environment where discovery, advertising, and participation operate as a continuous surface.</p><p>If that direction continues, social impact communication may encounter a different set of incentives, where clarity, consistency, and relational trust become more aligned with platform objectives, yet that alignment remains uncertain and dependent on how platforms interpret safety in relation to engagement.</p><p>What remains consistent across these changes is the condition that strategy must account for how people enter the work, because entry determines whether recognition occurs and whether participation becomes possible, which means designing for reach without recognition limits the ability to build sustained engagement.</p><p>Visibility is just a starting point that must connect to clarity, where the goal is not only to appear in the feed but to remain understandable within it, allowing someone to locate themselves inside the issue and see a path forward that extends beyond the initial interaction.</p><p>If the mechanics that drive virality are the same ones being examined as sources of harm, then ethical visibility must account for how to build trust and collective power within platforms that were not designed for either, and the answer will depend on whether communication can remain legible, actionable, and grounded as it moves through the environments that shape what people see and how they respond.</p></form></div>
+          <article class="article-body" id="top">
+            <section class="article-section article-section-intro theme-purple" data-section-id="top" data-number="00"><p>For as long as I have been online, I have believed that social and digital media could function as infrastructure for collective power. I have dreamed of a world where people can recognize themselves in an issue, understand how to participate, and find others doing the same work with ease. But I also interrogate that belief, and how it holds up against the systems that shape how information moves in reality. I find that my dreams are fundamentally at odds with the companies that built the systems that distribute information, systems deliberately designed to optimize for attention patterns that undermine how complex, trust-based learning develops over time.</p><p>Platform design is at the center of how content travels, because the same systems that surface content also shape what kinds of messages can survive long enough to be understood. The <strong><a href="https://www.reuters.com/legal/litigation/jury-reaches-verdict-meta-google-trial-social-media-addiction-2026-03-25/">recent jury verdict holding Meta and Google liable for harm tied to addictive design</a></strong> makes clear that platforms are deliberately structured to distribute information in ways that reinforce compulsive engagement.</p><p>In March 2026, A <strong><a href="https://apnews.com/article/social-media-addiction-trial-la-5e54075023d837ccdc76c4ca512e925d">California jury evaluated a case involving a young user who began using YouTube at age six and Instagram at age nine</a></strong>. The first trial of its kind to focus on <strong>platform design as a source of harm</strong>, this changes the conversation around building collective power online as we reconcile how platforms determine what is repeatedly shown, amplified, and reinforced over time.</p><p>Distribution operates through accumulation, where repeated signals train both the user and the model. <strong><a href="/blog/posting-less-wont-save-you.html">Platforms require consistent input to classify and expand reach.</a></strong> Meaning, visibility is produced, not guaranteed, through sustained interaction between content and the platform.</p><figure id="vision-1" class="article-figure theme-purple"><img src="https://substackcdn.com/image/fetch/$s_!yrIC!,w_1456,c_limit,f_auto,q_auto:good,fl_progressive:steep/https%3A%2F%2Fsubstack-post-media.s3.amazonaws.com%2Fpublic%2Fimages%2Fe399c98a-aa4a-4506-979f-63304599b96d_1600x900.png" alt=""><figcaption><span class="figure-caption-index">Figure 01</span><span class="figure-caption-text">Visual reference</span></figcaption></figure><p>The ethical question begins inside the attention loop. Algorithms reinforce the behaviors that sustain attention, where emotional intensity, simplicity, and immediacy generate stronger signals than context-heavy or slower-moving information. Across platform data, <strong><a href="/blog/short-form-video-market-oversaturated.html">content supply has expanded faster than attention capacity due to AI-generated production</a></strong>, creating denser feeds that require stronger filtering and prediction platforms. In turn, platforms prioritize signals that can be measured quickly such as watch time, completion, and interaction velocity. As density increases, distribution thresholds tighten, and the kinds of content that travel most efficiently are those that resolve quickly for both the platform and the viewer. <strong><a href="/blog/short-form-video-market-oversaturated.html">Short-form video shows how this compression operates across the market</a></strong>, where publishing volume increased by over 70% while reach per post declined. More content enters the platform without expanding the amount of attention available to absorb it. This dynamic creates <strong>a translation gap</strong> for work that depends on cumulative understanding, sustained trust, and layered context. Climate, clean energy, and advocacy topics don&#8217;t always compress cleanly into high-velocity signals, and the language required to explain them often loses coherence as it moves through platforms designed for rapid classification and retention.</p><p>As content volume increases and attention remains fixed, the threshold for visibility rises. Clarity becomes a classification advantage, because platforms are more likely to distribute content that can be mapped cleanly to a topic. Ambiguity or complexity reduces the probability of expansion, which reinforces the attention loop, by simplifying narratives to travel further and shape audience expectations. This loop continues to shape how people encounter issues for the first time. <strong><a href="/blog/future-is-community-led.html">Language tied to lived experience carries more weight in early attention, while institutional framing organizes the work internally but does not always translate into participation externally, creating a translation gap between recognition and entry.</a></strong></p><p>The recent Meta and Youtube verdicts brings the translation gap into the conversation around platform design, because if platforms can be evaluated based on the behavioral outcomes they produce, then the distribution platforms shaping public understanding of social issues become part of that same ethical landscape.</p><p>The ethics of algorithmic visibility emerge from how that landscape is constructed, each decision about framing, pacing, and format influences whether someone can locate themselves inside the issue, whether they can trust what they are seeing, and whether there is a visible way to act on it. In this environment, ethical strategy starts with designing language and structure that can survive inside these platforms while preserving the pathways to understanding and participation that collective power depends on.</p></section>
+<section class="article-section theme-purple" data-section-id="the-enshttification" data-number="01" data-theme="purple"><h2 id="the-enshttification" class="section-heading"><span class="section-number">01</span><span class="section-heading-text">The Ensh*ttification</span></h2><figure id="vision-2" class="article-figure theme-cyan"><iframe src="https://www.youtube-nocookie.com/embed/T4Upf_B9RLQ?rel=0&amp;autoplay=0&amp;showinfo=0&amp;enablejsapi=0" frameborder="0" gesture="media" allow="autoplay; fullscreen" allowautoplay="true" allowfullscreen="true"></iframe><figcaption><span class="figure-caption-index">Figure 02</span><span class="figure-caption-text">Embedded reference</span></figcaption></figure><p>We must also consider the economic incentives shaping these platforms. Cory Doctorow has described the results of these incentives as <strong><a href="https://www.newyorker.com/culture/infinite-scroll/the-age-of-enshittification">Ensh*ttification</a></strong>, where platforms stop optimizing for user experience and switch to extracting increasing value from attention. Over time, this lifecycle has reshaped how feeds prioritize and distribute content.</p><figure id="vision-3" class="article-figure theme-amber"><img src="https://substackcdn.com/image/fetch/$s_!4cPg!,w_1456,c_limit,f_auto,q_auto:good,fl_progressive:steep/https%3A%2F%2Fsubstack-post-media.s3.amazonaws.com%2Fpublic%2Fimages%2F654ee122-aed2-431f-901e-7369bd98329b_1488x837.png" alt=""><figcaption><span class="figure-caption-index">Figure 03</span><span class="figure-caption-text">Visual reference</span></figcaption></figure><p>As economic incentives grow, the same mechanisms that drive engagement also function as extraction, prioritizing content that sustains attention even when it compresses complexity. This explains why we have platforms engineered to create compulsive behavior and reinforce content that aligns with economic incentives. Users are left to fend for themselves across platforms that make it impossible to meaningfully distinguish between what users would chose to engage with and what has been engineered to hold their attention.</p></section>
+<section class="article-section theme-cyan" data-section-id="the-translation-gap-and-the-distortion-norm" data-number="02" data-theme="cyan"><h3 id="the-translation-gap-and-the-distortion-norm" class="section-heading"><span class="section-number">02</span><span class="section-heading-text">The Translation Gap and The Distortion Norm</span></h3><p>The translation gap is formed when ideas are compressed as they enter platforms. Translation allows a message to align with the pace and structure of a feed while maintaining its internal coherence. Distortion is when the message itself is reshaped to fit the signals a platform rewards. This becomes the norm when platforms reward high-velocity reaction over retention.</p><figure id="vision-4" class="article-figure theme-fuchsia"><img src="https://substackcdn.com/image/fetch/$s_!I58G!,w_1456,c_limit,f_auto,q_auto:good,fl_progressive:steep/https%3A%2F%2Fsubstack-post-media.s3.amazonaws.com%2Fpublic%2Fimages%2Fe51c2dd3-0cb2-451a-bdf5-b2d90b1f7bd0_1600x900.png" alt=""><figcaption><span class="figure-caption-index">Figure 04</span><span class="figure-caption-text">Visual reference</span></figcaption></figure><p>Every platform imposes constraints that require translation: short-form video compresses time, feeds prioritize immediacy, and ranking platforms depend on early interaction signals. This does require that information <strong>be structured in ways that can be recognized quickly</strong>. This process <strong>can</strong> still preserve the pathways someone needs to follow the issue further, <strong><a href="/blog/short-form-video-market-oversaturated.html">especially when it connects to deeper context across formats</a></strong>. Distortion becomes normalized when the structure of the platform determines the substance of the message, which appears in practices that generate signals without building understanding, including rage-bait, performative controversy, and false urgency.</p><p>Rage-bait aligns directly with how ranking platforms operate, because replies, shares, and rapid interaction loops act as distribution inputs. <strong><a href="/blog/posting-less-wont-save-you.html">Conversation signals increasingly influence reach across platforms</a></strong>, which creates a direct incentive to produce content that generates immediate response even if that response does not deepen comprehension. The same pattern extends into performative controversy and false urgency, where stakes are elevated to accelerate attention cycles, allowing content to pass through algorithmic thresholds more quickly, while the underlying issue becomes secondary to the reaction it produces, which shifts the role of communication from informing participation to sustaining visibility. Repeated exposure to reactive framing establishes expectations about how an issue should be encountered, which then influences how future content is interpreted, shared, and engaged with, reinforcing an attention loop where simplification becomes the dominant entry point.</p><p>Platforms that reward retention and interaction at scale create conditions where distortion can operate as an effective growth strategy, even as it narrows the range of understanding available to the audience. The consequence appears in the type of community that forms, where entry points built on reaction tend to produce participation that remains at the level of response, limiting the ability to carry people from awareness into sustained involvement with complex issues. For organizations working on long-term challenges, the way an issue is introduced determines whether someone can locate themselves within it and whether the next step is visible, which ties participation in your broader work directly to how your language maps across platforms and access.</p><p>An ethical strategy operates within these constraints by adapting in support of recognition while preserving the structure needed for action, ensuring that translation maintains coherence rather than reorganizing the issue around the signals required for visibility.</p></section>
+<section class="article-section theme-amber" data-section-id="vanity-metrics-trust-and-how-to-talk-to-leadership" data-number="03" data-theme="amber"><h3 id="vanity-metrics-trust-and-how-to-talk-to-leadership" class="section-heading"><span class="section-number">03</span><span class="section-heading-text">Vanity metrics, trust, and how to talk to leadership</span></h3><p>This becomes visible in how metrics are interpreted once content enters reporting structures, because likes, views, and reach are often treated as outcomes when they are actually traces of different kinds of behavior occurring inside a platform that measures interaction more easily than understanding.</p><figure id="vision-5" class="article-figure theme-purple"><img src="https://substackcdn.com/image/fetch/$s_!cYlU!,w_1456,c_limit,f_auto,q_auto:good,fl_progressive:steep/https%3A%2F%2Fsubstack-post-media.s3.amazonaws.com%2Fpublic%2Fimages%2F2922c19a-73b7-4a04-89ea-e03551b864bd_1600x900.png" alt=""><figcaption><span class="figure-caption-index">Figure 05</span><span class="figure-caption-text">Visual reference</span></figcaption></figure><p>Each metric carries a distinct function tied to how platforms organize visibility. Where a like reflects recognition within an existing network, a share or send reflects relevance strong enough to pass into someone else&#8217;s immediate context, and a comment reflects an entry into conversation that can carry agreement, disagreement, or curiosity. Overall, these signals describe movement inside the feed instead of comprehension outside the platform.</p><p>Platform design separates interaction from interpretation, allowing content to accumulate high visibility through signals that don&#8217;t require someone to fully process what they are seeing. This is intensified in environments where attention is fragmented and exposure happens in rapid sequence, which reinforces the translation gap between what travels and what lands. Platforms also increasingly rely on behavioral signals like replies, dwell time, and engagement probability to determine distribution, which means the metrics available to organizations are optimized for what the platform can observe rather than what the organization ultimately needs to know about participation or understanding.</p><p>The most useful way to frame metrics is in terms of the type of behavior they capture. Network signals such as likes indicate support among people already proximate to the organization. Distribution signals such as reach indicate how far content traveled through recommendation platforms. Neither of these alone confirms whether someone can locate themselves within the issue or understand what to do next. This is where platform logic reinforces the need for translation. Platforms differentiate between content that circulates within known networks and content that expands into new audiences, and those two forms of movement produce different kinds of feedback that cannot be collapsed into a single measure of success.</p><p>Ethical visibility appears when these metrics are used as proxies for trust or action, because equating interaction with impact obscures whether the communication is actually enabling participation, which is the outcome most mission-driven organizations are trying to achieve. Reframe metrics as signals tied to specific roles within the platform, where likes indicate recognition, shares indicate peer-level relevance, comments indicate conversational entry, and actions such as clicks, signups, replies, or event participation indicate movement beyond the platform into forms of engagement that require higher levels of understanding. This situates vanity metrics within a broader structure which is advantageous because they remain necessary inputs for distribution and provide early feedback on how content is being received. To align vanity metrics with participation, shift from how content performed inside the platform to how communication functions across platforms, where the central question becomes whether the audience can recognize their place within the issue and whether the next step is visible once that recognition occurs.</p></section>
+<section class="article-section theme-fuchsia" data-section-id="what-platforms-might-do-next" data-number="04" data-theme="fuchsia"><h3 id="what-platforms-might-do-next" class="section-heading"><span class="section-number">04</span><span class="section-heading-text">What platforms might do next</span></h3><p>Across platforms, the ethics of algorithmic visibility continues to resolve through user behavior, where attention follows what feels immediately legible within a feed and trust forms through proximity to people, communities, or experiences that already carry meaning, which creates an environment where discovery, advertising, and participation operate as a continuous surface.</p><p>If that direction continues, social impact communication may encounter a different set of incentives, where clarity, consistency, and relational trust become more aligned with platform objectives, yet that alignment remains uncertain and dependent on how platforms interpret safety in relation to engagement.</p><p>What remains consistent across these changes is the condition that strategy must account for how people enter the work, because entry determines whether recognition occurs and whether participation becomes possible, which means designing for reach without recognition limits the ability to build sustained engagement.</p><p>Visibility is just a starting point that must connect to clarity, where the goal is not only to appear in the feed but to remain understandable within it, allowing someone to locate themselves inside the issue and see a path forward that extends beyond the initial interaction.</p><p>If the mechanics that drive virality are the same ones being examined as sources of harm, then ethical visibility must account for how to build trust and collective power within platforms that were not designed for either, and the answer will depend on whether communication can remain legible, actionable, and grounded as it moves through the environments that shape what people see and how they respond.</p></div></section>
           </article>
 
-          <section class="panel article-cta">
+          <section class="article-cta">
             <h2>Keep the Grimoire Open.</h2>
             <p>Stay close to future essays through Substack, support the archive with a paid membership, or bring the same clarity into your own communications system.</p>
             <div class="cta-buttons">
               <a class="button-link" href="https://thealgorithmwitch.substack.com/" target="_blank" rel="noopener noreferrer">Subscribe on Substack</a>
               <a class="button-link" href="https://thealgorithmwitch.substack.com/" target="_blank" rel="noopener noreferrer">Become a Paid Member</a>
-              <a class="button-link" href="https://thealgorithmwitch.com/summon.html">Book a Consultation</a>
+              <a class="button-link" href="/summon.html">Book a Consultation</a>
             </div>
           </section>
 
-          <nav class="post-nav" aria-label="More posts">
-            <span><div class="micro-label">Newer</div><strong>No newer post</strong></span><a href="/blog/future-is-community-led.html"><div class="micro-label">Older</div><strong>The Future Is Community-Led</strong></a>
+          <nav class="dispatch-rail" aria-label="More dispatches">
+            <a class="dispatch-link older" href="/blog/future-is-community-led.html"><div class="micro-label">Older Dispatch</div><strong>The Future Is Community-Led</strong></a>
+    <div class="dispatch-socials" aria-label="Social links">
+      <a href="https://www.linkedin.com/in/cassandrearkema/" target="_blank" rel="noopener noreferrer" aria-label="LinkedIn"><i class="ph-fill ph-linkedin-logo"></i></a>
+      <a href="https://substack.com/@thealgorithmwitch" target="_blank" rel="noopener noreferrer" aria-label="Substack"><i class="ph-fill ph-substack-logo"></i></a>
+      <a href="https://www.instagram.com/thealgorithmwitch" target="_blank" rel="noopener noreferrer" aria-label="Instagram"><i class="ph-fill ph-instagram-logo"></i></a>
+    </div>
+  <span class="dispatch-empty next"><div class="micro-label">Newer Dispatch</div><strong>No newer dispatch</strong></span>
           </nav>
 
           <section class="related-section">
             <h2>Related Dispatches</h2>
             <div class="related-grid">
               
-      <a class="related-card" href="/blog/future-is-community-led.html">
+      <a class="related-card theme-purple" href="/blog/future-is-community-led.html">
         <div class="micro-label">Community</div>
         <h3>The Future Is Community-Led</h3>
         <p>What 320 climate websites and four platforms revealed about where this movement is going.</p>
       </a>
     
-      <a class="related-card" href="/blog/posting-less-wont-save-you.html">
+      <a class="related-card theme-cyan" href="/blog/posting-less-wont-save-you.html">
         <div class="micro-label">Dispatch</div>
         <h3>Posting Less Won’t Save You</h3>
         <p>aligning content to find its people | algorithm lore + digital patterns 🧄</p>
       </a>
     
-      <a class="related-card" href="/blog/born-to-scroll.html">
+      <a class="related-card theme-amber" href="/blog/born-to-scroll.html">
         <div class="micro-label">Platforms</div>
         <h3>Born to Scroll</h3>
         <p>Since 2018, platforms like TikTok, Instagram, and Twitter trained billions of people to navigate information through continuous vertical motion. By Cassandre Arkema</p>
@@ -963,19 +1136,57 @@
   </div>
 
   <script>
-    document.querySelectorAll('[data-copy-link]').forEach((button) => {
-      button.addEventListener('click', async () => {
-        const value = button.getAttribute('data-copy-link');
+    document.querySelectorAll('[data-copy-link]').forEach(function (button) {
+      button.addEventListener('click', async function () {
+        var value = button.getAttribute('data-copy-link');
         try {
           await navigator.clipboard.writeText(value);
-          const original = button.innerHTML;
+          var original = button.innerHTML;
           button.innerHTML = '<i class="ph-bold ph-check"></i>';
-          setTimeout(() => { button.innerHTML = original; }, 1200);
+          setTimeout(function () { button.innerHTML = original; }, 1200);
         } catch (error) {
           window.open(value, '_blank', 'noopener');
         }
       });
     });
+
+    var tocLinks = Array.prototype.slice.call(document.querySelectorAll('.toc-link[href^="#"]'));
+    var sections = Array.prototype.slice.call(document.querySelectorAll('.article-section[data-section-id]'));
+
+    function setActiveSection(id) {
+      sections.forEach(function (section) {
+        section.classList.toggle('is-active', section.getAttribute('data-section-id') === id);
+      });
+      tocLinks.forEach(function (link) {
+        link.classList.toggle('active', link.getAttribute('href') === '#' + id);
+      });
+    }
+
+    tocLinks.forEach(function (link) {
+      link.addEventListener('click', function () {
+        var id = link.getAttribute('href').slice(1);
+        setActiveSection(id);
+      });
+    });
+
+    var observer = new IntersectionObserver(function (entries) {
+      var visible = entries
+        .filter(function (entry) { return entry.isIntersecting; })
+        .sort(function (a, b) { return b.intersectionRatio - a.intersectionRatio; })[0];
+      if (!visible) return;
+      setActiveSection(visible.target.getAttribute('data-section-id'));
+    }, {
+      rootMargin: '-22% 0px -46% 0px',
+      threshold: [0.12, 0.35, 0.6]
+    });
+
+    sections.forEach(function (section) {
+      observer.observe(section);
+    });
+
+    if (sections.length) {
+      setActiveSection(sections[0].getAttribute('data-section-id'));
+    }
   </script>
 </body>
 </html>

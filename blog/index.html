@@ -1882,9 +1882,24 @@ video {
                 <a href="/services/" class="nav-link hover:text-white transition-colors" vid="26">Offerings</a>
             </div>
 
-            <a href="/summon.html" class="hidden md:inline-flex items-center justify-center px-6 py-2 bg-purple-500/10 hover:bg-purple-500/20 border border-purple-500/30 rounded-full text-xs uppercase tracking-widest text-white transition-all hover:scale-105 hover:border-purple-400" vid="27">
+            <a href="/summon.html" class="hidden md:inline-flex items-center justify-center px-6 py-2 bg-purple-500/10 hover:bg-purple-500/20 border border-purple-500/30 rounded-full text-xs uppercase tracking-widest text-white transition-all hover:scale-105" vid="27">
                 Summon Me
             </a>
+
+            <button id="menuButton" class="md:hidden text-white text-2xl" aria-expanded="false" aria-controls="mobileMenu" aria-label="Open menu">
+                <i class="ph ph-list"></i>
+            </button>
+        </div>
+
+        <div id="mobileMenu" class="md:hidden hidden mt-3 mx-auto max-w-7xl glass-panel rounded-2xl px-6 py-4">
+            <div class="flex flex-col gap-4 text-xs uppercase tracking-[0.2em] text-gray-300 font-medium">
+                <a href="/#origins" class="nav-link hover:text-white transition-colors">Origins</a>
+                <a href="/blog/" class="nav-link active hover:text-white transition-colors">Writings</a>
+                <a href="/services/" class="nav-link hover:text-white transition-colors">Offerings</a>
+                <a href="/summon.html" class="mt-2 inline-flex items-center justify-center px-6 py-3 bg-purple-500/10 hover:bg-purple-500/20 border border-purple-500/30 rounded-full text-xs uppercase tracking-widest text-white transition-all">
+                    Summon Me <i class="ph-bold ph-arrow-right ml-2"></i>
+                </a>
+            </div>
         </div>
     </nav>
 
@@ -1968,7 +1983,7 @@ video {
                 <div class="relative z-10 p-10 md:p-14">
                     <div class="text-center mb-12">
                         <span class="text-purple-400 uppercase tracking-[0.3em] text-xs font-bold mb-3 block">Offerings &amp; Incantations</span>
-                        <h2 class="font-magical text-4xl md:text-5xl text-white mb-4">The <span class="text-glow-gold">Service</span> Menu</h2>
+                        <h2 class="font-magical text-4xl md:text-5xl text-white mb-4">The <span class="text-gradient-gold">Service</span> Menu</h2>
                         <p class="font-serif-heading italic text-purple-200/60 text-lg max-w-xl mx-auto">Bespoke digital alchemy tailored to amplify your mission, strengthen your signal, and sharpen your public presence.</p>
                     </div>
 
@@ -2082,8 +2097,12 @@ video {
 
     <script vid="238">
         
+        const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+        const isSmallScreen = window.matchMedia('(max-width: 768px)').matches;
+        const canHover = window.matchMedia('(hover: hover) and (pointer: fine)').matches;
+
         const starContainer = document.getElementById('stars-container');
-        const starCount = window.innerWidth > 768 ? 200 : 100;
+        const starCount = prefersReducedMotion ? 0 : (isSmallScreen ? 100 : 200);
 
         for (let i = 0; i < starCount; i++) {
             const star = document.createElement('div');
@@ -2124,8 +2143,6 @@ video {
         })();
 
         (function () {
-            const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-            const canHover = window.matchMedia('(hover: hover) and (pointer: fine)').matches;
             if (!canHover || prefersReducedMotion) return;
 
             const cards = Array.from(document.querySelectorAll('.glass-card'));
@@ -2173,16 +2190,53 @@ video {
             });
         })();
 
-        const observerOptions = { root: null, rootMargin: '0px', threshold: 0.1 };
-        const observer = new IntersectionObserver((entries, observerRef) => {
-            entries.forEach(entry => {
-                if (entry.isIntersecting) {
-                    entry.target.classList.add('is-visible');
-                    observerRef.unobserve(entry.target);
-                }
+        const revealTargets = Array.from(document.querySelectorAll('.fade-in-up, .section-fade-up'));
+        if (prefersReducedMotion) {
+            revealTargets.forEach((el) => {
+                el.classList.add('is-visible');
+                el.classList.add('visible');
             });
-        }, observerOptions);
-        document.querySelectorAll('.fade-in-up, .section-fade-up').forEach(el => observer.observe(el));
+        } else {
+            const observerOptions = { root: null, rootMargin: '0px 0px -10% 0px', threshold: 0.01 };
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach((entry) => {
+                    if (entry.isIntersecting) {
+                        entry.target.classList.add('is-visible');
+                        entry.target.classList.add('visible');
+                    }
+                });
+            }, observerOptions);
+
+            requestAnimationFrame(() => {
+                revealTargets.forEach((el) => observer.observe(el));
+            });
+
+            window.addEventListener('load', () => {
+                setTimeout(() => {
+                    revealTargets.forEach((el) => {
+                        el.classList.add('is-visible');
+                        el.classList.add('visible');
+                    });
+                }, 700);
+            }, { once: true });
+        }
+
+        const menuBtn = document.getElementById('menuButton');
+        const mobileMenu = document.getElementById('mobileMenu');
+        if (menuBtn && mobileMenu) {
+            menuBtn.addEventListener('click', () => {
+                mobileMenu.classList.toggle('hidden');
+                const expanded = menuBtn.getAttribute('aria-expanded') === 'true';
+                menuBtn.setAttribute('aria-expanded', String(!expanded));
+            });
+
+            mobileMenu.querySelectorAll('a').forEach((link) => {
+                link.addEventListener('click', () => {
+                    mobileMenu.classList.add('hidden');
+                    menuBtn.setAttribute('aria-expanded', 'false');
+                });
+            });
+        }
 
         const archiveGrid = document.getElementById('archive-grid');
         const filterList = document.getElementById('filter-list');
@@ -2370,7 +2424,10 @@ video {
                 showMoreButton.hidden = remaining <= 0;
                 showMoreButton.innerHTML = `<span>Show More Scrolls${remaining > 0 ? ` (${remaining})` : ''}</span><i class="ph-bold ph-arrow-down"></i>`;
             }
-            archiveGrid.querySelectorAll('.fade-in-up, .section-fade-up').forEach((el) => observer.observe(el));
+            archiveGrid.querySelectorAll('.fade-in-up, .section-fade-up').forEach((el) => {
+                el.classList.add('is-visible');
+                el.classList.add('visible');
+            });
         }
 
         function embeddedPosts() {

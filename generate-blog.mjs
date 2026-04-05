@@ -34,6 +34,30 @@ const CARD_THEMES = [
   { theme: 'fuchsia', label: 'Culture' },
 ];
 
+function parseArgs(argv = []) {
+  const options = {
+    fromPostsJson: false,
+    only: new Set(),
+  };
+
+  argv.forEach((arg) => {
+    if (arg === '--from-posts-json') {
+      options.fromPostsJson = true;
+      return;
+    }
+    if (arg.startsWith('--only=')) {
+      arg
+        .slice('--only='.length)
+        .split(',')
+        .map((value) => value.trim())
+        .filter(Boolean)
+        .forEach((value) => options.only.add(value));
+    }
+  });
+
+  return options;
+}
+
 const CATEGORY_THEME_MAP = {
   Ethics: 'purple',
   Search: 'amber',
@@ -556,102 +580,120 @@ function extractDeckText(articleHtml = '', excerpt = '', title = '') {
 }
 
 async function main() {
+  const options = parseArgs(process.argv.slice(2));
   const template = await fs.readFile(TEMPLATE_PATH, 'utf8');
-  const feed = await fetchText(FEED_URL);
-  const items = [...feed.matchAll(/<item>([\s\S]*?)<\/item>/g)].map((match) => match[1]);
+  let posts;
 
-  if (!items.length) throw new Error('No posts were found in the Substack feed.');
-
-  const rawPosts = items.map((item) => ({
-    title: decodeHtml(getTagValue(item, 'title')),
-    description: decodeHtml(getTagValue(item, 'description')),
-    originalUrl: getTagValue(item, 'link'),
-    publishedAt: getTagValue(item, 'pubDate'),
-    coverImage: getAttributeValue(item, 'enclosure', 'url'),
-    contentHtml: getTagValue(item, 'content:encoded'),
-  }));
-
-  const feedTitles = new Set(rawPosts.map((post) => post.title));
-  const mappedTitles = new Set(TITLE_TO_SLUG.keys());
-  const missingFromFeed = [...mappedTitles].filter((title) => !feedTitles.has(title));
-  const unmappedFeedTitles = [...feedTitles].filter((title) => !mappedTitles.has(title));
-  if (missingFromFeed.length || unmappedFeedTitles.length) {
-    const errors = [];
-    if (missingFromFeed.length) errors.push(`Missing from feed: ${missingFromFeed.join(', ')}`);
-    if (unmappedFeedTitles.length) errors.push(`Unmapped feed titles: ${unmappedFeedTitles.join(', ')}`);
-    throw new Error(errors.join(' | '));
-  }
-
-  const normalized = rawPosts.reduce((acc, post) => {
-    try {
-      if (!post.contentHtml) throw new Error('missing full HTML body');
-      const websiteSlug = TITLE_TO_SLUG.get(post.title);
-      if (!websiteSlug) throw new Error('missing custom website slug');
-      acc.push({
-        title: post.title,
-        excerpt: safeExcerpt(post.description, post.contentHtml, post.title),
-        published_at: post.publishedAt,
-        cover_image: post.coverImage || '',
-        body_html: post.contentHtml,
-        original_substack_url: post.originalUrl,
-        original_substack_slug: stripQuery(post.originalUrl).split('/').pop() || '',
-        website_slug: websiteSlug,
-      });
-    } catch (error) {
-      console.warn(`Skipping malformed feed item "${post.title || 'Untitled'}": ${error.message}`);
+  if (options.fromPostsJson) {
+    posts = JSON.parse(await fs.readFile(POSTS_JSON_PATH, 'utf8'));
+    if (!Array.isArray(posts) || !posts.length) {
+      throw new Error('posts.json did not contain any posts.');
     }
-    return acc;
-  }, []).sort((a, b) => new Date(b.published_at) - new Date(a.published_at));
+  } else {
+    const feed = await fetchText(FEED_URL);
+    const items = [...feed.matchAll(/<item>([\s\S]*?)<\/item>/g)].map((match) => match[1]);
 
-  if (!normalized.length) {
-    throw new Error('No valid posts remained after feed normalization.');
-  }
+    if (!items.length) throw new Error('No posts were found in the Substack feed.');
 
-  const linkMap = new Map(normalized.map((post) => [stripQuery(post.original_substack_url), `/blog/${post.website_slug}.html`]));
+    const rawPosts = items.map((item) => ({
+      title: decodeHtml(getTagValue(item, 'title')),
+      description: decodeHtml(getTagValue(item, 'description')),
+      originalUrl: getTagValue(item, 'link'),
+      publishedAt: getTagValue(item, 'pubDate'),
+      coverImage: getAttributeValue(item, 'enclosure', 'url'),
+      contentHtml: getTagValue(item, 'content:encoded'),
+    }));
 
-  const posts = normalized.reduce((acc, post) => {
-    try {
-      const structured = sanitizeArticleHtml(post.body_html, linkMap);
-      if (stripTags(structured.html).length < 300) throw new Error('sanitized article body is too short');
-      const dates = formatDate(post.published_at);
-      const readingTimeMinutes = estimateReadingTime(structured.html);
-      const category = articleCategory(post.title);
-      const theme = themeForCategory(category);
-      const introText = getIntroText(structured.html);
-      const deckText = extractDeckText(structured.html, post.excerpt, post.title);
-      acc.push({
-        ...post,
-        body_html: structured.html,
-        toc: structured.toc,
-        figures: structured.figures,
-        category,
-        theme,
-        intro_opening: extractFirstSentence(introText),
-        intro_closing: extractLastSentence(introText),
-        deck_text: deckText,
-        published_iso: dates.iso,
-        published_short: dates.short,
-        published_long: dates.long,
-        canonical_url: `${BLOG_URL}${post.website_slug}.html`,
-        og_image: post.cover_image || FALLBACK_OG,
-        og_image_alt: `${post.title} | The Algorithm Witch`,
-        reading_time_minutes: readingTimeMinutes,
-        reading_time_display: `${readingTimeMinutes} min read`,
-      });
-    } catch (error) {
-      console.warn(`Skipping malformed generated post "${post.title}": ${error.message}`);
+    const feedTitles = new Set(rawPosts.map((post) => post.title));
+    const mappedTitles = new Set(TITLE_TO_SLUG.keys());
+    const missingFromFeed = [...mappedTitles].filter((title) => !feedTitles.has(title));
+    const unmappedFeedTitles = [...feedTitles].filter((title) => !mappedTitles.has(title));
+    if (missingFromFeed.length || unmappedFeedTitles.length) {
+      const errors = [];
+      if (missingFromFeed.length) errors.push(`Missing from feed: ${missingFromFeed.join(', ')}`);
+      if (unmappedFeedTitles.length) errors.push(`Unmapped feed titles: ${unmappedFeedTitles.join(', ')}`);
+      throw new Error(errors.join(' | '));
     }
-    return acc;
-  }, []);
 
-  if (!posts.length) {
-    throw new Error('No valid posts remained after article sanitization.');
+    const normalized = rawPosts.reduce((acc, post) => {
+      try {
+        if (!post.contentHtml) throw new Error('missing full HTML body');
+        const websiteSlug = TITLE_TO_SLUG.get(post.title);
+        if (!websiteSlug) throw new Error('missing custom website slug');
+        acc.push({
+          title: post.title,
+          excerpt: safeExcerpt(post.description, post.contentHtml, post.title),
+          published_at: post.publishedAt,
+          cover_image: post.coverImage || '',
+          body_html: post.contentHtml,
+          original_substack_url: post.originalUrl,
+          original_substack_slug: stripQuery(post.originalUrl).split('/').pop() || '',
+          website_slug: websiteSlug,
+        });
+      } catch (error) {
+        console.warn(`Skipping malformed feed item "${post.title || 'Untitled'}": ${error.message}`);
+      }
+      return acc;
+    }, []).sort((a, b) => new Date(b.published_at) - new Date(a.published_at));
+
+    if (!normalized.length) {
+      throw new Error('No valid posts remained after feed normalization.');
+    }
+
+    const linkMap = new Map(normalized.map((post) => [stripQuery(post.original_substack_url), `/blog/${post.website_slug}.html`]));
+
+    posts = normalized.reduce((acc, post) => {
+      try {
+        const structured = sanitizeArticleHtml(post.body_html, linkMap);
+        if (stripTags(structured.html).length < 300) throw new Error('sanitized article body is too short');
+        const dates = formatDate(post.published_at);
+        const readingTimeMinutes = estimateReadingTime(structured.html);
+        const category = articleCategory(post.title);
+        const theme = themeForCategory(category);
+        const introText = getIntroText(structured.html);
+        const deckText = extractDeckText(structured.html, post.excerpt, post.title);
+        acc.push({
+          ...post,
+          body_html: structured.html,
+          toc: structured.toc,
+          figures: structured.figures,
+          category,
+          theme,
+          intro_opening: extractFirstSentence(introText),
+          intro_closing: extractLastSentence(introText),
+          deck_text: deckText,
+          published_iso: dates.iso,
+          published_short: dates.short,
+          published_long: dates.long,
+          canonical_url: `${BLOG_URL}${post.website_slug}.html`,
+          og_image: post.cover_image || FALLBACK_OG,
+          og_image_alt: `${post.title} | The Algorithm Witch`,
+          reading_time_minutes: readingTimeMinutes,
+          reading_time_display: `${readingTimeMinutes} min read`,
+        });
+      } catch (error) {
+        console.warn(`Skipping malformed generated post "${post.title}": ${error.message}`);
+      }
+      return acc;
+    }, []);
+
+    if (!posts.length) {
+      throw new Error('No valid posts remained after article sanitization.');
+    }
+
+    await fs.writeFile(POSTS_JSON_PATH, `${JSON.stringify(posts, null, 2)}\n`);
   }
 
-  await fs.writeFile(POSTS_JSON_PATH, `${JSON.stringify(posts, null, 2)}\n`);
+  const renderPosts = options.only.size
+    ? posts.filter((post) => options.only.has(post.website_slug))
+    : posts;
 
-  for (let index = 0; index < posts.length; index += 1) {
-    const post = posts[index];
+  if (!renderPosts.length) {
+    throw new Error(`No posts matched the requested slug filter: ${[...options.only].join(', ')}`);
+  }
+
+  for (const post of renderPosts) {
+    const index = posts.findIndex((entry) => entry.website_slug === post.website_slug);
     const introLink = '<a class="toc-link" href="#top" data-theme="purple"><span class="toc-link-number">Intro</span><span class="toc-link-label">Intro</span></a>';
     const tocLinks = post.toc.length
       ? `${introLink}${post.toc.map((entry) => `<a class="toc-link" href="#${entry.id}" data-theme="${entry.theme}"><span class="toc-link-number">${entry.number}</span><span class="toc-link-label">${escapeHtml(entry.text)}</span></a>`).join('')}`
@@ -693,6 +735,7 @@ async function main() {
       COVER_MEDIA: coverMedia,
       TOC_LINKS: tocLinks,
       ORIGINAL_SUBSTACK_URL: post.original_substack_url || SUBSTACK_URL,
+      SUBSTACK_POST_URL: post.original_substack_url || SUBSTACK_URL,
       ENCODED_CANONICAL_URL: encodeURIComponent(post.canonical_url),
       ENCODED_SHARE_TITLE: encodeURIComponent(post.title),
       ARTICLE_INTRO_BODY: '',

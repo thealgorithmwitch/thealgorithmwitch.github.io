@@ -498,6 +498,14 @@ function getIntroText(articleHtml = '') {
   return stripTags(introMatch ? introMatch[1] : articleHtml).replace(/\s+/g, ' ').trim();
 }
 
+function getIntroParagraphs(articleHtml = '') {
+  const introMatch = articleHtml.match(/<section class="article-section article-section-intro[\s\S]*?>([\s\S]*?)<\/section>/i);
+  const introHtml = introMatch ? introMatch[1] : '';
+  return [...introHtml.matchAll(/<p[^>]*>([\s\S]*?)<\/p>/gi)]
+    .map((match) => normalizePlainText(stripTags(match[1])))
+    .filter(Boolean);
+}
+
 function extractFirstSentence(text = '') {
   const match = text.match(/(.{40,260}?[.!?])(?:\s|$)/);
   return (match ? match[1] : text).trim();
@@ -506,6 +514,24 @@ function extractFirstSentence(text = '') {
 function extractLastSentence(text = '') {
   const sentences = text.match(/[^.!?]+[.!?]+/g)?.map((part) => part.trim()).filter(Boolean) || [];
   return (sentences[sentences.length - 1] || text).trim();
+}
+
+function extractDeckText(articleHtml = '', excerpt = '', title = '') {
+  const paragraphs = getIntroParagraphs(articleHtml).filter((text) => !looksLikeLowQualityExcerpt(text, title));
+  const firstParagraph = paragraphs[0] || '';
+  const opening = extractFirstSentence(firstParagraph);
+  const remainder = normalizePlainText(firstParagraph.slice(opening.length));
+
+  if (remainder && remainder.length >= 45 && !looksLikeLowQualityExcerpt(remainder, title)) {
+    return truncateText(remainder, 220);
+  }
+
+  const secondary = paragraphs.slice(1).find((text) => !looksLikeLowQualityExcerpt(text, title));
+  if (secondary) return truncateText(secondary, 220);
+
+  const fallback = truncateText(excerpt, 220);
+  if (fallback && fallback !== truncateText(opening, 220)) return fallback;
+  return '';
 }
 
 async function main() {
@@ -571,6 +597,7 @@ async function main() {
       const category = articleCategory(post.title);
       const theme = themeForCategory(category);
       const introText = getIntroText(structured.html);
+      const deckText = extractDeckText(structured.html, post.excerpt, post.title);
       acc.push({
         ...post,
         body_html: structured.html,
@@ -580,6 +607,7 @@ async function main() {
         theme,
         intro_opening: extractFirstSentence(introText),
         intro_closing: extractLastSentence(introText),
+        deck_text: deckText,
         published_iso: dates.iso,
         published_short: dates.short,
         published_long: dates.long,
@@ -608,9 +636,17 @@ async function main() {
       ? `${introLink}${post.toc.map((entry) => `<a class="toc-link" href="#${entry.id}" data-theme="${entry.theme}"><span class="toc-link-number">${entry.number}</span><span class="toc-link-label">${escapeHtml(entry.text)}</span></a>`).join('')}`
       : introLink;
     const visionsPanel = buildVisionsPanel(post);
-    const coverMedia = post.cover_image
+    const coverInner = post.cover_image
       ? `<img src="${escapeAttribute(post.cover_image)}" alt="${escapeAttribute(post.title)}" loading="eager">`
       : '<div class="hero-media-placeholder"><i class="ph-duotone ph-image"></i></div>';
+    const coverMedia = `<div class="w-full max-w-2xl aspect-[16/9] sharp-panel flex flex-col items-center justify-center relative z-10 group-hover:border-purple-500/50 transition-colors duration-500">
+        <div class="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-indigo-900/20 via-transparent to-transparent opacity-50"></div>
+        ${coverInner}
+        <div class="absolute top-0 left-0 w-8 h-8 border-t-2 border-l-2 border-purple-500/30"></div>
+        <div class="absolute top-0 right-0 w-8 h-8 border-t-2 border-r-2 border-purple-500/30"></div>
+        <div class="absolute bottom-0 left-0 w-8 h-8 border-b-2 border-l-2 border-purple-500/30"></div>
+        <div class="absolute bottom-0 right-0 w-8 h-8 border-b-2 border-r-2 border-purple-500/30"></div>
+      </div>`;
 
     const html = replaceTokens(template, {
       PAGE_TITLE: escapeHtml(`${post.title} | The Algorithm Witch`),
@@ -622,16 +658,22 @@ async function main() {
       POST_THEME: post.theme,
       POST_CATEGORY: escapeHtml(post.category),
       POST_TITLE_HTML: titleToDisplayHtml(post.title),
+      POST_DECK_HTML: post.deck_text
+        ? `<p class="text-gray-300 font-light text-base lg:text-lg leading-relaxed mb-10 max-w-xl">${escapeHtml(post.deck_text)}</p>`
+        : '',
       POST_DATE_DISPLAY: escapeHtml(post.published_long),
+      POST_DATE_SHORT: escapeHtml(post.published_short),
       READING_TIME: escapeHtml(post.reading_time_display),
       POST_TAGS: buildWordTags(post),
       INTRO_OPENING: escapeHtml(post.intro_opening || post.excerpt),
       INTRO_CLOSING: escapeHtml(post.intro_closing || extractPullQuote(post)),
+      MAIN_QUOTE_BLOCK: buildQuoteBlock(post.intro_closing || extractPullQuote(post)),
       COVER_MEDIA: coverMedia,
       TOC_LINKS: tocLinks,
       ORIGINAL_SUBSTACK_URL: post.original_substack_url || SUBSTACK_URL,
       ENCODED_CANONICAL_URL: encodeURIComponent(post.canonical_url),
       ENCODED_SHARE_TITLE: encodeURIComponent(post.title),
+      ARTICLE_INTRO_BODY: '',
       ARTICLE_BODY: post.body_html,
       DISPATCH_RAIL: buildDispatchRail(posts, index),
       RELATED_POSTS: buildRelatedPosts(posts, post),

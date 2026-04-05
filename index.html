@@ -567,6 +567,40 @@
       background-size: 200% auto;
       animation: shine 8s linear infinite;
     }
+
+    .font-mono-tech { font-family: 'JetBrains Mono', monospace; }
+
+    .spell-card {
+      position: relative;
+      background: #0a0618;
+      border: 1px solid rgba(255,255,255,0.05);
+      transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+      z-index: 10;
+    }
+
+    .spell-card::before {
+      content: '';
+      position: absolute;
+      inset: 6px;
+      border: 1px solid rgba(255,255,255,0.03);
+      border-radius: inherit;
+      pointer-events: none;
+      transition: all 0.5s ease;
+    }
+
+    .spell-card:hover {
+      transform: translateY(-8px);
+      background: #0d0822;
+    }
+
+    .card-purple:hover { border-color: rgba(168, 85, 247, 0.4); box-shadow: 0 20px 40px -10px rgba(168, 85, 247, 0.15); }
+    .card-purple:hover::before { border-color: rgba(168, 85, 247, 0.2); }
+    .card-cyan:hover { border-color: rgba(6, 182, 212, 0.4); box-shadow: 0 20px 40px -10px rgba(6, 182, 212, 0.15); }
+    .card-cyan:hover::before { border-color: rgba(6, 182, 212, 0.2); }
+    .card-amber:hover { border-color: rgba(245, 158, 11, 0.4); box-shadow: 0 20px 40px -10px rgba(245, 158, 11, 0.15); }
+    .card-amber:hover::before { border-color: rgba(245, 158, 11, 0.2); }
+    .card-cta:hover { border-color: rgba(217, 70, 239, 0.4); box-shadow: 0 20px 50px -10px rgba(217, 70, 239, 0.25); }
+    .card-cta:hover::before { border-color: rgba(217, 70, 239, 0.2); }
   
     .text-gradient-purple {
       background: linear-gradient(135deg, #e9d5ff 0%, #c084fc 50%, #a855f7 100%);
@@ -1138,6 +1172,37 @@
       </div>
     </section>
 
+    <section id="writings" class="py-12 section-fade-up max-w-[1400px] mx-auto w-full">
+      <div class="text-center mb-16">
+        <span class="font-mono-tech text-purple-400 uppercase tracking-[0.3em] text-xs mb-3 block">Digital Ether</span>
+        <h2 class="font-magical text-5xl md:text-6xl text-white mb-6">Incantations in <span class="text-gradient-gold">Ink</span></h2>
+        <div class="w-24 h-px bg-gradient-to-r from-transparent via-purple-500 to-transparent mx-auto opacity-50"></div>
+      </div>
+
+      <div id="homepage-writings-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 items-stretch">
+        <div class="spell-card card-cta rounded-2xl p-8 flex flex-col justify-center items-center text-center group min-h-[420px] bg-gradient-to-b from-[#140b2e] to-[#0a0618] border-t-2 border-t-fuchsia-500/30">
+          <div class="absolute top-0 right-0 w-32 h-32 bg-fuchsia-500/10 rounded-full blur-2xl translate-x-1/2 -translate-y-1/2 group-hover:bg-fuchsia-500/20 transition-colors"></div>
+
+          <div class="flex items-center justify-center gap-3 mb-6 relative z-10">
+            <i class="ph-duotone ph-scroll text-2xl text-purple-400"></i>
+            <i class="ph-duotone ph-star text-3xl text-amber-400 animate-pulse"></i>
+            <i class="ph-duotone ph-book-bookmark text-2xl text-fuchsia-400"></i>
+          </div>
+
+          <h3 class="font-magical text-3xl text-white mb-4 relative z-10 leading-tight">42 Spells Await</h3>
+
+          <p class="text-gray-400 text-sm font-light mb-8 max-w-[200px] mx-auto relative z-10 leading-relaxed">
+            Ancient scrolls of strategy, alchemy, and advocacy lie within the Archive. Will you uncover their secrets?
+          </p>
+
+          <a href="/blog/" class="mt-auto relative z-10 inline-flex items-center justify-center w-full gap-3 px-6 py-4 bg-white/5 hover:bg-fuchsia-500/20 border border-fuchsia-500/30 hover:border-fuchsia-400/50 rounded-xl text-white font-mono-tech text-[10px] uppercase tracking-widest transition-all">
+            <span>Enter Archive</span>
+            <i class="ph-bold ph-arrow-right text-fuchsia-400 group-hover:translate-x-1 transition-transform"></i>
+          </a>
+        </div>
+      </div>
+    </section>
+
     <!-- QUIZ -->
  <section id="quiz" class="py-12 section-fade-up">
   <a href="/align.html" class="relative glass-card rounded-[3rem] overflow-hidden p-12 md:p-16 block group hover:no-underline">
@@ -1495,6 +1560,121 @@
       });
     });
   }
+
+  (function () {
+    const writingsGrid = document.getElementById('homepage-writings-grid');
+    if (!writingsGrid) return;
+
+    const themeMap = {
+      purple: {
+        cardClass: 'card-purple',
+        borderClass: 'border-t-purple-500/20',
+        iconWrap: 'bg-purple-500/10 border-purple-500/20 shadow-[0_0_15px_rgba(168,85,247,0.1)]',
+        icon: 'ph-duotone ph-chess-knight text-purple-400',
+        label: 'text-purple-400',
+        titleHover: 'group-hover:text-purple-200',
+        reading: 'text-purple-400'
+      },
+      cyan: {
+        cardClass: 'card-cyan',
+        borderClass: 'border-t-cyan-500/20',
+        iconWrap: 'bg-cyan-500/10 border-cyan-500/20 shadow-[0_0_15px_rgba(6,182,212,0.1)]',
+        icon: 'ph-duotone ph-chart-polar text-cyan-400',
+        label: 'text-cyan-400',
+        titleHover: 'group-hover:text-cyan-200',
+        reading: 'text-cyan-400'
+      },
+      amber: {
+        cardClass: 'card-amber',
+        borderClass: 'border-t-amber-500/20',
+        iconWrap: 'bg-amber-500/10 border-amber-500/20 shadow-[0_0_15px_rgba(245,158,11,0.1)]',
+        icon: 'ph-duotone ph-magnifying-glass text-amber-400',
+        label: 'text-amber-400',
+        titleHover: 'group-hover:text-amber-200',
+        reading: 'text-amber-400'
+      },
+      fuchsia: {
+        cardClass: 'card-cta',
+        borderClass: 'border-t-fuchsia-500/20',
+        iconWrap: 'bg-fuchsia-500/10 border-fuchsia-500/20 shadow-[0_0_15px_rgba(217,70,239,0.1)]',
+        icon: 'ph-duotone ph-orbit text-fuchsia-400',
+        label: 'text-fuchsia-400',
+        titleHover: 'group-hover:text-fuchsia-200',
+        reading: 'text-fuchsia-400'
+      }
+    };
+
+    function escapeHtml(value = '') {
+      return String(value)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+    }
+
+    function excerptForCard(post) {
+      const text = String(post.excerpt || '').trim();
+      if (text.length <= 150) return text;
+      return `${text.slice(0, 147).trimEnd()}...`;
+    }
+
+    function buildCard(post, index) {
+      const theme = themeMap[post.theme] || themeMap.purple;
+      return `
+        <a href="/blog/${escapeHtml(post.website_slug)}.html" class="spell-card ${theme.cardClass} rounded-2xl p-8 flex flex-col min-h-[420px] group border-t ${theme.borderClass} hover:no-underline">
+          <div class="flex justify-between items-start mb-8">
+            <div class="w-12 h-12 rounded-xl border flex items-center justify-center group-hover:scale-110 transition-transform duration-500 ${theme.iconWrap}">
+              <i class="${theme.icon} text-2xl"></i>
+            </div>
+            <span class="font-mono-tech text-[10px] text-gray-500 px-2 py-1 bg-white/5 rounded border border-white/5">${String(index + 1).padStart(2, '0')}</span>
+          </div>
+
+          <div class="mb-4">
+            <span class="font-mono-tech text-[10px] uppercase tracking-[0.2em] mb-3 block ${theme.label}">${escapeHtml(post.category || 'Dispatch')}</span>
+            <h3 class="font-magical text-xl text-white leading-snug transition-colors ${theme.titleHover}">${escapeHtml(post.title)}</h3>
+          </div>
+
+          <p class="text-sm text-gray-400 leading-relaxed font-light mb-8 flex-grow">
+            ${escapeHtml(excerptForCard(post))}
+          </p>
+
+          <div class="mt-auto pt-4 border-t border-white/5 flex items-center justify-between font-mono-tech text-[10px] text-gray-500 uppercase tracking-wider">
+            <div class="flex flex-col gap-1">
+              <span class="text-white/40">Date</span>
+              <span>${escapeHtml(post.published_short || '')}</span>
+            </div>
+            <div class="flex flex-col gap-1 text-right">
+              <span class="text-white/40">Time</span>
+              <span class="${theme.reading}">${escapeHtml(post.reading_time_display || '')}</span>
+            </div>
+          </div>
+        </a>`;
+    }
+
+    async function loadHomepageWritings() {
+      const urls = ['/blog/posts.json', './posts.json'];
+      let posts = null;
+
+      for (const url of urls) {
+        try {
+          const response = await fetch(url, { cache: 'no-store' });
+          if (!response.ok) continue;
+          posts = await response.json();
+          if (Array.isArray(posts) && posts.length) break;
+        } catch (_error) {
+          // try next source
+        }
+      }
+
+      if (!Array.isArray(posts) || !posts.length) return;
+
+      const recentMarkup = posts.slice(0, 3).map(buildCard).join('');
+      writingsGrid.insertAdjacentHTML('beforeend', recentMarkup);
+    }
+
+    loadHomepageWritings();
+  })();
 </script>
 </body>
 </html>

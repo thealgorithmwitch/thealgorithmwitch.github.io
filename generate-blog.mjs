@@ -182,15 +182,18 @@ function truncateText(text = '', maxLength = 170) {
 }
 
 function firstParagraphSnippet(html = '') {
-  const firstParagraph = html.match(/<p[^>]*>([\s\S]*?)<\/p>/i)?.[1];
-  return truncateText(firstParagraph ? stripTags(firstParagraph) : stripTags(html));
+  const paragraphs = [...String(html || '').matchAll(/<p[^>]*>([\s\S]*?)<\/p>/gi)]
+    .map((match) => truncateText(stripTags(match[1])))
+    .filter((text) => text && text.length > 20);
+  if (paragraphs.length) return paragraphs[0];
+  return truncateText(stripTags(html));
 }
 
 function safeExcerpt(description = '', contentHtml = '') {
-  const primary = truncateText(description);
+  const primary = firstParagraphSnippet(contentHtml);
   if (primary) return primary;
-  const fallbackParagraph = firstParagraphSnippet(contentHtml);
-  if (fallbackParagraph) return fallbackParagraph;
+  const fallbackDescription = truncateText(description);
+  if (fallbackDescription) return fallbackDescription;
   const fallbackBody = truncateText(stripTags(contentHtml));
   return fallbackBody || '';
 }

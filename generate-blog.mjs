@@ -261,7 +261,14 @@ function extractImageFigure(block) {
   const alt = decodeHtml(block.match(/<img[^>]*alt="([^"]*)"/i)?.[1] || '');
   const caption = sanitizeCaption(block.match(/<figcaption[^>]*>([\s\S]*?)<\/figcaption>/i)?.[1] || '');
   const captionHtml = caption ? `<figcaption>${escapeHtml(caption)}</figcaption>` : '';
-  return `<figure><div class="figure-frame"><img src="${escapeAttribute(src)}" alt="${escapeAttribute(alt || '')}"></div>${captionHtml}</figure>`;
+  return `<figure>
+  <div class="figure-frame">
+    <div class="media-box">
+      <img src="${escapeAttribute(src)}" alt="${escapeAttribute(alt || '')}">
+    </div>
+  </div>
+  ${captionHtml}
+</figure>`;
 }
 
 function sanitizeArticleHtml(html, mappedLinks) {
@@ -346,9 +353,15 @@ function sanitizeArticleHtml(html, mappedLinks) {
       alt: imgAlt,
       iframe: iframeSrc,
     });
-    const framedInner = /class="figure-frame"/i.test(innerWithoutCaption)
-      ? innerWithoutCaption
-      : `<div class="figure-frame">${innerWithoutCaption}</div>`;
+const framedInner = /class="figure-frame"/i.test(innerWithoutCaption)
+  ? innerWithoutCaption.replace(
+      /<div class="figure-frame">([\s\S]*?)<\/div>/i,
+      (_m, content) => {
+        if (/class="media-box"/i.test(content)) return `<div class="figure-frame">${content}</div>`;
+        return `<div class="figure-frame"><div class="media-box">${content}</div></div>`;
+      }
+    )
+  : `<div class="figure-frame"><div class="media-box">${innerWithoutCaption}</div></div>`;
     return `<figure id="${id}" class="article-figure theme-${theme}">${framedInner}<figcaption><span class="figure-caption-index">Figure ${number}</span><span class="figure-caption-text">${escapeHtml(captionText)}</span></figcaption></figure>`;
   });
 
@@ -702,14 +715,9 @@ async function main() {
     const coverInner = post.cover_image
       ? `<img src="${escapeAttribute(post.cover_image)}" alt="${escapeAttribute(post.title)}" loading="eager">`
       : '<div class="hero-media-placeholder"><i class="ph-duotone ph-image"></i></div>';
-    const coverMedia = `<div class="w-full max-w-2xl aspect-[16/9] sharp-panel flex flex-col items-center justify-center relative z-10 group-hover:border-purple-500/50 transition-colors duration-500">
-        <div class="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-indigo-900/20 via-transparent to-transparent opacity-50"></div>
-        ${coverInner}
-        <div class="absolute top-0 left-0 w-8 h-8 border-t-2 border-l-2 border-purple-500/30"></div>
-        <div class="absolute top-0 right-0 w-8 h-8 border-t-2 border-r-2 border-purple-500/30"></div>
-        <div class="absolute bottom-0 left-0 w-8 h-8 border-b-2 border-l-2 border-purple-500/30"></div>
-        <div class="absolute bottom-0 right-0 w-8 h-8 border-b-2 border-r-2 border-purple-500/30"></div>
-      </div>`;
+const coverMedia = post.cover_image
+  ? `<img src="${escapeAttribute(post.cover_image)}" alt="${escapeAttribute(post.title)}" loading="eager">`
+  : '<div class="hero-media-placeholder"><i class="ph-duotone ph-image"></i></div>';
 
     const html = replaceTokens(template, {
       PAGE_TITLE: escapeHtml(`${post.title} | The Algorithm Witch`),

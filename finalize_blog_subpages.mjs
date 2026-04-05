@@ -22,7 +22,15 @@ const INTRO_QUOTE_TEMPLATE = extractFirstMatch(
 const MAIN_QUOTE_TEMPLATE = extractFirstMatch(
   TEMPLATE_HTML,
   /(<blockquote class="my-16 sharp-panel p-8 md:p-10 relative"[\s\S]*?<\/blockquote>)/,
-);
+) || `<blockquote class="my-16 sharp-panel p-8 md:p-10 relative">
+  <div class="absolute -top-4 -left-4 bg-black border border-purple-500 text-purple-400 p-2">
+    <i class="ph-fill ph-quotes text-xl"></i>
+  </div>
+  <p class="font-serif-heading emoji-safe text-2xl text-white leading-relaxed z-10 relative"></p>
+  <footer class="mt-8 font-mono-code text-[10px] uppercase tracking-[0.2em] text-purple-400 flex items-center gap-3">
+    <span class="w-4 h-px bg-purple-500"></span> CASSANDRE ARKEMA, THE ALGORITHM WITCH
+  </footer>
+</blockquote>`;
 const TITLE_FIT_SCRIPT = `
   <script id="title-fit-script">
     (() => {
@@ -605,14 +613,27 @@ function buildIntroQuote(text) {
 
 function buildMainQuote(text) {
   return MAIN_QUOTE_TEMPLATE
-    .replace(/<p class="font-serif-heading text-2xl text-white leading-relaxed z-10 relative"[^>]*>\s*[\s\S]*?\s*<\/p>/, `<p class="font-serif-heading text-2xl text-white leading-relaxed z-10 relative">${escapeHtml(text)}</p>`)
-    .replace(/<span class="w-4 h-px bg-purple-500"[^>]*><\/span>\s*Excerpt from the Grimoire/, `<span class="w-4 h-px bg-purple-500"></span> CASSANDRE ARKEMA, THE ALGORITHM WITCH`)
+    .replace(/<p class="font-serif-heading[^"]*text-white[^"]*"[^>]*>\s*[\s\S]*?\s*<\/p>/, `<p class="font-serif-heading emoji-safe text-2xl text-white leading-relaxed z-10 relative">${escapeHtml(text)}</p>`)
+    .replace(/<span class="w-4 h-px bg-purple-500"[^>]*><\/span>\s*(?:Excerpt from the Grimoire|CASSANDRE ARKEMA, THE ALGORITHM WITCH)/, `<span class="w-4 h-px bg-purple-500"></span> CASSANDRE ARKEMA, THE ALGORITHM WITCH`)
     .replace(/\svid="[^"]*"/g, '');
+}
+
+function buildKeepOpenBox() {
+  return `<div class="keep-open-box sharp-panel">
+            <div class="keep-open-kicker micro">Signal Continuum</div>
+            <div class="keep-open-title">Keep the Grimoire Open</div>
+            <p class="keep-open-copy">Trace adjacent signals, return to the archive, or stay subscribed to the next scroll moving through the system.</p>
+            <div class="keep-open-actions">
+              <a class="keep-open-action primary" href="/blog/"><span>Archive</span><i class="ph-bold ph-arrow-up-right"></i></a>
+              <a class="keep-open-action" href="https://thealgorithmwitch.substack.com/" target="_blank" rel="noopener noreferrer"><span>Initiate Subscription</span><i class="ph-bold ph-arrow-right"></i></a>
+            </div>
+          </div>`;
 }
 
 function buildLowerShell(currentPost, allPosts, index) {
   const relatedPosts = allPosts.filter((entry) => entry.website_slug !== currentPost.website_slug).slice(0, 3);
-  return `<div class="lower-divider upper" aria-hidden="true"></div>
+  return `${buildKeepOpenBox()}
+      <div class="lower-divider upper" aria-hidden="true"></div>
       <section class="lower-shell">
         <section>
           <h2 class="related-shell-title">Related Dispatches</h2>
@@ -641,12 +662,19 @@ for (const filename of allHtmlFiles) {
   const filePath = path.join(BLOG_DIR, filename);
   let html = await fs.readFile(filePath, 'utf8');
 
-  html = replaceSectionByBounds(
-    html,
-    '<nav id="navbar"',
-    '\n\n    <main>',
-    `${HEADER_NAV.trim().replace(/\svid="[^"]*"/g, '')}\n\n    `,
-  );
+  if (html.includes('<nav id="navbar"')) {
+    html = replaceSectionByBounds(
+      html,
+      '<nav id="navbar"',
+      '\n\n    <main>',
+      `${HEADER_NAV.trim().replace(/\svid="[^"]*"/g, '')}\n\n    `,
+    );
+  } else if (html.includes('<main')) {
+    html = html.replace(
+      /<main/,
+      `${HEADER_NAV.trim().replace(/\svid="[^"]*"/g, '')}\n\n    <main`,
+    );
+  }
 
   if (!html.includes('subpage-polish-overrides')) {
     html = html.replace(
@@ -703,9 +731,7 @@ for (const filename of allHtmlFiles) {
           </div>`,
   );
 
-  const introText = stripHtml(
-    extractFirstMatch(html, /<p class="[^"]*border-l-4 border-purple-500[^"]*">([\s\S]*?)<\/p>/) || post.intro_opening || '',
-  );
+  const introText = stripHtml(post.intro_opening || '');
   html = html.replace(
     /<p class="[^"]*border-l-4 border-purple-500[^"]*">[\s\S]*?<\/p>/,
     buildIntroQuote(introText),
@@ -716,18 +742,15 @@ for (const filename of allHtmlFiles) {
     '',
   );
 
-  const boxedQuoteText = stripHtml(
-    extractFirstMatch(html, /<blockquote[\s\S]*?<p class="[^"]*text-white[^"]*">([\s\S]*?)<\/p>[\s\S]*?<\/blockquote>/) || post.intro_closing || '',
-  );
-  html = html.replace(
-    /(<article class="article-body" id="top">)([\s\S]*?)(<\/article>)/,
-    (_match, open, body, close) => `${open}${body.replace(/<blockquote[\s\S]*?<\/blockquote>/g, '')}${close}`,
-  );
-  html = html.replace(
-    /<blockquote[\s\S]*?<\/blockquote>/,
-    buildMainQuote(boxedQuoteText),
-  );
+  const boxedQuoteText = stripHtml(post.intro_closing || '');
+  html = html.replace(/<blockquote[\s\S]*?<\/blockquote>/, buildMainQuote(boxedQuoteText));
   html = html.replace(/Excerpt from the Grimoire/g, 'CASSANDRE ARKEMA, THE ALGORITHM WITCH');
+  if (!html.includes('<blockquote')) {
+    html = html.replace(
+      /(<p class="font-serif-heading emoji-safe text-2xl text-purple-200\/90 leading-relaxed italic mb-12 border-l-4 border-purple-500 pl-6 py-2 bg-gradient-to-r from-purple-900\/20 to-transparent"[^>]*>[\s\S]*?<\/p>)/,
+      `$1\n\n${buildMainQuote(boxedQuoteText)}`,
+    );
+  }
 
   html = html.replace(
     /const menuButton = document\.getElementById\('menuButton'\);[\s\S]*?const bodyEl = document\.body;/,
@@ -760,12 +783,21 @@ for (const filename of allHtmlFiles) {
     );
   }
 
-  html = replaceSectionByBounds(
-    html,
-    '<div class="lower-divider upper" aria-hidden="true"></div>',
-    '\n    </main>',
-    `${buildLowerShell(post, POSTS, index)}\n`,
-  );
+  if (html.includes('<div class="lower-divider upper" aria-hidden="true"></div>')) {
+    html = replaceSectionByBounds(
+      html,
+      '<div class="lower-divider upper" aria-hidden="true"></div>',
+      '</main>',
+      `${buildLowerShell(post, POSTS, index)}\n`,
+    );
+  } else if (html.includes('<section class="max-w-[1400px] mx-auto px-6 py-16 border-t border-purple-900/30 bg-[#0a0514]/50 mt-12"')) {
+    html = replaceSectionByBounds(
+      html,
+      '<section class="max-w-[1400px] mx-auto px-6 py-16 border-t border-purple-900/30 bg-[#0a0514]/50 mt-12"',
+      '</main>',
+      `${buildLowerShell(post, POSTS, index)}\n\n`,
+    );
+  }
 
   const currentTheme = getThemeForCategory(post.category);
   html = html.replace(/<body class="[^"]*">/, `<body class="${currentTheme}">`);

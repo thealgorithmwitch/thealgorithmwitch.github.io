@@ -279,7 +279,10 @@ function sanitizeArticleHtml(html, mappedLinks) {
   cleaned = cleaned.replace(/<div class="captioned-button-wrap"[\s\S]*?<\/div>/gi, '');
   cleaned = cleaned.replace(/<div class="subscription-widget-wrap-editor"[\s\S]*?<\/div><\/div>/gi, '');
   cleaned = cleaned.replace(/<div class="captioned-image-container">[\s\S]*?<\/figure><\/div>/gi, (block) => extractImageFigure(block));
-  cleaned = cleaned.replace(/<div id="[^"]*" class="youtube-wrap"[^>]*><div class="youtube-inner">([\s\S]*?<\/iframe>)<\/div><\/div>/gi, '<figure><div class="figure-frame">$1</div></figure>');
+  cleaned = cleaned.replace(
+  /<div id="[^"]*" class="youtube-wrap"[^>]*><div class="youtube-inner">([\s\S]*?<\/iframe>)<\/div><\/div>/gi,
+  '<figure><div class="figure-frame"><div class="media-box">$1</div></div></figure>'
+);
   cleaned = cleaned.replace(/<div class="image-link-expand"[\s\S]*?<\/div><\/div>/gi, '');
   cleaned = cleaned.replace(/<picture[^>]*>/gi, '');
   cleaned = cleaned.replace(/<\/picture>/gi, '');
@@ -598,10 +601,66 @@ async function main() {
   let posts;
 
   if (options.fromPostsJson) {
-    posts = JSON.parse(await fs.readFile(POSTS_JSON_PATH, 'utf8'));
-    if (!Array.isArray(posts) || !posts.length) {
+    const storedPosts = JSON.parse(await fs.readFile(POSTS_JSON_PATH, 'utf8'));
+
+    if (!Array.isArray(storedPosts) || !storedPosts.length) {
       throw new Error('posts.json did not contain any posts.');
     }
+
+    const linkMap = new Map(
+      storedPosts.map((post) => [stripQuery(post.original_substack_url), `/blog/${post.website_slug}.html`])
+    );
+
+    posts = storedPosts.reduce((acc, post) => {
+      try {
+        const structured = sanitizeArticleHtml(post.body_html || '', linkMap);
+        if (stripTags(structured.html).length < 300) {
+          throw new Error('sanitized article body is too short');
+        }
+
+        const dates = formatDate(post.published_at);
+        const readingTimeMinutes = estimateReadingTime(structured.html);
+        const category = articleCategory(post.title);
+        const theme = themeForCategory(category);
+        const introText = getIntroText(structured.html);
+        const deckText = extractDeckText(structured.html, post.excerpt, post.title);
+
+        acc.push({
+          ...post,
+          body_html: structured.html,
+          toc: structured.toc,
+          figures: structured.figures,
+          category,
+          theme,
+          intro_opening: extractFirstSentence(introText),
+          intro_closing: extractLastSentence(introText),
+          deck_text: deckText,
+          published_iso: dates.iso,
+          published_short: dates.short,
+          published_long: dates.long,
+          canonical_url: `${BLOG_URL}${post.website_slug}.html`,
+          og_image: post.cover_image || FALLBACK_OG,
+          og_image_alt: `${post.title} | The Algorithm Witch`,
+          reading_time_minutes: readingTimeMinutes,
+          reading_time_display: `${readingTimeMinutes} min read`,
+        });
+      } catch (error) {
+        console.warn(`Skipping malformed stored post "${post.title || 'Untitled'}": ${error.message}`);
+      }
+
+      return acc;
+    }, []);
+
+    if (!posts.length) {
+      throw new Error('No valid posts remained after posts.json normalization.');
+    }
+  } else {
+    // feed path stays here
+  }
+
+  ...
+}
+
   } else {
     const feed = await fetchText(FEED_URL);
     const items = [...feed.matchAll(/<item>([\s\S]*?)<\/item>/g)].map((match) => match[1]);
@@ -712,9 +771,6 @@ async function main() {
       ? `${introLink}${post.toc.map((entry) => `<a class="toc-link" href="#${entry.id}" data-theme="${entry.theme}"><span class="toc-link-number">${entry.number}</span><span class="toc-link-label">${escapeHtml(entry.text)}</span></a>`).join('')}`
       : introLink;
     const visionsPanel = buildVisionsPanel(post);
-    const coverInner = post.cover_image
-      ? `<img src="${escapeAttribute(post.cover_image)}" alt="${escapeAttribute(post.title)}" loading="eager">`
-      : '<div class="hero-media-placeholder"><i class="ph-duotone ph-image"></i></div>';
 const coverMedia = post.cover_image
   ? `<img src="${escapeAttribute(post.cover_image)}" alt="${escapeAttribute(post.title)}" loading="eager">`
   : '<div class="hero-media-placeholder"><i class="ph-duotone ph-image"></i></div>';

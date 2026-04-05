@@ -1862,9 +1862,16 @@
     const mobileMenu = document.getElementById('mobileMenu');
     if (menuButton && mobileMenu) {
       menuButton.addEventListener('click', () => {
-        const isOpen = menuButton.getAttribute('aria-expanded') === 'true';
-        menuButton.setAttribute('aria-expanded', String(!isOpen));
-        mobileMenu.hidden = isOpen;
+        mobileMenu.classList.toggle('hidden');
+        const expanded = menuButton.getAttribute('aria-expanded') === 'true';
+        menuButton.setAttribute('aria-expanded', String(!expanded));
+      });
+
+      mobileMenu.querySelectorAll('a').forEach((link) => {
+        link.addEventListener('click', () => {
+          mobileMenu.classList.add('hidden');
+          menuButton.setAttribute('aria-expanded', 'false');
+        });
       });
     }
 

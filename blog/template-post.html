@@ -435,6 +435,85 @@
       border-color: rgba(88, 28, 135, 0.2);
     }
 
+  .subscription-copy,
+  .substack-fallback,
+  .signal-copy {
+    color: var(--text-soft);
+    font-size: 0.94rem;
+    line-height: 1.75;
+  }
+
+  .substack-shell {
+    margin-top: 1rem;
+    border: 1px solid rgba(88, 28, 135, 0.5);
+    background: linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.01)), #090411;
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.03);
+    overflow: hidden;
+  }
+
+  .substack-embed {
+    padding: 1rem;
+    display: grid;
+    gap: 0.85rem;
+    background: linear-gradient(180deg, rgba(11, 6, 20, 0.94), rgba(6, 3, 12, 0.98));
+  }
+
+  .substack-embed label {
+    color: #ddd6fe;
+    font-size: 0.74rem;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    font-family: Inter, system-ui, sans-serif;
+  }
+
+  .substack-embed input {
+    width: 100%;
+    min-height: 3rem;
+    padding: 0 1rem;
+    border: 1px solid rgba(168, 85, 247, 0.3);
+    background: rgba(255, 255, 255, 0.04);
+    color: white;
+    font: inherit;
+  }
+
+  .substack-embed input::placeholder {
+    color: #8d94a5;
+  }
+
+  .substack-embed input:focus {
+    outline: none;
+    border-color: var(--accent);
+    box-shadow: 0 0 0 1px color-mix(in srgb, var(--accent) 45%, transparent);
+  }
+
+  .substack-embed button {
+    min-height: 3rem;
+    border: 1px solid rgba(168, 85, 247, 0.45);
+    background: linear-gradient(135deg, rgba(168, 85, 247, 0.2), rgba(251, 191, 36, 0.12));
+    color: white;
+    font: inherit;
+    font-size: 0.78rem;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: transform 0.24s ease, border-color 0.24s ease, background-color 0.24s ease;
+  }
+
+  .substack-embed button:hover {
+    transform: translateY(-2px);
+    border-color: color-mix(in srgb, var(--accent) 55%, white 15%);
+  }
+
+  .substack-fallback {
+    margin-top: 0.85rem;
+  }
+
+  .substack-fallback a {
+    color: #c4b5fd;
+    text-decoration: underline;
+    text-underline-offset: 0.16em;
+  }
+
     .hero-media-frame {
       width: 100%;
       max-width: 52rem;
@@ -1402,76 +1481,101 @@
         </div>
       </header>
 
-      <div class="content-inner">
-        <aside class="sidebar-stack">
-          <div class="sharp-panel panel-pad">
-            <div class="panel-heading">
-              <div class="left">
-                <i class="ph-fill ph-book-bookmark"></i>
-                <span class="micro">Index</span>
-              </div>
-            </div>
-            <nav class="toc-links micro">
-              {{TOC_LINKS}}
-            </nav>
-          </div>
-
-          <div class="sharp-panel panel-pad">
-            <div class="panel-heading">
-              <div class="left">
-                <i class="ph-fill ph-aperture"></i>
-                <span class="micro">Visions</span>
-              </div>
-              <span class="micro" style="color:#6b7280;">{{VISION_COUNT}}</span>
-            </div>
-            <div class="visions-grid">
-              {{VISIONS_PANEL}}
-            </div>
-          </div>
-
-          <div class="keep-open-box sharp-panel">
-            <div class="keep-open-kicker micro">Signal Continuum</div>
-            <div class="keep-open-title">Keep the Grimoire Open</div>
-            <p class="keep-open-copy">Trace adjacent signals, return to the archive, or stay subscribed to the next scroll moving through the system.</p>
-            <div class="keep-open-actions">
-              <a class="keep-open-action primary" href="/blog/">
-                <span>Archive</span>
-                <i class="ph-bold ph-arrow-up-right"></i>
-              </a>
-              <a class="keep-open-action" href="https://thealgorithmwitch.substack.com/" target="_blank" rel="noopener noreferrer">
-                <span>Initiate Subscription</span>
-                <i class="ph-bold ph-arrow-right"></i>
-              </a>
-            </div>
-          </div>
-        </aside>
-
-        <div class="article-column">
-          <div class="share-row" aria-label="Share article">
-            <a href="https://twitter.com/intent/tweet?url={{ENCODED_CANONICAL_URL}}&text={{ENCODED_SHARE_TITLE}}" target="_blank" rel="noopener noreferrer" aria-label="Share on X">
-              <i class="ph-fill ph-twitter-logo"></i>
-            </a>
-            <a href="https://www.linkedin.com/sharing/share-offsite/?url={{ENCODED_CANONICAL_URL}}" target="_blank" rel="noopener noreferrer" aria-label="Share on LinkedIn">
-              <i class="ph-fill ph-linkedin-logo"></i>
-            </a>
-            <button type="button" data-copy-link="{{CANONICAL_URL}}" aria-label="Copy Link">
-              <i class="ph-bold ph-link"></i>
-            </button>
-          </div>
-
-          <p class="intro-callout">{{INTRO_OPENING}}</p>
-
-          <article class="article-body" id="top">
-            {{ARTICLE_BODY}}
-          </article>
-
-          {{MAIN_QUOTE_BLOCK}}
-
-          <div class="post-tags-footer">
-            {{POST_TAGS}}
-          </div>
+<div class="content-inner">
+  <aside class="sidebar-stack">
+    <div class="sharp-panel panel-pad">
+      <div class="panel-heading">
+        <div class="left">
+          <i class="ph-fill ph-book-bookmark"></i>
+          <span class="micro">Index</span>
         </div>
       </div>
+      <nav class="toc-links micro">
+        {{TOC_LINKS}}
+      </nav>
+    </div>
+
+    <div class="sharp-panel panel-pad">
+      <div class="panel-heading">
+        <div class="left">
+          <i class="ph-fill ph-aperture"></i>
+          <span class="micro">Visions</span>
+        </div>
+        <span class="micro" style="color:#6b7280;">{{VISION_COUNT}}</span>
+      </div>
+      <div class="visions-grid">
+        {{VISIONS_PANEL}}
+      </div>
+    </div>
+
+    <div class="sharp-panel panel-pad">
+      <div class="panel-heading">
+        <div class="left">
+          <i class="ph-duotone ph-envelope-open"></i>
+          <span class="micro">Signal Intake</span>
+        </div>
+      </div>
+      <p class="subscription-copy">Receive encrypted dispatches monthly without leaving the archive.</p>
+      <div class="substack-shell">
+        <form class="substack-embed" action="https://thealgorithmwitch.substack.com/api/v1/free" method="post" target="_blank">
+          <label for="substack-email-post">Email Address</label>
+          <input id="substack-email-post" name="email" type="email" placeholder="you@domain.com" required>
+          <input type="hidden" name="first_url" value="{{CANONICAL_URL}}">
+          <input type="hidden" name="source" value="website-post">
+          <button type="submit">Initiate Subscription</button>
+        </form>
+      </div>
+      <p class="substack-fallback">
+        If submission is blocked,
+        <a href="{{SUBSTACK_POST_URL}}" target="_blank" rel="noopener noreferrer">view the original dispatch</a>
+        or
+        <a href="https://thealgorithmwitch.substack.com/" target="_blank" rel="noopener noreferrer">subscribe directly on Substack</a>.
+      </p>
+    </div>
+  </aside>
+
+  <div class="article-column">
+    <div class="share-row" aria-label="Share article">
+      <a href="https://twitter.com/intent/tweet?url={{ENCODED_CANONICAL_URL}}&text={{ENCODED_SHARE_TITLE}}" target="_blank" rel="noopener noreferrer" aria-label="Share on X">
+        <i class="ph-fill ph-twitter-logo"></i>
+      </a>
+      <a href="https://www.linkedin.com/sharing/share-offsite/?url={{ENCODED_CANONICAL_URL}}" target="_blank" rel="noopener noreferrer" aria-label="Share on LinkedIn">
+        <i class="ph-fill ph-linkedin-logo"></i>
+      </a>
+      <button type="button" data-copy-link="{{CANONICAL_URL}}" aria-label="Copy Link">
+        <i class="ph-bold ph-link"></i>
+      </button>
+    </div>
+
+    <p class="intro-callout">{{INTRO_OPENING}}</p>
+
+    <article class="article-body" id="top">
+      {{ARTICLE_BODY}}
+    </article>
+
+    {{MAIN_QUOTE_BLOCK}}
+
+    <div class="post-tags-footer">
+      {{POST_TAGS}}
+    </div>
+
+    <div class="keep-open-box sharp-panel">
+      <div class="keep-open-kicker micro">Signal Continuum</div>
+      <div class="keep-open-title">Keep the Grimoire Open</div>
+      <p class="keep-open-copy">Trace adjacent signals, return to the archive, or stay subscribed to the next scroll moving through the system.</p>
+      <div class="keep-open-actions">
+        <a class="keep-open-action primary" href="/blog/">
+          <span>Archive</span>
+          <i class="ph-bold ph-arrow-up-right"></i>
+        </a>
+        <a class="keep-open-action" href="https://thealgorithmwitch.substack.com/" target="_blank" rel="noopener noreferrer">
+          <span>Initiate Subscription</span>
+          <i class="ph-bold ph-arrow-right"></i>
+        </a>
+      </div>
+    </div>
+  </div>
+</div>
 
       <div class="lower-divider upper" aria-hidden="true"></div>
 

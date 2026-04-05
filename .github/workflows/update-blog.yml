@@ -1,0 +1,52 @@
+name: Update Blog From Substack
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '17 11 * * *'
+
+permissions:
+  contents: write
+
+jobs:
+  update-blog:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Generate blog from Substack feed
+        run: node generate-blog.mjs
+
+      - name: Finalize generated blog subpages
+        run: node finalize_blog_subpages.mjs
+
+      - name: Check for changes
+        id: changes
+        run: |
+          if git diff --quiet && git diff --cached --quiet; then
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Commit and push updates
+        if: steps.changes.outputs.changed == 'true'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -m "chore: update blog from Substack feed"
+          git push
+
+      - name: No changes
+        if: steps.changes.outputs.changed != 'true'
+        run: echo "No blog updates detected."

@@ -1,1874 +1,1203 @@
-<html lang="en" vid="0"><head vid="1">
-<meta charset="UTF-8" vid="2">
-<meta name="viewport" content="width=device-width, initial-scale=1.0" vid="3">
-<meta name="referrer" content="strict-origin-when-cross-origin" vid="4">
-<meta name="theme-color" content="#030014" vid="5">
-<title vid="6">The Ethics of Algorithmic Visibility | The Algorithm Witch</title>
-<meta name="description" content="For as long as I have been online, I have believed that social and digital media could function as infrastructure for collective power. I have dreamed of a world where…" vid="7">
-<link rel="canonical" href="https://thealgorithmwitch.com/blog/ethics-of-algorithmic-visibility.html" vid="8">
-<meta property="og:type" content="article" vid="9">
-<meta property="og:site_name" content="The Algorithm Witch" vid="10">
-<meta property="og:title" content="The Ethics of Algorithmic Visibility | The Algorithm Witch" vid="11">
-<meta property="og:description" content="For as long as I have been online, I have believed that social and digital media could function as infrastructure for collective power. I have dreamed of a world where…" vid="12">
-<meta property="og:url" content="https://thealgorithmwitch.com/blog/ethics-of-algorithmic-visibility.html" vid="13">
-<meta property="og:image" content="https://substack-post-media.s3.amazonaws.com/public/images/40bd0dfc-356b-4dea-9299-bd908965027d_1600x900.png" vid="14">
-<meta property="og:image:alt" content="The Ethics of Algorithmic Visibility | The Algorithm Witch" vid="15">
-<meta name="twitter:card" content="summary_large_image" vid="16">
-<meta name="twitter:title" content="The Ethics of Algorithmic Visibility | The Algorithm Witch" vid="17">
-<meta name="twitter:description" content="For as long as I have been online, I have believed that social and digital media could function as infrastructure for collective power. I have dreamed of a world where…" vid="18">
-<meta name="twitter:image" content="https://substack-post-media.s3.amazonaws.com/public/images/40bd0dfc-356b-4dea-9299-bd908965027d_1600x900.png" vid="19">
-<script type="application/ld+json" vid="20">{"@context":"https://schema.org","@graph":[{"@type":"BlogPosting","@id":"https://thealgorithmwitch.com/blog/ethics-of-algorithmic-visibility.html#article","headline":"The Ethics of Algorithmic Visibility","description":"For as long as I have been online, I have believed that social and digital media could function as infrastructure for collective power. I have dreamed of a world where…","url":"https://thealgorithmwitch.com/blog/ethics-of-algorithmic-visibility.html","datePublished":"2026-03-31","dateModified":"2026-03-31","author":{"@id":"https://thealgorithmwitch.com/#person"},"publisher":{"@id":"https://thealgorithmwitch.com/#person"},"mainEntityOfPage":{"@id":"https://thealgorithmwitch.com/blog/ethics-of-algorithmic-visibility.html#webpage"},"image":{"@type":"ImageObject","url":"https://substack-post-media.s3.amazonaws.com/public/images/40bd0dfc-356b-4dea-9299-bd908965027d_1600x900.png"},"articleSection":"Ethics"},{"@type":"WebPage","@id":"https://thealgorithmwitch.com/blog/ethics-of-algorithmic-visibility.html#webpage","url":"https://thealgorithmwitch.com/blog/ethics-of-algorithmic-visibility.html","name":"The Ethics of Algorithmic Visibility | The Algorithm Witch","isPartOf":{"@id":"https://thealgorithmwitch.com/blog/#blog"}},{"@type":"Blog","@id":"https://thealgorithmwitch.com/blog/#blog","url":"https://thealgorithmwitch.com/blog/","name":"The Algorithm Witch Archive"},{"@type":"Person","@id":"https://thealgorithmwitch.com/#person","name":"Cassandre Arkema","alternateName":"The Algorithm Witch","url":"https://thealgorithmwitch.com/"}]}</script>
-<link rel="preconnect" href="https://fonts.googleapis.com" vid="21">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="" vid="22">
-<link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@400;700;900&amp;family=Inter:wght@300;400;500;600&amp;family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&amp;family=JetBrains+Mono:wght@400;700&amp;display=swap" rel="stylesheet" vid="23">
-<script src="https://unpkg.com/@phosphor-icons/web" vid="24"></script>
-<style vid="25">
-:root {
---color-bg-base: #05020a;
---color-panel: #0d0718;
---color-border: rgba(168, 85, 247, 0.2);
---color-accent: #a855f7;
---color-gold: #fbbf24;
-}
-
-
-body {
-background-color: var(--color-bg-base);
-color: #d1d5db;
-font-family: 'Inter', sans-serif;
-margin: 0;
-padding: 0;
-overflow-x: hidden;
-scroll-behavior: smooth;
-}
-
-
-
-
-.bg-grid {
-background-size: 40px 40px;
-background-image: linear-gradient(to right, rgba(168, 85, 247, 0.03) 1px, transparent 1px),
-linear-gradient(to bottom, rgba(168, 85, 247, 0.03) 1px, transparent 1px);
-position: fixed;
-inset: 0;
-z-index: 0;
-pointer-events: none;
-}
-
-
-.font-magical { font-family: 'Cinzel Decorative', serif; }
-.font-serif-heading { font-family: 'Playfair Display', serif; }
-.font-mono-code { font-family: 'JetBrains Mono', monospace; }
-.emoji-safe {
-font-family: inherit, "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", "Segoe UI Symbol", sans-serif;
-}
-
-
-.stars {
-position: fixed;
-top: 0;
-left: 0;
-width: 100%;
-height: 100%;
-pointer-events: none;
-z-index: 1;
-}
-
-
-.star {
-position: absolute;
-background: #fff;
-border-radius: 50%;
-opacity: 0;
-animation: twinkle var(--duration) ease-in-out infinite;
-animation-delay: var(--delay);
-box-shadow: 0 0 5px #fff, 0 0 10px #a855f7;
-}
-
-
-@keyframes twinkle {
-0% { opacity: 0; transform: scale(0.3); }
-50% { opacity: var(--opacity); transform: scale(1); }
-100% { opacity: 0; transform: scale(0.3); }
-}
-
-
-.sharp-panel {
-background: var(--color-panel);
-border: 1px solid var(--color-border);
-position: relative;
-}
-
-
-.sharp-panel::before {
-content: '';
-position: absolute;
-top: 0; left: 0;
-width: 4px; height: 4px;
-background: var(--color-accent);
-}
-.sharp-panel::after {
-content: '';
-position: absolute;
-bottom: 0; right: 0;
-width: 4px; height: 4px;
-background: var(--color-accent);
-}
-
-
-
-.post-hero-copy { grid-column: span 5 / span 5; }
-.post-hero-media { grid-column: span 7 / span 7; }
-.post-sidebar-shell { grid-column: span 3 / span 3; }
-.post-article-shell { grid-column: span 8 / span 8; }
-.post-rail-shell { grid-column: span 1 / span 1; }
-.toc-panel { display: flex; flex-direction: column; gap: 0.25rem; }
-@media (max-width: 1023px) {
-.post-hero-copy,
-.post-hero-media,
-.post-sidebar-shell,
-.post-article-shell,
-.post-rail-shell {
-  grid-column: 1 / -1;
-}
-}
-
-.text-glow {
-text-shadow: 0 0 20px rgba(168, 85, 247, 0.5);
-}
-
-
-.text-glow-gold {
-text-shadow: 0 0 20px rgba(251, 191, 36, 0.4);
-}
-
-
-.article-body p { margin-bottom: 1.75rem; line-height: 1.8; }
-.article-body h2 { scroll-margin-top: 120px; }
-.article-body h3 {
-margin: 2.5rem 0 1rem;
-font-family: 'Playfair Display', serif;
-font-size: 1.5rem;
-line-height: 1.35;
-color: #f3f4f6;
-font-weight: 400;
-}
-.article-body h4 {
-margin: 2rem 0 0.85rem;
-font-family: 'Inter', sans-serif;
-font-size: 0.95rem;
-line-height: 1.5;
-letter-spacing: 0.14em;
-text-transform: uppercase;
-color: #c4b5fd;
-font-weight: 500;
-}
-
-
-.custom-scrollbar::-webkit-scrollbar { height: 4px; width: 4px; }
-.custom-scrollbar::-webkit-scrollbar-track { background: #000; }
-.custom-scrollbar::-webkit-scrollbar-thumb { background: #4c1d95; }
-.custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #7e22ce; }
-
-
-.toc-link {
-border-left: 1px solid rgba(168, 85, 247, 0.2);
-transition: all 0.2s ease;
-}
-.toc-link:hover {
-border-left-color: rgba(168, 85, 247, 0.6);
-background: linear-gradient(to right, rgba(168, 85, 247, 0.05), transparent);
-}
-.toc-link.active {
-color: #fbbf24;
-font-weight: 500;
-border-left-color: #fbbf24;
-background: linear-gradient(to right, rgba(251, 191, 36, 0.05), transparent);
-}
-
-
-.nav-item {
-position: relative;
-padding-bottom: 0.25rem;
-}
-.nav-item::after {
-content: '';
-position: absolute;
-bottom: 0;
-left: 0;
-width: 100%;
-height: 1px;
-background: var(--color-accent);
-transform: scaleX(0);
-transform-origin: right;
-transition: transform 0.3s ease;
-}
-.nav-item:hover::after, .nav-item.active::after {
-transform: scaleX(1);
-transform-origin: left;
-}
-</style>
-
-
-<style type="text/css">
-*, ::before, ::after {
---tw-border-spacing-x: 0;
---tw-border-spacing-y: 0;
---tw-translate-x: 0;
---tw-translate-y: 0;
---tw-rotate: 0;
---tw-skew-x: 0;
---tw-skew-y: 0;
---tw-scale-x: 1;
---tw-scale-y: 1;
---tw-pan-x: ;
---tw-pan-y: ;
---tw-pinch-zoom: ;
---tw-scroll-snap-strictness: proximity;
---tw-gradient-from-position: ;
---tw-gradient-via-position: ;
---tw-gradient-to-position: ;
---tw-ordinal: ;
---tw-slashed-zero: ;
---tw-numeric-figure: ;
---tw-numeric-spacing: ;
---tw-numeric-fraction: ;
---tw-ring-inset: ;
---tw-ring-offset-width: 0px;
---tw-ring-offset-color: #fff;
---tw-ring-color: rgb(59 130 246 / 0.5);
---tw-ring-offset-shadow: 0 0 #0000;
---tw-ring-shadow: 0 0 #0000;
---tw-shadow: 0 0 #0000;
---tw-shadow-colored: 0 0 #0000;
---tw-blur: ;
---tw-brightness: ;
---tw-contrast: ;
---tw-grayscale: ;
---tw-hue-rotate: ;
---tw-invert: ;
---tw-saturate: ;
---tw-sepia: ;
---tw-drop-shadow: ;
---tw-backdrop-blur: ;
---tw-backdrop-brightness: ;
---tw-backdrop-contrast: ;
---tw-backdrop-grayscale: ;
---tw-backdrop-hue-rotate: ;
---tw-backdrop-invert: ;
---tw-backdrop-opacity: ;
---tw-backdrop-saturate: ;
---tw-backdrop-sepia: ;
---tw-contain-size: ;
---tw-contain-layout: ;
---tw-contain-paint: ;
---tw-contain-style: ;
-}
-
-
-::backdrop {
---tw-border-spacing-x: 0;
---tw-border-spacing-y: 0;
---tw-translate-x: 0;
---tw-translate-y: 0;
---tw-rotate: 0;
---tw-skew-x: 0;
---tw-skew-y: 0;
---tw-scale-x: 1;
---tw-scale-y: 1;
---tw-pan-x: ;
---tw-pan-y: ;
---tw-pinch-zoom: ;
---tw-scroll-snap-strictness: proximity;
---tw-gradient-from-position: ;
---tw-gradient-via-position: ;
---tw-gradient-to-position: ;
---tw-ordinal: ;
---tw-slashed-zero: ;
---tw-numeric-figure: ;
---tw-numeric-spacing: ;
---tw-numeric-fraction: ;
---tw-ring-inset: ;
---tw-ring-offset-width: 0px;
---tw-ring-offset-color: #fff;
---tw-ring-color: rgb(59 130 246 / 0.5);
---tw-ring-offset-shadow: 0 0 #0000;
---tw-ring-shadow: 0 0 #0000;
---tw-shadow: 0 0 #0000;
---tw-shadow-colored: 0 0 #0000;
---tw-blur: ;
---tw-brightness: ;
---tw-contrast: ;
---tw-grayscale: ;
---tw-hue-rotate: ;
---tw-invert: ;
---tw-saturate: ;
---tw-sepia: ;
---tw-drop-shadow: ;
---tw-backdrop-blur: ;
---tw-backdrop-brightness: ;
---tw-backdrop-contrast: ;
---tw-backdrop-grayscale: ;
---tw-backdrop-hue-rotate: ;
---tw-backdrop-invert: ;
---tw-backdrop-opacity: ;
---tw-backdrop-saturate: ;
---tw-backdrop-sepia: ;
---tw-contain-size: ;
---tw-contain-layout: ;
---tw-contain-paint: ;
---tw-contain-style: ;
-}/*
-! tailwindcss v3.4.17 | MIT License | https://tailwindcss.com
-*//*
-1. Prevent padding and border from affecting element width. (https://github.com/mozdevs/cssremedy/issues/4)
-2. Allow adding a border to an element by just adding a border-width. (https://github.com/tailwindcss/tailwindcss/pull/116)
-*/
-
-
-*,
-::before,
-::after {
-box-sizing: border-box; /* 1 */
-border-width: 0; /* 2 */
-border-style: solid; /* 2 */
-border-color: #e5e7eb; /* 2 */
-}
-
-
-::before,
-::after {
---tw-content: '';
-}
-
-
-/*
-1. Use a consistent sensible line-height in all browsers.
-2. Prevent adjustments of font size after orientation changes in iOS.
-3. Use a more readable tab size.
-4. Use the user's configured `sans` font-family by default.
-5. Use the user's configured `sans` font-feature-settings by default.
-6. Use the user's configured `sans` font-variation-settings by default.
-7. Disable tap highlights on iOS
-*/
-
-
-html,
-:host {
-line-height: 1.5; /* 1 */
--webkit-text-size-adjust: 100%; /* 2 */
--moz-tab-size: 4; /* 3 */
-tab-size: 4; /* 3 */
-font-family: ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji"; /* 4 */
-font-feature-settings: normal; /* 5 */
-font-variation-settings: normal; /* 6 */
--webkit-tap-highlight-color: transparent; /* 7 */
-}
-
-
-/*
-1. Remove the margin in all browsers.
-2. Inherit line-height from `html` so users can set them as a class directly on the `html` element.
-*/
-
-
-body {
-margin: 0; /* 1 */
-line-height: inherit; /* 2 */
-}
-
-
-/*
-1. Add the correct height in Firefox.
-2. Correct the inheritance of border color in Firefox. (https://bugzilla.mozilla.org/show_bug.cgi?id=190655)
-3. Ensure horizontal rules are visible by default.
-*/
-
-
-hr {
-height: 0; /* 1 */
-color: inherit; /* 2 */
-border-top-width: 1px; /* 3 */
-}
-
-
-/*
-Add the correct text decoration in Chrome, Edge, and Safari.
-*/
-
-
-abbr:where([title]) {
-text-decoration: underline dotted;
-}
-
-
-/*
-Remove the default font size and weight for headings.
-*/
-
-
-h1,
-h2,
-h3,
-h4,
-h5,
-h6 {
-font-size: inherit;
-font-weight: inherit;
-}
-
-
-/*
-Reset links to optimize for opt-in styling instead of opt-out.
-*/
-
-
-a {
-color: inherit;
-text-decoration: inherit;
-}
-
-
-/*
-Add the correct font weight in Edge and Safari.
-*/
-
-
-b,
-strong {
-font-weight: bolder;
-}
-
-
-/*
-1. Use the user's configured `mono` font-family by default.
-2. Use the user's configured `mono` font-feature-settings by default.
-3. Use the user's configured `mono` font-variation-settings by default.
-4. Correct the odd `em` font sizing in all browsers.
-*/
-
-
-code,
-kbd,
-samp,
-pre {
-font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; /* 1 */
-font-feature-settings: normal; /* 2 */
-font-variation-settings: normal; /* 3 */
-font-size: 1em; /* 4 */
-}
-
-
-/*
-Add the correct font size in all browsers.
-*/
-
-
-small {
-font-size: 80%;
-}
-
-
-/*
-Prevent `sub` and `sup` elements from affecting the line height in all browsers.
-*/
-
-
-sub,
-sup {
-font-size: 75%;
-line-height: 0;
-position: relative;
-vertical-align: baseline;
-}
-
-
-sub {
-bottom: -0.25em;
-}
-
-
-sup {
-top: -0.5em;
-}
-
-
-/*
-1. Remove text indentation from table contents in Chrome and Safari. (https://bugs.chromium.org/p/chromium/issues/detail?id=999088, https://bugs.webkit.org/show_bug.cgi?id=201297)
-2. Correct table border color inheritance in all Chrome and Safari. (https://bugs.chromium.org/p/chromium/issues/detail?id=935729, https://bugs.webkit.org/show_bug.cgi?id=195016)
-3. Remove gaps between table borders by default.
-*/
-
-
-table {
-text-indent: 0; /* 1 */
-border-color: inherit; /* 2 */
-border-collapse: collapse; /* 3 */
-}
-
-
-/*
-1. Change the font styles in all browsers.
-2. Remove the margin in Firefox and Safari.
-3. Remove default padding in all browsers.
-*/
-
-
-button,
-input,
-optgroup,
-select,
-textarea {
-font-family: inherit; /* 1 */
-font-feature-settings: inherit; /* 1 */
-font-variation-settings: inherit; /* 1 */
-font-size: 100%; /* 1 */
-font-weight: inherit; /* 1 */
-line-height: inherit; /* 1 */
-letter-spacing: inherit; /* 1 */
-color: inherit; /* 1 */
-margin: 0; /* 2 */
-padding: 0; /* 3 */
-}
-
-
-/*
-Remove the inheritance of text transform in Edge and Firefox.
-*/
-
-
-button,
-select {
-text-transform: none;
-}
-
-
-/*
-1. Correct the inability to style clickable types in iOS and Safari.
-2. Remove default button styles.
-*/
-
-
-button,
-input:where([type='button']),
-input:where([type='reset']),
-input:where([type='submit']) {
--webkit-appearance: button; /* 1 */
-background-color: transparent; /* 2 */
-background-image: none; /* 2 */
-}
-
-
-/*
-Use the modern Firefox focus style for all focusable elements.
-*/
-
-
-:-moz-focusring {
-outline: auto;
-}
-
-
-/*
-Remove the additional `:invalid` styles in Firefox. (https://github.com/mozilla/gecko-dev/blob/2f9eacd9d3d995c937b4251a5557d95d494c9be1/layout/style/res/forms.css#L728-L737)
-*/
-
-
-:-moz-ui-invalid {
-box-shadow: none;
-}
-
-
-/*
-Add the correct vertical alignment in Chrome and Firefox.
-*/
-
-
-progress {
-vertical-align: baseline;
-}
-
-
-/*
-Correct the cursor style of increment and decrement buttons in Safari.
-*/
-
-
-::-webkit-inner-spin-button,
-::-webkit-outer-spin-button {
-height: auto;
-}
-
-
-/*
-1. Correct the odd appearance in Chrome and Safari.
-2. Correct the outline style in Safari.
-*/
-
-
-[type='search'] {
--webkit-appearance: textfield; /* 1 */
-outline-offset: -2px; /* 2 */
-}
-
-
-/*
-Remove the inner padding in Chrome and Safari on macOS.
-*/
-
-
-::-webkit-search-decoration {
--webkit-appearance: none;
-}
-
-
-/*
-1. Correct the inability to style clickable types in iOS and Safari.
-2. Change font properties to `inherit` in Safari.
-*/
-
-
-::-webkit-file-upload-button {
--webkit-appearance: button; /* 1 */
-font: inherit; /* 2 */
-}
-
-
-/*
-Add the correct display in Chrome and Safari.
-*/
-
-
-summary {
-display: list-item;
-}
-
-
-/*
-Removes the default spacing and border for appropriate elements.
-*/
-
-
-blockquote,
-dl,
-dd,
-h1,
-h2,
-h3,
-h4,
-h5,
-h6,
-hr,
-figure,
-p,
-pre {
-margin: 0;
-}
-
-
-fieldset {
-margin: 0;
-padding: 0;
-}
-
-
-legend {
-padding: 0;
-}
-
-
-ol,
-ul,
-menu {
-list-style: none;
-margin: 0;
-padding: 0;
-}
-
-
-/*
-Reset default styling for dialogs.
-*/
-dialog {
-padding: 0;
-}
-
-
-/*
-Prevent resizing textareas horizontally by default.
-*/
-
-
-textarea {
-resize: vertical;
-}
-
-
-/*
-1. Reset the default placeholder opacity in Firefox. (https://github.com/tailwindlabs/tailwindcss/issues/3300)
-2. Set the default placeholder color to the user's configured gray 400 color.
-*/
-
-
-input::placeholder,
-textarea::placeholder {
-opacity: 1; /* 1 */
-color: #9ca3af; /* 2 */
-}
-
-
-/*
-Set the default cursor for buttons.
-*/
-
-
-button,
-[role="button"] {
-cursor: pointer;
-}
-
-
-/*
-Make sure disabled buttons don't get the pointer cursor.
-*/
-:disabled {
-cursor: default;
-}
-
-
-/*
-1. Make replaced elements `display: block` by default. (https://github.com/mozdevs/cssremedy/issues/14)
-2. Add `vertical-align: middle` to align replaced elements more sensibly by default. (https://github.com/jensimmons/cssremedy/issues/14#issuecomment-634934210)
-This can trigger a poorly considered lint error in some tools but is included by design.
-*/
-
-
-img,
-svg,
-video,
-canvas,
-audio,
-iframe,
-embed,
-object {
-display: block; /* 1 */
-vertical-align: middle; /* 2 */
-}
-
-
-/*
-Constrain images and videos to the parent width and preserve their intrinsic aspect ratio. (https://github.com/mozdevs/cssremedy/issues/14)
-*/
-
-
-img,
-video {
-max-width: 100%;
-height: auto;
-}
-
-
-/* Make elements with the HTML hidden attribute stay hidden by default */
-[hidden]:where(:not([hidden="until-found"])) {
-display: none;
-}
-.pointer-events-none {
-pointer-events: none;
-}
-.fixed {
-position: fixed;
-}
-.absolute {
-position: absolute;
-}
-.relative {
-position: relative;
-}
-.sticky {
-position: sticky;
-}
-.inset-0 {
-inset: 0px;
-}
-.inset-4 {
-inset: 1rem;
-}
-.inset-8 {
-inset: 2rem;
-}
-.-left-4 {
-left: -1rem;
-}
-.-right-1 {
-right: -0.25rem;
-}
-.-top-1 {
-top: -0.25rem;
-}
-.-top-4 {
-top: -1rem;
-}
-.bottom-0 {
-bottom: 0px;
-}
-.bottom-1 {
-bottom: 0.25rem;
-}
-.bottom-\[20\%\] {
-bottom: 20%;
-}
-.left-0 {
-left: 0px;
-}
-.left-4 {
-left: 1rem;
-}
-.left-\[-10\%\] {
-left: -10%;
-}
-.left-\[50\%\] {
-left: 50%;
-}
-.right-0 {
-right: 0px;
-}
-.right-1 {
-right: 0.25rem;
-}
-.top-0 {
-top: 0px;
-}
-.top-28 {
-top: 7rem;
-}
-.top-4 {
-top: 1rem;
-}
-.top-\[10\%\] {
-top: 10%;
-}
-.z-0 {
-z-index: 0;
-}
-.z-10 {
-z-index: 10;
-}
-.z-50 {
-z-index: 50;
-}
-.col-span-12 {
-grid-column: span 12 / span 12;
-}
-.mx-auto {
-margin-left: auto;
-margin-right: auto;
-}
-.my-16 {
-margin-top: 4rem;
-margin-bottom: 4rem;
-}
-.mb-1 {
-margin-bottom: 0.25rem;
-}
-.mb-12 {
-margin-bottom: 3rem;
-}
-.mb-2 {
-margin-bottom: 0.5rem;
-}
-.mb-3 {
-margin-bottom: 0.75rem;
-}
-.mb-4 {
-margin-bottom: 1rem;
-}
-.mb-6 {
-margin-bottom: 1.5rem;
-}
-.mb-8 {
-margin-bottom: 2rem;
-}
-.mr-2 {
-margin-right: 0.5rem;
-}
-.mt-1 {
-margin-top: 0.25rem;
-}
-.mt-12 {
-margin-top: 3rem;
-}
-.mt-2 {
-margin-top: 0.5rem;
-}
-.mt-20 {
-margin-top: 5rem;
-}
-.mt-4 {
-margin-top: 1rem;
-}
-.mt-8 {
-margin-top: 2rem;
-}
-.mt-auto {
-margin-top: auto;
-}
-.line-clamp-2 {
-overflow: hidden;
-display: -webkit-box;
--webkit-box-orient: vertical;
--webkit-line-clamp: 2;
-}
-.block {
-display: block;
-}
-.flex {
-display: flex;
-}
-.inline-flex {
-display: inline-flex;
-}
-.grid {
-display: grid;
-}
-.hidden {
-display: none;
-}
-.aspect-\[16\/9\] {
-aspect-ratio: 16/9;
-}
-.aspect-square {
-aspect-ratio: 1 / 1;
-}
-.aspect-video {
-aspect-ratio: 16 / 9;
-}
-.h-1 {
-height: 0.25rem;
-}
-.h-10 {
-height: 2.5rem;
-}
-.h-12 {
-height: 3rem;
-}
-.h-2 {
-height: 0.5rem;
-}
-.h-20 {
-height: 5rem;
-}
-.h-8 {
-height: 2rem;
-}
-.h-\[400px\] {
-height: 400px;
-}
-.h-\[500px\] {
-height: 500px;
-}
-.h-full {
-height: 100%;
-}
-.h-px {
-height: 1px;
-}
-.min-h-\[60vh\] {
-min-height: 60vh;
-}
-.w-10 {
-width: 2.5rem;
-}
-.w-12 {
-width: 3rem;
-}
-.w-2 {
-width: 0.5rem;
-}
-.w-4 {
-width: 1rem;
-}
-.w-8 {
-width: 2rem;
-}
-.w-\[1000px\] {
-width: 1000px;
-}
-.w-\[500px\] {
-width: 500px;
-}
-.w-fit {
-width: fit-content;
-}
-.w-full {
-width: 100%;
-}
-.w-px {
-width: 1px;
-}
-.max-w-2xl {
-max-width: 42rem;
-}
-.max-w-3xl {
-max-width: 48rem;
-}
-.max-w-\[1400px\] {
-max-width: 1400px;
-}
-.shrink-0 {
-flex-shrink: 0;
-}
-.-translate-x-1\/2 {
---tw-translate-x: -50%;
-transform: translate(var(--tw-translate-x), var(--tw-translate-y)) rotate(var(--tw-rotate)) skewX(var(--tw-skew-x)) skewY(var(--tw-skew-y)) scaleX(var(--tw-scale-x)) scaleY(var(--tw-scale-y));
-}
-.translate-x-4 {
---tw-translate-x: 1rem;
-transform: translate(var(--tw-translate-x), var(--tw-translate-y)) rotate(var(--tw-rotate)) skewX(var(--tw-skew-x)) skewY(var(--tw-skew-y)) scaleX(var(--tw-scale-x)) scaleY(var(--tw-scale-y));
-}
-.translate-y-4 {
---tw-translate-y: 1rem;
-transform: translate(var(--tw-translate-x), var(--tw-translate-y)) rotate(var(--tw-rotate)) skewX(var(--tw-skew-x)) skewY(var(--tw-skew-y)) scaleX(var(--tw-scale-x)) scaleY(var(--tw-scale-y));
-}
-.transform {
-transform: translate(var(--tw-translate-x), var(--tw-translate-y)) rotate(var(--tw-rotate)) skewX(var(--tw-skew-x)) skewY(var(--tw-skew-y)) scaleX(var(--tw-scale-x)) scaleY(var(--tw-scale-y));
-}
-@keyframes pulse {
-
-
-50% {
-opacity: .5;
-}
-}
-.animate-pulse {
-animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
-}
-.cursor-pointer {
-cursor: pointer;
-}
-.grid-cols-1 {
-grid-template-columns: repeat(1, minmax(0, 1fr));
-}
-.grid-cols-2 {
-grid-template-columns: repeat(2, minmax(0, 1fr));
-}
-.flex-col {
-flex-direction: column;
-}
-.flex-wrap {
-flex-wrap: wrap;
-}
-.items-start {
-align-items: flex-start;
-}
-.items-center {
-align-items: center;
-}
-.justify-end {
-justify-content: flex-end;
-}
-.justify-center {
-justify-content: center;
-}
-.justify-between {
-justify-content: space-between;
-}
-.gap-10 {
-gap: 2.5rem;
-}
-.gap-12 {
-gap: 3rem;
-}
-.gap-2 {
-gap: 0.5rem;
-}
-.gap-3 {
-gap: 0.75rem;
-}
-.gap-4 {
-gap: 1rem;
-}
-.gap-6 {
-gap: 1.5rem;
-}
-.space-y-1 > :not([hidden]) ~ :not([hidden]) {
---tw-space-y-reverse: 0;
-margin-top: calc(0.25rem * calc(1 - var(--tw-space-y-reverse)));
-margin-bottom: calc(0.25rem * var(--tw-space-y-reverse));
-}
-.space-y-12 > :not([hidden]) ~ :not([hidden]) {
---tw-space-y-reverse: 0;
-margin-top: calc(3rem * calc(1 - var(--tw-space-y-reverse)));
-margin-bottom: calc(3rem * var(--tw-space-y-reverse));
-}
-.space-y-3 > :not([hidden]) ~ :not([hidden]) {
---tw-space-y-reverse: 0;
-margin-top: calc(0.75rem * calc(1 - var(--tw-space-y-reverse)));
-margin-bottom: calc(0.75rem * var(--tw-space-y-reverse));
-}
-.overflow-hidden {
-overflow: hidden;
-}
-.rounded-\[100\%\] {
-border-radius: 100%;
-}
-.rounded-full {
-border-radius: 9999px;
-}
-.rounded-none {
-border-radius: 0px;
-}
-.border {
-border-width: 1px;
-}
-.border-b {
-border-bottom-width: 1px;
-}
-.border-b-2 {
-border-bottom-width: 2px;
-}
-.border-l {
-border-left-width: 1px;
-}
-.border-l-2 {
-border-left-width: 2px;
-}
-.border-l-4 {
-border-left-width: 4px;
-}
-.border-r {
-border-right-width: 1px;
-}
-.border-r-2 {
-border-right-width: 2px;
-}
-.border-t {
-border-top-width: 1px;
-}
-.border-t-2 {
-border-top-width: 2px;
-}
-.border-none {
-border-style: none;
-}
-.border-cyan-500\/30 {
-border-color: rgb(6 182 212 / 0.3);
-}
-.border-cyan-900\/30 {
-border-color: rgb(22 78 99 / 0.3);
-}
-.border-cyan-900\/50 {
-border-color: rgb(22 78 99 / 0.5);
-}
-.border-gray-800 {
---tw-border-opacity: 1;
-border-color: rgb(31 41 55 / var(--tw-border-opacity, 1));
-}
-.border-pink-900\/20 {
-border-color: rgb(131 24 67 / 0.2);
-}
-.border-pink-900\/30 {
-border-color: rgb(131 24 67 / 0.3);
-}
-.border-pink-900\/50 {
-border-color: rgb(131 24 67 / 0.5);
-}
-.border-purple-500 {
---tw-border-opacity: 1;
-border-color: rgb(168 85 247 / var(--tw-border-opacity, 1));
-}
-.border-purple-500\/30 {
-border-color: rgb(168 85 247 / 0.3);
-}
-.border-purple-500\/50 {
-border-color: rgb(168 85 247 / 0.5);
-}
-.border-purple-900 {
---tw-border-opacity: 1;
-border-color: rgb(88 28 135 / var(--tw-border-opacity, 1));
-}
-.border-purple-900\/20 {
-border-color: rgb(88 28 135 / 0.2);
-}
-.border-purple-900\/30 {
-border-color: rgb(88 28 135 / 0.3);
-}
-.border-purple-900\/50 {
-border-color: rgb(88 28 135 / 0.5);
-}
-.border-purple-900\/80 {
-border-color: rgb(88 28 135 / 0.8);
-}
-.border-yellow-500\/30 {
-border-color: rgb(234 179 8 / 0.3);
-}
-.border-yellow-900\/30 {
-border-color: rgb(113 63 18 / 0.3);
-}
-.border-yellow-900\/50 {
-border-color: rgb(113 63 18 / 0.5);
-}
-.bg-\[\#05020a\] {
---tw-bg-opacity: 1;
-background-color: rgb(5 2 10 / var(--tw-bg-opacity, 1));
-}
-.bg-\[\#05020a\]\/90 {
-background-color: rgb(5 2 10 / 0.9);
-}
-.bg-\[\#0a0514\]\/50 {
-background-color: rgb(10 5 20 / 0.5);
-}
-.bg-\[\#0d0718\] {
---tw-bg-opacity: 1;
-background-color: rgb(13 7 24 / var(--tw-bg-opacity, 1));
-}
-.bg-\[\#0d0718\]\/50 {
-background-color: rgb(13 7 24 / 0.5);
-}
-.bg-black {
---tw-bg-opacity: 1;
-background-color: rgb(0 0 0 / var(--tw-bg-opacity, 1));
-}
-.bg-indigo-900\/10 {
-background-color: rgb(49 46 129 / 0.1);
-}
-.bg-purple-500 {
---tw-bg-opacity: 1;
-background-color: rgb(168 85 247 / var(--tw-bg-opacity, 1));
-}
-.bg-purple-500\/50 {
-background-color: rgb(168 85 247 / 0.5);
-}
-.bg-purple-900\/20 {
-background-color: rgb(88 28 135 / 0.2);
-}
-.bg-transparent {
-background-color: transparent;
-}
-.bg-yellow-400 {
---tw-bg-opacity: 1;
-background-color: rgb(250 204 21 / var(--tw-bg-opacity, 1));
-}
-.bg-\[linear-gradient\(45deg\2c rgba\(6\2c 182\2c 212\2c 0\.05\)_25\%\2c transparent_25\%\2c transparent_50\%\2c rgba\(6\2c 182\2c 212\2c 0\.05\)_50\%\2c rgba\(6\2c 182\2c 212\2c 0\.05\)_75\%\2c transparent_75\%\2c transparent\)\] {
-background-image: linear-gradient(45deg,rgba(6,182,212,0.05) 25%,transparent 25%,transparent 50%,rgba(6,182,212,0.05) 50%,rgba(6,182,212,0.05) 75%,transparent 75%,transparent);
-}
-.bg-\[radial-gradient\(circle_at_center\2c rgba\(234\2c 179\2c 8\2c 0\.1\)_0\2c transparent_100\%\)\] {
-background-image: radial-gradient(circle at center,rgba(234,179,8,0.1) 0,transparent 100%);
-}
-.bg-\[radial-gradient\(circle_at_center\2c rgba\(255\2c 255\2c 255\2c 0\.05\)_0\2c transparent_100\%\)\] {
-background-image: radial-gradient(circle at center,rgba(255,255,255,0.05) 0,transparent 100%);
-}
-.bg-\[radial-gradient\(ellipse_at_center\2c _var\(--tw-gradient-stops\)\)\] {
-background-image: radial-gradient(ellipse at center, var(--tw-gradient-stops));
-}
-.bg-\[url\(\'data\:image\/svg\+xml\;base64\2c PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI4IiBoZWlnaHQ9IjgiPgo8cmVjdCB3aWR0aD0iOCIgaGVpZ2h0PSI4IiBmaWxsPSIjMDAwIj48L3JlY3Q\+CjxwYXRoIGQ9Ik0wIDBMOCA4Wk04IDBMMCA4WiIgc3Ryb2tlPSIjM2IwNzY0IiBzdHJva2Utd2lkdGg9IjEiPjwvcGF0aD4KPC9zdmc\+\'\)\] {
-background-image: url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI4IiBoZWlnaHQ9IjgiPgo8cmVjdCB3aWR0aD0iOCIgaGVpZ2h0PSI4IiBmaWxsPSIjMDAwIj48L3JlY3Q+CjxwYXRoIGQ9Ik0wIDBMOCA4Wk04IDBMMCA4WiIgc3Ryb2tlPSIjM2IwNzY0IiBzdHJva2Utd2lkdGg9IjEiPjwvcGF0aD4KPC9zdmc+');
-}
-.bg-gradient-to-b {
-background-image: linear-gradient(to bottom, var(--tw-gradient-stops));
-}
-.bg-gradient-to-r {
-background-image: linear-gradient(to right, var(--tw-gradient-stops));
-}
-.from-indigo-900\/20 {
---tw-gradient-from: rgb(49 46 129 / 0.2) var(--tw-gradient-from-position);
---tw-gradient-to: rgb(49 46 129 / 0) var(--tw-gradient-to-position);
---tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to);
-}
-.from-purple-600 {
---tw-gradient-from: #9333ea var(--tw-gradient-from-position);
---tw-gradient-to: rgb(147 51 234 / 0) var(--tw-gradient-to-position);
---tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to);
-}
-.from-purple-900\/20 {
---tw-gradient-from: rgb(88 28 135 / 0.2) var(--tw-gradient-from-position);
---tw-gradient-to: rgb(88 28 135 / 0) var(--tw-gradient-to-position);
---tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to);
-}
-.from-purple-900\/50 {
---tw-gradient-from: rgb(88 28 135 / 0.5) var(--tw-gradient-from-position);
---tw-gradient-to: rgb(88 28 135 / 0) var(--tw-gradient-to-position);
---tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to);
-}
-.via-transparent {
---tw-gradient-to: rgb(0 0 0 / 0) var(--tw-gradient-to-position);
---tw-gradient-stops: var(--tw-gradient-from), transparent var(--tw-gradient-via-position), var(--tw-gradient-to);
-}
-.to-transparent {
---tw-gradient-to: transparent var(--tw-gradient-to-position);
-}
-.bg-\[length\:20px_20px\] {
-background-size: 20px 20px;
-}
-.p-1 {
-padding: 0.25rem;
-}
-.p-2 {
-padding: 0.5rem;
-}
-.p-5 {
-padding: 1.25rem;
-}
-.p-6 {
-padding: 1.5rem;
-}
-.p-8 {
-padding: 2rem;
-}
-.px-2 {
-padding-left: 0.5rem;
-padding-right: 0.5rem;
-}
-.px-3 {
-padding-left: 0.75rem;
-padding-right: 0.75rem;
-}
-.px-5 {
-padding-left: 1.25rem;
-padding-right: 1.25rem;
-}
-.px-6 {
-padding-left: 1.5rem;
-padding-right: 1.5rem;
-}
-.py-0\.5 {
-padding-top: 0.125rem;
-padding-bottom: 0.125rem;
-}
-.py-1 {
-padding-top: 0.25rem;
-padding-bottom: 0.25rem;
-}
-.py-12 {
-padding-top: 3rem;
-padding-bottom: 3rem;
-}
-.py-16 {
-padding-top: 4rem;
-padding-bottom: 4rem;
-}
-.py-2 {
-padding-top: 0.5rem;
-padding-bottom: 0.5rem;
-}
-.py-2\.5 {
-padding-top: 0.625rem;
-padding-bottom: 0.625rem;
-}
-.py-8 {
-padding-top: 2rem;
-padding-bottom: 2rem;
-}
-.pb-2 {
-padding-bottom: 0.5rem;
-}
-.pb-4 {
-padding-bottom: 1rem;
-}
-.pb-6 {
-padding-bottom: 1.5rem;
-}
-.pl-4 {
-padding-left: 1rem;
-}
-.pl-6 {
-padding-left: 1.5rem;
-}
-.pt-12 {
-padding-top: 3rem;
-}
-.pt-20 {
-padding-top: 5rem;
-}
-.pt-4 {
-padding-top: 1rem;
-}
-.pt-8 {
-padding-top: 2rem;
-}
-.text-center {
-text-align: center;
-}
-.text-right {
-text-align: right;
-}
-.text-2xl {
-font-size: 1.5rem;
-line-height: 2rem;
-}
-.text-3xl {
-font-size: 1.875rem;
-line-height: 2.25rem;
-}
-.text-5xl {
-font-size: 3rem;
-line-height: 1;
-}
-.text-6xl {
-font-size: 3.75rem;
-line-height: 1;
-}
-.text-\[10px\] {
-font-size: 10px;
-}
-.text-\[11px\] {
-font-size: 11px;
-}
-.text-\[8px\] {
-font-size: 8px;
-}
-.text-\[9px\] {
-font-size: 9px;
-}
-.text-lg {
-font-size: 1.125rem;
-line-height: 1.75rem;
-}
-.text-sm {
-font-size: 0.875rem;
-line-height: 1.25rem;
-}
-.text-xl {
-font-size: 1.25rem;
-line-height: 1.75rem;
-}
-.text-xs {
-font-size: 0.75rem;
-line-height: 1rem;
-}
-.font-bold {
-font-weight: 700;
-}
-.font-light {
-font-weight: 300;
-}
-.font-medium {
-font-weight: 500;
-}
-.uppercase {
-text-transform: uppercase;
-}
-.italic {
-font-style: italic;
-}
-.leading-\[1\.1\] {
-line-height: 1.1;
-}
-.leading-relaxed {
-line-height: 1.625;
-}
-.tracking-\[0\.15em\] {
-letter-spacing: 0.15em;
-}
-.tracking-\[0\.2em\] {
-letter-spacing: 0.2em;
-}
-.tracking-\[0\.3em\] {
-letter-spacing: 0.3em;
-}
-.tracking-wide {
-letter-spacing: 0.025em;
-}
-.tracking-wider {
-letter-spacing: 0.05em;
-}
-.tracking-widest {
-letter-spacing: 0.1em;
-}
-.text-cyan-400 {
---tw-text-opacity: 1;
-color: rgb(34 211 238 / var(--tw-text-opacity, 1));
-}
-.text-cyan-400\/50 {
-color: rgb(34 211 238 / 0.5);
-}
-.text-cyan-500 {
---tw-text-opacity: 1;
-color: rgb(6 182 212 / var(--tw-text-opacity, 1));
-}
-.text-cyan-500\/30 {
-color: rgb(6 182 212 / 0.3);
-}
-.text-cyan-500\/40 {
-color: rgb(6 182 212 / 0.4);
-}
-.text-cyan-500\/50 {
-color: rgb(6 182 212 / 0.5);
-}
-.text-gray-200 {
---tw-text-opacity: 1;
-color: rgb(229 231 235 / var(--tw-text-opacity, 1));
-}
-.text-gray-300 {
---tw-text-opacity: 1;
-color: rgb(209 213 219 / var(--tw-text-opacity, 1));
-}
-.text-gray-400 {
---tw-text-opacity: 1;
-color: rgb(156 163 175 / var(--tw-text-opacity, 1));
-}
-.text-gray-500 {
---tw-text-opacity: 1;
-color: rgb(107 114 128 / var(--tw-text-opacity, 1));
-}
-.text-gray-500\/30 {
-color: rgb(107 114 128 / 0.3);
-}
-.text-gray-600 {
---tw-text-opacity: 1;
-color: rgb(75 85 99 / var(--tw-text-opacity, 1));
-}
-.text-pink-400\/50 {
-color: rgb(244 114 182 / 0.5);
-}
-.text-pink-500 {
---tw-text-opacity: 1;
-color: rgb(236 72 153 / var(--tw-text-opacity, 1));
-}
-.text-pink-500\/30 {
-color: rgb(236 72 153 / 0.3);
-}
-.text-pink-500\/40 {
-color: rgb(236 72 153 / 0.4);
-}
-.text-pink-500\/50 {
-color: rgb(236 72 153 / 0.5);
-}
-.text-purple-200\/90 {
-color: rgb(233 213 255 / 0.9);
-}
-.text-purple-300 {
---tw-text-opacity: 1;
-color: rgb(216 180 254 / var(--tw-text-opacity, 1));
-}
-.text-purple-300\/50 {
-color: rgb(216 180 254 / 0.5);
-}
-.text-purple-400 {
---tw-text-opacity: 1;
-color: rgb(192 132 252 / var(--tw-text-opacity, 1));
-}
-.text-purple-400\/50 {
-color: rgb(192 132 252 / 0.5);
-}
-.text-purple-500 {
---tw-text-opacity: 1;
-color: rgb(168 85 247 / var(--tw-text-opacity, 1));
-}
-.text-purple-500\/30 {
-color: rgb(168 85 247 / 0.3);
-}
-.text-purple-500\/40 {
-color: rgb(168 85 247 / 0.4);
-}
-.text-purple-500\/50 {
-color: rgb(168 85 247 / 0.5);
-}
-.text-purple-900 {
---tw-text-opacity: 1;
-color: rgb(88 28 135 / var(--tw-text-opacity, 1));
-}
-.text-white {
---tw-text-opacity: 1;
-color: rgb(255 255 255 / var(--tw-text-opacity, 1));
-}
-.text-yellow-400 {
---tw-text-opacity: 1;
-color: rgb(250 204 21 / var(--tw-text-opacity, 1));
-}
-.text-yellow-400\/50 {
-color: rgb(250 204 21 / 0.5);
-}
-.text-yellow-500 {
---tw-text-opacity: 1;
-color: rgb(234 179 8 / var(--tw-text-opacity, 1));
-}
-.text-yellow-500\/30 {
-color: rgb(234 179 8 / 0.3);
-}
-.text-yellow-500\/40 {
-color: rgb(234 179 8 / 0.4);
-}
-.text-yellow-500\/50 {
-color: rgb(234 179 8 / 0.5);
-}
-.antialiased {
--webkit-font-smoothing: antialiased;
--moz-osx-font-smoothing: grayscale;
-}
-.placeholder-gray-600::placeholder {
---tw-placeholder-opacity: 1;
-color: rgb(75 85 99 / var(--tw-placeholder-opacity, 1));
-}
-.opacity-20 {
-opacity: 0.2;
-}
-.opacity-50 {
-opacity: 0.5;
-}
-.outline-none {
-outline: 2px solid transparent;
-outline-offset: 2px;
-}
-.blur-\[100px\] {
---tw-blur: blur(100px);
-filter: var(--tw-blur) var(--tw-brightness) var(--tw-contrast) var(--tw-grayscale) var(--tw-hue-rotate) var(--tw-invert) var(--tw-saturate) var(--tw-sepia) var(--tw-drop-shadow);
-}
-.blur-\[120px\] {
---tw-blur: blur(120px);
-filter: var(--tw-blur) var(--tw-brightness) var(--tw-contrast) var(--tw-grayscale) var(--tw-hue-rotate) var(--tw-invert) var(--tw-saturate) var(--tw-sepia) var(--tw-drop-shadow);
-}
-.grayscale {
---tw-grayscale: grayscale(100%);
-filter: var(--tw-blur) var(--tw-brightness) var(--tw-contrast) var(--tw-grayscale) var(--tw-hue-rotate) var(--tw-invert) var(--tw-saturate) var(--tw-sepia) var(--tw-drop-shadow);
-}
-.backdrop-blur-sm {
---tw-backdrop-blur: blur(4px);
--webkit-backdrop-filter: var(--tw-backdrop-blur) var(--tw-backdrop-brightness) var(--tw-backdrop-contrast) var(--tw-backdrop-grayscale) var(--tw-backdrop-hue-rotate) var(--tw-backdrop-invert) var(--tw-backdrop-opacity) var(--tw-backdrop-saturate) var(--tw-backdrop-sepia);
-backdrop-filter: var(--tw-backdrop-blur) var(--tw-backdrop-brightness) var(--tw-backdrop-contrast) var(--tw-backdrop-grayscale) var(--tw-backdrop-hue-rotate) var(--tw-backdrop-invert) var(--tw-backdrop-opacity) var(--tw-backdrop-saturate) var(--tw-backdrop-sepia);
-}
-.transition {
-transition-property: color, background-color, border-color, text-decoration-color, fill, stroke, opacity, box-shadow, transform, filter, backdrop-filter;
-transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
-transition-duration: 150ms;
-}
-.transition-all {
-transition-property: all;
-transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
-transition-duration: 150ms;
-}
-.transition-colors {
-transition-property: color, background-color, border-color, text-decoration-color, fill, stroke;
-transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
-transition-duration: 150ms;
-}
-.transition-transform {
-transition-property: transform;
-transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
-transition-duration: 150ms;
-}
-.duration-300 {
-transition-duration: 300ms;
-}
-.duration-500 {
-transition-duration: 500ms;
-}
-.duration-700 {
-transition-duration: 700ms;
-}
-.ease-in-out {
-transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
-}
-.selection\:bg-yellow-500\/30 *::selection {
-background-color: rgb(234 179 8 / 0.3);
-}
-.selection\:text-yellow-200 *::selection {
---tw-text-opacity: 1;
-color: rgb(254 240 138 / var(--tw-text-opacity, 1));
-}
-.selection\:bg-yellow-500\/30::selection {
-background-color: rgb(234 179 8 / 0.3);
-}
-.selection\:text-yellow-200::selection {
---tw-text-opacity: 1;
-color: rgb(254 240 138 / var(--tw-text-opacity, 1));
-}
-.hover\:border-cyan-500:hover {
---tw-border-opacity: 1;
-border-color: rgb(6 182 212 / var(--tw-border-opacity, 1));
-}
-.hover\:border-cyan-500\/50:hover {
-border-color: rgb(6 182 212 / 0.5);
-}
-.hover\:border-purple-500:hover {
---tw-border-opacity: 1;
-border-color: rgb(168 85 247 / var(--tw-border-opacity, 1));
-}
-.hover\:border-purple-500\/50:hover {
-border-color: rgb(168 85 247 / 0.5);
-}
-.hover\:border-yellow-500\/50:hover {
-border-color: rgb(234 179 8 / 0.5);
-}
-.hover\:bg-purple-500:hover {
---tw-bg-opacity: 1;
-background-color: rgb(168 85 247 / var(--tw-bg-opacity, 1));
-}
-.hover\:text-purple-300:hover {
---tw-text-opacity: 1;
-color: rgb(216 180 254 / var(--tw-text-opacity, 1));
-}
-.hover\:text-purple-400:hover {
---tw-text-opacity: 1;
-color: rgb(192 132 252 / var(--tw-text-opacity, 1));
-}
-.hover\:text-white:hover {
---tw-text-opacity: 1;
-color: rgb(255 255 255 / var(--tw-text-opacity, 1));
-}
-.focus\:ring-0:focus {
---tw-ring-offset-shadow: var(--tw-ring-inset) 0 0 0 var(--tw-ring-offset-width) var(--tw-ring-offset-color);
---tw-ring-shadow: var(--tw-ring-inset) 0 0 0 calc(0px + var(--tw-ring-offset-width)) var(--tw-ring-color);
-box-shadow: var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow, 0 0 #0000);
-}
-.group:hover .group-hover\:-translate-x-1 {
---tw-translate-x: -0.25rem;
-transform: translate(var(--tw-translate-x), var(--tw-translate-y)) rotate(var(--tw-rotate)) skewX(var(--tw-skew-x)) skewY(var(--tw-skew-y)) scaleX(var(--tw-scale-x)) scaleY(var(--tw-scale-y));
-}
-.group:hover .group-hover\:translate-x-1 {
---tw-translate-x: 0.25rem;
-transform: translate(var(--tw-translate-x), var(--tw-translate-y)) rotate(var(--tw-rotate)) skewX(var(--tw-skew-x)) skewY(var(--tw-skew-y)) scaleX(var(--tw-scale-x)) scaleY(var(--tw-scale-y));
-}
-.group:hover .group-hover\:scale-110 {
---tw-scale-x: 1.1;
---tw-scale-y: 1.1;
-transform: translate(var(--tw-translate-x), var(--tw-translate-y)) rotate(var(--tw-rotate)) skewX(var(--tw-skew-x)) skewY(var(--tw-skew-y)) scaleX(var(--tw-scale-x)) scaleY(var(--tw-scale-y));
-}
-.group:hover .group-hover\:border-purple-500 {
---tw-border-opacity: 1;
-border-color: rgb(168 85 247 / var(--tw-border-opacity, 1));
-}
-.group:hover .group-hover\:border-purple-500\/50 {
-border-color: rgb(168 85 247 / 0.5);
-}
-.group:hover .group-hover\:text-cyan-400 {
---tw-text-opacity: 1;
-color: rgb(34 211 238 / var(--tw-text-opacity, 1));
-}
-.group:hover .group-hover\:text-pink-400 {
---tw-text-opacity: 1;
-color: rgb(244 114 182 / var(--tw-text-opacity, 1));
-}
-.group:hover .group-hover\:text-purple-300 {
---tw-text-opacity: 1;
-color: rgb(216 180 254 / var(--tw-text-opacity, 1));
-}
-.group:hover .group-hover\:text-purple-400 {
---tw-text-opacity: 1;
-color: rgb(192 132 252 / var(--tw-text-opacity, 1));
-}
-.group:hover .group-hover\:text-white {
---tw-text-opacity: 1;
-color: rgb(255 255 255 / var(--tw-text-opacity, 1));
-}
-.group:hover .group-hover\:text-yellow-400 {
---tw-text-opacity: 1;
-color: rgb(250 204 21 / var(--tw-text-opacity, 1));
-}
-.group:hover .group-hover\:text-yellow-500 {
---tw-text-opacity: 1;
-color: rgb(234 179 8 / var(--tw-text-opacity, 1));
-}
-.group:hover .group-hover\:grayscale-0 {
---tw-grayscale: grayscale(0);
-filter: var(--tw-blur) var(--tw-brightness) var(--tw-contrast) var(--tw-grayscale) var(--tw-hue-rotate) var(--tw-invert) var(--tw-saturate) var(--tw-sepia) var(--tw-drop-shadow);
-}
-@media (min-width: 768px) {
-
-
-.md\:flex {
-display: flex;
-}
-
-
-.md\:w-auto {
-width: auto;
-}
-
-
-.md\:grid-cols-3 {
-grid-template-columns: repeat(3, minmax(0, 1fr));
-}
-
-
-.md\:flex-row {
-flex-direction: row;
-}
-
-
-.md\:p-10 {
-padding: 2.5rem;
-}
-
-
-.md\:text-4xl {
-font-size: 2.25rem;
-line-height: 2.5rem;
-}
-}
-@media (min-width: 1024px) {
-
-
-.lg\:col-span-1 {
-grid-column: span 1 / span 1;
-}
-
-
-.lg\:col-span-3 {
-grid-column: span 3 / span 3;
-}
-
-
-.lg\:col-span-5 {
-grid-column: span 5 / span 5;
-}
-
-
-.lg\:col-span-7 {
-grid-column: span 7 / span 7;
-}
-
-
-.lg\:col-span-8 {
-grid-column: span 8 / span 8;
-}
-
-
-.lg\:block {
-display: block;
-}
-
-
-.lg\:flex {
-display: flex;
-}
-
-
-.lg\:hidden {
-display: none;
-}
-
-
-.lg\:h-auto {
-height: auto;
-}
-
-
-.lg\:grid-cols-12 {
-grid-template-columns: repeat(12, minmax(0, 1fr));
-}
-
-
-.lg\:pl-8 {
-padding-left: 2rem;
-}
-
-
-.lg\:text-6xl {
-font-size: 3.75rem;
-line-height: 1;
-}
-}* {
--ms-overflow-style: none !important;
-scrollbar-width: none !important;
-}
-
-
-*::-webkit-scrollbar {
-display: none !important;
-width: 0 !important;
-height: 0 !important;
-}
-</style>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+    <script>document.documentElement.classList.add('js');</script>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="referrer" content="strict-origin-when-cross-origin">
+  <meta name="theme-color" content="#030014">
+  <title>The Ethics of Algorithmic Visibility | The Algorithm Witch</title>
+  <meta name="description" content="For as long as I have been online, I have believed that social and digital media could function as infrastructure for collective power. I have dreamed of a world where…">
+  <meta name="author" content="Cassandre Arkema">
+  <link rel="canonical" href="https://thealgorithmwitch.com/blog/ethics-of-algorithmic-visibility.html">
+  <meta name="robots" content="max-image-preview:large">
+  <link rel="icon" href="/favicon.ico" sizes="any">
+  <link rel="icon" type="image/png" href="/favicon-48x48.png" sizes="48x48">
+  <link rel="icon" type="image/png" href="/favicon-32x32.png" sizes="32x32">
+  <link rel="icon" type="image/png" href="/favicon-16x16.png" sizes="16x16">
+  <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+  <meta property="og:type" content="article">
+  <meta property="og:site_name" content="The Algorithm Witch">
+  <meta property="og:locale" content="en_US">
+  <meta property="og:title" content="The Ethics of Algorithmic Visibility | The Algorithm Witch">
+  <meta property="og:description" content="For as long as I have been online, I have believed that social and digital media could function as infrastructure for collective power. I have dreamed of a world where…">
+  <meta property="og:url" content="https://thealgorithmwitch.com/blog/ethics-of-algorithmic-visibility.html">
+  <meta property="og:image" content="https://substack-post-media.s3.amazonaws.com/public/images/40bd0dfc-356b-4dea-9299-bd908965027d_1600x900.png">
+  <meta property="og:image:secure_url" content="https://substack-post-media.s3.amazonaws.com/public/images/40bd0dfc-356b-4dea-9299-bd908965027d_1600x900.png">
+  <meta property="og:image:alt" content="The Ethics of Algorithmic Visibility | The Algorithm Witch">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="The Ethics of Algorithmic Visibility | The Algorithm Witch">
+  <meta name="twitter:description" content="For as long as I have been online, I have believed that social and digital media could function as infrastructure for collective power. I have dreamed of a world where…">
+  <meta name="twitter:image" content="https://substack-post-media.s3.amazonaws.com/public/images/40bd0dfc-356b-4dea-9299-bd908965027d_1600x900.png">
+  <link rel="dns-prefetch" href="//unpkg.com">
+  <link rel="preconnect" href="https://unpkg.com" crossorigin>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <style>html, body { background:#030014; margin:0; padding:0; } body { color:#e2e8f0; font-family:system-ui,-apple-system,Segoe UI,Roboto,Inter,Arial,sans-serif; }</style>
+  <link rel="preload" as="style" href="/assets/tailwind.css?v=4" onload="this.onload=null;this.rel='stylesheet'">
+  <noscript><link rel="stylesheet" href="/assets/tailwind.css?v=4"></noscript>
+<link rel="preload" as="image" href="https://substack-post-media.s3.amazonaws.com/public/images/40bd0dfc-356b-4dea-9299-bd908965027d_1600x900.png">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@400&family=Inter:wght@300;400;500;600&family=Playfair+Display:ital,wght@0,400;0,600;1,400&display=swap" media="print" onload="this.media='all'">
+  <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@400&family=Inter:wght@300;400;500;600&family=Playfair+Display:ital,wght@0,400;0,600;1,400&display=swap"></noscript>
+  <script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"BlogPosting","@id":"https://thealgorithmwitch.com/blog/ethics-of-algorithmic-visibility.html#article","headline":"The Ethics of Algorithmic Visibility","description":"For as long as I have been online, I have believed that social and digital media could function as infrastructure for collective power. I have dreamed of a world where\u2026","url":"https://thealgorithmwitch.com/blog/ethics-of-algorithmic-visibility.html","datePublished":"2026-03-31","dateModified":"2026-03-31","author":{"@id":"https://thealgorithmwitch.com/#person"},"publisher":{"@id":"https://thealgorithmwitch.com/#person"},"mainEntityOfPage":{"@id":"https://thealgorithmwitch.com/blog/ethics-of-algorithmic-visibility.html#webpage"},"image":{"@type":"ImageObject","url":"https://substack-post-media.s3.amazonaws.com/public/images/40bd0dfc-356b-4dea-9299-bd908965027d_1600x900.png"},"articleSection":"Ethics"},{"@type":"WebPage","@id":"https://thealgorithmwitch.com/blog/ethics-of-algorithmic-visibility.html#webpage","url":"https://thealgorithmwitch.com/blog/ethics-of-algorithmic-visibility.html","name":"The Ethics of Algorithmic Visibility | The Algorithm Witch","isPartOf":{"@id":"https://thealgorithmwitch.com/blog/#blog"}},{"@type":"Blog","@id":"https://thealgorithmwitch.com/blog/#blog","url":"https://thealgorithmwitch.com/blog/","name":"The Algorithm Witch Archive"},{"@type":"Person","@id":"https://thealgorithmwitch.com/#person","name":"Cassandre Arkema","alternateName":"The Algorithm Witch","url":"https://thealgorithmwitch.com/"}]}</script>
+  <script>
+    (function () {
+      const isSmallScreen = window.matchMedia('(max-width: 768px)').matches;
+      const s = document.createElement('script');
+      s.src = 'https://unpkg.com/@phosphor-icons/web';
+      s.defer = true;
+      if (!isSmallScreen) {
+        document.head.appendChild(s);
+        return;
+      }
+      window.addEventListener('load', function () {
+        document.head.appendChild(s);
+      }, { once: true });
+    })();
+  </script>
+  <style>
+    :root {
+      --bg: #05020a;
+      --panel: #0d0718;
+      --panel-soft: rgba(13, 7, 24, 0.78);
+      --line: rgba(168, 85, 247, 0.2);
+      --text: #e5e7eb;
+      --text-soft: #aeb5c4;
+      --text-faint: #7d8798;
+      --gold: #fbbf24;
+      --accent: #a855f7;
+      --accent-soft: rgba(168, 85, 247, 0.18);
+      --shadow: 0 24px 56px rgba(0, 0, 0, 0.35);
+    }
+
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      background:
+        radial-gradient(circle at 50% 0%, rgba(88, 28, 135, 0.26), transparent 42%),
+        radial-gradient(circle at 15% 18%, rgba(168, 85, 247, 0.12), transparent 24%),
+        radial-gradient(circle at 80% 76%, rgba(34, 211, 238, 0.08), transparent 18%),
+        var(--bg);
+      color: var(--text);
+      font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      overflow-x: clip;
+      -webkit-font-smoothing: antialiased;
+    }
+    body.theme-purple { --accent: #a855f7; --accent-soft: rgba(168, 85, 247, 0.18); }
+    body.theme-cyan { --accent: #22d3ee; --accent-soft: rgba(34, 211, 238, 0.18); }
+    body.theme-amber { --accent: #fbbf24; --accent-soft: rgba(251, 191, 36, 0.18); }
+    body.theme-fuchsia { --accent: #f472b6; --accent-soft: rgba(244, 114, 182, 0.18); }
+
+    a { color: inherit; text-decoration: none; }
+    img { display: block; max-width: 100%; }
+    .bg-grid {
+      position: fixed;
+      inset: 0;
+      z-index: 0;
+      pointer-events: none;
+      background-image:
+        linear-gradient(to right, rgba(168, 85, 247, 0.03) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(168, 85, 247, 0.03) 1px, transparent 1px);
+      background-size: 40px 40px;
+    }
+    .stars {
+      position: fixed;
+      inset: 0;
+      z-index: 1;
+      pointer-events: none;
+    }
+    .star {
+      position: absolute;
+      background: #fff;
+      border-radius: 50%;
+      opacity: 0;
+      animation: twinkle var(--duration) ease-in-out infinite;
+      animation-delay: var(--delay);
+      box-shadow: 0 0 5px #fff, 0 0 10px var(--accent);
+    }
+    @keyframes twinkle {
+      0% { opacity: 0; transform: scale(0.3); }
+      50% { opacity: var(--opacity); transform: scale(1); }
+      100% { opacity: 0; transform: scale(0.3); }
+    }
+    .site-shell { position: relative; z-index: 2; }
+    .font-magical { font-family: "Cinzel Decorative", Georgia, serif; font-weight: 400; }
+    .font-serif-heading { font-family: "Playfair Display", Georgia, serif; }
+    .font-ui { font-family: Inter, system-ui, sans-serif; }
+    .micro {
+      font-size: 0.72rem;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      font-weight: 500;
+    }
+    .nav-item {
+      position: relative;
+      padding-bottom: 0.25rem;
+    }
+    .nav-item::after {
+      content: "";
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      width: 100%;
+      height: 1px;
+      background: var(--accent);
+      transform: scaleX(0);
+      transform-origin: right;
+      transition: transform 0.28s ease;
+    }
+    .nav-item:hover::after,
+    .nav-item.active::after {
+      transform: scaleX(1);
+      transform-origin: left;
+    }
+    .topbar {
+      position: fixed;
+      top: 0;
+      width: 100%;
+      z-index: 50;
+      padding: 1.5rem;
+      transition: all 0.3s ease;
+    }
+    .glass-panel {
+      background: rgba(12, 6, 26, 0.82);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.28);
+      backdrop-filter: blur(18px);
+      -webkit-backdrop-filter: blur(18px);
+    }
+    .topbar-inner,
+    .hero-inner,
+    .content-inner,
+    .lower-shell,
+    .site-footer-inner {
+      width: min(1400px, calc(100% - 2rem));
+      margin: 0 auto;
+    }
+    .topbar-inner {
+      min-height: 4.75rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+      padding: 1rem 2rem;
+      border-radius: 999px;
+    }
+    .brand-lockup { display: inline-flex; align-items: center; gap: 0.75rem; }
+    @keyframes pulseDot {
+      0%, 100% { opacity: 0.6; transform: scale(1); }
+      50% { opacity: 1; transform: scale(1.15); }
+    }
+    .brand-word {
+      font-family: "Cinzel Decorative", Georgia, serif;
+      font-size: 1.25rem;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: white;
+      text-shadow: 0 0 20px rgba(168, 85, 247, 0.35);
+      font-weight: 400;
+    }
+    .topbar-nav {
+      display: flex;
+      align-items: center;
+      gap: 2.25rem;
+      color: #9ca3af;
+    }
+    .mobile-menu {
+      display: none;
+      margin-top: 0.75rem;
+      border-radius: 1rem;
+      padding: 1rem 1.25rem;
+    }
+    .button-link {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.55rem;
+      min-height: 2.8rem;
+      padding: 0 1.1rem;
+      border-radius: 999px;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      background: rgba(255, 255, 255, 0.05);
+      color: white;
+      transition: transform 0.24s ease, border-color 0.24s ease, background-color 0.24s ease;
+    }
+    .button-link:hover {
+      transform: translateY(-2px);
+      background: var(--accent-soft);
+      border-color: color-mix(in srgb, var(--accent) 55%, white 15%);
+    }
+    .post-hero {
+      width: 100%;
+      border-bottom: 1px solid rgba(88, 28, 135, 0.5);
+      background: rgba(13, 7, 24, 0.52);
+    }
+    .hero-inner {
+      display: grid;
+      grid-template-columns: minmax(320px, 0.95fr) minmax(420px, 1.05fr);
+      min-height: 60vh;
+    }
+    .hero-copy {
+      padding: 4rem 1.5rem;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      border-right: 1px solid rgba(88, 28, 135, 0.5);
+      min-width: 0;
+    }
+    .back-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.55rem;
+      color: #7d8798;
+      margin-bottom: 2.8rem;
+      width: fit-content;
+    }
+    .back-link:hover { color: var(--accent); }
+    .category-row {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      margin-bottom: 1.2rem;
+    }
+    .category-square {
+      width: 0.55rem;
+      height: 0.55rem;
+      background: var(--accent);
+      flex-shrink: 0;
+    }
+    .category-chip {
+      border: 1px solid color-mix(in srgb, var(--accent) 35%, transparent);
+      color: var(--accent);
+      padding: 0.18rem 0.5rem;
+      width: fit-content;
+    }
+    .post-title {
+      margin: 0 0 1.8rem;
+      font-family: "Cinzel Decorative", Georgia, serif;
+      font-size: clamp(3rem, 5vw, 5.5rem);
+      line-height: 1.08;
+      text-transform: uppercase;
+      color: white;
+      text-shadow: 0 0 20px rgba(168, 85, 247, 0.32);
+      font-weight: 400;
+    }
+    .post-title-accent {
+      display: block;
+      margin-top: 0.45rem;
+      color: var(--gold);
+      text-shadow: 0 0 20px rgba(251, 191, 36, 0.28);
+      font-style: italic;
+    }
+    .hero-meta {
+      margin-top: auto;
+      padding-top: 2rem;
+      border-top: 1px solid rgba(88, 28, 135, 0.3);
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+    .hero-logo-box {
+      width: 3.15rem;
+      height: 3.15rem;
+      background: #000;
+      border: 1px solid var(--accent);
+      display: inline-grid;
+      place-items: center;
+      flex-shrink: 0;
+      position: relative;
+      color: var(--accent);
+    }
+    .hero-logo-box .star-dot {
+      position: absolute;
+      top: -0.22rem;
+      right: -0.22rem;
+      width: 0.38rem;
+      height: 0.38rem;
+      background: var(--gold);
+    }
+    .hero-meta-name {
+      color: white;
+      font-size: 0.95rem;
+      letter-spacing: 0.02em;
+    }
+    .hero-meta-line {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 0.7rem;
+      margin-top: 0.35rem;
+      color: var(--text-faint);
+      font-size: 0.74rem;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+    }
+    .hero-meta-line .divider {
+      color: rgba(88, 28, 135, 0.85);
+    }
+    .hero-media {
+      position: relative;
+      background: #05020a;
+      padding: 2rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+    }
+    .hero-media::before,
+    .hero-media::after {
+      content: "";
+      position: absolute;
+      inset: 1rem;
+      border: 1px solid rgba(88, 28, 135, 0.32);
+      pointer-events: none;
+    }
+    .hero-media::after {
+      inset: 2rem;
+      border-color: rgba(88, 28, 135, 0.2);
+    }
+    .hero-media-frame {
+      width: 100%;
+      max-width: 52rem;
+      position: relative;
+      z-index: 1;
+      background: #0d0718;
+      border: 1px solid rgba(88, 28, 135, 0.5);
+      padding: 0.6rem;
+      box-shadow: var(--shadow);
+    }
+    .hero-media-frame::before,
+    .hero-media-frame::after,
+    .sharp-panel::before,
+    .sharp-panel::after,
+    .related-card::before,
+    .related-card::after,
+    .dispatch-card::before,
+    .dispatch-card::after {
+      content: "";
+      position: absolute;
+      width: 4px;
+      height: 4px;
+      background: var(--accent);
+    }
+    .hero-media-frame::before,
+    .sharp-panel::before,
+    .related-card::before,
+    .dispatch-card::before {
+      top: 0;
+      left: 0;
+    }
+    .hero-media-frame::after,
+    .sharp-panel::after,
+    .related-card::after,
+    .dispatch-card::after {
+      right: 0;
+      bottom: 0;
+    }
+    .hero-media-frame img,
+    .hero-media-frame iframe {
+      width: 100%;
+      height: auto;
+      display: block;
+      background: #000;
+      object-fit: contain;
+    }
+    .content-inner {
+      display: grid;
+      grid-template-columns: minmax(250px, 0.74fr) minmax(0, 1.26fr);
+      gap: 3rem;
+      padding: 4rem 0 2rem;
+      align-items: start;
+    }
+    .sidebar-stack,
+    .article-column {
+      min-width: 0;
+    }
+    body.split-scroll-ready .sidebar-stack,
+    body.split-scroll-ready .article-column {
+      max-height: calc(100vh - 7rem);
+      overflow-y: auto;
+      scrollbar-width: thin;
+      scrollbar-color: rgba(168, 85, 247, 0.45) transparent;
+    }
+    body.split-scroll-ready .sidebar-stack::-webkit-scrollbar,
+    body.split-scroll-ready .article-column::-webkit-scrollbar {
+      width: 6px;
+    }
+    body.split-scroll-ready .sidebar-stack::-webkit-scrollbar-thumb,
+    body.split-scroll-ready .article-column::-webkit-scrollbar-thumb {
+      background: rgba(168, 85, 247, 0.45);
+      border-radius: 999px;
+    }
+    body.split-scroll-ready .sidebar-stack {
+      position: sticky;
+      top: 6rem;
+      align-self: start;
+    }
+    body.split-scroll-ready .article-column {
+      position: sticky;
+      top: 6rem;
+      align-self: start;
+    }
+    .sidebar-stack { display: grid; gap: 1.4rem; }
+    .article-column { display: grid; gap: 1.5rem; }
+    .sharp-panel,
+    .related-card,
+    .dispatch-card {
+      position: relative;
+      background: var(--panel-soft);
+      border: 1px solid rgba(88, 28, 135, 0.5);
+      box-shadow: var(--shadow);
+    }
+    .panel-pad { padding: 1.5rem; }
+    .panel-heading {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+      margin: 0 0 1rem;
+      padding-bottom: 1rem;
+      border-bottom: 1px solid rgba(88, 28, 135, 0.5);
+    }
+    .panel-heading .left {
+      display: inline-flex;
+      gap: 0.7rem;
+      align-items: center;
+      color: white;
+    }
+    .panel-heading i { color: var(--gold); }
+    .toc-links { display: grid; gap: 0.2rem; }
+    .toc-link {
+      display: flex;
+      align-items: center;
+      gap: 0.8rem;
+      padding: 0.7rem 0 0.7rem 1rem;
+      border-left: 1px solid rgba(168, 85, 247, 0.2);
+      color: var(--text-faint);
+      transition: all 0.2s ease;
+    }
+    .toc-link-number {
+      min-width: 3.2rem;
+      color: var(--accent);
+      letter-spacing: 0.18em;
+      flex-shrink: 0;
+    }
+    .toc-link-label {
+      color: inherit;
+      min-width: 0;
+    }
+    .toc-link:hover {
+      border-left-color: color-mix(in srgb, var(--accent) 80%, white 12%);
+      background: linear-gradient(to right, var(--accent-soft), transparent);
+      color: #d8ddef;
+    }
+    .toc-link.active {
+      color: var(--gold);
+      border-left-color: var(--gold);
+      background: linear-gradient(to right, rgba(251, 191, 36, 0.08), transparent);
+    }
+    .toc-link.active .toc-link-number { color: var(--gold); }
+    .visions-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 0.75rem;
+    }
+    .vision-link {
+      aspect-ratio: 1;
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: #000;
+      border: 1px solid rgba(88, 28, 135, 0.5);
+      overflow: hidden;
+      transition: border-color 0.24s ease, transform 0.24s ease;
+    }
+    .vision-link:hover {
+      border-color: #22d3ee;
+      transform: translateY(-2px);
+    }
+    .vision-link img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      opacity: 0.9;
+    }
+    .vision-link i { color: rgba(168, 85, 247, 0.45); font-size: 1.3rem; }
+    .vision-tag {
+      position: absolute;
+      bottom: 0.3rem;
+      right: 0.35rem;
+      font-size: 0.55rem;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      color: #6b7280;
+    }
+    .subscription-copy,
+    .substack-fallback,
+    .signal-copy {
+      color: var(--text-soft);
+      font-size: 0.94rem;
+      line-height: 1.75;
+    }
+    .substack-shell {
+      margin-top: 1rem;
+      border: 1px solid rgba(88, 28, 135, 0.5);
+      background: linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.01)), #090411;
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.03);
+      overflow: hidden;
+    }
+    .substack-shell-bar {
+      min-height: 3rem;
+      padding: 0.8rem 0.95rem;
+      display: flex;
+      align-items: center;
+      justify-content: flex-start;
+      border-bottom: 1px solid rgba(88, 28, 135, 0.32);
+      color: #ddd6fe;
+      background: linear-gradient(to right, rgba(168, 85, 247, 0.12), rgba(5,2,10,0.2));
+    }
+    .substack-embed {
+      padding: 1rem;
+      display: grid;
+      gap: 0.85rem;
+      background: linear-gradient(180deg, rgba(11, 6, 20, 0.94), rgba(6, 3, 12, 0.98));
+    }
+    .substack-embed label {
+      color: #ddd6fe;
+      font-size: 0.74rem;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+    }
+    .substack-embed input {
+      width: 100%;
+      min-height: 3rem;
+      padding: 0 1rem;
+      border: 1px solid rgba(168, 85, 247, 0.3);
+      background: rgba(255, 255, 255, 0.04);
+      color: white;
+      font: inherit;
+    }
+    .substack-embed input::placeholder { color: #8d94a5; }
+    .substack-embed input:focus {
+      outline: none;
+      border-color: var(--accent);
+      box-shadow: 0 0 0 1px color-mix(in srgb, var(--accent) 45%, transparent);
+    }
+    .substack-embed button {
+      min-height: 3rem;
+      border: 1px solid rgba(168, 85, 247, 0.45);
+      background: linear-gradient(135deg, rgba(168, 85, 247, 0.2), rgba(251, 191, 36, 0.12));
+      color: white;
+      font: inherit;
+      font-size: 0.78rem;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      cursor: pointer;
+      transition: transform 0.24s ease, border-color 0.24s ease, background-color 0.24s ease;
+    }
+    .substack-embed button:hover {
+      transform: translateY(-2px);
+      border-color: color-mix(in srgb, var(--accent) 55%, white 15%);
+    }
+    .substack-fallback { margin-top: 0.85rem; }
+    .substack-fallback a { color: #c4b5fd; text-decoration: underline; text-underline-offset: 0.16em; }
+    .share-row {
+      display: flex;
+      justify-content: flex-end;
+      gap: 0.75rem;
+    }
+    .share-row a,
+    .share-row button {
+      width: 2.3rem;
+      height: 2.3rem;
+      border: 1px solid rgba(88, 28, 135, 0.5);
+      background: #0d0718;
+      color: #9ca3af;
+      display: grid;
+      place-items: center;
+      transition: all 0.24s ease;
+    }
+    .share-row a:hover,
+    .share-row button:hover {
+      color: white;
+      border-color: var(--accent);
+      background: rgba(168, 85, 247, 0.08);
+    }
+    .intro-callout {
+      border-left: 4px solid var(--accent);
+      background: linear-gradient(to right, var(--accent-soft), transparent 70%);
+      padding: 0.95rem 0 0.95rem 1.35rem;
+      font-family: "Playfair Display", Georgia, serif;
+      font-size: 1.42rem;
+      line-height: 1.7;
+      color: color-mix(in srgb, white 88%, var(--accent) 12%);
+      font-style: italic;
+    }
+    .intro-callout.closing {
+      margin-top: 1.8rem;
+      border-left-color: var(--gold);
+      background: linear-gradient(to right, rgba(251, 191, 36, 0.12), transparent 70%);
+      color: #f4e5a7;
+    }
+    .intro-callout footer {
+      margin-top: 0.9rem;
+      display: flex;
+      align-items: center;
+      gap: 0.7rem;
+      color: var(--accent);
+    }
+    .intro-callout footer::before {
+      content: "";
+      width: 1rem;
+      height: 1px;
+      background: var(--accent);
+    }
+    .article-body {
+      max-width: 52rem;
+      padding-bottom: 0.5rem;
+    }
+    .article-section {
+      padding: 2rem 0 0;
+      border-top: 1px solid rgba(88, 28, 135, 0.22);
+    }
+    .section-heading {
+      margin: 0 0 1.2rem;
+      padding-bottom: 1rem;
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      border-bottom: 1px solid rgba(88, 28, 135, 0.3);
+      font-family: "Cinzel Decorative", Georgia, serif;
+      font-size: clamp(2rem, 2.8vw, 2.9rem);
+      line-height: 1.18;
+      color: white;
+      scroll-margin-top: 110px;
+    }
+    .section-number {
+      color: var(--accent);
+      font-family: Inter, sans-serif;
+      font-size: 0.78rem;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      flex-shrink: 0;
+    }
+    .article-body p,
+    .article-body li {
+      color: #d1d5db;
+      font-size: 1.1rem;
+      line-height: 1.95;
+      font-weight: 300;
+      margin: 0 0 1.5rem;
+    }
+    .article-body ul,
+    .article-body ol { margin: 0 0 1.5rem 1.2rem; padding: 0; }
+    .article-body li { margin-bottom: 0.5rem; }
+    .article-body strong { color: white; font-weight: 500; }
+    .article-body a { color: #c4b5fd; text-decoration: underline; text-underline-offset: 0.18em; }
+    .article-body h4 {
+      margin: 1.6rem 0 1rem;
+      color: #ece7ff;
+      font-family: "Playfair Display", Georgia, serif;
+      font-size: 1.45rem;
+      font-weight: 400;
+      line-height: 1.4;
+    }
+    .article-body blockquote {
+      margin: 4rem 0;
+      padding: 2rem 2rem 2rem 2.5rem;
+      position: relative;
+    }
+    .article-body blockquote .quote-icon {
+      position: absolute;
+      top: -1rem;
+      left: -1rem;
+      background: #000;
+      border: 1px solid rgba(168, 85, 247, 0.9);
+      color: var(--accent);
+      padding: 0.55rem;
+      display: grid;
+      place-items: center;
+    }
+    .article-body blockquote p {
+      margin: 0;
+      position: relative;
+      z-index: 1;
+      font-family: "Playfair Display", Georgia, serif;
+      font-size: 1.5rem;
+      line-height: 1.7;
+      color: white;
+      font-style: normal;
+      font-weight: 400;
+    }
+    .article-body blockquote footer {
+      margin-top: 2rem;
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      color: var(--accent);
+      font-size: 10px;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+    }
+    .article-body blockquote footer span {
+      width: 1rem;
+      height: 1px;
+      background: var(--accent);
+    }
+    .article-figure {
+      margin: 3rem 0;
+      position: relative;
+    }
+    .article-figure > .figure-frame {
+      width: 100%;
+      background: #0d0718;
+      border: 1px solid color-mix(in srgb, var(--accent) 45%, #120818 55%);
+      padding: 0.5rem;
+    }
+    .article-figure > .figure-frame > * {
+      width: 100%;
+      display: block;
+      background: #000;
+      border: 1px solid color-mix(in srgb, var(--accent) 24%, #110816 76%);
+    }
+    .article-figure img,
+    .article-figure iframe {
+      width: 100%;
+      height: auto;
+      display: block;
+      object-fit: contain;
+      border: 0;
+      background: #000;
+    }
+    .article-figure iframe { min-height: 22rem; }
+    .article-figure figcaption {
+      margin-top: 0.7rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+      color: var(--text-faint);
+      font-size: 0.72rem;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+    }
+    .figure-caption-index { color: var(--accent); }
+    .post-tags-footer {
+      margin-top: 2.2rem;
+      padding-top: 1.2rem;
+      border-top: 1px solid rgba(88, 28, 135, 0.3);
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.65rem;
+    }
+    .tag-chip {
+      display: inline-flex;
+      align-items: center;
+      min-height: 2rem;
+      padding: 0 0.85rem;
+      border: 1px solid rgba(88, 28, 135, 0.4);
+      background: rgba(255, 255, 255, 0.03);
+      color: #ddd6fe;
+      font-size: 0.72rem;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+    }
+    .lower-shell {
+      display: grid;
+      gap: 1.5rem;
+      padding: 0 0 3rem;
+    }
+    .related-shell-title,
+    .dispatch-shell-title {
+      margin: 0 0 1rem;
+      font-family: "Cinzel Decorative", Georgia, serif;
+      font-size: 2rem;
+      color: white;
+      text-transform: uppercase;
+      font-weight: 400;
+    }
+    .related-grid,
+    .dispatch-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 1rem;
+    }
+    .dispatch-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .related-card,
+    .dispatch-card {
+      padding: 1.3rem;
+      background: var(--panel);
+      border-color: rgba(88, 28, 135, 0.55);
+      transition: transform 0.24s ease, border-color 0.24s ease;
+    }
+    .related-card:hover,
+    .dispatch-card:hover {
+      transform: translateY(-3px);
+      border-color: color-mix(in srgb, var(--accent) 60%, white 10%);
+    }
+    .related-card .category-chip,
+    .dispatch-card .category-chip { margin-bottom: 0.9rem; }
+    .related-card h3,
+    .dispatch-card h3 {
+      margin: 0 0 0.8rem;
+      font-family: "Cinzel Decorative", Georgia, serif;
+      font-size: 1.3rem;
+      line-height: 1.35;
+      text-transform: uppercase;
+      color: white;
+      font-weight: 400;
+    }
+    .related-card p,
+    .dispatch-card p {
+      margin: 0;
+      color: var(--text-soft);
+      line-height: 1.8;
+      font-size: 0.96rem;
+    }
+    .dispatch-arrow {
+      margin-top: 1rem;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.55rem;
+      color: var(--accent);
+    }
+    .site-footer {
+      border-top: 2px solid rgba(255, 255, 255, 0.16);
+      background: #000;
+      padding: 2.25rem 0;
+      position: relative;
+      z-index: 3;
+    }
+    .site-footer-inner {
+      display: flex;
+      flex-direction: column;
+      gap: 1.5rem;
+    }
+    .footer-row {
+      width: min(1400px, calc(100% - 2rem));
+      margin: 0 auto;
+      padding-top: 2rem;
+      border-top: 1px solid rgba(255, 255, 255, 0.1);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1.5rem;
+    }
+    .footer-socials {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 1.5rem;
+    }
+    .footer-socials a {
+      color: #94a3b8;
+      transition: color 0.24s ease, transform 0.24s ease;
+    }
+    .footer-socials a:hover {
+      color: white;
+      transform: translateY(-2px);
+    }
+    .footer-socials svg { width: 1.1rem; height: 1.1rem; display: block; }
+    .footer-copy {
+      color: #475569;
+      letter-spacing: 0.3em;
+      text-transform: uppercase;
+      font-size: 0.68rem;
+    }
+    .keep-open-box {
+      margin-top: 1.6rem;
+      padding: 1.3rem 1.4rem;
+      background: linear-gradient(180deg, rgba(88, 28, 135, 0.16), rgba(13, 7, 24, 0.96));
+      border-color: rgba(168, 85, 247, 0.55);
+    }
+    .keep-open-kicker {
+      color: var(--gold);
+      margin-bottom: 0.65rem;
+      letter-spacing: 0.22em;
+    }
+    .keep-open-title {
+      font-family: "Cinzel Decorative", Georgia, serif;
+      font-size: 1.55rem;
+      line-height: 1.2;
+      text-transform: uppercase;
+      color: white;
+      font-weight: 400;
+      margin-bottom: 0.65rem;
+    }
+    .keep-open-copy {
+      margin: 0;
+      color: var(--text-soft);
+      line-height: 1.8;
+      font-size: 0.98rem;
+    }
+    .lower-divider {
+      height: 1px;
+      background: linear-gradient(to right, transparent, rgba(168, 85, 247, 0.6), rgba(251, 191, 36, 0.42), transparent);
+      margin: 0.25rem 0 0.5rem;
+    }
+    .related-card {
+      text-align: center;
+    }
+    .related-card .category-chip {
+      margin-bottom: 0;
+      padding-inline: 0.72rem;
+    }
+    .related-card-category-line {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      margin-bottom: 1rem;
+      color: var(--accent);
+    }
+    .related-card-category-line::before,
+    .related-card-category-line::after {
+      content: "";
+      flex: 1 1 auto;
+      height: 1px;
+      background: color-mix(in srgb, var(--accent) 45%, transparent);
+    }
+    .related-card h3 {
+      font-size: 1.18rem;
+      margin-bottom: 0.95rem;
+    }
+    .related-card-date {
+      margin-top: 1rem;
+      padding-top: 0.95rem;
+      border-top: 1px solid color-mix(in srgb, var(--accent) 30%, rgba(255,255,255,0.06));
+      display: flex;
+      justify-content: center;
+    }
+    .related-card-date span {
+      border: 1px solid color-mix(in srgb, var(--accent) 34%, rgba(255,255,255,0.12));
+      background: rgba(255,255,255,0.02);
+      color: var(--text-faint);
+      padding: 0.32rem 0.7rem;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+    }
+    .site-footer-inner {
+      gap: 1.15rem;
+    }
+    .footer-copyright-wrap {
+      width: min(1400px, calc(100% - 2rem));
+      margin: 0 auto;
+      display: grid;
+      justify-items: center;
+      gap: 0.65rem;
+      padding-top: 0.35rem;
+    }
+    .footer-accent-line {
+      width: 3.25rem;
+      height: 1px;
+      background: rgba(168, 85, 247, 0.78);
+    }
+    .footer-copyright {
+      color: #a78bfa;
+      font-size: 0.82rem;
+      letter-spacing: 0.12em;
+      text-align: center;
+    }
+    .footer-row {
+      display: grid;
+      grid-template-columns: 1fr auto 1fr;
+      align-items: center;
+    }
+    .footer-spacer {
+      min-height: 1px;
+    }
+    .footer-socials {
+      justify-self: center;
+    }
+    .footer-copy {
+      justify-self: end;
+    }
+
+    .related-shell-title {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 1rem;
+      text-align: center;
+      font-size: 1.7rem;
+      margin-bottom: 1.35rem;
+    }
+    .related-shell-title::before,
+    .related-shell-title::after {
+      content: "";
+      width: min(16vw, 4.5rem);
+      height: 1px;
+      background: linear-gradient(to right, transparent, rgba(168, 85, 247, 0.6));
+    }
+    .related-shell-title::after {
+      background: linear-gradient(to left, transparent, rgba(168, 85, 247, 0.6));
+    }
+    .lower-divider {
+      height: 1px;
+      background: linear-gradient(to right, transparent, rgba(168, 85, 247, 0.6), rgba(251, 191, 36, 0.42), transparent);
+      margin: 0.2rem 0 0.6rem;
+    }
+    .lower-divider.upper {
+      margin: 1.85rem 0 1.25rem;
+    }
+    .keep-open-box {
+      margin-top: 1.6rem;
+      padding: 1.3rem 1.4rem;
+      background: linear-gradient(180deg, rgba(88, 28, 135, 0.16), rgba(13, 7, 24, 0.96));
+      border-color: rgba(168, 85, 247, 0.55);
+    }
+    .keep-open-kicker {
+      color: var(--gold);
+      margin-bottom: 0.65rem;
+      letter-spacing: 0.22em;
+    }
+    .keep-open-title {
+      font-family: "Cinzel Decorative", Georgia, serif;
+      font-size: 1.55rem;
+      line-height: 1.2;
+      text-transform: uppercase;
+      color: white;
+      font-weight: 400;
+      margin-bottom: 0.6rem;
+    }
+    .keep-open-copy {
+      margin: 0 0 1rem;
+      color: var(--text-soft);
+      line-height: 1.8;
+      font-size: 0.98rem;
+    }
+    .keep-open-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.75rem;
+    }
+    .keep-open-action {
+      min-height: 2.85rem;
+      padding: 0 1rem;
+      border: 1px solid rgba(168, 85, 247, 0.35);
+      background: rgba(255, 255, 255, 0.03);
+      color: white;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.55rem;
+      font-size: 0.72rem;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      transition: transform 0.24s ease, border-color 0.24s ease, background-color 0.24s ease;
+    }
+    .keep-open-action:hover {
+      transform: translateY(-2px);
+      border-color: rgba(168, 85, 247, 0.68);
+      background: rgba(168, 85, 247, 0.1);
+    }
+    .keep-open-action.primary {
+      border-color: rgba(251, 191, 36, 0.42);
+      color: #fef3c7;
+    }
+    .keep-open-action.primary:hover {
+      border-color: rgba(251, 191, 36, 0.7);
+      background: rgba(251, 191, 36, 0.08);
+    }
+    .related-card {
+      text-align: center;
+      display: flex;
+      flex-direction: column;
+      min-height: 100%;
+    }
+    .related-card .category-chip {
+      margin-bottom: 0;
+      padding-inline: 0.72rem;
+    }
+    .related-card-category-line {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      margin-bottom: 1rem;
+      color: var(--accent);
+    }
+    .related-card-category-line::before,
+    .related-card-category-line::after {
+      content: "";
+      flex: 1 1 auto;
+      height: 1px;
+      background: color-mix(in srgb, var(--accent) 45%, transparent);
+    }
+    .related-card h3 {
+      font-size: 1.18rem;
+      margin-bottom: 0.95rem;
+    }
+    .related-card p {
+      flex-grow: 1;
+    }
+    .related-card-date {
+      margin-top: 1rem;
+      padding-top: 0.95rem;
+      border-top: 1px solid color-mix(in srgb, var(--accent) 30%, rgba(255,255,255,0.06));
+      display: flex;
+      justify-content: center;
+    }
+    .related-card-date span {
+      border: 1px solid color-mix(in srgb, var(--accent) 34%, rgba(255,255,255,0.12));
+      background: rgba(255,255,255,0.02);
+      color: var(--text-faint);
+      padding: 0.32rem 0.7rem;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+    }
+
+
+
+    @media (max-width: 1180px) {
+      .topbar-nav,
+      .topbar .button-link { display: none; }
+      .mobile-menu { display: block; }
+      .hero-inner,
+      .content-inner,
+      .related-grid,
+      .dispatch-grid {
+        grid-template-columns: 1fr;
+      }
+      .hero-copy {
+        border-right: 0;
+        border-bottom: 1px solid rgba(88, 28, 135, 0.5);
+      }
+      .content-inner { gap: 2rem; }
+      .sidebar-stack,
+      .article-column {
+        max-height: none !important;
+        overflow: visible !important;
+        position: static !important;
+      }
+    }
+    @media (max-width: 760px) {
+      .topbar-inner,
+      .hero-inner,
+      .content-inner,
+      .lower-shell,
+      .site-footer-inner {
+        width: min(100% - 1.2rem, 1400px);
+      }
+      .topbar { padding: 1rem; }
+      .topbar-inner { padding: 0.9rem 1.2rem; }
+      .hero-copy,
+      .hero-media {
+        padding: 2rem 0.6rem;
+      }
+      .post-title { font-size: clamp(2.5rem, 9vw, 3.7rem); }
+      .section-heading {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.45rem;
+      }
+      .share-row { justify-content: flex-start; }
+      .site-footer-inner { text-align: center; align-items: center; }
+      .footer-row { grid-template-columns: 1fr; justify-items: center; }
+      .footer-copy { justify-self: center; }
+      .footer-spacer { display: none; }
+    }
+  </style>
   <style id="subpage-polish-overrides">
 
     main {
@@ -1942,24 +1271,6 @@ height: 0 !important;
       overflow-wrap: normal;
       word-break: normal;
       hyphens: none;
-    }
-    .article-body h3 {
-      margin: 2.5rem 0 1rem;
-      font-family: "Playfair Display", serif;
-      font-size: 1.5rem;
-      line-height: 1.35;
-      color: #f3f4f6;
-      font-weight: 400;
-    }
-    .article-body h4 {
-      margin: 2rem 0 0.85rem;
-      font-family: "Inter", sans-serif;
-      font-size: 0.95rem;
-      line-height: 1.5;
-      letter-spacing: 0.14em;
-      text-transform: uppercase;
-      color: #c4b5fd;
-      font-weight: 500;
     }
     .related-shell-title {
       margin: 0 0 2rem;
@@ -2313,26 +1624,11 @@ height: 0 !important;
 
   </style>
 </head>
-<body class="selection:bg-yellow-500/30 selection:text-yellow-200 antialiased" vid="11">
-
-
-
-
-<div class="bg-grid" vid="12"></div>
-<div id="star-container" class="stars" vid="13"></div>
-
-
-
-
-<div class="fixed inset-0 overflow-hidden pointer-events-none z-0" vid="14">
-<div class="absolute top-[10%] left-[50%] -translate-x-1/2 w-[1000px] h-[400px] bg-purple-900/20 rounded-[100%] blur-[100px]" vid="15"></div>
-<div class="absolute bottom-[20%] left-[-10%] w-[500px] h-[500px] bg-indigo-900/10 rounded-full blur-[120px]" vid="16"></div>
-</div>
-
-
-
-
-<nav id="navbar" class="fixed top-0 w-full z-50 px-6 py-6 transition-all duration-300">
+<body class="theme-purple">
+  <div class="bg-grid" aria-hidden="true"></div>
+  <div id="star-container" class="stars" aria-hidden="true"></div>
+  <div class="site-shell">
+    <nav id="navbar" class="fixed top-0 w-full z-50 px-6 py-6 transition-all duration-300">
         <div class="max-w-7xl mx-auto glass-panel rounded-full px-8 py-4 flex justify-between items-center archive-nav-inner">
             <a href="/" class="flex items-center gap-3 group">
                 <div class="relative">
@@ -2371,113 +1667,50 @@ height: 0 !important;
 
     
 
-    <main class="relative z-10 w-full pt-20" vid="31">
+    <main>
+      <header class="post-hero" id="hero-anchor">
+        <div class="hero-inner">
+          <div class="hero-copy">
+            <a href="/blog/" class="back-link micro"><i class="ph-bold ph-arrow-left"></i><span>Archive</span></a>
+            <div class="category-row">
+              <span class="category-square"></span>
+              <span class="category-chip micro">Ethics</span>
+            </div>
+            <h1 class="post-title">The Ethics<span class="post-title-accent">of Algorithmic Visibility</span></h1>
+            <p class="text-gray-300 font-light text-base lg:text-lg leading-relaxed mb-10 max-w-xl">I have dreamed of a world where people can recognize themselves in an issue, understand how to participate, and find others doing the same work with ease. But I also interrogate that belief, and how it holds up against…</p>
+            <div class="hero-meta">
+              <div class="hero-logo-box"><i class="ph-fill ph-sparkle"></i><span class="star-dot"></span></div>
+              <div>
+                <div class="hero-meta-name">Cassandre Arkema</div>
+                <div class="hero-meta-line">
+                  <time datetime="Mar 31, 2026">March 31, 2026</time>
+                  <span class="divider">|</span>
+                  <span>10 min read</span>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="hero-media">
+            <div class="hero-media-frame"><div class="w-full max-w-2xl aspect-[16/9] sharp-panel flex flex-col items-center justify-center relative z-10 group-hover:border-purple-500/50 transition-colors duration-500"><div class="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-indigo-900/20 via-transparent to-transparent opacity-50"></div><img src="https://substack-post-media.s3.amazonaws.com/public/images/40bd0dfc-356b-4dea-9299-bd908965027d_1600x900.png" alt="The Ethics of Algorithmic Visibility" loading="eager"><div class="absolute top-0 left-0 w-8 h-8 border-t-2 border-l-2 border-purple-500/30"></div><div class="absolute top-0 right-0 w-8 h-8 border-t-2 border-r-2 border-purple-500/30"></div><div class="absolute bottom-0 left-0 w-8 h-8 border-b-2 border-l-2 border-purple-500/30"></div><div class="absolute bottom-0 right-0 w-8 h-8 border-b-2 border-r-2 border-purple-500/30"></div></div></div>
+          </div>
+        </div>
+      </header>
 
+      <div class="content-inner">
+        <aside class="sidebar-stack">
+          <div class="sharp-panel panel-pad">
+            <div class="panel-heading">
+              <div class="left"><i class="ph-fill ph-book-bookmark"></i><span class="micro">Index</span></div>
+            </div>
+            <nav class="toc-links micro"><a class="toc-link" href="#top" data-theme="purple"><span class="toc-link-number">Intro</span><span class="toc-link-label">Intro</span></a><a class="toc-link" href="#the-enshttification" data-theme="purple"><span class="toc-link-number">01</span><span class="toc-link-label">The Ensh*ttification</span></a></nav>
+          </div>
 
-
-
-<header class="w-full border-b border-purple-900/50 bg-[#0d0718]/50" vid="32">
-<div class="max-w-[1400px] mx-auto" vid="33">
-<div class="grid grid-cols-1 lg:grid-cols-12 min-h-[60vh]" vid="34">
-
-
-
-
-<div class="post-hero-copy px-6 py-16 flex flex-col justify-center border-r border-purple-900/50 relative" vid="35">
-<a href="/blog/" class="inline-flex items-center gap-2 text-gray-500 text-xs font-mono-code uppercase tracking-widest hover:text-purple-400 transition-colors mb-12 w-fit" vid="36">
-<i class="ph-bold ph-arrow-left" vid="37"></i> Archive
-</a>
-
-
-<div class="flex items-center gap-3 mb-6" vid="38">
-<span class="w-2 h-2 bg-purple-500 rounded-none" vid="39"></span>
-<span class="font-mono-code text-[10px] uppercase tracking-widest text-purple-400 border border-purple-500/30 px-2 py-0.5" vid="40">Ethics</span>
-</div>
-
-
-<h1 class="font-magical text-5xl lg:text-6xl text-white leading-[1.1] mb-8 text-glow post-title" vid="41">
-The Ethics<span class="post-title-accent">of Algorithmic Visibility</span>
-</h1>
-
-<p class="text-gray-300 font-light text-base lg:text-lg leading-relaxed mb-10 max-w-xl">I have dreamed of a world where people can recognize themselves in an issue, understand how to participate, and find others doing the same work with ease. But I also interrogate that belief, and how it holds up against…</p>
-
-
-
-
-<div class="mt-auto pt-12 border-t border-purple-900/30 flex items-center gap-4" vid="44">
-<div class="w-12 h-12 bg-black border border-purple-500 flex items-center justify-center" vid="45">
-<span class="font-magical text-xl text-purple-400" vid="46">W</span>
-</div>
-<div vid="47">
-<div class="text-white font-medium text-sm tracking-wide" vid="48">Cassandre Arkema</div>
-<div class="text-xs font-mono-code text-gray-500 mt-1 flex items-center gap-3" vid="49">
-<span vid="50">March 31, 2026</span>
-<span class="text-purple-900" vid="51">|</span>
-<span vid="52">10 min read</span>
-</div>
-</div>
-</div>
-</div>
-
-
-
-
-<div class="post-hero-media relative h-[400px] lg:h-auto bg-[#05020a] group overflow-hidden flex items-center justify-center p-8" vid="53">
-
-
-<div class="absolute inset-4 border border-purple-900/30" vid="54"></div>
-<div class="absolute inset-8 border border-purple-900/20" vid="55"></div>
-
-<div class="w-full max-w-2xl aspect-[16/9] sharp-panel flex flex-col items-center justify-center relative z-10 group-hover:border-purple-500/50 transition-colors duration-500">
-        <div class="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-indigo-900/20 via-transparent to-transparent opacity-50"></div>
-        <img src="https://substack-post-media.s3.amazonaws.com/public/images/40bd0dfc-356b-4dea-9299-bd908965027d_1600x900.png" alt="The Ethics of Algorithmic Visibility" loading="eager">
-        <div class="absolute top-0 left-0 w-8 h-8 border-t-2 border-l-2 border-purple-500/30"></div>
-        <div class="absolute top-0 right-0 w-8 h-8 border-t-2 border-r-2 border-purple-500/30"></div>
-        <div class="absolute bottom-0 left-0 w-8 h-8 border-b-2 border-l-2 border-purple-500/30"></div>
-        <div class="absolute bottom-0 right-0 w-8 h-8 border-b-2 border-r-2 border-purple-500/30"></div>
-      </div>
-</div>
-
-
-</div>
-</div>
-</header>
-
-
-
-
-<div class="max-w-[1400px] mx-auto px-6 grid grid-cols-1 lg:grid-cols-12 gap-12 py-16" vid="64">
-
-
-
-
-<aside class="post-sidebar-shell hidden lg:block" vid="65">
-<div class="sticky top-28 space-y-12" vid="66">
-
-
-
-
-<div class="sharp-panel p-6" vid="67">
-<div class="flex items-center gap-3 mb-6 pb-4 border-b border-purple-900/50" vid="68">
-<i class="ph-fill ph-book-bookmark text-yellow-500 text-xl" vid="69"></i>
-<h3 class="font-mono-code text-xs uppercase tracking-widest text-white font-bold" vid="70">Index</h3>
-</div>
-<div class="space-y-1 font-mono-code text-[11px] leading-relaxed uppercase tracking-wider toc-panel" vid="71"><a class="toc-link" href="#top" data-theme="purple"><span class="toc-link-number">Intro</span><span class="toc-link-label">Intro</span></a><a class="toc-link" href="#the-enshttification" data-theme="purple"><span class="toc-link-number">01</span><span class="toc-link-label">The Ensh*ttification</span></a></div>
-</div>
-
-
-
-
-<div class="sharp-panel p-6" vid="77">
-<div class="flex items-center justify-between mb-6 pb-4 border-b border-purple-900/50" vid="78">
-<div class="flex items-center gap-3" vid="79">
-<i class="ph-fill ph-aperture text-cyan-500 text-xl" vid="80"></i>
-<h3 class="font-mono-code text-xs uppercase tracking-widest text-white font-bold" vid="81">Visions</h3>
-</div>
-<span class="font-mono-code text-[9px] text-gray-500" vid="82">5 files</span>
-</div>
-
-    
+          <div class="sharp-panel panel-pad">
+            <div class="panel-heading">
+              <div class="left"><i class="ph-fill ph-aperture"></i><span class="micro">Visions</span></div>
+              <span class="micro" style="color:#6b7280;">5 files</span>
+            </div>
+            <div class="visions-grid">
     <a class="vision-link" href="#vision-1">
       <img src="https://substackcdn.com/image/fetch/$s_!yrIC!,w_1456,c_limit,f_auto,q_auto:good,fl_progressive:steep/https%3A%2F%2Fsubstack-post-media.s3.amazonaws.com%2Fpublic%2Fimages%2Fe399c98a-aa4a-4506-979f-63304599b96d_1600x900.png" alt="F1">
       <span class="vision-tag">F1</span>
@@ -2502,81 +1735,10 @@ The Ethics<span class="post-title-accent">of Algorithmic Visibility</span>
       <img src="https://substackcdn.com/image/fetch/$s_!cYlU!,w_1456,c_limit,f_auto,q_auto:good,fl_progressive:steep/https%3A%2F%2Fsubstack-post-media.s3.amazonaws.com%2Fpublic%2Fimages%2F2922c19a-73b7-4a04-89ea-e03551b864bd_1600x900.png" alt="F5">
       <span class="vision-tag">F5</span>
     </a>
-  
-  
-</div>
+  </div>
+          </div>
 
-
-
-
-</div>
-</aside>
-
-
-
-
-<article class="post-article-shell article-body max-w-3xl lg:pl-8" vid="106">
-
-
-
-
-<div class="lg:hidden flex items-center justify-between border-b border-purple-900/30 pb-6 mb-8" vid="107">
-<div class="flex items-center gap-3" vid="108">
-<div class="w-10 h-10 bg-black border border-purple-500 flex items-center justify-center" vid="109">
-<span class="font-magical text-lg text-purple-400" vid="110">W</span>
-</div>
-<div vid="111">
-<div class="text-white text-sm" vid="112">Cassandre Arkema</div>
-<div class="text-[10px] font-mono-code text-gray-500 mt-1" vid="113">Mar 31, 2026 • 10 min read</div>
-</div>
-</div>
-</div>
-
-
-
-
-<div class="hidden lg:flex justify-end gap-2 mb-8" vid="114">
-<button class="w-8 h-8 bg-[#0d0718] border border-purple-900/50 flex items-center justify-center text-gray-400 hover:text-white hover:border-purple-500 transition-colors" aria-label="Share Twitter" vid="115">
-<i class="ph-fill ph-twitter-logo" vid="116"></i>
-</button>
-<button class="w-8 h-8 bg-[#0d0718] border border-purple-900/50 flex items-center justify-center text-gray-400 hover:text-white hover:border-purple-500 transition-colors" aria-label="Share LinkedIn" vid="117">
-<i class="ph-fill ph-linkedin-logo" vid="118"></i>
-</button>
-<button class="w-8 h-8 bg-[#0d0718] border border-purple-900/50 flex items-center justify-center text-gray-400 hover:text-white hover:border-purple-500 transition-colors" aria-label="Copy Link" vid="119">
-<i class="ph-bold ph-link" vid="120"></i>
-</button>
-</div>
-
-
-
-
-<p class="font-serif-heading emoji-safe text-2xl text-purple-200/90 leading-relaxed italic mb-12 border-l-4 border-purple-500 pl-6 py-2 bg-gradient-to-r from-purple-900/20 to-transparent" vid="121">
-For as long as I have been online, I have believed that social and digital media could function as infrastructure for collective power.
-</p>
-
-
-<blockquote class="my-16 sharp-panel p-8 md:p-10 relative"><div class="quote-icon absolute -top-4 -left-4 bg-black border border-purple-500 text-purple-400 p-2"><i class="ph-fill ph-quotes text-xl"></i></div><p class="font-serif-heading emoji-safe text-2xl text-white leading-relaxed z-10 relative">"In this environment, ethical strategy starts with designing language and structure that can survive inside these platforms while preserving the pathways to understanding and participation that collective power depends on."</p><footer class="mt-8 font-mono-code text-[10px] uppercase tracking-[0.2em] text-purple-400 flex items-center gap-3"><span class="w-4 h-px bg-purple-500"></span> CASSANDRE ARKEMA, THE ALGORITHM WITCH</footer></blockquote>
-<section class="article-section article-section-intro theme-purple" data-section-id="top"><p>For as long as I have been online, I have believed that social and digital media could function as infrastructure for collective power. I have dreamed of a world where people can recognize themselves in an issue, understand how to participate, and find others doing the same work with ease. But I also interrogate that belief, and how it holds up against the systems that shape how information moves in reality. I find that my dreams are fundamentally at odds with the companies that built the systems that distribute information, systems deliberately designed to optimize for attention patterns that undermine how complex, trust-based learning develops over time.</p><p>Platform design is at the center of how content travels, because the same systems that surface content also shape what kinds of messages can survive long enough to be understood. The <strong><a href="https://www.reuters.com/legal/litigation/jury-reaches-verdict-meta-google-trial-social-media-addiction-2026-03-25/">recent jury verdict holding Meta and Google liable for harm tied to addictive design</a></strong> makes clear that platforms are deliberately structured to distribute information in ways that reinforce compulsive engagement.</p><p>In March 2026, A <strong><a href="https://apnews.com/article/social-media-addiction-trial-la-5e54075023d837ccdc76c4ca512e925d">California jury evaluated a case involving a young user who began using YouTube at age six and Instagram at age nine</a></strong>. The first trial of its kind to focus on <strong>platform design as a source of harm</strong>, this changes the conversation around building collective power online as we reconcile how platforms determine what is repeatedly shown, amplified, and reinforced over time.</p><p>Distribution operates through accumulation, where repeated signals train both the user and the model. <strong><a href="/blog/posting-less-wont-save-you.html">Platforms require consistent input to classify and expand reach.</a></strong> Meaning, visibility is produced, not guaranteed, through sustained interaction between content and the platform.</p><figure id="vision-1" class="article-figure theme-purple"><div class="figure-frame"><img src="https://substackcdn.com/image/fetch/$s_!yrIC!,w_1456,c_limit,f_auto,q_auto:good,fl_progressive:steep/https%3A%2F%2Fsubstack-post-media.s3.amazonaws.com%2Fpublic%2Fimages%2Fe399c98a-aa4a-4506-979f-63304599b96d_1600x900.png" alt=""></div><figcaption><span class="figure-caption-index">Figure 01</span><span class="figure-caption-text">Visual reference</span></figcaption></figure><p>The ethical question begins inside the attention loop. Algorithms reinforce the behaviors that sustain attention, where emotional intensity, simplicity, and immediacy generate stronger signals than context-heavy or slower-moving information. Across platform data, <strong><a href="/blog/short-form-video-market-oversaturated.html">content supply has expanded faster than attention capacity due to AI-generated production</a></strong>, creating denser feeds that require stronger filtering and prediction platforms. In turn, platforms prioritize signals that can be measured quickly such as watch time, completion, and interaction velocity. As density increases, distribution thresholds tighten, and the kinds of content that travel most efficiently are those that resolve quickly for both the platform and the viewer. <strong><a href="/blog/short-form-video-market-oversaturated.html">Short-form video shows how this compression operates across the market</a></strong>, where publishing volume increased by over 70% while reach per post declined. More content enters the platform without expanding the amount of attention available to absorb it. This dynamic creates <strong>a translation gap</strong> for work that depends on cumulative understanding, sustained trust, and layered context. Climate, clean energy, and advocacy topics don&#8217;t always compress cleanly into high-velocity signals, and the language required to explain them often loses coherence as it moves through platforms designed for rapid classification and retention.</p><p>As content volume increases and attention remains fixed, the threshold for visibility rises. Clarity becomes a classification advantage, because platforms are more likely to distribute content that can be mapped cleanly to a topic. Ambiguity or complexity reduces the probability of expansion, which reinforces the attention loop, by simplifying narratives to travel further and shape audience expectations. This loop continues to shape how people encounter issues for the first time. <strong><a href="/blog/future-is-community-led.html">Language tied to lived experience carries more weight in early attention, while institutional framing organizes the work internally but does not always translate into participation externally, creating a translation gap between recognition and entry.</a></strong></p><p>The recent Meta and Youtube verdicts brings the translation gap into the conversation around platform design, because if platforms can be evaluated based on the behavioral outcomes they produce, then the distribution platforms shaping public understanding of social issues become part of that same ethical landscape.</p><p>The ethics of algorithmic visibility emerge from how that landscape is constructed, each decision about framing, pacing, and format influences whether someone can locate themselves inside the issue, whether they can trust what they are seeing, and whether there is a visible way to act on it. In this environment, ethical strategy starts with designing language and structure that can survive inside these platforms while preserving the pathways to understanding and participation that collective power depends on.</p></section>
-<section class="article-section theme-purple" data-section-id="the-enshttification" data-theme="purple"><h2 id="the-enshttification" class="section-heading"><span class="section-number">01</span><span class="section-heading-text">The Ensh*ttification</span></h2><figure id="vision-2" class="article-figure theme-cyan"><div class="figure-frame"><iframe src="https://www.youtube-nocookie.com/embed/T4Upf_B9RLQ?rel=0&amp;autoplay=0&amp;showinfo=0&amp;enablejsapi=0" frameborder="0" gesture="media" allow="autoplay; fullscreen" allowautoplay="true" allowfullscreen="true"></iframe></div><figcaption><span class="figure-caption-index">Figure 02</span><span class="figure-caption-text">Embedded reference</span></figcaption></figure><p>We must also consider the economic incentives shaping these platforms. Cory Doctorow has described the results of these incentives as <strong><a href="https://www.newyorker.com/culture/infinite-scroll/the-age-of-enshittification">Ensh*ttification</a></strong>, where platforms stop optimizing for user experience and switch to extracting increasing value from attention. Over time, this lifecycle has reshaped how feeds prioritize and distribute content.</p><figure id="vision-3" class="article-figure theme-amber"><div class="figure-frame"><img src="https://substackcdn.com/image/fetch/$s_!4cPg!,w_1456,c_limit,f_auto,q_auto:good,fl_progressive:steep/https%3A%2F%2Fsubstack-post-media.s3.amazonaws.com%2Fpublic%2Fimages%2F654ee122-aed2-431f-901e-7369bd98329b_1488x837.png" alt=""></div><figcaption><span class="figure-caption-index">Figure 03</span><span class="figure-caption-text">Visual reference</span></figcaption></figure><p>As economic incentives grow, the same mechanisms that drive engagement also function as extraction, prioritizing content that sustains attention even when it compresses complexity. This explains why we have platforms engineered to create compulsive behavior and reinforce content that aligns with economic incentives. Users are left to fend for themselves across platforms that make it impossible to meaningfully distinguish between what users would chose to engage with and what has been engineered to hold their attention.</p><h3 id="the-translation-gap-and-the-distortion-norm">The Translation Gap and The Distortion Norm</h3><p>The translation gap is formed when ideas are compressed as they enter platforms. Translation allows a message to align with the pace and structure of a feed while maintaining its internal coherence. Distortion is when the message itself is reshaped to fit the signals a platform rewards. This becomes the norm when platforms reward high-velocity reaction over retention.</p><figure id="vision-4" class="article-figure theme-fuchsia"><div class="figure-frame"><img src="https://substackcdn.com/image/fetch/$s_!I58G!,w_1456,c_limit,f_auto,q_auto:good,fl_progressive:steep/https%3A%2F%2Fsubstack-post-media.s3.amazonaws.com%2Fpublic%2Fimages%2Fe51c2dd3-0cb2-451a-bdf5-b2d90b1f7bd0_1600x900.png" alt=""></div><figcaption><span class="figure-caption-index">Figure 04</span><span class="figure-caption-text">Visual reference</span></figcaption></figure><p>Every platform imposes constraints that require translation: short-form video compresses time, feeds prioritize immediacy, and ranking platforms depend on early interaction signals. This does require that information <strong>be structured in ways that can be recognized quickly</strong>. This process <strong>can</strong> still preserve the pathways someone needs to follow the issue further, <strong><a href="/blog/short-form-video-market-oversaturated.html">especially when it connects to deeper context across formats</a></strong>. Distortion becomes normalized when the structure of the platform determines the substance of the message, which appears in practices that generate signals without building understanding, including rage-bait, performative controversy, and false urgency.</p><p>Rage-bait aligns directly with how ranking platforms operate, because replies, shares, and rapid interaction loops act as distribution inputs. <strong><a href="/blog/posting-less-wont-save-you.html">Conversation signals increasingly influence reach across platforms</a></strong>, which creates a direct incentive to produce content that generates immediate response even if that response does not deepen comprehension. The same pattern extends into performative controversy and false urgency, where stakes are elevated to accelerate attention cycles, allowing content to pass through algorithmic thresholds more quickly, while the underlying issue becomes secondary to the reaction it produces, which shifts the role of communication from informing participation to sustaining visibility. Repeated exposure to reactive framing establishes expectations about how an issue should be encountered, which then influences how future content is interpreted, shared, and engaged with, reinforcing an attention loop where simplification becomes the dominant entry point.</p><p>Platforms that reward retention and interaction at scale create conditions where distortion can operate as an effective growth strategy, even as it narrows the range of understanding available to the audience. The consequence appears in the type of community that forms, where entry points built on reaction tend to produce participation that remains at the level of response, limiting the ability to carry people from awareness into sustained involvement with complex issues. For organizations working on long-term challenges, the way an issue is introduced determines whether someone can locate themselves within it and whether the next step is visible, which ties participation in your broader work directly to how your language maps across platforms and access.</p><p>An ethical strategy operates within these constraints by adapting in support of recognition while preserving the structure needed for action, ensuring that translation maintains coherence rather than reorganizing the issue around the signals required for visibility.</p><h3 id="vanity-metrics-trust-and-how-to-talk-to-leadership">Vanity metrics, trust, and how to talk to leadership</h3><p>This becomes visible in how metrics are interpreted once content enters reporting structures, because likes, views, and reach are often treated as outcomes when they are actually traces of different kinds of behavior occurring inside a platform that measures interaction more easily than understanding.</p><figure id="vision-5" class="article-figure theme-purple"><div class="figure-frame"><img src="https://substackcdn.com/image/fetch/$s_!cYlU!,w_1456,c_limit,f_auto,q_auto:good,fl_progressive:steep/https%3A%2F%2Fsubstack-post-media.s3.amazonaws.com%2Fpublic%2Fimages%2F2922c19a-73b7-4a04-89ea-e03551b864bd_1600x900.png" alt=""></div><figcaption><span class="figure-caption-index">Figure 05</span><span class="figure-caption-text">Visual reference</span></figcaption></figure><p>Each metric carries a distinct function tied to how platforms organize visibility. Where a like reflects recognition within an existing network, a share or send reflects relevance strong enough to pass into someone else&#8217;s immediate context, and a comment reflects an entry into conversation that can carry agreement, disagreement, or curiosity. Overall, these signals describe movement inside the feed instead of comprehension outside the platform.</p><p>Platform design separates interaction from interpretation, allowing content to accumulate high visibility through signals that don&#8217;t require someone to fully process what they are seeing. This is intensified in environments where attention is fragmented and exposure happens in rapid sequence, which reinforces the translation gap between what travels and what lands. Platforms also increasingly rely on behavioral signals like replies, dwell time, and engagement probability to determine distribution, which means the metrics available to organizations are optimized for what the platform can observe rather than what the organization ultimately needs to know about participation or understanding.</p><p>The most useful way to frame metrics is in terms of the type of behavior they capture. Network signals such as likes indicate support among people already proximate to the organization. Distribution signals such as reach indicate how far content traveled through recommendation platforms. Neither of these alone confirms whether someone can locate themselves within the issue or understand what to do next. This is where platform logic reinforces the need for translation. Platforms differentiate between content that circulates within known networks and content that expands into new audiences, and those two forms of movement produce different kinds of feedback that cannot be collapsed into a single measure of success.</p><p>Ethical visibility appears when these metrics are used as proxies for trust or action, because equating interaction with impact obscures whether the communication is actually enabling participation, which is the outcome most mission-driven organizations are trying to achieve. Reframe metrics as signals tied to specific roles within the platform, where likes indicate recognition, shares indicate peer-level relevance, comments indicate conversational entry, and actions such as clicks, signups, replies, or event participation indicate movement beyond the platform into forms of engagement that require higher levels of understanding. This situates vanity metrics within a broader structure which is advantageous because they remain necessary inputs for distribution and provide early feedback on how content is being received. To align vanity metrics with participation, shift from how content performed inside the platform to how communication functions across platforms, where the central question becomes whether the audience can recognize their place within the issue and whether the next step is visible once that recognition occurs.</p><h3 id="what-platforms-might-do-next">What platforms might do next</h3><p>Across platforms, the ethics of algorithmic visibility continues to resolve through user behavior, where attention follows what feels immediately legible within a feed and trust forms through proximity to people, communities, or experiences that already carry meaning, which creates an environment where discovery, advertising, and participation operate as a continuous surface.</p><p>If that direction continues, social impact communication may encounter a different set of incentives, where clarity, consistency, and relational trust become more aligned with platform objectives, yet that alignment remains uncertain and dependent on how platforms interpret safety in relation to engagement.</p><p>What remains consistent across these changes is the condition that strategy must account for how people enter the work, because entry determines whether recognition occurs and whether participation becomes possible, which means designing for reach without recognition limits the ability to build sustained engagement.</p><p>Visibility is just a starting point that must connect to clarity, where the goal is not only to appear in the feed but to remain understandable within it, allowing someone to locate themselves inside the issue and see a path forward that extends beyond the initial interaction.</p><p>If the mechanics that drive virality are the same ones being examined as sources of harm, then ethical visibility must account for how to build trust and collective power within platforms that were not designed for either, and the answer will depend on whether communication can remain legible, actionable, and grounded as it moves through the environments that shape what people see and how they respond.</p></section>
-<div class="mt-20 pt-8 border-t border-purple-900/50 flex flex-wrap gap-2" vid="200"><span class="tag-chip">Ethics</span><span class="tag-chip">ethics</span><span class="tag-chip">algorithmic</span><span class="tag-chip">visibility</span></div>
-
-
-</article>
-
-
-
-
-
-
-<div class="post-rail-shell hidden lg:block" vid="205">
-
-
-<div class="h-full w-px bg-gradient-to-b from-purple-900/50 via-transparent to-transparent mx-auto" vid="206"></div>
-</div>
-
-
-</div>
-<div class="keep-open-box sharp-panel">
+          <div class="keep-open-box sharp-panel">
             <div class="keep-open-kicker micro">Signal Continuum</div>
             <div class="keep-open-title">Keep the Grimoire Open</div>
             <p class="keep-open-copy">Trace adjacent signals, return to the archive, or stay subscribed to the next scroll moving through the system.</p>
@@ -2585,12 +1747,28 @@ For as long as I have been online, I have believed that social and digital media
               <a class="keep-open-action" href="https://thealgorithmwitch.substack.com/" target="_blank" rel="noopener noreferrer"><span>Initiate Subscription</span><i class="ph-bold ph-arrow-right"></i></a>
             </div>
           </div>
+        </aside>
+
+        <div class="article-column">
+          <div class="share-row" aria-label="Share article">
+            <a href="https://twitter.com/intent/tweet?url=https%3A%2F%2Fthealgorithmwitch.com%2Fblog%2Fethics-of-algorithmic-visibility.html&text=The%20Ethics%20of%20Algorithmic%20Visibility" target="_blank" rel="noopener noreferrer" aria-label="Share on X"><i class="ph-fill ph-twitter-logo"></i></a>
+            <a href="https://www.linkedin.com/sharing/share-offsite/?url=https%3A%2F%2Fthealgorithmwitch.com%2Fblog%2Fethics-of-algorithmic-visibility.html" target="_blank" rel="noopener noreferrer" aria-label="Share on LinkedIn"><i class="ph-fill ph-linkedin-logo"></i></a>
+            <button type="button" data-copy-link="https://thealgorithmwitch.com/blog/ethics-of-algorithmic-visibility.html" aria-label="Copy Link"><i class="ph-bold ph-link"></i></button>
+          </div>
+
+          <p class="font-serif-heading text-2xl text-purple-200/90 leading-relaxed italic mb-12 border-l-4 border-purple-500 pl-6 py-2 bg-gradient-to-r from-purple-900/20 to-transparent">For as long as I have been online, I have believed that social and digital media could function as infrastructure for collective power.</p>
+          <article class="article-body" id="top"><section class="article-section article-section-intro theme-purple" data-section-id="top"><p>For as long as I have been online, I have believed that social and digital media could function as infrastructure for collective power. I have dreamed of a world where people can recognize themselves in an issue, understand how to participate, and find others doing the same work with ease. But I also interrogate that belief, and how it holds up against the systems that shape how information moves in reality. I find that my dreams are fundamentally at odds with the companies that built the systems that distribute information, systems deliberately designed to optimize for attention patterns that undermine how complex, trust-based learning develops over time.</p><p>Platform design is at the center of how content travels, because the same systems that surface content also shape what kinds of messages can survive long enough to be understood. The <strong><a href="https://www.reuters.com/legal/litigation/jury-reaches-verdict-meta-google-trial-social-media-addiction-2026-03-25/">recent jury verdict holding Meta and Google liable for harm tied to addictive design</a></strong> makes clear that platforms are deliberately structured to distribute information in ways that reinforce compulsive engagement.</p><p>In March 2026, A <strong><a href="https://apnews.com/article/social-media-addiction-trial-la-5e54075023d837ccdc76c4ca512e925d">California jury evaluated a case involving a young user who began using YouTube at age six and Instagram at age nine</a></strong>. The first trial of its kind to focus on <strong>platform design as a source of harm</strong>, this changes the conversation around building collective power online as we reconcile how platforms determine what is repeatedly shown, amplified, and reinforced over time.</p><p>Distribution operates through accumulation, where repeated signals train both the user and the model. <strong><a href="/blog/posting-less-wont-save-you.html">Platforms require consistent input to classify and expand reach.</a></strong> Meaning, visibility is produced, not guaranteed, through sustained interaction between content and the platform.</p><figure id="vision-1" class="article-figure theme-purple"><div class="figure-frame"><img src="https://substackcdn.com/image/fetch/$s_!yrIC!,w_1456,c_limit,f_auto,q_auto:good,fl_progressive:steep/https%3A%2F%2Fsubstack-post-media.s3.amazonaws.com%2Fpublic%2Fimages%2Fe399c98a-aa4a-4506-979f-63304599b96d_1600x900.png" alt=""></div><figcaption><span class="figure-caption-index">Figure 01</span><span class="figure-caption-text">Visual reference</span></figcaption></figure><p>The ethical question begins inside the attention loop. Algorithms reinforce the behaviors that sustain attention, where emotional intensity, simplicity, and immediacy generate stronger signals than context-heavy or slower-moving information. Across platform data, <strong><a href="/blog/short-form-video-market-oversaturated.html">content supply has expanded faster than attention capacity due to AI-generated production</a></strong>, creating denser feeds that require stronger filtering and prediction platforms. In turn, platforms prioritize signals that can be measured quickly such as watch time, completion, and interaction velocity. As density increases, distribution thresholds tighten, and the kinds of content that travel most efficiently are those that resolve quickly for both the platform and the viewer. <strong><a href="/blog/short-form-video-market-oversaturated.html">Short-form video shows how this compression operates across the market</a></strong>, where publishing volume increased by over 70% while reach per post declined. More content enters the platform without expanding the amount of attention available to absorb it. This dynamic creates <strong>a translation gap</strong> for work that depends on cumulative understanding, sustained trust, and layered context. Climate, clean energy, and advocacy topics don&#8217;t always compress cleanly into high-velocity signals, and the language required to explain them often loses coherence as it moves through platforms designed for rapid classification and retention.</p><p>As content volume increases and attention remains fixed, the threshold for visibility rises. Clarity becomes a classification advantage, because platforms are more likely to distribute content that can be mapped cleanly to a topic. Ambiguity or complexity reduces the probability of expansion, which reinforces the attention loop, by simplifying narratives to travel further and shape audience expectations. This loop continues to shape how people encounter issues for the first time. <strong><a href="/blog/future-is-community-led.html">Language tied to lived experience carries more weight in early attention, while institutional framing organizes the work internally but does not always translate into participation externally, creating a translation gap between recognition and entry.</a></strong></p><p>The recent Meta and Youtube verdicts brings the translation gap into the conversation around platform design, because if platforms can be evaluated based on the behavioral outcomes they produce, then the distribution platforms shaping public understanding of social issues become part of that same ethical landscape.</p><p>The ethics of algorithmic visibility emerge from how that landscape is constructed, each decision about framing, pacing, and format influences whether someone can locate themselves inside the issue, whether they can trust what they are seeing, and whether there is a visible way to act on it. In this environment, ethical strategy starts with designing language and structure that can survive inside these platforms while preserving the pathways to understanding and participation that collective power depends on.</p></section>
+<section class="article-section theme-purple" data-section-id="the-enshttification" data-theme="purple"><h2 id="the-enshttification" class="section-heading"><span class="section-number">01</span><span class="section-heading-text">The Ensh*ttification</span></h2><figure id="vision-2" class="article-figure theme-cyan"><div class="figure-frame"><iframe src="https://www.youtube-nocookie.com/embed/T4Upf_B9RLQ?rel=0&amp;autoplay=0&amp;showinfo=0&amp;enablejsapi=0" frameborder="0" gesture="media" allow="autoplay; fullscreen" allowautoplay="true" allowfullscreen="true"></iframe></div><figcaption><span class="figure-caption-index">Figure 02</span><span class="figure-caption-text">Embedded reference</span></figcaption></figure><p>We must also consider the economic incentives shaping these platforms. Cory Doctorow has described the results of these incentives as <strong><a href="https://www.newyorker.com/culture/infinite-scroll/the-age-of-enshittification">Ensh*ttification</a></strong>, where platforms stop optimizing for user experience and switch to extracting increasing value from attention. Over time, this lifecycle has reshaped how feeds prioritize and distribute content.</p><figure id="vision-3" class="article-figure theme-amber"><div class="figure-frame"><img src="https://substackcdn.com/image/fetch/$s_!4cPg!,w_1456,c_limit,f_auto,q_auto:good,fl_progressive:steep/https%3A%2F%2Fsubstack-post-media.s3.amazonaws.com%2Fpublic%2Fimages%2F654ee122-aed2-431f-901e-7369bd98329b_1488x837.png" alt=""></div><figcaption><span class="figure-caption-index">Figure 03</span><span class="figure-caption-text">Visual reference</span></figcaption></figure><p>As economic incentives grow, the same mechanisms that drive engagement also function as extraction, prioritizing content that sustains attention even when it compresses complexity. This explains why we have platforms engineered to create compulsive behavior and reinforce content that aligns with economic incentives. Users are left to fend for themselves across platforms that make it impossible to meaningfully distinguish between what users would chose to engage with and what has been engineered to hold their attention.</p><h3 id="the-translation-gap-and-the-distortion-norm">The Translation Gap and The Distortion Norm</h3><p>The translation gap is formed when ideas are compressed as they enter platforms. Translation allows a message to align with the pace and structure of a feed while maintaining its internal coherence. Distortion is when the message itself is reshaped to fit the signals a platform rewards. This becomes the norm when platforms reward high-velocity reaction over retention.</p><figure id="vision-4" class="article-figure theme-fuchsia"><div class="figure-frame"><img src="https://substackcdn.com/image/fetch/$s_!I58G!,w_1456,c_limit,f_auto,q_auto:good,fl_progressive:steep/https%3A%2F%2Fsubstack-post-media.s3.amazonaws.com%2Fpublic%2Fimages%2Fe51c2dd3-0cb2-451a-bdf5-b2d90b1f7bd0_1600x900.png" alt=""></div><figcaption><span class="figure-caption-index">Figure 04</span><span class="figure-caption-text">Visual reference</span></figcaption></figure><p>Every platform imposes constraints that require translation: short-form video compresses time, feeds prioritize immediacy, and ranking platforms depend on early interaction signals. This does require that information <strong>be structured in ways that can be recognized quickly</strong>. This process <strong>can</strong> still preserve the pathways someone needs to follow the issue further, <strong><a href="/blog/short-form-video-market-oversaturated.html">especially when it connects to deeper context across formats</a></strong>. Distortion becomes normalized when the structure of the platform determines the substance of the message, which appears in practices that generate signals without building understanding, including rage-bait, performative controversy, and false urgency.</p><p>Rage-bait aligns directly with how ranking platforms operate, because replies, shares, and rapid interaction loops act as distribution inputs. <strong><a href="/blog/posting-less-wont-save-you.html">Conversation signals increasingly influence reach across platforms</a></strong>, which creates a direct incentive to produce content that generates immediate response even if that response does not deepen comprehension. The same pattern extends into performative controversy and false urgency, where stakes are elevated to accelerate attention cycles, allowing content to pass through algorithmic thresholds more quickly, while the underlying issue becomes secondary to the reaction it produces, which shifts the role of communication from informing participation to sustaining visibility. Repeated exposure to reactive framing establishes expectations about how an issue should be encountered, which then influences how future content is interpreted, shared, and engaged with, reinforcing an attention loop where simplification becomes the dominant entry point.</p><p>Platforms that reward retention and interaction at scale create conditions where distortion can operate as an effective growth strategy, even as it narrows the range of understanding available to the audience. The consequence appears in the type of community that forms, where entry points built on reaction tend to produce participation that remains at the level of response, limiting the ability to carry people from awareness into sustained involvement with complex issues. For organizations working on long-term challenges, the way an issue is introduced determines whether someone can locate themselves within it and whether the next step is visible, which ties participation in your broader work directly to how your language maps across platforms and access.</p><p>An ethical strategy operates within these constraints by adapting in support of recognition while preserving the structure needed for action, ensuring that translation maintains coherence rather than reorganizing the issue around the signals required for visibility.</p><h3 id="vanity-metrics-trust-and-how-to-talk-to-leadership">Vanity metrics, trust, and how to talk to leadership</h3><p>This becomes visible in how metrics are interpreted once content enters reporting structures, because likes, views, and reach are often treated as outcomes when they are actually traces of different kinds of behavior occurring inside a platform that measures interaction more easily than understanding.</p><figure id="vision-5" class="article-figure theme-purple"><div class="figure-frame"><img src="https://substackcdn.com/image/fetch/$s_!cYlU!,w_1456,c_limit,f_auto,q_auto:good,fl_progressive:steep/https%3A%2F%2Fsubstack-post-media.s3.amazonaws.com%2Fpublic%2Fimages%2F2922c19a-73b7-4a04-89ea-e03551b864bd_1600x900.png" alt=""></div><figcaption><span class="figure-caption-index">Figure 05</span><span class="figure-caption-text">Visual reference</span></figcaption></figure><p>Each metric carries a distinct function tied to how platforms organize visibility. Where a like reflects recognition within an existing network, a share or send reflects relevance strong enough to pass into someone else&#8217;s immediate context, and a comment reflects an entry into conversation that can carry agreement, disagreement, or curiosity. Overall, these signals describe movement inside the feed instead of comprehension outside the platform.</p><p>Platform design separates interaction from interpretation, allowing content to accumulate high visibility through signals that don&#8217;t require someone to fully process what they are seeing. This is intensified in environments where attention is fragmented and exposure happens in rapid sequence, which reinforces the translation gap between what travels and what lands. Platforms also increasingly rely on behavioral signals like replies, dwell time, and engagement probability to determine distribution, which means the metrics available to organizations are optimized for what the platform can observe rather than what the organization ultimately needs to know about participation or understanding.</p><p>The most useful way to frame metrics is in terms of the type of behavior they capture. Network signals such as likes indicate support among people already proximate to the organization. Distribution signals such as reach indicate how far content traveled through recommendation platforms. Neither of these alone confirms whether someone can locate themselves within the issue or understand what to do next. This is where platform logic reinforces the need for translation. Platforms differentiate between content that circulates within known networks and content that expands into new audiences, and those two forms of movement produce different kinds of feedback that cannot be collapsed into a single measure of success.</p><p>Ethical visibility appears when these metrics are used as proxies for trust or action, because equating interaction with impact obscures whether the communication is actually enabling participation, which is the outcome most mission-driven organizations are trying to achieve. Reframe metrics as signals tied to specific roles within the platform, where likes indicate recognition, shares indicate peer-level relevance, comments indicate conversational entry, and actions such as clicks, signups, replies, or event participation indicate movement beyond the platform into forms of engagement that require higher levels of understanding. This situates vanity metrics within a broader structure which is advantageous because they remain necessary inputs for distribution and provide early feedback on how content is being received. To align vanity metrics with participation, shift from how content performed inside the platform to how communication functions across platforms, where the central question becomes whether the audience can recognize their place within the issue and whether the next step is visible once that recognition occurs.</p><h3 id="what-platforms-might-do-next">What platforms might do next</h3><p>Across platforms, the ethics of algorithmic visibility continues to resolve through user behavior, where attention follows what feels immediately legible within a feed and trust forms through proximity to people, communities, or experiences that already carry meaning, which creates an environment where discovery, advertising, and participation operate as a continuous surface.</p><p>If that direction continues, social impact communication may encounter a different set of incentives, where clarity, consistency, and relational trust become more aligned with platform objectives, yet that alignment remains uncertain and dependent on how platforms interpret safety in relation to engagement.</p><p>What remains consistent across these changes is the condition that strategy must account for how people enter the work, because entry determines whether recognition occurs and whether participation becomes possible, which means designing for reach without recognition limits the ability to build sustained engagement.</p><p>Visibility is just a starting point that must connect to clarity, where the goal is not only to appear in the feed but to remain understandable within it, allowing someone to locate themselves inside the issue and see a path forward that extends beyond the initial interaction.</p><p>If the mechanics that drive virality are the same ones being examined as sources of harm, then ethical visibility must account for how to build trust and collective power within platforms that were not designed for either, and the answer will depend on whether communication can remain legible, actionable, and grounded as it moves through the environments that shape what people see and how they respond.</p></section></article>
+          <blockquote class="my-16 sharp-panel p-8 md:p-10 relative"><div class="quote-icon absolute -top-4 -left-4 bg-black border border-purple-500 text-purple-400 p-2"><i class="ph-fill ph-quotes text-xl"></i></div><p class="font-serif-heading emoji-safe text-2xl text-white leading-relaxed z-10 relative">&quot;In this environment, ethical strategy starts with designing language and structure that can survive inside these platforms while preserving the pathways to understanding and participation that collective power depends on.&quot;</p><footer class="mt-8 font-mono-code text-[10px] uppercase tracking-[0.2em] text-purple-400 flex items-center gap-3"><span class="w-4 h-px bg-purple-500"></span> CASSANDRE ARKEMA, THE ALGORITHM WITCH</footer></blockquote>
+          <div class="post-tags-footer"><span class="tag-chip">Ethics</span><span class="tag-chip">ethics</span><span class="tag-chip">algorithmic</span><span class="tag-chip">visibility</span></div>
+        </div>
+      </div>
+
       <div class="lower-divider upper" aria-hidden="true"></div>
       <section class="lower-shell">
         <section>
           <h2 class="related-shell-title">Related Dispatches</h2>
           <div class="related-grid">
-
       <a class="related-card sharp-panel theme-cyan" href="/blog/future-is-community-led.html">
         <div class="related-card-category-line"><span class="category-chip micro">Community</span></div>
         <h3>The Future Is Community-Led</h3>
@@ -2611,110 +1789,179 @@ For as long as I have been online, I have believed that social and digital media
         <p>Clicking was the standard way to navigate the web. Scrolling was considered bad or risky design. Early usability research warned about the “below the fold” problem,…</p>
         <div class="related-card-date micro"><span>Mar 10, 2026</span></div>
       </a>
-    
-          </div>
+    </div>
         </section>
         <div class="lower-divider" aria-hidden="true"></div>
         <section>
-          <div class="dispatch-nav-row"><a class="dispatch-nav-link prev" href="/blog/future-is-community-led.html">
-    <div class="dispatch-nav-icon"><i class="ph-bold ph-arrow-left"></i></div>
-    <div class="dispatch-nav-text">
-      <div class="dispatch-nav-label">Previous Scroll</div>
-      <div class="dispatch-nav-title">The Future Is Community-Led</div>
-    </div>
-    
-  </a><div class="dispatch-nav-link next is-static">
-      
-      <div class="dispatch-nav-text">
-        <div class="dispatch-nav-label">Next Scroll</div>
-        <div class="dispatch-nav-title">No Newer Dispatch</div>
-      </div>
-      <div class="dispatch-nav-icon"><i class="ph-bold ph-arrow-right"></i></div>
-    </div></div>
+          <div class="dispatch-nav-row"><a class="dispatch-nav-link prev" href="/blog/future-is-community-led.html"><div class="dispatch-nav-icon"><i class="ph-bold ph-arrow-left"></i></div><div class="dispatch-nav-text"><div class="dispatch-nav-label">Previous Scroll</div><div class="dispatch-nav-title">The Future Is Community-Led</div></div></a><div class="dispatch-nav-link next is-static"><div class="dispatch-nav-text"><div class="dispatch-nav-label">Next Scroll</div><div class="dispatch-nav-title">No Newer Dispatch</div></div><div class="dispatch-nav-icon"><i class="ph-bold ph-arrow-right"></i></div></div></div>
         </section>
       </section>
-</main>
 
+    </main>
 
-<div class="footer-copyright-wrap">
-<span class="footer-accent-line" aria-hidden="true"></span>
-</div>
+    <div class="footer-copyright-wrap">
+        <span class="footer-accent-line" aria-hidden="true"></span>
+      </div>
 
+      <footer class="site-footer">
+        <div class="site-footer-inner">
+          <div class="footer-row">
+            <div class="font-magical footer-copyright">© 2026 The Algorithm Witch</div>
+          <div class="footer-socials" aria-label="Social links">
+            <a href="https://www.linkedin.com/in/cassandrearkema/" target="_blank" rel="noopener noreferrer" aria-label="LinkedIn">
+              <i class="ph-fill ph-linkedin-logo text-2xl"></i>
+            </a>
+            <a href="https://substack.com/@thealgorithmwitch" target="_blank" rel="noopener noreferrer" aria-label="Substack">
+              <i class="ph-fill ph-rss-simple text-2xl"></i>
+            </a>
+            <a href="https://www.instagram.com/thealgorithmwitch" target="_blank" rel="noopener noreferrer" aria-label="Instagram">
+              <i class="ph-fill ph-instagram-logo text-2xl"></i>
+            </a>
+            <a href="mailto:cassandre.arkema@gmail.com" aria-label="Email">
+              <i class="ph-fill ph-envelope-simple text-2xl"></i>
+            </a>
+          </div>
+          <div class="footer-copy">Crafted in the Ether</div>
+        </div>
+      </div>
+    </footer>
+  </div>
 
-<footer class="site-footer" vid="243">
-<div class="site-footer-inner">
-<div class="footer-row">
-<div class="font-magical footer-copyright">© 2026 The Algorithm Witch</div>
-<div class="footer-socials flex gap-6">
-<a href="https://www.linkedin.com/in/cassandrearkema/" target="_blank" rel="noopener noreferrer" aria-label="LinkedIn" class="text-slate-400 hover:text-white transition-colors transform hover:-translate-y-1"><i class="ph-fill ph-linkedin-logo text-2xl"></i></a>
-<a href="https://substack.com/@thealgorithmwitch" target="_blank" rel="noopener noreferrer" aria-label="Substack" class="text-slate-400 hover:text-white transition-colors transform hover:-translate-y-1"><i class="ph-fill ph-rss-simple text-2xl"></i></a>
-<a href="https://www.instagram.com/thealgorithmwitch" target="_blank" rel="noopener noreferrer" aria-label="Instagram" class="text-slate-400 hover:text-white transition-colors transform hover:-translate-y-1"><i class="ph-fill ph-instagram-logo text-2xl"></i></a>
-<a href="mailto:cassandre.arkema@gmail.com" aria-label="Email" class="text-slate-400 hover:text-white transition-colors transform hover:-translate-y-1"><i class="ph-fill ph-envelope-simple text-2xl"></i></a>
-</div>
-<div class="footer-copy font-mono-code">Crafted in the Ether</div>
-</div>
-</div>
-</footer>
+  <script>
+    const starContainer = document.getElementById('star-container');
+    const starCount = window.innerWidth > 768 ? 90 : 36;
+    for (let i = 0; i < starCount; i += 1) {
+      const star = document.createElement('div');
+      star.className = 'star';
+      star.style.left = `${Math.random() * 100}%`;
+      star.style.top = `${Math.random() * 100}%`;
+      const size = Math.random() * 1.8 + 0.7;
+      star.style.width = `${size}px`;
+      star.style.height = `${size}px`;
+      star.style.setProperty('--duration', `${3 + Math.random() * 5}s`);
+      star.style.setProperty('--delay', `${Math.random() * 5}s`);
+      star.style.setProperty('--opacity', 0.18 + Math.random() * 0.5);
+      starContainer.appendChild(star);
+    }
 
+    document.querySelectorAll('[data-copy-link]').forEach((button) => {
+      button.addEventListener('click', async () => {
+        const value = button.getAttribute('data-copy-link');
+        try {
+          await navigator.clipboard.writeText(value);
+          const previous = button.innerHTML;
+          button.innerHTML = '<i class="ph-bold ph-check"></i>';
+          setTimeout(() => { button.innerHTML = previous; }, 1200);
+        } catch (_error) {
+          window.open(value, '_blank', 'noopener');
+        }
+      });
+    });
 
-<script vid="245">
+    const menuButton = document.getElementById('menuButton');
+    const mobileMenu = document.getElementById('mobileMenu');
+    if (menuButton && mobileMenu) {
+      menuButton.addEventListener('click', () => {
+        mobileMenu.classList.toggle('hidden');
+        const expanded = menuButton.getAttribute('aria-expanded') === 'true';
+        menuButton.setAttribute('aria-expanded', String(!expanded));
+      });
 
+      mobileMenu.querySelectorAll('a').forEach((link) => {
+        link.addEventListener('click', () => {
+          mobileMenu.classList.add('hidden');
+          menuButton.setAttribute('aria-expanded', 'false');
+        });
+      });
+    }
 
-const starContainer = document.getElementById('star-container');
-const numStars = window.innerWidth > 768 ? 100 : 40;
+    const bodyEl = document.body;
+    const heroAnchor = document.getElementById('hero-anchor');
+    const articleColumn = document.querySelector('.article-column');
+    const tocLinks = Array.from(document.querySelectorAll('.toc-link[href^="#"]'));
+    const sections = Array.from(document.querySelectorAll('.article-section[data-section-id]'));
 
+    function desktopSplitCapable() {
+      return window.matchMedia('(min-width: 1181px)').matches;
+    }
 
-for (let i = 0; i < numStars; i++) {
-const star = document.createElement('div');
-star.classList.add('star');
-star.style.left = `${Math.random() * 100}%`;
-star.style.top = `${Math.random() * 100}%`;
-const size = Math.random() * 2 + 1;
-star.style.width = `${size}px`;
-star.style.height = `${size}px`;
-star.style.setProperty('--duration', `${3 + Math.random() * 5}s`);
-star.style.setProperty('--delay', `${Math.random() * 5}s`);
-star.style.setProperty('--opacity', 0.2 + Math.random() * 0.6);
-starContainer.appendChild(star);
-}
+    function splitReady() {
+      return desktopSplitCapable() && bodyEl.classList.contains('split-scroll-ready');
+    }
 
+    function syncSplitScrollMode() {
+      if (!heroAnchor || window.innerWidth <= 1180) {
+        bodyEl.classList.remove('split-scroll-ready');
+        return;
+      }
+      const trigger = heroAnchor.getBoundingClientRect().bottom <= 140;
+      bodyEl.classList.toggle('split-scroll-ready', trigger);
+    }
 
+    function setActiveSection(id) {
+      tocLinks.forEach((link) => link.classList.toggle('active', link.getAttribute('href') === `#${id}`));
+    }
 
+    function sectionTopInArticle(section) {
+      if (!articleColumn || !section) return 0;
+      const sectionRect = section.getBoundingClientRect();
+      const columnRect = articleColumn.getBoundingClientRect();
+      return sectionRect.top - columnRect.top + articleColumn.scrollTop;
+    }
 
-const tocLinks = document.querySelectorAll('.toc-link');
-const sections = Array.from(tocLinks).map(link => document.querySelector(link.getAttribute('href')));
+    function updateActiveByPosition() {
+      if (!sections.length) return;
+      if (splitReady() && articleColumn) {
+        const currentTop = articleColumn.scrollTop + 140;
+        let active = sections[0];
+        sections.forEach((section) => {
+          if (sectionTopInArticle(section) <= currentTop) active = section;
+        });
+        setActiveSection(active.getAttribute('data-section-id'));
+        return;
+      }
 
+      const rootTop = 0;
+      let active = sections[0];
+      sections.forEach((section) => {
+        const rect = section.getBoundingClientRect();
+        const offset = rect.top - rootTop;
+        if (offset <= 160) active = section;
+      });
+      setActiveSection(active.getAttribute('data-section-id'));
+    }
 
-const observerOptions = {
-root: null,
-rootMargin: '-20% 0px -60% 0px',
-threshold: 0
-};
+    tocLinks.forEach((link) => {
+      link.addEventListener('click', (event) => {
+        event.preventDefault();
+        const id = link.getAttribute('href').slice(1);
+        const target = document.getElementById(id);
+        if (!target) return;
+        setActiveSection(id);
+        if (articleColumn && desktopSplitCapable()) {
+          bodyEl.classList.add('split-scroll-ready');
+          requestAnimationFrame(() => {
+            articleColumn.scrollTo({ top: Math.max(sectionTopInArticle(target) - 24, 0), behavior: 'smooth' });
+          });
+          return;
+        }
+        const targetTop = target.getBoundingClientRect().top + window.scrollY - 108;
+        window.scrollTo({ top: Math.max(targetTop, 0), behavior: 'smooth' });
+      });
+    });
 
-
-const observer = new IntersectionObserver((entries) => {
-entries.forEach(entry => {
-if (entry.isIntersecting) {
-const id = entry.target.getAttribute('id');
-tocLinks.forEach(link => {
-link.classList.remove('active');
-if (link.getAttribute('href') === `#${id}`) {
-link.classList.add('active');
-}
-});
-}
-});
-}, observerOptions);
-
-
-sections.forEach(section => {
-if (section) observer.observe(section);
-});
-</script>
-
-
-
-
+    window.addEventListener('scroll', syncSplitScrollMode, { passive: true });
+    window.addEventListener('scroll', updateActiveByPosition, { passive: true });
+    window.addEventListener('resize', () => {
+      syncSplitScrollMode();
+      updateActiveByPosition();
+    });
+    if (articleColumn) {
+      articleColumn.addEventListener('scroll', updateActiveByPosition, { passive: true });
+    }
+    syncSplitScrollMode();
+    updateActiveByPosition();
+  </script>
 
   <script id="title-fit-script">
     (() => {
@@ -2759,4 +2006,5 @@ if (section) observer.observe(section);
       window.addEventListener('resize', fitResponsiveTitles);
     })();
   </script>
-</body></html>
+</body>
+</html>

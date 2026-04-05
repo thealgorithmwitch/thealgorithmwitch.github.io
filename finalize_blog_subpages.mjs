@@ -157,6 +157,24 @@ const OVERRIDE_CSS = `
       word-break: normal;
       hyphens: none;
     }
+    .article-body h3 {
+      margin: 2.5rem 0 1rem;
+      font-family: "Playfair Display", serif;
+      font-size: 1.5rem;
+      line-height: 1.35;
+      color: #f3f4f6;
+      font-weight: 400;
+    }
+    .article-body h4 {
+      margin: 2rem 0 0.85rem;
+      font-family: "Inter", sans-serif;
+      font-size: 0.95rem;
+      line-height: 1.5;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: #c4b5fd;
+      font-weight: 500;
+    }
     .related-shell-title {
       margin: 0 0 2rem;
       font-family: "Cinzel Decorative", Georgia, serif;
@@ -784,12 +802,21 @@ for (const filename of allHtmlFiles) {
   }
 
   if (html.includes('<div class="lower-divider upper" aria-hidden="true"></div>')) {
-    html = replaceSectionByBounds(
-      html,
-      '<div class="lower-divider upper" aria-hidden="true"></div>',
-      '</main>',
-      `${buildLowerShell(post, POSTS, index)}\n`,
-    );
+    if (html.includes('<div class="keep-open-box sharp-panel">')) {
+      html = replaceSectionByBounds(
+        html,
+        '<div class="keep-open-box sharp-panel">',
+        '</main>',
+        `${buildLowerShell(post, POSTS, index)}\n`,
+      );
+    } else {
+      html = replaceSectionByBounds(
+        html,
+        '<div class="lower-divider upper" aria-hidden="true"></div>',
+        '</main>',
+        `${buildLowerShell(post, POSTS, index)}\n`,
+      );
+    }
   } else if (html.includes('<section class="max-w-[1400px] mx-auto px-6 py-16 border-t border-purple-900/30 bg-[#0a0514]/50 mt-12"')) {
     html = replaceSectionByBounds(
       html,

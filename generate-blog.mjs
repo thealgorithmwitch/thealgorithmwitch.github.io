@@ -164,6 +164,37 @@ function sanitizeCaption(text = '') {
   return decodeHtml(text.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ')).trim();
 }
 
+function normalizePlainText(text = '') {
+  return decodeHtml(String(text || ''))
+    .replace(/<[^>]+>/g, ' ')
+    .replace(/[\r\n\t]+/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+function truncateText(text = '', maxLength = 170) {
+  const normalized = normalizePlainText(text);
+  if (!normalized || normalized.length <= maxLength) return normalized;
+  const clipped = normalized.slice(0, maxLength + 1);
+  const boundary = clipped.lastIndexOf(' ');
+  const safe = boundary > Math.floor(maxLength * 0.6) ? clipped.slice(0, boundary) : clipped.slice(0, maxLength);
+  return `${safe.trim()}…`;
+}
+
+function firstParagraphSnippet(html = '') {
+  const firstParagraph = html.match(/<p[^>]*>([\s\S]*?)<\/p>/i)?.[1];
+  return truncateText(firstParagraph ? stripTags(firstParagraph) : stripTags(html));
+}
+
+function safeExcerpt(description = '', contentHtml = '') {
+  const primary = truncateText(description);
+  if (primary) return primary;
+  const fallbackParagraph = firstParagraphSnippet(contentHtml);
+  if (fallbackParagraph) return fallbackParagraph;
+  const fallbackBody = truncateText(stripTags(contentHtml));
+  return fallbackBody || '';
+}
+
 function buildQuoteBlock(text = '') {
   const quoteText = stripTags(text).replace(/\s+/g, ' ').trim();
   if (!quoteText) return '';
@@ -474,51 +505,69 @@ async function main() {
     throw new Error(errors.join(' | '));
   }
 
-  const normalized = rawPosts.map((post) => {
-    if (!post.contentHtml) throw new Error(`Missing full HTML body in feed for: ${post.title}`);
-    const websiteSlug = TITLE_TO_SLUG.get(post.title);
-    if (!websiteSlug) throw new Error(`No custom website slug provided for: ${post.title}`);
-    return {
-      title: post.title,
-      excerpt: post.description || stripTags(post.contentHtml).slice(0, 180),
-      published_at: post.publishedAt,
-      cover_image: post.coverImage || '',
-      body_html: post.contentHtml,
-      original_substack_url: post.originalUrl,
-      original_substack_slug: stripQuery(post.originalUrl).split('/').pop() || '',
-      website_slug: websiteSlug,
-    };
-  }).sort((a, b) => new Date(b.published_at) - new Date(a.published_at));
+  const normalized = rawPosts.reduce((acc, post) => {
+    try {
+      if (!post.contentHtml) throw new Error('missing full HTML body');
+      const websiteSlug = TITLE_TO_SLUG.get(post.title);
+      if (!websiteSlug) throw new Error('missing custom website slug');
+      acc.push({
+        title: post.title,
+        excerpt: safeExcerpt(post.description, post.contentHtml),
+        published_at: post.publishedAt,
+        cover_image: post.coverImage || '',
+        body_html: post.contentHtml,
+        original_substack_url: post.originalUrl,
+        original_substack_slug: stripQuery(post.originalUrl).split('/').pop() || '',
+        website_slug: websiteSlug,
+      });
+    } catch (error) {
+      console.warn(`Skipping malformed feed item "${post.title || 'Untitled'}": ${error.message}`);
+    }
+    return acc;
+  }, []).sort((a, b) => new Date(b.published_at) - new Date(a.published_at));
+
+  if (!normalized.length) {
+    throw new Error('No valid posts remained after feed normalization.');
+  }
 
   const linkMap = new Map(normalized.map((post) => [stripQuery(post.original_substack_url), `/blog/${post.website_slug}.html`]));
 
-  const posts = normalized.map((post) => {
-    const structured = sanitizeArticleHtml(post.body_html, linkMap);
-    if (stripTags(structured.html).length < 300) throw new Error(`Sanitized article body is too short for: ${post.title}`);
-    const dates = formatDate(post.published_at);
-    const readingTimeMinutes = estimateReadingTime(structured.html);
-    const category = articleCategory(post.title);
-    const theme = themeForCategory(category);
-    const introText = getIntroText(structured.html);
-    return {
-      ...post,
-      body_html: structured.html,
-      toc: structured.toc,
-      figures: structured.figures,
-      category,
-      theme,
-      intro_opening: extractFirstSentence(introText),
-      intro_closing: extractLastSentence(introText),
-      published_iso: dates.iso,
-      published_short: dates.short,
-      published_long: dates.long,
-      canonical_url: `${BLOG_URL}${post.website_slug}.html`,
-      og_image: post.cover_image || FALLBACK_OG,
-      og_image_alt: `${post.title} | The Algorithm Witch`,
-      reading_time_minutes: readingTimeMinutes,
-      reading_time_display: `${readingTimeMinutes} min read`,
-    };
-  });
+  const posts = normalized.reduce((acc, post) => {
+    try {
+      const structured = sanitizeArticleHtml(post.body_html, linkMap);
+      if (stripTags(structured.html).length < 300) throw new Error('sanitized article body is too short');
+      const dates = formatDate(post.published_at);
+      const readingTimeMinutes = estimateReadingTime(structured.html);
+      const category = articleCategory(post.title);
+      const theme = themeForCategory(category);
+      const introText = getIntroText(structured.html);
+      acc.push({
+        ...post,
+        body_html: structured.html,
+        toc: structured.toc,
+        figures: structured.figures,
+        category,
+        theme,
+        intro_opening: extractFirstSentence(introText),
+        intro_closing: extractLastSentence(introText),
+        published_iso: dates.iso,
+        published_short: dates.short,
+        published_long: dates.long,
+        canonical_url: `${BLOG_URL}${post.website_slug}.html`,
+        og_image: post.cover_image || FALLBACK_OG,
+        og_image_alt: `${post.title} | The Algorithm Witch`,
+        reading_time_minutes: readingTimeMinutes,
+        reading_time_display: `${readingTimeMinutes} min read`,
+      });
+    } catch (error) {
+      console.warn(`Skipping malformed generated post "${post.title}": ${error.message}`);
+    }
+    return acc;
+  }, []);
+
+  if (!posts.length) {
+    throw new Error('No valid posts remained after article sanitization.');
+  }
 
   await fs.writeFile(POSTS_JSON_PATH, `${JSON.stringify(posts, null, 2)}\n`);
 

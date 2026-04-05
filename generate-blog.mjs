@@ -437,29 +437,47 @@ function buildRelatedPosts(allPosts, currentPost) {
   return allPosts
     .filter((post) => post.website_slug !== currentPost.website_slug)
     .slice(0, 3)
-    .map((post, index) => {
+    .map((post) => {
       const theme = themeForCategory(post.category);
       return `
       <a class="related-card sharp-panel theme-${theme}" href="/blog/${post.website_slug}.html">
-        <div class="category-chip micro" style="margin-bottom:1.35rem;">${escapeHtml(post.category)}</div>
+        <div class="related-card-category-line"><span class="category-chip micro">${escapeHtml(post.category)}</span></div>
         <h3>${escapeHtml(post.title)}</h3>
         <p>${escapeHtml(post.excerpt)}</p>
+        <div class="related-card-date micro"><span>${escapeHtml(post.published_short || '')}</span></div>
       </a>
     `;
     })
     .join('');
 }
 
+function buildDispatchLink(post, label, direction) {
+  if (!post) {
+    const title = direction === 'prev' ? 'No Older Dispatch' : 'No Newer Dispatch';
+    return `<div class="dispatch-nav-link ${direction} is-static">
+      ${direction === 'prev' ? '<div class="dispatch-nav-icon"><i class="ph-bold ph-arrow-left"></i></div>' : ''}
+      <div class="dispatch-nav-text">
+        <div class="dispatch-nav-label">${label}</div>
+        <div class="dispatch-nav-title">${title}</div>
+      </div>
+      ${direction === 'next' ? '<div class="dispatch-nav-icon"><i class="ph-bold ph-arrow-right"></i></div>' : ''}
+    </div>`;
+  }
+
+  return `<a class="dispatch-nav-link ${direction}" href="/blog/${post.website_slug}.html">
+    ${direction === 'prev' ? '<div class="dispatch-nav-icon"><i class="ph-bold ph-arrow-left"></i></div>' : ''}
+    <div class="dispatch-nav-text">
+      <div class="dispatch-nav-label">${label}</div>
+      <div class="dispatch-nav-title">${escapeHtml(post.title)}</div>
+    </div>
+    ${direction === 'next' ? '<div class="dispatch-nav-icon"><i class="ph-bold ph-arrow-right"></i></div>' : ''}
+  </a>`;
+}
+
 function buildDispatchRail(posts, index) {
   const older = posts[index + 1];
   const newer = posts[index - 1];
-  const olderHtml = older
-    ? `<a class="dispatch-card sharp-panel older" href="/blog/${older.website_slug}.html"><div class="category-chip micro">${escapeHtml(older.category)}</div><h3>${escapeHtml(older.title)}</h3><p>${escapeHtml(older.excerpt)}</p><div class="dispatch-arrow micro"><span>←</span><span>Previous Dispatch</span></div></a>`
-    : '<div class="dispatch-card sharp-panel older"><div class="category-chip micro">Archive</div><h3>No Earlier Dispatch</h3><p>You are at the earliest dispatch in the current imported archive.</p><div class="dispatch-arrow micro"><span>←</span><span>Previous Dispatch</span></div></div>';
-  const newerHtml = newer
-    ? `<a class="dispatch-card sharp-panel next" href="/blog/${newer.website_slug}.html"><div class="category-chip micro">${escapeHtml(newer.category)}</div><h3>${escapeHtml(newer.title)}</h3><p>${escapeHtml(newer.excerpt)}</p><div class="dispatch-arrow micro"><span>Next Dispatch</span><span>→</span></div></a>`
-    : '<div class="dispatch-card sharp-panel next"><div class="category-chip micro">Archive</div><h3>No Newer Dispatch</h3><p>You are at the latest dispatch in the current imported archive.</p><div class="dispatch-arrow micro"><span>Next Dispatch</span><span>→</span></div></div>';
-  return `${olderHtml}${newerHtml}`;
+  return `${buildDispatchLink(older, 'Previous Scroll', 'prev')}${buildDispatchLink(newer, 'Next Scroll', 'next')}`;
 }
 
 function buildVisionsPanel(post) {

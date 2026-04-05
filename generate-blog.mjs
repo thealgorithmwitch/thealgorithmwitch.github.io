@@ -684,6 +684,7 @@ async function main() {
         : '',
       POST_DATE_DISPLAY: escapeHtml(post.published_long),
       POST_DATE_SHORT: escapeHtml(post.published_short),
+      POST_DATE_ISO: escapeHtml(post.published_iso.slice(0, 10)),
       READING_TIME: escapeHtml(post.reading_time_display),
       POST_TAGS: buildWordTags(post),
       INTRO_OPENING: escapeHtml(post.intro_opening || post.excerpt),

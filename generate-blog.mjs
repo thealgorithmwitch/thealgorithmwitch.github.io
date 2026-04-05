@@ -355,12 +355,18 @@ function replaceTokens(template, tokens) {
   );
 }
 
+function normalizeVidAttributes(html) {
+  let nextVid = 0;
+  return html.replace(/\svid="[^"]*"/g, () => ` vid="${nextVid++}"`);
+}
+
 function injectArchiveData(html, posts) {
   const payload = JSON.stringify(posts);
-  return html.replace(
+  const withData = html.replace(
     /<script id="archive-posts-data" type="application\/json">[\s\S]*?<\/script>/,
     `<script id="archive-posts-data" type="application/json">${payload}</script>`,
   );
+  return normalizeVidAttributes(withData);
 }
 
 function buildRelatedPosts(allPosts, currentPost) {

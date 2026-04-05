@@ -1609,6 +1609,10 @@
         reading: 'text-fuchsia-400'
       }
     };
+    const ethicsTheme = {
+      ...themeMap.purple,
+      icon: 'ph-duotone ph-scales text-purple-400'
+    };
 
     function escapeHtml(value = '') {
       return String(value)
@@ -1626,7 +1630,9 @@
     }
 
     function buildCard(post, index) {
-      const theme = themeMap[post.theme] || themeMap.purple;
+      const theme = post.category === 'Ethics'
+        ? ethicsTheme
+        : (themeMap[post.theme] || themeMap.purple);
       return `
         <a href="/blog/${escapeHtml(post.website_slug)}.html" class="spell-card ${theme.cardClass} rounded-2xl p-8 flex flex-col min-h-[420px] group border-t ${theme.borderClass} hover:no-underline">
           <div class="flex justify-between items-start mb-8">

@@ -62,6 +62,12 @@ function fetchText(url) {
 
 function decodeHtml(text = '') {
   return text
+    .replace(/&#x([0-9a-f]+);/gi, (_match, hex) => {
+      try { return String.fromCodePoint(parseInt(hex, 16)); } catch { return _match; }
+    })
+    .replace(/&#([0-9]+);/g, (_match, dec) => {
+      try { return String.fromCodePoint(parseInt(dec, 10)); } catch { return _match; }
+    })
     .replace(/&#8217;/g, '’')
     .replace(/&#8216;/g, '‘')
     .replace(/&#8220;/g, '“')
@@ -169,6 +175,10 @@ function normalizePlainText(text = '') {
     .replace(/<[^>]+>/g, ' ')
     .replace(/[\r\n\t]+/g, ' ')
     .replace(/\s+/g, ' ')
+    .replace(/\s+([.,!?;:])/g, '$1')
+    .replace(/([!?.,])\1{1,}/g, '$1')
+    .replace(/\(\s+/g, '(')
+    .replace(/\s+\)/g, ')')
     .trim();
 }
 
@@ -181,16 +191,33 @@ function truncateText(text = '', maxLength = 170) {
   return `${safe.trim()}…`;
 }
 
-function firstParagraphSnippet(html = '') {
+function looksLikeLowQualityExcerpt(text = '', title = '') {
+  const normalized = normalizePlainText(text);
+  if (!normalized) return true;
+  const lower = normalized.toLowerCase();
+  const titleLower = normalizePlainText(title).toLowerCase();
+  if (normalized.length < 45) return true;
+  if (titleLower && lower === titleLower) return true;
+  if (titleLower && lower.includes(titleLower) && normalized.length < Math.max(90, titleLower.length + 25)) return true;
+  if (/^(share|subscribe|thanks for reading|found this useful|sign up|read more)\b/i.test(normalized)) return true;
+  if (/(substack|utm_|action=share|type your email|collective power starts|weekly strategy)/i.test(normalized)) return true;
+  const wordCount = normalized.split(/\s+/).filter(Boolean).length;
+  if (wordCount < 7) return true;
+  return false;
+}
+
+function firstParagraphSnippet(html = '', title = '') {
   const paragraphs = [...String(html || '').matchAll(/<p[^>]*>([\s\S]*?)<\/p>/gi)]
-    .map((match) => truncateText(stripTags(match[1])))
-    .filter((text) => text && text.length > 20);
-  if (paragraphs.length) return paragraphs[0];
+    .map((match) => normalizePlainText(stripTags(match[1])))
+    .filter(Boolean);
+  const meaningful = paragraphs.find((text) => !looksLikeLowQualityExcerpt(text, title));
+  if (meaningful) return truncateText(meaningful);
+  if (paragraphs.length) return truncateText(paragraphs[0]);
   return truncateText(stripTags(html));
 }
 
-function safeExcerpt(description = '', contentHtml = '') {
-  const primary = firstParagraphSnippet(contentHtml);
+function safeExcerpt(description = '', contentHtml = '', title = '') {
+  const primary = firstParagraphSnippet(contentHtml, title);
   if (primary) return primary;
   const fallbackDescription = truncateText(description);
   if (fallbackDescription) return fallbackDescription;
@@ -201,7 +228,7 @@ function safeExcerpt(description = '', contentHtml = '') {
 function buildQuoteBlock(text = '') {
   const quoteText = stripTags(text).replace(/\s+/g, ' ').trim();
   if (!quoteText) return '';
-  return `<blockquote class="my-16 sharp-panel p-8 md:p-10 relative"><div class="quote-icon absolute -top-4 -left-4 bg-black border border-purple-500 text-purple-400 p-2"><i class="ph-fill ph-quotes text-xl"></i></div><p class="font-serif-heading text-2xl text-white leading-relaxed z-10 relative">"${escapeHtml(quoteText)}"</p><footer class="mt-8 font-mono-code text-[10px] uppercase tracking-[0.2em] text-purple-400 flex items-center gap-3"><span class="w-4 h-px bg-purple-500"></span> CASSANDRE ARKEMA, THE ALGORITHM WITCH</footer></blockquote>`;
+  return `<blockquote class="my-16 sharp-panel p-8 md:p-10 relative"><div class="quote-icon absolute -top-4 -left-4 bg-black border border-purple-500 text-purple-400 p-2"><i class="ph-fill ph-quotes text-xl"></i></div><p class="font-serif-heading emoji-safe text-2xl text-white leading-relaxed z-10 relative">"${escapeHtml(quoteText)}"</p><footer class="mt-8 font-mono-code text-[10px] uppercase tracking-[0.2em] text-purple-400 flex items-center gap-3"><span class="w-4 h-px bg-purple-500"></span> CASSANDRE ARKEMA, THE ALGORITHM WITCH</footer></blockquote>`;
 }
 
 function extractImageFigure(block) {
@@ -515,7 +542,7 @@ async function main() {
       if (!websiteSlug) throw new Error('missing custom website slug');
       acc.push({
         title: post.title,
-        excerpt: safeExcerpt(post.description, post.contentHtml),
+        excerpt: safeExcerpt(post.description, post.contentHtml, post.title),
         published_at: post.publishedAt,
         cover_image: post.coverImage || '',
         body_html: post.contentHtml,

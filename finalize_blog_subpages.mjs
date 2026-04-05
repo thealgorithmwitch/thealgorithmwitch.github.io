@@ -696,7 +696,7 @@ for (const filename of allHtmlFiles) {
   html = html.replace(/Excerpt from the Grimoire/g, 'CASSANDRE ARKEMA, THE ALGORITHM WITCH');
 
   html = html.replace(
-    /const menuButton = document\.getElementById\('menuButton'\);[\s\S]*?menuButton\.setAttribute\('aria-expanded', 'false'\);\s*\}\);\s*\}/,
+    /const menuButton = document\.getElementById\('menuButton'\);[\s\S]*?const bodyEl = document\.body;/,
     `const menuButton = document.getElementById('menuButton');
     const mobileMenu = document.getElementById('mobileMenu');
     if (menuButton && mobileMenu) {
@@ -712,7 +712,9 @@ for (const filename of allHtmlFiles) {
           menuButton.setAttribute('aria-expanded', 'false');
         });
       });
-    }`,
+    }
+
+    const bodyEl = document.body;`,
   );
 
   if (!html.includes('id="title-fit-script"')) {

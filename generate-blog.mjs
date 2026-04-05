@@ -333,7 +333,10 @@ function sanitizeArticleHtml(html, mappedLinks) {
 }
 
 function structureArticleHtml(html, toc, figures) {
-  const matches = [...html.matchAll(/<(h[23]) id="([^"]+)">([\s\S]*?)<\/\1>/gi)];
+  const headingMatches = [...html.matchAll(/<(h[23]) id="([^"]+)">([\s\S]*?)<\/\1>/gi)];
+  const hasH2 = headingMatches.some((match) => match[1].toLowerCase() === 'h2');
+  const topLevelTag = hasH2 ? 'h2' : 'h3';
+  const matches = headingMatches.filter((match) => match[1].toLowerCase() === topLevelTag);
   if (!matches.length) {
     return {
       html: `<section class="article-section article-section-intro theme-purple" data-section-id="top">${html}</section>`,

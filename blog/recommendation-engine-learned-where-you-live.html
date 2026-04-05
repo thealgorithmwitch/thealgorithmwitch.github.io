@@ -1196,6 +1196,9 @@
   </style>
   <style id="subpage-polish-overrides">
 
+    main {
+      padding-top: 6.5rem;
+    }
     .topbar {
       position: fixed;
       top: 0;
@@ -1208,20 +1211,21 @@
       width: min(1280px, calc(100% - 0rem));
       margin: 0 auto;
       min-height: 4.75rem;
-      display: flex;
+      display: grid;
+      grid-template-columns: auto 1fr auto auto;
       align-items: center;
-      justify-content: space-between;
       gap: 1rem;
       padding: 1rem 2rem;
       border-radius: 999px;
     }
-    .topbar-nav {
+    .archive-nav-desktop {
       display: flex;
       align-items: center;
+      justify-self: center;
       gap: 2rem;
       color: #d1d5db;
     }
-    .button-link {
+    .archive-nav-cta {
       display: inline-flex;
       align-items: center;
       justify-content: center;
@@ -1234,16 +1238,38 @@
       color: white;
       transition: transform 0.24s ease, border-color 0.24s ease, background-color 0.24s ease;
     }
-    .button-link:hover {
+    .archive-nav-cta:hover {
       transform: scale(1.05);
       background: rgba(168, 85, 247, 0.2);
       border-color: rgba(192, 132, 252, 0.8);
+    }
+    .archive-nav-toggle {
+      display: none;
+    }
+    .archive-mobile-menu[hidden] {
+      display: none !important;
     }
     .brand-lockup,
     .topbar-inner > a:first-child {
       display: inline-flex;
       align-items: center;
       gap: 0.75rem;
+    }
+    .post-hero {
+      padding-top: 1.1rem;
+    }
+    .back-link {
+      margin-bottom: 3rem;
+    }
+    .post-title {
+      font-size: clamp(2.7rem, 4.85vw, 5rem);
+      line-height: 1.14;
+      overflow-wrap: anywhere;
+      word-break: normal;
+    }
+    .post-title-accent {
+      display: block;
+      margin-top: 0.4rem;
     }
     .related-shell-title {
       margin: 0 0 2rem;
@@ -1336,10 +1362,12 @@
       display: grid;
       grid-template-columns: repeat(3, minmax(0, 1fr));
       gap: 1.5rem;
+      align-items: stretch;
     }
     .related-card {
       padding: 1.5rem;
       min-height: 100%;
+      height: 100%;
       display: flex;
       flex-direction: column;
       align-items: flex-start;
@@ -1357,7 +1385,7 @@
     .related-card.theme-amber { --card-accent: #fbbf24; }
     .related-card.theme-fuchsia { --card-accent: #f472b6; }
     .related-card .category-chip {
-      margin-bottom: 0.95rem;
+      margin-bottom: 1.15rem;
       border-color: color-mix(in srgb, var(--card-accent, var(--accent)) 35%, transparent);
       color: var(--card-accent, var(--accent));
       padding: 0.18rem 0.5rem;
@@ -1373,7 +1401,7 @@
       display: none;
     }
     .related-card h3 {
-      margin: 0 0 0.9rem;
+      margin: 0 0 1rem;
       font-family: "Cinzel Decorative", Georgia, serif;
       font-size: 1.3rem;
       line-height: 1.35;
@@ -1389,7 +1417,9 @@
       flex: 1 1 auto;
     }
     .related-card-date {
-      margin-top: 1rem;
+      margin-top: auto;
+      padding-top: 1rem;
+      align-self: stretch;
       padding-top: 1rem;
       border-top: 1px solid rgba(88, 28, 135, 0.3);
       display: flex;
@@ -1486,7 +1516,7 @@
     .site-footer {
       border-top: none;
       border-bottom: 2px solid rgba(168, 85, 247, 0.72);
-      background: #000;
+      background: transparent;
       padding: 1.5rem 0 1.3rem;
       position: relative;
       z-index: 3;
@@ -1546,16 +1576,26 @@
       .topbar-inner {
         width: min(100%, calc(100% - 0rem));
         padding: 0.9rem 1.1rem;
+        grid-template-columns: 1fr auto;
         gap: 0.85rem;
       }
-      .topbar-nav {
-        gap: 1rem;
-        font-size: 0.68rem;
-        letter-spacing: 0.15em;
+      .archive-nav-desktop,
+      .archive-nav-cta {
+        display: none !important;
       }
-      .button-link {
-        padding-inline: 1rem;
-        font-size: 0.68rem;
+      .archive-nav-toggle {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+      }
+      .post-hero {
+        padding-top: 1.85rem;
+      }
+      .back-link {
+        margin-bottom: 2.35rem;
+      }
+      .post-title {
+        font-size: clamp(2.2rem, 8vw, 3.7rem);
       }
       .footer-copyright-wrap {
         padding-bottom: 1rem;
@@ -1580,32 +1620,40 @@
   <div id="star-container" class="stars" aria-hidden="true"></div>
   <div class="site-shell">
     <nav id="navbar" class="topbar">
-      <div class="topbar-inner glass-panel">
-        <a href="/" class="flex items-center gap-3 group" aria-label="The Algorithm Witch home">
+      <div class="topbar-inner glass-panel archive-nav-inner">
+        <a href="/" class="flex items-center gap-3 group brand-lockup" aria-label="The Algorithm Witch home">
           <div class="relative">
             <i class="ph-fill ph-sparkle text-purple-400 text-2xl group-hover:scale-110 transition-transform duration-300"></i>
             <i class="ph-fill ph-star-four text-yellow-300 text-xs absolute -top-1 -right-2 animate-pulse"></i>
           </div>
           <span class="font-magical text-xl text-white tracking-widest group-hover:text-purple-200 transition-colors">Algorithm Witch</span>
         </a>
-        <div class="topbar-nav micro">
-          <a href="/#origins" class="nav-item">Origins</a>
-          <a href="/#grimoire" class="nav-item">Grimoire</a>
-          <a href="/blog/" class="nav-item active">Writings</a>
-          <a href="/services/" class="nav-item">Offerings</a>
+
+        <div class="hidden md:flex items-center gap-8 text-xs uppercase tracking-[0.2em] text-gray-300 font-medium archive-nav-desktop">
+          <a href="/#origins" class="nav-link hover:text-white transition-colors">Origins</a>
+          <a href="/#grimoire" class="nav-link hover:text-white transition-colors">Grimoire</a>
+          <a href="/blog/" class="nav-link active hover:text-white transition-colors">Writings</a>
+          <a href="/services/" class="nav-link hover:text-white transition-colors">Offerings</a>
         </div>
-        <a href="/summon.html" class="button-link micro">Summon Me</a>
-        <button id="menuButton" class="mobile-menu" aria-expanded="false" aria-controls="mobileMenu" aria-label="Open menu">
+
+        <a href="/summon.html" class="hidden md:inline-flex items-center justify-center px-6 py-2 bg-purple-500/10 hover:bg-purple-500/20 border border-purple-500/30 rounded-full text-xs uppercase tracking-widest text-white transition-all hover:scale-105 hover:border-purple-400 archive-nav-cta">
+          Summon Me
+        </a>
+
+        <button id="menuButton" class="md:hidden text-white text-2xl archive-nav-toggle" aria-expanded="false" aria-controls="mobileMenu" aria-label="Open menu">
           <i class="ph ph-list"></i>
         </button>
       </div>
-      <div id="mobileMenu" class="mobile-menu glass-panel" hidden>
-        <div class="micro" style="display:grid;gap:1rem;color:#d1d5db;">
-          <a href="/#origins" class="nav-item">Origins</a>
-          <a href="/#grimoire" class="nav-item">Grimoire</a>
-          <a href="/blog/" class="nav-item active">Writings</a>
-          <a href="/services/" class="nav-item">Offerings</a>
-          <a href="/summon.html" class="button-link micro" style="justify-self:start;">Summon Me</a>
+
+      <div id="mobileMenu" class="md:hidden hidden mt-3 mx-auto max-w-7xl glass-panel rounded-2xl px-6 py-4 archive-mobile-menu">
+        <div class="flex flex-col gap-4 text-xs uppercase tracking-[0.2em] text-gray-300 font-medium">
+          <a href="/#origins" class="nav-link hover:text-white transition-colors">Origins</a>
+          <a href="/#grimoire" class="nav-link hover:text-white transition-colors">Grimoire</a>
+          <a href="/blog/" class="nav-link active hover:text-white transition-colors">Writings</a>
+          <a href="/services/" class="nav-link hover:text-white transition-colors">Offerings</a>
+          <a href="/summon.html" class="mt-2 inline-flex items-center justify-center px-6 py-3 bg-purple-500/10 hover:bg-purple-500/20 border border-purple-500/30 rounded-full text-xs uppercase tracking-widest text-white transition-all">
+            Summon Me <i class="ph-bold ph-arrow-right ml-2"></i>
+          </a>
         </div>
       </div>
     </nav>
@@ -1732,8 +1780,8 @@
               <i class="ph-fill ph-quotes text-xl"></i>
             </div>
             <p class="font-serif-heading text-2xl text-white leading-relaxed z-10 relative">&quot;Interest graphs are being layered with geographic probability.&quot;</p>
-            <footer class="mt-8 text-[10px] uppercase tracking-[0.2em] text-purple-400 flex items-center gap-3" style="font-family: Inter, system-ui, sans-serif;">
-              <span class="w-4 h-px bg-purple-500"></span> CASSANDRE ARKEMA, THE ALGORITHM WITCH
+            <footer class="mt-8 font-mono-code text-[10px] uppercase tracking-[0.2em] text-purple-400 flex items-center gap-3">
+              <span class="w-4 h-px bg-purple-500"></span> Excerpt from the Grimoire
             </footer>
           </blockquote>
           <div class="post-tags-footer"><span class="tag-chip">Discovery</span><span class="tag-chip">recommendation</span><span class="tag-chip">engine</span><span class="tag-chip">live</span></div>
@@ -1742,7 +1790,7 @@
             <div class="keep-open-title">Keep the Grimoire Open</div>
             <p class="keep-open-copy">Trace adjacent signals, return to the archive, or stay subscribed to the next scroll moving through the system.</p>
             <div class="keep-open-actions">
-              <a class="keep-open-action primary" href="/blog/"><span>Return to Archive</span><i class="ph-bold ph-arrow-up-right"></i></a>
+              <a class="keep-open-action primary" href="/blog/"><span>Archive</span><i class="ph-bold ph-arrow-up-right"></i></a>
               <a class="keep-open-action" href="https://thealgorithmwitch.substack.com/" target="_blank" rel="noopener noreferrer"><span>Initiate Subscription</span><i class="ph-bold ph-arrow-right"></i></a>
             </div>
           </div>
@@ -1754,27 +1802,24 @@
         <section>
           <h2 class="related-shell-title">Related Dispatches</h2>
           <div class="related-grid">
-      <a class="related-card sharp-panel theme-purple" href="/blog/ethics-of-algorithmic-visibility.html">
+      <a class="related-card sharp-panel theme-amber" href="/blog/ethics-of-algorithmic-visibility.html">
         <div class="related-card-category-line"><span class="category-chip micro">Ethics</span></div>
         <h3>The Ethics of Algorithmic Visibility</h3>
         <p>Breaking down how the Meta and Google verdict changes the conversation around trust, attention, and building power online.</p>
         <div class="related-card-date micro"><span>Mar 31, 2026</span></div>
       </a>
-    
       <a class="related-card sharp-panel theme-cyan" href="/blog/future-is-community-led.html">
         <div class="related-card-category-line"><span class="category-chip micro">Community</span></div>
         <h3>The Future Is Community-Led</h3>
         <p>What 320 climate websites and four platforms revealed about where this movement is going.</p>
         <div class="related-card-date micro"><span>Mar 24, 2026</span></div>
       </a>
-    
       <a class="related-card sharp-panel theme-purple" href="/blog/posting-less-wont-save-you.html">
         <div class="related-card-category-line"><span class="category-chip micro">Dispatch</span></div>
         <h3>Posting Less Won’t Save You</h3>
         <p>aligning content to find its people | algorithm lore + digital patterns 🧄</p>
         <div class="related-card-date micro"><span>Mar 17, 2026</span></div>
       </a>
-    
           </div>
         </section>
         <div class="lower-divider" aria-hidden="true"></div>

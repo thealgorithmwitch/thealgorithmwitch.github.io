@@ -605,7 +605,7 @@ function buildIntroQuote(text) {
 
 function buildMainQuote(text) {
   return MAIN_QUOTE_TEMPLATE
-    .replace(/<p class="font-serif-heading text-2xl text-white leading-relaxed z-10 relative"[^>]*>\s*[\s\S]*?\s*<\/p>/, `<p class="font-serif-heading text-2xl text-white leading-relaxed z-10 relative">${escapeHtml(text)}</p>`)
+    .replace(/<p class="font-serif-heading emoji-safe text-2xl text-white leading-relaxed z-10 relative"[^>]*>\s*[\s\S]*?\s*<\/p>/, `<p class="font-serif-heading emoji-safe text-2xl text-white leading-relaxed z-10 relative">${escapeHtml(text)}</p>`)
     .replace(/<span class="w-4 h-px bg-purple-500"[^>]*><\/span>\s*Excerpt from the Grimoire/, `<span class="w-4 h-px bg-purple-500"></span> CASSANDRE ARKEMA, THE ALGORITHM WITCH`)
     .replace(/\svid="[^"]*"/g, '');
 }
@@ -703,9 +703,7 @@ for (const filename of allHtmlFiles) {
           </div>`,
   );
 
-  const introText = stripHtml(
-    extractFirstMatch(html, /<p class="[^"]*border-l-4 border-purple-500[^"]*">([\s\S]*?)<\/p>/) || post.intro_opening || '',
-  );
+  const introText = stripHtml(post.intro_opening || '');
   html = html.replace(
     /<p class="[^"]*border-l-4 border-purple-500[^"]*">[\s\S]*?<\/p>/,
     buildIntroQuote(introText),
@@ -716,9 +714,7 @@ for (const filename of allHtmlFiles) {
     '',
   );
 
-  const boxedQuoteText = stripHtml(
-    extractFirstMatch(html, /<blockquote[\s\S]*?<p class="[^"]*text-white[^"]*">([\s\S]*?)<\/p>[\s\S]*?<\/blockquote>/) || post.intro_closing || '',
-  );
+  const boxedQuoteText = stripHtml(post.intro_closing || '');
   html = html.replace(
     /(<article class="article-body" id="top">)([\s\S]*?)(<\/article>)/,
     (_match, open, body, close) => `${open}${body.replace(/<blockquote[\s\S]*?<\/blockquote>/g, '')}${close}`,

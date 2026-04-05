@@ -2277,6 +2277,10 @@ video {
                 inactiveIcon: 'text-fuchsia-400 opacity-50 group-hover:opacity-100'
             }
         ];
+        const ethicsTheme = {
+            ...cardThemes[0],
+            icon: 'ph-scales',
+        };
         let activeFilter = 'all';
         let visibleCount = 6;
         let posts = [];
@@ -2327,7 +2331,7 @@ video {
                 Platforms: cardThemes[3],
                 Discovery: cardThemes[2],
                 Community: cardThemes[1],
-                Ethics: cardThemes[0],
+                Ethics: ethicsTheme,
             };
             return themeMap[category] || cardThemes[0];
         }
@@ -2405,7 +2409,7 @@ video {
                 const active = activeFilter === category;
                 const label = category === 'all' ? 'All Scrolls' : category;
                 const count = category === 'all' ? posts.length : counts[category];
-                const icon = category === 'all' ? 'ph-infinity' : cardThemes[(index - 1 + cardThemes.length) % cardThemes.length].icon;
+                const icon = category === 'all' ? 'ph-infinity' : themeForCategory(category).icon;
                 const colorTheme = category === 'all'
                     ? cardThemes[0]
                     : themeForCategory(category);

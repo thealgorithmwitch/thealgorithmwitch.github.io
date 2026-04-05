@@ -1247,14 +1247,22 @@
       margin-bottom: 3rem;
     }
     .post-title {
-      font-size: clamp(2.7rem, 4.85vw, 5rem);
+      font-size: clamp(2.5rem, 4.45vw, 5rem);
       line-height: 1.14;
-      overflow-wrap: anywhere;
+      overflow-wrap: normal;
       word-break: normal;
+      hyphens: none;
     }
     .post-title-accent {
       display: block;
       margin-top: 0.4rem;
+    }
+    .post-title,
+    .post-title-accent,
+    .related-card h3 {
+      overflow-wrap: normal;
+      word-break: normal;
+      hyphens: none;
     }
     .related-shell-title {
       margin: 0 0 2rem;
@@ -1370,7 +1378,7 @@
     .related-card.theme-amber { --card-accent: #fbbf24; }
     .related-card.theme-fuchsia { --card-accent: #f472b6; }
     .related-card .category-chip {
-      margin-bottom: 1.15rem;
+      margin-bottom: 1.35rem;
       border-color: color-mix(in srgb, var(--card-accent, var(--accent)) 35%, transparent);
       color: var(--card-accent, var(--accent));
       padding: 0.18rem 0.5rem;
@@ -1562,7 +1570,7 @@
         margin-bottom: 2.35rem;
       }
       .post-title {
-        font-size: clamp(2.2rem, 8vw, 3.7rem);
+        font-size: clamp(2rem, 7.2vw, 3.7rem);
       }
       .footer-copyright-wrap {
         padding-bottom: 1rem;
@@ -1681,7 +1689,6 @@
             </div>
             <p class="subscription-copy">Receive encrypted dispatches monthly without leaving the archive.</p>
             <div class="substack-shell">
-              <div class="substack-shell-bar micro"><span>Signal Intake</span></div>
               <form class="substack-embed" action="https://thealgorithmwitch.substack.com/api/v1/free" method="post" target="_blank">
                 <label for="substack-email-post">Email Address</label>
                 <input id="substack-email-post" name="email" type="email" placeholder="you@domain.com" required>
@@ -1715,7 +1722,7 @@
 </div>
 <p class="font-serif-heading text-2xl text-white leading-relaxed z-10 relative">&quot;Understanding that change matters, especially for nonprofits and mission-driven organizations that rely on visibility to do their work.&quot;</p>
 <footer class="mt-8 font-mono-code text-[10px] uppercase tracking-[0.2em] text-purple-400 flex items-center gap-3">
-<span class="w-4 h-px bg-purple-500"></span> Excerpt from the Grimoire
+<span class="w-4 h-px bg-purple-500"></span> CASSANDRE ARKEMA, THE ALGORITHM WITCH
 </footer>
 </blockquote>
           <div class="post-tags-footer"><span class="tag-chip">Search</span><span class="tag-chip">search</span><span class="tag-chip">changing</span></div>
@@ -1933,6 +1940,50 @@
     }
     syncSplitScrollMode();
     updateActiveByPosition();
+  </script>
+
+  <script id="title-fit-script">
+    (() => {
+      function fitTitleToContainer(selector) {
+        document.querySelectorAll(selector).forEach((element) => {
+          const computed = window.getComputedStyle(element);
+          const originalSize = parseFloat(computed.fontSize);
+          if (!originalSize) return;
+
+          element.style.wordBreak = 'normal';
+          element.style.overflowWrap = 'normal';
+          element.style.hyphens = 'none';
+          element.style.fontSize = '';
+
+          let currentSize = originalSize;
+          let guard = 0;
+          while (
+            guard < 16 &&
+            (element.scrollWidth > element.clientWidth + 1 || element.scrollHeight > element.clientHeight + 1) &&
+            currentSize > originalSize * 0.84
+          ) {
+            currentSize -= 0.08;
+            element.style.fontSize = currentSize.toFixed(2) + 'px';
+            guard += 1;
+          }
+        });
+      }
+
+      function fitResponsiveTitles() {
+        fitTitleToContainer('.post-title');
+      }
+
+      if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', () => {
+          requestAnimationFrame(fitResponsiveTitles);
+        }, { once: true });
+      } else {
+        requestAnimationFrame(fitResponsiveTitles);
+      }
+
+      window.addEventListener('load', fitResponsiveTitles, { once: true });
+      window.addEventListener('resize', fitResponsiveTitles);
+    })();
   </script>
 </body>
 </html>

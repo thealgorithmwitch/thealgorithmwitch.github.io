@@ -279,7 +279,7 @@ function sanitizeArticleHtml(html, mappedLinks) {
   cleaned = cleaned.replace(/<div class="captioned-button-wrap"[\s\S]*?<\/div>/gi, '');
   cleaned = cleaned.replace(/<div class="subscription-widget-wrap-editor"[\s\S]*?<\/div><\/div>/gi, '');
   cleaned = cleaned.replace(/<div class="captioned-image-container">[\s\S]*?<\/figure><\/div>/gi, (block) => extractImageFigure(block));
-  cleaned = cleaned.replace(
+cleaned = cleaned.replace(
   /<div id="[^"]*" class="youtube-wrap"[^>]*><div class="youtube-inner">([\s\S]*?<\/iframe>)<\/div><\/div>/gi,
   '<figure><div class="figure-frame"><div class="media-box">$1</div></div></figure>'
 );
@@ -293,7 +293,7 @@ function sanitizeArticleHtml(html, mappedLinks) {
   cleaned = cleaned.replace(/<button[\s\S]*?<\/button>/gi, '');
   cleaned = cleaned.replace(/<form class="subscription-widget-subscribe"[\s\S]*?<\/form>/gi, '');
   cleaned = cleaned.replace(/<div class="preamble">[\s\S]*?<\/div>/gi, '');
-  cleaned = cleaned.replace(/\s(?:class|data-[\w-]+|width|height|srcset|sizes|fetchpriority|title|style|target|loading)="[^"]*"/gi, '');
+  cleaned = cleaned.replace(/\s(?:data-[\w-]+|width|height|srcset|sizes|fetchpriority|title|style|target|loading)="[^"]*"/gi, '');
   cleaned = cleaned.replace(/<p[^>]*>\s*<a[^>]*>\s*<span>\s*(Share|Subscribe)\s*<\/span>\s*<\/a>\s*<\/p>/gi, '');
   cleaned = cleaned.replace(/<a[^>]*>\s*<span>\s*(Share|Subscribe)\s*<\/span>\s*<\/a>/gi, '');
   cleaned = cleaned.replace(/<div>\s*<label[^>]*>Text within this block will maintain its original spacing when published<\/label>\s*<pre><em>([\s\S]*?)<\/em><\/pre>\s*<\/div>/gi, (_m, text) => {
@@ -614,6 +614,7 @@ async function main() {
     posts = storedPosts.reduce((acc, post) => {
       try {
         const structured = sanitizeArticleHtml(post.body_html || '', linkMap);
+
         if (stripTags(structured.html).length < 300) {
           throw new Error('sanitized article body is too short');
         }
@@ -655,13 +656,6 @@ async function main() {
       throw new Error('No valid posts remained after posts.json normalization.');
     }
   } else {
-    // feed path stays here
-  }
-
-  ...
-}
-
-  } else {
     const feed = await fetchText(FEED_URL);
     const items = [...feed.matchAll(/<item>([\s\S]*?)<\/item>/g)].map((match) => match[1]);
 
@@ -680,6 +674,7 @@ async function main() {
     const mappedTitles = new Set(TITLE_TO_SLUG.keys());
     const missingFromFeed = [...mappedTitles].filter((title) => !feedTitles.has(title));
     const unmappedFeedTitles = [...feedTitles].filter((title) => !mappedTitles.has(title));
+
     if (missingFromFeed.length || unmappedFeedTitles.length) {
       const errors = [];
       if (missingFromFeed.length) errors.push(`Missing from feed: ${missingFromFeed.join(', ')}`);
@@ -692,6 +687,7 @@ async function main() {
         if (!post.contentHtml) throw new Error('missing full HTML body');
         const websiteSlug = TITLE_TO_SLUG.get(post.title);
         if (!websiteSlug) throw new Error('missing custom website slug');
+
         acc.push({
           title: post.title,
           excerpt: safeExcerpt(post.description, post.contentHtml, post.title),
@@ -705,6 +701,7 @@ async function main() {
       } catch (error) {
         console.warn(`Skipping malformed feed item "${post.title || 'Untitled'}": ${error.message}`);
       }
+
       return acc;
     }, []).sort((a, b) => new Date(b.published_at) - new Date(a.published_at));
 
@@ -712,18 +709,25 @@ async function main() {
       throw new Error('No valid posts remained after feed normalization.');
     }
 
-    const linkMap = new Map(normalized.map((post) => [stripQuery(post.original_substack_url), `/blog/${post.website_slug}.html`]));
+    const linkMap = new Map(
+      normalized.map((post) => [stripQuery(post.original_substack_url), `/blog/${post.website_slug}.html`])
+    );
 
     posts = normalized.reduce((acc, post) => {
       try {
         const structured = sanitizeArticleHtml(post.body_html, linkMap);
-        if (stripTags(structured.html).length < 300) throw new Error('sanitized article body is too short');
+
+        if (stripTags(structured.html).length < 300) {
+          throw new Error('sanitized article body is too short');
+        }
+
         const dates = formatDate(post.published_at);
         const readingTimeMinutes = estimateReadingTime(structured.html);
         const category = articleCategory(post.title);
         const theme = themeForCategory(category);
         const introText = getIntroText(structured.html);
         const deckText = extractDeckText(structured.html, post.excerpt, post.title);
+
         acc.push({
           ...post,
           body_html: structured.html,
@@ -746,6 +750,7 @@ async function main() {
       } catch (error) {
         console.warn(`Skipping malformed generated post "${post.title}": ${error.message}`);
       }
+
       return acc;
     }, []);
 
@@ -770,10 +775,12 @@ async function main() {
     const tocLinks = post.toc.length
       ? `${introLink}${post.toc.map((entry) => `<a class="toc-link" href="#${entry.id}" data-theme="${entry.theme}"><span class="toc-link-number">${entry.number}</span><span class="toc-link-label">${escapeHtml(entry.text)}</span></a>`).join('')}`
       : introLink;
+
     const visionsPanel = buildVisionsPanel(post);
-const coverMedia = post.cover_image
-  ? `<img src="${escapeAttribute(post.cover_image)}" alt="${escapeAttribute(post.title)}" loading="eager">`
-  : '<div class="hero-media-placeholder"><i class="ph-duotone ph-image"></i></div>';
+
+    const coverMedia = post.cover_image
+      ? `<img src="${escapeAttribute(post.cover_image)}" alt="${escapeAttribute(post.title)}" loading="eager">`
+      : '<div class="hero-media-placeholder"><i class="ph-duotone ph-image"></i></div>';
 
     const html = replaceTokens(template, {
       PAGE_TITLE: escapeHtml(`${post.title} | The Algorithm Witch`),

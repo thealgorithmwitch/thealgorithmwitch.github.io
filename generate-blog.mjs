@@ -377,6 +377,7 @@ function structureArticleHtml(html, toc, figures) {
   const hasH2 = headingMatches.some((match) => match[1].toLowerCase() === 'h2');
   const topLevelTag = hasH2 ? 'h2' : 'h3';
   const matches = headingMatches.filter((match) => match[1].toLowerCase() === topLevelTag);
+
   if (!matches.length) {
     return {
       html: `<section class="article-section article-section-intro theme-purple" data-section-id="top">${html}</section>`,
@@ -388,26 +389,70 @@ function structureArticleHtml(html, toc, figures) {
   const sections = [];
   const themedToc = [];
   const intro = html.slice(0, matches[0].index).trim();
+
   if (intro) {
-    sections.push(`<section class="article-section article-section-intro theme-purple" data-section-id="top">${intro}</section>`);
+    sections.push(
+      `<section class="article-section article-section-intro theme-purple" data-section-id="top">${intro}</section>`
+    );
   }
 
   matches.forEach((match, index) => {
     const fullHeading = match[0];
-    const tag = match[1];
+    const tag = match[1].toLowerCase();
     const id = match[2];
     const text = stripTags(match[3]).trim();
     const nextStart = index + 1 < matches.length ? matches[index + 1].index : html.length;
     const theme = SECTION_THEMES[index % SECTION_THEMES.length];
     const number = String(index + 1).padStart(2, '0');
+
     let block = html.slice(match.index, nextStart);
-    const heading = `<${tag} id="${id}" class="section-heading"><span class="section-number">${number}</span><span class="section-heading-text">${match[3]}</span></${tag}>`;
-    block = block.replace(fullHeading, heading);
-    sections.push(`<section class="article-section theme-${theme}" data-section-id="${id}" data-theme="${theme}">${block}</section>`);
-    themedToc.push({ id, text, number, theme });
+
+    const sectionHeading = `<${tag} id="${id}" class="section-heading"><span class="section-number">${number}</span><span class="section-heading-text">${match[3]}</span></${tag}>`;
+    block = block.replace(fullHeading, sectionHeading);
+
+    block = block.replace(
+      /<h3\b([^>]*)id="([^"]+)"([^>]*)>([\s\S]*?)<\/h3>/gi,
+      (_full, before, subId, after, inner) => {
+        const subText = stripTags(inner).trim();
+        themedToc.push({
+          id: subId,
+          text: subText,
+          number: `${number}.${themedToc.filter((entry) => entry.number.startsWith(`${number}.`)).length + 1}`,
+          theme,
+        });
+        return `<h3${before}id="${subId}"${after} class="article-subheading">${inner}</h3>`;
+      }
+    );
+
+    sections.push(
+      `<section class="article-section theme-${theme}" data-section-id="${id}" data-theme="${theme}">${block}</section>`
+    );
+
+    themedToc.push({
+      id,
+      text,
+      number,
+      theme,
+    });
   });
 
-  return { html: sections.join('\n'), toc: themedToc, figures };
+  const orderedToc = [{ id: 'top', text: 'Intro', number: 'Intro', theme: 'purple' }];
+
+  sections.forEach((_section, sectionIndex) => {
+    const topNumber = String(sectionIndex + 1).padStart(2, '0');
+    const topEntry = themedToc.find((entry) => entry.number === topNumber);
+    if (topEntry) orderedToc.push(topEntry);
+
+    themedToc
+      .filter((entry) => entry.number.startsWith(`${topNumber}.`))
+      .forEach((entry) => orderedToc.push(entry));
+  });
+
+  return {
+    html: sections.join('\n'),
+    toc: orderedToc,
+    figures,
+  };
 }
 
 function buildJsonLd(post) {
@@ -761,10 +806,9 @@ async function main() {
 
   for (const post of renderPosts) {
     const index = posts.findIndex((entry) => entry.website_slug === post.website_slug);
-    const introLink = '<a class="toc-link" href="#top" data-theme="purple"><span class="toc-link-number">Intro</span><span class="toc-link-label">Intro</span></a>';
-    const tocLinks = post.toc.length
-      ? `${introLink}${post.toc.map((entry) => `<a class="toc-link" href="#${entry.id}" data-theme="${entry.theme}"><span class="toc-link-number">${entry.number}</span><span class="toc-link-label">${escapeHtml(entry.text)}</span></a>`).join('')}`
-      : introLink;
+const tocLinks = post.toc.length
+  ? post.toc.map((entry) => `<a class="toc-link" href="#${entry.id}" data-theme="${entry.theme}"><span class="toc-link-number">${entry.number}</span><span class="toc-link-label">${escapeHtml(entry.text)}</span></a>`).join('')
+  : '<a class="toc-link" href="#top" data-theme="purple"><span class="toc-link-number">Intro</span><span class="toc-link-label">Intro</span></a>';
 
     const visionsPanel = buildVisionsPanel(post);
 

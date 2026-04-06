@@ -335,7 +335,7 @@ cleaned = cleaned.replace(
 
   const figures = [];
   let figureCount = 0;
-  cleaned = cleaned.replace(/<figure>([\s\S]*?)<\/figure>/gi, (_full, inner) => {
+  cleaned = cleaned.replace(/<figure\b[^>]*>([\s\S]*?)<\/figure>/gi, (_full, inner) => {
     figureCount += 1;
     const id = `vision-${figureCount}`;
     const label = `F${figureCount}`;
@@ -373,7 +373,7 @@ const framedInner = /class="figure-frame"/i.test(innerWithoutCaption)
 }
 
 function structureArticleHtml(html, toc, figures) {
-  const headingMatches = [...html.matchAll(/<(h[23]) id="([^"]+)">([\s\S]*?)<\/\1>/gi)];
+  const headingMatches = [...html.matchAll(/<(h[23])\b[^>]*id="([^"]+)"[^>]*>([\s\S]*?)<\/\1>/gi)];
   const hasH2 = headingMatches.some((match) => match[1].toLowerCase() === 'h2');
   const topLevelTag = hasH2 ? 'h2' : 'h3';
   const matches = headingMatches.filter((match) => match[1].toLowerCase() === topLevelTag);
@@ -607,50 +607,40 @@ async function main() {
       throw new Error('posts.json did not contain any posts.');
     }
 
-    const linkMap = new Map(
-      storedPosts.map((post) => [stripQuery(post.original_substack_url), `/blog/${post.website_slug}.html`])
-    );
+    posts = storedPosts.map((post) => {
+      const bodyHtml = post.body_html || '';
 
-    posts = storedPosts.reduce((acc, post) => {
-      try {
-        const structured = sanitizeArticleHtml(post.body_html || '', linkMap);
-
-        if (stripTags(structured.html).length < 300) {
-          throw new Error('sanitized article body is too short');
-        }
-
-        const dates = formatDate(post.published_at);
-        const readingTimeMinutes = estimateReadingTime(structured.html);
-        const category = articleCategory(post.title);
-        const theme = themeForCategory(category);
-        const introText = getIntroText(structured.html);
-        const deckText = extractDeckText(structured.html, post.excerpt, post.title);
-
-        acc.push({
-          ...post,
-          body_html: structured.html,
-          toc: structured.toc,
-          figures: structured.figures,
-          category,
-          theme,
-          intro_opening: extractFirstSentence(introText),
-          intro_closing: extractLastSentence(introText),
-          deck_text: deckText,
-          published_iso: dates.iso,
-          published_short: dates.short,
-          published_long: dates.long,
-          canonical_url: `${BLOG_URL}${post.website_slug}.html`,
-          og_image: post.cover_image || FALLBACK_OG,
-          og_image_alt: `${post.title} | The Algorithm Witch`,
-          reading_time_minutes: readingTimeMinutes,
-          reading_time_display: `${readingTimeMinutes} min read`,
-        });
-      } catch (error) {
-        console.warn(`Skipping malformed stored post "${post.title || 'Untitled'}": ${error.message}`);
+      if (stripTags(bodyHtml).length < 300) {
+        throw new Error(`Stored article body is too short for "${post.title || 'Untitled'}".`);
       }
 
-      return acc;
-    }, []);
+      const dates = formatDate(post.published_at);
+      const readingTimeMinutes = estimateReadingTime(bodyHtml);
+      const category = articleCategory(post.title);
+      const theme = themeForCategory(category);
+      const introText = getIntroText(bodyHtml);
+      const deckText = extractDeckText(bodyHtml, post.excerpt, post.title);
+
+      return {
+        ...post,
+        body_html: bodyHtml,
+        toc: Array.isArray(post.toc) ? post.toc : [],
+        figures: Array.isArray(post.figures) ? post.figures : [],
+        category,
+        theme,
+        intro_opening: extractFirstSentence(introText),
+        intro_closing: extractLastSentence(introText),
+        deck_text: deckText,
+        published_iso: dates.iso,
+        published_short: dates.short,
+        published_long: dates.long,
+        canonical_url: `${BLOG_URL}${post.website_slug}.html`,
+        og_image: post.cover_image || FALLBACK_OG,
+        og_image_alt: `${post.title} | The Algorithm Witch`,
+        reading_time_minutes: readingTimeMinutes,
+        reading_time_display: `${readingTimeMinutes} min read`,
+      };
+    });
 
     if (!posts.length) {
       throw new Error('No valid posts remained after posts.json normalization.');
@@ -820,10 +810,14 @@ async function main() {
     await fs.writeFile(path.join(OUTPUT_DIR, `${post.website_slug}.html`), html);
   }
 
-  const archiveSource = await fs.readFile(ARCHIVE_SOURCE_PATH, 'utf8');
-  const archiveWithData = injectArchiveData(archiveSource, posts);
-  await fs.writeFile(ARCHIVE_SOURCE_PATH, archiveWithData);
-  await fs.writeFile(ARCHIVE_OUTPUT_PATH, archiveWithData);
+  const shouldUpdateArchive = options.only.size === 0;
+
+  if (shouldUpdateArchive) {
+    const archiveSource = await fs.readFile(ARCHIVE_SOURCE_PATH, 'utf8');
+    const archiveWithData = injectArchiveData(archiveSource, posts);
+    await fs.writeFile(ARCHIVE_SOURCE_PATH, archiveWithData);
+    await fs.writeFile(ARCHIVE_OUTPUT_PATH, archiveWithData);
+  }
 }
 
 main().catch((error) => {

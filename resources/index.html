@@ -1,0 +1,1316 @@
+
+<html lang="en" vid="0"><head vid="1">
+    <meta charset="UTF-8" vid="2">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" vid="3">
+    <title vid="4">Resource Gallery | The Algorithm Witch</title>
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com" vid="6">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="" vid="7">
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@400;700;900&amp;family=Inter:wght@300;400;500;600&amp;family=JetBrains+Mono:wght@100..800&amp;display=swap" rel="stylesheet" vid="8">
+    <script src="https://unpkg.com/@phosphor-icons/web" vid="9"></script>
+    <style vid="10">
+        :root {
+            --bg-base: #02000a;
+            --bg-surface: #0a0618;
+            --accent-purple: #a855f7;
+            --accent-cyan: #06b6d4;
+            --accent-amber: #f59e0b;
+            --accent-fuchsia: #d946ef;
+        }
+
+        body {
+            background-color: var(--bg-base);
+            color: #e2e8f0;
+            font-family: 'Inter', sans-serif;
+            overflow-x: hidden;
+            scroll-behavior: smooth;
+        }
+
+        .font-cinzel { font-family: 'Cinzel Decorative', cursive; }
+        .font-mono-tech { font-family: 'JetBrains Mono', monospace; }
+
+        .stars-container {
+            position: fixed;
+            inset: 0;
+            z-index: 0;
+            pointer-events: none;
+            background: radial-gradient(circle at 50% 0%, #150a30 0%, var(--bg-base) 70%);
+        }
+
+        .star {
+            position: absolute;
+            background: #fff;
+            border-radius: 50%;
+            animation: twinkle var(--twinkle-dur) ease-in-out infinite alternate;
+            opacity: var(--base-opacity);
+        }
+
+        @keyframes twinkle {
+            0% { opacity: var(--base-opacity); transform: scale(0.8); }
+            100% { opacity: 1; transform: scale(1.5); box-shadow: 0 0 6px 1px rgba(255,255,255,0.6); }
+        }
+
+        .orb {
+            position: fixed;
+            border-radius: 50%;
+            filter: blur(120px);
+            opacity: 0.15;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .glass-panel {
+            background: rgba(13, 12, 34, 0.6);
+            backdrop-filter: blur(16px);
+            border: 1px solid rgba(139, 92, 246, 0.15);
+        }
+
+        
+        .gallery-container {
+            display: grid;
+            grid-template-columns: repeat(12, 1fr);
+            gap: 2rem;
+            align-items: start;
+        }
+
+        .gallery-item {
+            position: relative;
+            transition: all 0.6s cubic-bezier(0.23, 1, 0.32, 1);
+            z-index: 10;
+        }
+
+        .gallery-item:hover {
+            z-index: 50;
+            transform: scale(1.02) translateY(-10px);
+        }
+
+        .resource-card {
+            background: var(--bg-surface);
+            border: 1px solid rgba(255,255,255,0.05);
+            box-shadow: 0 10px 30px -10px rgba(0,0,0,0.5);
+            overflow: hidden;
+        }
+
+        .card-purple:hover { border-color: rgba(168, 85, 247, 0.4); box-shadow: 0 30px 60px -12px rgba(168, 85, 247, 0.2); }
+        .card-cyan:hover { border-color: rgba(6, 182, 212, 0.4); box-shadow: 0 30px 60px -12px rgba(6, 182, 212, 0.2); }
+        .card-amber:hover { border-color: rgba(245, 158, 11, 0.4); box-shadow: 0 30px 60px -12px rgba(245, 158, 11, 0.2); }
+        .card-fuchsia:hover { border-color: rgba(217, 70, 239, 0.4); box-shadow: 0 30px 60px -12px rgba(217, 70, 239, 0.2); }
+
+        
+        .item-1 { grid-column: 1 / 5; margin-top: 0; }
+        .item-2 { grid-column: 6 / 10; margin-top: 120px; z-index: 20; }
+        .item-3 { grid-column: 3 / 7; margin-top: -80px; }
+        .item-4 { grid-column: 8 / 13; margin-top: 40px; }
+        .item-5 { grid-column: 1 / 6; margin-top: 60px; }
+        .item-6 { grid-column: 7 / 11; margin-top: -140px; }
+
+        .text-glow-gold {
+            background: linear-gradient(135deg, #fde047 0%, #b45309 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .fade-in-up {
+            opacity: 0;
+            transform: translateY(40px);
+            transition: opacity 1.2s ease-out, transform 1.2s ease-out;
+        }
+        .fade-in-up.is-visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .nav-item { position: relative; }
+        .nav-item::after {
+            content: '';
+            position: absolute;
+            width: 0; height: 1px; bottom: -4px; left: 0;
+            background: var(--accent-purple);
+            transition: width 0.3s ease;
+        }
+        .nav-item:hover::after { width: 100%; }
+    </style>
+
+  <style type="text/css">
+*, ::before, ::after {
+  --tw-border-spacing-x: 0;
+  --tw-border-spacing-y: 0;
+  --tw-translate-x: 0;
+  --tw-translate-y: 0;
+  --tw-rotate: 0;
+  --tw-skew-x: 0;
+  --tw-skew-y: 0;
+  --tw-scale-x: 1;
+  --tw-scale-y: 1;
+  --tw-pan-x:  ;
+  --tw-pan-y:  ;
+  --tw-pinch-zoom:  ;
+  --tw-scroll-snap-strictness: proximity;
+  --tw-gradient-from-position:  ;
+  --tw-gradient-via-position:  ;
+  --tw-gradient-to-position:  ;
+  --tw-ordinal:  ;
+  --tw-slashed-zero:  ;
+  --tw-numeric-figure:  ;
+  --tw-numeric-spacing:  ;
+  --tw-numeric-fraction:  ;
+  --tw-ring-inset:  ;
+  --tw-ring-offset-width: 0px;
+  --tw-ring-offset-color: #fff;
+  --tw-ring-color: rgb(59 130 246 / 0.5);
+  --tw-ring-offset-shadow: 0 0 #0000;
+  --tw-ring-shadow: 0 0 #0000;
+  --tw-shadow: 0 0 #0000;
+  --tw-shadow-colored: 0 0 #0000;
+  --tw-blur:  ;
+  --tw-brightness:  ;
+  --tw-contrast:  ;
+  --tw-grayscale:  ;
+  --tw-hue-rotate:  ;
+  --tw-invert:  ;
+  --tw-saturate:  ;
+  --tw-sepia:  ;
+  --tw-drop-shadow:  ;
+  --tw-backdrop-blur:  ;
+  --tw-backdrop-brightness:  ;
+  --tw-backdrop-contrast:  ;
+  --tw-backdrop-grayscale:  ;
+  --tw-backdrop-hue-rotate:  ;
+  --tw-backdrop-invert:  ;
+  --tw-backdrop-opacity:  ;
+  --tw-backdrop-saturate:  ;
+  --tw-backdrop-sepia:  ;
+  --tw-contain-size:  ;
+  --tw-contain-layout:  ;
+  --tw-contain-paint:  ;
+  --tw-contain-style:  ;
+}
+
+::backdrop {
+  --tw-border-spacing-x: 0;
+  --tw-border-spacing-y: 0;
+  --tw-translate-x: 0;
+  --tw-translate-y: 0;
+  --tw-rotate: 0;
+  --tw-skew-x: 0;
+  --tw-skew-y: 0;
+  --tw-scale-x: 1;
+  --tw-scale-y: 1;
+  --tw-pan-x:  ;
+  --tw-pan-y:  ;
+  --tw-pinch-zoom:  ;
+  --tw-scroll-snap-strictness: proximity;
+  --tw-gradient-from-position:  ;
+  --tw-gradient-via-position:  ;
+  --tw-gradient-to-position:  ;
+  --tw-ordinal:  ;
+  --tw-slashed-zero:  ;
+  --tw-numeric-figure:  ;
+  --tw-numeric-spacing:  ;
+  --tw-numeric-fraction:  ;
+  --tw-ring-inset:  ;
+  --tw-ring-offset-width: 0px;
+  --tw-ring-offset-color: #fff;
+  --tw-ring-color: rgb(59 130 246 / 0.5);
+  --tw-ring-offset-shadow: 0 0 #0000;
+  --tw-ring-shadow: 0 0 #0000;
+  --tw-shadow: 0 0 #0000;
+  --tw-shadow-colored: 0 0 #0000;
+  --tw-blur:  ;
+  --tw-brightness:  ;
+  --tw-contrast:  ;
+  --tw-grayscale:  ;
+  --tw-hue-rotate:  ;
+  --tw-invert:  ;
+  --tw-saturate:  ;
+  --tw-sepia:  ;
+  --tw-drop-shadow:  ;
+  --tw-backdrop-blur:  ;
+  --tw-backdrop-brightness:  ;
+  --tw-backdrop-contrast:  ;
+  --tw-backdrop-grayscale:  ;
+  --tw-backdrop-hue-rotate:  ;
+  --tw-backdrop-invert:  ;
+  --tw-backdrop-opacity:  ;
+  --tw-backdrop-saturate:  ;
+  --tw-backdrop-sepia:  ;
+  --tw-contain-size:  ;
+  --tw-contain-layout:  ;
+  --tw-contain-paint:  ;
+  --tw-contain-style:  ;
+}/*
+! tailwindcss v3.4.17 | MIT License | https://tailwindcss.com
+*//*
+1. Prevent padding and border from affecting element width. (https://github.com/mozdevs/cssremedy/issues/4)
+2. Allow adding a border to an element by just adding a border-width. (https://github.com/tailwindcss/tailwindcss/pull/116)
+*/
+
+*,
+::before,
+::after {
+  box-sizing: border-box; /* 1 */
+  border-width: 0; /* 2 */
+  border-style: solid; /* 2 */
+  border-color: #e5e7eb; /* 2 */
+}
+
+::before,
+::after {
+  --tw-content: '';
+}
+
+/*
+1. Use a consistent sensible line-height in all browsers.
+2. Prevent adjustments of font size after orientation changes in iOS.
+3. Use a more readable tab size.
+4. Use the user's configured `sans` font-family by default.
+5. Use the user's configured `sans` font-feature-settings by default.
+6. Use the user's configured `sans` font-variation-settings by default.
+7. Disable tap highlights on iOS
+*/
+
+html,
+:host {
+  line-height: 1.5; /* 1 */
+  -webkit-text-size-adjust: 100%; /* 2 */
+  -moz-tab-size: 4; /* 3 */
+  tab-size: 4; /* 3 */
+  font-family: ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji"; /* 4 */
+  font-feature-settings: normal; /* 5 */
+  font-variation-settings: normal; /* 6 */
+  -webkit-tap-highlight-color: transparent; /* 7 */
+}
+
+/*
+1. Remove the margin in all browsers.
+2. Inherit line-height from `html` so users can set them as a class directly on the `html` element.
+*/
+
+body {
+  margin: 0; /* 1 */
+  line-height: inherit; /* 2 */
+}
+
+/*
+1. Add the correct height in Firefox.
+2. Correct the inheritance of border color in Firefox. (https://bugzilla.mozilla.org/show_bug.cgi?id=190655)
+3. Ensure horizontal rules are visible by default.
+*/
+
+hr {
+  height: 0; /* 1 */
+  color: inherit; /* 2 */
+  border-top-width: 1px; /* 3 */
+}
+
+/*
+Add the correct text decoration in Chrome, Edge, and Safari.
+*/
+
+abbr:where([title]) {
+  text-decoration: underline dotted;
+}
+
+/*
+Remove the default font size and weight for headings.
+*/
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  font-size: inherit;
+  font-weight: inherit;
+}
+
+/*
+Reset links to optimize for opt-in styling instead of opt-out.
+*/
+
+a {
+  color: inherit;
+  text-decoration: inherit;
+}
+
+/*
+Add the correct font weight in Edge and Safari.
+*/
+
+b,
+strong {
+  font-weight: bolder;
+}
+
+/*
+1. Use the user's configured `mono` font-family by default.
+2. Use the user's configured `mono` font-feature-settings by default.
+3. Use the user's configured `mono` font-variation-settings by default.
+4. Correct the odd `em` font sizing in all browsers.
+*/
+
+code,
+kbd,
+samp,
+pre {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; /* 1 */
+  font-feature-settings: normal; /* 2 */
+  font-variation-settings: normal; /* 3 */
+  font-size: 1em; /* 4 */
+}
+
+/*
+Add the correct font size in all browsers.
+*/
+
+small {
+  font-size: 80%;
+}
+
+/*
+Prevent `sub` and `sup` elements from affecting the line height in all browsers.
+*/
+
+sub,
+sup {
+  font-size: 75%;
+  line-height: 0;
+  position: relative;
+  vertical-align: baseline;
+}
+
+sub {
+  bottom: -0.25em;
+}
+
+sup {
+  top: -0.5em;
+}
+
+/*
+1. Remove text indentation from table contents in Chrome and Safari. (https://bugs.chromium.org/p/chromium/issues/detail?id=999088, https://bugs.webkit.org/show_bug.cgi?id=201297)
+2. Correct table border color inheritance in all Chrome and Safari. (https://bugs.chromium.org/p/chromium/issues/detail?id=935729, https://bugs.webkit.org/show_bug.cgi?id=195016)
+3. Remove gaps between table borders by default.
+*/
+
+table {
+  text-indent: 0; /* 1 */
+  border-color: inherit; /* 2 */
+  border-collapse: collapse; /* 3 */
+}
+
+/*
+1. Change the font styles in all browsers.
+2. Remove the margin in Firefox and Safari.
+3. Remove default padding in all browsers.
+*/
+
+button,
+input,
+optgroup,
+select,
+textarea {
+  font-family: inherit; /* 1 */
+  font-feature-settings: inherit; /* 1 */
+  font-variation-settings: inherit; /* 1 */
+  font-size: 100%; /* 1 */
+  font-weight: inherit; /* 1 */
+  line-height: inherit; /* 1 */
+  letter-spacing: inherit; /* 1 */
+  color: inherit; /* 1 */
+  margin: 0; /* 2 */
+  padding: 0; /* 3 */
+}
+
+/*
+Remove the inheritance of text transform in Edge and Firefox.
+*/
+
+button,
+select {
+  text-transform: none;
+}
+
+/*
+1. Correct the inability to style clickable types in iOS and Safari.
+2. Remove default button styles.
+*/
+
+button,
+input:where([type='button']),
+input:where([type='reset']),
+input:where([type='submit']) {
+  -webkit-appearance: button; /* 1 */
+  background-color: transparent; /* 2 */
+  background-image: none; /* 2 */
+}
+
+/*
+Use the modern Firefox focus style for all focusable elements.
+*/
+
+:-moz-focusring {
+  outline: auto;
+}
+
+/*
+Remove the additional `:invalid` styles in Firefox. (https://github.com/mozilla/gecko-dev/blob/2f9eacd9d3d995c937b4251a5557d95d494c9be1/layout/style/res/forms.css#L728-L737)
+*/
+
+:-moz-ui-invalid {
+  box-shadow: none;
+}
+
+/*
+Add the correct vertical alignment in Chrome and Firefox.
+*/
+
+progress {
+  vertical-align: baseline;
+}
+
+/*
+Correct the cursor style of increment and decrement buttons in Safari.
+*/
+
+::-webkit-inner-spin-button,
+::-webkit-outer-spin-button {
+  height: auto;
+}
+
+/*
+1. Correct the odd appearance in Chrome and Safari.
+2. Correct the outline style in Safari.
+*/
+
+[type='search'] {
+  -webkit-appearance: textfield; /* 1 */
+  outline-offset: -2px; /* 2 */
+}
+
+/*
+Remove the inner padding in Chrome and Safari on macOS.
+*/
+
+::-webkit-search-decoration {
+  -webkit-appearance: none;
+}
+
+/*
+1. Correct the inability to style clickable types in iOS and Safari.
+2. Change font properties to `inherit` in Safari.
+*/
+
+::-webkit-file-upload-button {
+  -webkit-appearance: button; /* 1 */
+  font: inherit; /* 2 */
+}
+
+/*
+Add the correct display in Chrome and Safari.
+*/
+
+summary {
+  display: list-item;
+}
+
+/*
+Removes the default spacing and border for appropriate elements.
+*/
+
+blockquote,
+dl,
+dd,
+h1,
+h2,
+h3,
+h4,
+h5,
+h6,
+hr,
+figure,
+p,
+pre {
+  margin: 0;
+}
+
+fieldset {
+  margin: 0;
+  padding: 0;
+}
+
+legend {
+  padding: 0;
+}
+
+ol,
+ul,
+menu {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+/*
+Reset default styling for dialogs.
+*/
+dialog {
+  padding: 0;
+}
+
+/*
+Prevent resizing textareas horizontally by default.
+*/
+
+textarea {
+  resize: vertical;
+}
+
+/*
+1. Reset the default placeholder opacity in Firefox. (https://github.com/tailwindlabs/tailwindcss/issues/3300)
+2. Set the default placeholder color to the user's configured gray 400 color.
+*/
+
+input::placeholder,
+textarea::placeholder {
+  opacity: 1; /* 1 */
+  color: #9ca3af; /* 2 */
+}
+
+/*
+Set the default cursor for buttons.
+*/
+
+button,
+[role="button"] {
+  cursor: pointer;
+}
+
+/*
+Make sure disabled buttons don't get the pointer cursor.
+*/
+:disabled {
+  cursor: default;
+}
+
+/*
+1. Make replaced elements `display: block` by default. (https://github.com/mozdevs/cssremedy/issues/14)
+2. Add `vertical-align: middle` to align replaced elements more sensibly by default. (https://github.com/jensimmons/cssremedy/issues/14#issuecomment-634934210)
+   This can trigger a poorly considered lint error in some tools but is included by design.
+*/
+
+img,
+svg,
+video,
+canvas,
+audio,
+iframe,
+embed,
+object {
+  display: block; /* 1 */
+  vertical-align: middle; /* 2 */
+}
+
+/*
+Constrain images and videos to the parent width and preserve their intrinsic aspect ratio. (https://github.com/mozdevs/cssremedy/issues/14)
+*/
+
+img,
+video {
+  max-width: 100%;
+  height: auto;
+}
+
+/* Make elements with the HTML hidden attribute stay hidden by default */
+[hidden]:where(:not([hidden="until-found"])) {
+  display: none;
+}
+.fixed {
+  position: fixed;
+}
+.absolute {
+  position: absolute;
+}
+.relative {
+  position: relative;
+}
+.bottom-\[-10\%\] {
+  bottom: -10%;
+}
+.left-\[-10\%\] {
+  left: -10%;
+}
+.right-\[-5\%\] {
+  right: -5%;
+}
+.top-0 {
+  top: 0px;
+}
+.top-\[-20\%\] {
+  top: -20%;
+}
+.z-10 {
+  z-index: 10;
+}
+.z-50 {
+  z-index: 50;
+}
+.mx-auto {
+  margin-left: auto;
+  margin-right: auto;
+}
+.mb-1 {
+  margin-bottom: 0.25rem;
+}
+.mb-10 {
+  margin-bottom: 2.5rem;
+}
+.mb-3 {
+  margin-bottom: 0.75rem;
+}
+.mb-4 {
+  margin-bottom: 1rem;
+}
+.mb-6 {
+  margin-bottom: 1.5rem;
+}
+.mb-8 {
+  margin-bottom: 2rem;
+}
+.mt-auto {
+  margin-top: auto;
+}
+.flex {
+  display: flex;
+}
+.grid {
+  display: grid;
+}
+.hidden {
+  display: none;
+}
+.h-10 {
+  height: 2.5rem;
+}
+.h-16 {
+  height: 4rem;
+}
+.h-20 {
+  height: 5rem;
+}
+.h-\[1px\] {
+  height: 1px;
+}
+.h-\[600px\] {
+  height: 600px;
+}
+.h-\[800px\] {
+  height: 800px;
+}
+.w-10 {
+  width: 2.5rem;
+}
+.w-16 {
+  width: 4rem;
+}
+.w-20 {
+  width: 5rem;
+}
+.w-8 {
+  width: 2rem;
+}
+.w-\[600px\] {
+  width: 600px;
+}
+.w-\[800px\] {
+  width: 800px;
+}
+.w-full {
+  width: 100%;
+}
+.max-w-2xl {
+  max-width: 42rem;
+}
+.max-w-\[1200px\] {
+  max-width: 1200px;
+}
+.max-w-\[1600px\] {
+  max-width: 1600px;
+}
+.shrink-0 {
+  flex-shrink: 0;
+}
+.scale-110 {
+  --tw-scale-x: 1.1;
+  --tw-scale-y: 1.1;
+  transform: translate(var(--tw-translate-x), var(--tw-translate-y)) rotate(var(--tw-rotate)) skewX(var(--tw-skew-x)) skewY(var(--tw-skew-y)) scaleX(var(--tw-scale-x)) scaleY(var(--tw-scale-y));
+}
+.transform {
+  transform: translate(var(--tw-translate-x), var(--tw-translate-y)) rotate(var(--tw-rotate)) skewX(var(--tw-skew-x)) skewY(var(--tw-skew-y)) scaleX(var(--tw-scale-x)) scaleY(var(--tw-scale-y));
+}
+.flex-col {
+  flex-direction: column;
+}
+.items-start {
+  align-items: flex-start;
+}
+.items-center {
+  align-items: center;
+}
+.justify-center {
+  justify-content: center;
+}
+.justify-between {
+  justify-content: space-between;
+}
+.gap-10 {
+  gap: 2.5rem;
+}
+.gap-2 {
+  gap: 0.5rem;
+}
+.gap-3 {
+  gap: 0.75rem;
+}
+.gap-4 {
+  gap: 1rem;
+}
+.gap-6 {
+  gap: 1.5rem;
+}
+.gap-8 {
+  gap: 2rem;
+}
+.rounded {
+  border-radius: 0.25rem;
+}
+.rounded-full {
+  border-radius: 9999px;
+}
+.rounded-lg {
+  border-radius: 0.5rem;
+}
+.rounded-xl {
+  border-radius: 0.75rem;
+}
+.border {
+  border-width: 1px;
+}
+.border-b {
+  border-bottom-width: 1px;
+}
+.border-l-4 {
+  border-left-width: 4px;
+}
+.border-t {
+  border-top-width: 1px;
+}
+.border-amber-500\/40 {
+  border-color: rgb(245 158 11 / 0.4);
+}
+.border-cyan-500\/20 {
+  border-color: rgb(6 182 212 / 0.2);
+}
+.border-cyan-500\/30 {
+  border-color: rgb(6 182 212 / 0.3);
+}
+.border-fuchsia-500\/20 {
+  border-color: rgb(217 70 239 / 0.2);
+}
+.border-purple-500\/20 {
+  border-color: rgb(168 85 247 / 0.2);
+}
+.border-purple-500\/30 {
+  border-color: rgb(168 85 247 / 0.3);
+}
+.border-white\/10 {
+  border-color: rgb(255 255 255 / 0.1);
+}
+.border-white\/5 {
+  border-color: rgb(255 255 255 / 0.05);
+}
+.bg-\[\#02000a\] {
+  --tw-bg-opacity: 1;
+  background-color: rgb(2 0 10 / var(--tw-bg-opacity, 1));
+}
+.bg-\[\#02000a\]\/80 {
+  background-color: rgb(2 0 10 / 0.8);
+}
+.bg-cyan-500\/10 {
+  background-color: rgb(6 182 212 / 0.1);
+}
+.bg-cyan-900 {
+  --tw-bg-opacity: 1;
+  background-color: rgb(22 78 99 / var(--tw-bg-opacity, 1));
+}
+.bg-fuchsia-500\/10 {
+  background-color: rgb(217 70 239 / 0.1);
+}
+.bg-purple-500\/10 {
+  background-color: rgb(168 85 247 / 0.1);
+}
+.bg-purple-500\/5 {
+  background-color: rgb(168 85 247 / 0.05);
+}
+.bg-purple-500\/50 {
+  background-color: rgb(168 85 247 / 0.5);
+}
+.bg-purple-600 {
+  --tw-bg-opacity: 1;
+  background-color: rgb(147 51 234 / var(--tw-bg-opacity, 1));
+}
+.bg-white\/5 {
+  background-color: rgb(255 255 255 / 0.05);
+}
+.p-10 {
+  padding: 2.5rem;
+}
+.p-12 {
+  padding: 3rem;
+}
+.p-8 {
+  padding: 2rem;
+}
+.px-2 {
+  padding-left: 0.5rem;
+  padding-right: 0.5rem;
+}
+.px-3 {
+  padding-left: 0.75rem;
+  padding-right: 0.75rem;
+}
+.px-5 {
+  padding-left: 1.25rem;
+  padding-right: 1.25rem;
+}
+.px-6 {
+  padding-left: 1.5rem;
+  padding-right: 1.5rem;
+}
+.py-1 {
+  padding-top: 0.25rem;
+  padding-bottom: 0.25rem;
+}
+.py-12 {
+  padding-top: 3rem;
+  padding-bottom: 3rem;
+}
+.py-2\.5 {
+  padding-top: 0.625rem;
+  padding-bottom: 0.625rem;
+}
+.py-3 {
+  padding-top: 0.75rem;
+  padding-bottom: 0.75rem;
+}
+.py-4 {
+  padding-top: 1rem;
+  padding-bottom: 1rem;
+}
+.pb-20 {
+  padding-bottom: 5rem;
+}
+.pb-40 {
+  padding-bottom: 10rem;
+}
+.pt-40 {
+  padding-top: 10rem;
+}
+.text-center {
+  text-align: center;
+}
+.text-2xl {
+  font-size: 1.5rem;
+  line-height: 2rem;
+}
+.text-3xl {
+  font-size: 1.875rem;
+  line-height: 2.25rem;
+}
+.text-4xl {
+  font-size: 2.25rem;
+  line-height: 2.5rem;
+}
+.text-6xl {
+  font-size: 3.75rem;
+  line-height: 1;
+}
+.text-\[10px\] {
+  font-size: 10px;
+}
+.text-\[11px\] {
+  font-size: 11px;
+}
+.text-\[9px\] {
+  font-size: 9px;
+}
+.text-base {
+  font-size: 1rem;
+  line-height: 1.5rem;
+}
+.text-lg {
+  font-size: 1.125rem;
+  line-height: 1.75rem;
+}
+.text-sm {
+  font-size: 0.875rem;
+  line-height: 1.25rem;
+}
+.text-xl {
+  font-size: 1.25rem;
+  line-height: 1.75rem;
+}
+.text-xs {
+  font-size: 0.75rem;
+  line-height: 1rem;
+}
+.font-light {
+  font-weight: 300;
+}
+.uppercase {
+  text-transform: uppercase;
+}
+.leading-relaxed {
+  line-height: 1.625;
+}
+.tracking-\[0\.15em\] {
+  letter-spacing: 0.15em;
+}
+.tracking-\[0\.2em\] {
+  letter-spacing: 0.2em;
+}
+.tracking-\[0\.3em\] {
+  letter-spacing: 0.3em;
+}
+.tracking-widest {
+  letter-spacing: 0.1em;
+}
+.text-amber-400 {
+  --tw-text-opacity: 1;
+  color: rgb(251 191 36 / var(--tw-text-opacity, 1));
+}
+.text-amber-500\/70 {
+  color: rgb(245 158 11 / 0.7);
+}
+.text-cyan-400 {
+  --tw-text-opacity: 1;
+  color: rgb(34 211 238 / var(--tw-text-opacity, 1));
+}
+.text-fuchsia-400 {
+  --tw-text-opacity: 1;
+  color: rgb(232 121 249 / var(--tw-text-opacity, 1));
+}
+.text-gray-300 {
+  --tw-text-opacity: 1;
+  color: rgb(209 213 219 / var(--tw-text-opacity, 1));
+}
+.text-gray-400 {
+  --tw-text-opacity: 1;
+  color: rgb(156 163 175 / var(--tw-text-opacity, 1));
+}
+.text-gray-500 {
+  --tw-text-opacity: 1;
+  color: rgb(107 114 128 / var(--tw-text-opacity, 1));
+}
+.text-gray-600 {
+  --tw-text-opacity: 1;
+  color: rgb(75 85 99 / var(--tw-text-opacity, 1));
+}
+.text-purple-400 {
+  --tw-text-opacity: 1;
+  color: rgb(192 132 252 / var(--tw-text-opacity, 1));
+}
+.text-purple-900 {
+  --tw-text-opacity: 1;
+  color: rgb(88 28 135 / var(--tw-text-opacity, 1));
+}
+.text-white {
+  --tw-text-opacity: 1;
+  color: rgb(255 255 255 / var(--tw-text-opacity, 1));
+}
+.blur {
+  --tw-blur: blur(8px);
+  filter: var(--tw-blur) var(--tw-brightness) var(--tw-contrast) var(--tw-grayscale) var(--tw-hue-rotate) var(--tw-invert) var(--tw-saturate) var(--tw-sepia) var(--tw-drop-shadow);
+}
+.filter {
+  filter: var(--tw-blur) var(--tw-brightness) var(--tw-contrast) var(--tw-grayscale) var(--tw-hue-rotate) var(--tw-invert) var(--tw-saturate) var(--tw-sepia) var(--tw-drop-shadow);
+}
+.backdrop-blur-xl {
+  --tw-backdrop-blur: blur(24px);
+  -webkit-backdrop-filter: var(--tw-backdrop-blur) var(--tw-backdrop-brightness) var(--tw-backdrop-contrast) var(--tw-backdrop-grayscale) var(--tw-backdrop-hue-rotate) var(--tw-backdrop-invert) var(--tw-backdrop-opacity) var(--tw-backdrop-saturate) var(--tw-backdrop-sepia);
+  backdrop-filter: var(--tw-backdrop-blur) var(--tw-backdrop-brightness) var(--tw-backdrop-contrast) var(--tw-backdrop-grayscale) var(--tw-backdrop-hue-rotate) var(--tw-backdrop-invert) var(--tw-backdrop-opacity) var(--tw-backdrop-saturate) var(--tw-backdrop-sepia);
+}
+.backdrop-filter {
+  -webkit-backdrop-filter: var(--tw-backdrop-blur) var(--tw-backdrop-brightness) var(--tw-backdrop-contrast) var(--tw-backdrop-grayscale) var(--tw-backdrop-hue-rotate) var(--tw-backdrop-invert) var(--tw-backdrop-opacity) var(--tw-backdrop-saturate) var(--tw-backdrop-sepia);
+  backdrop-filter: var(--tw-backdrop-blur) var(--tw-backdrop-brightness) var(--tw-backdrop-contrast) var(--tw-backdrop-grayscale) var(--tw-backdrop-hue-rotate) var(--tw-backdrop-invert) var(--tw-backdrop-opacity) var(--tw-backdrop-saturate) var(--tw-backdrop-sepia);
+}
+.transition {
+  transition-property: color, background-color, border-color, text-decoration-color, fill, stroke, opacity, box-shadow, transform, filter, backdrop-filter;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  transition-duration: 150ms;
+}
+.transition-all {
+  transition-property: all;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  transition-duration: 150ms;
+}
+.transition-colors {
+  transition-property: color, background-color, border-color, text-decoration-color, fill, stroke;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  transition-duration: 150ms;
+}
+.ease-in-out {
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+}
+.selection\:bg-purple-900 *::selection {
+  --tw-bg-opacity: 1;
+  background-color: rgb(88 28 135 / var(--tw-bg-opacity, 1));
+}
+.selection\:text-purple-100 *::selection {
+  --tw-text-opacity: 1;
+  color: rgb(243 232 255 / var(--tw-text-opacity, 1));
+}
+.selection\:bg-purple-900::selection {
+  --tw-bg-opacity: 1;
+  background-color: rgb(88 28 135 / var(--tw-bg-opacity, 1));
+}
+.selection\:text-purple-100::selection {
+  --tw-text-opacity: 1;
+  color: rgb(243 232 255 / var(--tw-text-opacity, 1));
+}
+.hover\:border-fuchsia-500:hover {
+  --tw-border-opacity: 1;
+  border-color: rgb(217 70 239 / var(--tw-border-opacity, 1));
+}
+.hover\:bg-cyan-500:hover {
+  --tw-bg-opacity: 1;
+  background-color: rgb(6 182 212 / var(--tw-bg-opacity, 1));
+}
+.hover\:bg-fuchsia-500:hover {
+  --tw-bg-opacity: 1;
+  background-color: rgb(217 70 239 / var(--tw-bg-opacity, 1));
+}
+.hover\:bg-purple-500\/20:hover {
+  background-color: rgb(168 85 247 / 0.2);
+}
+.hover\:bg-white\/5:hover {
+  background-color: rgb(255 255 255 / 0.05);
+}
+.hover\:text-purple-400:hover {
+  --tw-text-opacity: 1;
+  color: rgb(192 132 252 / var(--tw-text-opacity, 1));
+}
+.hover\:text-white:hover {
+  --tw-text-opacity: 1;
+  color: rgb(255 255 255 / var(--tw-text-opacity, 1));
+}
+.hover\:underline:hover {
+  text-decoration-line: underline;
+}
+.group:hover .group-hover\:border-purple-500\/50 {
+  border-color: rgb(168 85 247 / 0.5);
+}
+.group:hover .group-hover\:text-white {
+  --tw-text-opacity: 1;
+  color: rgb(255 255 255 / var(--tw-text-opacity, 1));
+}
+@media (min-width: 768px) {
+
+  .md\:flex {
+    display: flex;
+  }
+
+  .md\:flex-row {
+    flex-direction: row;
+  }
+}
+@media (min-width: 1024px) {
+
+  .lg\:px-12 {
+    padding-left: 3rem;
+    padding-right: 3rem;
+  }
+
+  .lg\:px-24 {
+    padding-left: 6rem;
+    padding-right: 6rem;
+  }
+
+  .lg\:text-8xl {
+    font-size: 6rem;
+    line-height: 1;
+  }
+}* {
+      -ms-overflow-style: none !important;
+      scrollbar-width: none !important;
+    }
+
+    *::-webkit-scrollbar {
+      display: none !important;
+      width: 0 !important;
+      height: 0 !important;
+    }
+  </style></head>
+<body class="selection:bg-purple-900 selection:text-purple-100" vid="11">
+
+    <div class="stars-container" id="stars-container" vid="12"></div>
+    <div class="orb bg-purple-600 w-[800px] h-[800px] top-[-20%] left-[-10%]" vid="13"></div>
+    <div class="orb bg-cyan-900 w-[600px] h-[600px] bottom-[-10%] right-[-5%]" vid="14"></div>
+
+    <nav class="fixed top-0 w-full z-50 border-b border-white/5 bg-[#02000a]/80 backdrop-blur-xl" vid="15">
+        <div class="max-w-[1600px] mx-auto px-6 lg:px-12 h-20 flex justify-between items-center" vid="16">
+            <a href="#" class="flex items-center gap-4 group" vid="17">
+                <div class="relative flex items-center justify-center w-10 h-10 rounded-lg bg-white/5 border border-white/10 group-hover:border-purple-500/50 transition-colors" vid="18">
+                    <i class="ph-fill ph-sparkle text-purple-400 text-xl" vid="19"></i>
+                </div>
+                <span class="font-cinzel text-lg tracking-[0.15em] text-white" vid="20">Algorithm Witch</span>
+            </a>
+            <div class="hidden md:flex items-center gap-10 font-mono-tech text-[11px] uppercase tracking-[0.2em] text-gray-400" vid="21">
+                <a href="#" class="nav-item hover:text-white" vid="22">Origins</a>
+                <a href="#" class="nav-item hover:text-white" vid="23">Grimoire</a>
+                <a href="#" class="nav-item hover:text-white" vid="24">Services</a>
+                <a href="#" class="nav-item hover:text-white" vid="25">Focus</a>
+            </div>
+            <a href="#" class="flex items-center gap-2 px-5 py-2.5 bg-white/5 border border-white/10 rounded-lg font-mono-tech text-[10px] uppercase tracking-widest text-white group" vid="26">
+                <i class="ph-bold ph-envelope-simple text-purple-400 group-hover:text-white" vid="27"></i>
+                <span vid="28">Summon</span>
+            </a>
+        </div>
+    </nav>
+
+    <header class="relative z-10 max-w-[1200px] mx-auto px-6 pt-40 pb-20 text-center" vid="29">
+        <div class="flex items-center justify-center gap-3 mb-6 fade-in-up" vid="30">
+            <div class="h-[1px] w-8 bg-purple-500/50" vid="31"></div>
+            <span class="font-mono-tech text-[10px] text-purple-400 uppercase tracking-[0.3em]" vid="32">Exhibition of Sigils</span>
+            <div class="h-[1px] w-8 bg-purple-500/50" vid="33"></div>
+        </div>
+        <h1 class="font-cinzel text-6xl lg:text-8xl text-white mb-6 text-glow-gold fade-in-up" style="transition-delay: 100ms;" vid="34">Resources</h1>
+        <p class="max-w-2xl mx-auto text-gray-400 text-base leading-relaxed font-light fade-in-up" style="transition-delay: 200ms;" vid="35">
+            A curated collection of enchanted assets and technical scrolls, displayed for your discerning scrying.
+        </p>
+    </header>
+
+    <main class="relative z-10 max-w-[1600px] mx-auto px-6 lg:px-24 pb-40" vid="36">
+        <div class="gallery-container" vid="37">
+            
+            <div class="gallery-item item-1 fade-in-up" vid="38">
+                <article class="resource-card card-purple rounded-xl p-8 flex flex-col group" vid="39">
+                    <div class="flex justify-between items-start mb-6" vid="40">
+                        <i class="ph-duotone ph-presentation-chart text-4xl text-purple-400" vid="41"></i>
+                        <span class="font-mono-tech text-[9px] text-gray-500 border border-white/10 px-2 py-1" vid="42">TPL-01</span>
+                    </div>
+                    <h3 class="font-cinzel text-2xl text-white mb-4" vid="43">Viral Hook Grids</h3>
+                    <p class="text-sm text-gray-400 leading-relaxed font-light mb-8" vid="44">Proven viral hooks for narrative testing across the LinkedIn and Twitter weave.</p>
+                    <button class="mt-auto w-full py-3 bg-purple-500/5 hover:bg-purple-500/20 border border-purple-500/30 text-white rounded-lg text-[10px] font-mono-tech uppercase tracking-widest transition-all" vid="45">Examine Scroll</button>
+                </article>
+            </div>
+
+            <div class="gallery-item item-2 fade-in-up" style="transition-delay: 300ms;" vid="46">
+                <article class="resource-card card-cyan rounded-xl p-10 flex flex-col group scale-110" vid="47">
+                    <div class="flex justify-between items-start mb-8" vid="48">
+                        <i class="ph-duotone ph-calculator text-4xl text-cyan-400" vid="49"></i>
+                        <span class="font-mono-tech text-[9px] text-gray-500 border border-white/10 px-2 py-1" vid="50">MEMBER</span>
+                    </div>
+                    <h3 class="font-cinzel text-3xl text-white mb-4" vid="51">ROI Projection Loom</h3>
+                    <p class="text-base text-gray-400 leading-relaxed font-light mb-10" vid="52">Interactive calculation tool for organic reach and advocacy campaign potential.</p>
+                    <button class="mt-auto w-full py-4 bg-cyan-500/10 hover:bg-cyan-500 border border-cyan-500/30 text-white rounded-lg text-[11px] font-mono-tech uppercase tracking-widest transition-all" vid="53">Initialize Loom</button>
+                </article>
+            </div>
+
+            <div class="gallery-item item-3 fade-in-up" style="transition-delay: 150ms;" vid="54">
+                <article class="resource-card card-amber rounded-xl p-8 flex flex-col group border-l-4 border-amber-500/40" vid="55">
+                    <div class="mb-6" vid="56">
+                        <i class="ph-duotone ph-scroll text-3xl text-amber-400" vid="57"></i>
+                    </div>
+                    <h3 class="font-cinzel text-xl text-white mb-3" vid="58">The 2025 Oracle</h3>
+                    <p class="text-xs text-gray-400 leading-relaxed mb-6" vid="59">Deep-scrying playbook detailing major algorithm shifts for the coming solar cycle.</p>
+                    <div class="flex justify-between items-center mt-auto" vid="60">
+                        <span class="font-mono-tech text-[9px] text-amber-500/70" vid="61">42 PAGES</span>
+                        <a href="#" class="text-white text-xs font-mono-tech hover:underline" vid="62">Unroll →</a>
+                    </div>
+                </article>
+            </div>
+
+            <div class="gallery-item item-4 fade-in-up" style="transition-delay: 450ms;" vid="63">
+                <article class="resource-card card-fuchsia rounded-xl p-12 flex flex-col group" vid="64">
+                    <div class="w-20 h-20 mb-8 mx-auto bg-fuchsia-500/10 rounded-full flex items-center justify-center border border-fuchsia-500/20" vid="65">
+                        <i class="ph-duotone ph-paint-brush-broad text-4xl text-fuchsia-400" vid="66"></i>
+                    </div>
+                    <h3 class="font-cinzel text-2xl text-white text-center mb-4" vid="67">Ether Icon Set v1.0</h3>
+                    <p class="text-sm text-gray-400 text-center leading-relaxed font-light mb-8" vid="68">150+ glyphs custom-forged for mystical-tech branding and interface rituals.</p>
+                    <button class="w-full py-3 bg-white/5 hover:bg-fuchsia-500 border border-white/10 hover:border-fuchsia-500 text-white rounded-lg text-[10px] font-mono-tech uppercase tracking-widest transition-all" vid="69">Download Pack</button>
+                </article>
+            </div>
+
+            <div class="gallery-item item-5 fade-in-up" style="transition-delay: 200ms;" vid="70">
+                <article class="resource-card card-purple rounded-xl p-8 flex items-center gap-6 group" vid="71">
+                    <div class="w-16 h-16 shrink-0 bg-purple-500/10 rounded border border-purple-500/20 flex items-center justify-center" vid="72">
+                        <i class="ph-duotone ph-calendar text-3xl text-purple-400" vid="73"></i>
+                    </div>
+                    <div vid="74">
+                        <h3 class="font-cinzel text-lg text-white mb-1" vid="75">Lunar Calendar</h3>
+                        <p class="text-[11px] text-gray-500 font-mono-tech uppercase tracking-widest" vid="76">FREE • 28 DAY CYCLE</p>
+                    </div>
+                </article>
+            </div>
+
+            <div class="gallery-item item-6 fade-in-up" style="transition-delay: 500ms;" vid="77">
+                <article class="resource-card card-cyan rounded-xl p-8 flex flex-col group" vid="78">
+                    <div class="flex justify-between items-center mb-6" vid="79">
+                        <span class="px-3 py-1 bg-cyan-500/10 text-cyan-400 font-mono-tech text-[9px] rounded-full border border-cyan-500/20" vid="80">DIAGNOSTIC</span>
+                    </div>
+                    <h3 class="font-cinzel text-xl text-white mb-4" vid="81">Ghost Site Auditor</h3>
+                    <p class="text-sm text-gray-400 leading-relaxed font-light mb-6" vid="82">Detect "dead zones" in your website where attention is lost to the void.</p>
+                    <button class="mt-auto w-full py-3 border border-white/10 text-gray-300 hover:text-white hover:bg-white/5 transition-all text-[10px] font-mono-tech uppercase tracking-widest" vid="83">Initialize Scan</button>
+                </article>
+            </div>
+
+        </div>
+    </main>
+
+    <footer class="border-t border-white/5 bg-[#02000a] py-12" vid="84">
+        <div class="max-w-[1600px] mx-auto px-6 flex flex-col md:flex-row justify-between items-center gap-6" vid="85">
+            <div class="flex items-center gap-2 text-gray-500" vid="86">
+                <i class="ph-fill ph-sparkle text-purple-900" vid="87"></i>
+                <span class="font-cinzel text-sm" vid="88">The Algorithm Witch</span>
+            </div>
+            <div class="flex gap-8 font-mono-tech text-[10px] uppercase tracking-widest text-gray-600" vid="89">
+                <a href="#" class="hover:text-purple-400" vid="90">Privacy</a>
+                <a href="#" class="hover:text-purple-400" vid="91">Terms</a>
+                <a href="#" class="hover:text-purple-400" vid="92">Ethics</a>
+            </div>
+            <div class="font-mono-tech text-[10px] text-gray-600 uppercase" vid="93">
+                © 2024 • Crafted in the Ether
+            </div>
+        </div>
+    </footer>
+
+    <script vid="94">
+        const starContainer = document.getElementById('stars-container');
+        for (let i = 0; i < 150; i++) {
+            const star = document.createElement('div');
+            star.classList.add('star');
+            star.style.left = `${Math.random() * 100}%`;
+            star.style.top = `${Math.random() * 100}%`;
+            const size = Math.random() * 1.5 + 0.5;
+            star.style.width = `${size}px`;
+            star.style.height = `${size}px`;
+            star.style.setProperty('--twinkle-dur', `${2 + Math.random() * 4}s`);
+            star.style.setProperty('--base-opacity', `${0.1 + Math.random() * 0.4}`);
+            starContainer.appendChild(star);
+        }
+
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('is-visible');
+                }
+            });
+        }, { threshold: 0.1 });
+
+        document.querySelectorAll('.fade-in-up').forEach(el => observer.observe(el));
+    </script>
+
+
+</body></html>

@@ -374,31 +374,36 @@ const framedInner = /class="figure-frame"/i.test(innerWithoutCaption)
 
 function structureArticleHtml(html, toc, figures) {
   const headingMatches = [...html.matchAll(/<(h[23])\b[^>]*id="([^"]+)"[^>]*>([\s\S]*?)<\/\1>/gi)];
-  const hasH2 = headingMatches.some((match) => match[1].toLowerCase() === 'h2');
-  const topLevelTag = hasH2 ? 'h2' : 'h3';
-  const matches = headingMatches.filter((match) => match[1].toLowerCase() === topLevelTag);
+  const matches = headingMatches.filter((match) => match[1].toLowerCase() === 'h2');
 
   if (!matches.length) {
+    const normalizedHtml = html
+      .replace(/<h3\b([^>]*)>([\s\S]*?)<\/h3>/gi, '<h3$1 class="article-subheading">$2</h3>')
+      .replace(/<h4\b([^>]*)>([\s\S]*?)<\/h4>/gi, '<h3$1 class="article-subheading">$2</h3>');
+
     return {
-      html: `<section class="article-section article-section-intro theme-purple" data-section-id="top">${html}</section>`,
-      toc: [{ id: 'top', text: 'Article start', number: 'INTRO', theme: 'purple' }],
+      html: `<section class="article-section article-section-intro theme-purple" data-section-id="top">${normalizedHtml}</section>`,
+      toc: [{ id: 'top', text: 'Intro', number: 'Intro', theme: 'purple' }],
       figures,
     };
   }
 
   const sections = [];
-  const themedToc = [];
+  const orderedToc = [{ id: 'top', text: 'Intro', number: 'Intro', theme: 'purple' }];
   const intro = html.slice(0, matches[0].index).trim();
 
   if (intro) {
+    const normalizedIntro = intro
+      .replace(/<h3\b([^>]*)>([\s\S]*?)<\/h3>/gi, '<h3$1 class="article-subheading">$2</h3>')
+      .replace(/<h4\b([^>]*)>([\s\S]*?)<\/h4>/gi, '<h3$1 class="article-subheading">$2</h3>');
+
     sections.push(
-      `<section class="article-section article-section-intro theme-purple" data-section-id="top">${intro}</section>`
+      `<section class="article-section article-section-intro theme-purple" data-section-id="top">${normalizedIntro}</section>`
     );
   }
 
   matches.forEach((match, index) => {
     const fullHeading = match[0];
-    const tag = match[1].toLowerCase();
     const id = match[2];
     const text = stripTags(match[3]).trim();
     const nextStart = index + 1 < matches.length ? matches[index + 1].index : html.length;
@@ -407,45 +412,29 @@ function structureArticleHtml(html, toc, figures) {
 
     let block = html.slice(match.index, nextStart);
 
-    const sectionHeading = `<${tag} id="${id}" class="section-heading"><span class="section-number">${number}</span><span class="section-heading-text">${match[3]}</span></${tag}>`;
+    const sectionHeading = `<h2 id="${id}" class="section-heading"><span class="section-number">${number}</span><span class="section-heading-text">${match[3]}</span></h2>`;
     block = block.replace(fullHeading, sectionHeading);
 
     block = block.replace(
-      /<h3\b([^>]*)id="([^"]+)"([^>]*)>([\s\S]*?)<\/h3>/gi,
-      (_full, before, subId, after, inner) => {
-        const subText = stripTags(inner).trim();
-        themedToc.push({
-          id: subId,
-          text: subText,
-          number: `${number}.${themedToc.filter((entry) => entry.number.startsWith(`${number}.`)).length + 1}`,
-          theme,
-        });
-        return `<h3${before}id="${subId}"${after} class="article-subheading">${inner}</h3>`;
-      }
+      /<h3\b([^>]*)>([\s\S]*?)<\/h3>/gi,
+      (_full, attrs, inner) => `<h3${attrs} class="article-subheading">${inner}</h3>`
+    );
+
+    block = block.replace(
+      /<h4\b([^>]*)>([\s\S]*?)<\/h4>/gi,
+      (_full, attrs, inner) => `<h3${attrs} class="article-subheading">${inner}</h3>`
     );
 
     sections.push(
       `<section class="article-section theme-${theme}" data-section-id="${id}" data-theme="${theme}">${block}</section>`
     );
 
-    themedToc.push({
+    orderedToc.push({
       id,
       text,
       number,
       theme,
     });
-  });
-
-  const orderedToc = [{ id: 'top', text: 'Intro', number: 'Intro', theme: 'purple' }];
-
-  sections.forEach((_section, sectionIndex) => {
-    const topNumber = String(sectionIndex + 1).padStart(2, '0');
-    const topEntry = themedToc.find((entry) => entry.number === topNumber);
-    if (topEntry) orderedToc.push(topEntry);
-
-    themedToc
-      .filter((entry) => entry.number.startsWith(`${topNumber}.`))
-      .forEach((entry) => orderedToc.push(entry));
   });
 
   return {
@@ -705,40 +694,28 @@ async function main() {
       contentHtml: getTagValue(item, 'content:encoded'),
     }));
 
-    const feedTitles = new Set(rawPosts.map((post) => post.title));
-    const mappedTitles = new Set(TITLE_TO_SLUG.keys());
-    const missingFromFeed = [...mappedTitles].filter((title) => !feedTitles.has(title));
-    const unmappedFeedTitles = [...feedTitles].filter((title) => !mappedTitles.has(title));
+const normalized = rawPosts.reduce((acc, post) => {
+  try {
+    if (!post.contentHtml) throw new Error('missing full HTML body');
 
-    if (missingFromFeed.length || unmappedFeedTitles.length) {
-      const errors = [];
-      if (missingFromFeed.length) errors.push(`Missing from feed: ${missingFromFeed.join(', ')}`);
-      if (unmappedFeedTitles.length) errors.push(`Unmapped feed titles: ${unmappedFeedTitles.join(', ')}`);
-      throw new Error(errors.join(' | '));
-    }
+    const websiteSlug = TITLE_TO_SLUG.get(post.title) || slugify(post.title);
 
-    const normalized = rawPosts.reduce((acc, post) => {
-      try {
-        if (!post.contentHtml) throw new Error('missing full HTML body');
-        const websiteSlug = TITLE_TO_SLUG.get(post.title);
-        if (!websiteSlug) throw new Error('missing custom website slug');
+    acc.push({
+      title: post.title,
+      excerpt: safeExcerpt(post.description, post.contentHtml, post.title),
+      published_at: post.publishedAt,
+      cover_image: post.coverImage || '',
+      body_html: post.contentHtml,
+      original_substack_url: post.originalUrl,
+      original_substack_slug: stripQuery(post.originalUrl).split('/').pop() || '',
+      website_slug: websiteSlug,
+    });
+  } catch (error) {
+    console.warn(`Skipping malformed feed item "${post.title || 'Untitled'}": ${error.message}`);
+  }
 
-        acc.push({
-          title: post.title,
-          excerpt: safeExcerpt(post.description, post.contentHtml, post.title),
-          published_at: post.publishedAt,
-          cover_image: post.coverImage || '',
-          body_html: post.contentHtml,
-          original_substack_url: post.originalUrl,
-          original_substack_slug: stripQuery(post.originalUrl).split('/').pop() || '',
-          website_slug: websiteSlug,
-        });
-      } catch (error) {
-        console.warn(`Skipping malformed feed item "${post.title || 'Untitled'}": ${error.message}`);
-      }
-
-      return acc;
-    }, []).sort((a, b) => new Date(b.published_at) - new Date(a.published_at));
+  return acc;
+}, []).sort((a, b) => new Date(b.published_at) - new Date(a.published_at));
 
     if (!normalized.length) {
       throw new Error('No valid posts remained after feed normalization.');

@@ -1392,6 +1392,189 @@ video {
     align-items: center;
 }
 
+.spec-nav-wrap {
+  position: fixed;
+  top: 0;
+  width: 100%;
+  z-index: 50;
+  padding: 1.5rem;
+  transition: all 0.3s ease;
+}
+
+.spec-nav {
+  width: min(80rem, 100%);
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 2rem;
+  padding: 1rem 2rem;
+  border-radius: 9999px;
+  background: rgba(13, 12, 34, 0.6);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(139, 92, 246, 0.15);
+}
+
+.spec-brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.75rem;
+  color: inherit;
+  text-decoration: none;
+  flex-shrink: 0;
+}
+
+.spec-brand-icon {
+  position: relative;
+}
+
+.spec-sparkle {
+  color: #c084fc;
+  font-size: 1.5rem;
+  transition: transform 0.3s ease;
+}
+
+.spec-brand:hover .spec-sparkle {
+  transform: scale(1.1);
+}
+
+.spec-star {
+  position: absolute;
+  top: -0.25rem;
+  right: -0.45rem;
+  color: #fde047;
+  font-size: 0.75rem;
+}
+
+.spec-brand-text {
+  font-size: 1.25rem;
+  color: #ffffff;
+  letter-spacing: 0.2em;
+  transition: color 0.3s ease;
+}
+
+.spec-brand:hover .spec-brand-text {
+  color: #e9d5ff;
+}
+
+.spec-nav-links {
+  display: flex;
+  align-items: center;
+  gap: 2rem;
+}
+
+.spec-nav-link {
+  position: relative;
+  color: #d1d5db;
+  font-size: 0.75rem;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.2em;
+  text-decoration: none;
+  transition: color 0.3s ease;
+}
+
+.spec-nav-link:hover {
+  color: #ffffff;
+}
+
+.spec-nav-link::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  bottom: -0.25rem;
+  width: 0;
+  height: 1px;
+  background: #a855f7;
+  transition: width 0.3s ease;
+}
+
+.spec-nav-link:hover::after {
+  width: 100%;
+}
+
+.spec-nav-cta {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  flex-shrink: 0;
+  padding: 0.5rem 1.5rem;
+  border-radius: 9999px;
+  border: 1px solid rgba(168, 85, 247, 0.3);
+  background: rgba(168, 85, 247, 0.1);
+  color: #ffffff;
+  font-size: 0.75rem;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.2em;
+  text-decoration: none;
+  transition: background 0.3s ease, transform 0.3s ease, border-color 0.3s ease;
+}
+
+.spec-nav-cta:hover {
+  background: rgba(168, 85, 247, 0.2);
+  border-color: rgba(168, 85, 247, 0.3);
+  transform: scale(1.05);
+}
+
+.spec-nav-cta-icon {
+  font-size: 0.85rem;
+}
+
+.spec-menu-button {
+  display: none;
+  background: transparent;
+  color: #ffffff;
+  font-size: 1.75rem;
+  border: 0;
+}
+
+.spec-mobile-menu {
+  width: min(80rem, 100%);
+  margin: 0.75rem auto 0;
+  padding: 1rem 1.5rem;
+  border-radius: 1rem;
+  background: rgba(13, 12, 34, 0.6);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(139, 92, 246, 0.15);
+}
+
+.spec-mobile-menu-inner {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.spec-mobile-cta {
+  margin-top: 0.5rem;
+  width: 100%;
+  padding: 0.75rem 1.5rem;
+}
+
+@media (max-width: 767px) {
+  .spec-nav {
+    padding: 1rem 1.25rem;
+    gap: 1rem;
+  }
+
+  .spec-nav-links,
+  .spec-nav > .spec-nav-cta {
+    display: none;
+  }
+
+  .spec-menu-button {
+    display: block;
+  }
+
+  .spec-brand-text {
+    font-size: 1.05rem;
+    letter-spacing: 0.15em;
+  }
+}
+
 .footer-socials a {
     color: #94a3b8;
     transition: color 0.24s ease, transform 0.24s ease;
@@ -1441,44 +1624,45 @@ video {
         <div class="absolute bottom-[10%] left-[-5%] w-[600px] h-[600px] bg-indigo-900/10 rounded-full blur-[120px]" vid="16"></div>
     </div>
 
-<!-- NAV -->
-<nav id="navbar" class="fixed top-0 w-full z-50 px-6 py-6 transition-all duration-300">
-  <div class="max-w-7xl mx-auto glass-panel rounded-full px-8 py-4 flex justify-between items-center">
-    <a href="/" class="flex items-center gap-3 group">
-      <div class="relative">
-        <i class="ph-fill ph-sparkle text-purple-400 text-2xl group-hover:scale-110 transition-transform duration-300"></i>
-        <i class="ph-fill ph-star-four text-yellow-300 text-xs absolute -top-1 -right-2 animate-pulse"></i>
+<nav id="navbar" class="spec-nav-wrap">
+  <div class="spec-nav">
+    <a href="/" class="spec-brand">
+      <div class="spec-brand-icon">
+        <i class="ph-fill ph-sparkle spec-sparkle"></i>
+        <i class="ph-fill ph-star-four spec-star"></i>
       </div>
-      <span class="font-magical text-xl text-white tracking-widest group-hover:text-purple-200 transition-colors">Algorithm Witch</span>
+      <span class="font-magical spec-brand-text">Algorithm Witch</span>
     </a>
 
-    <div class="hidden md:flex items-center gap-8 text-xs uppercase tracking-[0.2em] text-gray-300 font-medium">
-      <a href="/#origins" class="nav-link hover:text-white transition-colors">Origins</a>
-      <a href="/blog/" class="nav-link hover:text-white transition-colors">Writings</a>
-      <a href="/services/" class="nav-link hover:text-white transition-colors">Offerings</a>
+    <div class="spec-nav-links">
+      <a href="/#origins" class="spec-nav-link">Origins</a>
+      <a href="/blog/" class="spec-nav-link">Writings</a>
+      <a href="/services/" class="spec-nav-link">Offerings</a>
     </div>
 
-<a href="/client/RE-volv/dashboard.html" class="hidden md:inline-flex nav-cta">
-  Return to Dashboard
-</a>
+    <a href="/client/RE-volv/dashboard.html" class="spec-nav-cta">
+      Return to Dashboard
+      <i class="ph-bold ph-arrow-right spec-nav-cta-icon"></i>
+    </a>
 
-    <button id="menuButton" class="md:hidden text-white text-2xl" aria-expanded="false" aria-controls="mobileMenu" aria-label="Open menu">
+    <button id="menuButton" class="spec-menu-button" aria-expanded="false" aria-controls="mobileMenu" aria-label="Open menu">
       <i class="ph ph-list"></i>
     </button>
   </div>
 
-  <div id="mobileMenu" class="md:hidden hidden mt-3 mx-auto max-w-7xl glass-panel rounded-2xl px-6 py-4">
-    <div class="flex flex-col gap-4 text-xs uppercase tracking-[0.2em] text-gray-300 font-medium">
-      <a href="/#origins" class="nav-link hover:text-white transition-colors">Origins</a>
-      <a href="/blog/" class="nav-link hover:text-white transition-colors">Writings</a>
-      <a href="/services/" class="nav-link hover:text-white transition-colors">Offerings</a>
-      <a href="/client/RE-volv/dashboard.html" class="mt-2 inline-flex items-center justify-center px-6 py-3 bg-purple-500/10 hover:bg-purple-500/20 border border-purple-500/30 rounded-full text-xs uppercase tracking-widest text-white transition-all">
-        Return to Dashboard <i class="ph-bold ph-arrow-right ml-2"></i>
+  <div id="mobileMenu" class="spec-mobile-menu hidden">
+    <div class="spec-mobile-menu-inner">
+      <a href="/#origins" class="spec-nav-link">Origins</a>
+      <a href="/blog/" class="spec-nav-link">Writings</a>
+      <a href="/services/" class="spec-nav-link">Offerings</a>
+      <a href="/client/RE-volv/dashboard.html" class="spec-nav-cta spec-mobile-cta">
+        Return to Dashboard
+        <i class="ph-bold ph-arrow-right spec-nav-cta-icon"></i>
       </a>
     </div>
   </div>
 </nav>
-
+    
     <main class="relative z-10 w-full pt-32 pb-24" vid="32">
         <div class="max-w-[1200px] mx-auto px-6" vid="33">
             

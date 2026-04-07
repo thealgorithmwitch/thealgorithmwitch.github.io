@@ -1,0 +1,2021 @@
+
+<html lang="en" vid="0"><head vid="1">
+    <meta charset="UTF-8" vid="2">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" vid="3">
+    <title vid="4">GTM Tracking &amp; Campaign Measurements | Alchemical Data</title>
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com" vid="6">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="" vid="7">
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@400;700;900&amp;family=Inter:wght@300;400;500;600&amp;family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&amp;display=swap" rel="stylesheet" vid="8">
+    <script src="https://unpkg.com/@phosphor-icons/web" vid="9"></script>
+    <style vid="10">
+        :root {
+            --color-bg: #030014;
+            --color-purple: #a855f7;
+            --color-gold: #fde047;
+            --color-cyan: #06b6d4;
+            --color-amber: #f59e0b;
+            --color-emerald: #10b981;
+            --color-fuchsia: #d946ef;
+        }
+
+        body {
+            background-color: var(--color-bg);
+            color: #e2e8f0;
+            font-family: 'Inter', sans-serif;
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            width: 100vw;
+            height: 100vh;
+        }
+
+        .font-magical { font-family: 'Cinzel Decorative', cursive; }
+        .font-serif-heading { font-family: 'Playfair Display', serif; }
+
+        .stars {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            pointer-events: none; z-index: 0;
+        }
+        .star {
+            position: absolute;
+            background: white;
+            border-radius: 50%;
+            opacity: 0;
+            animation: twinkle var(--duration) ease-in-out infinite;
+            animation-delay: var(--delay);
+        }
+        @keyframes twinkle {
+            0% { opacity: 0; transform: scale(0.5); }
+            50% { opacity: var(--opacity); transform: scale(1.2); box-shadow: 0 0 4px rgba(255, 255, 255, 0.8); }
+            100% { opacity: 0; transform: scale(0.5); }
+        }
+
+        .glass-panel {
+            background: rgba(13, 12, 34, 0.6);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+        
+        .glass-card {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(10px);
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .glass-card::before {
+            content: ''; position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background: radial-gradient(600px circle at var(--mouse-x) var(--mouse-y), rgba(255, 255, 255, 0.08), transparent 40%);
+            opacity: 0; transition: opacity 0.5s; pointer-events: none;
+        }
+        .glass-card:hover::before { opacity: 1; }
+        .glass-card:hover { transform: translateY(-5px); }
+
+        .text-gradient-gold { background: linear-gradient(to right, #fef9c3, #fbbf24, #fef9c3); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-size: 200% auto; animation: shine 8s linear infinite; }
+        .text-gradient-cyan { background: linear-gradient(to right, #cffafe, #06b6d4, #cffafe); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-size: 200% auto; animation: shine 8s linear infinite; }
+        .text-gradient-emerald { background: linear-gradient(to right, #d1fae5, #10b981, #d1fae5); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-size: 200% auto; animation: shine 8s linear infinite; }
+        
+        @keyframes shine { to { background-position: 200% center; } }
+        .float { animation: float 6s ease-in-out infinite; }
+        @keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-15px); } }
+
+        #page-presentation { width: 100vw; height: 100vh; overflow: hidden; position: relative; }
+        .ambient-glow { position: fixed; border-radius: 50%; filter: blur(120px); opacity: 0.3; pointer-events: none; z-index: 0; transition: all 1s ease-in-out; }
+        
+        .slide { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; opacity: 0; transform: translateY(40px) scale(0.98); transition: all 0.8s cubic-bezier(0.4, 0, 0.2, 1); pointer-events: none; z-index: 0; padding: 4rem; }
+        .slide.active { opacity: 1; transform: translateY(0) scale(1); pointer-events: auto; z-index: 10; }
+        
+        .nav-btn { position: fixed; top: 50%; transform: translateY(-50%); z-index: 50; width: 48px; height: 48px; border-radius: 50%; background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1); color: rgba(255, 255, 255, 0.5); display: flex; align-items: center; justify-content: center; cursor: pointer; backdrop-filter: blur(8px); transition: all 0.3s ease; }
+        .nav-btn:hover { background: rgba(255, 255, 255, 0.1); color: white; border-color: rgba(168, 85, 247, 0.5); box-shadow: 0 0 20px rgba(168, 85, 247, 0.3); }
+        .nav-prev { left: 2rem; }
+        .nav-next { right: 2rem; }
+        
+        .presentation-controls { position: fixed; bottom: 2rem; left: 50%; transform: translateX(-50%); z-index: 50; display: flex; align-items: center; gap: 2rem; padding: 0.75rem 2rem; border-radius: 9999px; background: rgba(0, 0, 0, 0.4); border: 1px solid rgba(255, 255, 255, 0.1); backdrop-filter: blur(12px); }
+        .dots-container { display: flex; gap: 0.75rem; }
+        .dot { width: 8px; height: 8px; border-radius: 50%; background: rgba(255, 255, 255, 0.2); cursor: pointer; transition: all 0.3s ease; }
+        .dot.active { background: var(--color-purple); transform: scale(1.5); box-shadow: 0 0 10px var(--color-purple); }
+        
+        .content-container { width: 100%; max-width: 1200px; max-height: 100%; display: flex; flex-direction: column; justify-content: center; }
+        
+        .glow-border-purple:hover { border-color: rgba(168, 85, 247, 0.4); box-shadow: 0 10px 40px -10px rgba(168, 85, 247, 0.2); }
+        .glow-border-cyan:hover { border-color: rgba(6, 182, 212, 0.4); box-shadow: 0 10px 40px -10px rgba(6, 182, 212, 0.2); }
+        .glow-border-amber:hover { border-color: rgba(245, 158, 11, 0.4); box-shadow: 0 10px 40px -10px rgba(245, 158, 11, 0.2); }
+        .glow-border-emerald:hover { border-color: rgba(16, 185, 129, 0.4); box-shadow: 0 10px 40px -10px rgba(16, 185, 129, 0.2); }
+    </style>
+
+  <style type="text/css">
+*, ::before, ::after {
+  --tw-border-spacing-x: 0;
+  --tw-border-spacing-y: 0;
+  --tw-translate-x: 0;
+  --tw-translate-y: 0;
+  --tw-rotate: 0;
+  --tw-skew-x: 0;
+  --tw-skew-y: 0;
+  --tw-scale-x: 1;
+  --tw-scale-y: 1;
+  --tw-pan-x:  ;
+  --tw-pan-y:  ;
+  --tw-pinch-zoom:  ;
+  --tw-scroll-snap-strictness: proximity;
+  --tw-gradient-from-position:  ;
+  --tw-gradient-via-position:  ;
+  --tw-gradient-to-position:  ;
+  --tw-ordinal:  ;
+  --tw-slashed-zero:  ;
+  --tw-numeric-figure:  ;
+  --tw-numeric-spacing:  ;
+  --tw-numeric-fraction:  ;
+  --tw-ring-inset:  ;
+  --tw-ring-offset-width: 0px;
+  --tw-ring-offset-color: #fff;
+  --tw-ring-color: rgb(59 130 246 / 0.5);
+  --tw-ring-offset-shadow: 0 0 #0000;
+  --tw-ring-shadow: 0 0 #0000;
+  --tw-shadow: 0 0 #0000;
+  --tw-shadow-colored: 0 0 #0000;
+  --tw-blur:  ;
+  --tw-brightness:  ;
+  --tw-contrast:  ;
+  --tw-grayscale:  ;
+  --tw-hue-rotate:  ;
+  --tw-invert:  ;
+  --tw-saturate:  ;
+  --tw-sepia:  ;
+  --tw-drop-shadow:  ;
+  --tw-backdrop-blur:  ;
+  --tw-backdrop-brightness:  ;
+  --tw-backdrop-contrast:  ;
+  --tw-backdrop-grayscale:  ;
+  --tw-backdrop-hue-rotate:  ;
+  --tw-backdrop-invert:  ;
+  --tw-backdrop-opacity:  ;
+  --tw-backdrop-saturate:  ;
+  --tw-backdrop-sepia:  ;
+  --tw-contain-size:  ;
+  --tw-contain-layout:  ;
+  --tw-contain-paint:  ;
+  --tw-contain-style:  ;
+}
+
+::backdrop {
+  --tw-border-spacing-x: 0;
+  --tw-border-spacing-y: 0;
+  --tw-translate-x: 0;
+  --tw-translate-y: 0;
+  --tw-rotate: 0;
+  --tw-skew-x: 0;
+  --tw-skew-y: 0;
+  --tw-scale-x: 1;
+  --tw-scale-y: 1;
+  --tw-pan-x:  ;
+  --tw-pan-y:  ;
+  --tw-pinch-zoom:  ;
+  --tw-scroll-snap-strictness: proximity;
+  --tw-gradient-from-position:  ;
+  --tw-gradient-via-position:  ;
+  --tw-gradient-to-position:  ;
+  --tw-ordinal:  ;
+  --tw-slashed-zero:  ;
+  --tw-numeric-figure:  ;
+  --tw-numeric-spacing:  ;
+  --tw-numeric-fraction:  ;
+  --tw-ring-inset:  ;
+  --tw-ring-offset-width: 0px;
+  --tw-ring-offset-color: #fff;
+  --tw-ring-color: rgb(59 130 246 / 0.5);
+  --tw-ring-offset-shadow: 0 0 #0000;
+  --tw-ring-shadow: 0 0 #0000;
+  --tw-shadow: 0 0 #0000;
+  --tw-shadow-colored: 0 0 #0000;
+  --tw-blur:  ;
+  --tw-brightness:  ;
+  --tw-contrast:  ;
+  --tw-grayscale:  ;
+  --tw-hue-rotate:  ;
+  --tw-invert:  ;
+  --tw-saturate:  ;
+  --tw-sepia:  ;
+  --tw-drop-shadow:  ;
+  --tw-backdrop-blur:  ;
+  --tw-backdrop-brightness:  ;
+  --tw-backdrop-contrast:  ;
+  --tw-backdrop-grayscale:  ;
+  --tw-backdrop-hue-rotate:  ;
+  --tw-backdrop-invert:  ;
+  --tw-backdrop-opacity:  ;
+  --tw-backdrop-saturate:  ;
+  --tw-backdrop-sepia:  ;
+  --tw-contain-size:  ;
+  --tw-contain-layout:  ;
+  --tw-contain-paint:  ;
+  --tw-contain-style:  ;
+}/*
+! tailwindcss v3.4.17 | MIT License | https://tailwindcss.com
+*//*
+1. Prevent padding and border from affecting element width. (https://github.com/mozdevs/cssremedy/issues/4)
+2. Allow adding a border to an element by just adding a border-width. (https://github.com/tailwindcss/tailwindcss/pull/116)
+*/
+
+*,
+::before,
+::after {
+  box-sizing: border-box; /* 1 */
+  border-width: 0; /* 2 */
+  border-style: solid; /* 2 */
+  border-color: #e5e7eb; /* 2 */
+}
+
+::before,
+::after {
+  --tw-content: '';
+}
+
+/*
+1. Use a consistent sensible line-height in all browsers.
+2. Prevent adjustments of font size after orientation changes in iOS.
+3. Use a more readable tab size.
+4. Use the user's configured `sans` font-family by default.
+5. Use the user's configured `sans` font-feature-settings by default.
+6. Use the user's configured `sans` font-variation-settings by default.
+7. Disable tap highlights on iOS
+*/
+
+html,
+:host {
+  line-height: 1.5; /* 1 */
+  -webkit-text-size-adjust: 100%; /* 2 */
+  -moz-tab-size: 4; /* 3 */
+  tab-size: 4; /* 3 */
+  font-family: ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji"; /* 4 */
+  font-feature-settings: normal; /* 5 */
+  font-variation-settings: normal; /* 6 */
+  -webkit-tap-highlight-color: transparent; /* 7 */
+}
+
+/*
+1. Remove the margin in all browsers.
+2. Inherit line-height from `html` so users can set them as a class directly on the `html` element.
+*/
+
+body {
+  margin: 0; /* 1 */
+  line-height: inherit; /* 2 */
+}
+
+/*
+1. Add the correct height in Firefox.
+2. Correct the inheritance of border color in Firefox. (https://bugzilla.mozilla.org/show_bug.cgi?id=190655)
+3. Ensure horizontal rules are visible by default.
+*/
+
+hr {
+  height: 0; /* 1 */
+  color: inherit; /* 2 */
+  border-top-width: 1px; /* 3 */
+}
+
+/*
+Add the correct text decoration in Chrome, Edge, and Safari.
+*/
+
+abbr:where([title]) {
+  text-decoration: underline dotted;
+}
+
+/*
+Remove the default font size and weight for headings.
+*/
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  font-size: inherit;
+  font-weight: inherit;
+}
+
+/*
+Reset links to optimize for opt-in styling instead of opt-out.
+*/
+
+a {
+  color: inherit;
+  text-decoration: inherit;
+}
+
+/*
+Add the correct font weight in Edge and Safari.
+*/
+
+b,
+strong {
+  font-weight: bolder;
+}
+
+/*
+1. Use the user's configured `mono` font-family by default.
+2. Use the user's configured `mono` font-feature-settings by default.
+3. Use the user's configured `mono` font-variation-settings by default.
+4. Correct the odd `em` font sizing in all browsers.
+*/
+
+code,
+kbd,
+samp,
+pre {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; /* 1 */
+  font-feature-settings: normal; /* 2 */
+  font-variation-settings: normal; /* 3 */
+  font-size: 1em; /* 4 */
+}
+
+/*
+Add the correct font size in all browsers.
+*/
+
+small {
+  font-size: 80%;
+}
+
+/*
+Prevent `sub` and `sup` elements from affecting the line height in all browsers.
+*/
+
+sub,
+sup {
+  font-size: 75%;
+  line-height: 0;
+  position: relative;
+  vertical-align: baseline;
+}
+
+sub {
+  bottom: -0.25em;
+}
+
+sup {
+  top: -0.5em;
+}
+
+/*
+1. Remove text indentation from table contents in Chrome and Safari. (https://bugs.chromium.org/p/chromium/issues/detail?id=999088, https://bugs.webkit.org/show_bug.cgi?id=201297)
+2. Correct table border color inheritance in all Chrome and Safari. (https://bugs.chromium.org/p/chromium/issues/detail?id=935729, https://bugs.webkit.org/show_bug.cgi?id=195016)
+3. Remove gaps between table borders by default.
+*/
+
+table {
+  text-indent: 0; /* 1 */
+  border-color: inherit; /* 2 */
+  border-collapse: collapse; /* 3 */
+}
+
+/*
+1. Change the font styles in all browsers.
+2. Remove the margin in Firefox and Safari.
+3. Remove default padding in all browsers.
+*/
+
+button,
+input,
+optgroup,
+select,
+textarea {
+  font-family: inherit; /* 1 */
+  font-feature-settings: inherit; /* 1 */
+  font-variation-settings: inherit; /* 1 */
+  font-size: 100%; /* 1 */
+  font-weight: inherit; /* 1 */
+  line-height: inherit; /* 1 */
+  letter-spacing: inherit; /* 1 */
+  color: inherit; /* 1 */
+  margin: 0; /* 2 */
+  padding: 0; /* 3 */
+}
+
+/*
+Remove the inheritance of text transform in Edge and Firefox.
+*/
+
+button,
+select {
+  text-transform: none;
+}
+
+/*
+1. Correct the inability to style clickable types in iOS and Safari.
+2. Remove default button styles.
+*/
+
+button,
+input:where([type='button']),
+input:where([type='reset']),
+input:where([type='submit']) {
+  -webkit-appearance: button; /* 1 */
+  background-color: transparent; /* 2 */
+  background-image: none; /* 2 */
+}
+
+/*
+Use the modern Firefox focus style for all focusable elements.
+*/
+
+:-moz-focusring {
+  outline: auto;
+}
+
+/*
+Remove the additional `:invalid` styles in Firefox. (https://github.com/mozilla/gecko-dev/blob/2f9eacd9d3d995c937b4251a5557d95d494c9be1/layout/style/res/forms.css#L728-L737)
+*/
+
+:-moz-ui-invalid {
+  box-shadow: none;
+}
+
+/*
+Add the correct vertical alignment in Chrome and Firefox.
+*/
+
+progress {
+  vertical-align: baseline;
+}
+
+/*
+Correct the cursor style of increment and decrement buttons in Safari.
+*/
+
+::-webkit-inner-spin-button,
+::-webkit-outer-spin-button {
+  height: auto;
+}
+
+/*
+1. Correct the odd appearance in Chrome and Safari.
+2. Correct the outline style in Safari.
+*/
+
+[type='search'] {
+  -webkit-appearance: textfield; /* 1 */
+  outline-offset: -2px; /* 2 */
+}
+
+/*
+Remove the inner padding in Chrome and Safari on macOS.
+*/
+
+::-webkit-search-decoration {
+  -webkit-appearance: none;
+}
+
+/*
+1. Correct the inability to style clickable types in iOS and Safari.
+2. Change font properties to `inherit` in Safari.
+*/
+
+::-webkit-file-upload-button {
+  -webkit-appearance: button; /* 1 */
+  font: inherit; /* 2 */
+}
+
+/*
+Add the correct display in Chrome and Safari.
+*/
+
+summary {
+  display: list-item;
+}
+
+/*
+Removes the default spacing and border for appropriate elements.
+*/
+
+blockquote,
+dl,
+dd,
+h1,
+h2,
+h3,
+h4,
+h5,
+h6,
+hr,
+figure,
+p,
+pre {
+  margin: 0;
+}
+
+fieldset {
+  margin: 0;
+  padding: 0;
+}
+
+legend {
+  padding: 0;
+}
+
+ol,
+ul,
+menu {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+/*
+Reset default styling for dialogs.
+*/
+dialog {
+  padding: 0;
+}
+
+/*
+Prevent resizing textareas horizontally by default.
+*/
+
+textarea {
+  resize: vertical;
+}
+
+/*
+1. Reset the default placeholder opacity in Firefox. (https://github.com/tailwindlabs/tailwindcss/issues/3300)
+2. Set the default placeholder color to the user's configured gray 400 color.
+*/
+
+input::placeholder,
+textarea::placeholder {
+  opacity: 1; /* 1 */
+  color: #9ca3af; /* 2 */
+}
+
+/*
+Set the default cursor for buttons.
+*/
+
+button,
+[role="button"] {
+  cursor: pointer;
+}
+
+/*
+Make sure disabled buttons don't get the pointer cursor.
+*/
+:disabled {
+  cursor: default;
+}
+
+/*
+1. Make replaced elements `display: block` by default. (https://github.com/mozdevs/cssremedy/issues/14)
+2. Add `vertical-align: middle` to align replaced elements more sensibly by default. (https://github.com/jensimmons/cssremedy/issues/14#issuecomment-634934210)
+   This can trigger a poorly considered lint error in some tools but is included by design.
+*/
+
+img,
+svg,
+video,
+canvas,
+audio,
+iframe,
+embed,
+object {
+  display: block; /* 1 */
+  vertical-align: middle; /* 2 */
+}
+
+/*
+Constrain images and videos to the parent width and preserve their intrinsic aspect ratio. (https://github.com/mozdevs/cssremedy/issues/14)
+*/
+
+img,
+video {
+  max-width: 100%;
+  height: auto;
+}
+
+/* Make elements with the HTML hidden attribute stay hidden by default */
+[hidden]:where(:not([hidden="until-found"])) {
+  display: none;
+}
+.container {
+  width: 100%;
+}
+@media (min-width: 640px) {
+
+  .container {
+    max-width: 640px;
+  }
+}
+@media (min-width: 768px) {
+
+  .container {
+    max-width: 768px;
+  }
+}
+@media (min-width: 1024px) {
+
+  .container {
+    max-width: 1024px;
+  }
+}
+@media (min-width: 1280px) {
+
+  .container {
+    max-width: 1280px;
+  }
+}
+@media (min-width: 1536px) {
+
+  .container {
+    max-width: 1536px;
+  }
+}
+.pointer-events-none {
+  pointer-events: none;
+}
+.fixed {
+  position: fixed;
+}
+.absolute {
+  position: absolute;
+}
+.relative {
+  position: relative;
+}
+.-inset-2 {
+  inset: -0.5rem;
+}
+.inset-0 {
+  inset: 0px;
+}
+.-right-2 {
+  right: -0.5rem;
+}
+.-right-4 {
+  right: -1rem;
+}
+.-top-1 {
+  top: -0.25rem;
+}
+.-top-4 {
+  top: -1rem;
+}
+.bottom-\[-10\%\] {
+  bottom: -10%;
+}
+.left-0 {
+  left: 0px;
+}
+.left-8 {
+  left: 2rem;
+}
+.left-\[-10\%\] {
+  left: -10%;
+}
+.right-\[-10\%\] {
+  right: -10%;
+}
+.top-1\/2 {
+  top: 50%;
+}
+.top-6 {
+  top: 1.5rem;
+}
+.top-\[-20\%\] {
+  top: -20%;
+}
+.z-0 {
+  z-index: 0;
+}
+.z-10 {
+  z-index: 10;
+}
+.z-50 {
+  z-index: 50;
+}
+.mx-auto {
+  margin-left: auto;
+  margin-right: auto;
+}
+.mb-1 {
+  margin-bottom: 0.25rem;
+}
+.mb-10 {
+  margin-bottom: 2.5rem;
+}
+.mb-12 {
+  margin-bottom: 3rem;
+}
+.mb-16 {
+  margin-bottom: 4rem;
+}
+.mb-2 {
+  margin-bottom: 0.5rem;
+}
+.mb-3 {
+  margin-bottom: 0.75rem;
+}
+.mb-4 {
+  margin-bottom: 1rem;
+}
+.mb-6 {
+  margin-bottom: 1.5rem;
+}
+.mb-8 {
+  margin-bottom: 2rem;
+}
+.mt-1 {
+  margin-top: 0.25rem;
+}
+.mt-16 {
+  margin-top: 4rem;
+}
+.mt-2 {
+  margin-top: 0.5rem;
+}
+.mt-20 {
+  margin-top: 5rem;
+}
+.mt-6 {
+  margin-top: 1.5rem;
+}
+.block {
+  display: block;
+}
+.inline-block {
+  display: inline-block;
+}
+.flex {
+  display: flex;
+}
+.grid {
+  display: grid;
+}
+.hidden {
+  display: none;
+}
+.h-10 {
+  height: 2.5rem;
+}
+.h-12 {
+  height: 3rem;
+}
+.h-16 {
+  height: 4rem;
+}
+.h-24 {
+  height: 6rem;
+}
+.h-32 {
+  height: 8rem;
+}
+.h-4 {
+  height: 1rem;
+}
+.h-\[600px\] {
+  height: 600px;
+}
+.h-\[800px\] {
+  height: 800px;
+}
+.h-full {
+  height: 100%;
+}
+.h-px {
+  height: 1px;
+}
+.w-10 {
+  width: 2.5rem;
+}
+.w-12 {
+  width: 3rem;
+}
+.w-16 {
+  width: 4rem;
+}
+.w-24 {
+  width: 6rem;
+}
+.w-32 {
+  width: 8rem;
+}
+.w-\[600px\] {
+  width: 600px;
+}
+.w-\[800px\] {
+  width: 800px;
+}
+.w-full {
+  width: 100%;
+}
+.w-px {
+  width: 1px;
+}
+.max-w-2xl {
+  max-width: 42rem;
+}
+.max-w-3xl {
+  max-width: 48rem;
+}
+.max-w-4xl {
+  max-width: 56rem;
+}
+.shrink-0 {
+  flex-shrink: 0;
+}
+.flex-grow {
+  flex-grow: 1;
+}
+.-translate-y-12 {
+  --tw-translate-y: -3rem;
+  transform: translate(var(--tw-translate-x), var(--tw-translate-y)) rotate(var(--tw-rotate)) skewX(var(--tw-skew-x)) skewY(var(--tw-skew-y)) scaleX(var(--tw-scale-x)) scaleY(var(--tw-scale-y));
+}
+.transform {
+  transform: translate(var(--tw-translate-x), var(--tw-translate-y)) rotate(var(--tw-rotate)) skewX(var(--tw-skew-x)) skewY(var(--tw-skew-y)) scaleX(var(--tw-scale-x)) scaleY(var(--tw-scale-y));
+}
+@keyframes pulse {
+
+  50% {
+    opacity: .5;
+  }
+}
+.animate-pulse {
+  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+.grid-cols-1 {
+  grid-template-columns: repeat(1, minmax(0, 1fr));
+}
+.flex-col {
+  flex-direction: column;
+}
+.items-start {
+  align-items: flex-start;
+}
+.items-center {
+  align-items: center;
+}
+.justify-center {
+  justify-content: center;
+}
+.gap-10 {
+  gap: 2.5rem;
+}
+.gap-2 {
+  gap: 0.5rem;
+}
+.gap-3 {
+  gap: 0.75rem;
+}
+.gap-4 {
+  gap: 1rem;
+}
+.gap-6 {
+  gap: 1.5rem;
+}
+.gap-8 {
+  gap: 2rem;
+}
+.space-y-4 > :not([hidden]) ~ :not([hidden]) {
+  --tw-space-y-reverse: 0;
+  margin-top: calc(1rem * calc(1 - var(--tw-space-y-reverse)));
+  margin-bottom: calc(1rem * var(--tw-space-y-reverse));
+}
+.space-y-6 > :not([hidden]) ~ :not([hidden]) {
+  --tw-space-y-reverse: 0;
+  margin-top: calc(1.5rem * calc(1 - var(--tw-space-y-reverse)));
+  margin-bottom: calc(1.5rem * var(--tw-space-y-reverse));
+}
+.overflow-hidden {
+  overflow: hidden;
+}
+.rounded-2xl {
+  border-radius: 1rem;
+}
+.rounded-3xl {
+  border-radius: 1.5rem;
+}
+.rounded-\[2\.5rem\] {
+  border-radius: 2.5rem;
+}
+.rounded-\[3rem\] {
+  border-radius: 3rem;
+}
+.rounded-full {
+  border-radius: 9999px;
+}
+.rounded-xl {
+  border-radius: 0.75rem;
+}
+.border {
+  border-width: 1px;
+}
+.border-l-4 {
+  border-left-width: 4px;
+}
+.border-t {
+  border-top-width: 1px;
+}
+.border-t-2 {
+  border-top-width: 2px;
+}
+.border-amber-500\/20 {
+  border-color: rgb(245 158 11 / 0.2);
+}
+.border-cyan-500\/20 {
+  border-color: rgb(6 182 212 / 0.2);
+}
+.border-emerald-500\/30 {
+  border-color: rgb(16 185 129 / 0.3);
+}
+.border-purple-500\/20 {
+  border-color: rgb(168 85 247 / 0.2);
+}
+.border-purple-500\/30 {
+  border-color: rgb(168 85 247 / 0.3);
+}
+.border-purple-500\/40 {
+  border-color: rgb(168 85 247 / 0.4);
+}
+.border-rose-500\/30 {
+  border-color: rgb(244 63 94 / 0.3);
+}
+.border-l-amber-500 {
+  --tw-border-opacity: 1;
+  border-left-color: rgb(245 158 11 / var(--tw-border-opacity, 1));
+}
+.border-l-cyan-500 {
+  --tw-border-opacity: 1;
+  border-left-color: rgb(6 182 212 / var(--tw-border-opacity, 1));
+}
+.border-l-emerald-500 {
+  --tw-border-opacity: 1;
+  border-left-color: rgb(16 185 129 / var(--tw-border-opacity, 1));
+}
+.border-l-purple-500 {
+  --tw-border-opacity: 1;
+  border-left-color: rgb(168 85 247 / var(--tw-border-opacity, 1));
+}
+.border-l-rose-500 {
+  --tw-border-opacity: 1;
+  border-left-color: rgb(244 63 94 / var(--tw-border-opacity, 1));
+}
+.border-t-amber-500\/40 {
+  border-top-color: rgb(245 158 11 / 0.4);
+}
+.border-t-cyan-500\/40 {
+  border-top-color: rgb(6 182 212 / 0.4);
+}
+.border-t-purple-500\/30 {
+  border-top-color: rgb(168 85 247 / 0.3);
+}
+.border-t-purple-500\/40 {
+  border-top-color: rgb(168 85 247 / 0.4);
+}
+.bg-\[\#0a0520\] {
+  --tw-bg-opacity: 1;
+  background-color: rgb(10 5 32 / var(--tw-bg-opacity, 1));
+}
+.bg-amber-500 {
+  --tw-bg-opacity: 1;
+  background-color: rgb(245 158 11 / var(--tw-bg-opacity, 1));
+}
+.bg-amber-500\/10 {
+  background-color: rgb(245 158 11 / 0.1);
+}
+.bg-amber-600\/10 {
+  background-color: rgb(217 119 6 / 0.1);
+}
+.bg-amber-900\/30 {
+  background-color: rgb(120 53 15 / 0.3);
+}
+.bg-cyan-500 {
+  --tw-bg-opacity: 1;
+  background-color: rgb(6 182 212 / var(--tw-bg-opacity, 1));
+}
+.bg-cyan-900\/30 {
+  background-color: rgb(22 78 99 / 0.3);
+}
+.bg-emerald-500 {
+  --tw-bg-opacity: 1;
+  background-color: rgb(16 185 129 / var(--tw-bg-opacity, 1));
+}
+.bg-emerald-900\/30 {
+  background-color: rgb(6 78 59 / 0.3);
+}
+.bg-emerald-900\/40 {
+  background-color: rgb(6 78 59 / 0.4);
+}
+.bg-indigo-900\/20 {
+  background-color: rgb(49 46 129 / 0.2);
+}
+.bg-purple-500\/50 {
+  background-color: rgb(168 85 247 / 0.5);
+}
+.bg-purple-900\/30 {
+  background-color: rgb(88 28 135 / 0.3);
+}
+.bg-purple-900\/40 {
+  background-color: rgb(88 28 135 / 0.4);
+}
+.bg-rose-500 {
+  --tw-bg-opacity: 1;
+  background-color: rgb(244 63 94 / var(--tw-bg-opacity, 1));
+}
+.bg-rose-500\/5 {
+  background-color: rgb(244 63 94 / 0.05);
+}
+.bg-rose-950\/50 {
+  background-color: rgb(76 5 25 / 0.5);
+}
+.bg-white\/20 {
+  background-color: rgb(255 255 255 / 0.2);
+}
+.bg-gradient-to-b {
+  background-image: linear-gradient(to bottom, var(--tw-gradient-stops));
+}
+.bg-gradient-to-r {
+  background-image: linear-gradient(to right, var(--tw-gradient-stops));
+}
+.from-amber-500\/5 {
+  --tw-gradient-from: rgb(245 158 11 / 0.05) var(--tw-gradient-from-position);
+  --tw-gradient-to: rgb(245 158 11 / 0) var(--tw-gradient-to-position);
+  --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to);
+}
+.from-cyan-500\/5 {
+  --tw-gradient-from: rgb(6 182 212 / 0.05) var(--tw-gradient-from-position);
+  --tw-gradient-to: rgb(6 182 212 / 0) var(--tw-gradient-to-position);
+  --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to);
+}
+.from-emerald-500\/5 {
+  --tw-gradient-from: rgb(16 185 129 / 0.05) var(--tw-gradient-from-position);
+  --tw-gradient-to: rgb(16 185 129 / 0) var(--tw-gradient-to-position);
+  --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to);
+}
+.from-purple-500\/5 {
+  --tw-gradient-from: rgb(168 85 247 / 0.05) var(--tw-gradient-from-position);
+  --tw-gradient-to: rgb(168 85 247 / 0) var(--tw-gradient-to-position);
+  --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to);
+}
+.from-purple-600 {
+  --tw-gradient-from: #9333ea var(--tw-gradient-from-position);
+  --tw-gradient-to: rgb(147 51 234 / 0) var(--tw-gradient-to-position);
+  --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to);
+}
+.from-purple-900\/10 {
+  --tw-gradient-from: rgb(88 28 135 / 0.1) var(--tw-gradient-from-position);
+  --tw-gradient-to: rgb(88 28 135 / 0) var(--tw-gradient-to-position);
+  --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to);
+}
+.from-transparent {
+  --tw-gradient-from: transparent var(--tw-gradient-from-position);
+  --tw-gradient-to: rgb(0 0 0 / 0) var(--tw-gradient-to-position);
+  --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to);
+}
+.via-emerald-500\/30 {
+  --tw-gradient-to: rgb(16 185 129 / 0)  var(--tw-gradient-to-position);
+  --tw-gradient-stops: var(--tw-gradient-from), rgb(16 185 129 / 0.3) var(--tw-gradient-via-position), var(--tw-gradient-to);
+}
+.via-fuchsia-500 {
+  --tw-gradient-to: rgb(217 70 239 / 0)  var(--tw-gradient-to-position);
+  --tw-gradient-stops: var(--tw-gradient-from), #d946ef var(--tw-gradient-via-position), var(--tw-gradient-to);
+}
+.to-indigo-600 {
+  --tw-gradient-to: #4f46e5 var(--tw-gradient-to-position);
+}
+.to-transparent {
+  --tw-gradient-to: transparent var(--tw-gradient-to-position);
+}
+.p-10 {
+  padding: 2.5rem;
+}
+.p-12 {
+  padding: 3rem;
+}
+.p-4 {
+  padding: 1rem;
+}
+.p-6 {
+  padding: 1.5rem;
+}
+.p-8 {
+  padding: 2rem;
+}
+.px-4 {
+  padding-left: 1rem;
+  padding-right: 1rem;
+}
+.px-6 {
+  padding-left: 1.5rem;
+  padding-right: 1.5rem;
+}
+.py-1 {
+  padding-top: 0.25rem;
+  padding-bottom: 0.25rem;
+}
+.py-2 {
+  padding-top: 0.5rem;
+  padding-bottom: 0.5rem;
+}
+.text-center {
+  text-align: center;
+}
+.text-2xl {
+  font-size: 1.5rem;
+  line-height: 2rem;
+}
+.text-3xl {
+  font-size: 1.875rem;
+  line-height: 2.25rem;
+}
+.text-4xl {
+  font-size: 2.25rem;
+  line-height: 2.5rem;
+}
+.text-5xl {
+  font-size: 3rem;
+  line-height: 1;
+}
+.text-6xl {
+  font-size: 3.75rem;
+  line-height: 1;
+}
+.text-base {
+  font-size: 1rem;
+  line-height: 1.5rem;
+}
+.text-lg {
+  font-size: 1.125rem;
+  line-height: 1.75rem;
+}
+.text-sm {
+  font-size: 0.875rem;
+  line-height: 1.25rem;
+}
+.text-xl {
+  font-size: 1.25rem;
+  line-height: 1.75rem;
+}
+.text-xs {
+  font-size: 0.75rem;
+  line-height: 1rem;
+}
+.font-bold {
+  font-weight: 700;
+}
+.font-light {
+  font-weight: 300;
+}
+.font-medium {
+  font-weight: 500;
+}
+.uppercase {
+  text-transform: uppercase;
+}
+.lowercase {
+  text-transform: lowercase;
+}
+.italic {
+  font-style: italic;
+}
+.leading-\[1\.1\] {
+  line-height: 1.1;
+}
+.leading-relaxed {
+  line-height: 1.625;
+}
+.tracking-\[0\.2em\] {
+  letter-spacing: 0.2em;
+}
+.tracking-\[0\.3em\] {
+  letter-spacing: 0.3em;
+}
+.tracking-widest {
+  letter-spacing: 0.1em;
+}
+.text-amber-300 {
+  --tw-text-opacity: 1;
+  color: rgb(252 211 77 / var(--tw-text-opacity, 1));
+}
+.text-amber-400 {
+  --tw-text-opacity: 1;
+  color: rgb(251 191 36 / var(--tw-text-opacity, 1));
+}
+.text-amber-500 {
+  --tw-text-opacity: 1;
+  color: rgb(245 158 11 / var(--tw-text-opacity, 1));
+}
+.text-black {
+  --tw-text-opacity: 1;
+  color: rgb(0 0 0 / var(--tw-text-opacity, 1));
+}
+.text-cyan-300 {
+  --tw-text-opacity: 1;
+  color: rgb(103 232 249 / var(--tw-text-opacity, 1));
+}
+.text-cyan-500 {
+  --tw-text-opacity: 1;
+  color: rgb(6 182 212 / var(--tw-text-opacity, 1));
+}
+.text-emerald-200 {
+  --tw-text-opacity: 1;
+  color: rgb(167 243 208 / var(--tw-text-opacity, 1));
+}
+.text-emerald-300 {
+  --tw-text-opacity: 1;
+  color: rgb(110 231 183 / var(--tw-text-opacity, 1));
+}
+.text-emerald-400 {
+  --tw-text-opacity: 1;
+  color: rgb(52 211 153 / var(--tw-text-opacity, 1));
+}
+.text-gray-400 {
+  --tw-text-opacity: 1;
+  color: rgb(156 163 175 / var(--tw-text-opacity, 1));
+}
+.text-gray-500 {
+  --tw-text-opacity: 1;
+  color: rgb(107 114 128 / var(--tw-text-opacity, 1));
+}
+.text-purple-100\/80 {
+  color: rgb(243 232 255 / 0.8);
+}
+.text-purple-100\/90 {
+  color: rgb(243 232 255 / 0.9);
+}
+.text-purple-200 {
+  --tw-text-opacity: 1;
+  color: rgb(233 213 255 / var(--tw-text-opacity, 1));
+}
+.text-purple-300 {
+  --tw-text-opacity: 1;
+  color: rgb(216 180 254 / var(--tw-text-opacity, 1));
+}
+.text-purple-400 {
+  --tw-text-opacity: 1;
+  color: rgb(192 132 252 / var(--tw-text-opacity, 1));
+}
+.text-purple-500 {
+  --tw-text-opacity: 1;
+  color: rgb(168 85 247 / var(--tw-text-opacity, 1));
+}
+.text-rose-400 {
+  --tw-text-opacity: 1;
+  color: rgb(251 113 133 / var(--tw-text-opacity, 1));
+}
+.text-white {
+  --tw-text-opacity: 1;
+  color: rgb(255 255 255 / var(--tw-text-opacity, 1));
+}
+.text-white\/50 {
+  color: rgb(255 255 255 / 0.5);
+}
+.text-yellow-300 {
+  --tw-text-opacity: 1;
+  color: rgb(253 224 71 / var(--tw-text-opacity, 1));
+}
+.text-yellow-400 {
+  --tw-text-opacity: 1;
+  color: rgb(250 204 21 / var(--tw-text-opacity, 1));
+}
+.antialiased {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+.opacity-0 {
+  opacity: 0;
+}
+.opacity-30 {
+  opacity: 0.3;
+}
+.opacity-60 {
+  opacity: 0.6;
+}
+.opacity-80 {
+  opacity: 0.8;
+}
+.mix-blend-screen {
+  mix-blend-mode: screen;
+}
+.shadow-\[0_0_20px_rgba\(16\2c 185\2c 129\2c 0\.3\)\] {
+  --tw-shadow: 0 0 20px rgba(16,185,129,0.3);
+  --tw-shadow-colored: 0 0 20px var(--tw-shadow-color);
+  box-shadow: var(--tw-ring-offset-shadow, 0 0 #0000), var(--tw-ring-shadow, 0 0 #0000), var(--tw-shadow);
+}
+.shadow-\[0_0_20px_rgba\(16\2c 185\2c 129\2c 0\.5\)\] {
+  --tw-shadow: 0 0 20px rgba(16,185,129,0.5);
+  --tw-shadow-colored: 0 0 20px var(--tw-shadow-color);
+  box-shadow: var(--tw-ring-offset-shadow, 0 0 #0000), var(--tw-ring-shadow, 0 0 #0000), var(--tw-shadow);
+}
+.shadow-\[0_0_20px_rgba\(168\2c 85\2c 247\2c 0\.3\)\] {
+  --tw-shadow: 0 0 20px rgba(168,85,247,0.3);
+  --tw-shadow-colored: 0 0 20px var(--tw-shadow-color);
+  box-shadow: var(--tw-ring-offset-shadow, 0 0 #0000), var(--tw-ring-shadow, 0 0 #0000), var(--tw-shadow);
+}
+.shadow-\[0_0_20px_rgba\(245\2c 158\2c 11\2c 0\.3\)\] {
+  --tw-shadow: 0 0 20px rgba(245,158,11,0.3);
+  --tw-shadow-colored: 0 0 20px var(--tw-shadow-color);
+  box-shadow: var(--tw-ring-offset-shadow, 0 0 #0000), var(--tw-ring-shadow, 0 0 #0000), var(--tw-shadow);
+}
+.shadow-\[0_0_20px_rgba\(6\2c 182\2c 212\2c 0\.3\)\] {
+  --tw-shadow: 0 0 20px rgba(6,182,212,0.3);
+  --tw-shadow-colored: 0 0 20px var(--tw-shadow-color);
+  box-shadow: var(--tw-ring-offset-shadow, 0 0 #0000), var(--tw-ring-shadow, 0 0 #0000), var(--tw-shadow);
+}
+.shadow-\[0_0_40px_-10px_rgba\(168\2c 85\2c 247\2c 0\.6\)\] {
+  --tw-shadow: 0 0 40px -10px rgba(168,85,247,0.6);
+  --tw-shadow-colored: 0 0 40px -10px var(--tw-shadow-color);
+  box-shadow: var(--tw-ring-offset-shadow, 0 0 #0000), var(--tw-ring-shadow, 0 0 #0000), var(--tw-shadow);
+}
+.shadow-\[0_20px_40px_-10px_rgba\(168\2c 85\2c 247\2c 0\.2\)\] {
+  --tw-shadow: 0 20px 40px -10px rgba(168,85,247,0.2);
+  --tw-shadow-colored: 0 20px 40px -10px var(--tw-shadow-color);
+  box-shadow: var(--tw-ring-offset-shadow, 0 0 #0000), var(--tw-ring-shadow, 0 0 #0000), var(--tw-shadow);
+}
+.blur {
+  --tw-blur: blur(8px);
+  filter: var(--tw-blur) var(--tw-brightness) var(--tw-contrast) var(--tw-grayscale) var(--tw-hue-rotate) var(--tw-invert) var(--tw-saturate) var(--tw-sepia) var(--tw-drop-shadow);
+}
+.blur-3xl {
+  --tw-blur: blur(64px);
+  filter: var(--tw-blur) var(--tw-brightness) var(--tw-contrast) var(--tw-grayscale) var(--tw-hue-rotate) var(--tw-invert) var(--tw-saturate) var(--tw-sepia) var(--tw-drop-shadow);
+}
+.drop-shadow-2xl {
+  --tw-drop-shadow: drop-shadow(0 25px 25px rgb(0 0 0 / 0.15));
+  filter: var(--tw-blur) var(--tw-brightness) var(--tw-contrast) var(--tw-grayscale) var(--tw-hue-rotate) var(--tw-invert) var(--tw-saturate) var(--tw-sepia) var(--tw-drop-shadow);
+}
+.filter {
+  filter: var(--tw-blur) var(--tw-brightness) var(--tw-contrast) var(--tw-grayscale) var(--tw-hue-rotate) var(--tw-invert) var(--tw-saturate) var(--tw-sepia) var(--tw-drop-shadow);
+}
+.backdrop-filter {
+  -webkit-backdrop-filter: var(--tw-backdrop-blur) var(--tw-backdrop-brightness) var(--tw-backdrop-contrast) var(--tw-backdrop-grayscale) var(--tw-backdrop-hue-rotate) var(--tw-backdrop-invert) var(--tw-backdrop-opacity) var(--tw-backdrop-saturate) var(--tw-backdrop-sepia);
+  backdrop-filter: var(--tw-backdrop-blur) var(--tw-backdrop-brightness) var(--tw-backdrop-contrast) var(--tw-backdrop-grayscale) var(--tw-backdrop-hue-rotate) var(--tw-backdrop-invert) var(--tw-backdrop-opacity) var(--tw-backdrop-saturate) var(--tw-backdrop-sepia);
+}
+.transition {
+  transition-property: color, background-color, border-color, text-decoration-color, fill, stroke, opacity, box-shadow, transform, filter, backdrop-filter;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  transition-duration: 150ms;
+}
+.transition-all {
+  transition-property: all;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  transition-duration: 150ms;
+}
+.transition-transform {
+  transition-property: transform;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  transition-duration: 150ms;
+}
+.ease-in-out {
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+}
+.selection\:bg-purple-600 *::selection {
+  --tw-bg-opacity: 1;
+  background-color: rgb(147 51 234 / var(--tw-bg-opacity, 1));
+}
+.selection\:text-white *::selection {
+  --tw-text-opacity: 1;
+  color: rgb(255 255 255 / var(--tw-text-opacity, 1));
+}
+.selection\:bg-purple-600::selection {
+  --tw-bg-opacity: 1;
+  background-color: rgb(147 51 234 / var(--tw-bg-opacity, 1));
+}
+.selection\:text-white::selection {
+  --tw-text-opacity: 1;
+  color: rgb(255 255 255 / var(--tw-text-opacity, 1));
+}
+.hover\:border-emerald-500\/40:hover {
+  border-color: rgb(16 185 129 / 0.4);
+}
+.hover\:border-emerald-500\/50:hover {
+  border-color: rgb(16 185 129 / 0.5);
+}
+.hover\:bg-rose-500\/10:hover {
+  background-color: rgb(244 63 94 / 0.1);
+}
+.group:hover .group-hover\:scale-110 {
+  --tw-scale-x: 1.1;
+  --tw-scale-y: 1.1;
+  transform: translate(var(--tw-translate-x), var(--tw-translate-y)) rotate(var(--tw-rotate)) skewX(var(--tw-skew-x)) skewY(var(--tw-skew-y)) scaleX(var(--tw-scale-x)) scaleY(var(--tw-scale-y));
+}
+.group:hover .group-hover\:bg-emerald-500 {
+  --tw-bg-opacity: 1;
+  background-color: rgb(16 185 129 / var(--tw-bg-opacity, 1));
+}
+.group:hover .group-hover\:text-black {
+  --tw-text-opacity: 1;
+  color: rgb(0 0 0 / var(--tw-text-opacity, 1));
+}
+@media (min-width: 768px) {
+
+  .md\:block {
+    display: block;
+  }
+
+  .md\:-translate-y-6 {
+    --tw-translate-y: -1.5rem;
+    transform: translate(var(--tw-translate-x), var(--tw-translate-y)) rotate(var(--tw-rotate)) skewX(var(--tw-skew-x)) skewY(var(--tw-skew-y)) scaleX(var(--tw-scale-x)) scaleY(var(--tw-scale-y));
+  }
+
+  .md\:grid-cols-2 {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .md\:grid-cols-3 {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .md\:grid-cols-4 {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+
+  .md\:text-2xl {
+    font-size: 1.5rem;
+    line-height: 2rem;
+  }
+
+  .md\:text-3xl {
+    font-size: 1.875rem;
+    line-height: 2.25rem;
+  }
+
+  .md\:text-7xl {
+    font-size: 4.5rem;
+    line-height: 1;
+  }
+}
+@media (min-width: 1024px) {
+
+  .lg\:text-8xl {
+    font-size: 6rem;
+    line-height: 1;
+  }
+}* {
+      -ms-overflow-style: none !important;
+      scrollbar-width: none !important;
+    }
+
+    *::-webkit-scrollbar {
+      display: none !important;
+      width: 0 !important;
+      height: 0 !important;
+    }
+  </style></head>
+<body class="selection:bg-purple-600 selection:text-white antialiased text-base" vid="11">
+
+    <div id="star-container" class="stars" vid="12"></div>
+
+    <div id="page-presentation" class="w-full h-full" vid="13">
+        <div id="ambient-1" class="ambient-glow w-[800px] h-[800px] top-[-20%] left-[-10%] bg-purple-900/30 mix-blend-screen" vid="14"></div>
+        <div id="ambient-2" class="ambient-glow w-[600px] h-[600px] bottom-[-10%] right-[-10%] bg-indigo-900/20 mix-blend-screen" vid="15"></div>
+
+        <div class="fixed top-6 left-8 z-50 flex items-center gap-3" vid="16">
+            <div class="relative" vid="17">
+                <i class="ph-fill ph-sparkle text-purple-400 text-2xl" vid="18"></i>
+                <i class="ph-fill ph-star-four text-yellow-300 text-xs absolute -top-1 -right-2 animate-pulse" vid="19"></i>
+            </div>
+            <span class="font-magical text-xl text-white tracking-widest opacity-80 uppercase text-sm" vid="20">THE ALGORITHM WITCH</span>
+        </div>
+
+        <button id="btn-prev" class="nav-btn nav-prev" aria-label="Previous Slide" vid="21">
+            <i class="ph-bold ph-caret-left text-xl" vid="22"></i>
+        </button>
+        <button id="btn-next" class="nav-btn nav-next" aria-label="Next Slide" vid="23">
+            <i class="ph-bold ph-caret-right text-xl" vid="24"></i>
+        </button>
+
+        <div class="presentation-controls" vid="25">
+            <div class="dots-container" id="dots-container" vid="26"></div>
+            <div class="w-px h-4 bg-white/20" vid="27"></div>
+            <div class="slide-counter text-xs tracking-widest text-white/50 font-bold" id="slide-counter" vid="28">1 / 8</div>
+        </div>
+
+        <main id="slides-container" class="relative w-full h-full" vid="29">
+
+            
+            <section class="slide active" data-ambient="bg-purple-900/30,bg-indigo-900/20" vid="30">
+                <div class="content-container items-center text-center" vid="31">
+                    <div class="mb-8 relative inline-block float" vid="32">
+                        <div class="absolute -inset-2 bg-gradient-to-r from-purple-600 via-fuchsia-500 to-indigo-600 rounded-full blur opacity-30" vid="33"></div>
+                        <div class="relative px-6 py-2 bg-[#0a0520] rounded-full border border-purple-500/30 text-purple-200 text-xs font-medium uppercase tracking-[0.2em] flex items-center gap-2" vid="34">
+                            <i class="ph-fill ph-magic-wand text-yellow-400" vid="35"></i> Prepared for Digital Performance Optimization
+                        </div>
+                    </div>
+                    <h1 class="font-magical text-5xl md:text-7xl lg:text-8xl mb-8 leading-[1.1] drop-shadow-2xl" vid="36">
+                        <span class="text-white block" vid="37">GTM Tracking &amp;</span>
+                        <span class="text-gradient-gold block mt-2" vid="38">Measurements</span>
+                    </h1>
+                    <p class="font-serif-heading text-xl md:text-2xl text-purple-100/80 max-w-4xl mx-auto leading-relaxed font-light italic mt-6" vid="39">
+                        This presentation outlines the standard operating procedures for implementing, validating, and maintaining a reliable tracking system using Google Tag Manager (GTM) and GA4.
+                    </p>
+                    <div class="mt-16 animate-pulse" vid="40">
+                        <i class="ph-fill ph-caret-double-down text-purple-400 text-2xl" vid="41"></i>
+                    </div>
+                </div>
+            </section>
+
+            
+            <section class="slide" data-ambient="bg-cyan-900/20,bg-purple-900/20" vid="42">
+                <div class="content-container" vid="43">
+                    <div class="flex items-center gap-4 mb-12" vid="44">
+                        <span class="h-px w-12 bg-cyan-500" vid="45"></span>
+                        <h2 class="font-magical text-4xl text-white uppercase tracking-widest" vid="46">The Tracking Framework</h2>
+                    </div>
+                    
+                    <div class="grid md:grid-cols-3 gap-8" vid="47">
+                        <div class="glass-card glow-border-cyan p-10 rounded-3xl flex flex-col border-t-2 border-t-cyan-500/40" vid="48">
+                            <div class="w-16 h-16 rounded-2xl bg-cyan-900/30 border border-cyan-500/20 flex items-center justify-center mb-8" vid="49">
+                                <i class="ph-duotone ph-stack text-3xl text-cyan-300" vid="50"></i>
+                            </div>
+                            <h3 class="font-magical text-2xl text-white mb-4" vid="51">Foundation Layer</h3>
+                            <ul class="space-y-4 text-gray-400 text-sm leading-relaxed" vid="52">
+                                <li class="flex items-start gap-3" vid="53"><i class="ph-fill ph-sparkle text-cyan-500 mt-1" vid="54"></i> GA4 base tag implementation</li>
+                                <li class="flex items-start gap-3" vid="55"><i class="ph-fill ph-sparkle text-cyan-500 mt-1" vid="56"></i> All Pages trigger configuration</li>
+                                <li class="flex items-start gap-3" vid="57"><i class="ph-fill ph-sparkle text-cyan-500 mt-1" vid="58"></i> Correct firing logic validation</li>
+                            </ul>
+                        </div>
+
+                        <div class="glass-card glow-border-purple p-10 rounded-3xl flex flex-col border-t-2 border-t-purple-500/40 transform md:-translate-y-6 shadow-[0_20px_40px_-10px_rgba(168,85,247,0.2)]" vid="59">
+                            <div class="w-16 h-16 rounded-2xl bg-purple-900/30 border border-purple-500/20 flex items-center justify-center mb-8" vid="60">
+                                <i class="ph-duotone ph-lightning text-3xl text-purple-300" vid="61"></i>
+                            </div>
+                            <h3 class="font-magical text-2xl text-white mb-4" vid="62">Event Layer</h3>
+                            <ul class="space-y-4 text-gray-400 text-sm leading-relaxed" vid="63">
+                                <li class="flex items-start gap-3" vid="64"><i class="ph-fill ph-sparkle text-purple-500 mt-1" vid="65"></i> Key action tracking</li>
+                                <li class="flex items-start gap-3" vid="66"><i class="ph-fill ph-sparkle text-purple-500 mt-1" vid="67"></i> Form submission events</li>
+                                <li class="flex items-start gap-3" vid="68"><i class="ph-fill ph-sparkle text-purple-500 mt-1" vid="69"></i> Core conversion mapping</li>
+                            </ul>
+                        </div>
+
+                        <div class="glass-card glow-border-amber p-10 rounded-3xl flex flex-col border-t-2 border-t-amber-500/40" vid="70">
+                            <div class="w-16 h-16 rounded-2xl bg-amber-900/30 border border-amber-500/20 flex items-center justify-center mb-8" vid="71">
+                                <i class="ph-duotone ph-path text-3xl text-amber-300" vid="72"></i>
+                            </div>
+                            <h3 class="font-magical text-2xl text-white mb-4" vid="73">Attribution Layer</h3>
+                            <ul class="space-y-4 text-gray-400 text-sm leading-relaxed" vid="74">
+                                <li class="flex items-start gap-3" vid="75"><i class="ph-fill ph-sparkle text-amber-500 mt-1" vid="76"></i> UTM structure enforcement</li>
+                                <li class="flex items-start gap-3" vid="77"><i class="ph-fill ph-sparkle text-amber-500 mt-1" vid="78"></i> Campaign naming consistency</li>
+                                <li class="flex items-start gap-3" vid="79"><i class="ph-fill ph-sparkle text-amber-500 mt-1" vid="80"></i> Source/Medium normalization</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            
+            <section class="slide" data-ambient="bg-rose-900/20,bg-purple-900/20" vid="81">
+                <div class="content-container" vid="82">
+                    <div class="flex items-center gap-4 mb-12" vid="83">
+                        <span class="h-px w-12 bg-rose-500" vid="84"></span>
+                        <h2 class="font-magical text-4xl text-white uppercase tracking-widest" vid="85">Critical Fixes Required</h2>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-8" vid="86">
+                        <div class="glass-card p-8 rounded-3xl border-l-4 border-l-rose-500 bg-rose-500/5 group hover:bg-rose-500/10 transition-all" vid="87">
+                            <div class="flex gap-6 items-start" vid="88">
+                                <div class="p-4 bg-rose-950/50 rounded-2xl border border-rose-500/30 text-rose-400" vid="89">
+                                    <i class="ph-bold ph-warning text-3xl" vid="90"></i>
+                                </div>
+                                <div vid="91">
+                                    <h3 class="text-xl text-white font-magical mb-2" vid="92">Base Tag Missing</h3>
+                                    <p class="text-gray-400 text-sm leading-relaxed" vid="93">GA4 base tag is currently missing from the container and must be created immediately to capture any traffic data.</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="glass-card p-8 rounded-3xl border-l-4 border-l-rose-500 bg-rose-500/5 group hover:bg-rose-500/10 transition-all" vid="94">
+                            <div class="flex gap-6 items-start" vid="95">
+                                <div class="p-4 bg-rose-950/50 rounded-2xl border border-rose-500/30 text-rose-400" vid="96">
+                                    <i class="ph-bold ph-faders text-3xl" vid="97"></i>
+                                </div>
+                                <div vid="98">
+                                    <h3 class="text-xl text-white font-magical mb-2" vid="99">Trigger Configuration</h3>
+                                    <p class="text-gray-400 text-sm leading-relaxed" vid="100">All Pages trigger is missing or misconfigured; it must be set up to ensure tracking initiates on every site interaction.</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="glass-card p-8 rounded-3xl border-l-4 border-l-rose-500 bg-rose-500/5 group hover:bg-rose-500/10 transition-all" vid="101">
+                            <div class="flex gap-6 items-start" vid="102">
+                                <div class="p-4 bg-rose-950/50 rounded-2xl border border-rose-500/30 text-rose-400" vid="103">
+                                    <i class="ph-bold ph-link-break text-3xl" vid="104"></i>
+                                </div>
+                                <div vid="105">
+                                    <h3 class="text-xl text-white font-magical mb-2" vid="106">Tag Disconnection</h3>
+                                    <p class="text-gray-400 text-sm leading-relaxed" vid="107">GA4 tag is currently unattached to the global trigger; it must be formally bound to the All Pages trigger to fire correctly.</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="glass-card p-8 rounded-3xl border-l-4 border-l-rose-500 bg-rose-500/5 group hover:bg-rose-500/10 transition-all" vid="108">
+                            <div class="flex gap-6 items-start" vid="109">
+                                <div class="p-4 bg-rose-950/50 rounded-2xl border border-rose-500/30 text-rose-400" vid="110">
+                                    <i class="ph-bold ph-test-tube text-3xl" vid="111"></i>
+                                </div>
+                                <div vid="112">
+                                    <h3 class="text-xl text-white font-magical mb-2" vid="113">Untested Conversions</h3>
+                                    <p class="text-gray-400 text-sm leading-relaxed" vid="114">Conversion tracking events must be implemented and rigorously tested through GTM Preview mode before launch.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            
+            <section class="slide" data-ambient="bg-emerald-900/20,bg-cyan-900/20" vid="115">
+                <div class="content-container" vid="116">
+                    <div class="text-center mb-16" vid="117">
+                        <span class="text-emerald-400 uppercase tracking-[0.3em] text-xs font-bold mb-3 block" vid="118">Step-by-Step Alchemy</span>
+                        <h2 class="font-magical text-5xl text-white mb-6" vid="119">Implementation Ritual</h2>
+                    </div>
+
+                    <div class="grid md:grid-cols-4 gap-6 relative" vid="120">
+                        <div class="hidden md:block absolute top-1/2 left-0 w-full h-px bg-gradient-to-r from-transparent via-emerald-500/30 to-transparent -translate-y-12" vid="121"></div>
+                        
+                        <div class="glass-card p-8 rounded-[2.5rem] text-center relative z-10 hover:border-emerald-500/50 transition-all" vid="122">
+                            <div class="w-12 h-12 rounded-full bg-emerald-500 text-black font-magical text-xl flex items-center justify-center mx-auto mb-6 shadow-[0_0_20px_rgba(16,185,129,0.5)]" vid="123">1</div>
+                            <i class="ph-duotone ph-code text-4xl text-emerald-300 mb-4" vid="124"></i>
+                            <h3 class="font-magical text-lg text-white mb-2" vid="125">Create GA4 Tag</h3>
+                            <p class="text-gray-500 text-xs leading-relaxed" vid="126">Configure tag with the correct Measurement ID from GA4 property settings.</p>
+                        </div>
+
+                        <div class="glass-card p-8 rounded-[2.5rem] text-center relative z-10 hover:border-emerald-500/50 transition-all" vid="127">
+                            <div class="w-12 h-12 rounded-full bg-emerald-500 text-black font-magical text-xl flex items-center justify-center mx-auto mb-6 shadow-[0_0_20px_rgba(16,185,129,0.5)]" vid="128">2</div>
+                            <i class="ph-duotone ph-selection-plus text-4xl text-emerald-300 mb-4" vid="129"></i>
+                            <h3 class="font-magical text-lg text-white mb-2" vid="130">Configure Trigger</h3>
+                            <p class="text-gray-500 text-xs leading-relaxed" vid="131">Create All Pages trigger using the standard Page View trigger type.</p>
+                        </div>
+
+                        <div class="glass-card p-8 rounded-[2.5rem] text-center relative z-10 hover:border-emerald-500/50 transition-all" vid="132">
+                            <div class="w-12 h-12 rounded-full bg-emerald-500 text-black font-magical text-xl flex items-center justify-center mx-auto mb-6 shadow-[0_0_20px_rgba(16,185,129,0.5)]" vid="133">3</div>
+                            <i class="ph-duotone ph-rocket-launch text-4xl text-emerald-300 mb-4" vid="134"></i>
+                            <h3 class="font-magical text-lg text-white mb-2" vid="135">Attach &amp; Publish</h3>
+                            <p class="text-gray-500 text-xs leading-relaxed" vid="136">Bind trigger to GA4 tag and publish the updated GTM container version.</p>
+                        </div>
+
+                        <div class="glass-card p-8 rounded-[2.5rem] text-center relative z-10 hover:border-emerald-500/50 transition-all" vid="137">
+                            <div class="w-12 h-12 rounded-full bg-emerald-500 text-black font-magical text-xl flex items-center justify-center mx-auto mb-6 shadow-[0_0_20px_rgba(16,185,129,0.5)]" vid="138">4</div>
+                            <i class="ph-duotone ph-magnifying-glass text-4xl text-emerald-300 mb-4" vid="139"></i>
+                            <h3 class="font-magical text-lg text-white mb-2" vid="140">Validate Flow</h3>
+                            <p class="text-gray-500 text-xs leading-relaxed" vid="141">Test using GTM Preview Mode and GA4 DebugView to confirm event firing.</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            
+            <section class="slide" data-ambient="bg-amber-900/20,bg-orange-900/20" vid="142">
+                <div class="content-container" vid="143">
+                    <div class="flex items-center gap-4 mb-12" vid="144">
+                        <span class="h-px w-12 bg-amber-500" vid="145"></span>
+                        <h2 class="font-magical text-4xl text-white uppercase tracking-widest" vid="146">Campaign Tracking SOP</h2>
+                    </div>
+
+                    <div class="grid md:grid-cols-2 gap-8" vid="147">
+                        <div class="glass-card p-10 rounded-3xl border-t-2 border-t-amber-500/40 relative overflow-hidden group" vid="148">
+                            <div class="absolute -right-4 -top-4 w-32 h-32 bg-amber-600/10 blur-3xl rounded-full" vid="149"></div>
+                            <h3 class="font-magical text-2xl text-white mb-8" vid="150">Universal Standards</h3>
+                            <div class="space-y-6" vid="151">
+                                <div class="flex gap-4 items-start" vid="152">
+                                    <div class="w-10 h-10 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center shrink-0" vid="153">
+                                        <i class="ph-fill ph-tag text-amber-400" vid="154"></i>
+                                    </div>
+                                    <div vid="155">
+                                        <h4 class="text-white font-bold text-sm uppercase tracking-widest mb-1" vid="156">Apply UTMs</h4>
+                                        <p class="text-gray-400 text-xs" vid="157">All external campaign links must include consistent UTM parameters.</p>
+                                    </div>
+                                </div>
+                                <div class="flex gap-4 items-start" vid="158">
+                                    <div class="w-10 h-10 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center shrink-0" vid="159">
+                                        <i class="ph-fill ph-text-aa text-amber-400" vid="160"></i>
+                                    </div>
+                                    <div vid="161">
+                                        <h4 class="text-white font-bold text-sm uppercase tracking-widest mb-1" vid="162">Lowercase Only</h4>
+                                        <p class="text-gray-400 text-xs" vid="163">Use consistent lowercase naming with underscores for all values.</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="glass-card p-10 rounded-3xl border-t-2 border-t-amber-500/40 relative overflow-hidden group" vid="164">
+                            <div class="absolute -right-4 -top-4 w-32 h-32 bg-amber-600/10 blur-3xl rounded-full" vid="165"></div>
+                            <h3 class="font-magical text-2xl text-white mb-8" vid="166">Deployment Protocol</h3>
+                            <div class="space-y-6" vid="167">
+                                <div class="flex gap-4 items-start" vid="168">
+                                    <div class="w-10 h-10 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center shrink-0" vid="169">
+                                        <i class="ph-fill ph-list-checks text-amber-400" vid="170"></i>
+                                    </div>
+                                    <div vid="171">
+                                        <h4 class="text-white font-bold text-sm uppercase tracking-widest mb-1" vid="172">Registry Alignment</h4>
+                                        <p class="text-gray-400 text-xs" vid="173">Ensure campaign names align strictly with the internal campaign registry.</p>
+                                    </div>
+                                </div>
+                                <div class="flex gap-4 items-start" vid="174">
+                                    <div class="w-10 h-10 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center shrink-0" vid="175">
+                                        <i class="ph-fill ph-cursor-click text-amber-400" vid="176"></i>
+                                    </div>
+                                    <div vid="177">
+                                        <h4 class="text-white font-bold text-sm uppercase tracking-widest mb-1" vid="178">Full Journey Test</h4>
+                                        <p class="text-gray-400 text-xs" vid="179">Test full journey from click to conversion before every campaign launch.</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            
+            <section class="slide" data-ambient="bg-emerald-900/20,bg-indigo-900/20" vid="180">
+                <div class="content-container items-center" vid="181">
+                    <div class="text-center mb-16" vid="182">
+                        <h2 class="font-magical text-5xl text-white mb-4" vid="183">Quality Assurance</h2>
+                        <div class="inline-block px-4 py-1 rounded-full bg-emerald-900/40 border border-emerald-500/30 text-emerald-200 text-xs font-bold uppercase tracking-widest" vid="184">The Validation Rite</div>
+                    </div>
+
+                    <div class="w-full max-w-3xl space-y-4" vid="185">
+                        <div class="glass-card p-6 rounded-2xl flex items-center gap-6 group hover:border-emerald-500/40 transition-all" vid="186">
+                            <div class="w-12 h-12 rounded-full border border-emerald-500/30 flex items-center justify-center text-emerald-400 group-hover:bg-emerald-500 group-hover:text-black transition-all" vid="187">
+                                <i class="ph-bold ph-check text-xl" vid="188"></i>
+                            </div>
+                            <div class="flex-grow" vid="189">
+                                <h4 class="text-white font-magical text-xl" vid="190">Global Fire Check</h4>
+                                <p class="text-gray-500 text-sm" vid="191">Confirm that GA4 configuration tag fires correctly on all unique page paths.</p>
+                            </div>
+                        </div>
+                        <div class="glass-card p-6 rounded-2xl flex items-center gap-6 group hover:border-emerald-500/40 transition-all" vid="192">
+                            <div class="w-12 h-12 rounded-full border border-emerald-500/30 flex items-center justify-center text-emerald-400 group-hover:bg-emerald-500 group-hover:text-black transition-all" vid="193">
+                                <i class="ph-bold ph-check text-xl" vid="194"></i>
+                            </div>
+                            <div class="flex-grow" vid="195">
+                                <h4 class="text-white font-magical text-xl" vid="196">Conversion Integrity</h4>
+                                <p class="text-gray-500 text-sm" vid="197">Verify all conversion events appear instantly in GA4 DebugView upon action.</p>
+                            </div>
+                        </div>
+                        <div class="glass-card p-6 rounded-2xl flex items-center gap-6 group hover:border-emerald-500/40 transition-all" vid="198">
+                            <div class="w-12 h-12 rounded-full border border-emerald-500/30 flex items-center justify-center text-emerald-400 group-hover:bg-emerald-500 group-hover:text-black transition-all" vid="199">
+                                <i class="ph-bold ph-check text-xl" vid="200"></i>
+                            </div>
+                            <div class="flex-grow" vid="201">
+                                <h4 class="text-white font-magical text-xl" vid="202">Deduplication Check</h4>
+                                <p class="text-gray-500 text-sm" vid="203">Ensure no duplicate firing or tag inflation is detected across any interactions.</p>
+                            </div>
+                        </div>
+                        <div class="glass-card p-6 rounded-2xl flex items-center gap-6 group hover:border-emerald-500/40 transition-all" vid="204">
+                            <div class="w-12 h-12 rounded-full border border-emerald-500/30 flex items-center justify-center text-emerald-400 group-hover:bg-emerald-500 group-hover:text-black transition-all" vid="205">
+                                <i class="ph-bold ph-check text-xl" vid="206"></i>
+                            </div>
+                            <div class="flex-grow" vid="207">
+                                <h4 class="text-white font-magical text-xl" vid="208">Attribution Matching</h4>
+                                <p class="text-gray-500 text-sm" vid="209">Validate that campaign attribution in reports matches expected live values.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            
+            <section class="slide" data-ambient="bg-indigo-900/30,bg-purple-900/20" vid="210">
+                <div class="content-container" vid="211">
+                    <div class="text-center mb-16" vid="212">
+                        <span class="text-purple-400 uppercase tracking-[0.3em] text-xs font-bold mb-3 block" vid="213">Sustainable Maintenance</span>
+                        <h2 class="font-magical text-5xl text-white mb-6" vid="214">Ongoing Monitoring</h2>
+                    </div>
+
+                    <div class="grid md:grid-cols-2 gap-8" vid="215">
+                        <div class="glass-card p-10 rounded-[2.5rem] border-l-4 border-l-purple-500 bg-gradient-to-r from-purple-500/5 to-transparent flex items-center gap-8 group" vid="216">
+                            <div class="w-16 h-16 rounded-2xl bg-purple-900/30 flex items-center justify-center shrink-0 shadow-[0_0_20px_rgba(168,85,247,0.3)] group-hover:scale-110 transition-transform" vid="217">
+                                <i class="ph-duotone ph-magnifying-glass text-3xl text-purple-300" vid="218"></i>
+                            </div>
+                            <div vid="219">
+                                <h3 class="font-magical text-xl text-white mb-2" vid="220">Conversion Audit</h3>
+                                <p class="text-gray-400 text-sm leading-relaxed" vid="221">Regularly review campaigns that show traffic but zero conversions to identify technical fails.</p>
+                            </div>
+                        </div>
+                        <div class="glass-card p-10 rounded-[2.5rem] border-l-4 border-l-cyan-500 bg-gradient-to-r from-cyan-500/5 to-transparent flex items-center gap-8 group" vid="222">
+                            <div class="w-16 h-16 rounded-2xl bg-cyan-900/30 flex items-center justify-center shrink-0 shadow-[0_0_20px_rgba(6,182,212,0.3)] group-hover:scale-110 transition-transform" vid="223">
+                                <i class="ph-duotone ph-list-dashes text-3xl text-cyan-300" vid="224"></i>
+                            </div>
+                            <div vid="225">
+                                <h3 class="font-magical text-xl text-white mb-2" vid="226">Monthly GTM Audit</h3>
+                                <p class="text-gray-400 text-sm leading-relaxed" vid="227">Conduct a thorough audit of all GTM tags monthly to prune dead scripts and legacy tags.</p>
+                            </div>
+                        </div>
+                        <div class="glass-card p-10 rounded-[2.5rem] border-l-4 border-l-amber-500 bg-gradient-to-r from-amber-500/5 to-transparent flex items-center gap-8 group" vid="228">
+                            <div class="w-16 h-16 rounded-2xl bg-amber-900/30 flex items-center justify-center shrink-0 shadow-[0_0_20px_rgba(245,158,11,0.3)] group-hover:scale-110 transition-transform" vid="229">
+                                <i class="ph-duotone ph-selection-all text-3xl text-amber-300" vid="230"></i>
+                            </div>
+                            <div vid="231">
+                                <h3 class="font-magical text-xl text-white mb-2" vid="232">Naming Normalization</h3>
+                                <p class="text-gray-400 text-sm leading-relaxed" vid="233">Manually normalize campaign naming inconsistencies in source data to maintain report hygiene.</p>
+                            </div>
+                        </div>
+                        <div class="glass-card p-10 rounded-[2.5rem] border-l-4 border-l-emerald-500 bg-gradient-to-r from-emerald-500/5 to-transparent flex items-center gap-8 group" vid="234">
+                            <div class="w-16 h-16 rounded-2xl bg-emerald-900/30 flex items-center justify-center shrink-0 shadow-[0_0_20px_rgba(16,185,129,0.3)] group-hover:scale-110 transition-transform" vid="235">
+                                <i class="ph-duotone ph-chart-bar text-3xl text-emerald-300" vid="236"></i>
+                            </div>
+                            <div vid="237">
+                                <h3 class="font-magical text-xl text-white mb-2" vid="238">Dashboard Refresh</h3>
+                                <p class="text-gray-400 text-sm leading-relaxed" vid="239">Update performance dashboards monthly to reflect the latest clean data and insights.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            
+            <section class="slide" data-ambient="bg-purple-900/40,bg-indigo-900/20" vid="240">
+                <div class="content-container items-center text-center" vid="241">
+                    <div class="w-24 h-24 rounded-full bg-purple-900/40 border border-purple-500/40 flex items-center justify-center mb-10 shadow-[0_0_40px_-10px_rgba(168,85,247,0.6)]" vid="242">
+                        <div class="w-24 h-24 rounded-full bg-purple-900/40 border border-purple-500/40 flex items-center justify-center mb-10 shadow-[0_0_40px_-10px_rgba(168,85,247,0.6)]">
+  <i class="ph-duotone ph-sparkle text-5xl text-purple-300 animate-pulse"></i>
+</div>
+                    </div>
+                    <h2 class="font-magical text-6xl text-white mb-12 drop-shadow-2xl" vid="244">The Path to Clarity</h2>
+                    
+                    <div class="glass-card p-12 rounded-[3rem] w-full max-w-4xl border-t border-t-purple-500/30 relative overflow-hidden" vid="245">
+                        <div class="absolute inset-0 bg-gradient-to-b from-purple-900/10 to-transparent pointer-events-none" vid="246"></div>
+                        <p class="font-serif-heading text-2xl md:text-3xl text-purple-100/90 leading-relaxed italic mb-8" vid="247">
+                            A complete tracking system ensures that all user interactions can be measured and tied back to campaign performance.
+                        </p>
+                        <div class="h-px w-24 bg-purple-500/50 mx-auto mb-8" vid="248"></div>
+                        <p class="text-gray-400 text-lg font-light leading-relaxed max-w-2xl mx-auto" vid="249">
+                            Once the foundation layer is correctly implemented, the organization can move from <strong class="text-white" vid="250">incomplete data</strong> to <strong class="text-gradient-gold" vid="251">actionable insight</strong>.
+                        </p>
+                    </div>
+
+                    <div class="mt-20 flex items-center gap-10 opacity-60" vid="252">
+                        <div class="flex items-center gap-3" vid="253">
+                            <i class="ph-fill ph-check-circle text-emerald-400" vid="254"></i>
+                            <span class="text-xs uppercase tracking-widest text-white/50 font-bold" vid="255">Accurate</span>
+                        </div>
+                        <div class="flex items-center gap-3" vid="256">
+                            <i class="ph-fill ph-check-circle text-emerald-400" vid="257"></i>
+                            <span class="text-xs uppercase tracking-widest text-white/50 font-bold" vid="258">Consistent</span>
+                        </div>
+                        <div class="flex items-center gap-3" vid="259">
+                            <i class="ph-fill ph-check-circle text-emerald-400" vid="260"></i>
+                            <span class="text-xs uppercase tracking-widest text-white/50 font-bold" vid="261">Validated</span>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+        </main>
+    </div>
+
+    <script vid="262">
+        document.addEventListener('DOMContentLoaded', () => {
+            
+            const starContainer = document.getElementById('star-container');
+            const starCount = 150;
+            for (let i = 0; i < starCount; i++) {
+                const star = document.createElement('div');
+                star.classList.add('star');
+                star.style.left = `${Math.random() * 100}%`;
+                star.style.top = `${Math.random() * 100}%`;
+                const size = Math.random() < 0.1 ? 3 : (Math.random() < 0.4 ? 2 : 1);
+                star.style.width = `${size}px`;
+                star.style.height = `${size}px`;
+                star.style.setProperty('--duration', `${2 + Math.random() * 4}s`);
+                star.style.setProperty('--delay', `${Math.random() * 5}s`);
+                star.style.setProperty('--opacity', 0.2 + Math.random() * 0.6);
+                starContainer.appendChild(star);
+            }
+
+            
+            document.addEventListener('mousemove', e => {
+                document.querySelectorAll('.glass-card').forEach(card => {
+                    const rect = card.getBoundingClientRect();
+                    card.style.setProperty('--mouse-x', `${e.clientX - rect.left}px`);
+                    card.style.setProperty('--mouse-y', `${e.clientY - rect.top}px`);
+                });
+            });
+
+            
+            const slides = document.querySelectorAll('.slide');
+            const totalSlides = slides.length;
+            let currentSlide = 0;
+            let isAnimating = false;
+            
+            const btnPrev = document.getElementById('btn-prev');
+            const btnNext = document.getElementById('btn-next');
+            const counterEl = document.getElementById('slide-counter');
+            const dotsContainer = document.getElementById('dots-container');
+            const ambient1 = document.getElementById('ambient-1');
+            const ambient2 = document.getElementById('ambient-2');
+
+            
+            for (let i = 0; i < totalSlides; i++) {
+                const dot = document.createElement('div');
+                dot.classList.add('dot');
+                if(i === 0) dot.classList.add('active');
+                dot.addEventListener('click', () => goToSlide(i));
+                dotsContainer.appendChild(dot);
+            }
+            const dots = document.querySelectorAll('.dot');
+            
+            counterEl.innerText = `1 / ${totalSlides}`;
+
+            function updateAmbientGlow() {
+                const currentThemeData = slides[currentSlide].getAttribute('data-ambient');
+                if(currentThemeData) {
+                    const classes = currentThemeData.split(',');
+                    ambient1.className = `ambient-glow w-[800px] h-[800px] top-[-20%] left-[-10%] mix-blend-screen ${classes[0]}`;
+                    ambient2.className = `ambient-glow w-[600px] h-[600px] bottom-[-10%] right-[-10%] mix-blend-screen ${classes[1] || classes[0]}`;
+                }
+            }
+
+            function updateSlides(newIndex, direction) {
+                if (isAnimating || newIndex === currentSlide) return;
+                isAnimating = true;
+
+                const currentEl = slides[currentSlide];
+                const nextEl = slides[newIndex];
+
+                
+                nextEl.classList.remove('opacity-0', 'pointer-events-none', 'z-0', 'active');
+                
+                if (direction === 'next') {
+                    nextEl.style.transform = 'translateY(40px) scale(0.98)';
+                    currentEl.style.transform = 'translateY(-40px) scale(0.98)';
+                } else {
+                    nextEl.style.transform = 'translateY(-40px) scale(0.98)';
+                    currentEl.style.transform = 'translateY(40px) scale(0.98)';
+                }
+
+                void nextEl.offsetWidth; 
+
+                currentEl.classList.remove('active');
+                currentEl.classList.add('opacity-0', 'pointer-events-none', 'z-0');
+                
+                nextEl.style.transform = ''; 
+                nextEl.classList.add('active');
+
+                dots[currentSlide].classList.remove('active');
+                dots[newIndex].classList.add('active');
+                currentSlide = newIndex;
+                counterEl.innerText = `${currentSlide + 1} / ${totalSlides}`;
+                
+                updateAmbientGlow();
+
+                setTimeout(() => {
+                    currentEl.style.transform = ''; 
+                    isAnimating = false;
+                }, 800);
+            }
+
+            function nextSlide() {
+                if (currentSlide < totalSlides - 1) updateSlides(currentSlide + 1, 'next');
+            }
+
+            function prevSlide() {
+                if (currentSlide > 0) updateSlides(currentSlide - 1, 'prev');
+            }
+
+            function goToSlide(index) {
+                if(index > currentSlide) {
+                    updateSlides(index, 'next');
+                } else if (index < currentSlide) {
+                    updateSlides(index, 'prev');
+                }
+            }
+
+            btnNext.addEventListener('click', nextSlide);
+            btnPrev.addEventListener('click', prevSlide);
+
+            
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'ArrowRight' || e.key === 'ArrowDown' || e.key === ' ') {
+                    e.preventDefault();
+                    nextSlide();
+                } else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
+                    e.preventDefault();
+                    prevSlide();
+                }
+            });
+
+            let wheelTimeout;
+            document.addEventListener('wheel', (e) => {
+                if (isAnimating) return;
+                if (Math.abs(e.deltaY) < 40) return; 
+                
+                clearTimeout(wheelTimeout);
+                wheelTimeout = setTimeout(() => {
+                    if (e.deltaY > 0) {
+                        nextSlide();
+                    } else {
+                        prevSlide();
+                    }
+                }, 50);
+            }, { passive: false });
+
+            updateAmbientGlow();
+        });
+    </script>
+
+</body></html>

@@ -1401,12 +1401,16 @@ document.addEventListener("DOMContentLoaded", async () => {
   });
   updateHeaderDatePillForView("home");
 
+  renderUxLoadingState();
+
   const overviewResults = await Promise.allSettled([
-    loadHomeSnapshot()
+    loadHomeSnapshot(),
+    loadClarityFromSheet()
   ]);
 
   const overviewNames = [
-    "loadHomeSnapshot"
+    "loadHomeSnapshot",
+    "loadClarityFromSheet"
   ];
 
   const overviewFailures = [];
@@ -1435,12 +1439,6 @@ document.addEventListener("DOMContentLoaded", async () => {
       await syncClarityData({ silent: true });
     } catch (error) {
       console.error("Initial Clarity sync failed:", error);
-    }
-  } else {
-    try {
-      await loadClarityFromSheet();
-    } catch (error) {
-      console.error("Initial Clarity load failed:", error);
     }
   }
 });
@@ -1710,19 +1708,36 @@ async function loadPerformanceComparisonFromSheet() {
   renderPerformanceComparison(currentPerformanceComparison);
 }
 
-  async function loadClarityFromSheet() {
+  async function loadClarityFromSheet(options = {}) {
+    const { silent = false } = options;
+    const updated = document.getElementById("ux-last-updated");
+    if (updated && !silent) updated.textContent = "Loading UX insights...";
+
     const params = {
       page: document.getElementById("ux-filter-page")?.value || "all",
       device: document.getElementById("ux-filter-device")?.value || "all",
       numOfDays: getClarityDaysFromUi()
     };
 
-    const data = await apiGet("getClaritySummary", params);
-    if (!data.ok) throw new Error(data.error || "Failed to load clarity summary");
+    try {
+      const data = await apiGet("getClaritySummary", params);
+      if (!data.ok) throw new Error(data.error || "Failed to load clarity summary");
 
-    currentClaritySummary = data.summary || { rows: [] };
-    renderClaritySummary(currentClaritySummary);
-    populateUxPageOptionsFromClarityRows(currentClaritySummary.rows || []);
+      currentClaritySummary = data.summary || { rows: [] };
+      renderClaritySummary(currentClaritySummary);
+      populateUxPageOptionsFromClarityRows(currentClaritySummary.rows || []);
+
+      if (updated) {
+        updated.textContent = currentClaritySummary.latestSnapshotDate
+          ? `Updated: ${currentClaritySummary.latestSnapshotDate}`
+          : "Updated: —";
+      }
+    } catch (error) {
+      console.error("loadClarityFromSheet failed:", error);
+      renderEmptyUxState();
+      if (updated) updated.textContent = "Load error";
+      throw error;
+    }
   }
 
 async function loadHomeSnapshot() {
@@ -1919,6 +1934,22 @@ function getCurrentReportFilterParams() {
       loadReportsSnapshot({ updatedText: "Updated: Just now" }).catch((error) => {
         console.error("Deferred Visual Intelligence load failed:", error);
       });
+    }
+
+    if (viewId === "ux") {
+      updateHeaderDatePillForView("ux");
+
+      const hasLoadedRows =
+        currentClaritySummary &&
+        Array.isArray(currentClaritySummary.rows) &&
+        currentClaritySummary.rows.length > 0;
+
+      if (!hasLoadedRows) {
+        renderUxLoadingState();
+        loadClarityFromSheet().catch((error) => {
+          console.error("Deferred UX load failed:", error);
+        });
+      }
     }
 
     if (updateHash) history.replaceState(null, "", `#${viewId}`);
@@ -2725,6 +2756,25 @@ function renderHomeOverviewSnapshot(summary, comparison) {
     });
   }
 
+  function renderUxLoadingState(message = "Loading UX insights...") {
+    const updated = document.getElementById("ux-last-updated");
+    if (updated) updated.textContent = message;
+
+    const rage = document.getElementById("ux-kpi-rage");
+    const dead = document.getElementById("ux-kpi-dead");
+    const scroll = document.getElementById("ux-kpi-scroll");
+    const time = document.getElementById("ux-kpi-time");
+    const high = document.getElementById("ux-kpi-high");
+    const highSub = document.getElementById("ux-kpi-high-sub");
+
+    if (rage) rage.textContent = "—";
+    if (dead) dead.textContent = "—";
+    if (scroll) scroll.textContent = "—";
+    if (time) time.textContent = "—";
+    if (high) high.textContent = "Loading...";
+    if (highSub) highSub.textContent = "Pulling Clarity summary";
+  }
+
   function renderPerformanceTrendCharts(trend) {
     renderSparklineChart({
       targetId: "chart-sessions-trend",
@@ -3119,7 +3169,7 @@ async function refreshReportsData() {
       return response.sync || {};
     } catch (error) {
       console.error(error);
-      if (updated) updated.textContent = "Update failed";
+      if (updated) updated.textContent = "Sync failed";
       if (!silent) {
         showToast("Sync Error", "Could not sync Clarity data.", "ph-warning", "text-amber-400");
       }

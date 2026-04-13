@@ -949,7 +949,12 @@
             </div>
 
             <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-              <p class="text-[10px] text-gray-500">Saving writes this link to the Google Sheet registry.</p>
+              <div>
+                <p class="text-[10px] text-gray-500">Saving writes this link to the Google Sheet registry.</p>
+                <div id="utm-builder-status" class="text-[10px] uppercase tracking-wider text-gray-500 font-medium mt-1">
+                  Waiting for registry load
+                </div>
+              </div>
               <button
                 type="button"
                 id="save-utm-button"
@@ -1013,7 +1018,7 @@
                 <th class="w-10"></th>
               </tr>
             </thead>
-            <tbody id="registry-tbody"></tbody>
+            <tbody id="utm-registry-tbody"></tbody>
           </table>
         </div>
       </div>
@@ -1344,7 +1349,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   updateLocalSyncTime();
   switchView(getInitialView(), false);
 
-  renderRegistry([]);
+  renderUtmLoadingState("Loading UTM registry...");
   renderHomeRecentUtmLinks([]);
   renderLoadingPerformanceState();
   renderEmptyUxState();
@@ -1376,6 +1381,20 @@ document.addEventListener("DOMContentLoaded", async () => {
       console.error(`${names[index]} failed:`, result.reason);
     }
   });
+
+  const registryResult = setupResults[0];
+  const utmStatus = document.getElementById("utm-builder-status");
+  if (utmStatus) {
+    if (registryResult.status === "fulfilled") {
+      utmStatus.textContent = `Loaded ${Array.isArray(currentRegistryItems) ? currentRegistryItems.length : 0} tracking links`;
+      utmStatus.classList.remove("text-gray-500", "text-amber-400");
+      utmStatus.classList.add("text-emerald-400");
+    } else {
+      utmStatus.textContent = "Registry load failed";
+      utmStatus.classList.remove("text-gray-500", "text-emerald-400");
+      utmStatus.classList.add("text-amber-400");
+    }
+  }
 
   try {
     populateReportFilterOptionsFromRegistry();
@@ -1629,6 +1648,13 @@ document.addEventListener("DOMContentLoaded", async () => {
     currentRegistryItems = Array.isArray(data.registry) ? data.registry : [];
     populateUtmFilterOptions(currentRegistryItems);
     applyUtmRegistryFilters();
+
+    const utmStatus = document.getElementById("utm-builder-status");
+    if (utmStatus) {
+      utmStatus.textContent = `Loaded ${currentRegistryItems.length} tracking links`;
+      utmStatus.classList.remove("text-gray-500", "text-amber-400");
+      utmStatus.classList.add("text-emerald-400");
+    }
   }
 
 async function loadAuditFromSheet(status = "all") {
@@ -1952,6 +1978,35 @@ function getCurrentReportFilterParams() {
       }
     }
 
+    if (viewId === "utm") {
+      updateHeaderDatePillForView("utm");
+
+      const hasRegistryRows = Array.isArray(currentRegistryItems) && currentRegistryItems.length > 0;
+      if (!hasRegistryRows) {
+        renderUtmLoadingState("Loading UTM registry...");
+        loadRegistryFromSheet().then(() => {
+          const utmStatus = document.getElementById("utm-builder-status");
+          if (utmStatus) {
+            utmStatus.textContent = `Loaded ${Array.isArray(currentRegistryItems) ? currentRegistryItems.length : 0} tracking links`;
+            utmStatus.classList.remove("text-gray-500", "text-amber-400");
+            utmStatus.classList.add("text-emerald-400");
+          }
+        }).catch((error) => {
+          console.error("Deferred registry load failed:", error);
+          const utmStatus = document.getElementById("utm-builder-status");
+          if (utmStatus) {
+            utmStatus.textContent = "Registry load failed";
+            utmStatus.classList.remove("text-gray-500", "text-emerald-400");
+            utmStatus.classList.add("text-amber-400");
+          }
+        });
+      }
+
+      if (updateHash) history.replaceState(null, "", `#${viewId}`);
+      if (scrollWrap) scrollWrap.scrollTo({ top: 0, behavior: "smooth" });
+      return;
+    }
+
     if (updateHash) history.replaceState(null, "", `#${viewId}`);
     if (scrollWrap) scrollWrap.scrollTo({ top: 0, behavior: "smooth" });
   }
@@ -2135,43 +2190,83 @@ function generateUTM() {
   }
 
   async function saveUTM() {
-    const destinationUrl = document.getElementById("utm-url")?.value.trim() || "";
-    const source = normalizeUtmLooseValue_(document.getElementById("utm-source")?.value || "");
-    const medium = normalizeUtmMediumValue_((document.getElementById("utm-medium")?.value || "").trim());
-    const campaign = document.getElementById("utm-campaign")?.value.trim() || "";
-    const content = document.getElementById("utm-content")?.value.trim() || "";
-    const term = document.getElementById("utm-term")?.value.trim() || "";
-    const notes = document.getElementById("utm-notes")?.value.trim() || "";
-    const result = document.getElementById("utm-result")?.value || "";
+    const destinationUrl = String(document.getElementById("utm-url")?.value || "").trim();
+    const source = String(document.getElementById("utm-source")?.value || "").trim().toLowerCase();
+    const medium = normalizeUtmMediumValue_(
+      String(document.getElementById("utm-medium")?.value || "").trim()
+    );
+    const campaignInput = String(document.getElementById("utm-campaign")?.value || "").trim();
+    const content = String(document.getElementById("utm-content")?.value || "").trim();
+    const term = String(document.getElementById("utm-term")?.value || "").trim();
+    const notes = String(document.getElementById("utm-notes")?.value || "").trim();
+    const resultField = document.getElementById("utm-result");
+    const generatedLink = String(resultField?.value || "").trim();
+    const utmStatus = document.getElementById("utm-builder-status");
 
-    if (!destinationUrl || !source || !medium || !campaign || !result || result.startsWith("Waiting")) {
+    const campaign = campaignInput
+      .replace(/\s+/g, "_")
+      .replace(/[^A-Za-z0-9_]/g, "");
+
+    if (!destinationUrl || !source || !medium || !campaign || !generatedLink || generatedLink.startsWith("Waiting")) {
       showToast("Incomplete", "Please fill required fields to save.", "ph-warning", "text-amber-400");
       return;
     }
 
+    let normalizedDestinationUrl = destinationUrl;
+    if (!/^https?:\/\//i.test(normalizedDestinationUrl)) {
+      normalizedDestinationUrl = `https://${normalizedDestinationUrl}`;
+    }
+
     try {
-      const response = await apiPost("saveUTM", {
-        destinationUrl,
+      new URL(normalizedDestinationUrl);
+    } catch (error) {
+      showToast("Invalid URL", "Enter a valid destination URL before saving.", "ph-warning", "text-amber-400");
+      return;
+    }
+
+    try {
+      console.log("saveUTM start");
+
+      if (utmStatus) {
+        utmStatus.textContent = "Saving tracking link...";
+        utmStatus.classList.remove("text-emerald-400", "text-amber-400");
+        utmStatus.classList.add("text-gray-500");
+      }
+
+      console.log("saveUTM payload preview:", {
+        destinationUrl: normalizedDestinationUrl,
         source,
         medium,
         campaign,
-        campaignName: campaign,
+        campaignName: campaignInput || campaign,
         content,
         term,
         notes
       });
 
-      if (!response.ok) throw new Error(response.error || "Save failed");
+      const response = await apiPost("saveUTM", {
+        destinationUrl: normalizedDestinationUrl,
+        source,
+        medium,
+        campaign,
+        campaignName: campaignInput || campaign,
+        content,
+        term,
+        notes
+      });
+
+      console.log("saveUTM response:", response);
+
+      if (!response?.ok) {
+        throw new Error(response?.error || "Save failed");
+      }
 
       const saved = response.saved || {};
-      const savedLink = String(saved.fullUtmLink || result || "").trim();
+      const savedLink = String(saved.fullUtmLink || generatedLink || "").trim();
 
-      if (savedLink) {
-        const resultField = document.getElementById("utm-result");
-        if (resultField) {
-          resultField.value = savedLink;
-          resultField.dataset.generatedLink = savedLink;
-        }
+      if (resultField && savedLink) {
+        resultField.value = savedLink;
+        resultField.dataset.generatedLink = savedLink;
       }
 
       if (saved && Object.keys(saved).length) {
@@ -2183,8 +2278,9 @@ function generateUTM() {
           String(saved.content || "").trim().toLowerCase(),
           String(saved.term || "").trim().toLowerCase()
         ].join("|");
+
         currentRegistryItems = [saved].concat(
-          currentRegistryItems.filter((item) => {
+          (currentRegistryItems || []).filter((item) => {
             const itemVariantKey = [
               String(item.source || "").trim().toLowerCase(),
               String(item.medium || "").trim().toLowerCase(),
@@ -2196,19 +2292,30 @@ function generateUTM() {
             return itemVariantKey !== savedVariantKey;
           })
         );
+
         populateUtmFilterOptions(currentRegistryItems);
         applyUtmRegistryFilters();
       } else {
         await loadRegistryFromSheet();
       }
 
-      loadRegistryFromSheet().catch((error) => {
-        console.error("Background registry refresh failed:", error);
-      });
-      showToast("Saved Successfully", "Link added to registry.", "ph-check-circle");
+      if (utmStatus) {
+        utmStatus.textContent = `Loaded ${Array.isArray(currentRegistryItems) ? currentRegistryItems.length : 0} tracking links`;
+        utmStatus.classList.remove("text-gray-500", "text-amber-400");
+        utmStatus.classList.add("text-emerald-400");
+      }
+
+      showToast("Saved", "UTM link added to the registry.", "ph-check");
     } catch (error) {
-      console.error(error);
-      showToast("Save Error", error.message || "Could not save to sheet.", "ph-warning", "text-amber-400");
+      console.error("saveUTM failed:", error);
+
+      if (utmStatus) {
+        utmStatus.textContent = "Save failed";
+        utmStatus.classList.remove("text-gray-500", "text-emerald-400");
+        utmStatus.classList.add("text-amber-400");
+      }
+
+      showToast("Save Error", error.message || "Could not save UTM link.", "ph-warning", "text-amber-400");
     }
   }
 
@@ -2439,7 +2546,7 @@ function applyUtmRegistryFilters() {
   }
 
   function renderRegistry(items) {
-    const tbody = document.getElementById("registry-tbody");
+    const tbody = document.getElementById("utm-registry-tbody");
     if (!tbody) return;
 
     if (!items.length) {
@@ -2754,6 +2861,27 @@ function renderHomeOverviewSnapshot(summary, comparison) {
       avgEngagementTimeSeconds: 0,
       rows: []
     });
+  }
+
+  function renderUtmLoadingState(message = "Loading UTM registry...") {
+    const tableBody = document.getElementById("utm-registry-tbody");
+    const statusText = document.getElementById("utm-builder-status");
+
+    if (statusText) {
+      statusText.textContent = message;
+      statusText.classList.remove("text-emerald-400", "text-amber-400");
+      statusText.classList.add("text-gray-500");
+    }
+
+    if (tableBody) {
+      tableBody.innerHTML = `
+        <tr>
+          <td colspan="4" class="px-4 py-8 text-center text-sm text-gray-500">
+            ${message}
+          </td>
+        </tr>
+      `;
+    }
   }
 
   function renderUxLoadingState(message = "Loading UX insights...") {

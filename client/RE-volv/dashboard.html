@@ -1031,7 +1031,7 @@
             <div class="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
               <div>
                 <h2 class="font-magical text-3xl text-white mb-2">Experience Friction</h2>
-                <p class="text-sm text-gray-400">Behavioral insights derived from Microsoft Clarity recordings and heatmaps.</p>
+                <p class="text-sm text-gray-400">Aggregate UX signals from Microsoft Clarity summary data.</p>
               </div>
               <div class="flex flex-wrap items-center gap-3">
                 <span class="text-[10px] text-gray-500 uppercase tracking-wider" id="ux-last-updated">Updated: Oct 30, 2024</span>
@@ -1053,15 +1053,6 @@
                       <option value="1">Last 1 Day</option>
                       <option value="2">Last 2 Days</option>
                       <option value="3">Last 3 Days</option>
-                  </select>
-                </div>
-                <div>
-                  <label class="block text-[9px] text-gray-500 mb-1 uppercase">Page</label>
-                  <select id="ux-filter-page" class="input-magical text-xs rounded-md px-2 py-1.5 min-w-[140px]">
-                    <option value="all">All Pages</option>
-                    <option value="/solar-savings">/solar-savings</option>
-                    <option value="/donate">/donate</option>
-                    <option value="/about-us">/about-us</option>
                   </select>
                 </div>
                 <div>
@@ -1097,11 +1088,11 @@
                 <div class="text-2xl font-bold text-white" id="ux-kpi-time">1:45</div>
                 <div class="text-xs text-gray-400 mt-1">Per session</div>
               </div>
-              <button type="button" id="highlight-friction-page" class="glass-card p-4 border-l-2 border-l-purple-500 text-left hover:bg-white/5">
-                <div class="text-[10px] uppercase tracking-wider text-gray-500 font-bold mb-2">Highest Friction</div>
+              <div class="glass-card p-4 border-l-2 border-l-purple-500 text-left">
+                <div id="ux-kpi-high-label" class="text-[10px] uppercase tracking-wider text-gray-500 font-bold mb-2">Friction Rate</div>
                 <div class="text-lg font-bold text-white truncate" id="ux-kpi-high">/solar-savings</div>
-                <div class="text-xs text-rose-400 mt-1">4.8% rage rate</div>
-              </button>
+                <div id="ux-kpi-high-sub" class="text-xs text-rose-400 mt-1">4.8% rage rate</div>
+              </div>
             </div>
           </div>
         </section>
@@ -1740,29 +1731,20 @@ async function loadPerformanceComparisonFromSheet() {
     if (updated && !silent) updated.textContent = "Loading UX insights...";
 
     const params = {
-      page: document.getElementById("ux-filter-page")?.value || "all",
       device: document.getElementById("ux-filter-device")?.value || "all",
       numOfDays: getClarityDaysFromUi()
     };
 
-    try {
-      const data = await apiGet("getClaritySummary", params);
-      if (!data.ok) throw new Error(data.error || "Failed to load clarity summary");
+    const data = await apiGet("getClaritySummary", params);
+    if (!data.ok) throw new Error(data.error || "Failed to load clarity summary");
 
-      currentClaritySummary = data.summary || { rows: [] };
-      renderClaritySummary(currentClaritySummary);
-      populateUxPageOptionsFromClarityRows(currentClaritySummary.rows || []);
+    currentClaritySummary = data.summary || { rows: [] };
+    renderClaritySummary(currentClaritySummary);
 
-      if (updated) {
-        updated.textContent = currentClaritySummary.latestSnapshotDate
-          ? `Updated: ${currentClaritySummary.latestSnapshotDate}`
-          : "Updated: —";
-      }
-    } catch (error) {
-      console.error("loadClarityFromSheet failed:", error);
-      renderEmptyUxState();
-      if (updated) updated.textContent = "Load error";
-      throw error;
+    if (updated) {
+      updated.textContent = currentClaritySummary.latestSnapshotDate
+        ? `Updated: ${currentClaritySummary.latestSnapshotDate}`
+        : "Updated: —";
     }
   }
 
@@ -3220,26 +3202,12 @@ async function refreshReportsData() {
 }
   
   function bindUXFilters() {
-    ["ux-filter-date", "ux-filter-page", "ux-filter-device"].forEach((id) => {
+    ["ux-filter-date", "ux-filter-device"].forEach((id) => {
       const el = document.getElementById(id);
       if (el) el.addEventListener("change", applyUXFilters);
     });
 
     document.getElementById("sync-clarity-button")?.addEventListener("click", () => syncClarityData());
-    document.getElementById("highlight-friction-page")?.addEventListener("click", () => {
-      const targetPage = document.getElementById("ux-kpi-high")?.textContent?.trim();
-      const pageSelect = document.getElementById("ux-filter-page");
-      if (pageSelect && targetPage && targetPage !== "-") {
-        if (![...pageSelect.options].some((opt) => opt.value === targetPage)) {
-          const opt = document.createElement("option");
-          opt.value = targetPage;
-          opt.textContent = targetPage;
-          pageSelect.appendChild(opt);
-        }
-        pageSelect.value = targetPage;
-      }
-      applyUXFilters();
-    });
   }
 
   function getClarityDaysFromUi() {
@@ -3317,39 +3285,44 @@ async function refreshReportsData() {
     const deadClicks = Number(summary.deadClicks || 0);
     const avgScrollDepth = Number(summary.avgScrollDepth || 0);
     const avgEngagementTimeSeconds = Number(summary.avgEngagementTimeSeconds || 0);
-    const rows = Array.isArray(summary.rows) ? summary.rows : [];
-
-    const highestFrictionRow = rows.reduce((best, row) => {
-      const bestScore = best ? Number(best.friction_score || 0) : -1;
-      const rowScore = Number(row.friction_score || 0);
-      return rowScore > bestScore ? row : best;
-    }, null);
+    const frictionRate = getAggregateFrictionRate(summary);
+    const highCardLabel = document.getElementById("ux-kpi-high-label");
+    const highCardValue = document.getElementById("ux-kpi-high");
+    const highCardSub = document.getElementById("ux-kpi-high-sub");
 
     if (rageEl) rageEl.textContent = formatNumber(rageClicks);
     if (deadEl) deadEl.textContent = formatNumber(deadClicks);
     if (scrollEl) scrollEl.textContent = formatPercentDisplay(avgScrollDepth);
     if (timeEl) timeEl.textContent = formatDurationDisplay(avgEngagementTimeSeconds);
-    if (highEl) highEl.textContent = highestFrictionRow?.page || "Unassigned page";
     if (updatedEl) updatedEl.textContent = summary?.latestSnapshotDate ? `Updated: ${summary.latestSnapshotDate}` : "Updated: —";
 
-    const highlightCard = document.getElementById("highlight-friction-page");
-    if (highlightCard) {
-      const sub = highlightCard.querySelector(".text-xs.text-rose-400");
-      if (sub) {
-        sub.textContent = highestFrictionRow
-          ? `${formatPercent(highestFrictionRow.rage_rate || 0)} rage rate`
-          : "No page data";
-      }
+    if (highCardLabel) highCardLabel.textContent = "Friction Rate";
+    if (highCardValue) highCardValue.textContent = `${Math.round(frictionRate * 100)}%`;
+    if (highCardSub) {
+      highCardSub.textContent = `${Number(summary?.rageClicks || 0)} rage + ${Number(summary?.deadClicks || 0)} dead + ${Number(summary?.quickbacks || 0)} quickbacks + ${Number(summary?.scriptErrors || 0)} errors`;
     }
 
     const homeUxCard = document.querySelector("#view-home button[data-view='ux']");
     if (homeUxCard) {
+      const rows = Array.isArray(summary.rows) ? summary.rows : [];
       const score = getFrictionLabel_(rows);
       const scoreEl = homeUxCard.querySelector(".text-2xl");
       if (scoreEl) {
         scoreEl.innerHTML = `${escapeHtml(score)} <span class="text-sm text-gray-500 font-normal">Friction</span>`;
       }
     }
+  }
+
+  function getAggregateFrictionRate(summary) {
+    const sessions = Number(summary?.sessions || 0);
+    if (!sessions) return 0;
+
+    const rageClicks = Number(summary?.rageClicks || 0);
+    const deadClicks = Number(summary?.deadClicks || 0);
+    const quickbacks = Number(summary?.quickbacks || 0);
+    const scriptErrors = Number(summary?.scriptErrors || 0);
+
+    return (rageClicks + deadClicks + quickbacks + scriptErrors) / sessions;
   }
 
   function formatPercentDisplay(value) {
@@ -3649,31 +3622,7 @@ function showAuditDetail(id) {
   }
 
   function populateUxPageOptionsFromClarityRows(rows) {
-    const select = document.getElementById("ux-filter-page");
-    if (!select) return;
-
-    const currentValue = select.value || "all";
-
-    const pages = [...new Set(
-      (rows || [])
-        .map((row) => String(row.page || "").trim())
-        .filter((page) => page && page !== "all")
-    )].sort();
-
-    select.innerHTML = `<option value="all">All Pages</option>`;
-
-    pages.forEach((page) => {
-      const option = document.createElement("option");
-      option.value = page;
-      option.textContent = page;
-      select.appendChild(option);
-    });
-
-    if ([...select.options].some((opt) => opt.value === currentValue)) {
-      select.value = currentValue;
-    } else {
-      select.value = "all";
-    }
+    return rows;
   }
 
 function populateSelectFromValues(selectId, values, allLabel) {

@@ -1247,7 +1247,7 @@
 
 <script>
   const APP_CONFIG = {
-    APPS_SCRIPT_URL: "https://script.google.com/macros/s/AKfycbzKtDNn5eJevBMut0CXN7rBUu-qawWbn53CQafk8Z89xQrkPIeKw75AL9IpUaUIw0h0/exec",
+    APPS_SCRIPT_URL: "https://script.google.com/macros/s/AKfycbzkp0XCxJtcWn1Mz4-uceJD0oNlivQhwjY_4hohTjXQG9tu-UmEbBBxQjND76X2HoC-/exec",
     AUTO_SYNC_PERFORMANCE_ON_LOAD: false,
     AUTO_SYNC_CLARITY_ON_LOAD: false
   };
@@ -1321,7 +1321,12 @@
     return {
       whatsWorking: [],
       needsAttention: [],
-      nextAction: null
+      nextAction: null,
+      usedFallbacks: {
+        whatsWorking: false,
+        needsAttention: false,
+        nextAction: false
+      }
     };
   }
 
@@ -1767,7 +1772,16 @@ async function loadHomeSnapshot() {
     : [];
 
   if (highlightsRes.status === "fulfilled" && highlightsRes.value?.ok) {
-    currentAuditHighlights = normalizeAuditHighlightsPayload(highlightsRes.value.highlights || {});
+    const incomingHighlights = normalizeAuditHighlightsPayload(highlightsRes.value.highlights || {});
+
+    const currentHasSignal = hasAuditHighlightSignal_(currentAuditHighlights);
+    const incomingHasSignal = hasAuditHighlightSignal_(incomingHighlights);
+    const currentFallbackOnly = isFallbackOnlyAuditHighlights_(currentAuditHighlights);
+    const incomingFallbackOnly = isFallbackOnlyAuditHighlights_(incomingHighlights);
+
+    if (!currentHasSignal || (incomingHasSignal && (!incomingFallbackOnly || currentFallbackOnly))) {
+      currentAuditHighlights = incomingHighlights;
+    }
   }
 
   if (noteRes.status === "rejected" || !noteRes.value?.ok) {
@@ -1778,13 +1792,20 @@ async function loadHomeSnapshot() {
     currentAuditHighlights,
     currentHomeSummary
   );
+  const existingStrategicNote = currentHomeInsights?.strategicNote || null;
+  const incomingStrategicNote = noteRes.status === "fulfilled" && noteRes.value?.ok
+    ? normalizeStrategicNote_(noteRes.value.note || fallbackStrategicNote)
+    : normalizeStrategicNote_(fallbackStrategicNote);
+  const strategicNote = shouldReplaceStrategicNote_(existingStrategicNote, incomingStrategicNote)
+    ? incomingStrategicNote
+    : normalizeStrategicNote_(existingStrategicNote);
 
   currentHomeInsights = {
     summary: currentHomeSummary,
     comparison: currentHomeComparison,
     recentLinks: currentRecentRegistryLinks,
     auditHighlights: currentAuditHighlights,
-    strategicNote: noteRes.status === "fulfilled" && noteRes.value?.ok ? (noteRes.value.note || fallbackStrategicNote) : fallbackStrategicNote,
+    strategicNote: strategicNote,
     gtmSummary: gtmRes.status === "fulfilled" && gtmRes.value?.ok ? (gtmRes.value.summary || {}) : {}
   };
 
@@ -1818,21 +1839,66 @@ function buildFallbackStrategicNote_(auditHighlights, summary) {
   if (topAttention) {
     return {
       title: topAttention.title || "Needs Attention",
-      body: topAttention.detail || topAttention.finding || topAttention.recommendation || "No strong pattern detected yet."
+      body: topAttention.detail || topAttention.finding || topAttention.recommendation || "No strong pattern detected yet.",
+      isFallback: true,
+      fallbackReason: "context_thin"
     };
   }
 
   if (Number(summary?.sessions || 0) > 0) {
     return {
       title: "Strategic Note",
-      body: `${formatNumber(summary.sessions || 0)} sessions and ${formatNumber(summary.conversions || 0)} conversions are in the current window. Use the strongest source and landing page as the control.`
+      body: `${formatNumber(summary.sessions || 0)} sessions and ${formatNumber(summary.conversions || 0)} conversions are in the current window. Use the strongest source and landing page as the control.`,
+      isFallback: true,
+      fallbackReason: "context_thin"
     };
   }
 
   return {
     title: "Strategic Note",
-    body: "No strong pattern detected yet."
+    body: "No strong pattern detected yet.",
+    isFallback: true,
+    fallbackReason: "no_pattern"
   };
+}
+
+function hasAuditHighlightSignal_(highlights) {
+  const normalized = normalizeAuditHighlightsPayload(highlights);
+  return Boolean(
+    (normalized.whatsWorking || []).length ||
+    (normalized.needsAttention || []).length ||
+    normalized.nextAction
+  );
+}
+
+function isFallbackOnlyAuditHighlights_(highlights) {
+  const normalized = normalizeAuditHighlightsPayload(highlights);
+  const usedFallbacks = normalized.usedFallbacks || {};
+  if (!hasAuditHighlightSignal_(normalized)) return false;
+
+  return Boolean(
+    usedFallbacks.whatsWorking &&
+    usedFallbacks.needsAttention &&
+    usedFallbacks.nextAction
+  );
+}
+
+function shouldReplaceStrategicNote_(currentNote, incomingNote) {
+  if (!currentNote) return true;
+
+  const current = normalizeStrategicNote_(currentNote);
+  const incoming = normalizeStrategicNote_(incomingNote);
+
+  const currentBody = String(current.body || "").trim();
+  const incomingBody = String(incoming.body || "").trim();
+
+  if (!currentBody) return true;
+  if (!incomingBody) return false;
+  if (!incoming.isFallback) return true;
+  if (!current.isFallback) return false;
+  if (current.fallbackReason === "no_pattern" && incoming.fallbackReason !== "no_pattern") return true;
+  if (incomingBody.length > currentBody.length) return true;
+  return false;
 }
 
 function getCurrentReportFilterParams() {
@@ -2734,19 +2800,32 @@ function renderHomeOverviewSnapshot(summary, comparison) {
   }
 
   function normalizeStrategicNote_(note) {
+    if (!note) {
+      return {
+        title: "Strategic Note",
+        body: "No strong pattern detected yet.",
+        isFallback: true,
+        fallbackReason: "no_pattern"
+      };
+    }
+
     if (typeof note === "string") {
       const body = String(note || "").trim() || "No strong pattern detected yet.";
       return {
         title: "Strategic Note",
-        body
+        body,
+        isFallback: true,
+        fallbackReason: "no_pattern"
       };
     }
 
     const title = String(note?.title || "Strategic Note").trim() || "Strategic Note";
     const detail = String(note?.detail || "").trim();
     const body = String(note?.body || detail || "").trim() || "No strong pattern detected yet.";
+    const isFallback = Boolean(note?.isFallback);
+    const fallbackReason = String(note?.fallbackReason || (isFallback ? "context_thin" : "")).trim();
 
-    return { title, body };
+    return { title, body, isFallback, fallbackReason };
   }
 
   function renderHomeGtmStatus(summary) {
@@ -2980,7 +3059,12 @@ function renderHomeOverviewSnapshot(summary, comparison) {
     return {
       whatsWorking: Array.isArray(candidate.whatsWorking) ? candidate.whatsWorking : [],
       needsAttention: Array.isArray(candidate.needsAttention) ? candidate.needsAttention : [],
-      nextAction: candidate.nextAction || null
+      nextAction: candidate.nextAction || null,
+      usedFallbacks: {
+        whatsWorking: Boolean(candidate.usedFallbacks?.whatsWorking),
+        needsAttention: Boolean(candidate.usedFallbacks?.needsAttention),
+        nextAction: Boolean(candidate.usedFallbacks?.nextAction)
+      }
     };
   }
 

@@ -1449,6 +1449,10 @@ document.addEventListener("DOMContentLoaded", async () => {
     console.error("Initial Visual Intelligence load failed:", error);
   }
 
+  if (!hasRenderedAuditContent_(currentAuditHighlights)) {
+    renderAuditHighlights(currentAuditHighlights);
+  }
+
   if (APP_CONFIG.AUTO_SYNC_CLARITY_ON_LOAD) {
     try {
       await syncClarityData({ silent: true });
@@ -1569,6 +1573,10 @@ document.addEventListener("DOMContentLoaded", async () => {
   if (!data.ok) throw new Error(data.error || "Failed to load audit highlights");
 
   currentAuditHighlights = normalizeAuditHighlightsPayload(data.highlights || {});
+  currentHomeInsights = {
+    ...(currentHomeInsights || {}),
+    auditHighlights: currentAuditHighlights
+  };
   renderAuditHighlights(currentAuditHighlights);
 }
 
@@ -1863,6 +1871,15 @@ function buildFallbackStrategicNote_(auditHighlights, summary) {
 }
 
 function hasAuditHighlightSignal_(highlights) {
+  const normalized = normalizeAuditHighlightsPayload(highlights);
+  return Boolean(
+    (normalized.whatsWorking || []).length ||
+    (normalized.needsAttention || []).length ||
+    normalized.nextAction
+  );
+}
+
+function hasRenderedAuditContent_(highlights) {
   const normalized = normalizeAuditHighlightsPayload(highlights);
   return Boolean(
     (normalized.whatsWorking || []).length ||

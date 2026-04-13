@@ -811,11 +811,21 @@
                     required
                   >
                     <option value="" disabled selected>Select...</option>
-                    <option value="google">google</option>
-                    <option value="linkedin">linkedin</option>
-                    <option value="facebook">facebook</option>
-                    <option value="hs_email">hs_email</option>
-                    <option value="partner">partner</option>
+                    <option value="google">Google</option>
+                    <option value="linkedin">LinkedIn</option>
+                    <option value="facebook">Facebook</option>
+                    <option value="instagram">Instagram</option>
+                    <option value="youtube">YouTube</option>
+                    <option value="x">X / Twitter</option>
+                    <option value="bluesky">Bluesky</option>
+                    <option value="threads">Threads</option>
+                    <option value="tiktok">TikTok</option>
+                    <option value="hs_email">HubSpot Email</option>
+                    <option value="newsletter">Newsletter</option>
+                    <option value="partner">Partner</option>
+                    <option value="referral">Referral</option>
+                    <option value="direct">Direct</option>
+                    <option value="other">Other</option>
                   </select>
                 </div>
 
@@ -830,9 +840,20 @@
                   >
                     <option value="" disabled selected>Select...</option>
                     <option value="cpc">cpc</option>
-                    <option value="social">social</option>
-                    <option value="email">email</option>
-                    <option value="referral">referral</option>
+                    <option value="paid_social">Paid Social</option>
+                    <option value="organic_social">Organic Social</option>
+                    <option value="email">Email</option>
+                    <option value="referral">Referral</option>
+                    <option value="sms">SMS</option>
+                    <option value="qr">QR</option>
+                    <option value="display">Display</option>
+                    <option value="video">Video</option>
+                    <option value="affiliate">Affiliate</option>
+                    <option value="press">Press</option>
+                    <option value="partnership">Partnership</option>
+                    <option value="organic">Organic</option>
+                    <option value="social">Social</option>
+                    <option value="other">Other</option>
                   </select>
                 </div>
               </div>
@@ -1230,7 +1251,7 @@
 
 <script>
   const APP_CONFIG = {
-    APPS_SCRIPT_URL: "https://script.google.com/macros/s/AKfycbzJjEIqM7eDEQqLTif7kKe0bYDgfyCp5wpvdyYJisdVbtzX2qBtQr_3B8I_PEvjdYKv/exec",
+    APPS_SCRIPT_URL: "https://script.google.com/macros/s/AKfycbw-kpO7hCeAMogqYNdSbT1Ma9PujexnAT15oEkwatJQKdWsWJhyw2l5DsD1jkY0Kivt/exec",
     AUTO_SYNC_PERFORMANCE_ON_LOAD: false,
     AUTO_SYNC_CLARITY_ON_LOAD: false
   };
@@ -1721,24 +1742,32 @@ async function loadHomeSnapshot() {
   currentRecentRegistryLinks = recentRes.status === "fulfilled" && recentRes.value?.ok && Array.isArray(recentRes.value.links)
     ? recentRes.value.links
     : [];
-  currentHomeInsights = {
-    summary: currentHomeSummary,
-    comparison: currentHomeComparison,
-    recentLinks: currentRecentRegistryLinks,
-    auditHighlights: highlightsRes.status === "fulfilled" && highlightsRes.value?.ok
-      ? normalizeAuditHighlightsPayload(highlightsRes.value.highlights || {})
-      : currentAuditHighlights,
-    strategicNote: noteRes.status === "fulfilled" && noteRes.value?.ok ? (noteRes.value.note || {}) : {},
-    gtmSummary: gtmRes.status === "fulfilled" && gtmRes.value?.ok ? (gtmRes.value.summary || {}) : {}
-  };
 
   if (highlightsRes.status === "fulfilled" && highlightsRes.value?.ok) {
     currentAuditHighlights = normalizeAuditHighlightsPayload(highlightsRes.value.highlights || {});
   }
 
+  if (noteRes.status === "rejected" || !noteRes.value?.ok) {
+    console.error("getStrategicNote failed:", noteRes.status === "rejected" ? noteRes.reason : noteRes.value);
+  }
+
+  const fallbackStrategicNote = buildFallbackStrategicNote_(
+    currentAuditHighlights,
+    currentHomeSummary
+  );
+
+  currentHomeInsights = {
+    summary: currentHomeSummary,
+    comparison: currentHomeComparison,
+    recentLinks: currentRecentRegistryLinks,
+    auditHighlights: currentAuditHighlights,
+    strategicNote: noteRes.status === "fulfilled" && noteRes.value?.ok ? (noteRes.value.note || fallbackStrategicNote) : fallbackStrategicNote,
+    gtmSummary: gtmRes.status === "fulfilled" && gtmRes.value?.ok ? (gtmRes.value.summary || {}) : {}
+  };
+
   [
     ["renderHomeOverviewSnapshot", () => renderHomeOverviewSnapshot(currentHomeSummary, currentHomeComparison)],
-    ["renderHomeStrategicNote", () => renderHomeStrategicNote(currentHomeInsights.strategicNote || {})],
+    ["renderHomeStrategicNote", () => renderHomeStrategicNote(currentHomeInsights.strategicNote)],
     ["renderHomeGtmStatus", () => renderHomeGtmStatus(currentHomeInsights.gtmSummary || {})],
     ["renderHomeRecentUtmLinks", () => renderHomeRecentUtmLinks(currentRecentRegistryLinks)],
     ["renderAuditHighlights", () => renderAuditHighlights(currentAuditHighlights)]
@@ -1757,6 +1786,30 @@ async function loadHomeSnapshot() {
   if (failedLabels.length === requests.length) {
     throw new Error("All overview requests failed");
   }
+}
+
+function buildFallbackStrategicNote_(auditHighlights, summary) {
+  const attentionItems = Array.isArray(auditHighlights?.needsAttention) ? auditHighlights.needsAttention : [];
+  const topAttention = attentionItems[0] || null;
+
+  if (topAttention) {
+    return {
+      title: topAttention.title || "Needs Attention",
+      body: topAttention.detail || topAttention.finding || topAttention.recommendation || "No strong pattern detected yet."
+    };
+  }
+
+  if (Number(summary?.sessions || 0) > 0) {
+    return {
+      title: "Strategic Note",
+      body: `${formatNumber(summary.sessions || 0)} sessions and ${formatNumber(summary.conversions || 0)} conversions are in the current window. Use the strongest source and landing page as the control.`
+    };
+  }
+
+  return {
+    title: "Strategic Note",
+    body: "No strong pattern detected yet."
+  };
 }
 
 function getCurrentReportFilterParams() {
@@ -1953,8 +2006,8 @@ function generateUTM() {
   }
 
   const urlValue = String(urlField?.value || "").trim();
-  const source = String(sourceField?.value || "").trim();
-  const medium = String(mediumField?.value || "").trim();
+  const source = normalizeUtmLooseValue_(sourceField?.value || "");
+  const medium = normalizeUtmLooseValue_(mediumField?.value || "");
   const campaign = String(campaignField?.value || "").trim();
   const term = String(termField?.value || "").trim();
   const content = String(contentField?.value || "").trim();
@@ -1981,8 +2034,8 @@ function generateUTM() {
 
     const url = new URL(normalizedUrl);
 
-    if (source) url.searchParams.set("utm_source", source.toLowerCase());
-    if (medium) url.searchParams.set("utm_medium", medium.toLowerCase());
+    if (source) url.searchParams.set("utm_source", source);
+    if (medium) url.searchParams.set("utm_medium", medium);
     if (campaign) {
       url.searchParams.set(
         "utm_campaign",
@@ -2052,8 +2105,8 @@ function generateUTM() {
 
   async function saveUTM() {
     const destinationUrl = document.getElementById("utm-url")?.value.trim() || "";
-    const source = (document.getElementById("utm-source")?.value || "").trim();
-    const medium = (document.getElementById("utm-medium")?.value || "").trim();
+    const source = normalizeUtmLooseValue_(document.getElementById("utm-source")?.value || "");
+    const medium = normalizeUtmLooseValue_(document.getElementById("utm-medium")?.value || "");
     const campaign = document.getElementById("utm-campaign")?.value.trim() || "";
     const content = document.getElementById("utm-content")?.value.trim() || "";
     const term = document.getElementById("utm-term")?.value.trim() || "";
@@ -2126,6 +2179,13 @@ function generateUTM() {
       console.error(error);
       showToast("Save Error", error.message || "Could not save to sheet.", "ph-warning", "text-amber-400");
     }
+  }
+
+  function normalizeUtmLooseValue_(value) {
+    return String(value || "")
+      .trim()
+      .toLowerCase()
+      .replace(/\s+/g, "_");
   }
 
   function resetUtmRegistryFilters() {
@@ -2506,15 +2566,10 @@ function renderHomeOverviewSnapshot(summary, comparison) {
     const attentionItems = Array.isArray(currentHomeInsights?.auditHighlights?.needsAttention)
       ? currentHomeInsights.auditHighlights.needsAttention
       : [];
-    const noteTitle = typeof note === "string"
-      ? "Strategic Note"
-      : note?.title || "Strategic Note";
-    const noteBody = typeof note === "string"
-      ? note
-      : note?.body || "No strong pattern detected yet.";
+    const normalizedNote = normalizeStrategicNote_(note);
 
-    if (titleEl) titleEl.textContent = noteTitle;
-    if (bodyEl) bodyEl.textContent = noteBody;
+    if (titleEl) titleEl.textContent = normalizedNote.title;
+    if (bodyEl) bodyEl.textContent = normalizedNote.body;
 
     if (auditSummaryEl) {
       if (attentionItems.length) {
@@ -2523,6 +2578,22 @@ function renderHomeOverviewSnapshot(summary, comparison) {
         auditSummaryEl.textContent = "No active high-priority issues";
       }
     }
+  }
+
+  function normalizeStrategicNote_(note) {
+    if (typeof note === "string") {
+      const body = String(note || "").trim() || "No strong pattern detected yet.";
+      return {
+        title: "Strategic Note",
+        body
+      };
+    }
+
+    const title = String(note?.title || "Strategic Note").trim() || "Strategic Note";
+    const detail = String(note?.detail || "").trim();
+    const body = String(note?.body || detail || "").trim() || "No strong pattern detected yet.";
+
+    return { title, body };
   }
 
   function renderHomeGtmStatus(summary) {
@@ -2991,11 +3062,25 @@ async function refreshReportsData() {
       if (!response.ok) throw new Error(response.error || "Sync failed");
 
       await loadClarityFromSheet();
-      if (updated) updated.textContent = "Updated: Just now";
+      if (updated) {
+        updated.textContent = currentClaritySummary?.latestSnapshotDate
+          ? `Updated: ${currentClaritySummary.latestSnapshotDate}`
+          : "Updated: Just now";
+      }
       updateLocalSyncTime();
 
       if (!silent) {
-        showToast("Sync Complete", "Clarity data refreshed.", "ph-check-circle");
+        const sync = response.sync || {};
+        const fetched = Number(sync.rowsFetched);
+        const appended = Number(sync.rowsAppended);
+        const hasCounts = Number.isFinite(fetched) && Number.isFinite(appended);
+        showToast(
+          "Sync Complete",
+          hasCounts
+            ? `Clarity data refreshed. ${fetched} rows fetched, ${appended} appended.`
+            : "Clarity data refreshed.",
+          "ph-check-circle"
+        );
       }
 
       return response.sync || {};
@@ -3034,7 +3119,7 @@ async function refreshReportsData() {
     if (scrollEl) scrollEl.textContent = `${Math.round(avgScrollDepth)}%`;
     if (timeEl) timeEl.textContent = formatDuration(avgEngagementTimeSeconds);
     if (highEl) highEl.textContent = highestFrictionRow?.page || "-";
-    if (updatedEl) updatedEl.textContent = "Updated: Just now";
+    if (updatedEl) updatedEl.textContent = summary?.latestSnapshotDate ? `Updated: ${summary.latestSnapshotDate}` : "Updated: Just now";
 
     const highlightCard = document.getElementById("highlight-friction-page");
     if (highlightCard) {

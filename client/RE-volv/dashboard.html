@@ -839,7 +839,7 @@
                     required
                   >
                     <option value="" disabled selected>Select...</option>
-                    <option value="cpc">cpc</option>
+                    <option value="cpc">CPC / Paid Search</option>
                     <option value="paid_social">Paid Social</option>
                     <option value="organic_social">Organic Social</option>
                     <option value="email">Email</option>
@@ -1251,7 +1251,7 @@
 
 <script>
   const APP_CONFIG = {
-    APPS_SCRIPT_URL: "https://script.google.com/macros/s/AKfycbw-kpO7hCeAMogqYNdSbT1Ma9PujexnAT15oEkwatJQKdWsWJhyw2l5DsD1jkY0Kivt/exec",
+    APPS_SCRIPT_URL: "https://script.google.com/macros/s/AKfycbyvon-HJ3mgBUTaoOyZWYpTDR8Kva5T41ZY6MVEqbfrT9oeE5boyuObIo2CDPq780J0/exec",
     AUTO_SYNC_PERFORMANCE_ON_LOAD: false,
     AUTO_SYNC_CLARITY_ON_LOAD: false
   };
@@ -2007,7 +2007,7 @@ function generateUTM() {
 
   const urlValue = String(urlField?.value || "").trim();
   const source = normalizeUtmLooseValue_(sourceField?.value || "");
-  const medium = normalizeUtmLooseValue_(mediumField?.value || "");
+  const medium = normalizeUtmMediumValue_(String(mediumField?.value || "").trim());
   const campaign = String(campaignField?.value || "").trim();
   const term = String(termField?.value || "").trim();
   const content = String(contentField?.value || "").trim();
@@ -2106,7 +2106,7 @@ function generateUTM() {
   async function saveUTM() {
     const destinationUrl = document.getElementById("utm-url")?.value.trim() || "";
     const source = normalizeUtmLooseValue_(document.getElementById("utm-source")?.value || "");
-    const medium = normalizeUtmLooseValue_(document.getElementById("utm-medium")?.value || "");
+    const medium = normalizeUtmMediumValue_((document.getElementById("utm-medium")?.value || "").trim());
     const campaign = document.getElementById("utm-campaign")?.value.trim() || "";
     const content = document.getElementById("utm-content")?.value.trim() || "";
     const term = document.getElementById("utm-term")?.value.trim() || "";
@@ -2186,6 +2186,39 @@ function generateUTM() {
       .trim()
       .toLowerCase()
       .replace(/\s+/g, "_");
+  }
+
+  function normalizeUtmMediumValue_(value) {
+    const raw = String(value || "").trim().toLowerCase();
+    if (!raw) return "";
+
+    const compact = raw.replace(/\s+/g, "_").replace(/[^a-z0-9_]/g, "");
+
+    if (compact === "paidsocial" || compact === "paid_social" || compact === "social_paid") return "paid_social";
+    if (compact === "organicsocial" || compact === "organic_social") return "organic_social";
+    if (compact === "paidsearch" || compact === "paid_search") return "cpc";
+    if (compact === "ppc") return "cpc";
+    if (compact === "e_mail") return "email";
+
+    const allowed = new Set([
+      "cpc",
+      "paid_social",
+      "organic_social",
+      "email",
+      "referral",
+      "sms",
+      "qr",
+      "display",
+      "video",
+      "affiliate",
+      "press",
+      "partnership",
+      "organic",
+      "social",
+      "other"
+    ]);
+
+    return allowed.has(compact) ? compact : compact;
   }
 
   function resetUtmRegistryFilters() {
@@ -3109,17 +3142,17 @@ async function refreshReportsData() {
     const rows = Array.isArray(summary.rows) ? summary.rows : [];
 
     const highestFrictionRow = rows.reduce((best, row) => {
-      const bestRate = best ? Number(best.rage_rate || 0) : -1;
-      const rowRate = Number(row.rage_rate || 0);
-      return rowRate > bestRate ? row : best;
+      const bestScore = best ? Number(best.friction_score || 0) : -1;
+      const rowScore = Number(row.friction_score || 0);
+      return rowScore > bestScore ? row : best;
     }, null);
 
     if (rageEl) rageEl.textContent = formatNumber(rageClicks);
     if (deadEl) deadEl.textContent = formatNumber(deadClicks);
-    if (scrollEl) scrollEl.textContent = `${Math.round(avgScrollDepth)}%`;
-    if (timeEl) timeEl.textContent = formatDuration(avgEngagementTimeSeconds);
-    if (highEl) highEl.textContent = highestFrictionRow?.page || "-";
-    if (updatedEl) updatedEl.textContent = summary?.latestSnapshotDate ? `Updated: ${summary.latestSnapshotDate}` : "Updated: Just now";
+    if (scrollEl) scrollEl.textContent = formatPercentDisplay(avgScrollDepth);
+    if (timeEl) timeEl.textContent = formatDurationDisplay(avgEngagementTimeSeconds);
+    if (highEl) highEl.textContent = highestFrictionRow?.page || "Unassigned page";
+    if (updatedEl) updatedEl.textContent = summary?.latestSnapshotDate ? `Updated: ${summary.latestSnapshotDate}` : "Updated: —";
 
     const highlightCard = document.getElementById("highlight-friction-page");
     if (highlightCard) {
@@ -3139,6 +3172,19 @@ async function refreshReportsData() {
         scoreEl.innerHTML = `${escapeHtml(score)} <span class="text-sm text-gray-500 font-normal">Friction</span>`;
       }
     }
+  }
+
+  function formatPercentDisplay(value) {
+    const num = Number(value || 0);
+    return `${Math.round(num * 100)}%`;
+  }
+
+  function formatDurationDisplay(seconds) {
+    const value = Number(seconds || 0);
+    if (!value) return "0 sec";
+    if (value < 60) return `${Math.round(value)} sec`;
+    const mins = value / 60;
+    return mins < 10 ? `${mins.toFixed(1)} min` : `${Math.round(mins)} min`;
   }
 
   function bindAuditFilters() {
@@ -3425,8 +3471,31 @@ function showAuditDetail(id) {
   }
 
   function populateUxPageOptionsFromClarityRows(rows) {
-    const values = (rows || []).map((row) => row.page).filter(Boolean);
-    populateSelectFromValues("ux-filter-page", values, "All Pages");
+    const select = document.getElementById("ux-filter-page");
+    if (!select) return;
+
+    const currentValue = select.value || "all";
+
+    const pages = [...new Set(
+      (rows || [])
+        .map((row) => String(row.page || "").trim())
+        .filter((page) => page && page !== "all")
+    )].sort();
+
+    select.innerHTML = `<option value="all">All Pages</option>`;
+
+    pages.forEach((page) => {
+      const option = document.createElement("option");
+      option.value = page;
+      option.textContent = page;
+      select.appendChild(option);
+    });
+
+    if ([...select.options].some((opt) => opt.value === currentValue)) {
+      select.value = currentValue;
+    } else {
+      select.value = "all";
+    }
   }
 
 function populateSelectFromValues(selectId, values, allLabel) {

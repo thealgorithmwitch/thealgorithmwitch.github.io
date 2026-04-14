@@ -1247,7 +1247,7 @@
 
 <script>
   const APP_CONFIG = {
-    APPS_SCRIPT_URL: "https://script.google.com/macros/s/AKfycbzkp0XCxJtcWn1Mz4-uceJD0oNlivQhwjY_4hohTjXQG9tu-UmEbBBxQjND76X2HoC-/exec",
+    APPS_SCRIPT_URL: "https://script.google.com/macros/s/AKfycby3QzHbbKkIkuJ81OtQ0B6TfvsBSzAtsFpIQTcZLPsPTOlxNddf7QEcW8TGCCK1zIhe/exec",
     AUTO_SYNC_PERFORMANCE_ON_LOAD: false,
     AUTO_SYNC_CLARITY_ON_LOAD: false
   };
@@ -3787,6 +3787,13 @@ function populateSelectFromValues(selectId, values, allLabel) {
   select.value = validValues.includes(normalizedCurrent) ? normalizedCurrent : "all";
 }
   
+  function buildResponsePreview(text, limit = 300) {
+    return String(text || "")
+      .replace(/\s+/g, " ")
+      .trim()
+      .slice(0, limit);
+  }
+
   async function apiGet(action, params = {}) {
     const url = new URL(APP_CONFIG.APPS_SCRIPT_URL);
     url.searchParams.set("action", action);
@@ -3797,18 +3804,55 @@ function populateSelectFromValues(selectId, values, allLabel) {
       }
     });
 
-    const response = await fetch(url.toString(), { method: "GET" });
+    let response;
+    try {
+      response = await fetch(url.toString(), { method: "GET" });
+    } catch (error) {
+      console.error("GET request failed before a response was received", {
+        action,
+        url: url.toString(),
+        params,
+        error: error?.message || error
+      });
+      throw new Error(`GET ${action} network failure`);
+    }
+
     const text = await response.text();
+    const contentType = response.headers.get("content-type") || "";
+    const preview = buildResponsePreview(text);
 
     if (!response.ok) {
-      throw new Error(`GET ${action} failed`);
+      console.error("GET request returned non-OK status", {
+        action,
+        url: url.toString(),
+        status: response.status,
+        statusText: response.statusText,
+        contentType,
+        preview
+      });
+      throw new Error(`GET ${action} failed (${response.status})`);
     }
 
     try {
-      return JSON.parse(text);
+      const parsed = JSON.parse(text);
+      if (parsed && parsed.ok === false) {
+        console.error("Apps Script returned ok:false", {
+          action,
+          url: url.toString(),
+          error: parsed.error || "Unknown backend error",
+          payload: parsed
+        });
+      }
+      return parsed;
     } catch (error) {
-      console.error("Non-JSON GET response for", action, text);
-      throw new Error(`GET ${action} returned invalid JSON`);
+      console.error("Non-JSON GET response", {
+        action,
+        url: url.toString(),
+        status: response.status,
+        contentType,
+        preview
+      });
+      throw new Error(`GET ${action} returned invalid JSON (${response.status})`);
     }
   }
 

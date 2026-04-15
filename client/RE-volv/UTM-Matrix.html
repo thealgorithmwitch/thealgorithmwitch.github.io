@@ -1,0 +1,1839 @@
+
+<html lang="en" vid="0"><head vid="1">
+    <meta charset="UTF-8" vid="2">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" vid="3">
+    <title vid="4">UTM Matrix Guide | The Algorithm Witch</title>
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com" vid="6">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="" vid="7">
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@400;700;900&amp;family=Inter:wght@300;400;500;600&amp;family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&amp;family=JetBrains+Mono:wght@400;700&amp;display=swap" rel="stylesheet" vid="8">
+    <script src="https://unpkg.com/@phosphor-icons/web" vid="9"></script>
+    <style vid="10">
+        :root {
+            --color-bg-base: #05020a;
+            --color-panel: #0d0718;
+            --color-border: rgba(168, 85, 247, 0.2);
+            --color-accent: #a855f7;
+            --color-gold: #fbbf24;
+            --color-cyan: #06b6d4;
+            --color-pink: #ec4899;
+        }
+
+        body {
+            background-color: var(--color-bg-base);
+            color: #d1d5db;
+            font-family: 'Inter', sans-serif;
+            margin: 0;
+            padding: 0;
+            overflow-x: hidden;
+            scroll-behavior: smooth;
+        }
+
+        .bg-grid {
+            background-size: 40px 40px;
+            background-image: linear-gradient(to right, rgba(168, 85, 247, 0.03) 1px, transparent 1px),
+                              linear-gradient(to bottom, rgba(168, 85, 247, 0.03) 1px, transparent 1px);
+            position: fixed;
+            inset: 0;
+            z-index: 0;
+            pointer-events: none;
+        }
+
+        .font-magical { font-family: 'Cinzel Decorative', serif; }
+        .font-serif-heading { font-family: 'Playfair Display', serif; }
+        .font-mono-code { font-family: 'JetBrains Mono', monospace; }
+
+        .stars {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 1;
+        }
+
+        .star {
+            position: absolute;
+            background: #fff;
+            border-radius: 50%;
+            opacity: 0;
+            animation: twinkle var(--duration) ease-in-out infinite;
+            animation-delay: var(--delay);
+            box-shadow: 0 0 5px #fff, 0 0 10px #a855f7;
+        }
+
+        @keyframes twinkle {
+            0% { opacity: 0; transform: scale(0.3); }
+            50% { opacity: var(--opacity); transform: scale(1); }
+            100% { opacity: 0; transform: scale(0.3); }
+        }
+
+        .sharp-panel {
+            background: var(--color-panel);
+            border: 1px solid var(--color-border);
+            position: relative;
+        }
+
+        .sharp-panel::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0;
+            width: 4px; height: 4px;
+            background: var(--color-accent);
+        }
+        .sharp-panel::after {
+            content: '';
+            position: absolute;
+            bottom: 0; right: 0;
+            width: 4px; height: 4px;
+            background: var(--color-accent);
+        }
+
+        .text-glow {
+            text-shadow: 0 0 20px rgba(168, 85, 247, 0.5);
+        }
+
+        .text-glow-gold {
+            text-shadow: 0 0 20px rgba(251, 191, 36, 0.4);
+        }
+
+        .text-glow-cyan {
+            text-shadow: 0 0 20px rgba(6, 182, 212, 0.4);
+        }
+
+        .data-table {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0;
+        }
+        .data-table th {
+            text-align: left;
+            padding: 1rem;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: #6b7280;
+            border-bottom: 1px solid var(--color-border);
+            background: rgba(0,0,0,0.2);
+        }
+        .data-table td {
+            padding: 1.25rem 1rem;
+            border-bottom: 1px solid rgba(168, 85, 247, 0.1);
+            vertical-align: top;
+        }
+        .data-table tr:last-child td {
+            border-bottom: none;
+        }
+
+        .status-badge {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.65rem;
+            text-transform: uppercase;
+            padding: 0.15rem 0.5rem;
+            border: 1px solid currentColor;
+            letter-spacing: 0.1em;
+        }
+
+        .fail-glow { color: #f43f5e; text-shadow: 0 0 10px rgba(244, 63, 94, 0.4); }
+        .pass-glow { color: #10b981; text-shadow: 0 0 10px rgba(16, 185, 129, 0.4); }
+
+        .nav-item {
+            position: relative;
+            padding-bottom: 0.25rem;
+        }
+        .nav-item::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 1px;
+            background: var(--color-accent);
+            transform: scaleX(0);
+            transform-origin: right;
+            transition: transform 0.3s ease;
+        }
+        .nav-item:hover::after {
+            transform: scaleX(1);
+            transform-origin: left;
+        }
+
+        .code-block {
+            background: #000;
+            padding: 1.5rem;
+            border: 1px solid rgba(6, 182, 212, 0.2);
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.85rem;
+            line-height: 1.6;
+            overflow-x: auto;
+            position: relative;
+        }
+        .code-block::before {
+            content: 'URL';
+            position: absolute;
+            top: 0; right: 0;
+            padding: 2px 8px;
+            background: rgba(6, 182, 212, 0.2);
+            color: var(--color-cyan);
+            font-size: 10px;
+            letter-spacing: 1px;
+        }
+
+        .rule-card {
+            border-left: 2px solid var(--color-accent);
+            padding-left: 1.5rem;
+        }
+
+        ::-webkit-scrollbar { width: 5px; }
+        ::-webkit-scrollbar-track { background: var(--color-bg-base); }
+        ::-webkit-scrollbar-thumb { background: #4c1d95; }
+    </style>
+
+  <style type="text/css">
+*, ::before, ::after {
+  --tw-border-spacing-x: 0;
+  --tw-border-spacing-y: 0;
+  --tw-translate-x: 0;
+  --tw-translate-y: 0;
+  --tw-rotate: 0;
+  --tw-skew-x: 0;
+  --tw-skew-y: 0;
+  --tw-scale-x: 1;
+  --tw-scale-y: 1;
+  --tw-pan-x:  ;
+  --tw-pan-y:  ;
+  --tw-pinch-zoom:  ;
+  --tw-scroll-snap-strictness: proximity;
+  --tw-gradient-from-position:  ;
+  --tw-gradient-via-position:  ;
+  --tw-gradient-to-position:  ;
+  --tw-ordinal:  ;
+  --tw-slashed-zero:  ;
+  --tw-numeric-figure:  ;
+  --tw-numeric-spacing:  ;
+  --tw-numeric-fraction:  ;
+  --tw-ring-inset:  ;
+  --tw-ring-offset-width: 0px;
+  --tw-ring-offset-color: #fff;
+  --tw-ring-color: rgb(59 130 246 / 0.5);
+  --tw-ring-offset-shadow: 0 0 #0000;
+  --tw-ring-shadow: 0 0 #0000;
+  --tw-shadow: 0 0 #0000;
+  --tw-shadow-colored: 0 0 #0000;
+  --tw-blur:  ;
+  --tw-brightness:  ;
+  --tw-contrast:  ;
+  --tw-grayscale:  ;
+  --tw-hue-rotate:  ;
+  --tw-invert:  ;
+  --tw-saturate:  ;
+  --tw-sepia:  ;
+  --tw-drop-shadow:  ;
+  --tw-backdrop-blur:  ;
+  --tw-backdrop-brightness:  ;
+  --tw-backdrop-contrast:  ;
+  --tw-backdrop-grayscale:  ;
+  --tw-backdrop-hue-rotate:  ;
+  --tw-backdrop-invert:  ;
+  --tw-backdrop-opacity:  ;
+  --tw-backdrop-saturate:  ;
+  --tw-backdrop-sepia:  ;
+  --tw-contain-size:  ;
+  --tw-contain-layout:  ;
+  --tw-contain-paint:  ;
+  --tw-contain-style:  ;
+}
+
+::backdrop {
+  --tw-border-spacing-x: 0;
+  --tw-border-spacing-y: 0;
+  --tw-translate-x: 0;
+  --tw-translate-y: 0;
+  --tw-rotate: 0;
+  --tw-skew-x: 0;
+  --tw-skew-y: 0;
+  --tw-scale-x: 1;
+  --tw-scale-y: 1;
+  --tw-pan-x:  ;
+  --tw-pan-y:  ;
+  --tw-pinch-zoom:  ;
+  --tw-scroll-snap-strictness: proximity;
+  --tw-gradient-from-position:  ;
+  --tw-gradient-via-position:  ;
+  --tw-gradient-to-position:  ;
+  --tw-ordinal:  ;
+  --tw-slashed-zero:  ;
+  --tw-numeric-figure:  ;
+  --tw-numeric-spacing:  ;
+  --tw-numeric-fraction:  ;
+  --tw-ring-inset:  ;
+  --tw-ring-offset-width: 0px;
+  --tw-ring-offset-color: #fff;
+  --tw-ring-color: rgb(59 130 246 / 0.5);
+  --tw-ring-offset-shadow: 0 0 #0000;
+  --tw-ring-shadow: 0 0 #0000;
+  --tw-shadow: 0 0 #0000;
+  --tw-shadow-colored: 0 0 #0000;
+  --tw-blur:  ;
+  --tw-brightness:  ;
+  --tw-contrast:  ;
+  --tw-grayscale:  ;
+  --tw-hue-rotate:  ;
+  --tw-invert:  ;
+  --tw-saturate:  ;
+  --tw-sepia:  ;
+  --tw-drop-shadow:  ;
+  --tw-backdrop-blur:  ;
+  --tw-backdrop-brightness:  ;
+  --tw-backdrop-contrast:  ;
+  --tw-backdrop-grayscale:  ;
+  --tw-backdrop-hue-rotate:  ;
+  --tw-backdrop-invert:  ;
+  --tw-backdrop-opacity:  ;
+  --tw-backdrop-saturate:  ;
+  --tw-backdrop-sepia:  ;
+  --tw-contain-size:  ;
+  --tw-contain-layout:  ;
+  --tw-contain-paint:  ;
+  --tw-contain-style:  ;
+}/*
+! tailwindcss v3.4.17 | MIT License | https://tailwindcss.com
+*//*
+1. Prevent padding and border from affecting element width. (https://github.com/mozdevs/cssremedy/issues/4)
+2. Allow adding a border to an element by just adding a border-width. (https://github.com/tailwindcss/tailwindcss/pull/116)
+*/
+
+*,
+::before,
+::after {
+  box-sizing: border-box; /* 1 */
+  border-width: 0; /* 2 */
+  border-style: solid; /* 2 */
+  border-color: #e5e7eb; /* 2 */
+}
+
+::before,
+::after {
+  --tw-content: '';
+}
+
+/*
+1. Use a consistent sensible line-height in all browsers.
+2. Prevent adjustments of font size after orientation changes in iOS.
+3. Use a more readable tab size.
+4. Use the user's configured `sans` font-family by default.
+5. Use the user's configured `sans` font-feature-settings by default.
+6. Use the user's configured `sans` font-variation-settings by default.
+7. Disable tap highlights on iOS
+*/
+
+html,
+:host {
+  line-height: 1.5; /* 1 */
+  -webkit-text-size-adjust: 100%; /* 2 */
+  -moz-tab-size: 4; /* 3 */
+  tab-size: 4; /* 3 */
+  font-family: ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji"; /* 4 */
+  font-feature-settings: normal; /* 5 */
+  font-variation-settings: normal; /* 6 */
+  -webkit-tap-highlight-color: transparent; /* 7 */
+}
+
+/*
+1. Remove the margin in all browsers.
+2. Inherit line-height from `html` so users can set them as a class directly on the `html` element.
+*/
+
+body {
+  margin: 0; /* 1 */
+  line-height: inherit; /* 2 */
+}
+
+/*
+1. Add the correct height in Firefox.
+2. Correct the inheritance of border color in Firefox. (https://bugzilla.mozilla.org/show_bug.cgi?id=190655)
+3. Ensure horizontal rules are visible by default.
+*/
+
+hr {
+  height: 0; /* 1 */
+  color: inherit; /* 2 */
+  border-top-width: 1px; /* 3 */
+}
+
+/*
+Add the correct text decoration in Chrome, Edge, and Safari.
+*/
+
+abbr:where([title]) {
+  text-decoration: underline dotted;
+}
+
+/*
+Remove the default font size and weight for headings.
+*/
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  font-size: inherit;
+  font-weight: inherit;
+}
+
+/*
+Reset links to optimize for opt-in styling instead of opt-out.
+*/
+
+a {
+  color: inherit;
+  text-decoration: inherit;
+}
+
+/*
+Add the correct font weight in Edge and Safari.
+*/
+
+b,
+strong {
+  font-weight: bolder;
+}
+
+/*
+1. Use the user's configured `mono` font-family by default.
+2. Use the user's configured `mono` font-feature-settings by default.
+3. Use the user's configured `mono` font-variation-settings by default.
+4. Correct the odd `em` font sizing in all browsers.
+*/
+
+code,
+kbd,
+samp,
+pre {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; /* 1 */
+  font-feature-settings: normal; /* 2 */
+  font-variation-settings: normal; /* 3 */
+  font-size: 1em; /* 4 */
+}
+
+/*
+Add the correct font size in all browsers.
+*/
+
+small {
+  font-size: 80%;
+}
+
+/*
+Prevent `sub` and `sup` elements from affecting the line height in all browsers.
+*/
+
+sub,
+sup {
+  font-size: 75%;
+  line-height: 0;
+  position: relative;
+  vertical-align: baseline;
+}
+
+sub {
+  bottom: -0.25em;
+}
+
+sup {
+  top: -0.5em;
+}
+
+/*
+1. Remove text indentation from table contents in Chrome and Safari. (https://bugs.chromium.org/p/chromium/issues/detail?id=999088, https://bugs.webkit.org/show_bug.cgi?id=201297)
+2. Correct table border color inheritance in all Chrome and Safari. (https://bugs.chromium.org/p/chromium/issues/detail?id=935729, https://bugs.webkit.org/show_bug.cgi?id=195016)
+3. Remove gaps between table borders by default.
+*/
+
+table {
+  text-indent: 0; /* 1 */
+  border-color: inherit; /* 2 */
+  border-collapse: collapse; /* 3 */
+}
+
+/*
+1. Change the font styles in all browsers.
+2. Remove the margin in Firefox and Safari.
+3. Remove default padding in all browsers.
+*/
+
+button,
+input,
+optgroup,
+select,
+textarea {
+  font-family: inherit; /* 1 */
+  font-feature-settings: inherit; /* 1 */
+  font-variation-settings: inherit; /* 1 */
+  font-size: 100%; /* 1 */
+  font-weight: inherit; /* 1 */
+  line-height: inherit; /* 1 */
+  letter-spacing: inherit; /* 1 */
+  color: inherit; /* 1 */
+  margin: 0; /* 2 */
+  padding: 0; /* 3 */
+}
+
+/*
+Remove the inheritance of text transform in Edge and Firefox.
+*/
+
+button,
+select {
+  text-transform: none;
+}
+
+/*
+1. Correct the inability to style clickable types in iOS and Safari.
+2. Remove default button styles.
+*/
+
+button,
+input:where([type='button']),
+input:where([type='reset']),
+input:where([type='submit']) {
+  -webkit-appearance: button; /* 1 */
+  background-color: transparent; /* 2 */
+  background-image: none; /* 2 */
+}
+
+/*
+Use the modern Firefox focus style for all focusable elements.
+*/
+
+:-moz-focusring {
+  outline: auto;
+}
+
+/*
+Remove the additional `:invalid` styles in Firefox. (https://github.com/mozilla/gecko-dev/blob/2f9eacd9d3d995c937b4251a5557d95d494c9be1/layout/style/res/forms.css#L728-L737)
+*/
+
+:-moz-ui-invalid {
+  box-shadow: none;
+}
+
+/*
+Add the correct vertical alignment in Chrome and Firefox.
+*/
+
+progress {
+  vertical-align: baseline;
+}
+
+/*
+Correct the cursor style of increment and decrement buttons in Safari.
+*/
+
+::-webkit-inner-spin-button,
+::-webkit-outer-spin-button {
+  height: auto;
+}
+
+/*
+1. Correct the odd appearance in Chrome and Safari.
+2. Correct the outline style in Safari.
+*/
+
+[type='search'] {
+  -webkit-appearance: textfield; /* 1 */
+  outline-offset: -2px; /* 2 */
+}
+
+/*
+Remove the inner padding in Chrome and Safari on macOS.
+*/
+
+::-webkit-search-decoration {
+  -webkit-appearance: none;
+}
+
+/*
+1. Correct the inability to style clickable types in iOS and Safari.
+2. Change font properties to `inherit` in Safari.
+*/
+
+::-webkit-file-upload-button {
+  -webkit-appearance: button; /* 1 */
+  font: inherit; /* 2 */
+}
+
+/*
+Add the correct display in Chrome and Safari.
+*/
+
+summary {
+  display: list-item;
+}
+
+/*
+Removes the default spacing and border for appropriate elements.
+*/
+
+blockquote,
+dl,
+dd,
+h1,
+h2,
+h3,
+h4,
+h5,
+h6,
+hr,
+figure,
+p,
+pre {
+  margin: 0;
+}
+
+fieldset {
+  margin: 0;
+  padding: 0;
+}
+
+legend {
+  padding: 0;
+}
+
+ol,
+ul,
+menu {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+/*
+Reset default styling for dialogs.
+*/
+dialog {
+  padding: 0;
+}
+
+/*
+Prevent resizing textareas horizontally by default.
+*/
+
+textarea {
+  resize: vertical;
+}
+
+/*
+1. Reset the default placeholder opacity in Firefox. (https://github.com/tailwindlabs/tailwindcss/issues/3300)
+2. Set the default placeholder color to the user's configured gray 400 color.
+*/
+
+input::placeholder,
+textarea::placeholder {
+  opacity: 1; /* 1 */
+  color: #9ca3af; /* 2 */
+}
+
+/*
+Set the default cursor for buttons.
+*/
+
+button,
+[role="button"] {
+  cursor: pointer;
+}
+
+/*
+Make sure disabled buttons don't get the pointer cursor.
+*/
+:disabled {
+  cursor: default;
+}
+
+/*
+1. Make replaced elements `display: block` by default. (https://github.com/mozdevs/cssremedy/issues/14)
+2. Add `vertical-align: middle` to align replaced elements more sensibly by default. (https://github.com/jensimmons/cssremedy/issues/14#issuecomment-634934210)
+   This can trigger a poorly considered lint error in some tools but is included by design.
+*/
+
+img,
+svg,
+video,
+canvas,
+audio,
+iframe,
+embed,
+object {
+  display: block; /* 1 */
+  vertical-align: middle; /* 2 */
+}
+
+/*
+Constrain images and videos to the parent width and preserve their intrinsic aspect ratio. (https://github.com/mozdevs/cssremedy/issues/14)
+*/
+
+img,
+video {
+  max-width: 100%;
+  height: auto;
+}
+
+/* Make elements with the HTML hidden attribute stay hidden by default */
+[hidden]:where(:not([hidden="until-found"])) {
+  display: none;
+}
+.pointer-events-none {
+  pointer-events: none;
+}
+.fixed {
+  position: fixed;
+}
+.absolute {
+  position: absolute;
+}
+.relative {
+  position: relative;
+}
+.inset-0 {
+  inset: 0px;
+}
+.-right-1 {
+  right: -0.25rem;
+}
+.-top-1 {
+  top: -0.25rem;
+}
+.bottom-\[10\%\] {
+  bottom: 10%;
+}
+.left-\[-5\%\] {
+  left: -5%;
+}
+.right-\[5\%\] {
+  right: 5%;
+}
+.top-0 {
+  top: 0px;
+}
+.top-\[5\%\] {
+  top: 5%;
+}
+.z-0 {
+  z-index: 0;
+}
+.z-10 {
+  z-index: 10;
+}
+.z-50 {
+  z-index: 50;
+}
+.mx-auto {
+  margin-left: auto;
+  margin-right: auto;
+}
+.mb-10 {
+  margin-bottom: 2.5rem;
+}
+.mb-12 {
+  margin-bottom: 3rem;
+}
+.mb-2 {
+  margin-bottom: 0.5rem;
+}
+.mb-20 {
+  margin-bottom: 5rem;
+}
+.mb-24 {
+  margin-bottom: 6rem;
+}
+.mb-3 {
+  margin-bottom: 0.75rem;
+}
+.mb-4 {
+  margin-bottom: 1rem;
+}
+.mb-6 {
+  margin-bottom: 1.5rem;
+}
+.mb-8 {
+  margin-bottom: 2rem;
+}
+.mr-2 {
+  margin-right: 0.5rem;
+}
+.mt-1 {
+  margin-top: 0.25rem;
+}
+.mt-12 {
+  margin-top: 3rem;
+}
+.mt-8 {
+  margin-top: 2rem;
+}
+.block {
+  display: block;
+}
+.flex {
+  display: flex;
+}
+.inline-flex {
+  display: inline-flex;
+}
+.table {
+  display: table;
+}
+.grid {
+  display: grid;
+}
+.hidden {
+  display: none;
+}
+.h-10 {
+  height: 2.5rem;
+}
+.h-16 {
+  height: 4rem;
+}
+.h-2 {
+  height: 0.5rem;
+}
+.h-20 {
+  height: 5rem;
+}
+.h-8 {
+  height: 2rem;
+}
+.h-\[600px\] {
+  height: 600px;
+}
+.h-\[800px\] {
+  height: 800px;
+}
+.h-px {
+  height: 1px;
+}
+.w-1\/3 {
+  width: 33.333333%;
+}
+.w-1\/4 {
+  width: 25%;
+}
+.w-10 {
+  width: 2.5rem;
+}
+.w-16 {
+  width: 4rem;
+}
+.w-2 {
+  width: 0.5rem;
+}
+.w-8 {
+  width: 2rem;
+}
+.w-\[600px\] {
+  width: 600px;
+}
+.w-\[800px\] {
+  width: 800px;
+}
+.w-full {
+  width: 100%;
+}
+.max-w-2xl {
+  max-width: 42rem;
+}
+.max-w-3xl {
+  max-width: 48rem;
+}
+.max-w-4xl {
+  max-width: 56rem;
+}
+.max-w-\[1200px\] {
+  max-width: 1200px;
+}
+.max-w-\[1400px\] {
+  max-width: 1400px;
+}
+.border-collapse {
+  border-collapse: collapse;
+}
+.transform {
+  transform: translate(var(--tw-translate-x), var(--tw-translate-y)) rotate(var(--tw-rotate)) skewX(var(--tw-skew-x)) skewY(var(--tw-skew-y)) scaleX(var(--tw-scale-x)) scaleY(var(--tw-scale-y));
+}
+@keyframes pulse {
+
+  50% {
+    opacity: .5;
+  }
+}
+.animate-pulse {
+  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+.grid-cols-2 {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+.flex-col {
+  flex-direction: column;
+}
+.items-start {
+  align-items: flex-start;
+}
+.items-center {
+  align-items: center;
+}
+.justify-center {
+  justify-content: center;
+}
+.justify-between {
+  justify-content: space-between;
+}
+.gap-10 {
+  gap: 2.5rem;
+}
+.gap-2 {
+  gap: 0.5rem;
+}
+.gap-3 {
+  gap: 0.75rem;
+}
+.gap-4 {
+  gap: 1rem;
+}
+.gap-6 {
+  gap: 1.5rem;
+}
+.gap-8 {
+  gap: 2rem;
+}
+.space-y-3 > :not([hidden]) ~ :not([hidden]) {
+  --tw-space-y-reverse: 0;
+  margin-top: calc(0.75rem * calc(1 - var(--tw-space-y-reverse)));
+  margin-bottom: calc(0.75rem * var(--tw-space-y-reverse));
+}
+.space-y-4 > :not([hidden]) ~ :not([hidden]) {
+  --tw-space-y-reverse: 0;
+  margin-top: calc(1rem * calc(1 - var(--tw-space-y-reverse)));
+  margin-bottom: calc(1rem * var(--tw-space-y-reverse));
+}
+.overflow-hidden {
+  overflow: hidden;
+}
+.rounded-full {
+  border-radius: 9999px;
+}
+.border {
+  border-width: 1px;
+}
+.border-b {
+  border-bottom-width: 1px;
+}
+.border-l {
+  border-left-width: 1px;
+}
+.border-l-4 {
+  border-left-width: 4px;
+}
+.border-t {
+  border-top-width: 1px;
+}
+.border-cyan-500 {
+  --tw-border-opacity: 1;
+  border-color: rgb(6 182 212 / var(--tw-border-opacity, 1));
+}
+.border-cyan-500\/30 {
+  border-color: rgb(6 182 212 / 0.3);
+}
+.border-cyan-900\/30 {
+  border-color: rgb(22 78 99 / 0.3);
+}
+.border-cyan-900\/50 {
+  border-color: rgb(22 78 99 / 0.5);
+}
+.border-green-500 {
+  --tw-border-opacity: 1;
+  border-color: rgb(34 197 94 / var(--tw-border-opacity, 1));
+}
+.border-green-900\/30 {
+  border-color: rgb(20 83 45 / 0.3);
+}
+.border-pink-500 {
+  --tw-border-opacity: 1;
+  border-color: rgb(236 72 153 / var(--tw-border-opacity, 1));
+}
+.border-pink-900\/20 {
+  border-color: rgb(131 24 67 / 0.2);
+}
+.border-pink-900\/30 {
+  border-color: rgb(131 24 67 / 0.3);
+}
+.border-pink-900\/50 {
+  border-color: rgb(131 24 67 / 0.5);
+}
+.border-purple-500 {
+  --tw-border-opacity: 1;
+  border-color: rgb(168 85 247 / var(--tw-border-opacity, 1));
+}
+.border-purple-500\/50 {
+  border-color: rgb(168 85 247 / 0.5);
+}
+.border-purple-900\/30 {
+  border-color: rgb(88 28 135 / 0.3);
+}
+.border-purple-900\/50 {
+  border-color: rgb(88 28 135 / 0.5);
+}
+.border-purple-900\/80 {
+  border-color: rgb(88 28 135 / 0.8);
+}
+.border-red-500 {
+  --tw-border-opacity: 1;
+  border-color: rgb(239 68 68 / var(--tw-border-opacity, 1));
+}
+.border-white {
+  --tw-border-opacity: 1;
+  border-color: rgb(255 255 255 / var(--tw-border-opacity, 1));
+}
+.border-yellow-500 {
+  --tw-border-opacity: 1;
+  border-color: rgb(234 179 8 / var(--tw-border-opacity, 1));
+}
+.border-yellow-500\/50 {
+  border-color: rgb(234 179 8 / 0.5);
+}
+.border-yellow-900\/20 {
+  border-color: rgb(113 63 18 / 0.2);
+}
+.border-l-cyan-500 {
+  --tw-border-opacity: 1;
+  border-left-color: rgb(6 182 212 / var(--tw-border-opacity, 1));
+}
+.border-l-purple-500 {
+  --tw-border-opacity: 1;
+  border-left-color: rgb(168 85 247 / var(--tw-border-opacity, 1));
+}
+.bg-\[\#05020a\]\/90 {
+  background-color: rgb(5 2 10 / 0.9);
+}
+.bg-black {
+  --tw-bg-opacity: 1;
+  background-color: rgb(0 0 0 / var(--tw-bg-opacity, 1));
+}
+.bg-cyan-900\/30 {
+  background-color: rgb(22 78 99 / 0.3);
+}
+.bg-green-900\/30 {
+  background-color: rgb(20 83 45 / 0.3);
+}
+.bg-green-950\/20 {
+  background-color: rgb(5 46 22 / 0.2);
+}
+.bg-indigo-900\/10 {
+  background-color: rgb(49 46 129 / 0.1);
+}
+.bg-pink-900\/30 {
+  background-color: rgb(131 24 67 / 0.3);
+}
+.bg-pink-900\/5 {
+  background-color: rgb(131 24 67 / 0.05);
+}
+.bg-pink-950\/5 {
+  background-color: rgb(80 7 36 / 0.05);
+}
+.bg-purple-500 {
+  --tw-bg-opacity: 1;
+  background-color: rgb(168 85 247 / var(--tw-bg-opacity, 1));
+}
+.bg-purple-900\/10 {
+  background-color: rgb(88 28 135 / 0.1);
+}
+.bg-purple-900\/30 {
+  background-color: rgb(88 28 135 / 0.3);
+}
+.bg-red-950\/20 {
+  background-color: rgb(69 10 10 / 0.2);
+}
+.bg-yellow-400 {
+  --tw-bg-opacity: 1;
+  background-color: rgb(250 204 21 / var(--tw-bg-opacity, 1));
+}
+.bg-yellow-500\/5 {
+  background-color: rgb(234 179 8 / 0.05);
+}
+.bg-yellow-900\/30 {
+  background-color: rgb(113 63 18 / 0.3);
+}
+.bg-gradient-to-br {
+  background-image: linear-gradient(to bottom right, var(--tw-gradient-stops));
+}
+.from-indigo-950\/20 {
+  --tw-gradient-from: rgb(30 27 75 / 0.2) var(--tw-gradient-from-position);
+  --tw-gradient-to: rgb(30 27 75 / 0) var(--tw-gradient-to-position);
+  --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to);
+}
+.to-black {
+  --tw-gradient-to: #000 var(--tw-gradient-to-position);
+}
+.p-10 {
+  padding: 2.5rem;
+}
+.p-12 {
+  padding: 3rem;
+}
+.p-2 {
+  padding: 0.5rem;
+}
+.p-6 {
+  padding: 1.5rem;
+}
+.p-8 {
+  padding: 2rem;
+}
+.px-2 {
+  padding-left: 0.5rem;
+  padding-right: 0.5rem;
+}
+.px-6 {
+  padding-left: 1.5rem;
+  padding-right: 1.5rem;
+}
+.py-0\.5 {
+  padding-top: 0.125rem;
+  padding-bottom: 0.125rem;
+}
+.py-16 {
+  padding-top: 4rem;
+  padding-bottom: 4rem;
+}
+.pb-2 {
+  padding-bottom: 0.5rem;
+}
+.pb-24 {
+  padding-bottom: 6rem;
+}
+.pt-32 {
+  padding-top: 8rem;
+}
+.pt-4 {
+  padding-top: 1rem;
+}
+.text-left {
+  text-align: left;
+}
+.text-center {
+  text-align: center;
+}
+.text-2xl {
+  font-size: 1.5rem;
+  line-height: 2rem;
+}
+.text-3xl {
+  font-size: 1.875rem;
+  line-height: 2.25rem;
+}
+.text-4xl {
+  font-size: 2.25rem;
+  line-height: 2.5rem;
+}
+.text-5xl {
+  font-size: 3rem;
+  line-height: 1;
+}
+.text-\[10px\] {
+  font-size: 10px;
+}
+.text-\[11px\] {
+  font-size: 11px;
+}
+.text-lg {
+  font-size: 1.125rem;
+  line-height: 1.75rem;
+}
+.text-sm {
+  font-size: 0.875rem;
+  line-height: 1.25rem;
+}
+.text-xl {
+  font-size: 1.25rem;
+  line-height: 1.75rem;
+}
+.text-xs {
+  font-size: 0.75rem;
+  line-height: 1rem;
+}
+.font-bold {
+  font-weight: 700;
+}
+.font-light {
+  font-weight: 300;
+}
+.uppercase {
+  text-transform: uppercase;
+}
+.italic {
+  font-style: italic;
+}
+.leading-relaxed {
+  line-height: 1.625;
+}
+.leading-tight {
+  line-height: 1.25;
+}
+.tracking-\[0\.15em\] {
+  letter-spacing: 0.15em;
+}
+.tracking-\[0\.1em\] {
+  letter-spacing: 0.1em;
+}
+.tracking-\[0\.3em\] {
+  letter-spacing: 0.3em;
+}
+.tracking-widest {
+  letter-spacing: 0.1em;
+}
+.text-cyan-400 {
+  --tw-text-opacity: 1;
+  color: rgb(34 211 238 / var(--tw-text-opacity, 1));
+}
+.text-cyan-500 {
+  --tw-text-opacity: 1;
+  color: rgb(6 182 212 / var(--tw-text-opacity, 1));
+}
+.text-gray-300 {
+  --tw-text-opacity: 1;
+  color: rgb(209 213 219 / var(--tw-text-opacity, 1));
+}
+.text-gray-400 {
+  --tw-text-opacity: 1;
+  color: rgb(156 163 175 / var(--tw-text-opacity, 1));
+}
+.text-gray-500 {
+  --tw-text-opacity: 1;
+  color: rgb(107 114 128 / var(--tw-text-opacity, 1));
+}
+.text-gray-600 {
+  --tw-text-opacity: 1;
+  color: rgb(75 85 99 / var(--tw-text-opacity, 1));
+}
+.text-green-400 {
+  --tw-text-opacity: 1;
+  color: rgb(74 222 128 / var(--tw-text-opacity, 1));
+}
+.text-pink-400 {
+  --tw-text-opacity: 1;
+  color: rgb(244 114 182 / var(--tw-text-opacity, 1));
+}
+.text-pink-500 {
+  --tw-text-opacity: 1;
+  color: rgb(236 72 153 / var(--tw-text-opacity, 1));
+}
+.text-purple-300 {
+  --tw-text-opacity: 1;
+  color: rgb(216 180 254 / var(--tw-text-opacity, 1));
+}
+.text-purple-400 {
+  --tw-text-opacity: 1;
+  color: rgb(192 132 252 / var(--tw-text-opacity, 1));
+}
+.text-purple-500 {
+  --tw-text-opacity: 1;
+  color: rgb(168 85 247 / var(--tw-text-opacity, 1));
+}
+.text-red-400 {
+  --tw-text-opacity: 1;
+  color: rgb(248 113 113 / var(--tw-text-opacity, 1));
+}
+.text-white {
+  --tw-text-opacity: 1;
+  color: rgb(255 255 255 / var(--tw-text-opacity, 1));
+}
+.text-yellow-100\/70 {
+  color: rgb(254 249 195 / 0.7);
+}
+.text-yellow-400 {
+  --tw-text-opacity: 1;
+  color: rgb(250 204 21 / var(--tw-text-opacity, 1));
+}
+.antialiased {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+.opacity-20 {
+  opacity: 0.2;
+}
+.opacity-30 {
+  opacity: 0.3;
+}
+.blur-\[120px\] {
+  --tw-blur: blur(120px);
+  filter: var(--tw-blur) var(--tw-brightness) var(--tw-contrast) var(--tw-grayscale) var(--tw-hue-rotate) var(--tw-invert) var(--tw-saturate) var(--tw-sepia) var(--tw-drop-shadow);
+}
+.blur-\[150px\] {
+  --tw-blur: blur(150px);
+  filter: var(--tw-blur) var(--tw-brightness) var(--tw-contrast) var(--tw-grayscale) var(--tw-hue-rotate) var(--tw-invert) var(--tw-saturate) var(--tw-sepia) var(--tw-drop-shadow);
+}
+.backdrop-blur-sm {
+  --tw-backdrop-blur: blur(4px);
+  -webkit-backdrop-filter: var(--tw-backdrop-blur) var(--tw-backdrop-brightness) var(--tw-backdrop-contrast) var(--tw-backdrop-grayscale) var(--tw-backdrop-hue-rotate) var(--tw-backdrop-invert) var(--tw-backdrop-opacity) var(--tw-backdrop-saturate) var(--tw-backdrop-sepia);
+  backdrop-filter: var(--tw-backdrop-blur) var(--tw-backdrop-brightness) var(--tw-backdrop-contrast) var(--tw-backdrop-grayscale) var(--tw-backdrop-hue-rotate) var(--tw-backdrop-invert) var(--tw-backdrop-opacity) var(--tw-backdrop-saturate) var(--tw-backdrop-sepia);
+}
+.transition {
+  transition-property: color, background-color, border-color, text-decoration-color, fill, stroke, opacity, box-shadow, transform, filter, backdrop-filter;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  transition-duration: 150ms;
+}
+.transition-all {
+  transition-property: all;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  transition-duration: 150ms;
+}
+.transition-colors {
+  transition-property: color, background-color, border-color, text-decoration-color, fill, stroke;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  transition-duration: 150ms;
+}
+.ease-in-out {
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+}
+.selection\:bg-purple-500\/30 *::selection {
+  background-color: rgb(168 85 247 / 0.3);
+}
+.selection\:text-purple-200 *::selection {
+  --tw-text-opacity: 1;
+  color: rgb(233 213 255 / var(--tw-text-opacity, 1));
+}
+.selection\:bg-purple-500\/30::selection {
+  background-color: rgb(168 85 247 / 0.3);
+}
+.selection\:text-purple-200::selection {
+  --tw-text-opacity: 1;
+  color: rgb(233 213 255 / var(--tw-text-opacity, 1));
+}
+.hover\:border-purple-500:hover {
+  --tw-border-opacity: 1;
+  border-color: rgb(168 85 247 / var(--tw-border-opacity, 1));
+}
+.hover\:bg-white\/5:hover {
+  background-color: rgb(255 255 255 / 0.05);
+}
+.hover\:text-purple-300:hover {
+  --tw-text-opacity: 1;
+  color: rgb(216 180 254 / var(--tw-text-opacity, 1));
+}
+.hover\:text-white:hover {
+  --tw-text-opacity: 1;
+  color: rgb(255 255 255 / var(--tw-text-opacity, 1));
+}
+.group:hover .group-hover\:text-yellow-400 {
+  --tw-text-opacity: 1;
+  color: rgb(250 204 21 / var(--tw-text-opacity, 1));
+}
+@media (min-width: 768px) {
+
+  .md\:block {
+    display: block;
+  }
+
+  .md\:grid-cols-2 {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .md\:grid-cols-4 {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+
+  .md\:flex-row {
+    flex-direction: row;
+  }
+
+  .md\:text-7xl {
+    font-size: 4.5rem;
+    line-height: 1;
+  }
+}
+@media (min-width: 1024px) {
+
+  .lg\:flex {
+    display: flex;
+  }
+
+  .lg\:grid-cols-3 {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}* {
+      -ms-overflow-style: none !important;
+      scrollbar-width: none !important;
+    }
+
+    *::-webkit-scrollbar {
+      display: none !important;
+      width: 0 !important;
+      height: 0 !important;
+    }
+  </style></head>
+<body class="selection:bg-purple-500/30 selection:text-purple-200 antialiased" vid="11">
+
+    <div class="bg-grid" vid="12"></div>
+    <div id="star-container" class="stars" vid="13"></div>
+    
+    <div class="fixed inset-0 overflow-hidden pointer-events-none z-0" vid="14">
+        <div class="absolute top-[5%] right-[5%] w-[800px] h-[800px] bg-purple-900/10 rounded-full blur-[150px]" vid="15"></div>
+        <div class="absolute bottom-[10%] left-[-5%] w-[600px] h-[600px] bg-indigo-900/10 rounded-full blur-[120px]" vid="16"></div>
+    </div>
+
+    <nav class="fixed top-0 w-full z-50 bg-[#05020a]/90 backdrop-blur-sm border-b border-purple-900/50" vid="17">
+        <div class="max-w-[1400px] mx-auto px-6 h-20 flex justify-between items-center" vid="18">
+            <a href="#" class="flex items-center gap-4 group" vid="19">
+                <div class="w-10 h-10 border border-purple-500/50 flex items-center justify-center relative bg-black" vid="20">
+                    <i class="ph-fill ph-sparkle text-purple-400 text-xl group-hover:text-yellow-400 transition-colors" vid="21"></i>
+                    <div class="absolute -top-1 -right-1 w-2 h-2 bg-yellow-400 animate-pulse" vid="22"></div>
+                </div>
+                <span class="font-magical text-xl text-white tracking-[0.15em] uppercase text-glow" vid="23">Algorithm Witch</span>
+            </a>
+            
+            <div class="hidden lg:flex items-center gap-10 text-xs font-mono-code uppercase tracking-widest text-gray-400" vid="24">
+                <a href="#" class="nav-item hover:text-purple-300 transition-colors" vid="25">Grimoire</a>
+                <a href="#" class="nav-item hover:text-purple-300 transition-colors" vid="26">Writings</a>
+                <a href="#" class="nav-item text-white border-b border-white" vid="27">Resources</a>
+                <a href="#" class="nav-item hover:text-purple-300 transition-colors" vid="28">Summon</a>
+            </div>
+
+            <div class="flex items-center gap-4" vid="29">
+                <span class="font-mono-code text-[10px] text-purple-500 hidden md:block" vid="30">DOC_ID: UTM_MATRIX_V2.1</span>
+                <div class="w-2 h-2 bg-purple-500 animate-pulse" vid="31"></div>
+            </div>
+        </div>
+    </nav>
+
+    <main class="relative z-10 w-full pt-32 pb-24" vid="32">
+        <div class="max-w-[1200px] mx-auto px-6" vid="33">
+            
+            <header class="mb-20 text-center relative" vid="34">
+                <div class="inline-flex items-center gap-2 mb-6" vid="35">
+                    <span class="w-8 h-px bg-purple-500" vid="36"></span>
+                    <span class="font-mono-code text-[10px] uppercase tracking-[0.3em] text-purple-400" vid="37">Digital Strategy Alchemy</span>
+                    <span class="w-8 h-px bg-purple-500" vid="38"></span>
+                </div>
+                <h1 class="font-magical text-5xl md:text-7xl text-white leading-tight mb-8 text-glow" vid="39">
+                    UTM Matrix <br vid="40">
+                    <span class="text-yellow-400 italic text-glow-gold" vid="41">Deployment Guide</span>
+                </h1>
+                
+                <div class="mt-12 sharp-panel p-8 max-w-4xl mx-auto text-left border-l-4 border-l-purple-500" vid="42">
+                    <div class="flex items-start gap-4" vid="43">
+                        <i class="ph-fill ph-book-open text-purple-400 text-3xl mt-1" vid="44"></i>
+                        <div vid="45">
+                            <h3 class="font-mono-code text-xs text-white uppercase tracking-widest mb-3 font-bold" vid="46">&gt; 00. Purpose</h3>
+                            <p class="text-gray-400 text-lg leading-relaxed mb-4 font-serif-heading italic" vid="47">
+                                Create tracking links that keep campaign attribution clean in GA4, match the campaign registry, support dashboard reporting, and reduce unattributed or fragmented traffic.
+                            </p>
+                            <p class="text-gray-400 text-sm leading-relaxed" vid="48">
+                                This supports the project goal of building a trusted data foundation and a standardized <span class="text-purple-300" vid="49">"Link Tracking Calculator"</span> for future campaign use.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </header>
+
+            
+            <section class="mb-24" vid="50">
+                <div class="flex items-center gap-4 mb-8" vid="51">
+                    <div class="w-8 h-8 bg-purple-900/30 border border-purple-500 flex items-center justify-center font-mono-code text-xs text-purple-400" vid="52">01</div>
+                    <h2 class="font-magical text-2xl text-white" vid="53">When to Create a UTM Link</h2>
+                </div>
+                <div class="grid md:grid-cols-2 gap-8" vid="54">
+                    <div class="sharp-panel p-8 border-cyan-900/30" vid="55">
+                        <h3 class="font-mono-code text-cyan-400 text-xs uppercase tracking-widest mb-6 border-b border-cyan-900/50 pb-2" vid="56">Required Scenarios</h3>
+                        <ul class="space-y-4" vid="57">
+                            <li class="flex items-center gap-3" vid="58"><i class="ph-bold ph-check text-cyan-500" vid="59"></i> <span vid="60">Email Sends</span></li>
+                            <li class="flex items-center gap-3" vid="61"><i class="ph-bold ph-check text-cyan-500" vid="62"></i> <span vid="63">Social Posts (Organic &amp; Paid)</span></li>
+                            <li class="flex items-center gap-3" vid="64"><i class="ph-bold ph-check text-cyan-500" vid="65"></i> <span vid="66">Partner &amp; Press Links</span></li>
+                            <li class="flex items-center gap-3" vid="67"><i class="ph-bold ph-check text-cyan-500" vid="68"></i> <span vid="69">QR Codes</span></li>
+                            <li class="flex items-center gap-3" vid="70"><i class="ph-bold ph-check text-cyan-500" vid="71"></i> <span vid="72">Campaign Landing Page Promotion</span></li>
+                        </ul>
+                    </div>
+                    <div class="sharp-panel p-8 border-pink-900/30" vid="73">
+                        <h3 class="font-mono-code text-pink-400 text-xs uppercase tracking-widest mb-6 border-b border-pink-900/50 pb-2" vid="74">Prohibited Scenarios</h3>
+                        <ul class="space-y-4" vid="75">
+                            <li class="flex items-center gap-3" vid="76"><i class="ph-bold ph-x text-pink-500" vid="77"></i> <span vid="78">Internal Navigation</span></li>
+                            <li class="flex items-center gap-3" vid="79"><i class="ph-bold ph-x text-pink-500" vid="80"></i> <span vid="81">Links only used inside the website</span></li>
+                            <li class="flex items-center gap-3" vid="82"><i class="ph-bold ph-x text-pink-500" vid="83"></i> <span vid="84">Unplanned copy/paste links</span></li>
+                        </ul>
+                    </div>
+                </div>
+            </section>
+
+            
+            <section class="mb-24" vid="85">
+                <div class="flex items-center gap-4 mb-8" vid="86">
+                    <div class="w-8 h-8 bg-cyan-900/30 border border-cyan-500 flex items-center justify-center font-mono-code text-xs text-cyan-400" vid="87">02</div>
+                    <h2 class="font-magical text-2xl text-white" vid="88">Required Inputs Before You Start</h2>
+                </div>
+                <div class="sharp-panel p-10 bg-gradient-to-br from-indigo-950/20 to-black" vid="89">
+                    <p class="text-gray-400 mb-10 text-lg font-light leading-relaxed max-w-3xl" vid="90">
+                        Before opening the UTM Matrix, ensure the following structure is defined. This follows the tracking-first logic: define the structure before launch so data flows into the registry cleanly.
+                    </p>
+                    <div class="grid grid-cols-2 md:grid-cols-4 gap-6" vid="91">
+                        <div class="border-t border-cyan-500/30 pt-4" vid="92">
+                            <span class="font-mono-code text-[10px] text-cyan-500 block mb-2" vid="93">FIELD 01</span>
+                            <span class="text-white font-serif-heading italic" vid="94">Destination URL</span>
+                        </div>
+                        <div class="border-t border-cyan-500/30 pt-4" vid="95">
+                            <span class="font-mono-code text-[10px] text-cyan-500 block mb-2" vid="96">FIELD 02</span>
+                            <span class="text-white font-serif-heading italic" vid="97">Source &amp; Medium</span>
+                        </div>
+                        <div class="border-t border-cyan-500/30 pt-4" vid="98">
+                            <span class="font-mono-code text-[10px] text-cyan-500 block mb-2" vid="99">FIELD 03</span>
+                            <span class="text-white font-serif-heading italic" vid="100">Campaign Name</span>
+                        </div>
+                        <div class="border-t border-cyan-500/30 pt-4" vid="101">
+                            <span class="font-mono-code text-[10px] text-cyan-500 block mb-2" vid="102">FIELD 04</span>
+                            <span class="text-white font-serif-heading italic" vid="103">Primary Goal</span>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            
+            <section class="mb-24" vid="104">
+                <div class="flex items-center gap-4 mb-8" vid="105">
+                    <div class="w-8 h-8 bg-yellow-900/30 border border-yellow-500 flex items-center justify-center font-mono-code text-xs text-yellow-400" vid="106">03</div>
+                    <h2 class="font-magical text-2xl text-white" vid="107">Required UTM Fields</h2>
+                </div>
+                <div class="sharp-panel overflow-hidden border-yellow-900/20" vid="108">
+                    <table class="data-table" vid="109">
+                        <thead vid="110">
+                            <tr vid="111">
+                                <th class="w-1/4" vid="112">Parameter</th>
+                                <th vid="113">Definition</th>
+                                <th vid="114">Examples</th>
+                            </tr>
+                        </thead>
+                        <tbody vid="115">
+                            <tr vid="116">
+                                <td class="font-mono-code text-white font-bold" vid="117">utm_source</td>
+                                <td class="text-sm text-gray-400" vid="118">Where the traffic comes from.</td>
+                                <td class="font-mono-code text-[11px] text-cyan-400" vid="119">google, linkedin, facebook, instagram, hs_email, newsletter, partner</td>
+                            </tr>
+                            <tr vid="120">
+                                <td class="font-mono-code text-white font-bold" vid="121">utm_medium</td>
+                                <td class="text-sm text-gray-400" vid="122">The type of distribution or channel.</td>
+                                <td class="font-mono-code text-[11px] text-cyan-400" vid="123">cpc, paid_social, organic_social, email, referral, qr, press, partnership</td>
+                            </tr>
+                            <tr vid="124">
+                                <td class="font-mono-code text-white font-bold" vid="125">utm_campaign</td>
+                                <td class="text-sm text-gray-400" vid="126">The normalized name of the initiative.</td>
+                                <td class="font-mono-code text-[11px] text-cyan-400" vid="127">solar_story_series, ribbon_cutting_april2026, donor_newsletter_launch</td>
+                            </tr>
+                            <tr vid="128">
+                                <td class="font-mono-code text-gray-500" vid="129">utm_content</td>
+                                <td class="text-sm text-gray-500" vid="130">Optional: variant, asset, or placement.</td>
+                                <td class="font-mono-code text-[11px] text-gray-600" vid="131">cta_button, banner_blue, welcome_table</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            
+            <section class="mb-24" vid="132">
+                <div class="flex items-center gap-4 mb-8" vid="133">
+                    <div class="w-8 h-8 bg-pink-900/30 border border-pink-500 flex items-center justify-center font-mono-code text-xs text-pink-400" vid="134">04</div>
+                    <h2 class="font-magical text-2xl text-white" vid="135">Naming Rules (Non-Negotiable)</h2>
+                </div>
+                
+                <div class="grid lg:grid-cols-3 gap-6" vid="136">
+                    
+                    <div class="sharp-panel p-6 border-purple-900/30" vid="137">
+                        <h4 class="font-mono-code text-xs text-white uppercase mb-4" vid="138">Source Standard</h4>
+                        <div class="space-y-4" vid="139">
+                            <div class="text-[11px] font-mono-code text-green-400 bg-green-950/20 p-2 border-l border-green-500" vid="140">GOOD: linkedin, instagram, google</div>
+                            <div class="text-[11px] font-mono-code text-red-400 bg-red-950/20 p-2 border-l border-red-500" vid="141">AVOID: LinkedIn, IG, Google Ads</div>
+                        </div>
+                    </div>
+                    
+                    <div class="sharp-panel p-6 border-purple-900/30" vid="142">
+                        <h4 class="font-mono-code text-xs text-white uppercase mb-4" vid="143">Medium Standard</h4>
+                        <div class="space-y-4" vid="144">
+                            <div class="text-[11px] font-mono-code text-green-400 bg-green-950/20 p-2 border-l border-green-500" vid="145">GOOD: email, cpc, paid_social</div>
+                            <div class="text-[11px] font-mono-code text-red-400 bg-red-950/20 p-2 border-l border-red-500" vid="146">AVOID: social-paid, paidsocial, e-mail</div>
+                        </div>
+                    </div>
+                    
+                    <div class="sharp-panel p-6 border-purple-900/30" vid="147">
+                        <h4 class="font-mono-code text-xs text-white uppercase mb-4" vid="148">Campaign Standard</h4>
+                        <div class="space-y-4" vid="149">
+                            <div class="text-[11px] font-mono-code text-green-400 bg-green-950/20 p-2 border-l border-green-500" vid="150">GOOD: solar_story_series</div>
+                            <div class="text-[11px] font-mono-code text-red-400 bg-red-950/20 p-2 border-l border-red-500" vid="151">AVOID: Solar Story Series!</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="mt-8 p-6 sharp-panel border-pink-900/50 bg-pink-900/5 text-sm italic text-gray-400" vid="152">
+                    <i class="ph-fill ph-warning text-pink-500 mr-2" vid="153"></i>
+                    Rule: Lowercase standardized names only. No spaces. Underscores instead of punctuation. Inconsistent naming fragments reporting.
+                </div>
+            </section>
+
+            
+            <section class="mb-24" vid="154">
+                <div class="flex items-center gap-4 mb-8" vid="155">
+                    <div class="w-8 h-8 bg-purple-900/30 border border-purple-500 flex items-center justify-center font-mono-code text-xs text-purple-400" vid="156">05</div>
+                    <h2 class="font-magical text-2xl text-white" vid="157">Workflow for Creating a New Link</h2>
+                </div>
+                
+                <div class="space-y-4" vid="158">
+                    <div class="sharp-panel p-6 flex flex-col md:flex-row items-start gap-8 hover:bg-white/5 transition-colors" vid="159">
+                        <div class="font-magical text-4xl text-purple-500 opacity-20" vid="160">01</div>
+                        <div vid="161">
+                            <h3 class="font-mono-code text-white font-bold mb-2 uppercase tracking-widest" vid="162">Confirm Destination URL</h3>
+                            <p class="text-sm text-gray-400" vid="163">Use the final public URL. Ensure it's live and supports the intended conversion action.</p>
+                        </div>
+                    </div>
+                    <div class="sharp-panel p-6 flex flex-col md:flex-row items-start gap-8 hover:bg-white/5 transition-colors" vid="164">
+                        <div class="font-magical text-4xl text-purple-500 opacity-20" vid="165">02</div>
+                        <div vid="166">
+                            <h3 class="font-mono-code text-white font-bold mb-2 uppercase tracking-widest" vid="167">Open the UTM Matrix</h3>
+                            <p class="text-sm text-gray-400" vid="168">Navigate to the UTM Matrix section in your dashboard workspace.</p>
+                        </div>
+                    </div>
+                    <div class="sharp-panel p-6 flex flex-col md:flex-row items-start gap-8 hover:bg-white/5 transition-colors" vid="169">
+                        <div class="font-magical text-4xl text-purple-500 opacity-20" vid="170">03</div>
+                        <div vid="171">
+                            <h3 class="font-mono-code text-white font-bold mb-2 uppercase tracking-widest" vid="172">Enter Required Fields</h3>
+                            <p class="text-sm text-gray-400" vid="173">Populate Destination URL, Source, Medium, and Campaign Name.</p>
+                        </div>
+                    </div>
+                    <div class="sharp-panel p-6 flex flex-col md:flex-row items-start gap-8 hover:bg-white/5 transition-colors" vid="174">
+                        <div class="font-magical text-4xl text-purple-500 opacity-20" vid="175">04</div>
+                        <div vid="176">
+                            <h3 class="font-mono-code text-white font-bold mb-2 uppercase tracking-widest" vid="177">Add Optional Details</h3>
+                            <p class="text-sm text-gray-400" vid="178">Use utm_content for variants or utm_term for keywords when granular reporting is needed.</p>
+                        </div>
+                    </div>
+                    <div class="sharp-panel p-6 flex flex-col md:flex-row items-start gap-8 hover:bg-white/5 transition-colors" vid="179">
+                        <div class="font-magical text-4xl text-purple-500 opacity-20" vid="180">05</div>
+                        <div vid="181">
+                            <h3 class="font-mono-code text-white font-bold mb-2 uppercase tracking-widest" vid="182">Review Link Integrity</h3>
+                            <p class="text-sm text-gray-400" vid="183">Confirm validity, check for typos, and ensure naming matches standards before proceeding.</p>
+                        </div>
+                    </div>
+                    <div class="sharp-panel p-6 flex flex-col md:flex-row items-start gap-8 hover:bg-white/5 transition-all border-l-4 border-l-cyan-500" vid="184">
+                        <div class="font-magical text-4xl text-cyan-500 opacity-30" vid="185">06</div>
+                        <div vid="186">
+                            <h3 class="font-mono-code text-cyan-400 font-bold mb-2 uppercase tracking-widest" vid="187">Save to Registry</h3>
+                            <p class="text-sm text-gray-300" vid="188">CRITICAL: Save the link to the registry so it becomes part of the tracked system. Prevents audit flags.</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            
+            <section class="mb-24" vid="189">
+                <div class="flex items-center gap-4 mb-8" vid="190">
+                    <div class="w-8 h-8 bg-cyan-900/30 border border-cyan-500 flex items-center justify-center font-mono-code text-xs text-cyan-400" vid="191">08</div>
+                    <h2 class="font-magical text-2xl text-white" vid="192">Deployment Examples</h2>
+                </div>
+                <div class="grid gap-8" vid="193">
+                    
+                    <div class="sharp-panel p-8" vid="194">
+                        <div class="flex items-center gap-2 mb-4" vid="195">
+                            <span class="px-2 py-0.5 bg-purple-900/30 text-purple-400 font-mono-code text-[10px] uppercase" vid="196">Example A</span>
+                            <span class="text-white text-sm font-serif-heading italic" vid="197">Organic LinkedIn post</span>
+                        </div>
+                        <div class="code-block" vid="198">
+                            https://re-volv.org/solar-series<span class="text-cyan-400" vid="199">?utm_source=linkedin&amp;utm_medium=organic_social&amp;utm_campaign=solar_story_series</span>
+                        </div>
+                    </div>
+                    
+                    <div class="sharp-panel p-8" vid="200">
+                        <div class="flex items-center gap-2 mb-4" vid="201">
+                            <span class="px-2 py-0.5 bg-purple-900/30 text-purple-400 font-mono-code text-[10px] uppercase" vid="202">Example B</span>
+                            <span class="text-white text-sm font-serif-heading italic" vid="203">Email newsletter with content variant</span>
+                        </div>
+                        <div class="code-block" vid="204">
+                            https://re-volv.org/donate<span class="text-cyan-400" vid="205">?utm_source=hs_email&amp;utm_medium=email&amp;utm_campaign=spring_donor_push&amp;utm_content=cta_button</span>
+                        </div>
+                    </div>
+                    
+                    <div class="sharp-panel p-8" vid="206">
+                        <div class="flex items-center gap-2 mb-4" vid="207">
+                            <span class="px-2 py-0.5 bg-purple-900/30 text-purple-400 font-mono-code text-[10px] uppercase" vid="208">Example C</span>
+                            <span class="text-white text-sm font-serif-heading italic" vid="209">Event QR code</span>
+                        </div>
+                        <div class="code-block" vid="210">
+                            https://re-volv.org/ribbon-cutting<span class="text-cyan-400" vid="211">?utm_source=event_signage&amp;utm_medium=qr&amp;utm_campaign=ribbon_cutting_chicago&amp;utm_content=welcome_table</span>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            
+            <section class="mb-24" vid="212">
+                <div class="flex items-center gap-4 mb-8" vid="213">
+                    <div class="w-8 h-8 bg-green-900/30 border border-green-500 flex items-center justify-center font-mono-code text-xs text-green-400" vid="214">09</div>
+                    <h2 class="font-magical text-2xl text-white" vid="215">QA Checklist Before Publishing</h2>
+                </div>
+                <div class="sharp-panel overflow-hidden border-green-900/30" vid="216">
+                    <table class="data-table" vid="217">
+                        <thead vid="218">
+                            <tr vid="219">
+                                <th class="w-1/3" vid="220">Checkpoint</th>
+                                <th vid="221">Pass Condition</th>
+                            </tr>
+                        </thead>
+                        <tbody vid="222">
+                            <tr vid="223">
+                                <td class="font-mono-code text-white font-bold" vid="224">Destination URL</td>
+                                <td class="text-sm text-gray-400" vid="225">Link opens correctly and lander supports intended CTA.</td>
+                            </tr>
+                            <tr vid="226">
+                                <td class="font-mono-code text-white font-bold" vid="227">Standardization</td>
+                                <td class="text-sm text-gray-400" vid="228">Source, Medium, and Campaign follow lowercase/underscore rules.</td>
+                            </tr>
+                            <tr vid="229">
+                                <td class="font-mono-code text-white font-bold" vid="230">Registry Sync</td>
+                                <td class="text-sm text-gray-400" vid="231">Link has been saved to registry; deployed version matches exactly.</td>
+                            </tr>
+                            <tr vid="232">
+                                <td class="font-mono-code text-white font-bold" vid="233">No Special Chars</td>
+                                <td class="text-sm text-gray-400" vid="234">No spaces or odd punctuation (!, @, #) in campaign name.</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            
+            <section class="mb-24" vid="235">
+                <div class="flex items-center gap-4 mb-8" vid="236">
+                    <div class="w-8 h-8 bg-pink-900/30 border border-pink-500 flex items-center justify-center font-mono-code text-xs text-pink-400" vid="237">10</div>
+                    <h2 class="font-magical text-2xl text-white" vid="238">Common Mistakes to Avoid</h2>
+                </div>
+                <div class="grid md:grid-cols-2 gap-6" vid="239">
+                    <div class="sharp-panel p-6 border-pink-900/20 bg-pink-950/5" vid="240">
+                        <div class="flex gap-4" vid="241">
+                            <i class="ph-bold ph-warning text-pink-500 text-2xl" vid="242"></i>
+                            <div vid="243">
+                                <h4 class="font-mono-code text-white text-xs uppercase mb-2" vid="244">Manual Editing</h4>
+                                <p class="text-xs text-gray-400 leading-relaxed" vid="245">Do not hand-edit UTM strings after generation. If a variant is needed, create a new entry.</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="sharp-panel p-6 border-pink-900/20 bg-pink-950/5" vid="246">
+                        <div class="flex gap-4" vid="247">
+                            <i class="ph-bold ph-warning text-pink-500 text-2xl" vid="248"></i>
+                            <div vid="249">
+                                <h4 class="font-mono-code text-white text-xs uppercase mb-2" vid="250">Casual Labels</h4>
+                                <p class="text-xs text-gray-400 leading-relaxed" vid="251">Do not invent new medium labels casually. Use only the standardized set in the SOP.</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="sharp-panel p-6 border-pink-900/20 bg-pink-950/5" vid="252">
+                        <div class="flex gap-4" vid="253">
+                            <i class="ph-bold ph-warning text-pink-500 text-2xl" vid="254"></i>
+                            <div vid="255">
+                                <h4 class="font-mono-code text-white text-xs uppercase mb-2" vid="256">Capitalization</h4>
+                                <p class="text-xs text-gray-400 leading-relaxed" vid="257">Avoid mixed case. 'Google' and 'google' report as two separate sources in GA4.</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="sharp-panel p-6 border-pink-900/20 bg-pink-950/5" vid="258">
+                        <div class="flex gap-4" vid="259">
+                            <i class="ph-bold ph-warning text-pink-500 text-2xl" vid="260"></i>
+                            <div vid="261">
+                                <h4 class="font-mono-code text-white text-xs uppercase mb-2" vid="262">Renaming</h4>
+                                <p class="text-xs text-gray-400 leading-relaxed" vid="263">Do not rename campaigns mid-stream. It breaks historical reporting comparison.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            
+            <section class="mb-24" vid="264">
+                <div class="flex items-center gap-4 mb-8" vid="265">
+                    <div class="w-8 h-8 bg-purple-900/30 border border-purple-500 flex items-center justify-center font-mono-code text-xs text-purple-400" vid="266">12</div>
+                    <h2 class="font-magical text-2xl text-white" vid="267">Ownership &amp; Responsibility</h2>
+                </div>
+                <div class="grid md:grid-cols-2 gap-10" vid="268">
+                    <div class="rule-card border-purple-500" vid="269">
+                        <h4 class="font-mono-code text-purple-400 text-xs uppercase tracking-widest mb-4" vid="270">Comms / Campaign Owner</h4>
+                        <ul class="text-sm text-gray-400 space-y-3" vid="271">
+                            <li vid="272">Choosing correct source, medium, and campaign</li>
+                            <li vid="273">Deploying the right saved link</li>
+                            <li vid="274">Requesting new links for new variants</li>
+                        </ul>
+                    </div>
+                    <div class="rule-card border-cyan-500" vid="275">
+                        <h4 class="font-mono-code text-cyan-400 text-xs uppercase tracking-widest mb-4" vid="276">Analytics / Consultant</h4>
+                        <ul class="text-sm text-gray-400 space-y-3" vid="277">
+                            <li vid="278">Maintaining naming standards</li>
+                            <li vid="279">Reviewing registry cleanliness</li>
+                            <li vid="280">Flagging fragmented naming &amp; validating behavior</li>
+                        </ul>
+                    </div>
+                </div>
+            </section>
+
+            
+            <section class="mb-12" vid="281">
+                <div class="sharp-panel p-12 text-center border-yellow-500/50 bg-yellow-500/5" vid="282">
+                    <div class="w-16 h-16 border border-yellow-500 flex items-center justify-center mx-auto mb-8 bg-black" vid="283">
+                        <i class="ph-fill ph-shield-check text-yellow-400 text-4xl" vid="284"></i>
+                    </div>
+                    <h2 class="font-magical text-3xl text-white mb-6" vid="285">The Final Rule</h2>
+                    <p class="font-serif-heading text-xl text-yellow-100/70 max-w-2xl mx-auto italic leading-relaxed" vid="286">
+                        Do not publish a campaign link until it has been generated in the UTM Matrix, reviewed for naming consistency, saved to the registry, and copied exactly into the live placement.
+                    </p>
+                </div>
+            </section>
+        </div>
+    </main>
+
+    <footer class="border-t border-purple-900/80 bg-black py-16 relative z-10" vid="287">
+        <div class="max-w-[1200px] mx-auto px-6 flex flex-col md:flex-row justify-between items-center gap-8" vid="288">
+            <div class="flex items-center gap-4" vid="289">
+                <div class="w-8 h-8 border border-purple-500 flex items-center justify-center bg-black" vid="290">
+                    <i class="ph-fill ph-sparkle text-purple-400 text-sm" vid="291"></i>
+                </div>
+                <span class="font-magical text-sm text-white tracking-[0.1em]" vid="292">Algorithm Witch Resources</span>
+            </div>
+            
+            <div class="text-center" vid="293">
+                <p class="font-mono-code text-[10px] uppercase tracking-[0.3em] text-gray-600 mb-2" vid="294">
+                    System.out.println("Tracking Foundation Initialized");
+                </p>
+                <p class="text-xs text-gray-500 font-mono-code" vid="295">© 2024 • Standardized in the Ether</p>
+            </div>
+            
+            <div class="flex gap-4" vid="296">
+                <a href="#" class="w-8 h-8 flex items-center justify-center border border-purple-900/50 text-gray-500 hover:text-white hover:border-purple-500 transition-colors" vid="297"><i class="ph-bold ph-arrow-up" vid="298"></i></a>
+                <a href="#" class="w-8 h-8 flex items-center justify-center border border-purple-900/50 text-gray-500 hover:text-white hover:border-purple-500 transition-colors" vid="299"><i class="ph-fill ph-terminal" vid="300"></i></a>
+            </div>
+        </div>
+    </footer>
+
+    <script vid="301">
+        const starContainer = document.getElementById('star-container');
+        const numStars = window.innerWidth > 768 ? 100 : 40;
+        
+        for (let i = 0; i < numStars; i++) {
+            const star = document.createElement('div');
+            star.classList.add('star');
+            star.style.left = `${Math.random() * 100}%`;
+            star.style.top = `${Math.random() * 100}%`;
+            const size = Math.random() * 1.8 + 0.4;
+            star.style.width = `${size}px`;
+            star.style.height = `${size}px`;
+            star.style.setProperty('--duration', `${3 + Math.random() * 5}s`);
+            star.style.setProperty('--delay', `${Math.random() * 5}s`);
+            star.style.setProperty('--opacity', 0.1 + Math.random() * 0.5);
+            starContainer.appendChild(star);
+        }
+    </script>
+
+</body></html>

@@ -1,1 +1,1753 @@
+<html lang="en" vid="0"><head vid="1">
+    <meta charset="UTF-8" vid="2">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" vid="3">
+    <title vid="4">Fresh Roles | The Algorithm Witch</title>
+    
+    <style vid="6">
+        @import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,100..1000;1,9..40,100..1000&family=Instrument+Serif:ital@0;1&family=Space+Mono:ital,wght@0,400;0,700;1,400;1,700&display=swap');
 
+        :root {
+            --bg-paper: #0A1F15;
+            --ink-primary: #CFFBE3;
+            --ink-secondary: rgba(207, 251, 227, 0.7);
+            --ink-tertiary: rgba(207, 251, 227, 0.4);
+            --accent-chartreuse: #A8FF3E;
+            --accent-lavender: #D4C1FF;
+            --surface-card: #0D261A;
+            --surface-alt: #1A1429;
+            --border-divider: #163628;
+            --border-highlight: rgba(168, 255, 62, 0.3);
+            
+            --font-serif: 'Instrument Serif', serif;
+            --font-sans: 'DM Sans', sans-serif;
+            --font-mono: 'Space Mono', monospace;
+            
+            --transition: 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
+
+        body {
+            background-color: var(--bg-paper);
+            color: var(--ink-primary);
+            font-family: var(--font-sans);
+            line-height: 1.5;
+            overflow-x: hidden;
+        }
+
+        ::selection {
+            background: var(--accent-chartreuse);
+            color: var(--bg-paper);
+        }
+
+        
+        .botanical-bg {
+            position: fixed;
+            pointer-events: none;
+            z-index: 0;
+            opacity: 0.05;
+            color: var(--ink-primary);
+        }
+        .botanical-tl { top: -5%; left: -5%; width: 40vw; height: 40vw; transform: rotate(15deg); }
+        .botanical-br { bottom: -10%; right: -5%; width: 50vw; height: 50vw; transform: rotate(-20deg); }
+
+        
+        h1, h2, h3, h4, .font-serif { font-family: var(--font-serif); font-weight: 400; }
+        .font-mono { font-family: var(--font-mono); }
+        .text-chartreuse { color: var(--accent-chartreuse); }
+        .text-lavender { color: var(--accent-lavender); }
+        
+        
+        .app-container {
+            position: relative;
+            z-index: 10;
+            max-width: 1440px;
+            margin: 0 auto;
+            padding: 0 40px;
+        }
+
+        
+        nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            height: 80px;
+            border-bottom: 1px solid var(--border-divider);
+            background: rgba(10, 31, 21, 0.9);
+            backdrop-filter: blur(10px);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .logo {
+            display: flex;
+            align-items: baseline;
+            gap: 12px;
+            text-decoration: none;
+            color: var(--ink-primary);
+        }
+
+        .logo h1 {
+            font-size: 2rem;
+            letter-spacing: -0.02em;
+        }
+
+        .logo span {
+            font-family: var(--font-mono);
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            color: var(--accent-chartreuse);
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 32px;
+        }
+
+        .nav-link {
+            font-family: var(--font-mono);
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--ink-secondary);
+            text-decoration: none;
+            transition: var(--transition);
+            position: relative;
+            padding: 8px 0;
+        }
+
+        .nav-link:hover, .nav-link.active {
+            color: var(--accent-chartreuse);
+        }
+
+        .nav-link.active::after {
+            content: '';
+            position: absolute;
+            bottom: -1px;
+            left: 0;
+            width: 100%;
+            height: 2px;
+            background: var(--accent-chartreuse);
+        }
+
+        .btn-primary {
+            background: var(--accent-chartreuse);
+            color: var(--bg-paper);
+            border: 1px solid var(--accent-chartreuse);
+            padding: 10px 20px;
+            font-family: var(--font-mono);
+            font-size: 0.75rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            cursor: pointer;
+            transition: var(--transition);
+            text-decoration: none;
+            display: inline-block;
+        }
+
+        .btn-primary:hover {
+            box-shadow: 0 0 15px rgba(168, 255, 62, 0.4);
+            transform: translateY(-1px);
+        }
+
+        
+        section {
+            padding: 80px 0;
+            min-height: 80vh;
+        }
+
+        
+        .hero-section {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding-top: 120px;
+            padding-bottom: 60px;
+            text-align: center;
+        }
+
+        .search-container {
+            width: 100%;
+            max-width: 900px;
+            position: relative;
+        }
+
+        .search-input-wrapper {
+            background: var(--surface-card);
+            border: 1px solid var(--border-divider);
+            padding: 24px 32px;
+            display: flex;
+            align-items: center;
+            border-radius: 2px;
+            transition: var(--transition);
+        }
+
+        .search-input-wrapper:focus-within {
+            border-color: var(--accent-chartreuse);
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.4), inset 0 0 0 1px var(--accent-chartreuse);
+        }
+
+        .search-input {
+            width: 100%;
+            border: none;
+            outline: none;
+            font-family: var(--font-serif);
+            font-size: 2.5rem;
+            color: var(--ink-primary);
+            background: transparent;
+        }
+
+        .search-input::placeholder {
+            color: var(--ink-tertiary);
+            font-style: italic;
+        }
+
+        .quick-filters {
+            display: flex;
+            gap: 12px;
+            margin-top: 32px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .filter-chip {
+            padding: 8px 20px;
+            border: 1px solid var(--border-divider);
+            background: transparent;
+            font-family: var(--font-mono);
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            cursor: pointer;
+            transition: var(--transition);
+            color: var(--ink-secondary);
+            border-radius: 20px;
+        }
+
+        .filter-chip:hover {
+            border-color: var(--ink-primary);
+            color: var(--ink-primary);
+        }
+
+        .filter-chip.active {
+            background: var(--accent-chartreuse);
+            color: var(--bg-paper);
+            border-color: var(--accent-chartreuse);
+            box-shadow: 0 0 15px rgba(168, 255, 62, 0.2);
+        }
+
+        .stats-bar {
+            font-family: var(--font-mono);
+            font-size: 0.7rem;
+            color: var(--ink-tertiary);
+            margin-top: 48px;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            display: flex;
+            gap: 16px;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .stats-bar span::after {
+            content: "•";
+            margin-left: 16px;
+        }
+        .stats-bar span:last-child::after { content: ""; }
+
+        .weekly-drop {
+            margin-top: 80px;
+            background: var(--surface-alt);
+            border: 1px solid rgba(212, 193, 255, 0.2);
+            padding: 40px;
+            border-radius: 4px;
+            text-align: left;
+            position: relative;
+            max-width: 900px;
+            width: 100%;
+        }
+
+        .weekly-drop::before {
+            content: "EDITORIAL NOTE";
+            position: absolute;
+            top: -10px;
+            left: 40px;
+            background: var(--accent-lavender);
+            color: var(--surface-alt);
+            font-family: var(--font-mono);
+            font-size: 0.65rem;
+            padding: 2px 8px;
+            font-weight: bold;
+            letter-spacing: 0.05em;
+        }
+
+        
+        .grid-header {
+            border-top: 2px solid var(--accent-chartreuse);
+            border-bottom: 1px solid var(--border-divider);
+            padding: 12px 0;
+            margin-bottom: 24px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-family: var(--font-mono);
+            font-size: 0.75rem;
+            letter-spacing: 0.05em;
+            color: var(--ink-secondary);
+            text-transform: uppercase;
+        }
+
+        .mini-filters {
+            display: flex;
+            gap: 32px;
+            margin-bottom: 32px;
+            overflow-x: auto;
+            padding-bottom: 8px;
+            scrollbar-width: thin;
+            scrollbar-color: var(--border-divider) transparent;
+        }
+
+        .mini-filter-group {
+            flex-shrink: 0;
+        }
+
+        .mini-filter-label {
+            font-family: var(--font-mono);
+            font-size: 0.65rem;
+            text-transform: uppercase;
+            color: var(--accent-chartreuse);
+            margin-bottom: 8px;
+            display: block;
+        }
+
+        .mini-filter-options {
+            display: flex;
+            gap: 16px;
+        }
+
+        .mini-filter-options label {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 0.8rem;
+            color: var(--ink-secondary);
+            cursor: pointer;
+        }
+
+        .mini-filter-options input[type="checkbox"] {
+            appearance: none;
+            width: 14px;
+            height: 14px;
+            border: 1px solid var(--border-divider);
+            background: transparent;
+            cursor: pointer;
+            position: relative;
+        }
+
+        .mini-filter-options input[type="checkbox"]:checked {
+            background: var(--accent-chartreuse);
+            border-color: var(--accent-chartreuse);
+        }
+
+        .mini-filter-options input[type="checkbox"]:checked::after {
+            content: '';
+            position: absolute;
+            left: 4px;
+            top: 1px;
+            width: 4px;
+            height: 8px;
+            border: solid var(--bg-paper);
+            border-width: 0 2px 2px 0;
+            transform: rotate(45deg);
+        }
+
+        .classifieds-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 0;
+            border-left: 1px solid var(--border-divider);
+            border-top: 1px solid var(--border-divider);
+        }
+
+        .classified-card {
+            background: var(--surface-card);
+            padding: 24px;
+            border-right: 1px solid var(--border-divider);
+            border-bottom: 1px solid var(--border-divider);
+            transition: var(--transition);
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            cursor: pointer;
+            min-height: 220px;
+        }
+
+        .classified-card:hover {
+            background: #113121;
+            box-shadow: inset 0 0 0 1px var(--accent-chartreuse);
+            z-index: 2;
+        }
+
+        .featured-marker {
+            position: absolute;
+            top: 0;
+            right: 0;
+            width: 0;
+            height: 0;
+            border-style: solid;
+            border-width: 0 32px 32px 0;
+            border-color: transparent var(--accent-lavender) transparent transparent;
+            z-index: 1;
+        }
+
+        .card-ref {
+            font-family: var(--font-mono);
+            font-size: 0.65rem;
+            color: var(--accent-chartreuse);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .card-title {
+            font-family: var(--font-serif);
+            font-size: 1.6rem;
+            line-height: 1.1;
+            color: var(--ink-primary);
+        }
+
+        .card-org {
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--ink-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .card-footer {
+            margin-top: auto;
+            padding-top: 16px;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+            border-top: 1px dotted var(--border-divider);
+        }
+
+        .card-meta {
+            font-size: 0.8rem;
+            color: var(--ink-tertiary);
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+        
+        .card-meta-row {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .card-salary {
+            font-family: var(--font-mono);
+            font-weight: 700;
+            font-size: 0.9rem;
+            color: var(--accent-chartreuse);
+        }
+
+        
+        .section-title {
+            font-family: var(--font-serif);
+            font-size: 3.5rem;
+            margin-bottom: 16px;
+            color: var(--ink-primary);
+        }
+
+        .section-desc {
+            font-size: 1.1rem;
+            color: var(--ink-secondary);
+            max-width: 600px;
+            margin-bottom: 48px;
+        }
+
+        .profiles-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 24px;
+        }
+
+        .profile-card {
+            background: transparent;
+            border: 1px solid var(--border-divider);
+            display: flex;
+            transition: var(--transition);
+        }
+
+        .profile-card:hover {
+            border-color: var(--ink-tertiary);
+            background: rgba(255,255,255,0.02);
+        }
+
+        .profile-visual {
+            width: 140px;
+            background: var(--surface-card);
+            border-right: 1px solid var(--border-divider);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .avatar-placeholder {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            background: var(--surface-alt);
+            border: 1px solid rgba(212, 193, 255, 0.3);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: var(--font-serif);
+            font-size: 2rem;
+            color: var(--accent-lavender);
+            margin-bottom: 16px;
+            box-shadow: inset 0 0 20px rgba(212, 193, 255, 0.1);
+        }
+        
+        .avatar-placeholder.alt {
+            background: rgba(168, 255, 62, 0.05);
+            border-color: rgba(168, 255, 62, 0.3);
+            color: var(--accent-chartreuse);
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            background: var(--accent-chartreuse);
+            border-radius: 50%;
+            box-shadow: 0 0 10px var(--accent-chartreuse);
+        }
+
+        .profile-content {
+            padding: 32px;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .profile-name {
+            font-family: var(--font-serif);
+            font-size: 2rem;
+            color: var(--ink-primary);
+            line-height: 1;
+            margin-bottom: 8px;
+        }
+
+        .profile-role {
+            font-family: var(--font-mono);
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            color: var(--accent-chartreuse);
+            letter-spacing: 0.05em;
+            margin-bottom: 24px;
+        }
+
+        .profile-prompt {
+            background: var(--surface-card);
+            padding: 16px;
+            border-left: 2px solid var(--accent-lavender);
+            margin-bottom: 24px;
+        }
+
+        .prompt-q {
+            font-family: var(--font-mono);
+            font-size: 0.65rem;
+            text-transform: uppercase;
+            color: var(--ink-tertiary);
+            margin-bottom: 8px;
+        }
+
+        .prompt-a {
+            font-size: 0.95rem;
+            font-style: italic;
+            color: var(--ink-secondary);
+            line-height: 1.4;
+        }
+
+        .profile-tags {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            margin-top: auto;
+        }
+
+        .profile-tags span {
+            font-family: var(--font-mono);
+            font-size: 0.65rem;
+            padding: 4px 10px;
+            border: 1px solid var(--border-divider);
+            color: var(--ink-secondary);
+        }
+
+        
+        .employer-section {
+            background: var(--surface-alt);
+            border-top: 1px solid var(--border-divider);
+            border-bottom: 1px solid var(--border-divider);
+            padding: 100px 40px;
+            margin: 80px -40px 0; 
+            position: relative;
+            overflow: hidden;
+        }
+
+        .employer-content {
+            max-width: 1440px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 80px;
+            align-items: center;
+        }
+
+        .employer-text h2 {
+            font-family: var(--font-serif);
+            font-size: 4rem;
+            color: var(--accent-lavender);
+            line-height: 1;
+            margin-bottom: 24px;
+        }
+
+        .employer-text p {
+            font-size: 1.2rem;
+            color: var(--ink-secondary);
+            margin-bottom: 32px;
+            max-width: 480px;
+        }
+
+        .benefit-list {
+            list-style: none;
+            margin-bottom: 48px;
+        }
+
+        .benefit-list li {
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+            margin-bottom: 16px;
+            font-size: 0.95rem;
+            color: var(--ink-primary);
+        }
+
+        .benefit-list svg {
+            color: var(--accent-chartreuse);
+            width: 20px;
+            height: 20px;
+            flex-shrink: 0;
+            margin-top: 2px;
+        }
+
+        .employer-card {
+            background: var(--surface-card);
+            border: 1px solid var(--border-divider);
+            padding: 40px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.5);
+        }
+
+        .form-group {
+            margin-bottom: 24px;
+        }
+
+        .form-group label {
+            display: block;
+            font-family: var(--font-mono);
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            color: var(--ink-secondary);
+            margin-bottom: 8px;
+        }
+
+        .form-group input {
+            width: 100%;
+            background: transparent;
+            border: none;
+            border-bottom: 1px solid var(--border-divider);
+            padding: 12px 0;
+            color: var(--ink-primary);
+            font-size: 1rem;
+            outline: none;
+            transition: var(--transition);
+        }
+
+        .form-group input:focus {
+            border-bottom-color: var(--accent-chartreuse);
+        }
+
+        footer {
+            padding: 60px 40px;
+            text-align: center;
+            font-family: var(--font-mono);
+            font-size: 0.75rem;
+            color: var(--ink-tertiary);
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+        }
+
+        
+        .icon { width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+    </style>
+
+  <style type="text/css">
+*, ::before, ::after {
+  --tw-border-spacing-x: 0;
+  --tw-border-spacing-y: 0;
+  --tw-translate-x: 0;
+  --tw-translate-y: 0;
+  --tw-rotate: 0;
+  --tw-skew-x: 0;
+  --tw-skew-y: 0;
+  --tw-scale-x: 1;
+  --tw-scale-y: 1;
+  --tw-pan-x:  ;
+  --tw-pan-y:  ;
+  --tw-pinch-zoom:  ;
+  --tw-scroll-snap-strictness: proximity;
+  --tw-gradient-from-position:  ;
+  --tw-gradient-via-position:  ;
+  --tw-gradient-to-position:  ;
+  --tw-ordinal:  ;
+  --tw-slashed-zero:  ;
+  --tw-numeric-figure:  ;
+  --tw-numeric-spacing:  ;
+  --tw-numeric-fraction:  ;
+  --tw-ring-inset:  ;
+  --tw-ring-offset-width: 0px;
+  --tw-ring-offset-color: #fff;
+  --tw-ring-color: rgb(59 130 246 / 0.5);
+  --tw-ring-offset-shadow: 0 0 #0000;
+  --tw-ring-shadow: 0 0 #0000;
+  --tw-shadow: 0 0 #0000;
+  --tw-shadow-colored: 0 0 #0000;
+  --tw-blur:  ;
+  --tw-brightness:  ;
+  --tw-contrast:  ;
+  --tw-grayscale:  ;
+  --tw-hue-rotate:  ;
+  --tw-invert:  ;
+  --tw-saturate:  ;
+  --tw-sepia:  ;
+  --tw-drop-shadow:  ;
+  --tw-backdrop-blur:  ;
+  --tw-backdrop-brightness:  ;
+  --tw-backdrop-contrast:  ;
+  --tw-backdrop-grayscale:  ;
+  --tw-backdrop-hue-rotate:  ;
+  --tw-backdrop-invert:  ;
+  --tw-backdrop-opacity:  ;
+  --tw-backdrop-saturate:  ;
+  --tw-backdrop-sepia:  ;
+  --tw-contain-size:  ;
+  --tw-contain-layout:  ;
+  --tw-contain-paint:  ;
+  --tw-contain-style:  ;
+}
+
+::backdrop {
+  --tw-border-spacing-x: 0;
+  --tw-border-spacing-y: 0;
+  --tw-translate-x: 0;
+  --tw-translate-y: 0;
+  --tw-rotate: 0;
+  --tw-skew-x: 0;
+  --tw-skew-y: 0;
+  --tw-scale-x: 1;
+  --tw-scale-y: 1;
+  --tw-pan-x:  ;
+  --tw-pan-y:  ;
+  --tw-pinch-zoom:  ;
+  --tw-scroll-snap-strictness: proximity;
+  --tw-gradient-from-position:  ;
+  --tw-gradient-via-position:  ;
+  --tw-gradient-to-position:  ;
+  --tw-ordinal:  ;
+  --tw-slashed-zero:  ;
+  --tw-numeric-figure:  ;
+  --tw-numeric-spacing:  ;
+  --tw-numeric-fraction:  ;
+  --tw-ring-inset:  ;
+  --tw-ring-offset-width: 0px;
+  --tw-ring-offset-color: #fff;
+  --tw-ring-color: rgb(59 130 246 / 0.5);
+  --tw-ring-offset-shadow: 0 0 #0000;
+  --tw-ring-shadow: 0 0 #0000;
+  --tw-shadow: 0 0 #0000;
+  --tw-shadow-colored: 0 0 #0000;
+  --tw-blur:  ;
+  --tw-brightness:  ;
+  --tw-contrast:  ;
+  --tw-grayscale:  ;
+  --tw-hue-rotate:  ;
+  --tw-invert:  ;
+  --tw-saturate:  ;
+  --tw-sepia:  ;
+  --tw-drop-shadow:  ;
+  --tw-backdrop-blur:  ;
+  --tw-backdrop-brightness:  ;
+  --tw-backdrop-contrast:  ;
+  --tw-backdrop-grayscale:  ;
+  --tw-backdrop-hue-rotate:  ;
+  --tw-backdrop-invert:  ;
+  --tw-backdrop-opacity:  ;
+  --tw-backdrop-saturate:  ;
+  --tw-backdrop-sepia:  ;
+  --tw-contain-size:  ;
+  --tw-contain-layout:  ;
+  --tw-contain-paint:  ;
+  --tw-contain-style:  ;
+}/*
+! tailwindcss v3.4.17 | MIT License | https://tailwindcss.com
+*//*
+1. Prevent padding and border from affecting element width. (https://github.com/mozdevs/cssremedy/issues/4)
+2. Allow adding a border to an element by just adding a border-width. (https://github.com/tailwindcss/tailwindcss/pull/116)
+*/
+
+*,
+::before,
+::after {
+  box-sizing: border-box; /* 1 */
+  border-width: 0; /* 2 */
+  border-style: solid; /* 2 */
+  border-color: #e5e7eb; /* 2 */
+}
+
+::before,
+::after {
+  --tw-content: '';
+}
+
+/*
+1. Use a consistent sensible line-height in all browsers.
+2. Prevent adjustments of font size after orientation changes in iOS.
+3. Use a more readable tab size.
+4. Use the user's configured `sans` font-family by default.
+5. Use the user's configured `sans` font-feature-settings by default.
+6. Use the user's configured `sans` font-variation-settings by default.
+7. Disable tap highlights on iOS
+*/
+
+html,
+:host {
+  line-height: 1.5; /* 1 */
+  -webkit-text-size-adjust: 100%; /* 2 */
+  -moz-tab-size: 4; /* 3 */
+  tab-size: 4; /* 3 */
+  font-family: ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji"; /* 4 */
+  font-feature-settings: normal; /* 5 */
+  font-variation-settings: normal; /* 6 */
+  -webkit-tap-highlight-color: transparent; /* 7 */
+}
+
+/*
+1. Remove the margin in all browsers.
+2. Inherit line-height from `html` so users can set them as a class directly on the `html` element.
+*/
+
+body {
+  margin: 0; /* 1 */
+  line-height: inherit; /* 2 */
+}
+
+/*
+1. Add the correct height in Firefox.
+2. Correct the inheritance of border color in Firefox. (https://bugzilla.mozilla.org/show_bug.cgi?id=190655)
+3. Ensure horizontal rules are visible by default.
+*/
+
+hr {
+  height: 0; /* 1 */
+  color: inherit; /* 2 */
+  border-top-width: 1px; /* 3 */
+}
+
+/*
+Add the correct text decoration in Chrome, Edge, and Safari.
+*/
+
+abbr:where([title]) {
+  text-decoration: underline dotted;
+}
+
+/*
+Remove the default font size and weight for headings.
+*/
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  font-size: inherit;
+  font-weight: inherit;
+}
+
+/*
+Reset links to optimize for opt-in styling instead of opt-out.
+*/
+
+a {
+  color: inherit;
+  text-decoration: inherit;
+}
+
+/*
+Add the correct font weight in Edge and Safari.
+*/
+
+b,
+strong {
+  font-weight: bolder;
+}
+
+/*
+1. Use the user's configured `mono` font-family by default.
+2. Use the user's configured `mono` font-feature-settings by default.
+3. Use the user's configured `mono` font-variation-settings by default.
+4. Correct the odd `em` font sizing in all browsers.
+*/
+
+code,
+kbd,
+samp,
+pre {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; /* 1 */
+  font-feature-settings: normal; /* 2 */
+  font-variation-settings: normal; /* 3 */
+  font-size: 1em; /* 4 */
+}
+
+/*
+Add the correct font size in all browsers.
+*/
+
+small {
+  font-size: 80%;
+}
+
+/*
+Prevent `sub` and `sup` elements from affecting the line height in all browsers.
+*/
+
+sub,
+sup {
+  font-size: 75%;
+  line-height: 0;
+  position: relative;
+  vertical-align: baseline;
+}
+
+sub {
+  bottom: -0.25em;
+}
+
+sup {
+  top: -0.5em;
+}
+
+/*
+1. Remove text indentation from table contents in Chrome and Safari. (https://bugs.chromium.org/p/chromium/issues/detail?id=999088, https://bugs.webkit.org/show_bug.cgi?id=201297)
+2. Correct table border color inheritance in all Chrome and Safari. (https://bugs.chromium.org/p/chromium/issues/detail?id=935729, https://bugs.webkit.org/show_bug.cgi?id=195016)
+3. Remove gaps between table borders by default.
+*/
+
+table {
+  text-indent: 0; /* 1 */
+  border-color: inherit; /* 2 */
+  border-collapse: collapse; /* 3 */
+}
+
+/*
+1. Change the font styles in all browsers.
+2. Remove the margin in Firefox and Safari.
+3. Remove default padding in all browsers.
+*/
+
+button,
+input,
+optgroup,
+select,
+textarea {
+  font-family: inherit; /* 1 */
+  font-feature-settings: inherit; /* 1 */
+  font-variation-settings: inherit; /* 1 */
+  font-size: 100%; /* 1 */
+  font-weight: inherit; /* 1 */
+  line-height: inherit; /* 1 */
+  letter-spacing: inherit; /* 1 */
+  color: inherit; /* 1 */
+  margin: 0; /* 2 */
+  padding: 0; /* 3 */
+}
+
+/*
+Remove the inheritance of text transform in Edge and Firefox.
+*/
+
+button,
+select {
+  text-transform: none;
+}
+
+/*
+1. Correct the inability to style clickable types in iOS and Safari.
+2. Remove default button styles.
+*/
+
+button,
+input:where([type='button']),
+input:where([type='reset']),
+input:where([type='submit']) {
+  -webkit-appearance: button; /* 1 */
+  background-color: transparent; /* 2 */
+  background-image: none; /* 2 */
+}
+
+/*
+Use the modern Firefox focus style for all focusable elements.
+*/
+
+:-moz-focusring {
+  outline: auto;
+}
+
+/*
+Remove the additional `:invalid` styles in Firefox. (https://github.com/mozilla/gecko-dev/blob/2f9eacd9d3d995c937b4251a5557d95d494c9be1/layout/style/res/forms.css#L728-L737)
+*/
+
+:-moz-ui-invalid {
+  box-shadow: none;
+}
+
+/*
+Add the correct vertical alignment in Chrome and Firefox.
+*/
+
+progress {
+  vertical-align: baseline;
+}
+
+/*
+Correct the cursor style of increment and decrement buttons in Safari.
+*/
+
+::-webkit-inner-spin-button,
+::-webkit-outer-spin-button {
+  height: auto;
+}
+
+/*
+1. Correct the odd appearance in Chrome and Safari.
+2. Correct the outline style in Safari.
+*/
+
+[type='search'] {
+  -webkit-appearance: textfield; /* 1 */
+  outline-offset: -2px; /* 2 */
+}
+
+/*
+Remove the inner padding in Chrome and Safari on macOS.
+*/
+
+::-webkit-search-decoration {
+  -webkit-appearance: none;
+}
+
+/*
+1. Correct the inability to style clickable types in iOS and Safari.
+2. Change font properties to `inherit` in Safari.
+*/
+
+::-webkit-file-upload-button {
+  -webkit-appearance: button; /* 1 */
+  font: inherit; /* 2 */
+}
+
+/*
+Add the correct display in Chrome and Safari.
+*/
+
+summary {
+  display: list-item;
+}
+
+/*
+Removes the default spacing and border for appropriate elements.
+*/
+
+blockquote,
+dl,
+dd,
+h1,
+h2,
+h3,
+h4,
+h5,
+h6,
+hr,
+figure,
+p,
+pre {
+  margin: 0;
+}
+
+fieldset {
+  margin: 0;
+  padding: 0;
+}
+
+legend {
+  padding: 0;
+}
+
+ol,
+ul,
+menu {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+/*
+Reset default styling for dialogs.
+*/
+dialog {
+  padding: 0;
+}
+
+/*
+Prevent resizing textareas horizontally by default.
+*/
+
+textarea {
+  resize: vertical;
+}
+
+/*
+1. Reset the default placeholder opacity in Firefox. (https://github.com/tailwindlabs/tailwindcss/issues/3300)
+2. Set the default placeholder color to the user's configured gray 400 color.
+*/
+
+input::placeholder,
+textarea::placeholder {
+  opacity: 1; /* 1 */
+  color: #9ca3af; /* 2 */
+}
+
+/*
+Set the default cursor for buttons.
+*/
+
+button,
+[role="button"] {
+  cursor: pointer;
+}
+
+/*
+Make sure disabled buttons don't get the pointer cursor.
+*/
+:disabled {
+  cursor: default;
+}
+
+/*
+1. Make replaced elements `display: block` by default. (https://github.com/mozdevs/cssremedy/issues/14)
+2. Add `vertical-align: middle` to align replaced elements more sensibly by default. (https://github.com/jensimmons/cssremedy/issues/14#issuecomment-634934210)
+   This can trigger a poorly considered lint error in some tools but is included by design.
+*/
+
+img,
+svg,
+video,
+canvas,
+audio,
+iframe,
+embed,
+object {
+  display: block; /* 1 */
+  vertical-align: middle; /* 2 */
+}
+
+/*
+Constrain images and videos to the parent width and preserve their intrinsic aspect ratio. (https://github.com/mozdevs/cssremedy/issues/14)
+*/
+
+img,
+video {
+  max-width: 100%;
+  height: auto;
+}
+
+/* Make elements with the HTML hidden attribute stay hidden by default */
+[hidden]:where(:not([hidden="until-found"])) {
+  display: none;
+}
+.fixed {
+  position: fixed;
+}
+.absolute {
+  position: absolute;
+}
+.relative {
+  position: relative;
+}
+.sticky {
+  position: sticky;
+}
+.block {
+  display: block;
+}
+.flex {
+  display: flex;
+}
+.grid {
+  display: grid;
+}
+.hidden {
+  display: none;
+}
+.flex-shrink {
+  flex-shrink: 1;
+}
+.transform {
+  transform: translate(var(--tw-translate-x), var(--tw-translate-y)) rotate(var(--tw-rotate)) skewX(var(--tw-skew-x)) skewY(var(--tw-skew-y)) scaleX(var(--tw-scale-x)) scaleY(var(--tw-scale-y));
+}
+.flex-wrap {
+  flex-wrap: wrap;
+}
+.border {
+  border-width: 1px;
+}
+.font-mono {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+}
+.font-serif {
+  font-family: ui-serif, Georgia, Cambria, "Times New Roman", Times, serif;
+}
+.uppercase {
+  text-transform: uppercase;
+}
+.italic {
+  font-style: italic;
+}
+.antialiased {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+.outline {
+  outline-style: solid;
+}
+.blur {
+  --tw-blur: blur(8px);
+  filter: var(--tw-blur) var(--tw-brightness) var(--tw-contrast) var(--tw-grayscale) var(--tw-hue-rotate) var(--tw-invert) var(--tw-saturate) var(--tw-sepia) var(--tw-drop-shadow);
+}
+.grayscale {
+  --tw-grayscale: grayscale(100%);
+  filter: var(--tw-blur) var(--tw-brightness) var(--tw-contrast) var(--tw-grayscale) var(--tw-hue-rotate) var(--tw-invert) var(--tw-saturate) var(--tw-sepia) var(--tw-drop-shadow);
+}
+.backdrop-filter {
+  -webkit-backdrop-filter: var(--tw-backdrop-blur) var(--tw-backdrop-brightness) var(--tw-backdrop-contrast) var(--tw-backdrop-grayscale) var(--tw-backdrop-hue-rotate) var(--tw-backdrop-invert) var(--tw-backdrop-opacity) var(--tw-backdrop-saturate) var(--tw-backdrop-sepia);
+  backdrop-filter: var(--tw-backdrop-blur) var(--tw-backdrop-brightness) var(--tw-backdrop-contrast) var(--tw-backdrop-grayscale) var(--tw-backdrop-hue-rotate) var(--tw-backdrop-invert) var(--tw-backdrop-opacity) var(--tw-backdrop-saturate) var(--tw-backdrop-sepia);
+}
+.transition {
+  transition-property: color, background-color, border-color, text-decoration-color, fill, stroke, opacity, box-shadow, transform, filter, backdrop-filter;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  transition-duration: 150ms;
+}* {
+      -ms-overflow-style: none !important;
+      scrollbar-width: none !important;
+    }
+
+    *::-webkit-scrollbar {
+      display: none !important;
+      width: 0 !important;
+      height: 0 !important;
+    }
+  </style></head>
+<body vid="7">
+
+    
+    <svg class="botanical-bg botanical-tl" viewBox="0 0 200 200" preserveAspectRatio="xMidYMid slice" vid="8">
+        <path d="M100,200 C100,200 60,120 60,60 C60,0 140,0 140,60 C140,120 100,200 100,200 Z" fill="none" stroke="currentColor" stroke-width="0.5" vid="9"></path>
+        <path d="M60,60 Q80,100 100,200" fill="none" stroke="currentColor" stroke-width="0.3" vid="10"></path>
+        <path d="M140,60 Q120,100 100,200" fill="none" stroke="currentColor" stroke-width="0.3" vid="11"></path>
+        <circle cx="100" cy="40" r="2" fill="currentColor" opacity="0.5" vid="12"></circle>
+    </svg>
+
+    <svg class="botanical-bg botanical-br" viewBox="0 0 200 200" preserveAspectRatio="xMidYMid slice" vid="13">
+        <path d="M20,100 C20,100 80,60 140,60 C200,60 200,140 140,140 C80,140 20,100 20,100 Z" fill="none" stroke="currentColor" stroke-width="0.5" vid="14"></path>
+        <path d="M140,60 Q100,80 20,100" fill="none" stroke="currentColor" stroke-width="0.3" vid="15"></path>
+        <path d="M140,140 Q100,120 20,100" fill="none" stroke="currentColor" stroke-width="0.3" vid="16"></path>
+    </svg>
+
+    <div class="app-container" vid="17">
+        
+        
+        <nav vid="18">
+            <a href="#home" class="logo" vid="19">
+                <h1 vid="20">Fresh Roles</h1>
+                <span vid="21">by The Algorithm Witch</span>
+            </a>
+            <div class="nav-links" vid="22">
+                <a href="#home" class="nav-link active" vid="23">Search</a>
+                <a href="#classifieds" class="nav-link" vid="24">Classifieds</a>
+                <a href="#profiles" class="nav-link" vid="25">Profiles</a>
+                <a href="#employers" class="nav-link" vid="26">For Employers</a>
+            </div>
+            <div style="display: flex; gap: 24px; align-items: center;" vid="27">
+                <a href="#" style="color: var(--ink-secondary); font-size: 0.9rem; text-decoration: none; font-weight: 500;" vid="28">Sign In</a>
+                <a href="#" class="btn-primary" vid="29">Join Archive</a>
+            </div>
+        </nav>
+
+        
+        <section id="home" class="hero-section" vid="30">
+            <div class="search-container" vid="31">
+                <div class="search-input-wrapper" vid="32">
+                    <svg class="icon" style="width: 32px; height: 32px; color: var(--accent-chartreuse); margin-right: 24px;" viewBox="0 0 24 24" vid="33"><circle cx="11" cy="11" r="8" vid="34"></circle><line x1="21" y1="21" x2="16.65" y2="16.65" vid="35"></line></svg>
+                    <input type="text" class="search-input" placeholder="Search roles, skills, or organizations..." vid="36">
+                </div>
+                
+                <div class="quick-filters" vid="37">
+                    <button class="filter-chip active" vid="38">Remote</button>
+                    <button class="filter-chip" vid="39">Climate Tech</button>
+                    <button class="filter-chip" vid="40">Oceans</button>
+                    <button class="filter-chip" vid="41">Strategy</button>
+                    <button class="filter-chip" vid="42">Design &amp; Art</button>
+                    <button class="filter-chip" vid="43">Full-time</button>
+                </div>
+
+                <div class="stats-bar" vid="44">
+                    <span vid="45">Currently Indexing: 1,247 opportunities</span>
+                    <span vid="46">342 creative profiles</span>
+                    <span style="color: var(--accent-chartreuse);" vid="47">Updated 12m ago</span>
+                </div>
+            </div>
+
+            <div class="weekly-drop" vid="48">
+                <h3 style="font-family: var(--font-serif); font-size: 2.5rem; color: var(--accent-lavender); margin-bottom: 16px;" vid="49">The Signal in the Noise.</h3>
+                <p style="font-size: 1.1rem; color: var(--ink-secondary); line-height: 1.6; max-width: 700px;" vid="50">
+                    We don't just scrape job boards. We curate roles that demand deep creative intelligence applied to the biosphere's most pressing challenges. This week, we're seeing a <strong vid="51">40% surge in policy-led communication roles</strong>. Organizations are finally moving from "reporting" to "narrating" their impact.
+                </p>
+            </div>
+        </section>
+
+        
+        <section id="classifieds" vid="52">
+            <div class="grid-header" vid="53">
+                <div vid="54">VOL. IV — NO. 142 OPPORTUNITIES</div>
+                <div vid="55">LATEST SIGNALS // BOARD VIEW</div>
+            </div>
+
+            
+            <div class="mini-filters" vid="56">
+                <div class="mini-filter-group" vid="57">
+                    <span class="mini-filter-label" vid="58">Attributes</span>
+                    <div class="mini-filter-options" vid="59">
+                        <label vid="60"><input type="checkbox" checked="" vid="61"> Full-time</label>
+                        <label vid="62"><input type="checkbox" vid="63"> Contract</label>
+                        <label vid="64"><input type="checkbox" checked="" vid="65"> Leadership</label>
+                    </div>
+                </div>
+                <div class="mini-filter-group" vid="66">
+                    <span class="mini-filter-label" vid="67">Primary Sector</span>
+                    <div class="mini-filter-options" vid="68">
+                        <label vid="69"><input type="checkbox" checked="" vid="70"> Climate Tech</label>
+                        <label vid="71"><input type="checkbox" vid="72"> Conservation</label>
+                        <label vid="73"><input type="checkbox" vid="74"> Built Environment</label>
+                    </div>
+                </div>
+                <div class="mini-filter-group" vid="75">
+                    <span class="mini-filter-label" vid="76">Source Signal</span>
+                    <div class="mini-filter-options" vid="77">
+                        <label vid="78"><input type="checkbox" checked="" vid="79"> Witch Approved</label>
+                        <label vid="80"><input type="checkbox" vid="81"> Verified Direct</label>
+                    </div>
+                </div>
+            </div>
+
+            
+            <div class="classifieds-grid" vid="82">
+                
+                
+                <div class="classified-card" vid="83">
+                    <div class="featured-marker" vid="84"></div>
+                    <span class="card-ref" vid="85">REF: SPEC_0982</span>
+                    <h3 class="card-title" vid="86">Design Director, Climate Adaptation</h3>
+                    <div class="card-org" vid="87">Terraformation Labs</div>
+                    <div class="card-footer" vid="88">
+                        <div class="card-meta" vid="89">
+                            <div class="card-meta-row" vid="90">
+                                <svg class="icon" vid="91"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" vid="92"></path><circle cx="12" cy="10" r="3" vid="93"></circle></svg> Remote
+                            </div>
+                            <div class="card-meta-row" vid="94">
+                                <svg class="icon" vid="95"><rect x="2" y="7" width="20" height="14" rx="2" ry="2" vid="96"></rect><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16" vid="97"></path></svg> Full-time
+                            </div>
+                        </div>
+                        <div class="card-salary" vid="98">$160k – $210k</div>
+                    </div>
+                </div>
+
+                
+                <div class="classified-card" vid="99">
+                    <span class="card-ref" vid="100">REF: SPEC_1002</span>
+                    <h3 class="card-title" vid="101">Senior Campaign Strategist (Oceans)</h3>
+                    <div class="card-org" vid="102">World Wildlife Fund</div>
+                    <div class="card-footer" vid="103">
+                        <div class="card-meta" vid="104">
+                            <div class="card-meta-row" vid="105">
+                                <svg class="icon" vid="106"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" vid="107"></path><circle cx="12" cy="10" r="3" vid="108"></circle></svg> Wash. D.C. / Hybrid
+                            </div>
+                            <div class="card-meta-row" vid="109">
+                                <svg class="icon" vid="110"><rect x="2" y="7" width="20" height="14" rx="2" ry="2" vid="111"></rect><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16" vid="112"></path></svg> Full-time
+                            </div>
+                        </div>
+                        <div class="card-salary" vid="113">$115k – $140k</div>
+                    </div>
+                </div>
+
+                
+                <div class="classified-card" vid="114">
+                    <span class="card-ref" vid="115">REF: SPEC_0741</span>
+                    <h3 class="card-title" vid="116">Product Designer (Freelance)</h3>
+                    <div class="card-org" vid="117">Climate Research Collective</div>
+                    <div class="card-footer" vid="118">
+                        <div class="card-meta" vid="119">
+                            <div class="card-meta-row" vid="120">
+                                <svg class="icon" vid="121"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" vid="122"></path><circle cx="12" cy="10" r="3" vid="123"></circle></svg> Remote
+                            </div>
+                            <div class="card-meta-row" vid="124">
+                                <svg class="icon" vid="125"><rect x="2" y="7" width="20" height="14" rx="2" ry="2" vid="126"></rect><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16" vid="127"></path></svg> 6mo Contract
+                            </div>
+                        </div>
+                        <div class="card-salary" vid="128">$800 / day</div>
+                    </div>
+                </div>
+
+                
+                <div class="classified-card" vid="129">
+                    <span class="card-ref" vid="130">REF: SPEC_1104</span>
+                    <h3 class="card-title" vid="131">Head of Brand &amp; Ecosystem</h3>
+                    <div class="card-org" vid="132">Watershed</div>
+                    <div class="card-footer" vid="133">
+                        <div class="card-meta" vid="134">
+                            <div class="card-meta-row" vid="135">
+                                <svg class="icon" vid="136"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" vid="137"></path><circle cx="12" cy="10" r="3" vid="138"></circle></svg> London
+                            </div>
+                            <div class="card-meta-row" vid="139">
+                                <svg class="icon" vid="140"><rect x="2" y="7" width="20" height="14" rx="2" ry="2" vid="141"></rect><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16" vid="142"></path></svg> Full-time
+                            </div>
+                        </div>
+                        <div class="card-salary" vid="143">£110k – £135k</div>
+                    </div>
+                </div>
+
+                
+                <div class="classified-card" vid="144">
+                    <div class="featured-marker" vid="145"></div>
+                    <span class="card-ref" vid="146">REF: SPEC_0912</span>
+                    <h3 class="card-title" vid="147">Visual Systems Lead</h3>
+                    <div class="card-org" vid="148">Ecotrust Global</div>
+                    <div class="card-footer" vid="149">
+                        <div class="card-meta" vid="150">
+                            <div class="card-meta-row" vid="151">
+                                <svg class="icon" vid="152"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" vid="153"></path><circle cx="12" cy="10" r="3" vid="154"></circle></svg> Remote
+                            </div>
+                            <div class="card-meta-row" vid="155">
+                                <svg class="icon" vid="156"><rect x="2" y="7" width="20" height="14" rx="2" ry="2" vid="157"></rect><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16" vid="158"></path></svg> Full-time
+                            </div>
+                        </div>
+                        <div class="card-salary" vid="159">$140k – $165k</div>
+                    </div>
+                </div>
+
+                
+                <div class="classified-card" vid="160">
+                    <span class="card-ref" vid="161">REF: SPEC_1201</span>
+                    <h3 class="card-title" vid="162">Communication Designer</h3>
+                    <div class="card-org" vid="163">The Nature Conservancy</div>
+                    <div class="card-footer" vid="164">
+                        <div class="card-meta" vid="165">
+                            <div class="card-meta-row" vid="166">
+                                <svg class="icon" vid="167"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" vid="168"></path><circle cx="12" cy="10" r="3" vid="169"></circle></svg> Arlington, VA
+                            </div>
+                            <div class="card-meta-row" vid="170">
+                                <svg class="icon" vid="171"><rect x="2" y="7" width="20" height="14" rx="2" ry="2" vid="172"></rect><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16" vid="173"></path></svg> Full-time
+                            </div>
+                        </div>
+                        <div class="card-salary" vid="174">$95k – $110k</div>
+                    </div>
+                </div>
+
+                
+                <div class="classified-card" vid="175">
+                    <span class="card-ref" vid="176">REF: SPEC_0884</span>
+                    <h3 class="card-title" vid="177">Creative Director, Energy</h3>
+                    <div class="card-org" vid="178">SolarCity Collective</div>
+                    <div class="card-footer" vid="179">
+                        <div class="card-meta" vid="180">
+                            <div class="card-meta-row" vid="181">
+                                <svg class="icon" vid="182"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" vid="183"></path><circle cx="12" cy="10" r="3" vid="184"></circle></svg> SF / Hybrid
+                            </div>
+                            <div class="card-meta-row" vid="185">
+                                <svg class="icon" vid="186"><rect x="2" y="7" width="20" height="14" rx="2" ry="2" vid="187"></rect><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16" vid="188"></path></svg> Full-time
+                            </div>
+                        </div>
+                        <div class="card-salary" vid="189">$180k+</div>
+                    </div>
+                </div>
+
+                
+                <div class="classified-card" vid="190">
+                    <span class="card-ref" vid="191">REF: SPEC_1055</span>
+                    <h3 class="card-title" vid="192">Regenerative Design Fellow</h3>
+                    <div class="card-org" vid="193">The Long Now</div>
+                    <div class="card-footer" vid="194">
+                        <div class="card-meta" vid="195">
+                            <div class="card-meta-row" vid="196">
+                                <svg class="icon" vid="197"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" vid="198"></path><circle cx="12" cy="10" r="3" vid="199"></circle></svg> Remote
+                            </div>
+                            <div class="card-meta-row" vid="200">
+                                <svg class="icon" vid="201"><rect x="2" y="7" width="20" height="14" rx="2" ry="2" vid="202"></rect><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16" vid="203"></path></svg> Fellowship
+                            </div>
+                        </div>
+                        <div class="card-salary" vid="204">$5k / mo</div>
+                    </div>
+                </div>
+
+                
+                <div class="classified-card" vid="205">
+                    <span class="card-ref" vid="206">REF: SPEC_0642</span>
+                    <h3 class="card-title" vid="207">Senior UX Researcher</h3>
+                    <div class="card-org" vid="208">Rewiring America</div>
+                    <div class="card-footer" vid="209">
+                        <div class="card-meta" vid="210">
+                            <div class="card-meta-row" vid="211">
+                                <svg class="icon" vid="212"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" vid="213"></path><circle cx="12" cy="10" r="3" vid="214"></circle></svg> Remote
+                            </div>
+                            <div class="card-meta-row" vid="215">
+                                <svg class="icon" vid="216"><rect x="2" y="7" width="20" height="14" rx="2" ry="2" vid="217"></rect><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16" vid="218"></path></svg> Full-time
+                            </div>
+                        </div>
+                        <div class="card-salary" vid="219">$155k – $190k</div>
+                    </div>
+                </div>
+
+            </div>
+            
+            <div style="text-align: center; margin-top: 40px;" vid="220">
+                <button class="btn-primary" style="background: transparent; color: var(--accent-chartreuse);" vid="221">Load More Opportunities</button>
+            </div>
+        </section>
+
+        
+        <section id="profiles" vid="222">
+            <h2 class="section-title" vid="223">The Talent Archive</h2>
+            <p class="section-desc" vid="224">Discover vetted creative professionals actively seeking roles in climate tech, conservation, and regenerative systems. Profiles update weekly.</p>
+            
+            <div class="profiles-grid" vid="225">
+                
+                
+                <div class="profile-card" vid="226">
+                    <div class="profile-visual" vid="227">
+                        <div class="avatar-placeholder" vid="228">EV</div>
+                        <div style="display: flex; align-items: center; gap: 6px; font-family: var(--font-mono); font-size: 0.65rem; color: var(--ink-secondary);" vid="229">
+                            <div class="status-dot" vid="230"></div> Open to Work
+                        </div>
+                    </div>
+                    <div class="profile-content" vid="231">
+                        <div class="profile-role" vid="232">Climate Data Storyteller</div>
+                        <h3 class="profile-name" vid="233">Elena Vance</h3>
+                        <div class="profile-prompt" vid="234">
+                            <div class="prompt-q" vid="235">What problem do you keep coming back to?</div>
+                            <div class="prompt-a" vid="236">"Making dense climate data into narratives people actually want to read, rather than just endure."</div>
+                        </div>
+                        <div class="profile-tags" vid="237">
+                            <span vid="238">#D3.js</span>
+                            <span vid="239">#Policy</span>
+                            <span vid="240">#DataViz</span>
+                        </div>
+                    </div>
+                </div>
+
+                
+                <div class="profile-card" vid="241">
+                    <div class="profile-visual" vid="242">
+                        <div class="avatar-placeholder alt" vid="243">JT</div>
+                        <div style="display: flex; align-items: center; gap: 6px; font-family: var(--font-mono); font-size: 0.65rem; color: var(--ink-secondary);" vid="244">
+                            <div class="status-dot" style="background: var(--ink-tertiary); box-shadow: none;" vid="245"></div> Passive
+                        </div>
+                    </div>
+                    <div class="profile-content" vid="246">
+                        <div class="profile-role" vid="247">Regenerative Architect</div>
+                        <h3 class="profile-name" vid="248">Julian Thorne</h3>
+                        <div class="profile-prompt" vid="249">
+                            <div class="prompt-q" vid="250">What problem do you keep coming back to?</div>
+                            <div class="prompt-a" vid="251">"Resource scarcity in urban centers and how built environments can act as carbon sinks instead of emitters."</div>
+                        </div>
+                        <div class="profile-tags" vid="252">
+                            <span vid="253">#BIM</span>
+                            <span vid="254">#CircularMaterials</span>
+                            <span vid="255">#Urbanism</span>
+                        </div>
+                    </div>
+                </div>
+
+                
+                <div class="profile-card" vid="256">
+                    <div class="profile-visual" vid="257">
+                        <div class="avatar-placeholder" vid="258">MK</div>
+                        <div style="display: flex; align-items: center; gap: 6px; font-family: var(--font-mono); font-size: 0.65rem; color: var(--ink-secondary);" vid="259">
+                            <div class="status-dot" vid="260"></div> Open to Work
+                        </div>
+                    </div>
+                    <div class="profile-content" vid="261">
+                        <div class="profile-role" vid="262">Lead Visual Designer</div>
+                        <h3 class="profile-name" vid="263">Maya Kapoor</h3>
+                        <div class="profile-prompt" vid="264">
+                            <div class="prompt-q" vid="265">What problem do you keep coming back to?</div>
+                            <div class="prompt-a" vid="266">"Translating complex scientific consensus into accessible visual languages for grassroots advocacy."</div>
+                        </div>
+                        <div class="profile-tags" vid="267">
+                            <span vid="268">#ArtDirection</span>
+                            <span vid="269">#Campaigns</span>
+                            <span vid="270">#Figma</span>
+                        </div>
+                    </div>
+                </div>
+
+                
+                <div class="profile-card" vid="271">
+                    <div class="profile-visual" vid="272">
+                        <div class="avatar-placeholder alt" vid="273">SR</div>
+                        <div style="display: flex; align-items: center; gap: 6px; font-family: var(--font-mono); font-size: 0.65rem; color: var(--ink-secondary);" vid="274">
+                            <div class="status-dot" vid="275"></div> Open to Work
+                        </div>
+                    </div>
+                    <div class="profile-content" vid="276">
+                        <div class="profile-role" vid="277">Senior Product Manager</div>
+                        <h3 class="profile-name" vid="278">Samuel Reed</h3>
+                        <div class="profile-prompt" vid="279">
+                            <div class="prompt-q" vid="280">What problem do you keep coming back to?</div>
+                            <div class="prompt-a" vid="281">"Building clean energy consumer platforms that don't compromise on UX standards set by Web2."</div>
+                        </div>
+                        <div class="profile-tags" vid="282">
+                            <span vid="283">#Agile</span>
+                            <span vid="284">#CleanEnergy</span>
+                            <span vid="285">#Growth</span>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </section>
+
+        
+        <section id="employers" class="employer-section" vid="286">
+            <div class="employer-content" vid="287">
+                <div class="employer-text" vid="288">
+                    <h2 vid="289">Hire the minds working on what matters.</h2>
+                    <p vid="290">Stop sifting through generalist job boards. Our audience consists exclusively of vetted designers, strategists, and engineers actively looking to apply their skills to planetary scale problems.</p>
+                    
+                    <ul class="benefit-list" vid="291">
+                        <li vid="292">
+                            <svg viewBox="0 0 24 24" vid="293"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" vid="294"></path><polyline points="22 4 12 14.01 9 11.01" vid="295"></polyline></svg>
+                            Direct access to the 'Talent Archive' database
+                        </li>
+                        <li vid="296">
+                            <svg viewBox="0 0 24 24" vid="297"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" vid="298"></path><polyline points="22 4 12 14.01 9 11.01" vid="299"></polyline></svg>
+                            Roles pushed to our newsletter of 15k+ subscribers
+                        </li>
+                        <li vid="300">
+                            <svg viewBox="0 0 24 24" vid="301"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" vid="302"></path><polyline points="22 4 12 14.01 9 11.01" vid="303"></polyline></svg>
+                            Editorial featuring in the "Weekly Drop"
+                        </li>
+                    </ul>
+                </div>
+
+                <div class="employer-card" vid="304">
+                    <div style="font-family: var(--font-mono); font-size: 0.75rem; color: var(--accent-chartreuse); margin-bottom: 24px; text-transform: uppercase;" vid="305">Partner Application</div>
+                    <h3 style="font-family: var(--font-serif); font-size: 2.5rem; margin-bottom: 32px; color: var(--ink-primary); line-height: 1.1;" vid="306">Submit an Opportunity</h3>
+                    
+                    <form vid="307">
+                        <div class="form-group" vid="308">
+                            <label vid="309">Organization Name</label>
+                            <input type="text" placeholder="e.g. Terraformation Labs" vid="310">
+                        </div>
+                        <div class="form-group" vid="311">
+                            <label vid="312">Role Title</label>
+                            <input type="text" placeholder="e.g. Senior UX Researcher" vid="313">
+                        </div>
+                        <div class="form-group" vid="314">
+                            <label vid="315">Work Email</label>
+                            <input type="email" placeholder="you@organization.com" vid="316">
+                        </div>
+                        <button type="button" class="btn-primary" style="width: 100%; margin-top: 16px; padding: 16px;" vid="317">Begin Submission</button>
+                    </form>
+                </div>
+            </div>
+        </section>
+
+    </div>
+
+    <footer vid="318">
+        <div vid="319">THE ALGORITHM WITCH // EST. 2024 // SYSTEM VERSION 1.1.0-BETA</div>
+        <div style="margin-top: 12px; opacity: 0.5;" vid="320">CLASSIFIEDS &amp; ARCHIVE VIEW</div>
+    </footer>
+
+    <script vid="321">
+        
+        const sections = document.querySelectorAll("section");
+        const navLinks = document.querySelectorAll(".nav-link");
+
+        window.addEventListener("scroll", () => {
+            let current = "";
+            sections.forEach((section) => {
+                const sectionTop = section.offsetTop;
+                const sectionHeight = section.clientHeight;
+                if (pageYOffset >= sectionTop - 200) {
+                    current = section.getAttribute("id");
+                }
+            });
+
+            navLinks.forEach((link) => {
+                link.classList.remove("active");
+                if (link.getAttribute("href").includes(current)) {
+                    link.classList.add("active");
+                }
+            });
+        });
+
+        
+        document.querySelectorAll('.filter-chip').forEach(chip => {
+            chip.addEventListener('click', () => {
+                chip.classList.toggle('active');
+            });
+        });
+    </script>
+
+</body></html>

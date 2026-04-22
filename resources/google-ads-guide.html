@@ -1,16 +1,27 @@
 
-<html lang="en" vid="0"><head vid="1">
+<html lang="en" style="background:#030014;color:#e2e8f0" vid="0"><head vid="1">
+    <script>
+        document.documentElement.classList.add('js');
+    </script>
     <meta charset="UTF-8" vid="2">
     <meta name="viewport" content="width=device-width, initial-scale=1.0" vid="3">
+    <meta name="theme-color" content="#030014">
+    <meta name="color-scheme" content="dark">
     <title vid="4">Google Ads Campaign SOP | Alchemical Data</title>
     
     <link rel="preconnect" href="https://fonts.googleapis.com" vid="6">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="" vid="7">
-    <link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@400;700;900&amp;family=Inter:wght@300;400;500;600&amp;family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&amp;display=swap" rel="stylesheet" vid="8">
-    <script src="https://unpkg.com/@phosphor-icons/web" vid="9"></script>
+    <style>
+        html, body { background:#030014; margin:0; padding:0; }
+        body { color:#e2e8f0; font-family:system-ui, -apple-system, Segoe UI, Roboto, Inter, Arial, sans-serif; }
+    </style>
+    <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@400;700;900&amp;family=Inter:wght@300;400;500;600&amp;family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&amp;display=swap" onload="this.onload=null;this.rel='stylesheet'" vid="8">
+    <noscript><link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@400;700;900&amp;family=Inter:wght@300;400;500;600&amp;family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&amp;display=swap" rel="stylesheet"></noscript>
+    <script defer src="https://unpkg.com/@phosphor-icons/web" vid="9"></script>
     <style vid="10">
         :root {
             --color-bg: #030014;
+            --color-card: rgba(20, 15, 45, 0.6);
             --color-purple: #a855f7;
             --color-gold: #fde047;
             --color-cyan: #06b6d4;
@@ -20,6 +31,14 @@
             --color-rose: #f43f5e;
         }
 
+        html,
+        body {
+            width: 100%;
+            min-height: 100%;
+            overflow-x: hidden;
+            -webkit-text-size-adjust: 100%;
+        }
+
         body {
             background-color: var(--color-bg);
             color: #e2e8f0;
@@ -27,8 +46,9 @@
             margin: 0;
             padding: 0;
             overflow: hidden;
-            width: 100vw;
-            height: 100vh;
+            width: 100%;
+            height: 100dvh;
+            min-height: 100vh;
         }
 
         .font-magical { font-family: 'Cinzel Decorative', cursive; }
@@ -67,6 +87,7 @@
             transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
             position: relative;
             overflow: hidden;
+            contain: layout paint;
         }
         
         .glass-card::before {
@@ -86,28 +107,182 @@
         @keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-15px); } }
 
         #page-presentation { width: 100vw; height: 100vh; overflow: hidden; position: relative; }
-        .ambient-glow { position: fixed; border-radius: 50%; filter: blur(120px); opacity: 0.3; pointer-events: none; z-index: 0; transition: all 1s ease-in-out; }
+        .ambient-glow { position: fixed; border-radius: 50%; filter: blur(120px); opacity: 0.4; pointer-events: none; z-index: 0; transition: all 1s ease-in-out; }
         
         .slide { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; opacity: 0; transform: translateY(40px) scale(0.98); transition: all 0.8s cubic-bezier(0.4, 0, 0.2, 1); pointer-events: none; z-index: 0; padding: 4rem; }
         .slide.active { opacity: 1; transform: translateY(0) scale(1); pointer-events: auto; z-index: 10; }
+        .slide.previous { transform: translateY(-40px) scale(0.98); }
         
         .nav-btn { position: fixed; top: 50%; transform: translateY(-50%); z-index: 50; width: 48px; height: 48px; border-radius: 50%; background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1); color: rgba(255, 255, 255, 0.5); display: flex; align-items: center; justify-content: center; cursor: pointer; backdrop-filter: blur(8px); transition: all 0.3s ease; }
         .nav-btn:hover { background: rgba(255, 255, 255, 0.1); color: white; border-color: rgba(168, 85, 247, 0.5); box-shadow: 0 0 20px rgba(168, 85, 247, 0.3); }
+        .nav-btn:active { transform: translateY(-50%) scale(0.95); }
         .nav-prev { left: 2rem; }
         .nav-next { right: 2rem; }
         
         .presentation-controls { position: fixed; bottom: 2rem; left: 50%; transform: translateX(-50%); z-index: 50; display: flex; align-items: center; gap: 2rem; padding: 0.75rem 2rem; border-radius: 9999px; background: rgba(0, 0, 0, 0.4); border: 1px solid rgba(255, 255, 255, 0.1); backdrop-filter: blur(12px); }
         .dots-container { display: flex; gap: 0.75rem; }
         .dot { width: 8px; height: 8px; border-radius: 50%; background: rgba(255, 255, 255, 0.2); cursor: pointer; transition: all 0.3s ease; }
+        .dot:hover { background: rgba(255, 255, 255, 0.5); }
         .dot.active { background: var(--color-purple); transform: scale(1.5); box-shadow: 0 0 10px var(--color-purple); }
         
-        .content-container { width: 100%; max-width: 1200px; max-height: 100%; display: flex; flex-direction: column; justify-content: center; }
+        .slide-counter { font-family: 'Inter', sans-serif; font-size: 0.75rem; letter-spacing: 0.2em; color: rgba(255, 255, 255, 0.5); font-weight: 600; }
+        .content-container { width: 100%; max-width: 1200px; max-height: calc(100dvh - 8rem); display: flex; flex-direction: column; justify-content: center; min-width: 0; overflow-y: auto; overflow-x: hidden; padding-block: 1.5rem; }
+        .slide { overflow-x: hidden; }
+        .slide .glass-card,
+        .slide .glass-panel,
+        .slide .grid > *,
+        .slide .flex > * { min-width: 0; }
+        .slide .glass-card,
+        .slide .glass-panel { height: auto; }
+        .slide h1,
+        .slide h2,
+        .slide h3,
+        .slide h4,
+        .slide p,
+        .slide li,
+        .slide span { overflow-wrap: anywhere; }
         
         .glow-border-purple:hover { border-color: rgba(168, 85, 247, 0.4); box-shadow: 0 10px 40px -10px rgba(168, 85, 247, 0.2); }
         .glow-border-cyan:hover { border-color: rgba(6, 182, 212, 0.4); box-shadow: 0 10px 40px -10px rgba(6, 182, 212, 0.2); }
         .glow-border-amber:hover { border-color: rgba(245, 158, 11, 0.4); box-shadow: 0 10px 40px -10px rgba(245, 158, 11, 0.2); }
         .glow-border-emerald:hover { border-color: rgba(16, 185, 129, 0.4); box-shadow: 0 10px 40px -10px rgba(16, 185, 129, 0.2); }
         .glow-border-rose:hover { border-color: rgba(244, 63, 94, 0.4); box-shadow: 0 10px 40px -10px rgba(244, 63, 94, 0.2); }
+
+        .mobile-swipe-text,
+        .mobile-read-hint {
+            display: none;
+        }
+
+        body.preload .ambient-glow {
+            filter: blur(72px);
+            opacity: 0.14;
+            transition: none;
+        }
+
+        body.preload .star {
+            animation: none;
+            opacity: 0;
+        }
+
+        body.preload .slide,
+        body.preload .glass-card,
+        body.preload .nav-btn,
+        body.preload .dot {
+            transition: none !important;
+        }
+
+        @media (max-width: 768px) {
+            .ambient-glow {
+                filter: blur(90px);
+                opacity: 0.18;
+            }
+        }
+
+        @media (max-width: 768px) {
+            :root {
+                --mobile-top-offset: 5.5rem;
+                --mobile-bottom-offset: 6.5rem;
+            }
+
+            body {
+                width: 100%;
+                height: 100dvh;
+                min-height: 100dvh;
+                overflow-x: hidden;
+                overflow-y: hidden;
+            }
+
+            #page-presentation {
+                width: 100%;
+                height: 100dvh;
+                min-height: 100dvh;
+                overflow: hidden;
+                overscroll-behavior: contain;
+                touch-action: pan-x pinch-zoom;
+            }
+
+            .slide {
+                box-sizing: border-box;
+                height: 100dvh;
+                max-height: 100dvh;
+                padding: var(--mobile-top-offset) 1rem var(--mobile-bottom-offset);
+                align-items: stretch;
+                justify-content: center;
+                overflow-y: auto;
+                -webkit-overflow-scrolling: touch;
+                overscroll-behavior-y: contain;
+                scroll-padding-top: var(--mobile-top-offset);
+                scroll-padding-bottom: var(--mobile-bottom-offset);
+                touch-action: pan-y pinch-zoom;
+            }
+
+            .content-container {
+                width: 100%;
+                max-width: 100%;
+                min-height: calc(100dvh - var(--mobile-top-offset) - var(--mobile-bottom-offset));
+                max-height: calc(100dvh - var(--mobile-top-offset) - var(--mobile-bottom-offset));
+                justify-content: center;
+                overflow-y: auto;
+                overscroll-behavior: contain;
+            }
+
+            .mobile-home-link {
+                top: 1rem !important;
+                left: 1rem !important;
+                right: 1rem;
+                gap: 0.65rem;
+            }
+
+            .mobile-home-link .font-magical {
+                font-size: 0.9rem;
+                line-height: 1.1;
+            }
+
+            .nav-btn {
+                display: none;
+            }
+
+            .presentation-controls {
+                bottom: 0.75rem;
+                gap: 0.75rem;
+                padding: 0.6rem 0.9rem;
+                width: calc(100vw - 1rem);
+                max-width: calc(100vw - 1rem);
+                justify-content: center;
+            }
+
+            .mobile-swipe-text {
+                display: block;
+                font-size: 0.58rem;
+                letter-spacing: 0.14em;
+                text-transform: uppercase;
+                color: rgba(255, 255, 255, 0.55);
+                white-space: nowrap;
+            }
+
+            .mobile-read-hint {
+                position: fixed;
+                right: 1rem;
+                bottom: 5.2rem;
+                z-index: 40;
+                display: inline-flex;
+                align-items: center;
+                gap: 0.35rem;
+                padding: 0.45rem 0.65rem;
+                border-radius: 9999px;
+                background: rgba(10, 5, 32, 0.78);
+                border: 1px solid rgba(255, 255, 255, 0.08);
+                font-size: 0.58rem;
+                letter-spacing: 0.14em;
+                text-transform: uppercase;
+                color: rgba(255, 255, 255, 0.72);
+                backdrop-filter: blur(10px);
+            }
+
+            .mobile-read-hint span {
+                white-space: nowrap;
+            }
+        }
     </style>
 
   <style type="text/css">
@@ -1334,7 +1509,7 @@ video {
       height: 0 !important;
     }
   </style></head>
-<body class="selection:bg-purple-600 selection:text-white antialiased text-base" vid="11">
+<body class="selection:bg-purple-600 selection:text-white antialiased text-base preload" vid="11">
 
     <div id="star-container" class="stars" vid="12"></div>
 
@@ -1342,13 +1517,13 @@ video {
         <div id="ambient-1" class="ambient-glow w-[800px] h-[800px] top-[-20%] left-[-10%] bg-purple-900/30 mix-blend-screen" vid="14"></div>
         <div id="ambient-2" class="ambient-glow w-[600px] h-[600px] bottom-[-10%] right-[-10%] bg-indigo-900/20 mix-blend-screen" vid="15"></div>
 
-        <div class="fixed top-6 left-8 z-50 flex items-center gap-3" vid="16">
+        <a href="/" class="mobile-home-link fixed top-6 left-8 z-50 flex items-center gap-3" aria-label="Return to homepage" vid="16">
             <div class="relative" vid="17">
-                <i class="ph-fill ph-crystal-ball text-purple-400 text-2xl" vid="18"></i>
-                <i class="ph-fill ph-sparkle text-yellow-300 text-xs absolute -top-1 -right-2 animate-pulse" vid="19"></i>
+                <i class="ph-fill ph-sparkle text-purple-400 text-2xl" vid="18"></i>
+                <i class="ph-fill ph-star-four text-yellow-300 text-xs absolute -top-1 -right-2 animate-pulse" vid="19"></i>
             </div>
-            <span class="font-magical text-xl text-white tracking-widest opacity-80 uppercase text-sm" vid="20">Alchemical Data</span>
-        </div>
+            <span class="font-magical text-xl text-white tracking-widest opacity-80 uppercase text-sm" vid="20">The Algorithm Witch</span>
+        </a>
 
         <button id="btn-prev" class="nav-btn nav-prev" aria-label="Previous Slide" vid="21">
             <i class="ph-bold ph-caret-left text-xl" vid="22"></i>
@@ -1357,10 +1532,16 @@ video {
             <i class="ph-bold ph-caret-right text-xl" vid="24"></i>
         </button>
 
+        <div class="mobile-read-hint" aria-hidden="true">
+            <i class="ph-bold ph-arrow-down"></i>
+            <span>Read More</span>
+        </div>
+
         <div class="presentation-controls" vid="25">
             <div class="dots-container" id="dots-container" vid="26"></div>
+            <div class="mobile-swipe-text">Swipe left/right</div>
             <div class="w-px h-4 bg-white/20" vid="27"></div>
-            <div class="slide-counter text-xs tracking-widest text-white/50 font-bold" id="slide-counter" vid="28">1 / 10</div>
+            <div class="slide-counter" id="slide-counter" vid="28">1 / 10</div>
         </div>
 
         <main id="slides-container" class="relative w-full h-full" vid="29">
@@ -1747,30 +1928,67 @@ video {
     </div>
 
     <script vid="303">
-        document.addEventListener('DOMContentLoaded', () => {
-            const starContainer = document.getElementById('star-container');
-            const starCount = 150;
-            for (let i = 0; i < starCount; i++) {
-                const star = document.createElement('div');
-                star.classList.add('star');
-                star.style.left = `${Math.random() * 100}%`;
-                star.style.top = `${Math.random() * 100}%`;
-                const size = Math.random() < 0.1 ? 3 : (Math.random() < 0.4 ? 2 : 1);
-                star.style.width = `${size}px`;
-                star.style.height = `${size}px`;
-                star.style.setProperty('--duration', `${2 + Math.random() * 4}s`);
-                star.style.setProperty('--delay', `${Math.random() * 5}s`);
-                star.style.setProperty('--opacity', 0.2 + Math.random() * 0.6);
-                starContainer.appendChild(star);
+        function scheduleNonCritical(task) {
+            if ('requestIdleCallback' in window) {
+                window.requestIdleCallback(task, { timeout: 600 });
+            } else {
+                window.setTimeout(task, 1);
             }
+        }
 
-            document.addEventListener('mousemove', e => {
-                document.querySelectorAll('.glass-card').forEach(card => {
-                    const rect = card.getBoundingClientRect();
-                    card.style.setProperty('--mouse-x', `${e.clientX - rect.left}px`);
-                    card.style.setProperty('--mouse-y', `${e.clientY - rect.top}px`);
-                });
+        function initRibbonCuttingPresentation() {
+            document.body.classList.remove('preload');
+            const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+            const isSmallScreen = window.matchMedia('(max-width: 768px)').matches;
+            const canHover = window.matchMedia('(hover: hover) and (pointer: fine)').matches;
+
+            const starContainer = document.getElementById('star-container');
+            scheduleNonCritical(() => {
+                if (!starContainer || starContainer.dataset.built) return;
+                starContainer.dataset.built = 'true';
+
+                const starCount = prefersReducedMotion ? 0 : (isSmallScreen ? 18 : 120);
+                const frag = document.createDocumentFragment();
+
+                for (let i = 0; i < starCount; i++) {
+                    const star = document.createElement('div');
+                    star.classList.add('star');
+                    star.style.left = `${Math.random() * 100}%`;
+                    star.style.top = `${Math.random() * 100}%`;
+                    const size = Math.random() < 0.1 ? 3 : (Math.random() < 0.4 ? 2 : 1);
+                    star.style.width = `${size}px`;
+                    star.style.height = `${size}px`;
+                    star.style.setProperty('--duration', `${2 + Math.random() * 4}s`);
+                    star.style.setProperty('--delay', `${Math.random() * 5}s`);
+                    star.style.setProperty('--opacity', 0.2 + Math.random() * 0.6);
+                    frag.appendChild(star);
+                }
+
+                starContainer.appendChild(frag);
             });
+
+            if (canHover) {
+                const cards = Array.from(document.querySelectorAll('.glass-card'));
+                let rafPending = false;
+                let lastX = 0;
+                let lastY = 0;
+
+                document.addEventListener('mousemove', (e) => {
+                    lastX = e.clientX;
+                    lastY = e.clientY;
+                    if (rafPending) return;
+                    rafPending = true;
+
+                    requestAnimationFrame(() => {
+                        cards.forEach((card) => {
+                            const rect = card.getBoundingClientRect();
+                            card.style.setProperty('--mouse-x', `${lastX - rect.left}px`);
+                            card.style.setProperty('--mouse-y', `${lastY - rect.top}px`);
+                        });
+                        rafPending = false;
+                    });
+                }, { passive: true });
+            }
 
             const slides = document.querySelectorAll('.slide');
             const totalSlides = slides.length;
@@ -1783,21 +2001,22 @@ video {
             const dotsContainer = document.getElementById('dots-container');
             const ambient1 = document.getElementById('ambient-1');
             const ambient2 = document.getElementById('ambient-2');
+            const presentationPage = document.getElementById('page-presentation');
 
             for (let i = 0; i < totalSlides; i++) {
                 const dot = document.createElement('div');
                 dot.classList.add('dot');
-                if(i === 0) dot.classList.add('active');
+                if (i === 0) dot.classList.add('active');
                 dot.addEventListener('click', () => goToSlide(i));
                 dotsContainer.appendChild(dot);
             }
             const dots = document.querySelectorAll('.dot');
-            
+
             counterEl.innerText = `1 / ${totalSlides}`;
 
             function updateAmbientGlow() {
                 const currentThemeData = slides[currentSlide].getAttribute('data-ambient');
-                if(currentThemeData) {
+                if (currentThemeData) {
                     const classes = currentThemeData.split(',');
                     ambient1.className = `ambient-glow w-[800px] h-[800px] top-[-20%] left-[-10%] mix-blend-screen ${classes[0]}`;
                     ambient2.className = `ambient-glow w-[600px] h-[600px] bottom-[-10%] right-[-10%] mix-blend-screen ${classes[1] || classes[0]}`;
@@ -1811,8 +2030,8 @@ video {
                 const currentEl = slides[currentSlide];
                 const nextEl = slides[newIndex];
 
-                nextEl.classList.remove('opacity-0', 'pointer-events-none', 'z-0', 'active');
-                
+                nextEl.classList.remove('opacity-0', 'pointer-events-none', 'z-0', 'active', 'previous');
+
                 if (direction === 'next') {
                     nextEl.style.transform = 'translateY(40px) scale(0.98)';
                     currentEl.style.transform = 'translateY(-40px) scale(0.98)';
@@ -1821,23 +2040,23 @@ video {
                     currentEl.style.transform = 'translateY(40px) scale(0.98)';
                 }
 
-                void nextEl.offsetWidth; 
+                void nextEl.offsetWidth;
 
                 currentEl.classList.remove('active');
                 currentEl.classList.add('opacity-0', 'pointer-events-none', 'z-0');
-                
-                nextEl.style.transform = ''; 
+
+                nextEl.style.transform = '';
                 nextEl.classList.add('active');
 
                 dots[currentSlide].classList.remove('active');
                 dots[newIndex].classList.add('active');
                 currentSlide = newIndex;
                 counterEl.innerText = `${currentSlide + 1} / ${totalSlides}`;
-                
+
                 updateAmbientGlow();
 
                 setTimeout(() => {
-                    currentEl.style.transform = ''; 
+                    currentEl.style.transform = '';
                     isAnimating = false;
                 }, 800);
             }
@@ -1851,7 +2070,7 @@ video {
             }
 
             function goToSlide(index) {
-                if(index > currentSlide) {
+                if (index > currentSlide) {
                     updateSlides(index, 'next');
                 } else if (index < currentSlide) {
                     updateSlides(index, 'prev');
@@ -1873,9 +2092,10 @@ video {
 
             let wheelTimeout;
             document.addEventListener('wheel', (e) => {
+                if (isMobilePresentation()) return;
                 if (isAnimating) return;
-                if (Math.abs(e.deltaY) < 40) return; 
-                
+                if (Math.abs(e.deltaY) < 40) return;
+
                 clearTimeout(wheelTimeout);
                 wheelTimeout = setTimeout(() => {
                     if (e.deltaY > 0) {
@@ -1886,8 +2106,66 @@ video {
                 }, 50);
             }, { passive: false });
 
+            let touchStartX = 0;
+            let touchStartY = 0;
+            let touchEndX = 0;
+            let touchEndY = 0;
+            let touchActive = false;
+
+            function isMobilePresentation() {
+                return window.matchMedia('(max-width: 768px)').matches;
+            }
+
+            presentationPage.addEventListener('touchstart', (e) => {
+                if (!isMobilePresentation()) return;
+                if (!e.touches || e.touches.length !== 1) return;
+
+                touchActive = true;
+                touchStartX = e.touches[0].clientX;
+                touchStartY = e.touches[0].clientY;
+                touchEndX = touchStartX;
+                touchEndY = touchStartY;
+            }, { passive: true });
+
+            presentationPage.addEventListener('touchmove', (e) => {
+                if (!touchActive || !e.touches || e.touches.length !== 1) return;
+                touchEndX = e.touches[0].clientX;
+                touchEndY = e.touches[0].clientY;
+            }, { passive: true });
+
+            presentationPage.addEventListener('touchend', () => {
+                if (!touchActive || isAnimating || !isMobilePresentation()) {
+                    touchActive = false;
+                    return;
+                }
+
+                const deltaX = touchEndX - touchStartX;
+                const deltaY = touchEndY - touchStartY;
+                const absX = Math.abs(deltaX);
+                const absY = Math.abs(deltaY);
+                const threshold = 40;
+
+                if (absX < threshold && absY < threshold) {
+                    touchActive = false;
+                    return;
+                }
+
+                if (absX > absY) {
+                    if (deltaX < 0) nextSlide();
+                    else prevSlide();
+                }
+
+                touchActive = false;
+            }, { passive: true });
+
             updateAmbientGlow();
-        });
+        }
+
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', () => requestAnimationFrame(initRibbonCuttingPresentation), { once: true });
+        } else {
+            requestAnimationFrame(initRibbonCuttingPresentation);
+        }
     </script>
 
 </body></html>

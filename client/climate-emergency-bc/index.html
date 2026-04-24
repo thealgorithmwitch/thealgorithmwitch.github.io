@@ -1,0 +1,2257 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Climate Emergency BC Workspace | The Algorithm Witch</title>
+  <meta name="description" content="Private client workspace for RE-volv digital metrics intensive." />
+  <meta name="robots" content="noindex, nofollow" />
+  <meta name="theme-color" content="#030014" />
+
+  <script src="https://cdn.tailwindcss.com/3.4.17"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@400;700;900&family=Inter:wght@300;400;500;600&display=swap"
+    rel="stylesheet"
+  />
+  <script src="https://unpkg.com/@phosphor-icons/web"></script>
+
+  <style>
+    :root {
+      --color-bg: #030014;
+    }
+
+    body {
+      background-color: var(--color-bg);
+      color: #e2e8f0;
+      font-family: 'Inter', sans-serif;
+      margin: 0;
+      padding: 0;
+    }
+
+        .rotate-180 {
+      transform: rotate(180deg);
+    }
+
+    .workspace-switcher-button {
+      background: rgba(10, 6, 20, 0.72);
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+      border: 1px solid rgba(255,255,255,0.08);
+      transition: all 0.2s ease;
+    }
+
+    .workspace-switcher-button:hover {
+      border-color: rgba(255,255,255,0.16);
+      background: rgba(20, 12, 34, 0.88);
+    }
+
+    .workspace-switcher-menu {
+      background: rgba(10, 6, 20, 0.96);
+      backdrop-filter: blur(18px);
+      -webkit-backdrop-filter: blur(18px);
+      border: 1px solid rgba(168, 85, 247, 0.18);
+      box-shadow: 0 18px 50px rgba(0,0,0,0.45);
+    }
+
+        .task-card {
+      background: rgba(10, 6, 20, 0.62);
+      border: 1px solid rgba(168, 85, 247, 0.12);
+      border-radius: 1rem;
+      transition: all 0.24s ease;
+      overflow: hidden;
+    }
+
+    .task-card:hover {
+      border-color: rgba(168, 85, 247, 0.28);
+      background: rgba(168, 85, 247, 0.04);
+    }
+
+    .task-card-header {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr);
+      gap: 0.9rem;
+      padding: 1rem 1rem 0.85rem;
+    }
+
+    @media (min-width: 900px) {
+      .task-card-header {
+        grid-template-columns: minmax(0, 1.8fr) repeat(4, minmax(0, auto));
+        align-items: start;
+      }
+    }
+
+    .task-meta-block {
+      min-width: 0;
+    }
+
+    .task-meta-label {
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      color: #6b7280;
+      margin-bottom: 0.35rem;
+    }
+
+    .task-meta-value {
+      font-size: 0.8rem;
+      color: #d1d5db;
+      line-height: 1.35;
+      word-break: break-word;
+      white-space: normal;
+    }
+
+    .task-title-wrap {
+      min-width: 0;
+    }
+
+    .task-title {
+      color: white;
+      font-size: 0.98rem;
+      font-weight: 600;
+      line-height: 1.4;
+      white-space: normal;
+      word-break: break-word;
+    }
+
+    .task-subtitle {
+      color: #9ca3af;
+      font-size: 0.78rem;
+      margin-top: 0.35rem;
+      white-space: normal;
+      word-break: break-word;
+    }
+
+    .task-card-body {
+      border-top: 1px solid rgba(255,255,255,0.05);
+      padding: 1rem;
+      background: rgba(0, 0, 0, 0.16);
+    }
+
+    .note-entry-card {
+      background: rgba(10, 6, 20, 0.62);
+      border: 1px solid rgba(168, 85, 247, 0.12);
+      border-radius: 1rem;
+      padding: 1rem;
+      transition: all 0.24s ease;
+    }
+
+    .note-entry-card:hover {
+      border-color: rgba(168, 85, 247, 0.28);
+      background: rgba(168, 85, 247, 0.04);
+    }
+
+    .note-text-block {
+      white-space: pre-wrap;
+      word-break: break-word;
+      line-height: 1.7;
+    }
+
+    .review-card-button {
+      width: 100%;
+      text-align: left;
+      background: rgba(10, 6, 20, 0.62);
+      border: 1px solid rgba(168, 85, 247, 0.14);
+      border-radius: 1rem;
+      padding: 1rem;
+      transition: all 0.24s ease;
+    }
+
+    .review-card-button:hover {
+      border-color: rgba(168, 85, 247, 0.3);
+      background: rgba(168, 85, 247, 0.05);
+    }
+
+    .brand-info-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.45rem;
+      padding: 0.45rem 0.75rem;
+      border-radius: 999px;
+      background: rgba(168, 85, 247, 0.14);
+      border: 1px solid rgba(168, 85, 247, 0.24);
+      color: #d8b4fe;
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      font-weight: 600;
+    }
+
+    .workspace-option-active {
+      background: rgba(168, 85, 247, 0.12);
+      border: 1px solid rgba(168, 85, 247, 0.24);
+    }
+
+    .font-magical {
+      font-family: 'Cinzel Decorative', cursive;
+    }
+
+    .glass-panel {
+      background: rgba(10, 6, 20, 0.8);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid rgba(168, 85, 247, 0.2);
+    }
+
+    .rotate-180 {
+      transform: rotate(180deg);
+    }
+
+    .glass-card {
+      background: rgba(10, 6, 20, 0.6);
+      backdrop-filter: blur(8px);
+      border: 1px solid rgba(168, 85, 247, 0.1);
+      transition: all 0.3s ease;
+    }
+
+    .glass-card:hover {
+      border-color: rgba(168, 85, 247, 0.3);
+      background: rgba(168, 85, 247, 0.05);
+    }
+
+    .modal-shell {
+      background: rgba(10, 6, 20, 0.9);
+      backdrop-filter: blur(18px);
+      -webkit-backdrop-filter: blur(18px);
+      border: 1px solid rgba(168, 85, 247, 0.22);
+    }
+
+    .timeline-center-line {
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      left: 1.4rem;
+      width: 1px;
+      background: linear-gradient(
+        to bottom,
+        transparent,
+        rgba(168, 85, 247, 0.22),
+        transparent
+      );
+    }
+
+    @media (min-width: 768px) {
+      .timeline-center-line {
+        left: 50%;
+        transform: translateX(-50%);
+      }
+    }
+
+    .line-clamp-2 {
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+
+    ::-webkit-scrollbar-track {
+      background: rgba(0, 0, 0, 0.2);
+    }
+
+    ::-webkit-scrollbar-thumb {
+      background: rgba(168, 85, 247, 0.3);
+      border-radius: 10px;
+    }
+
+    ::-webkit-scrollbar-thumb:hover {
+      background: rgba(168, 85, 247, 0.5);
+    }
+
+    details > summary {
+      list-style: none;
+    }
+
+    details > summary::-webkit-details-marker {
+      display: none;
+    }
+
+    details[open] summary ~ * {
+      animation: sweep 0.3s ease-in-out;
+    }
+
+    @keyframes sweep {
+      0% {
+        opacity: 0;
+        margin-top: -10px;
+      }
+      100% {
+        opacity: 1;
+        margin-top: 0;
+      }
+    }
+  </style>
+</head>
+<body class="selection:bg-purple-600/50 selection:text-white antialiased h-screen overflow-hidden flex flex-col">
+
+  <div id="view-workspace" class="flex flex-col h-screen w-full relative z-30">
+    <header class="sticky top-0 z-50 bg-[#030014]/95 backdrop-blur-xl border-b border-purple-500/20 shrink-0">
+      <div class="px-6 py-4 flex items-center justify-between max-w-7xl mx-auto">
+        <div class="flex items-center gap-4 min-w-0">
+          <a href="/client/" class="p-2 rounded-lg hover:bg-white/10 transition-colors border border-transparent hover:border-white/10 shrink-0" aria-label="Back to client workspaces">
+            <i class="ph-bold ph-arrow-left text-gray-400 hover:text-white"></i>
+          </a>
+
+          <div class="w-10 h-10 rounded-xl bg-cyan-500/20 border border-cyan-500/30 flex items-center justify-center shrink-0">
+            <span class="text-cyan-300 font-semibold">RV</span>
+          </div>
+
+          <div class="min-w-0">
+            <h1 id="header-project-name" class="text-white font-semibold tracking-wide truncate">Digital Performance &amp; Ad Grant Optimization</h1>
+            <p id="header-client-name" class="text-gray-400 text-xs tracking-wider uppercase">RE-volv</p>
+          </div>
+        </div>
+
+        <div class="hidden md:flex items-center gap-6 text-xs text-gray-400 shrink-0">
+          <span class="flex items-center gap-2 font-medium">
+            <i class="ph-bold ph-calendar-blank text-purple-400"></i>
+            <span id="header-duration">1 Month Pilot</span>
+          </span>
+          <span id="ws-status" class="px-3 py-1 bg-purple-500/20 text-purple-300 border border-purple-500/30 rounded-full font-medium tracking-wide uppercase text-[10px]">
+            In Progress
+          </span>
+        </div>
+      </div>
+
+      <div class="px-6 pb-0 lg:hidden overflow-x-auto border-t border-white/5 mt-2 pt-3">
+        <div class="flex gap-2 pb-3">
+          <button class="ws-mobile-nav px-4 py-2 rounded-lg text-sm whitespace-nowrap transition-all bg-purple-500/20 text-white border border-purple-500/30" data-target="overview">Overview</button>
+          <button class="ws-mobile-nav px-4 py-2 rounded-lg text-sm whitespace-nowrap transition-all text-gray-400 hover:text-white bg-white/5 border border-transparent" data-target="scope">Scope</button>
+          <button class="ws-mobile-nav px-4 py-2 rounded-lg text-sm whitespace-nowrap transition-all text-gray-400 hover:text-white bg-white/5 border border-transparent" data-target="tasks">Tasks</button>
+          <button class="ws-mobile-nav px-4 py-2 rounded-lg text-sm whitespace-nowrap transition-all text-gray-400 hover:text-white bg-white/5 border border-transparent" data-target="notes">Notes</button>
+          <button class="ws-mobile-nav px-4 py-2 rounded-lg text-sm whitespace-nowrap transition-all text-gray-400 hover:text-white bg-white/5 border border-transparent" data-target="assets">Assets</button>
+          <button class="ws-mobile-nav px-4 py-2 rounded-lg text-sm whitespace-nowrap transition-all text-gray-400 hover:text-white bg-white/5 border border-transparent" data-target="review">Client Review</button>
+        </div>
+      </div>
+    </header>
+    
+    <div class="flex flex-1 overflow-hidden max-w-7xl mx-auto w-full">
+<aside class="w-[260px] h-full glass-panel border-r border-y-0 border-l-0 hidden lg:flex flex-col relative z-20 shrink-0">
+  <div class="p-6 border-b border-white/5">
+    <div class="flex items-center gap-3 mb-1">
+      <i class="ph-fill ph-sparkle text-purple-400 text-xl"></i>
+      <span class="font-magical text-sm tracking-widest text-gray-400 uppercase">The Algorithm Witch</span>
+    </div>
+
+<div class="relative mt-4">
+  <button
+    type="button"
+    id="workspace-switcher-toggle"
+    class="workspace-switcher-button flex items-center gap-3 p-2.5 rounded-lg w-full text-left group"
+    aria-haspopup="true"
+    aria-expanded="false"
+  >
+    <div
+      id="workspace-switcher-icon-wrap"
+      class="w-8 h-8 rounded bg-[#1e1a2d] flex items-center justify-center border border-white/10 transition-colors"
+    >
+      <i id="workspace-switcher-icon" class="ph-fill ph-sun-horizon text-yellow-300 text-lg"></i>
+    </div>
+
+    <div class="flex-1 min-w-0">
+      <div class="text-xs text-gray-500 font-medium leading-none mb-1">Workspace</div>
+      <div id="workspace-switcher-label" class="text-sm font-bold text-white truncate">RE-volv Solar</div>
+    </div>
+
+    <i id="workspace-switcher-caret" class="ph-bold ph-caret-down text-gray-600 group-hover:text-gray-400 transition-transform"></i>
+  </button>
+
+  <div
+    id="workspace-switcher-menu"
+    class="workspace-switcher-menu hidden absolute top-full left-0 right-0 mt-2 rounded-lg z-50 overflow-hidden"
+  >
+    <div class="p-2 space-y-1">
+<a
+  id="workspace-option-nexus"
+  href="/client/RE-volv/dashboard.html"
+  class="workspace-option flex items-center gap-3 p-2 rounded hover:bg-white/5 transition-colors"
+  data-workspace="nexus"
+>
+  <div class="w-7 h-7 rounded bg-[#1e1a2d] flex items-center justify-center border border-white/10">
+    <i class="ph-fill ph-intersect-three text-cyan-300"></i>
+  </div>
+  <div class="min-w-0">
+    <div class="text-sm font-medium text-gray-200">Nexus</div>
+    <div class="text-[10px] text-gray-500">Client portal</div>
+  </div>
+  <i class="workspace-option-check ph-bold ph-check text-purple-400 ml-auto hidden"></i>
+</a>
+
+<a
+  id="workspace-option-revolv"
+  href="/client/RE-volv/"
+  class="workspace-option flex items-center gap-3 p-2 rounded hover:bg-white/5 transition-colors"
+  data-workspace="revolv"
+>
+  <div class="w-7 h-7 rounded bg-[#1e1a2d] flex items-center justify-center border border-white/10">
+    <i class="ph-fill ph-sun-horizon text-yellow-300"></i>
+  </div>
+  <div class="min-w-0">
+    <div class="text-sm font-medium text-gray-200">RE-volv Solar</div>
+    <div class="text-[10px] text-gray-500">Project workspace</div>
+  </div>
+  <i class="workspace-option-check ph-bold ph-check text-purple-400 ml-auto hidden"></i>
+</a>
+
+      <a
+        id="workspace-option-incantations"
+        href="/incantations"
+        class="workspace-option flex items-center gap-3 p-2 rounded hover:bg-white/5 transition-colors"
+        data-workspace="incantations"
+      >
+        <div class="w-7 h-7 rounded bg-[#1e1a2d] flex items-center justify-center border border-white/10">
+          <i class="ph-fill ph-sparkle text-amber-400"></i>
+        </div>
+        <div class="min-w-0">
+          <div class="text-sm font-medium text-gray-200">Incantations</div>
+          <div class="text-[10px] text-gray-500">Prompt crafter</div>
+        </div>
+        <i class="ph-bold ph-arrow-up-right text-gray-500 ml-auto"></i>
+      </a>
+    </div>
+  </div>
+</div>
+
+  <nav class="flex-1 overflow-y-auto p-4 space-y-1">
+    <div class="text-[10px] font-bold text-gray-600 uppercase tracking-widest px-4 mb-2 mt-2">Workspace</div>
+
+    <button class="ws-nav-btn w-full flex items-center justify-between px-4 py-3 rounded-xl text-sm transition-all text-gray-400 hover:text-white hover:bg-white/5 border border-transparent text-left" data-target="overview">
+      <span class="flex items-center gap-3"><i class="ph ph-squares-four text-lg"></i> Overview</span>
+    </button>
+
+    <button class="ws-nav-btn w-full flex items-center justify-between px-4 py-3 rounded-xl text-sm transition-all text-gray-400 hover:text-white hover:bg-white/5 border border-transparent text-left" data-target="scope">
+      <span class="flex items-center gap-3"><i class="ph ph-crosshair text-lg"></i> Scope</span>
+    </button>
+
+    <button class="ws-nav-btn w-full flex items-center justify-between px-4 py-3 rounded-xl text-sm transition-all bg-purple-500/20 text-white border border-purple-500/30 shadow-[inset_0_0_10px_rgba(168,85,247,0.1)] text-left" data-target="tasks">
+      <span class="flex items-center gap-3"><i class="ph ph-check-circle text-lg text-purple-300"></i> Tasks</span>
+      <span class="text-[10px] bg-purple-500/40 text-white px-2 py-0.5 rounded-full" id="nav-task-count">0</span>
+    </button>
+
+    <button class="ws-nav-btn w-full flex items-center justify-between px-4 py-3 rounded-xl text-sm transition-all text-gray-400 hover:text-white hover:bg-white/5 border border-transparent text-left" data-target="notes">
+      <span class="flex items-center gap-3"><i class="ph ph-notebook text-lg"></i> Notes</span>
+    </button>
+
+    <button class="ws-nav-btn w-full flex items-center justify-between px-4 py-3 rounded-xl text-sm transition-all text-gray-400 hover:text-white hover:bg-white/5 border border-transparent text-left" data-target="assets">
+      <span class="flex items-center gap-3"><i class="ph ph-file text-lg"></i> Assets</span>
+    </button>
+
+    <button class="ws-nav-btn w-full flex items-center justify-between px-4 py-3 rounded-xl text-sm transition-all text-gray-400 hover:text-white hover:bg-white/5 border border-transparent text-left" data-target="review">
+      <span class="flex items-center gap-3"><i class="ph ph-user-check text-lg"></i> Client Review</span>
+    </button>
+  </nav>
+
+  <div class="p-4 border-t border-white/5">
+    <div class="bg-black/20 rounded-lg p-3 border border-white/5 flex items-center gap-3 mb-3">
+      <div class="relative flex h-2 w-2">
+        <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+        <span class="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+      </div>
+      <div class="flex-1">
+        <div class="text-[10px] text-gray-500 font-medium uppercase tracking-wider">Sheets Connected</div>
+        <div id="sync-time" class="text-xs text-gray-300 font-medium">Synced: Today 08:30</div>
+      </div>
+    </div>
+
+    <div class="space-y-3">
+      <div class="bg-black/30 p-4 rounded-xl border border-white/5">
+        <div class="text-[10px] uppercase tracking-widest text-gray-500 mb-1">Service</div>
+        <div id="side-service" class="text-white text-sm">Digital Metrics Intensive</div>
+      </div>
+
+      <div class="bg-black/30 p-4 rounded-xl border border-white/5">
+        <div class="text-[10px] uppercase tracking-widest text-gray-500 mb-1">Capacity</div>
+        <div id="side-capacity" class="text-white text-sm">40 Hours</div>
+      </div>
+
+      <div class="bg-black/30 p-4 rounded-xl border border-white/5">
+        <div class="text-[10px] uppercase tracking-widest text-gray-500 mb-1">Primary Goal</div>
+        <div id="side-goal" class="text-white text-sm">Trusted data foundation</div>
+      </div>
+
+      <button id="reset-workspace-btn" class="w-full mt-2 px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-gray-300 hover:bg-white/10 text-xs uppercase tracking-widest">
+        Refresh Workspace
+      </button>
+    </div>
+  </div>
+</aside>
+      
+      <main class="flex-1 p-6 lg:p-8 overflow-y-auto w-full relative">
+        <div id="section-overview" class="ws-section hidden space-y-6 pb-20">
+          <div class="flex items-center justify-between gap-4 border-b border-purple-500/20 pb-4">
+            <h2 class="font-magical text-2xl text-white tracking-wide">Project Overview</h2>
+            <button id="edit-overview-btn" class="px-4 py-2 rounded-lg bg-white/5 border border-white/10 hover:border-purple-400/40 text-xs uppercase tracking-widest text-white">
+              Edit Overview
+            </button>
+          </div>
+
+          <div class="glass-card p-6 rounded-2xl">
+            <p id="overview-description" class="text-gray-400 text-sm leading-relaxed mb-6">
+              One-month pilot focused on building a trusted analytics foundation, campaign tracking for the story series and ribbon cutting events, Google Ad Grant cleanup, and training handoff.
+            </p>
+
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+              <div class="bg-black/30 p-4 rounded-xl border border-white/5">
+                <div class="text-xs text-gray-500 uppercase tracking-widest mb-1">Service</div>
+                <div id="overview-service" class="text-white text-sm">Digital Metrics Intensive</div>
+              </div>
+              <div class="bg-black/30 p-4 rounded-xl border border-white/5">
+                <div class="text-xs text-gray-500 uppercase tracking-widest mb-1">Capacity</div>
+                <div id="overview-capacity" class="text-white text-sm">40 Hours</div>
+              </div>
+              <div class="bg-black/30 p-4 rounded-xl border border-white/5">
+                <div class="text-xs text-gray-500 uppercase tracking-widest mb-1">Focus</div>
+                <div id="overview-focus" class="text-white text-sm">Tracking + measurement</div>
+              </div>
+              <div class="bg-black/30 p-4 rounded-xl border border-white/5">
+                <div class="text-xs text-gray-500 uppercase tracking-widest mb-1">Primary Goal</div>
+                <div id="overview-goal" class="text-white text-sm">Trusted data foundation</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div id="section-scope" class="ws-section hidden space-y-6 pb-20">
+          <div class="flex items-center justify-between gap-4 border-b border-purple-500/20 pb-4">
+            <h2 class="font-magical text-2xl text-white tracking-wide">Project Scope</h2>
+          </div>
+          <div id="scope-container" class="space-y-4"></div>
+        </div>
+
+        <div id="section-tasks" class="ws-section block space-y-6 pb-20">
+          <div class="flex flex-col sm:flex-row items-start sm:items-center gap-4 justify-between border-b border-purple-500/20 pb-4">
+            <h2 class="font-magical text-2xl text-white tracking-wide">Task Manager</h2>
+            <div class="flex flex-wrap items-center gap-3 w-full sm:w-auto">
+              <div class="relative flex-1 sm:w-56">
+                <i class="ph-bold ph-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-gray-500"></i>
+                <input type="text" id="task-search" placeholder="Search tasks..." class="w-full bg-black/40 border border-purple-500/30 rounded-lg pl-9 pr-3 py-2 text-xs text-white placeholder-gray-500 focus:outline-none focus:border-purple-400 transition-colors">
+              </div>
+
+              <select id="task-filter-status" class="bg-black/40 border border-purple-500/30 rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-purple-400 cursor-pointer appearance-none">
+                <option value="all">All Statuses</option>
+                <option value="Backlog">Backlog</option>
+                <option value="Ready">Ready</option>
+                <option value="In Progress">In Progress</option>
+                <option value="In Review">In Review</option>
+                <option value="Waiting on Client">Waiting on Client</option>
+                <option value="Done">Done</option>
+              </select>
+
+              <button id="new-task-btn" class="px-4 py-2 bg-purple-600 hover:bg-purple-500 rounded-lg text-xs font-semibold tracking-wider uppercase text-white flex items-center gap-2 shadow-[0_0_10px_rgba(168,85,247,0.3)] transition-colors">
+                <i class="ph-bold ph-plus"></i> New Task
+              </button>
+            </div>
+          </div>
+
+          <div class="glass-card border border-purple-500/20 rounded-xl p-4 md:p-5 shadow-lg">
+          <div id="tasks-list" class="space-y-4"></div>
+        </div>
+        </div>
+
+<div id="section-notes" class="ws-section hidden space-y-6 pb-20">
+  <h2 class="font-magical text-2xl text-white tracking-wide border-b border-purple-500/20 pb-4">Decisions &amp; Notes Log</h2>
+
+  <div class="max-w-3xl">
+    <div class="glass-card border border-purple-500/30 rounded-xl p-5 mb-8 focus-within:border-purple-400 focus-within:shadow-[0_0_15px_rgba(168,85,247,0.15)] transition-all">
+      <div class="space-y-4">
+        <div>
+          <label class="block text-[11px] uppercase tracking-widest text-purple-300 mb-2">Date</label>
+          <input
+            id="new-note-date"
+            type="text"
+            placeholder="Week 2 or Mar 16, 2026"
+            class="w-full bg-black/40 border border-purple-500/30 rounded-xl px-4 py-3 text-sm text-white placeholder-gray-500 focus:outline-none focus:border-purple-400"
+          />
+        </div>
+
+        <div>
+          <label class="block text-[11px] uppercase tracking-widest text-purple-300 mb-2">Author</label>
+          <input
+            id="new-note-author"
+            type="text"
+            placeholder="Author"
+            class="w-full bg-black/40 border border-purple-500/30 rounded-xl px-4 py-3 text-sm text-white placeholder-gray-500 focus:outline-none focus:border-purple-400"
+          />
+        </div>
+
+        <div>
+          <label class="block text-[11px] uppercase tracking-widest text-purple-300 mb-2">Note</label>
+          <textarea
+            id="new-note-text"
+            placeholder="Log a new decision, meeting note, or update..."
+            class="w-full bg-transparent border-none focus:ring-0 text-sm text-white placeholder-gray-500 resize-none h-20 focus:outline-none"
+          ></textarea>
+        </div>
+      </div>
+
+      <div class="flex justify-between items-center mt-3 pt-3 border-t border-white/5">
+        <div class="flex gap-2">
+          <button type="button" class="p-2 text-gray-400 hover:text-purple-300 rounded hover:bg-purple-500/10 transition-colors">
+            <i class="ph-bold ph-paperclip"></i>
+          </button>
+          <button type="button" class="p-2 text-gray-400 hover:text-purple-300 rounded hover:bg-purple-500/10 transition-colors">
+            <i class="ph-bold ph-text-b"></i>
+          </button>
+        </div>
+
+        <button
+          id="add-note-btn"
+          class="px-5 py-2 bg-white/10 hover:bg-purple-500 border border-white/10 hover:border-purple-400 rounded-lg text-xs font-semibold tracking-wider uppercase text-white transition-all"
+        >
+          Post Entry
+        </button>
+      </div>
+    </div>
+
+    <div
+      id="notes-container"
+      class="space-y-6 relative before:absolute before:inset-0 before:ml-[1.4rem] before:-translate-x-px md:before:left-1/2 md:before:ml-0 md:before:-translate-x-1/2 before:h-full before:w-px before:bg-gradient-to-b before:from-transparent before:via-purple-500/20 before:to-transparent"
+    ></div>
+  </div>
+</div>
+
+        <div id="section-assets" class="ws-section hidden space-y-6 pb-20">
+          <div class="flex items-center justify-between gap-4 border-b border-purple-500/20 pb-4">
+            <h2 class="font-magical text-2xl text-white tracking-wide">Project Assets</h2>
+            <button id="new-asset-btn" class="px-4 py-2 bg-purple-600 hover:bg-purple-500 rounded-lg text-xs font-semibold tracking-wider uppercase text-white flex items-center gap-2 shadow-[0_0_10px_rgba(168,85,247,0.3)] transition-colors">
+              <i class="ph-bold ph-plus"></i> New Asset
+            </button>
+          </div>
+          <div id="assets-grid" class="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-5"></div>
+        </div>
+
+        <div id="section-review" class="ws-section hidden space-y-6 pb-20">
+          <div class="flex items-center justify-between gap-4 border-b border-purple-500/20 pb-4">
+            <h2 class="font-magical text-2xl text-white tracking-wide">Client Review Queue</h2>
+            <div class="brand-info-chip">
+              <i class="ph-bold ph-sparkle"></i>
+              Click a card for task info
+            </div>
+          </div>
+
+          <div id="review-container" class="space-y-4 max-w-5xl"></div>
+        </div>
+      </main>
+    </div>
+  </div>
+
+  <!-- TASK MODAL -->
+  <div id="task-modal" class="hidden fixed inset-0 z-[70] items-center justify-center bg-black/70 backdrop-blur-md p-4">
+    <div class="modal-shell rounded-2xl w-full max-w-3xl max-h-[90vh] overflow-hidden shadow-[0_20px_60px_-15px_rgba(0,0,0,0.5)]">
+      <div class="flex items-center justify-between px-6 py-4 border-b border-white/10">
+        <h3 id="task-modal-title" class="font-magical text-xl text-white">Edit Task</h3>
+        <button id="close-task-modal" class="w-10 h-10 rounded-full bg-white/5 hover:bg-white/10 border border-white/10 flex items-center justify-center text-gray-300 hover:text-white">
+          <i class="ph-bold ph-x"></i>
+        </button>
+      </div>
+
+      <div class="p-6 overflow-y-auto max-h-[calc(90vh-150px)] space-y-6">
+        <input type="hidden" id="task-edit-id" />
+
+        <div class="grid md:grid-cols-2 gap-4">
+          <div>
+            <label class="block text-[11px] uppercase tracking-widest text-purple-300 mb-2">Task Name</label>
+            <input id="task-edit-name" type="text" class="w-full bg-black/40 border border-purple-500/30 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-purple-400" />
+          </div>
+          <div>
+            <label class="block text-[11px] uppercase tracking-widest text-purple-300 mb-2">Owner</label>
+            <input id="task-edit-owner" type="text" class="w-full bg-black/40 border border-purple-500/30 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-purple-400" />
+          </div>
+        </div>
+
+        <div class="grid md:grid-cols-4 gap-4">
+          <div>
+            <label class="block text-[11px] uppercase tracking-widest text-purple-300 mb-2">Category</label>
+            <input id="task-edit-category" type="text" class="w-full bg-black/40 border border-purple-500/30 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-purple-400" />
+          </div>
+          <div>
+            <label class="block text-[11px] uppercase tracking-widest text-purple-300 mb-2">Status</label>
+            <select id="task-edit-status" class="w-full bg-black/40 border border-purple-500/30 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-purple-400">
+              <option value="Backlog">Backlog</option>
+              <option value="Ready">Ready</option>
+              <option value="In Progress">In Progress</option>
+              <option value="In Review">In Review</option>
+              <option value="Waiting on Client">Waiting on Client</option>
+              <option value="Done">Done</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-[11px] uppercase tracking-widest text-purple-300 mb-2">Priority</label>
+            <select id="task-edit-priority" class="w-full bg-black/40 border border-purple-500/30 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-purple-400">
+              <option value="Low">Low</option>
+              <option value="Medium">Medium</option>
+              <option value="High">High</option>
+              <option value="Critical">Critical</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-[11px] uppercase tracking-widest text-purple-300 mb-2">Due Date</label>
+            <input id="task-edit-due" type="text" placeholder="Week 2" class="w-full bg-black/40 border border-purple-500/30 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-purple-400" />
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-[11px] uppercase tracking-widest text-purple-300 mb-2">Notes</label>
+          <textarea id="task-edit-notes" class="w-full bg-black/40 border border-purple-500/30 rounded-xl px-4 py-3 text-sm text-white resize-none h-28 focus:outline-none focus:border-purple-400"></textarea>
+        </div>
+
+        <div class="space-y-4">
+          <div class="flex items-center justify-between gap-4">
+            <h4 class="text-white text-sm uppercase tracking-widest">Task Attachments</h4>
+            <button id="task-add-attachment-btn" type="button" class="px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-xs uppercase tracking-widest text-white hover:border-purple-400/40">
+              Add Link
+            </button>
+          </div>
+
+          <div id="task-attachments-editor" class="space-y-3"></div>
+        </div>
+      </div>
+
+      <div class="px-6 py-4 border-t border-white/10 flex items-center justify-between gap-4">
+        <button id="delete-task-btn" class="px-4 py-3 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-300 text-xs uppercase tracking-widest">
+          Delete Task
+        </button>
+        <div class="flex items-center gap-3">
+          <button id="cancel-task-btn" class="px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-gray-300 text-xs uppercase tracking-widest">
+            Cancel
+          </button>
+          <button id="save-task-btn" class="px-5 py-3 rounded-xl bg-purple-600 hover:bg-purple-500 text-white text-xs uppercase tracking-widest">
+            Save Task
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ASSET MODAL -->
+  <div id="asset-modal" class="hidden fixed inset-0 z-[70] items-center justify-center bg-black/70 backdrop-blur-md p-4">
+    <div class="modal-shell rounded-2xl w-full max-w-2xl max-h-[90vh] overflow-hidden shadow-[0_20px_60px_-15px_rgba(0,0,0,0.5)]">
+      <div class="flex items-center justify-between px-6 py-4 border-b border-white/10">
+        <h3 id="asset-modal-title" class="font-magical text-xl text-white">Edit Asset</h3>
+        <button id="close-asset-modal" class="w-10 h-10 rounded-full bg-white/5 hover:bg-white/10 border border-white/10 flex items-center justify-center text-gray-300 hover:text-white">
+          <i class="ph-bold ph-x"></i>
+        </button>
+      </div>
+
+      <div class="p-6 overflow-y-auto max-h-[calc(90vh-150px)] space-y-4">
+        <input type="hidden" id="asset-edit-id" />
+
+        <div>
+          <label class="block text-[11px] uppercase tracking-widest text-purple-300 mb-2">Asset Name</label>
+          <input id="asset-edit-name" type="text" class="w-full bg-black/40 border border-purple-500/30 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-purple-400" />
+        </div>
+
+        <div class="grid md:grid-cols-2 gap-4">
+          <div>
+            <label class="block text-[11px] uppercase tracking-widest text-purple-300 mb-2">Asset Type</label>
+            <select id="asset-edit-type" class="w-full bg-black/40 border border-purple-500/30 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-purple-400">
+              <option value="pdf">PDF</option>
+              <option value="link">Link</option>
+              <option value="image">Image</option>
+              <option value="video">Video</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-[11px] uppercase tracking-widest text-purple-300 mb-2">URL</label>
+            <input id="asset-edit-url" type="text" class="w-full bg-black/40 border border-purple-500/30 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-purple-400" />
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-[11px] uppercase tracking-widest text-purple-300 mb-2">Caption</label>
+          <textarea id="asset-edit-caption" class="w-full bg-black/40 border border-purple-500/30 rounded-xl px-4 py-3 text-sm text-white resize-none h-24 focus:outline-none focus:border-purple-400"></textarea>
+        </div>
+      </div>
+
+      <div class="px-6 py-4 border-t border-white/10 flex items-center justify-between gap-4">
+        <button id="delete-asset-btn" class="px-4 py-3 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-300 text-xs uppercase tracking-widest">
+          Delete Asset
+        </button>
+        <div class="flex items-center gap-3">
+          <button id="cancel-asset-btn" class="px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-gray-300 text-xs uppercase tracking-widest">
+            Cancel
+          </button>
+          <button id="save-asset-btn" class="px-5 py-3 rounded-xl bg-purple-600 hover:bg-purple-500 text-white text-xs uppercase tracking-widest">
+            Save Asset
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- NOTE MODAL -->
+  <div id="note-modal" class="hidden fixed inset-0 z-[70] items-center justify-center bg-black/70 backdrop-blur-md p-4">
+    <div class="modal-shell rounded-2xl w-full max-w-2xl max-h-[90vh] overflow-hidden shadow-[0_20px_60px_-15px_rgba(0,0,0,0.5)]">
+      <div class="flex items-center justify-between px-6 py-4 border-b border-white/10">
+        <h3 class="font-magical text-xl text-white">Edit Note</h3>
+        <button id="close-note-modal" class="w-10 h-10 rounded-full bg-white/5 hover:bg-white/10 border border-white/10 flex items-center justify-center text-gray-300 hover:text-white">
+          <i class="ph-bold ph-x"></i>
+        </button>
+      </div>
+
+      <div class="p-6 overflow-y-auto max-h-[calc(90vh-150px)] space-y-4">
+        <input type="hidden" id="note-edit-id" />
+
+        <div class="grid md:grid-cols-2 gap-4">
+          <div>
+            <label class="block text-[11px] uppercase tracking-widest text-purple-300 mb-2">Date</label>
+            <input id="note-edit-date" type="text" class="w-full bg-black/40 border border-purple-500/30 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-purple-400" />
+          </div>
+          <div>
+            <label class="block text-[11px] uppercase tracking-widest text-purple-300 mb-2">Author</label>
+            <input id="note-edit-author" type="text" class="w-full bg-black/40 border border-purple-500/30 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-purple-400" />
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-[11px] uppercase tracking-widest text-purple-300 mb-2">Text</label>
+          <textarea id="note-edit-text" class="w-full bg-black/40 border border-purple-500/30 rounded-xl px-4 py-3 text-sm text-white resize-none h-36 focus:outline-none focus:border-purple-400"></textarea>
+        </div>
+      </div>
+
+      <div class="px-6 py-4 border-t border-white/10 flex items-center justify-between gap-4">
+        <button id="delete-note-btn" class="px-4 py-3 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-300 text-xs uppercase tracking-widest">
+          Delete Note
+        </button>
+        <div class="flex items-center gap-3">
+          <button id="cancel-note-btn" class="px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-gray-300 text-xs uppercase tracking-widest">
+            Cancel
+          </button>
+          <button id="save-note-btn" class="px-5 py-3 rounded-xl bg-purple-600 hover:bg-purple-500 text-white text-xs uppercase tracking-widest">
+            Save Note
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- OVERVIEW MODAL -->
+  <div id="overview-modal" class="hidden fixed inset-0 z-[70] items-center justify-center bg-black/70 backdrop-blur-md p-4">
+    <div class="modal-shell rounded-2xl w-full max-w-3xl max-h-[90vh] overflow-hidden shadow-[0_20px_60px_-15px_rgba(0,0,0,0.5)]">
+      <div class="flex items-center justify-between px-6 py-4 border-b border-white/10">
+        <h3 class="font-magical text-xl text-white">Edit Overview</h3>
+        <button id="close-overview-modal" class="w-10 h-10 rounded-full bg-white/5 hover:bg-white/10 border border-white/10 flex items-center justify-center text-gray-300 hover:text-white">
+          <i class="ph-bold ph-x"></i>
+        </button>
+      </div>
+
+      <div class="p-6 overflow-y-auto max-h-[calc(90vh-150px)] space-y-4">
+        <div class="grid md:grid-cols-2 gap-4">
+          <div>
+            <label class="block text-[11px] uppercase tracking-widest text-purple-300 mb-2">Project Name</label>
+            <input id="overview-edit-project-name" type="text" class="w-full bg-black/40 border border-purple-500/30 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-purple-400" />
+          </div>
+          <div>
+            <label class="block text-[11px] uppercase tracking-widest text-purple-300 mb-2">Client</label>
+            <input id="overview-edit-client-name" type="text" class="w-full bg-black/40 border border-purple-500/30 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-purple-400" />
+          </div>
+        </div>
+
+        <div class="grid md:grid-cols-2 gap-4">
+          <div>
+            <label class="block text-[11px] uppercase tracking-widest text-purple-300 mb-2">Status</label>
+            <select id="overview-edit-status" class="w-full bg-black/40 border border-purple-500/30 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-purple-400">
+              <option value="Backlog">Backlog</option>
+              <option value="Ready">Ready</option>
+              <option value="In Progress">In Progress</option>
+              <option value="In Review">In Review</option>
+              <option value="Waiting on Client">Waiting on Client</option>
+              <option value="Done">Done</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-[11px] uppercase tracking-widest text-purple-300 mb-2">Duration</label>
+            <input id="overview-edit-duration" type="text" class="w-full bg-black/40 border border-purple-500/30 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-purple-400" />
+          </div>
+        </div>
+
+        <div class="grid md:grid-cols-4 gap-4">
+          <div>
+            <label class="block text-[11px] uppercase tracking-widest text-purple-300 mb-2">Service</label>
+            <input id="overview-edit-service" type="text" class="w-full bg-black/40 border border-purple-500/30 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-purple-400" />
+          </div>
+          <div>
+            <label class="block text-[11px] uppercase tracking-widest text-purple-300 mb-2">Capacity</label>
+            <input id="overview-edit-capacity" type="text" class="w-full bg-black/40 border border-purple-500/30 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-purple-400" />
+          </div>
+          <div>
+            <label class="block text-[11px] uppercase tracking-widest text-purple-300 mb-2">Focus</label>
+            <input id="overview-edit-focus" type="text" class="w-full bg-black/40 border border-purple-500/30 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-purple-400" />
+          </div>
+          <div>
+            <label class="block text-[11px] uppercase tracking-widest text-purple-300 mb-2">Primary Goal</label>
+            <input id="overview-edit-goal" type="text" class="w-full bg-black/40 border border-purple-500/30 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-purple-400" />
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-[11px] uppercase tracking-widest text-purple-300 mb-2">Overview Description</label>
+          <textarea id="overview-edit-description" class="w-full bg-black/40 border border-purple-500/30 rounded-xl px-4 py-3 text-sm text-white resize-none h-32 focus:outline-none focus:border-purple-400"></textarea>
+        </div>
+      </div>
+
+      <div class="px-6 py-4 border-t border-white/10 flex items-center justify-end gap-3">
+        <button id="cancel-overview-btn" class="px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-gray-300 text-xs uppercase tracking-widest">
+          Cancel
+        </button>
+        <button id="save-overview-btn" class="px-5 py-3 rounded-xl bg-purple-600 hover:bg-purple-500 text-white text-xs uppercase tracking-widest">
+          Save Overview
+        </button>
+      </div>
+    </div>
+  </div>
+
+    <div id="review-info-modal" class="hidden fixed inset-0 z-[70] items-center justify-center bg-black/70 backdrop-blur-md p-4">
+    <div class="modal-shell rounded-2xl w-full max-w-2xl max-h-[90vh] overflow-hidden shadow-[0_20px_60px_-15px_rgba(0,0,0,0.5)]">
+      <div class="flex items-center justify-between px-6 py-4 border-b border-white/10">
+        <div>
+          <div class="text-[11px] uppercase tracking-[0.18em] text-purple-300 mb-1">Client Review</div>
+          <h3 id="review-info-title" class="font-magical text-xl text-white">Task Info</h3>
+        </div>
+        <button id="close-review-info-modal" class="w-10 h-10 rounded-full bg-white/5 hover:bg-white/10 border border-white/10 flex items-center justify-center text-gray-300 hover:text-white">
+          <i class="ph-bold ph-x"></i>
+        </button>
+      </div>
+
+      <div class="p-6 overflow-y-auto max-h-[calc(90vh-140px)] space-y-5">
+        <div class="flex flex-wrap gap-2" id="review-info-meta"></div>
+
+        <div class="glass-card rounded-xl p-5">
+          <div class="text-[11px] uppercase tracking-widest text-purple-300 mb-2">Task Details</div>
+          <div id="review-info-notes" class="text-sm text-gray-300 leading-relaxed whitespace-pre-wrap break-words"></div>
+        </div>
+
+        <div class="glass-card rounded-xl p-5">
+          <div class="text-[11px] uppercase tracking-widest text-purple-300 mb-3">Attachments</div>
+          <div id="review-info-attachments" class="flex flex-wrap gap-2"></div>
+        </div>
+      </div>
+
+      <div class="px-6 py-4 border-t border-white/10 flex justify-end">
+        <button id="review-info-open-task-btn" class="px-5 py-3 rounded-xl bg-purple-600 hover:bg-purple-500 text-white text-xs uppercase tracking-widest">
+          Open Task
+        </button>
+      </div>
+    </div>
+  </div>
+
+<script>
+  const API_BASE = "https://script.google.com/macros/s/AKfycbyDe_G4iBZ5yAyRrLNTP-Z1i13cK_JtloVq-74KRDDuyQzn6R5PuwV-doTUd7yk_QrC/exec";
+  const CLIENT_SLUG = "re-volv";
+
+  let workspaceData = {
+    project: {},
+    tasks: [],
+    notes: [],
+    assets: [],
+    phases: [],
+    deliverables: []
+  };
+
+  let expandedTasks = [];
+  let taskFilterStatus = 'all';
+  let taskSearchQuery = '';
+
+const WORKSPACE_CONFIGS = {
+  nexus: {
+    key: "nexus",
+    label: "Nexus",
+    icon: "ph-intersect-three",
+    themeColor: "#67e8f9",
+    href: "/client/"
+  },
+  revolv: {
+    key: "revolv",
+    label: "RE-volv Solar",
+    icon: "ph-sun-horizon",
+    themeColor: "#ffd700",
+    href: "/client/RE-volv/dashboard.html"
+  },
+  incantations: {
+    key: "incantations",
+    label: "Incantations",
+    icon: "ph-sparkle",
+    themeColor: "#f59e0b",
+    href: "/incantations"
+  }
+};
+
+const WORKSPACE_CONFIG = WORKSPACE_CONFIGS.revolv;
+
+  const taskModal = document.getElementById('task-modal');
+  const assetModal = document.getElementById('asset-modal');
+  const noteModal = document.getElementById('note-modal');
+  const overviewModal = document.getElementById('overview-modal');
+  const reviewInfoModal = document.getElementById('review-info-modal');
+
+async function apiGet(action, params = {}) {
+  const url = new URL(API_BASE);
+  url.searchParams.set('action', action);
+
+  Object.entries(params).forEach(([key, value]) => {
+    if (value !== undefined && value !== null && value !== '') {
+      url.searchParams.set(key, value);
+    }
+  });
+
+  const res = await fetch(url.toString());
+  const text = await res.text();
+
+  let data;
+  try {
+    data = JSON.parse(text);
+  } catch (err) {
+    console.error('Non-JSON GET response:', text);
+    throw new Error('Server did not return valid JSON');
+  }
+
+  if (!data.ok) throw new Error(data.error || 'API error');
+  return data;
+}
+
+  async function apiPost(payload) {
+    const res = await fetch(API_BASE, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'text/plain;charset=utf-8'
+      },
+      body: JSON.stringify(payload)
+    });
+  
+    const text = await res.text();
+    let data;
+  
+    try {
+      data = JSON.parse(text);
+    } catch (err) {
+      console.error('Non-JSON save response:', text);
+      throw new Error('Save failed: server did not return JSON');
+    }
+  
+    if (!data.ok) throw new Error(data.error || 'API error');
+    return data;
+  }
+
+async function loadWorkspaceData() {
+  const data = await apiGet('getWorkspace', { clientSlug: CLIENT_SLUG });
+
+  if (!data || !data.ok) {
+    throw new Error(data?.error || 'Workspace request failed');
+  }
+
+  if (!data.workspace) {
+    throw new Error('Workspace data missing from response');
+  }
+
+  workspaceData = {
+    project: data.workspace.project || {},
+    tasks: Array.isArray(data.workspace.tasks) ? data.workspace.tasks : [],
+    notes: Array.isArray(data.workspace.notes) ? data.workspace.notes : [],
+    assets: Array.isArray(data.workspace.assets) ? data.workspace.assets : [],
+    phases: Array.isArray(data.workspace.phases) ? data.workspace.phases : [],
+    deliverables: Array.isArray(data.workspace.deliverables) ? data.workspace.deliverables : []
+  };
+
+  console.log('Loaded notes:', workspaceData.notes);
+}
+
+  function getNextId(items) {
+    if (!items.length) return 1;
+    return Math.max(...items.map(item => Number(item.id) || 0)) + 1;
+  }
+
+  const getStatusStyles = (status) => {
+    const map = {
+      "Not Started": "bg-gray-500/10 text-gray-400 border-gray-500/20",
+      "In Progress": "bg-purple-500/10 text-purple-300 border-purple-500/30",
+      "Awaiting Client Review": "bg-amber-500/10 text-amber-300 border-amber-500/30",
+      "Blocked": "bg-rose-500/10 text-rose-300 border-rose-500/30",
+      "Complete": "bg-emerald-500/10 text-emerald-400 border-emerald-500/30",
+      "Backlog": "bg-gray-500/10 text-gray-400 border-gray-500/20",
+      "Ready": "bg-cyan-500/10 text-cyan-300 border-cyan-500/30",
+      "In Review": "bg-amber-500/10 text-amber-300 border-amber-500/30",
+      "Waiting on Client": "bg-amber-500/10 text-amber-300 border-amber-500/30",
+      "Done": "bg-emerald-500/10 text-emerald-400 border-emerald-500/30",
+      "Pending Review": "bg-amber-500/10 text-amber-300 border-amber-500/30",
+      "Revision Requested": "bg-rose-500/10 text-rose-300 border-rose-500/30",
+      "Approved": "bg-emerald-500/10 text-emerald-400 border-emerald-500/30"
+    };
+    return map[status] || map["Not Started"];
+  };
+
+  const getPriorityStyles = (priority) => {
+    const map = {
+      "Low": "text-gray-400",
+      "Medium": "text-blue-300",
+      "High": "text-amber-300",
+      "Critical": "text-rose-400 font-semibold"
+    };
+    return map[priority] || map["Low"];
+  };
+
+  const getAssetIcon = (type) => {
+    const map = {
+      "image": "ph-image text-purple-400",
+      "pdf": "ph-file-pdf text-rose-400",
+      "link": "ph-link text-cyan-400",
+      "video": "ph-play-circle text-amber-400"
+    };
+    return map[type] || "ph-file text-gray-400";
+  };
+
+  const getInitials = (name) => {
+    if (!name) return "NA";
+    return name.split(' ').map(n => n[0]).join('').toUpperCase().substring(0, 2);
+  };
+
+  function escapeHtml(str) {
+    return String(str ?? '')
+      .replaceAll('&', '&amp;')
+      .replaceAll('<', '&lt;')
+      .replaceAll('>', '&gt;')
+      .replaceAll('"', '&quot;')
+      .replaceAll("'", '&#039;');
+  }
+
+  function escapeAttribute(str) {
+    return String(str ?? '').replaceAll('"', '&quot;');
+  }
+
+  function getStableNoteId(note, index) {
+  const raw = note?.id;
+  if (raw === null || raw === undefined || String(raw).trim() === '') {
+    return `note-${index}`;
+  }
+  return String(raw);
+}
+
+  function openModal(el) {
+    if (!el) return;
+    el.classList.remove('hidden');
+    el.classList.add('flex');
+  }
+
+  function closeModal(el) {
+    if (!el) return;
+    el.classList.add('hidden');
+    el.classList.remove('flex');
+  }
+
+  function applyProjectMeta() {
+    document.getElementById('header-project-name').textContent = workspaceData.project.name || '';
+    document.getElementById('header-client-name').textContent = workspaceData.project.client || '';
+    document.getElementById('header-duration').textContent = workspaceData.project.duration || '';
+
+    const statusEl = document.getElementById('ws-status');
+    statusEl.textContent = workspaceData.project.status || '';
+    statusEl.className = `px-3 py-1 rounded-full font-medium tracking-wide uppercase text-[10px] border ${getStatusStyles(workspaceData.project.status)}`;
+
+    document.getElementById('side-service').textContent = workspaceData.project.service || '';
+    document.getElementById('side-capacity').textContent = workspaceData.project.capacity || '';
+    document.getElementById('side-goal').textContent = workspaceData.project.goal || '';
+
+    document.getElementById('overview-description').textContent = workspaceData.project.description || '';
+    document.getElementById('overview-service').textContent = workspaceData.project.service || '';
+    document.getElementById('overview-capacity').textContent = workspaceData.project.capacity || '';
+    document.getElementById('overview-focus').textContent = workspaceData.project.focus || '';
+    document.getElementById('overview-goal').textContent = workspaceData.project.goal || '';
+  }
+
+function renderTasks() {
+  const list = document.getElementById('tasks-list');
+  if (!list) {
+    console.error('renderTasks: #tasks-list not found');
+    return;
+  }
+  
+    let filtered = workspaceData.tasks.slice();
+
+    if (taskFilterStatus !== 'all') {
+      filtered = filtered.filter(t => t.status === taskFilterStatus);
+    }
+
+    if (taskSearchQuery) {
+      const q = taskSearchQuery.toLowerCase();
+      filtered = filtered.filter(t =>
+        (t.task || '').toLowerCase().includes(q) ||
+        (t.owner || '').toLowerCase().includes(q) ||
+        (t.category || '').toLowerCase().includes(q) ||
+        (t.notes || '').toLowerCase().includes(q)
+      );
+    }
+
+    document.getElementById('nav-task-count').innerText = workspaceData.tasks.length;
+
+    if (!filtered.length) {
+      list.innerHTML = `
+        <div class="glass-card rounded-xl p-8 text-center text-gray-500 text-sm">
+          No tasks match the current filters.
+        </div>
+      `;
+      return;
+    }
+
+    list.innerHTML = filtered.map(t => {
+      const isExpanded = expandedTasks.includes(Number(t.id));
+
+      return `
+        <div class="task-card">
+          <button
+            type="button"
+            class="task-card-header w-full text-left"
+            onclick="toggleTask(${Number(t.id)})"
+          >
+            <div class="task-title-wrap">
+              <div class="flex items-start gap-3">
+                <div class="mt-1 text-gray-500 shrink-0">
+                  <i class="ph-bold ${isExpanded ? 'ph-caret-down text-purple-400' : 'ph-caret-right'} transition-colors"></i>
+                </div>
+                <div class="min-w-0">
+                  <div class="task-title">${escapeHtml(t.task || '')}</div>
+                  <div class="task-subtitle">${escapeHtml(t.notes || 'No task notes yet.')}</div>
+                </div>
+              </div>
+            </div>
+
+            <div class="task-meta-block">
+              <div class="task-meta-label">Category</div>
+              <div class="task-meta-value">${escapeHtml(t.category || '—')}</div>
+            </div>
+
+            <div class="task-meta-block">
+              <div class="task-meta-label">Owner</div>
+              <div class="task-meta-value">${escapeHtml(t.owner || '—')}</div>
+            </div>
+
+            <div class="task-meta-block">
+              <div class="task-meta-label">Status</div>
+              <div class="task-meta-value">
+                <span class="px-2.5 py-1 rounded-full text-[10px] tracking-wider uppercase border inline-block ${getStatusStyles(t.status)}">
+                  ${escapeHtml(t.status || '')}
+                </span>
+              </div>
+            </div>
+
+            <div class="task-meta-block">
+              <div class="task-meta-label">Priority / Due</div>
+              <div class="task-meta-value">
+                <span class="${getPriorityStyles(t.priority)}">${escapeHtml(t.priority || '—')}</span>
+                <span class="text-gray-600"> • </span>
+                <span>${escapeHtml(t.due || '—')}</span>
+              </div>
+            </div>
+          </button>
+
+          ${isExpanded ? `
+            <div class="task-card-body space-y-4">
+              <div>
+                <div class="text-[11px] uppercase tracking-widest text-purple-300 mb-2">Notes</div>
+                <p class="text-sm text-gray-300 leading-relaxed whitespace-pre-wrap break-words">
+                  ${escapeHtml(t.notes || 'No additional notes.')}
+                </p>
+              </div>
+
+              <div>
+                <div class="flex items-center justify-between gap-3 mb-3">
+                  <div class="text-[11px] uppercase tracking-widest text-purple-300">Attachments</div>
+                  <button
+                    onclick="openTaskEditor(${Number(t.id)}); event.stopPropagation();"
+                    class="px-3 py-1.5 rounded-lg bg-purple-500/20 border border-purple-500/30 text-purple-300 hover:text-white text-xs uppercase tracking-widest"
+                  >
+                    Edit Task
+                  </button>
+                </div>
+
+                ${(t.attachments || []).length ? `
+                  <div class="flex flex-wrap gap-2">
+                    ${(t.attachments || []).map(file => `
+                      <a
+                        href="${escapeAttribute(file.url || '#')}"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        onclick="event.stopPropagation();"
+                        class="inline-flex items-center gap-2 text-xs px-3 py-1.5 rounded-full bg-white/5 border border-white/10 text-purple-300 hover:text-white hover:border-purple-400/40"
+                      >
+                        <i class="ph-bold ph-paperclip"></i>
+                        ${escapeHtml(file.label || 'Attachment')}
+                      </a>
+                    `).join('')}
+                  </div>
+                ` : `
+                  <p class="text-sm text-gray-500 italic">No attachment links yet.</p>
+                `}
+              </div>
+            </div>
+          ` : ''}
+        </div>
+      `;
+    }).join('');
+  }
+
+    function applyWorkspaceSwitcherState() {
+    const toggleLabel = document.getElementById('workspace-switcher-label');
+    const toggleIcon = document.getElementById('workspace-switcher-icon');
+    const toggleIconWrap = document.getElementById('workspace-switcher-icon-wrap');
+
+    if (toggleLabel) toggleLabel.textContent = WORKSPACE_CONFIG.label;
+
+    if (toggleIcon) {
+      toggleIcon.className = `ph-fill ${WORKSPACE_CONFIG.icon} text-lg`;
+      toggleIcon.style.color = WORKSPACE_CONFIG.themeColor;
+    }
+
+    if (toggleIconWrap) {
+      toggleIconWrap.style.borderColor = `${WORKSPACE_CONFIG.themeColor}33`;
+    }
+
+    document.documentElement.style.setProperty('--workspace-accent', WORKSPACE_CONFIG.themeColor);
+
+    document.querySelectorAll('.workspace-option').forEach(option => {
+      option.classList.remove('workspace-option-active');
+
+      const check = option.querySelector('.workspace-option-check');
+      if (check) check.classList.add('hidden');
+
+      if (option.dataset.workspace === WORKSPACE_CONFIG.key) {
+        option.classList.add('workspace-option-active');
+        if (check) check.classList.remove('hidden');
+      }
+    });
+  }
+
+  function renderScope() {
+    const container = document.getElementById('scope-container');
+    container.innerHTML = workspaceData.phases.map(phase => `
+      <details class="glass-card rounded-xl overflow-hidden group">
+        <summary class="px-6 py-4 flex items-center justify-between cursor-pointer hover:bg-white/5 transition-colors select-none">
+          <div class="flex items-center gap-4">
+            <div class="w-8 h-8 rounded-lg bg-black/50 border border-white/5 flex items-center justify-center text-gray-500 group-open:text-purple-400 group-open:border-purple-500/30 transition-colors">
+              <i class="ph-bold ph-caret-right transition-transform duration-200 group-open:rotate-90"></i>
+            </div>
+            <span class="text-white text-lg">${escapeHtml(phase.name || '')}</span>
+          </div>
+          <div class="flex items-center gap-4">
+            <span class="hidden sm:inline-block text-xs text-gray-400 bg-black/40 px-3 py-1 rounded-full border border-white/5">
+              <i class="ph-bold ph-clock"></i> Est. ${escapeHtml(String(phase.hours || ''))}h
+            </span>
+            <span class="text-xs tracking-wider uppercase text-purple-300 bg-purple-500/20 border border-purple-500/30 px-3 py-1 rounded-full">
+              ${(phase.deliverables || []).length} Deliverables
+            </span>
+          </div>
+        </summary>
+        <div class="px-6 pb-6 pt-2 pl-[4.5rem] border-t border-white/5 bg-black/20">
+          <p class="text-gray-300 text-sm mb-5 leading-relaxed">${escapeHtml(phase.description || '')}</p>
+          <h4 class="text-[10px] uppercase tracking-widest text-gray-500 mb-3">Key Deliverables</h4>
+          <ul class="space-y-2.5">
+            ${(phase.deliverables || []).map(d => `
+              <li class="flex items-start gap-3 text-sm text-gray-300">
+                <div class="mt-0.5 w-4 h-4 rounded-full bg-emerald-500/20 border border-emerald-500/40 flex items-center justify-center shrink-0">
+                  <i class="ph-bold ph-check text-[10px] text-emerald-400"></i>
+                </div>
+                ${escapeHtml(d)}
+              </li>
+            `).join('')}
+          </ul>
+        </div>
+      </details>
+    `).join('');
+  }
+
+function renderNotes() {
+  const container = document.getElementById('notes-container');
+  if (!container) return;
+
+  if (!workspaceData.notes.length) {
+    container.innerHTML = `
+      <div class="ml-12 md:ml-0 glass-card rounded-xl p-6 text-gray-400 text-sm">
+        No notes yet.
+      </div>
+    `;
+    return;
+  }
+
+  container.innerHTML = workspaceData.notes.map((note, index) => {
+    const safeId = escapeAttribute(getStableNoteId(note, index));
+    const initials = escapeHtml(getInitials(note.author || 'NA'));
+    const isEven = index % 2 === 1;
+
+      return `
+        <div class="relative flex items-start gap-6 md:gap-8 group">
+          <div class="absolute left-[1.4rem] md:left-1/2 -translate-x-1/2 mt-1.5 w-3 h-3 rounded-full bg-purple-500 border-[3px] border-[#0a0614] shadow-[0_0_10px_rgba(168,85,247,0.5)] z-10"></div>
+      
+          <div class="hidden md:block w-1/2 ${isEven ? 'order-1' : 'order-3'}"></div>
+      
+          <div class="flex-1 md:w-1/2 ml-12 md:ml-0 order-2 ${isEven ? 'md:mr-auto md:text-right' : 'md:ml-auto'}">
+            <div class="glass-card rounded-xl p-5 relative">
+              <div class="hidden md:block absolute top-3 w-8 h-px bg-purple-500/30 ${isEven ? '-left-8' : '-right-8'}"></div>
+      
+              <div class="flex items-center gap-3 mb-3 ${isEven ? 'md:flex-row-reverse' : ''}">
+                <div class="w-8 h-8 rounded-full bg-cyan-500/20 border border-cyan-500/30 flex items-center justify-center text-[10px] text-cyan-300 font-bold shrink-0">
+                  ${initials}
+                </div>
+      
+                <div class="flex flex-col ${isEven ? 'md:items-end' : ''}">
+                  <span class="text-white text-sm font-medium">${escapeHtml(note.author || '')}</span>
+                  <span class="text-gray-500 text-[10px] uppercase tracking-wider">${escapeHtml(note.date || '')}</span>
+                </div>
+              </div>
+      
+              <p class="text-gray-300 text-sm leading-relaxed whitespace-pre-wrap break-words">${escapeHtml(note.text || '')}</p>
+      
+              <div class="flex items-center gap-2 mt-4 pt-3 border-t border-white/5 ${isEven ? 'md:justify-end' : ''}">
+                <button
+                  type="button"
+                  onclick="openNoteEditorById('${safeId}'); event.stopPropagation();"
+                  class="p-2 rounded-lg bg-white/5 border border-white/10 text-gray-300 hover:text-white"
+                >
+                  <i class="ph-bold ph-pencil-simple"></i>
+                </button>
+      
+                <button
+                  type="button"
+                  onclick="deleteNoteById('${safeId}'); event.stopPropagation();"
+                  class="p-2 rounded-lg bg-rose-500/10 border border-rose-500/20 text-rose-300 hover:text-white"
+                >
+                  <i class="ph-bold ph-trash"></i>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      `;
+  }).join('');
+}
+
+  function renderAssets() {
+    const container = document.getElementById('assets-grid');
+
+    if (!workspaceData.assets.length) {
+      container.innerHTML = `
+        <div class="glass-card rounded-xl p-6 text-gray-400 text-sm col-span-full">
+          No assets yet.
+        </div>
+      `;
+      return;
+    }
+
+    container.innerHTML = workspaceData.assets.map(asset => `
+      <div class="glass-card rounded-xl p-4 hover:-translate-y-1 transition-transform group flex flex-col">
+        <a href="${escapeAttribute(asset.url || '#')}" target="_blank" rel="noopener noreferrer" class="no-underline">
+          <div class="aspect-video rounded-lg bg-black/50 border border-white/5 mb-4 flex items-center justify-center relative overflow-hidden">
+            <i class="ph-duotone ${getAssetIcon(asset.type)} text-4xl group-hover:scale-110 transition-transform duration-300"></i>
+            <div class="absolute inset-0 bg-purple-500/10 opacity-0 group-hover:opacity-100 transition-opacity"></div>
+          </div>
+        </a>
+
+        <div class="flex-1 flex flex-col justify-between">
+          <div>
+            <p class="text-white text-sm leading-tight mb-2 group-hover:text-purple-300 transition-colors line-clamp-2" title="${escapeAttribute(asset.name || '')}">
+              ${escapeHtml(asset.name || '')}
+            </p>
+            <p class="text-gray-500 text-xs leading-relaxed mb-3">${escapeHtml(asset.caption || '')}</p>
+          </div>
+
+          <div class="flex items-center justify-between mt-auto gap-3">
+            <span class="text-gray-500 text-[10px] tracking-wider uppercase">${escapeHtml(asset.type || '')}</span>
+
+            <div class="flex items-center gap-2">
+              <button
+                type="button"
+                onclick="openAssetEditor(${asset.id}); event.stopPropagation();"
+                class="p-2 rounded-lg bg-white/5 border border-white/10 text-gray-300 hover:text-white"
+              >
+                <i class="ph-bold ph-pencil-simple"></i>
+              </button>
+              <button
+                type="button"
+                onclick="deleteAsset(${asset.id}); event.stopPropagation();"
+                class="p-2 rounded-lg bg-rose-500/10 border border-rose-500/20 text-rose-300 hover:text-white"
+              >
+                <i class="ph-bold ph-trash"></i>
+              </button>
+              <a
+                href="${escapeAttribute(asset.url || '#')}"
+                target="_blank"
+                rel="noopener noreferrer"
+                class="p-2 rounded-lg bg-white/5 border border-white/10 text-gray-300 hover:text-white"
+              >
+                <i class="ph-bold ph-arrow-square-out"></i>
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+    `).join('');
+  }
+
+  function renderReview() {
+    const container = document.getElementById('review-container');
+    const reviewItems = workspaceData.tasks.filter(
+      t => t.status === 'In Review' || t.status === 'Waiting on Client'
+    );
+
+    if (!reviewItems.length) {
+      container.innerHTML = `
+        <div class="glass-card rounded-xl p-6 text-gray-400 text-sm">
+          Nothing is currently in client review.
+        </div>
+      `;
+      return;
+    }
+
+    container.innerHTML = reviewItems.map(t => `
+      <button
+        type="button"
+        class="review-card-button"
+        onclick="openReviewInfo(${Number(t.id)})"
+      >
+        <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
+          <div class="flex items-start gap-4 min-w-0">
+            <div class="w-12 h-12 rounded-xl bg-black/50 border border-white/5 flex items-center justify-center shrink-0">
+              <i class="ph-duotone ph-user-check text-2xl text-purple-300"></i>
+            </div>
+
+            <div class="min-w-0">
+              <p class="text-white text-base mb-1 break-words">${escapeHtml(t.task || '')}</p>
+              <p class="text-gray-500 text-xs break-words">${escapeHtml(t.category || '')}</p>
+              <p class="text-gray-400 text-sm mt-3 line-clamp-2 break-words">
+                ${escapeHtml(t.notes || 'Click for full task info.')}
+              </p>
+            </div>
+          </div>
+
+          <div class="flex flex-col items-start sm:items-end gap-3 shrink-0">
+            <span class="px-3 py-1.5 rounded-full text-[10px] tracking-wider uppercase border text-center min-w-[120px] ${getStatusStyles(t.status)}">
+              ${escapeHtml(t.status || '')}
+            </span>
+
+            <span class="brand-info-chip">
+              <i class="ph-bold ph-info"></i>
+              Info
+            </span>
+          </div>
+        </div>
+      </button>
+    `).join('');
+  }
+
+    function openReviewInfo(taskId) {
+    const task = workspaceData.tasks.find(t => Number(t.id) === Number(taskId));
+    if (!task) return;
+
+    document.getElementById('review-info-title').textContent = task.task || 'Task Info';
+
+    document.getElementById('review-info-meta').innerHTML = `
+      <span class="px-3 py-1.5 rounded-full text-[10px] tracking-wider uppercase border ${getStatusStyles(task.status)}">
+        ${escapeHtml(task.status || '')}
+      </span>
+      <span class="brand-info-chip">${escapeHtml(task.category || 'Uncategorized')}</span>
+      <span class="brand-info-chip">${escapeHtml(task.owner || 'Unassigned')}</span>
+      <span class="brand-info-chip">${escapeHtml(task.priority || 'No Priority')}</span>
+      <span class="brand-info-chip">${escapeHtml(task.due || 'No Due Date')}</span>
+    `;
+
+    document.getElementById('review-info-notes').textContent = task.notes || 'No notes added yet.';
+
+    const attachmentsWrap = document.getElementById('review-info-attachments');
+    if ((task.attachments || []).length) {
+      attachmentsWrap.innerHTML = task.attachments.map(file => `
+        <a
+          href="${escapeAttribute(file.url || '#')}"
+          target="_blank"
+          rel="noopener noreferrer"
+          class="inline-flex items-center gap-2 text-xs px-3 py-1.5 rounded-full bg-white/5 border border-white/10 text-purple-300 hover:text-white hover:border-purple-400/40"
+        >
+          <i class="ph-bold ph-paperclip"></i>
+          ${escapeHtml(file.label || 'Attachment')}
+        </a>
+      `).join('');
+    } else {
+      attachmentsWrap.innerHTML = `<p class="text-sm text-gray-500 italic">No attachments yet.</p>`;
+    }
+
+    const openTaskBtn = document.getElementById('review-info-open-task-btn');
+    openTaskBtn.onclick = () => {
+      closeModal(reviewInfoModal);
+      openTaskEditor(Number(task.id));
+    };
+
+    openModal(reviewInfoModal);
+  }
+
+  window.openReviewInfo = openReviewInfo;
+
+  function renderAll() {
+    applyProjectMeta();
+    renderTasks();
+    renderScope();
+    renderNotes();
+    renderAssets();
+    renderReview();
+  }
+
+  function switchTab(targetId) {
+    document.querySelectorAll('.ws-nav-btn, .ws-mobile-nav').forEach(btn => {
+      if (btn.classList.contains('ws-nav-btn')) {
+        btn.classList.remove('bg-purple-500/20', 'text-white', 'border-purple-500/30', 'shadow-[inset_0_0_10px_rgba(168,85,247,0.1)]');
+        btn.classList.add('text-gray-400', 'border-transparent');
+        const icon = btn.querySelector('i');
+        if (icon) icon.className = icon.className.replace(/text-purple-300/g, '');
+      } else {
+        btn.classList.remove('bg-purple-500/20', 'text-white', 'border-purple-500/30');
+        btn.classList.add('text-gray-400', 'bg-white/5', 'border-transparent');
+      }
+
+      if (btn.dataset.target === targetId) {
+        if (btn.classList.contains('ws-nav-btn')) {
+          btn.classList.add('bg-purple-500/20', 'text-white', 'border-purple-500/30', 'shadow-[inset_0_0_10px_rgba(168,85,247,0.1)]');
+          btn.classList.remove('text-gray-400', 'border-transparent');
+          const icon = btn.querySelector('i');
+          if (icon && !icon.className.includes('text-purple-300')) icon.className += ' text-purple-300';
+        } else {
+          btn.classList.add('bg-purple-500/20', 'text-white', 'border-purple-500/30');
+          btn.classList.remove('text-gray-400', 'bg-white/5', 'border-transparent');
+        }
+      }
+    });
+
+    document.querySelectorAll('.ws-section').forEach(sec => {
+      sec.classList.add('hidden');
+      sec.classList.remove('block');
+    });
+
+    const target = document.getElementById(`section-${targetId}`);
+    if (target) {
+      target.classList.remove('hidden');
+      target.classList.add('block');
+    }
+
+    if (targetId === 'tasks') renderTasks();
+    if (targetId === 'scope') renderScope();
+    if (targetId === 'notes') renderNotes();
+    if (targetId === 'assets') renderAssets();
+    if (targetId === 'review') renderReview();
+    if (targetId === 'overview') applyProjectMeta();
+  }
+
+  window.toggleTask = (id) => {
+    if (expandedTasks.includes(id)) {
+      expandedTasks = expandedTasks.filter(taskId => taskId !== id);
+    } else {
+      expandedTasks.push(id);
+    }
+    renderTasks();
+  };
+
+  function buildAttachmentEditorRows(attachments) {
+    const container = document.getElementById('task-attachments-editor');
+    container.innerHTML = '';
+
+    attachments.forEach((attachment, index) => {
+      const row = document.createElement('div');
+      row.className = 'grid md:grid-cols-[1fr_1.5fr_auto] gap-3 items-start';
+      row.innerHTML = `
+        <input
+          type="text"
+          value="${escapeAttribute(attachment.label || '')}"
+          placeholder="Label"
+          class="attachment-label bg-black/40 border border-purple-500/30 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-purple-400"
+        />
+        <input
+          type="text"
+          value="${escapeAttribute(attachment.url || '')}"
+          placeholder="URL"
+          class="attachment-url bg-black/40 border border-purple-500/30 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-purple-400"
+        />
+        <button type="button" class="remove-attachment-btn w-12 h-12 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-300 hover:text-white" data-index="${index}">
+          <i class="ph-bold ph-trash"></i>
+        </button>
+      `;
+      container.appendChild(row);
+    });
+
+    container.querySelectorAll('.remove-attachment-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        attachments.splice(Number(btn.dataset.index), 1);
+        buildAttachmentEditorRows(attachments);
+      });
+    });
+  }
+
+  function openTaskEditor(taskId = null) {
+    let task;
+    const isNew = taskId === null;
+
+    if (isNew) {
+      task = {
+        id: '',
+        task: '',
+        category: '',
+        owner: 'Cassandre',
+        status: 'Backlog',
+        priority: 'Medium',
+        due: '',
+        notes: '',
+        attachments: []
+      };
+      document.getElementById('task-modal-title').textContent = 'New Task';
+    } else {
+      task = JSON.parse(JSON.stringify(workspaceData.tasks.find(t => t.id === taskId)));
+      document.getElementById('task-modal-title').textContent = 'Edit Task';
+    }
+
+    document.getElementById('task-edit-id').value = task.id ?? '';
+    document.getElementById('task-edit-name').value = task.task || '';
+    document.getElementById('task-edit-owner').value = task.owner || '';
+    document.getElementById('task-edit-category').value = task.category || '';
+    document.getElementById('task-edit-status').value = task.status || 'Backlog';
+    document.getElementById('task-edit-priority').value = task.priority || 'Medium';
+    document.getElementById('task-edit-due').value = task.due || '';
+    document.getElementById('task-edit-notes').value = task.notes || '';
+
+    buildAttachmentEditorRows(task.attachments || []);
+    taskModal.dataset.mode = isNew ? 'new' : 'edit';
+    openModal(taskModal);
+  }
+
+  function collectTaskFormData() {
+    const attachmentRows = [...document.querySelectorAll('#task-attachments-editor > div')];
+    const attachments = attachmentRows.map(row => {
+      const label = row.querySelector('.attachment-label').value.trim();
+      const url = row.querySelector('.attachment-url').value.trim();
+      if (!label && !url) return null;
+      return { label: label || 'Attachment', url: url || '#' };
+    }).filter(Boolean);
+
+    return {
+      id: document.getElementById('task-edit-id').value ? Number(document.getElementById('task-edit-id').value) : '',
+      task: document.getElementById('task-edit-name').value.trim(),
+      owner: document.getElementById('task-edit-owner').value.trim(),
+      category: document.getElementById('task-edit-category').value.trim(),
+      status: document.getElementById('task-edit-status').value,
+      priority: document.getElementById('task-edit-priority').value,
+      due: document.getElementById('task-edit-due').value.trim(),
+      notes: document.getElementById('task-edit-notes').value.trim(),
+      attachments
+    };
+  }
+
+    async function saveTaskFromModal() {
+      try {
+        const data = collectTaskFormData();
+    
+        if (!data.task) {
+          alert('Task name is required.');
+          return;
+        }
+    
+        const res = await apiPost({
+          action: 'saveTask',
+          clientSlug: CLIENT_SLUG,
+          task: data
+        });
+    
+        const idx = workspaceData.tasks.findIndex(t => Number(t.id) === Number(res.task.id));
+        if (idx === -1) {
+          workspaceData.tasks.unshift({
+            ...res.task,
+            attachments: Array.isArray(data.attachments) ? data.attachments : []
+          });
+        } else {
+          workspaceData.tasks[idx] = {
+            ...workspaceData.tasks[idx],
+            ...res.task,
+            attachments: Array.isArray(data.attachments) ? data.attachments : []
+          };
+        }
+    
+        renderAll();
+        closeModal(taskModal);
+      } catch (err) {
+        console.error('Save task failed:', err);
+        alert(`Save task failed: ${err.message}`);
+      }
+    }
+
+  async function deleteTaskFromModal() {
+    const idValue = Number(document.getElementById('task-edit-id').value);
+    if (!idValue) {
+      closeModal(taskModal);
+      return;
+    }
+
+    await apiPost({
+      action: 'deleteTask',
+      clientSlug: CLIENT_SLUG,
+      id: idValue
+    });
+
+    workspaceData.tasks = workspaceData.tasks.filter(t => t.id !== idValue);
+    expandedTasks = expandedTasks.filter(id => id !== idValue);
+    renderAll();
+    closeModal(taskModal);
+  }
+
+  function openAssetEditor(assetId = null) {
+    let asset;
+    const isNew = assetId === null;
+
+    if (isNew) {
+      asset = { id: '', type: 'link', name: '', url: '', caption: '' };
+      document.getElementById('asset-modal-title').textContent = 'New Asset';
+    } else {
+      asset = JSON.parse(JSON.stringify(workspaceData.assets.find(a => a.id === assetId)));
+      document.getElementById('asset-modal-title').textContent = 'Edit Asset';
+    }
+
+    document.getElementById('asset-edit-id').value = asset.id ?? '';
+    document.getElementById('asset-edit-type').value = asset.type || 'link';
+    document.getElementById('asset-edit-name').value = asset.name || '';
+    document.getElementById('asset-edit-url').value = asset.url || '';
+    document.getElementById('asset-edit-caption').value = asset.caption || '';
+    assetModal.dataset.mode = isNew ? 'new' : 'edit';
+
+    openModal(assetModal);
+  }
+
+  async function saveAssetFromModal() {
+    const data = {
+      id: document.getElementById('asset-edit-id').value ? Number(document.getElementById('asset-edit-id').value) : '',
+      type: document.getElementById('asset-edit-type').value,
+      name: document.getElementById('asset-edit-name').value.trim(),
+      url: document.getElementById('asset-edit-url').value.trim(),
+      caption: document.getElementById('asset-edit-caption').value.trim()
+    };
+
+    if (!data.name) {
+      alert('Asset name is required.');
+      return;
+    }
+
+    if (!data.url) {
+      alert('Asset URL is required.');
+      return;
+    }
+
+    const res = await apiPost({
+      action: 'saveAsset',
+      clientSlug: CLIENT_SLUG,
+      asset: data
+    });
+
+    const idx = workspaceData.assets.findIndex(a => Number(a.id) === Number(res.asset.id));
+    if (idx === -1) {
+      workspaceData.assets.unshift(res.asset);
+    } else {
+      workspaceData.assets[idx] = { ...workspaceData.assets[idx], ...res.asset };
+    }
+
+    renderAll();
+    closeModal(assetModal);
+  }
+
+  async function deleteAssetFromModal() {
+    const idValue = Number(document.getElementById('asset-edit-id').value);
+    if (!idValue) {
+      closeModal(assetModal);
+      return;
+    }
+
+    await apiPost({
+      action: 'deleteAsset',
+      clientSlug: CLIENT_SLUG,
+      id: idValue
+    });
+
+    workspaceData.assets = workspaceData.assets.filter(a => a.id !== idValue);
+    renderAll();
+    closeModal(assetModal);
+  }
+
+function openNoteEditorById(noteId) {
+  const note = workspaceData.notes.find((n, index) => {
+    return getStableNoteId(n, index) === String(noteId);
+  });
+
+  if (!note) {
+    console.error('openNoteEditorById: note not found for id', noteId, workspaceData.notes);
+    alert('Could not open note for editing.');
+    return;
+  }
+
+  document.getElementById('note-edit-id').value = String(note.id ?? '');
+  document.getElementById('note-edit-date').value = note.date || '';
+  document.getElementById('note-edit-author').value = note.author || '';
+  document.getElementById('note-edit-text').value = note.text || '';
+
+  openModal(noteModal);
+}
+
+async function addNote() {
+  const data = {
+    id: '',
+    date: document.getElementById('new-note-date').value.trim() || new Date().toLocaleDateString(),
+    author: document.getElementById('new-note-author').value.trim() || 'Cassandre',
+    text: document.getElementById('new-note-text').value.trim()
+  };
+
+  if (!data.text) {
+    alert('Note text is required.');
+    return;
+  }
+
+  const res = await apiPost({
+    action: 'saveNote',
+    clientSlug: CLIENT_SLUG,
+    note: data
+  });
+
+  const savedNote = res.note || data;
+
+  workspaceData.notes.unshift(savedNote);
+
+  document.getElementById('new-note-date').value = '';
+  document.getElementById('new-note-author').value = '';
+  document.getElementById('new-note-text').value = '';
+
+  renderNotes();
+}
+
+window.deleteNoteById = async function(noteId) {
+  const note = workspaceData.notes.find((n, index) => getStableNoteId(n, index) === String(noteId));
+  if (!note) return;
+
+  if (!confirm('Delete this note?')) return;
+
+  const realId = String(note.id ?? '').trim();
+
+  if (!realId) {
+    alert('This note is missing a saved ID from Google Sheets. Refresh after confirming the Apps Script is returning note IDs.');
+    return;
+  }
+
+  await apiPost({
+    action: 'deleteNote',
+    clientSlug: CLIENT_SLUG,
+    id: realId
+  });
+
+  workspaceData.notes = workspaceData.notes.filter((n) => String(n.id ?? '') !== realId);
+
+  renderNotes();
+};
+
+window.openNoteEditorById = openNoteEditorById;
+
+  
+async function saveNoteFromModal() {
+  const rawId = document.getElementById('note-edit-id').value.trim();
+
+  const data = {
+    id: rawId || '',
+    date: document.getElementById('note-edit-date').value.trim(),
+    author: document.getElementById('note-edit-author').value.trim() || 'Cassandre',
+    text: document.getElementById('note-edit-text').value.trim()
+  };
+
+  if (!data.text) {
+    alert('Note text is required.');
+    return;
+  }
+
+  const res = await apiPost({
+    action: 'saveNote',
+    clientSlug: CLIENT_SLUG,
+    note: data
+  });
+
+  const savedNote = res.note || data;
+  const savedRealId = String(savedNote.id ?? '').trim();
+
+  if (rawId) {
+    const existingIndex = workspaceData.notes.findIndex(n => String(n.id ?? '').trim() === rawId);
+
+    if (existingIndex !== -1) {
+      workspaceData.notes[existingIndex] = savedNote;
+    } else {
+      workspaceData.notes.unshift(savedNote);
+    }
+  } else {
+    workspaceData.notes.unshift(savedNote);
+  }
+
+  renderNotes();
+  closeModal(noteModal);
+}
+  
+async function deleteNoteFromModal() {
+  const idValue = document.getElementById('note-edit-id').value.trim();
+
+  if (!idValue) {
+    closeModal(noteModal);
+    return;
+  }
+
+  await apiPost({
+    action: 'deleteNote',
+    clientSlug: CLIENT_SLUG,
+    id: idValue
+  });
+
+  workspaceData.notes = workspaceData.notes.filter(
+    n => String(n.id ?? '').trim() !== String(idValue)
+  );
+
+  renderNotes();
+  closeModal(noteModal);
+}
+
+  function openOverviewEditor() {
+    document.getElementById('overview-edit-project-name').value = workspaceData.project.name || '';
+    document.getElementById('overview-edit-client-name').value = workspaceData.project.client || '';
+    document.getElementById('overview-edit-status').value = workspaceData.project.status || 'In Progress';
+    document.getElementById('overview-edit-duration').value = workspaceData.project.duration || '';
+    document.getElementById('overview-edit-service').value = workspaceData.project.service || '';
+    document.getElementById('overview-edit-capacity').value = workspaceData.project.capacity || '';
+    document.getElementById('overview-edit-focus').value = workspaceData.project.focus || '';
+    document.getElementById('overview-edit-goal').value = workspaceData.project.goal || '';
+    document.getElementById('overview-edit-description').value = workspaceData.project.description || '';
+    openModal(overviewModal);
+  }
+
+  async function saveOverviewFromModal() {
+    workspaceData.project.name = document.getElementById('overview-edit-project-name').value.trim();
+    workspaceData.project.client = document.getElementById('overview-edit-client-name').value.trim();
+    workspaceData.project.status = document.getElementById('overview-edit-status').value;
+    workspaceData.project.duration = document.getElementById('overview-edit-duration').value.trim();
+    workspaceData.project.service = document.getElementById('overview-edit-service').value.trim();
+    workspaceData.project.capacity = document.getElementById('overview-edit-capacity').value.trim();
+    workspaceData.project.focus = document.getElementById('overview-edit-focus').value.trim();
+    workspaceData.project.goal = document.getElementById('overview-edit-goal').value.trim();
+    workspaceData.project.description = document.getElementById('overview-edit-description').value.trim();
+
+    await apiPost({
+      action: 'saveProjectMeta',
+      clientSlug: CLIENT_SLUG,
+      project: workspaceData.project
+    });
+
+    applyProjectMeta();
+    closeModal(overviewModal);
+  }
+
+  window.openAssetEditor = openAssetEditor;
+
+  window.deleteAsset = async function(assetId) {
+    if (!confirm('Delete this asset?')) return;
+    await apiPost({ action: 'deleteAsset', clientSlug: CLIENT_SLUG, id: assetId });
+    workspaceData.assets = workspaceData.assets.filter(a => a.id !== assetId);
+    renderAssets();
+  };
+  
+  function bindWorkspaceSwitcher() {
+    const toggle = document.getElementById('workspace-switcher-toggle');
+    const menu = document.getElementById('workspace-switcher-menu');
+    const caret = document.getElementById('workspace-switcher-caret');
+
+    if (!toggle || !menu || !caret) return;
+
+    const closeMenu = () => {
+      menu.classList.add('hidden');
+      caret.classList.remove('rotate-180');
+      toggle.setAttribute('aria-expanded', 'false');
+    };
+
+    const openMenu = () => {
+      menu.classList.remove('hidden');
+      caret.classList.add('rotate-180');
+      toggle.setAttribute('aria-expanded', 'true');
+    };
+
+    toggle.addEventListener('click', (event) => {
+      event.stopPropagation();
+      if (menu.classList.contains('hidden')) {
+        openMenu();
+      } else {
+        closeMenu();
+      }
+    });
+
+    document.addEventListener('click', (event) => {
+      if (!toggle.contains(event.target) && !menu.contains(event.target)) {
+        closeMenu();
+      }
+    });
+
+    document.addEventListener('keydown', (event) => {
+      if (event.key === 'Escape') closeMenu();
+    });
+
+    menu.querySelectorAll('a').forEach(link => {
+      link.addEventListener('click', () => {
+        closeMenu();
+      });
+    });
+  }
+
+function showWorkspaceError(title, message) {
+  const tasksList = document.getElementById('tasks-list');
+  const tasksSection = document.getElementById('section-tasks');
+  const reviewContainer = document.getElementById('review-container');
+  const scopeContainer = document.getElementById('scope-container');
+  const notesContainer = document.getElementById('notes-container');
+  const assetsGrid = document.getElementById('assets-grid');
+
+  const errorCard = `
+    <div class="glass-card rounded-xl border border-rose-500/30 bg-rose-500/10 p-5 max-w-2xl">
+      <div class="flex items-start gap-3">
+        <div class="w-10 h-10 rounded-full bg-rose-500/15 border border-rose-500/30 flex items-center justify-center shrink-0">
+          <i class="ph-bold ph-warning-circle text-rose-300 text-lg"></i>
+        </div>
+        <div>
+          <div class="text-[11px] uppercase tracking-[0.18em] text-rose-300 mb-1">Workspace Error</div>
+          <h3 class="text-white font-semibold mb-2">${escapeHtml(title)}</h3>
+          <p class="text-sm text-gray-300 leading-relaxed">${escapeHtml(message)}</p>
+        </div>
+      </div>
+    </div>
+  `;
+
+  if (tasksList) {
+    tasksList.innerHTML = errorCard;
+  } else if (tasksSection) {
+    tasksSection.innerHTML = errorCard;
+  }
+
+  if (reviewContainer) {
+    reviewContainer.innerHTML = `
+      <div class="glass-card rounded-xl p-6 text-gray-400 text-sm">
+        Review items unavailable while workspace data is loading.
+      </div>
+    `;
+  }
+
+  if (scopeContainer) {
+    scopeContainer.innerHTML = `
+      <div class="glass-card rounded-xl p-6 text-gray-400 text-sm">
+        Scope data unavailable.
+      </div>
+    `;
+  }
+
+  if (notesContainer) {
+    notesContainer.innerHTML = `
+      <div class="glass-card rounded-xl p-6 text-gray-400 text-sm">
+        Notes unavailable.
+      </div>
+    `;
+  }
+
+  if (assetsGrid) {
+    assetsGrid.innerHTML = `
+      <div class="glass-card rounded-xl p-6 text-gray-400 text-sm col-span-full">
+        Assets unavailable.
+      </div>
+    `;
+  }
+}
+  
+document.addEventListener('DOMContentLoaded', async () => {
+  try {
+    await loadWorkspaceData();
+    renderAll();
+  } catch (err) {
+    console.error(err);
+    showWorkspaceError(
+      'Failed to load workspace',
+      err?.message || 'Google Sheets data could not be loaded.'
+    );
+  }
+
+  document.getElementById('reset-workspace-btn')?.addEventListener('click', async () => {
+    try {
+      await loadWorkspaceData();
+      renderAll();
+    } catch (err) {
+      console.error(err);
+      showWorkspaceError(
+        'Refresh failed',
+        err?.message || 'Workspace data could not be refreshed.'
+      );
+    }
+  });
+
+  applyWorkspaceSwitcherState();
+  bindWorkspaceSwitcher();
+
+  document.querySelectorAll('.ws-nav-btn, .ws-mobile-nav').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      const target = e.currentTarget.dataset.target;
+      switchTab(target);
+    });
+  });
+
+  document.getElementById('task-filter-status')?.addEventListener('change', (e) => {
+    taskFilterStatus = e.target.value;
+    renderTasks();
+  });
+
+  document.getElementById('task-search')?.addEventListener('input', (e) => {
+    taskSearchQuery = e.target.value;
+    renderTasks();
+  });
+
+  document.getElementById('new-task-btn')?.addEventListener('click', () => openTaskEditor(null));
+  document.getElementById('close-task-modal')?.addEventListener('click', () => closeModal(taskModal));
+  document.getElementById('cancel-task-btn')?.addEventListener('click', () => closeModal(taskModal));
+  document.getElementById('save-task-btn')?.addEventListener('click', saveTaskFromModal);
+  document.getElementById('delete-task-btn')?.addEventListener('click', deleteTaskFromModal);
+
+  document.getElementById('task-add-attachment-btn')?.addEventListener('click', () => {
+    const rows = [...document.querySelectorAll('#task-attachments-editor > div')];
+    const current = rows.map(row => ({
+      label: row.querySelector('.attachment-label')?.value || '',
+      url: row.querySelector('.attachment-url')?.value || ''
+    }));
+    current.push({ label: '', url: '' });
+    buildAttachmentEditorRows(current);
+  });
+
+  document.getElementById('new-asset-btn')?.addEventListener('click', () => openAssetEditor(null));
+  document.getElementById('close-asset-modal')?.addEventListener('click', () => closeModal(assetModal));
+  document.getElementById('cancel-asset-btn')?.addEventListener('click', () => closeModal(assetModal));
+  document.getElementById('save-asset-btn')?.addEventListener('click', saveAssetFromModal);
+  document.getElementById('delete-asset-btn')?.addEventListener('click', deleteAssetFromModal);
+
+  document.getElementById('add-note-btn')?.addEventListener('click', addNote);
+  document.getElementById('close-note-modal')?.addEventListener('click', () => closeModal(noteModal));
+  document.getElementById('cancel-note-btn')?.addEventListener('click', () => closeModal(noteModal));
+  document.getElementById('save-note-btn')?.addEventListener('click', saveNoteFromModal);
+  document.getElementById('delete-note-btn')?.addEventListener('click', deleteNoteFromModal);
+
+  document.getElementById('edit-overview-btn')?.addEventListener('click', openOverviewEditor);
+  document.getElementById('close-overview-modal')?.addEventListener('click', () => closeModal(overviewModal));
+  document.getElementById('cancel-overview-btn')?.addEventListener('click', () => closeModal(overviewModal));
+  document.getElementById('save-overview-btn')?.addEventListener('click', saveOverviewFromModal);
+
+  document.getElementById('close-review-info-modal')?.addEventListener('click', () => closeModal(reviewInfoModal));
+
+  [taskModal, assetModal, noteModal, overviewModal, reviewInfoModal].forEach(modal => {
+    if (!modal) return;
+    modal.addEventListener('click', (e) => {
+      if (e.target === modal) closeModal(modal);
+    });
+  });
+
+  switchTab('tasks');
+});
+  
+</script>
+</body>
+</html>

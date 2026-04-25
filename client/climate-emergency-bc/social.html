@@ -2,6 +2,12 @@
     <meta charset="UTF-8" vid="2">
     <meta name="viewport" content="width=device-width, initial-scale=1.0" vid="3">
     <title vid="4">StellarSync | Content Command Center</title>
+    <link rel="manifest" href="./manifest.webmanifest">
+    <meta name="theme-color" content="#0a0612">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-title" content="StellarSync">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <link rel="apple-touch-icon" href="./icons/stellarsync-apple-touch-icon.png">
     <script src="https://cdn.tailwindcss.com/3.4.17" vid="5"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com" vid="6">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="" vid="7">
@@ -68,8 +74,8 @@
   .constellation-label-btn {
     position: absolute;
     transform: translateY(-50%);
-    background: rgba(18,12,29,0.88);
-    border: 1px solid rgba(255,255,255,0.08);
+    background: rgba(18,12,29,0.18);
+    border: 1px solid rgba(255,255,255,0.12);
     padding: 6px 10px;
     border-radius: 10px;
     font-size: 10px;
@@ -83,6 +89,7 @@
     hyphens: none;
     cursor: pointer;
     transition: border-color 0.2s ease, transform 0.2s ease, color 0.2s ease;
+    backdrop-filter: none;
   }
 
   .constellation-label-btn:hover {
@@ -213,15 +220,15 @@
         }
         .pillar-empty-state { border: 1px dashed rgba(255,255,255,0.08); border-radius: 0.75rem; padding: 0.75rem; color: #6b7280; font-size: 11px; text-align: center; }
 
-        .starmap-container { cursor: grab; background-color: var(--color-bg); }
+        .starmap-container { cursor: grab; background-color: transparent; }
         .starmap-container:active { cursor: grabbing; }
         .pipeline-svg { position: absolute; top: 0; left: 0; width: 2000px; height: 1200px; pointer-events: none; z-index: 1; }
         .pipeline-path { fill: none; stroke-width: 2; stroke-dasharray: 6 6; animation: dash 30s linear infinite; opacity: 0.2; }
         @keyframes dash { to { stroke-dashoffset: -100; } }
         
         .map-node { position: absolute; z-index: 10; transform: translate(-50%, -50%); }
-        .hub-node { padding: 12px; border-radius: 12px; border: 1px solid var(--panel-border); background: #120c1d; width: 160px; }
-        .post-node { background: #181125; border: 1px solid var(--panel-border); border-radius: 0.75rem; padding: 12px; width: 220px; transition: transform 0.2s, border-color 0.2s; cursor: pointer; }
+        .hub-node { padding: 12px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.12); background: rgba(18,12,29,0.18); width: 160px; backdrop-filter: none; }
+        .post-node { background: rgba(18,12,29,0.18); border: 1px solid rgba(255,255,255,0.12); border-radius: 0.75rem; padding: 12px; width: 220px; transition: transform 0.2s, border-color 0.2s; cursor: pointer; backdrop-filter: none; }
         .post-node:hover { transform: translate(-50%, -55%); border-color: rgba(255,255,255,0.2); z-index: 20; }
 
         .badge { font-size: 8px; font-weight: 700; text-transform: uppercase; padding: 2px 6px; border-radius: 4px; border: 1px solid; letter-spacing: 0.05em; }
@@ -267,6 +274,188 @@
         .audit-list li { position:relative; padding-left:1rem; }
         .audit-list li::before { content:""; position:absolute; left:0; top:0.5rem; width:6px; height:6px; border-radius:999px; background:currentColor; opacity:0.8; }
         .ledger-linkedin { color: #0A66C2; }
+
+        #view-constellation .starmap-container,
+        #view-constellation .hub-node,
+        #view-constellation .post-node,
+        #view-constellation .constellation-label-btn,
+        #view-constellation .campaign-title-safe {
+            background-color: transparent !important;
+        }
+
+        #view-constellation .hub-node,
+        #view-constellation .post-node,
+        #view-constellation .constellation-label-btn {
+            background: rgba(18,12,29,0.18) !important;
+            border-color: rgba(255,255,255,0.12) !important;
+            backdrop-filter: none !important;
+            box-shadow: none !important;
+        }
+
+        .mobile-bottom-nav {
+            display: none;
+        }
+
+        #install-app-btn.hidden,
+        #mobile-install-app-btn.hidden {
+            display: none !important;
+        }
+
+        @media (max-width: 768px) {
+            body {
+                padding: 0.75rem !important;
+                padding-bottom: 6.5rem !important;
+                gap: 0.75rem !important;
+            }
+
+            header {
+                height: auto !important;
+                min-height: 56px;
+                padding: 0.75rem 1rem !important;
+            }
+
+            header .font-bold.text-xl {
+                font-size: 1rem;
+            }
+
+            header .hidden.md\\:flex {
+                display: none !important;
+            }
+
+            header > div:last-child {
+                gap: 0.5rem !important;
+            }
+
+            header > div:last-child > div:last-child {
+                display: none !important;
+            }
+
+            #desktop-sidebar-nav,
+            #signal-overview-panel,
+            #shell-resize-handle {
+                display: none !important;
+            }
+
+            #primary-layout {
+                display: block !important;
+                overflow: visible !important;
+            }
+
+            #main-shell-panel {
+                width: 100% !important;
+                min-height: calc(100vh - 8.5rem);
+                overflow: visible !important;
+            }
+
+            .view-section {
+                height: auto !important;
+                min-height: calc(100vh - 9rem);
+                padding: 1rem !important;
+                overflow: auto !important;
+            }
+
+            #view-constellation {
+                min-height: calc(100vh - 10rem);
+            }
+
+            #view-constellation #starmap-viewport {
+                min-height: 60vh;
+            }
+
+            #view-media #media-grid,
+            #view-inspo #inspo-grid,
+            #view-performance .grid.grid-cols-2,
+            #view-performance #performance-kpis,
+            #view-audit .grid.grid-cols-3,
+            #view-audit .grid.grid-cols-2 {
+                grid-template-columns: 1fr !important;
+            }
+
+            #view-media .flex.justify-between.items-end.mb-8,
+            #view-inspo .flex.justify-between.items-end.mb-8,
+            #view-performance .flex.justify-between.items-end.mb-8,
+            #view-audit .flex.justify-between.items-end.mb-8,
+            #view-ledger .ledger-toolbar {
+                flex-direction: column !important;
+                align-items: stretch !important;
+                gap: 1rem !important;
+            }
+
+            #media-filter-bar {
+                margin-bottom: 1rem !important;
+            }
+
+            #scheduling-modal .modal-content,
+            #campaign-modal .modal-content,
+            #inspo-modal .modal-content,
+            #media-link-modal-card,
+            #media-asset-modal-card {
+                width: 100% !important;
+                max-width: 100% !important;
+                max-height: calc(100vh - 2rem) !important;
+                margin: 0 !important;
+            }
+
+            #scheduling-modal .modal-content > div:nth-child(2),
+            #campaign-modal .modal-content > div:nth-child(2),
+            #inspo-modal .modal-content > div:nth-child(2),
+            #media-link-modal .p-6,
+            #media-asset-modal .grid {
+                overflow-y: auto !important;
+            }
+
+            #media-asset-modal .grid {
+                grid-template-columns: 1fr !important;
+            }
+
+            #media-asset-modal-preview {
+                min-height: 220px !important;
+                border-right: 0 !important;
+                border-bottom: 1px solid rgba(255,255,255,0.05);
+            }
+
+            .mobile-bottom-nav {
+                display: grid;
+                grid-template-columns: repeat(6, minmax(0, 1fr));
+                gap: 0.25rem;
+                position: fixed;
+                left: 0.75rem;
+                right: 0.75rem;
+                bottom: 0.75rem;
+                z-index: 80;
+                background: rgba(18,12,29,0.96);
+                border: 1px solid rgba(255,255,255,0.08);
+                border-radius: 1.25rem;
+                padding: 0.5rem;
+                backdrop-filter: blur(16px);
+                box-shadow: 0 16px 40px rgba(0,0,0,0.35);
+            }
+
+            .mobile-bottom-nav .nav-btn {
+                width: 100%;
+                min-width: 0;
+                height: auto;
+                padding: 0.55rem 0.25rem;
+                border-radius: 0.9rem;
+                display: flex;
+                flex-direction: column;
+                gap: 0.2rem;
+                align-items: center;
+                justify-content: center;
+                font-size: 0.58rem;
+                color: #9ca3af;
+                background: transparent;
+            }
+
+            .mobile-bottom-nav .nav-btn i {
+                font-size: 1.05rem;
+            }
+
+            .mobile-bottom-nav .nav-btn.active {
+                background: #2d1b4e !important;
+                color: white !important;
+            }
+        }
     </style>
 </head>
 <body class="flex flex-col relative p-4 gap-4 overflow-hidden" vid="11">
@@ -290,6 +479,9 @@
                 <div class="w-1.5 h-1.5 rounded-full bg-[#00ffaa] shadow-[0_0_8px_#00ffaa]" vid="24"></div>
                 <span class="text-[10px] uppercase tracking-wider text-[#00ffaa] font-semibold" vid="25">Data Synced</span>
             </div>
+            <button id="install-app-btn" type="button" class="hidden px-4 py-2 bg-[#1a1128] hover:bg-[#231738] text-white text-[10px] uppercase tracking-wider font-bold rounded-xl transition-all items-center gap-2 border border-white/10">
+                <i class="ph-bold ph-download-simple"></i> Install App
+            </button>
             <button onclick="openModal()" class="px-6 py-2 bg-gradient-to-r from-[#9d4edd] to-[#c77dff] hover:opacity-90 text-white text-xs uppercase tracking-wider font-bold rounded-xl transition-all flex items-center gap-2 shadow-[0_0_20px_rgba(157,78,221,0.2)] border border-white/10" vid="26">
                 <i class="ph-bold ph-plus" vid="27"></i> New Post
             </button>
@@ -301,33 +493,33 @@
 
     <div class="flex flex-1 min-h-0 overflow-hidden relative z-10 w-full gap-4" vid="29">
         
-        <aside class="w-[88px] bg-[#120c1d] border border-white/5 rounded-2xl flex flex-col items-center py-6 gap-4 shrink-0 z-40" vid="30">
-            <button id="nav-calendar" onclick="switchView('calendar')" class="w-12 h-12 rounded-xl bg-[#2d1b4e] text-white flex items-center justify-center relative group nav-btn active transition-colors" vid="31">
+        <aside id="desktop-sidebar-nav" class="w-[88px] bg-[#120c1d] border border-white/5 rounded-2xl flex flex-col items-center py-6 gap-4 shrink-0 z-40" vid="30">
+            <button id="nav-calendar" data-view-target="calendar" onclick="switchView('calendar')" class="w-12 h-12 rounded-xl bg-[#2d1b4e] text-white flex items-center justify-center relative group nav-btn active transition-colors" vid="31">
                 <i class="ph-fill ph-calendar-blank text-2xl" vid="32"></i>
                 <span class="absolute left-16 bg-[#181125] border border-white/5 text-white text-[10px] px-3 py-1.5 rounded-lg opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity whitespace-nowrap shadow-xl" vid="33">Calendar</span>
             </button>
-            <button id="nav-constellation" onclick="switchView('constellation')" class="w-12 h-12 rounded-xl text-gray-500 hover:text-white hover:bg-[#1a1128] flex items-center justify-center relative group nav-btn transition-colors" vid="34">
+            <button id="nav-constellation" data-view-target="constellation" onclick="switchView('constellation')" class="w-12 h-12 rounded-xl text-gray-500 hover:text-white hover:bg-[#1a1128] flex items-center justify-center relative group nav-btn transition-colors" vid="34">
                 <i class="ph-fill ph-planet text-2xl" vid="35"></i>
                 <span class="absolute left-16 bg-[#181125] border border-white/5 text-white text-[10px] px-3 py-1.5 rounded-lg opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity whitespace-nowrap shadow-xl" vid="36">Constellation</span>
             </button>
-            <button id="nav-ledger" onclick="switchView('ledger')" class="w-12 h-12 rounded-xl text-gray-500 hover:text-white hover:bg-[#1a1128] flex items-center justify-center relative group nav-btn transition-colors" vid="37">
+            <button id="nav-ledger" data-view-target="ledger" onclick="switchView('ledger')" class="w-12 h-12 rounded-xl text-gray-500 hover:text-white hover:bg-[#1a1128] flex items-center justify-center relative group nav-btn transition-colors" vid="37">
                 <i class="ph-fill ph-table text-2xl" vid="38"></i>
                 <span class="absolute left-16 bg-[#181125] border border-white/5 text-white text-[10px] px-3 py-1.5 rounded-lg opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity whitespace-nowrap shadow-xl" vid="39">Ledger</span>
             </button>
-            <button id="nav-media" onclick="switchView('media')" class="w-12 h-12 rounded-xl text-gray-500 hover:text-white hover:bg-[#1a1128] flex items-center justify-center relative group nav-btn transition-colors" vid="40">
+            <button id="nav-media" data-view-target="media" onclick="switchView('media')" class="w-12 h-12 rounded-xl text-gray-500 hover:text-white hover:bg-[#1a1128] flex items-center justify-center relative group nav-btn transition-colors" vid="40">
                 <i class="ph-fill ph-images text-2xl" vid="41"></i>
                 <span class="absolute left-16 bg-[#181125] border border-white/5 text-white text-[10px] px-3 py-1.5 rounded-lg opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity whitespace-nowrap shadow-xl" vid="42">Media</span>
             </button>
-            <button id="nav-performance" onclick="switchView('performance')" class="w-12 h-12 rounded-xl text-gray-500 hover:text-white hover:bg-[#1a1128] flex items-center justify-center relative group nav-btn transition-colors">
+            <button id="nav-performance" data-view-target="performance" onclick="switchView('performance')" class="w-12 h-12 rounded-xl text-gray-500 hover:text-white hover:bg-[#1a1128] flex items-center justify-center relative group nav-btn transition-colors">
                 <i class="ph-fill ph-chart-line-up text-2xl"></i>
                 <span class="absolute left-16 bg-[#181125] border border-white/5 text-white text-[10px] px-3 py-1.5 rounded-lg opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity whitespace-nowrap shadow-xl">Performance</span>
             </button>
-            <button id="nav-audit" onclick="switchView('audit')" class="w-12 h-12 rounded-xl text-gray-500 hover:text-white hover:bg-[#1a1128] flex items-center justify-center relative group nav-btn transition-colors">
+            <button id="nav-audit" data-view-target="audit" onclick="switchView('audit')" class="w-12 h-12 rounded-xl text-gray-500 hover:text-white hover:bg-[#1a1128] flex items-center justify-center relative group nav-btn transition-colors">
                 <i class="ph-fill ph-shield-check text-2xl"></i>
                 <span class="absolute left-16 bg-[#181125] border border-white/5 text-white text-[10px] px-3 py-1.5 rounded-lg opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity whitespace-nowrap shadow-xl">Audit</span>
             </button>
             <div class="w-8 h-[1px] bg-white/5 my-2" vid="43"></div>
-            <button id="nav-inspo" onclick="switchView('inspo')" class="w-12 h-12 rounded-xl text-gray-500 hover:text-white hover:bg-[#1a1128] flex items-center justify-center relative group nav-btn transition-colors" vid="44">
+            <button id="nav-inspo" data-view-target="inspo" onclick="switchView('inspo')" class="w-12 h-12 rounded-xl text-gray-500 hover:text-white hover:bg-[#1a1128] flex items-center justify-center relative group nav-btn transition-colors" vid="44">
                 <i class="ph-fill ph-lightbulb text-2xl" vid="45"></i>
                 <span class="absolute left-16 bg-[#181125] border border-white/5 text-white text-[10px] px-3 py-1.5 rounded-lg opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity whitespace-nowrap shadow-xl" vid="46">Inspo Vault</span>
             </button>
@@ -407,6 +599,33 @@
     <div id="starmap-canvas" class="starmap-container absolute top-0 left-0 w-[2400px] h-[2200px] origin-top-left transition-transform duration-75 ease-out bg-transparent">
       <!-- script renders campaign rows, dots, and clickable labels here -->
     </div>
+
+    <nav class="mobile-bottom-nav">
+        <button type="button" data-view-target="calendar" onclick="switchView('calendar')" class="nav-btn active">
+            <i class="ph-fill ph-calendar-blank"></i>
+            <span>Calendar</span>
+        </button>
+        <button type="button" data-view-target="constellation" onclick="switchView('constellation')" class="nav-btn">
+            <i class="ph-fill ph-planet"></i>
+            <span>Constellation</span>
+        </button>
+        <button type="button" data-view-target="ledger" onclick="switchView('ledger')" class="nav-btn">
+            <i class="ph-fill ph-table"></i>
+            <span>Ledger</span>
+        </button>
+        <button type="button" data-view-target="media" onclick="switchView('media')" class="nav-btn">
+            <i class="ph-fill ph-images"></i>
+            <span>Media</span>
+        </button>
+        <button type="button" data-view-target="inspo" onclick="switchView('inspo')" class="nav-btn">
+            <i class="ph-fill ph-lightbulb"></i>
+            <span>Inspo</span>
+        </button>
+        <button type="button" data-view-target="performance" onclick="switchView('performance')" class="nav-btn">
+            <i class="ph-fill ph-chart-line-up"></i>
+            <span>Performance</span>
+        </button>
+    </nav>
   </div>
 </section>
             
@@ -1079,12 +1298,13 @@
       </div>
 
       <div>
-        <label class="block text-[10px] uppercase font-bold tracking-widest text-gray-500 mb-2">Theme Color</label>
+        <label class="block text-[10px] uppercase font-bold tracking-widest text-gray-500 mb-2">Default Pillar</label>
         <select id="campaign-pillar-input" class="form-input text-sm font-medium">
-          <option value="edu">Cyan</option>
-          <option value="promo">Violet</option>
-          <option value="engage">Gold</option>
-          <option value="aware">Green</option>
+          <option value="education">Education</option>
+          <option value="promotion">Promotion</option>
+          <option value="engagement">Engagement</option>
+          <option value="awareness">Awareness</option>
+          <option value="identity">Identity</option>
         </select>
       </div>
     </div>
@@ -1182,7 +1402,7 @@
 </div>
 <script>
 const APP_CONFIG = {
-  APP_SCRIPT_URL: "https://script.google.com/macros/s/AKfycbxMfHopqF9c93lsKjtBFnpzg2E7zd7zOAm3TUvU19I823SIWcykVvJLIyeX19thAClk9w/exec",
+  APP_SCRIPT_URL: "https://script.google.com/macros/s/AKfycbz66wL9mgY1TOu1-2qZ5q72SMAIyuXe5dTioOxPltExkXvwRiLkx3o4GhAaTF5ja2Eq/exec",
   ENABLE_REMOTE_SYNC: true,
   STORAGE_KEY: "stellarsync_local_state_v4",
   SHELL_LAYOUT_KEY: "stellarsync_shell_layout_v1"
@@ -1228,6 +1448,7 @@ let currentView = "calendar";
 let currentEditingPostId = null;
 let currentModalAsset = null;
 let shellLayout = loadShellLayout();
+let deferredInstallPrompt = null;
 
 let calendarMode = "month";
 let calendarCursor = getInitialCalendarCursor();
@@ -1307,6 +1528,7 @@ const mediaAssetModalPreview = document.getElementById("media-asset-modal-previe
 const mediaAssetModalMeta = document.getElementById("media-asset-modal-meta");
 const mediaAssetModalPerformance = document.getElementById("media-asset-modal-performance");
 const mediaAssetModalOpenLink = document.getElementById("media-asset-modal-open-link");
+const installAppBtn = document.getElementById("install-app-btn");
 
 const viewport = document.getElementById("starmap-viewport");
 const canvas = document.getElementById("starmap-canvas");
@@ -1343,33 +1565,32 @@ function normalizeDisplayText(value) {
 }
 
 const CANONICAL_PILLAR_MAP = {
-  auth: "authority",
-  authority: "authority",
-  authoritative: "authority",
-  dist: "distribution",
-  distribute: "distribution",
-  distribution: "distribution",
+  iden: "identity",
   ident: "identity",
   identity: "identity",
-  app: "application",
-  application: "application",
   edu: "education",
   education: "education",
   educational: "education",
-  promo: "promotional",
-  promotion: "promotional",
-  promotional: "promotional",
+  promo: "promotion",
+  promotion: "promotion",
+  promotional: "promotion",
   engage: "engagement",
   engagement: "engagement",
   aware: "awareness",
   awareness: "awareness"
 };
 
-function getCanonicalPillarValue(value) {
+function getCanonicalPillarValue(value, fallback = "") {
   const cleaned = normalizeDisplayText(value);
-  if (!cleaned) return "";
+  if (!cleaned) return fallback ? getCanonicalPillarValue(fallback, "") : "";
   const normalized = normalizeLookupValue(cleaned);
-  return CANONICAL_PILLAR_MAP[normalized] || cleaned;
+  if (CANONICAL_PILLAR_MAP[normalized]) return CANONICAL_PILLAR_MAP[normalized];
+  if (normalized.includes("identity")) return "identity";
+  if (normalized.includes("educat")) return "education";
+  if (normalized.includes("promo")) return "promotion";
+  if (normalized.includes("engage")) return "engagement";
+  if (normalized.includes("aware")) return "awareness";
+  return fallback ? getCanonicalPillarValue(fallback, "") : "";
 }
 
 function normalizePillarToken(value) {
@@ -1491,11 +1712,7 @@ function getPillarTheme(pillarValue) {
 }
 
 function legacyPillarForDisplayValue(value) {
-  const normalized = normalizePillarToken(value);
-  const matchedCampaign = (appState.campaigns || []).find(campaign => {
-    return normalizePillarToken(getDisplayCampaignContentPillar(campaign)) === normalized;
-  });
-  return matchedCampaign?.pillar || normalizePillar(value);
+  return normalizePillar(value);
 }
 
 const INSIGHT_METRICS = [
@@ -2273,6 +2490,8 @@ function buildAuditSummary() {
 function initApp() {
   seedStars();
   cleanInvalidImportantToken();
+  setupPWAInstall();
+  registerServiceWorkerSafe();
 
   renderModalPillarButtons();
   setupModalControls();
@@ -2420,7 +2639,7 @@ async function saveInspoFromModal() {
     summary: notes,
     domainOrMeta: deriveDomainLabel(url),
     suggestedPlatform: currentInspoType === "video" || currentInspoType === "image" ? "instagram" : currentInspoType === "trend" ? "both" : "linkedin",
-    suggestedPillar: currentInspoType === "trend" ? "engage" : currentInspoType === "image" || currentInspoType === "video" ? "aware" : "edu",
+    suggestedPillar: currentInspoType === "trend" ? "engagement" : currentInspoType === "image" || currentInspoType === "video" ? "awareness" : "education",
     createPostTitle: title,
     createPostDescription: notes,
     createPostType: currentInspoType === "video" ? "video" : currentInspoType === "article" ? "article" : currentInspoType === "image" ? "image" : "text",
@@ -2548,20 +2767,24 @@ function populateCampaignDropdown() {
 
 function normalizePillar(value) {
   const v = String(value || "").toLowerCase();
-  if (v.includes("promo") || v.includes("violet") || v.includes("purple")) return "promo";
-  if (v.includes("engage") || v.includes("gold") || v.includes("yellow")) return "engage";
-  if (v.includes("aware") || v.includes("green")) return "aware";
-  return "edu";
+  if (v.includes("identity") || v.includes("iden") || v.includes("ident")) return "identity";
+  if (v.includes("promo") || v.includes("violet") || v.includes("purple")) return "promotion";
+  if (v.includes("engage") || v.includes("gold") || v.includes("yellow")) return "engagement";
+  if (v.includes("aware") || v.includes("green")) return "awareness";
+  if (v.includes("edu") || v.includes("cyan") || v.includes("blue")) return "education";
+  return getCanonicalPillarValue(value, "education") || "education";
 }
 
 function defaultCampaignColor(pillar) {
-  return pillar === "edu" ? "#00f0ff" :
-         pillar === "promo" ? "#b25fff" :
-         pillar === "engage" ? "#ffd700" :
+  const canonical = normalizePillar(pillar);
+  return canonical === "education" ? "#00f0ff" :
+         canonical === "promotion" ? "#b25fff" :
+         canonical === "engagement" ? "#ffd700" :
+         canonical === "identity" ? "#fb7185" :
          "#00ffaa";
 }
 
-function openCampaignModal(defaultPillar = "edu") {
+function openCampaignModal(defaultPillar = "education") {
   if (!campaignModal || !campaignModalCard) return;
 
   if (campaignNameInput) campaignNameInput.value = "";
@@ -2581,13 +2804,13 @@ function closeCampaignModal() {
 
   setTimeout(() => {
     if (campaignNameInput) campaignNameInput.value = "";
-    if (campaignPillarInput) campaignPillarInput.value = "edu";
+    if (campaignPillarInput) campaignPillarInput.value = "education";
   }, 200);
 }
 
 async function saveCampaignFromModal() {
   const campaignName = campaignNameInput?.value.trim() || "";
-  const pillar = normalizePillar(campaignPillarInput?.value || "edu");
+  const pillar = normalizePillar(campaignPillarInput?.value || "education");
 
   if (!campaignName) {
     showToast("Missing name", "Please enter a campaign name.", "ph-warning", "text-yellow-400");
@@ -2985,11 +3208,12 @@ function renderConstellation() {
       top:50%;
       transform:translateY(-50%);
       padding:10px 18px;
-      background:rgba(18,12,29,0.78);
-      border:1px solid rgba(255,255,255,0.05);
+      background:rgba(18,12,29,0.18);
+      border:1px solid rgba(255,255,255,0.12);
       border-left:3px solid ${color};
       border-radius:0 12px 12px 0;
-      backdrop-filter:blur(10px);
+      backdrop-filter:none;
+      box-shadow:none;
       z-index:6;
       min-width:170px;
     `;
@@ -3081,7 +3305,7 @@ function renderConstellation() {
       width:34px;
       height:34px;
       transform:translate(-50%,-50%);
-      background:rgba(18,12,29,0.82);
+      background:rgba(18,12,29,0.18);
       border:2px dashed ${color}66;
       color:${color};
       z-index:10;
@@ -3110,7 +3334,7 @@ function renderConstellation() {
     <button id="constellation-create-campaign-btn" type="button"
       style="
         padding:16px 32px;
-        background:rgba(18,12,29,0.82);
+        background:rgba(18,12,29,0.18);
         border:2px dashed rgba(199,125,255,0.4);
         border-radius:14px;
         color:#c77dff;
@@ -3139,7 +3363,7 @@ async function promptCreateCampaignRow() {
   const campaignName = window.prompt("Campaign name");
   if (!campaignName) return null;
 
-  const pillar = normalizePillar(window.prompt("Theme: cyan, violet, gold, green", "cyan") || "cyan");
+  const pillar = normalizePillar(window.prompt("Default pillar: education, promotion, engagement, awareness, identity", "education") || "education");
   const color = defaultCampaignColor(pillar);
 
   const nextSortOrder = ((appState.campaigns || []).reduce((max, item) => {
@@ -3471,7 +3695,7 @@ async function editCampaignById(campaignId) {
   const nextName = window.prompt("Edit campaign name", campaign.campaignName);
   if (nextName === null) return;
 
-  const nextPillar = normalizePillar(window.prompt("Edit theme: cyan, violet, gold, green", campaign.pillar) || campaign.pillar);
+  const nextPillar = normalizePillar(window.prompt("Edit default pillar: education, promotion, engagement, awareness, identity", campaign.pillar) || campaign.pillar);
   const archiveAnswer = window.prompt("Archive this campaign? yes / no", campaign.isArchived ? "yes" : "no");
   if (archiveAnswer === null) return;
 
@@ -3502,7 +3726,7 @@ async function editCampaignById(campaignId) {
         ...post,
         campaignName: updated.campaignName,
         hubTitle: updated.campaignName,
-        hubPillarLabel: updated.pillar
+        hubPillarLabel: formatContentPillarLabel(updated.pillar)
       };
     });
 
@@ -3540,23 +3764,13 @@ function setupModalMediaUpload() {
         campaign: getCurrentModalCampaignLabel()
       });
 
-      currentModalAsset = {
-        id: result.asset.assetId,
-        title: result.asset.assetName,
-        type: result.asset.assetType,
-        fileUrl: result.asset.fileUrl
-      };
+      currentModalAsset = normalizeRemoteMedia(result.asset);
 
       if (modalMediaStatus) {
         modalMediaStatus.textContent = `${currentModalAsset.title} linked`;
       }
 
-      const postIndex = appState.posts.findIndex(p => p.id === currentEditingPostId);
-      if (postIndex >= 0) {
-        appState.posts[postIndex].assetId = currentModalAsset.id;
-        appState.posts[postIndex].mediaLabel = currentModalAsset.title;
-        persistLocalState();
-      }
+      await persistLinkedAssetForPost(currentModalAsset);
 
       await refreshMediaFromRemote();
       showToast("Uploaded", "Media linked to this post.", "ph-check", "text-[#00ffaa]");
@@ -3784,31 +3998,14 @@ function openMediaAsset(assetId) {
 async function refreshMediaFromRemote() {
   const media = await apiGetMedia();
 
-  appState.media = media.map(asset => ({
-    id: asset.assetId,
-    assetId: asset.assetId,
-    title: asset.assetName,
-    assetName: asset.assetName,
-    type: asset.assetType,
-    assetType: asset.assetType,
-    postId: asset.linkedPostId,
-    linkedPostId: asset.linkedPostId,
-    assetBadge: asset.assetBadge || "",
-    meta: asset.assetMeta || "",
-    status: asset.assetStatus || "",
-    placeholderIcon: asset.placeholderIcon || "",
-    fileUrl: asset.fileUrl || "",
-    campaign: asset.campaign || "",
-    driveFileId: asset.driveFileId || "",
-    sourceUrl: asset.sourceUrl || "",
-    sourceType: asset.sourceType || ""
-  }));
+  appState.media = media.map(asset => normalizeRemoteMedia(asset));
 
   appState.posts = (appState.posts || []).map((post) => {
     const linkedAsset = findLinkedAssetForPost(post, appState.media);
     if (!linkedAsset) return post;
     return {
       ...post,
+      assetId: post.assetId || linkedAsset.assetId || "",
       mediaLabel: post.mediaLabel || linkedAsset.title || ""
     };
   });
@@ -4152,7 +4349,7 @@ function populateMediaCampaignFilter() {
 function openPostModal(
   title = "",
   platform = "linkedin",
-  pillarClass = "edu",
+  pillarClass = "education",
   date = "",
   status = "draft",
   description = "",
@@ -4219,7 +4416,7 @@ function populateLedgerCampaignMenu() {
           data-filter-value="${escapeHtml(c.campaignId)}"
           class="ledger-filter-option w-full px-3 py-2 rounded-lg hover:bg-[#2d1b4e] text-left text-xs text-gray-300 hover:text-white transition-all flex items-center gap-2"
         >
-          <div class="w-2 h-2 rounded-full" style="background:${escapeHtml(c.color || pillarColor(c.pillar || 'edu'))}"></div>
+          <div class="w-2 h-2 rounded-full" style="background:${escapeHtml(c.color || pillarColor(c.pillar || 'education'))}"></div>
           ${escapeHtml(formatCampaignDisplayName(c.campaignName))}
         </button>
       `).join("")}
@@ -4303,21 +4500,20 @@ function setupSaveHandler() {
 
     const selectedCampaignId = campaignSelect?.value || "";
     const selectedCampaign = (appState.campaigns || []).find(campaign => String(campaign.campaignId || "") === String(selectedCampaignId || ""));
-    const selectedContentPillar = selectedCampaign?.pillar || getActivePillar() || existing?.hubPillarLabel || "";
-    const legacyPillar = selectedCampaign?.pillar || existing?.pillar || legacyPillarForDisplayValue(selectedContentPillar) || "edu";
+    const selectedContentPillar = normalizePillar(selectedCampaign?.pillar || getActivePillar() || existing?.hubPillarLabel || existing?.pillar || "education");
 
     const payload = {
       id: currentEditingPostId || generateId("post"),
       title: titleInput?.value.trim() || "",
       platform: platSelect?.value || "linkedin",
-      pillar: legacyPillar,
+      pillar: selectedContentPillar,
       date: dateInput?.value || "",
       status: statusSelect?.value || "draft",
       postType: postTypeSelect?.value || "text",
       description: descInput?.value.trim() || "",
       assetId: currentModalAsset?.id || existing?.assetId || "",
       hubTitle: selectedCampaign?.campaignName || existing?.hubTitle || titleInput?.value.trim() || "",
-      hubPillarLabel: selectedContentPillar,
+      hubPillarLabel: formatContentPillarLabel(selectedContentPillar),
       mediaLabel: currentModalAsset?.title || existing?.mediaLabel || "",
       createdFromInspoId: existing?.createdFromInspoId || "",
       campaignId: selectedCampaignId,
@@ -4409,7 +4605,6 @@ async function duplicatePostById(postId) {
 
 function switchView(viewName) {
   currentView = viewName;
-  const backgroundOverlay = document.getElementById("app-background-overlay");
   const mainShell = document.getElementById("main-shell-panel");
 
   document.querySelectorAll(".nav-btn").forEach((btn) => {
@@ -4417,11 +4612,13 @@ function switchView(viewName) {
     btn.classList.add("text-gray-500", "hover:text-white", "hover:bg-[#1a1128]");
   });
 
-  const activeBtn = document.getElementById(`nav-${viewName}`);
-  if (activeBtn) {
-    activeBtn.classList.remove("text-gray-500", "hover:text-white", "hover:bg-[#1a1128]");
-    activeBtn.classList.add("bg-[#2d1b4e]", "text-white", "active");
-  }
+  document.querySelectorAll(".nav-btn").forEach((btn) => {
+    const target = btn.dataset.viewTarget || btn.id?.replace(/^nav-/, "");
+    if (target === viewName) {
+      btn.classList.remove("text-gray-500", "hover:text-white", "hover:bg-[#1a1128]");
+      btn.classList.add("bg-[#2d1b4e]", "text-white", "active");
+    }
+  });
 
   document.querySelectorAll(".view-section").forEach((section) => {
     section.classList.add("hidden");
@@ -4436,10 +4633,6 @@ function switchView(viewName) {
 
   if (mainShell) {
     mainShell.scrollTop = 0;
-  }
-
-  if (backgroundOverlay) {
-    backgroundOverlay.style.display = viewName === "constellation" ? "none" : "";
   }
 
   requestAnimationFrame(() => {
@@ -4547,6 +4740,51 @@ function showToast(title, message, iconClass = "ph-sparkle", colorClass = "text-
   }, 3000);
 }
 
+function setupPWAInstall() {
+  const revealInstallButton = () => {
+    if (!installAppBtn) return;
+    installAppBtn.classList.remove("hidden");
+    installAppBtn.classList.add("inline-flex");
+  };
+
+  const hideInstallButton = () => {
+    if (!installAppBtn) return;
+    installAppBtn.classList.add("hidden");
+    installAppBtn.classList.remove("inline-flex");
+  };
+
+  window.addEventListener("beforeinstallprompt", (event) => {
+    event.preventDefault();
+    deferredInstallPrompt = event;
+    revealInstallButton();
+  });
+
+  window.addEventListener("appinstalled", () => {
+    deferredInstallPrompt = null;
+    hideInstallButton();
+  });
+
+  installAppBtn?.addEventListener("click", async () => {
+    if (!deferredInstallPrompt) return;
+    deferredInstallPrompt.prompt();
+    try {
+      await deferredInstallPrompt.userChoice;
+    } finally {
+      deferredInstallPrompt = null;
+      hideInstallButton();
+    }
+  });
+}
+
+function registerServiceWorkerSafe() {
+  if (!("serviceWorker" in navigator)) return;
+  window.addEventListener("load", () => {
+    navigator.serviceWorker.register("./service-worker.js").catch((err) => {
+      console.error("Service worker registration failed", err);
+    });
+  });
+}
+
 function inspoToPost(inspoIdOrTitle, type, description) {
   const item = (appState.inspo || []).find(entry => entry.id === inspoIdOrTitle);
 
@@ -4561,22 +4799,22 @@ function inspoToPost(inspoIdOrTitle, type, description) {
 
   setTimeout(() => {
     let platform = "linkedin";
-    let pillar = "edu";
+    let pillar = "education";
     let postType = "text";
 
     const sourceType = String(source.type || "").toLowerCase();
 
     if (["video", "image", "carousel", "visual"].includes(sourceType)) {
       platform = "instagram";
-      pillar = "aware";
+      pillar = "awareness";
       postType = sourceType === "video" ? "video" : "image";
     } else if (sourceType === "trend") {
       platform = "both";
-      pillar = "engage";
+      pillar = "engagement";
       postType = "text";
     } else if (sourceType === "article") {
       platform = "linkedin";
-      pillar = "edu";
+      pillar = "education";
       postType = "article";
     }
 
@@ -4707,25 +4945,7 @@ async function syncRemoteIfConfigured() {
     }
 
     if (Array.isArray(media)) {
-      appState.media = media.map(asset => ({
-        id: asset.assetId,
-        assetId: asset.assetId,
-        title: asset.assetName,
-        assetName: asset.assetName,
-        type: asset.assetType,
-        assetType: asset.assetType,
-        postId: asset.linkedPostId,
-        linkedPostId: asset.linkedPostId,
-        assetBadge: asset.assetBadge || "",
-        meta: asset.assetMeta || "",
-        status: asset.assetStatus || "",
-        placeholderIcon: asset.placeholderIcon || "",
-        fileUrl: asset.fileUrl || "",
-        campaign: asset.campaign || "",
-        driveFileId: asset.driveFileId || "",
-        sourceUrl: asset.sourceUrl || "",
-        sourceType: asset.sourceType || ""
-      }));
+      appState.media = media.map(asset => normalizeRemoteMedia(asset));
     }
 
     if (Array.isArray(posts)) {
@@ -4824,14 +5044,14 @@ function normalizeRemotePost(post, campaigns = [], mediaItems = []) {
     id: postId || `remote-${normalizeLookupValue(title || "post")}-${scheduledAt || "undated"}`,
     title,
     platform: String(pickRemoteValue(post?.platform, "linkedin")).trim() || "linkedin",
-    pillar: String(pickRemoteValue(post?.pillar, matchedCampaign?.pillar, "edu")).trim() || "edu",
+    pillar: getCanonicalPillarValue(pickRemoteValue(post?.pillar, post?.hubPillarLabel, post?.hub_pillar_label, matchedCampaign?.pillar), "education") || "education",
     date: scheduledAt,
     status: String(pickRemoteValue(post?.status, "draft")).trim() || "draft",
     postType: String(pickRemoteValue(post?.postType, post?.post_type, "text")).trim() || "text",
     description: String(pickRemoteValue(post?.description, post?.ledgerExcerpt, post?.ledger_excerpt, "")).trim(),
     assetId: String(pickRemoteValue(post?.assetId, post?.asset_id, "")).trim(),
     hubTitle: String(pickRemoteValue(post?.hubTitle, post?.hub_title, title)).trim(),
-    hubPillarLabel: String(pickRemoteValue(post?.hubPillarLabel, post?.hub_pillar_label, matchedCampaign?.pillar, "")).trim(),
+    hubPillarLabel: formatContentPillarLabel(pickRemoteValue(post?.hubPillarLabel, post?.hub_pillar_label, post?.pillar, matchedCampaign?.pillar, "education")),
     mediaLabel: String(pickRemoteValue(post?.mediaLabel, post?.media_label, linkedAsset?.title, linkedAsset?.assetName, "")).trim(),
     createdFromInspoId: String(pickRemoteValue(post?.createdFromInspoId, post?.created_from_inspo_id, "")).trim(),
     campaignId,
@@ -4848,7 +5068,7 @@ function normalizeRemotePost(post, campaigns = [], mediaItems = []) {
 }
 
 function normalizeRemoteCampaign(campaign) {
-  const pillar = String(pickRemoteValue(campaign?.pillar, campaign?.hubPillarLabel, campaign?.hub_pillar_label, "")).trim();
+  const pillar = getCanonicalPillarValue(pickRemoteValue(campaign?.pillar, campaign?.hubPillarLabel, campaign?.hub_pillar_label, ""), "");
   return {
     campaignId: String(pickRemoteValue(campaign?.campaignId, campaign?.campaign_id, campaign?.campaignID, campaign?.id, "")).trim(),
     campaignName: String(pickRemoteValue(campaign?.campaignName, campaign?.campaign_name, campaign?.title, "")).trim(),
@@ -4871,12 +5091,63 @@ function normalizeRemoteInspo(item) {
     sourceLabel: String(pickRemoteValue(item?.sourceLabel, item?.source_label, "")).trim(),
     domainOrMeta: String(pickRemoteValue(item?.domainOrMeta, item?.domain_or_meta, "")).trim(),
     suggestedPlatform: String(pickRemoteValue(item?.suggestedPlatform, item?.suggested_platform, "")).trim(),
-    suggestedPillar: String(pickRemoteValue(item?.suggestedPillar, item?.suggested_pillar, "")).trim(),
+    suggestedPillar: getCanonicalPillarValue(pickRemoteValue(item?.suggestedPillar, item?.suggested_pillar, ""), "education") || "education",
     createPostTitle: String(pickRemoteValue(item?.createPostTitle, item?.create_post_title, "")).trim(),
     createPostType: String(pickRemoteValue(item?.createPostType, item?.create_post_type, "")).trim(),
     notes: String(pickRemoteValue(item?.notes, "")).trim(),
     url: String(pickRemoteValue(item?.url, item?.notes, item?.domainOrMeta, item?.domain_or_meta, "")).trim()
   };
+}
+
+function normalizeRemoteMedia(asset) {
+  const assetId = String(pickRemoteValue(asset?.assetId, asset?.asset_id, asset?.id, "")).trim();
+  const linkedPostId = String(pickRemoteValue(asset?.linkedPostId, asset?.linked_post_id, asset?.postId, asset?.post_id, "")).trim();
+  const assetName = String(pickRemoteValue(asset?.assetName, asset?.asset_name, asset?.title, "")).trim();
+  const assetType = String(pickRemoteValue(asset?.assetType, asset?.asset_type, asset?.type, "image")).trim().toLowerCase() || "image";
+  const assetMeta = String(pickRemoteValue(asset?.assetMeta, asset?.asset_meta, asset?.meta, "")).trim();
+  const assetStatus = String(pickRemoteValue(asset?.assetStatus, asset?.asset_status, asset?.status, "")).trim();
+
+  return {
+    id: assetId,
+    assetId,
+    title: assetName,
+    assetName,
+    type: assetType,
+    assetType,
+    postId: linkedPostId,
+    linkedPostId,
+    assetBadge: String(pickRemoteValue(asset?.assetBadge, asset?.asset_badge, "")).trim(),
+    meta: assetMeta,
+    assetMeta,
+    status: assetStatus,
+    assetStatus,
+    placeholderIcon: String(pickRemoteValue(asset?.placeholderIcon, asset?.placeholder_icon, "")).trim(),
+    fileUrl: String(pickRemoteValue(asset?.fileUrl, asset?.file_url, "")).trim(),
+    campaign: String(pickRemoteValue(asset?.campaign, "")).trim(),
+    notes: String(pickRemoteValue(asset?.notes, "")).trim(),
+    driveFileId: String(pickRemoteValue(asset?.driveFileId, asset?.drive_file_id, "")).trim(),
+    sourceUrl: String(pickRemoteValue(asset?.sourceUrl, asset?.source_url, "")).trim(),
+    sourceType: String(pickRemoteValue(asset?.sourceType, asset?.source_type, "")).trim(),
+    mimeType: String(pickRemoteValue(asset?.mimeType, asset?.mime_type, "")).trim()
+  };
+}
+
+async function persistLinkedAssetForPost(asset) {
+  if (!currentEditingPostId) return;
+  const postIndex = appState.posts.findIndex((post) => post.id === currentEditingPostId);
+  if (postIndex < 0) return;
+
+  appState.posts[postIndex].assetId = asset?.assetId || asset?.id || "";
+  appState.posts[postIndex].mediaLabel = asset?.assetName || asset?.title || "";
+  persistLocalState();
+
+  if (APP_CONFIG.ENABLE_REMOTE_SYNC && isRemoteConfigured()) {
+    try {
+      await apiSavePost(appState.posts[postIndex]);
+    } catch (err) {
+      console.error("Failed to persist post asset link", err);
+    }
+  }
 }
 
 async function apiSaveMediaLink(payload) {
@@ -4892,14 +5163,14 @@ async function apiSavePost(post) {
     postId: post.id || null,
     title: post.title || "",
     platform: post.platform || "linkedin",
-    pillar: post.pillar || "edu",
+    pillar: normalizePillar(post.pillar || post.hubPillarLabel || "education"),
     scheduledAt: post.date || "",
     status: post.status || "draft",
     postType: post.postType || "text",
     description: post.description || "",
     assetId: post.assetId || "",
     hubTitle: post.hubTitle || post.title || "",
-    hubPillarLabel: post.hubPillarLabel || "",
+    hubPillarLabel: formatContentPillarLabel(post.hubPillarLabel || post.pillar || "education"),
     mediaLabel: post.mediaLabel || "",
     createdFromInspoId: post.createdFromInspoId || "",
     campaignId: post.campaignId || "",
@@ -4926,14 +5197,14 @@ async function apiDuplicatePost(postId) {
     duplicate: {
       title: `${source.title} Copy`,
       platform: source.platform,
-      pillar: source.pillar,
+      pillar: normalizePillar(source.pillar || source.hubPillarLabel || "education"),
       scheduledAt: source.date,
       status: "draft",
       postType: source.postType,
       description: source.description,
       assetId: source.assetId || "",
       hubTitle: source.hubTitle || "",
-      hubPillarLabel: source.hubPillarLabel || "",
+      hubPillarLabel: formatContentPillarLabel(source.hubPillarLabel || source.pillar || "education"),
       mediaLabel: source.mediaLabel || "",
       createdFromInspoId: source.createdFromInspoId || "",
       campaignId: source.campaignId || "",
@@ -5176,9 +5447,11 @@ function clamp(value, min, max) {
 }
 
 function pillarColor(pillar) {
-  return pillar === "edu" ? "#00f0ff" :
-         pillar === "promo" ? "#b25fff" :
-         pillar === "engage" ? "#ffd700" :
+  const canonical = normalizePillar(pillar);
+  return canonical === "education" ? "#00f0ff" :
+         canonical === "promotion" ? "#b25fff" :
+         canonical === "engagement" ? "#ffd700" :
+         canonical === "identity" ? "#fb7185" :
          "#00ffaa";
 }
 
@@ -5229,7 +5502,7 @@ window.setPillar = setPillar;
 window.openModal = function(
   title = "",
   platform = "linkedin",
-  pillarClass = "edu",
+  pillarClass = "education",
   date = "",
   status = "draft",
   description = "",
@@ -5266,4 +5539,3 @@ initApp();
 </script>
 </body>
 </html>
-

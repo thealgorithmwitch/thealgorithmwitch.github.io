@@ -2066,11 +2066,12 @@
       const paymentButton = document.getElementById("dynamicPaymentLink");
       const openButtons = [document.getElementById("openModalButton"), document.getElementById("mobileOpenModal")].filter(Boolean);
       // New save/reset buttons for top bar in mobile as well as status tracking
-      const saveBtn = document.getElementById("mobileSaveButton");
-      const resetBtn = document.getElementById("mobileResetButton");
+      const saveBtn = document.getElementById("saveContractButton");
+      const resetBtn = document.getElementById("resetContractButton");
       const topSaveText = document.getElementById("topSaveText");
       const topSaveDot = document.getElementById("topSaveDot");
-      const LOCAL_SAVE_KEY = "contract_saved_v1";
+      // FORM_STORAGE_KEY defined for consistent use across load/save
+      const FORM_STORAGE_KEY = "aw_contract_mce_trial_2026";
 
       function setSaveState(state) {
         if (topSaveText) topSaveText.textContent = state === "saved" ? "Saved" : "Unsaved";
@@ -2079,7 +2080,7 @@
 
       // Load initial save state
       try {
-        const exists = localStorage.getItem(LOCAL_SAVE_KEY) !== null;
+        const exists = localStorage.getItem(FORM_STORAGE_KEY) !== null;
         setSaveState(exists ? "saved" : "unsaved");
       } catch (_) {
         setSaveState("unsaved");
@@ -2087,20 +2088,16 @@
 
       if (saveBtn) {
         saveBtn.addEventListener("click", () => {
-          try {
-            localStorage.setItem(LOCAL_SAVE_KEY, JSON.stringify({ savedAt: new Date().toISOString() }));
-            setSaveState("saved");
-          } catch (e) {
-            setSaveState("unsaved");
-          }
+          saveFormState();
+          setDot("topSaveDot", "saved");
         });
       }
       if (resetBtn) {
         resetBtn.addEventListener("click", () => {
-          const ok = confirm("Clear saved contract data on this device?");
-          if (!ok) return;
-          localStorage.removeItem(LOCAL_SAVE_KEY);
-          setSaveState("unsaved");
+          const confirmed = window.confirm("Clear saved contract data on this device?");
+          if (!confirmed) return;
+          localStorage.removeItem(FORM_STORAGE_KEY);
+          window.location.reload();
         });
       }
       // Allow opening signature modal from the sidebar
@@ -2171,10 +2168,12 @@
       };
 
       loadFormState();
+      // Initialize save dot after loading state
+      try { setDot("topSaveDot", localStorage.getItem(FORM_STORAGE_KEY) ? "saved" : "pending"); } catch (_) { setDot("topSaveDot", "pending"); }
 
       document.querySelectorAll("input[name], textarea[name]").forEach((field) => {
-        field.addEventListener("input", saveFormState);
-        field.addEventListener("change", saveFormState);
+        field.addEventListener("input", () => { setDot("topSaveDot", "pending"); saveFormState(); });
+        field.addEventListener("change", () => { setDot("topSaveDot", "pending"); saveFormState(); });
       });
 
       const DEFAULT_PAYMENT_LINK = "https://www.paypal.com/invoice/p/#PMQJM7ZQ6DTCN79U";
@@ -2476,9 +2475,9 @@
 
       // Initialize signature state based on whether a signature exists
       setSignatureState(currentSignature() ? "saved" : "pending");
-      // Initialize save state from localStorage if present
+      // Initialize save state from localStorage if present (use FORM_STORAGE_KEY)
       try {
-        const saved = localStorage.getItem("contract_saved_v1");
+        const saved = localStorage.getItem(FORM_STORAGE_KEY);
         setSaveState(saved ? "saved" : "unsaved");
       } catch (_) {
         setSaveState("unsaved");
@@ -2487,31 +2486,5 @@
       window.signaturePads = { visiblePad, modalPad };
     })();
   </script>
-</body>
-</html>
-      .signature-grid {
-        display: grid !important;
-        grid-template-columns: 1fr 1fr !important;
-        gap: 0.18in !important;
-      }
-      .signature-area,
-      .practitioner-seal {
-        min-height: 0.8in !important;
-        height: 0.8in !important;
-        border: 1px solid rgba(168,85,247,0.34) !important;
-        background: rgba(5,2,10,0.72) !important;
-      }
-      .signature-image {
-        display: block !important;
-        position: static !important;
-        width: 100% !important;
-        height: 0.72in !important;
-        object-fit: contain !important;
-        padding: 0.04in !important;
-      }
-      .signature-canvas {
-        display: none !important;
-      }
-      .practitioner-script {
-        font-size: 15pt !important;
-      }
+  </body>
+  </html>

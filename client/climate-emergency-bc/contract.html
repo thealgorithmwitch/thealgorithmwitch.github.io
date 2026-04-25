@@ -108,54 +108,55 @@
     .sidebar {
       position: fixed;
       inset: 0 auto 0 0;
-      width: min(320px, calc(100vw - 48px));
+      width: var(--sidebar-expanded);
       display: flex;
       flex-direction: column;
       padding: 2rem 0 1.5rem;
       background: linear-gradient(to bottom, rgba(13, 7, 24, 0.96), rgba(5, 2, 10, 0.96));
       border-right: 1px solid var(--line);
       box-shadow: var(--shadow);
-      transform: translateX(-100%);
-      transition: transform 0.28s ease;
+      transform: none;
+      transition: width 0.28s ease;
       z-index: 50;
+      overflow: hidden;
     }
 
-    body.sidebar-open .sidebar {
-      transform: translateX(0);
+    .sidebar.collapsed {
+      width: var(--sidebar-collapsed);
     }
 
     .main-content {
-      margin-left: 0 !important;
+      margin-left: var(--sidebar-expanded);
       min-height: 100vh;
       position: relative;
       z-index: 10;
+      transition: margin-left 0.28s ease;
+    }
+
+    .sidebar.collapsed + .main-content,
+    body.sidebar-collapsed .main-content {
+      margin-left: var(--sidebar-collapsed);
     }
 
     .toggle-btn {
-      position: fixed;
-      left: 1rem;
-      top: 1rem;
-      width: 44px;
-      height: 44px;
+      position: absolute;
+      right: -14px;
+      top: 40px;
+      width: 28px;
+      height: 28px;
       display: grid;
       place-items: center;
-      background: rgba(12, 6, 26, 0.88);
-      color: #e5e7eb;
-      border: 1px solid rgba(168, 85, 247, 0.38);
+      background: var(--accent);
+      color: #fff;
+      border: 1px solid rgba(255,255,255,0.18);
       border-radius: 999px;
-      box-shadow: 0 18px 48px rgba(0,0,0,0.35);
-      backdrop-filter: blur(14px);
-      -webkit-backdrop-filter: blur(14px);
+      box-shadow: 0 0 16px rgba(168,85,247,0.55);
       cursor: pointer;
       z-index: 80;
     }
 
     .toggle-btn i {
-      font-size: 1.25rem;
-    }
-
-    body.sidebar-open .toggle-btn {
-      left: calc(min(320px, calc(100vw - 48px)) + 1rem);
+      font-size: 1rem;
     }
 
     .sidebar-inner {
@@ -252,32 +253,28 @@
       outline: none;
     }
 
+    .sidebar.collapsed .brand-row {
+      justify-content: center;
+      padding: 0;
+    }
+
+    .sidebar.collapsed .nav-item {
+      justify-content: center;
+      padding: 0;
+    }
+
+    .sidebar.collapsed .nav-text,
+    .sidebar.collapsed .sidebar-meta,
+    .sidebar.collapsed .sidebar-footer {
+      opacity: 0;
+      pointer-events: none;
+    }
+
     .page-wrap {
       width: min(960px, calc(100% - 2rem));
       max-width: 960px;
       margin: 0 auto;
       padding: 5.5rem 0 6rem;
-    }
-
-    .sidebar-overlay {
-      position: fixed;
-      inset: 0;
-      z-index: 40;
-      background: rgba(0, 0, 0, 0.48);
-      backdrop-filter: blur(2px);
-      -webkit-backdrop-filter: blur(2px);
-      opacity: 0;
-      pointer-events: none;
-      transition: opacity 0.2s ease;
-    }
-
-    body.sidebar-open .sidebar-overlay {
-      opacity: 1;
-      pointer-events: auto;
-    }
-
-    .sidebar-overlay[hidden] {
-      display: none !important;
     }
 
     .mobile-bar {
@@ -772,6 +769,10 @@
     }
 
     @media (max-width: 960px) {
+      .sidebar {
+        display: none;
+      }
+
       .mobile-bar {
         display: block;
       }
@@ -781,8 +782,9 @@
         padding-top: 2rem;
       }
 
-      body.sidebar-open .toggle-btn {
-        left: 1rem;
+      .main-content,
+      body.sidebar-collapsed .main-content {
+        margin-left: 0 !important;
       }
     }
 
@@ -821,13 +823,6 @@
       }
     }
 
-    @media (max-width: 420px) {
-      body.sidebar-open .toggle-btn {
-        left: auto;
-        right: 1rem;
-      }
-    }
-
     @keyframes pulse {
       0%, 100% { opacity: 0.3; }
       50% { opacity: 0.8; }
@@ -843,267 +838,108 @@
       body {
         margin: 0 !important;
         padding: 0 !important;
-        width: auto !important;
-        min-height: auto !important;
+        background: #05020a !important;
+        color: #e5e7eb !important;
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
         overflow: visible !important;
-        background: #fff !important;
-        color: #111827 !important;
-        -webkit-print-color-adjust: exact;
-        print-color-adjust: exact;
       }
 
-      body * {
-        box-shadow: none !important;
-        text-shadow: none !important;
-        backdrop-filter: none !important;
-        -webkit-backdrop-filter: none !important;
-        animation: none !important;
-        transition: none !important;
-      }
-
-      .stars,
-      .sidebar,
-      .sidebar-overlay,
       .toggle-btn,
       .mobile-bar,
       .screen-only,
       .modal,
       .signature-canvas,
       button,
-      nav {
+      .sidebar-overlay {
+        display: none !important;
+      }
+
+      .sidebar {
         display: none !important;
       }
 
       .main-content,
       .page-wrap {
-        display: block !important;
+        margin: 0 auto !important;
         width: 100% !important;
-        max-width: none !important;
-        margin: 0 !important;
+        max-width: 960px !important;
         padding: 0 !important;
         overflow: visible !important;
-        position: static !important;
       }
 
       .print-header {
         display: flex !important;
         justify-content: space-between !important;
-        align-items: baseline !important;
-        margin: 0 0 0.24in !important;
-        padding: 0 0 0.1in !important;
-        border-bottom: 1px solid rgba(168, 85, 247, 0.45) !important;
-        color: #4c1d95 !important;
-        font-family: Inter, Arial, Helvetica, sans-serif !important;
-        font-size: 8.5pt !important;
-        letter-spacing: 0.04em !important;
-      }
-
-      header {
-        margin: 0 0 0.28in !important;
-        padding: 0 !important;
-      }
-
-      .eyebrow {
-        display: inline-block !important;
-        margin: 0 0 0.09in !important;
-        padding: 0.03in 0.08in !important;
-        border: 1px solid rgba(168, 85, 247, 0.35) !important;
-        color: #6d28d9 !important;
-        background: rgba(168, 85, 247, 0.06) !important;
-        font-family: Inter, Arial, Helvetica, sans-serif !important;
-        font-size: 7.5pt !important;
-        letter-spacing: 0.12em !important;
-        text-transform: uppercase !important;
-      }
-
-      .header-title {
-        margin: 0 0 0.11in !important;
-        color: #111827 !important;
-        font-family: "Cinzel Decorative", Georgia, serif !important;
-        font-size: 24pt !important;
-        line-height: 1.12 !important;
-        font-weight: 400 !important;
-        text-transform: none !important;
-      }
-
-      .header-title .accent {
-        color: #92400e !important;
-        font-style: italic !important;
-      }
-
-      .header-rule {
-        display: block !important;
-        width: 1.15in !important;
-        height: 1px !important;
-        background: linear-gradient(to right, #7c3aed, rgba(251, 191, 36, 0.7), transparent) !important;
-      }
-
-      .section-shell {
-        display: block !important;
-        margin: 0 0 0.2in !important;
-        padding: 0 !important;
-        break-inside: avoid !important;
-        page-break-inside: avoid !important;
-      }
-
-      .section-num {
-        display: inline-block !important;
-        writing-mode: initial !important;
-        height: auto !important;
-        padding: 0 !important;
-        margin: 0 0 0.04in !important;
-        border: 0 !important;
-        color: #7c3aed !important;
-        opacity: 1 !important;
-        font-family: Inter, Arial, Helvetica, sans-serif !important;
-        font-size: 7pt !important;
-        letter-spacing: 0.14em !important;
-      }
-
-      .section-title {
-        margin: 0 0 0.08in !important;
-        padding: 0 0 0.05in !important;
-        border-bottom: 1px solid rgba(88, 28, 135, 0.28) !important;
-        color: #111827 !important;
-        font-family: "Cinzel Decorative", Georgia, serif !important;
-        font-size: 10.5pt !important;
-        letter-spacing: 0.12em !important;
-        text-transform: uppercase !important;
-        font-weight: 400 !important;
-      }
-
-      .section-content {
-        display: block !important;
-        width: 100% !important;
-      }
-
-      .hero-grid,
-      .card-grid,
-      .signature-grid,
-      .field-grid,
-      .chip-list {
-        display: grid !important;
-        grid-template-columns: 1fr 1fr !important;
-        gap: 0.13in !important;
-      }
-
-      .field.full {
-        grid-column: 1 / -1 !important;
+        color: #c4b5fd !important;
+        border-bottom: 1px solid rgba(168,85,247,0.45) !important;
+        margin-bottom: 1.5rem !important;
+        padding-bottom: 0.75rem !important;
       }
 
       .rune-card,
       .send-panel,
       .chip,
       .practitioner-seal {
-        background: #fff !important;
-        border: 1px solid rgba(88, 28, 135, 0.28) !important;
-        border-radius: 0.08in !important;
-        color: #111827 !important;
-        padding: 0.13in !important;
+        background: rgba(13, 7, 24, 0.92) !important;
+        border: 1px solid rgba(168,85,247,0.35) !important;
+        color: #e5e7eb !important;
+        box-shadow: none !important;
         break-inside: avoid !important;
         page-break-inside: avoid !important;
-      }
-
-      .rune-card::before,
-      .rune-card::after,
-      .send-panel::before,
-      .send-panel::after,
-      .practitioner-seal::before {
-        display: none !important;
-        content: none !important;
       }
 
       .section-copy,
       .section-copy p,
       .section-copy li,
       .chip p,
-      .utility-note {
-        color: #111827 !important;
-        font-family: Inter, Arial, Helvetica, sans-serif !important;
-        font-size: 9.2pt !important;
-        line-height: 1.48 !important;
+      .utility-note,
+      .field input,
+      .field textarea {
+        color: #e5e7eb !important;
       }
 
-      .section-copy p {
-        margin: 0 0 0.08in !important;
+      .header-title,
+      .section-title,
+      .meta-title,
+      .practitioner-script {
+        color: #fff !important;
       }
 
-      .section-copy ul {
-        margin: 0 !important;
-        padding-left: 0.18in !important;
+      .header-title .accent,
+      .font-serif-heading {
+        color: #fbbf24 !important;
       }
 
+      .section-num,
       .meta-kicker,
-      .meta-subtitle,
       .field-label,
-      .practitioner-role,
-      .detail-row {
-        color: #6d28d9 !important;
-        font-family: Inter, Arial, Helvetica, sans-serif !important;
-        font-size: 7.2pt !important;
-        letter-spacing: 0.08em !important;
-        text-transform: uppercase !important;
-      }
-
-      .meta-title {
-        color: #111827 !important;
-        font-family: "Playfair Display", Georgia, serif !important;
-        font-size: 14pt !important;
-        font-style: italic !important;
-        margin: 0 0 0.05in !important;
+      .meta-subtitle {
+        color: #a855f7 !important;
       }
 
       .field input,
       .field textarea {
-        display: block !important;
-        width: 100% !important;
-        min-height: 0.28in !important;
-        padding: 0.04in 0 !important;
-        border: 0 !important;
-        border-bottom: 1px solid rgba(88, 28, 135, 0.45) !important;
-        background: #fff !important;
-        color: #111827 !important;
-        font-family: Inter, Arial, Helvetica, sans-serif !important;
-        font-size: 9pt !important;
+        background: transparent !important;
+        border-bottom: 1px solid rgba(168,85,247,0.45) !important;
       }
 
       .signature-area {
-        position: relative !important;
-        min-height: 0.95in !important;
-        height: 0.95in !important;
-        background: #fff !important;
-        border: 1px solid rgba(88, 28, 135, 0.38) !important;
-        border-radius: 0.08in !important;
-        overflow: hidden !important;
+        background: rgba(5,2,10,0.72) !important;
+        border: 1px solid rgba(168,85,247,0.45) !important;
       }
 
       .signature-image {
         display: block !important;
         position: static !important;
         width: 100% !important;
-        height: 0.88in !important;
+        height: auto !important;
         object-fit: contain !important;
-        padding: 0.05in !important;
       }
 
-      .practitioner-script {
-        color: #111827 !important;
-        font-family: "Playfair Display", Georgia, serif !important;
-        font-size: 18pt !important;
-        font-style: italic !important;
-      }
-
-      .practitioner-role {
-        color: #6d28d9 !important;
-      }
-
-      .action-row,
-      .send-panel.screen-only {
-        display: none !important;
-      }
-
-      a[href]::after {
-        content: "" !important;
+      .section-shell {
+        break-inside: avoid !important;
+        page-break-inside: avoid !important;
       }
     }
   </style>
@@ -1111,11 +947,10 @@
 <body class="grimoire-grid">
   <div class="stars" id="starField" aria-hidden="true"></div>
 
-  <button class="toggle-btn screen-only" id="toggleSidebarButton" type="button" aria-label="Open contract navigation" aria-expanded="false" aria-controls="sidebar">
-    <i id="toggleIcon" class="ph ph-list"></i>
-  </button>
-
   <aside id="sidebar" class="sidebar">
+    <div class="toggle-btn screen-only" id="toggleSidebarButton" aria-label="Toggle sidebar">
+      <i id="toggleIcon" class="ph ph-caret-left"></i>
+    </div>
     <div class="sidebar-inner">
       <div class="brand-row">
         <div class="brand-sigil">
@@ -1175,7 +1010,6 @@
       </div>
     </div>
   </aside>
-  <div id="sidebarOverlay" class="sidebar-overlay screen-only" hidden></div>
 
   <div class="mobile-bar screen-only">
     <div class="mobile-bar-inner">
@@ -1214,7 +1048,7 @@
           <div class="hero-grid">
             <div class="rune-card">
               <span class="meta-kicker">The Client</span>
-              <h3 class="meta-title">[Client Organization]</h3>
+              <h3 class="meta-title">Climate Emergency BC</h3>
               <p class="section-copy">Client details may be completed with placeholders and finalized before signature and dispatch.</p>
             </div>
             <div class="rune-card" style="border-left:4px solid rgba(234,179,8,0.5);">
@@ -1230,7 +1064,7 @@
             <div class="field-grid">
               <div class="field">
                 <label class="field-label" for="clientOrganization">Client Organization</label>
-                <input id="clientOrganization" name="clientOrganization" type="text" placeholder="[Client Organization]">
+                <input id="clientOrganization" name="clientOrganization" type="text" value="Climate Emergency BC" placeholder="[Client Organization]">
               </div>
               <div class="field">
                 <label class="field-label" for="clientRepresentative">Client Representative</label>
@@ -1246,7 +1080,7 @@
               </div>
               <div class="field">
                 <label class="field-label" for="contractorEmail">Contractor Email</label>
-                <input id="contractorEmail" name="contractorEmail" type="email" value="[YOUR_EMAIL]">
+                <input id="contractorEmail" name="contractorEmail" type="email" value="cassandre.arkema@gmail.com">
               </div>
             </div>
           </div>
@@ -1293,11 +1127,11 @@
             <div class="field-grid">
               <div class="field">
                 <label class="field-label" for="startDate">Start Date</label>
-                <input id="startDate" name="startDate" type="date">
+                <input id="startDate" name="startDate" type="date" value="2026-05-01">
               </div>
               <div class="field">
                 <label class="field-label" for="endDate">End Date</label>
-                <input id="endDate" name="endDate" type="date">
+                <input id="endDate" name="endDate" type="date" value="2026-06-01">
               </div>
             </div>
           </div>
@@ -1528,6 +1362,23 @@
             <p class="utility-note" style="margin-top:1rem;">Signed contracts are sent through the configured backend email script.</p>
             <div class="send-status" id="sendStatus" data-state="idle"></div>
           </div>
+
+          <div class="rune-card" style="margin-top:2rem; text-align:center;">
+            <span class="meta-kicker">Next Step</span>
+            <h3 class="meta-title">Secure Your Spot</h3>
+            <p class="section-copy">Complete the upfront payment to begin the 30-day trial.</p>
+
+            <a
+              id="dynamicPaymentLink"
+              href="https://www.paypal.com/invoice/p/#PMQJM7ZQ6DTCN79U"
+              target="_blank"
+              rel="noopener noreferrer"
+              class="button"
+              style="margin-top:1rem;"
+            >
+              Pay $750 Deposit
+            </a>
+          </div>
         </div>
       </section>
     </div>
@@ -1569,31 +1420,18 @@
         upfrontPayment: "$750 USD"
       };
 
-      const overlay = document.getElementById("sidebarOverlay");
       const toggleButton = document.getElementById("toggleSidebarButton");
 
-      function setSidebar(open) {
-        document.body.classList.toggle("sidebar-open", open);
-
-        const icon = document.getElementById("toggleIcon");
-        if (icon) icon.className = open ? "ph ph-x" : "ph ph-list";
-
-        if (toggleButton) {
-          toggleButton.setAttribute("aria-expanded", String(open));
-          toggleButton.setAttribute("aria-label", open ? "Close contract navigation" : "Open contract navigation");
-        }
-
-        if (overlay) {
-          overlay.hidden = !open;
-        }
-      }
-
       function toggleSidebar() {
-        setSidebar(!document.body.classList.contains("sidebar-open"));
+        const sidebar = document.getElementById("sidebar");
+        const icon = document.getElementById("toggleIcon");
+        if (!sidebar) return;
+        const isCollapsed = sidebar.classList.toggle("collapsed");
+        document.body.classList.toggle("sidebar-collapsed", isCollapsed);
+        if (icon) icon.className = isCollapsed ? "ph ph-caret-right" : "ph ph-caret-left";
       }
 
       toggleButton?.addEventListener("click", toggleSidebar);
-      overlay?.addEventListener("click", () => setSidebar(false));
 
       const starField = document.getElementById("starField");
       for (let index = 0; index < 150; index += 1) {
@@ -1762,6 +1600,8 @@
       const signatureStatus = document.getElementById("signatureStatus");
       const sendStatus = document.getElementById("sendStatus");
       const contractorEmailField = document.getElementById("contractorEmail");
+      const paymentInput = document.getElementById("paymentLink");
+      const paymentButton = document.getElementById("dynamicPaymentLink");
       const openButtons = [document.getElementById("openModalButton"), document.getElementById("mobileOpenModal")].filter(Boolean);
       const sendButtons = [document.getElementById("sendContractButton"), document.getElementById("mobileSendButton")].filter(Boolean);
 
@@ -1771,6 +1611,46 @@
 
       const readField = (name) => document.querySelector(`[name="${name}"]`);
       const getValue = (name) => (readField(name)?.value || "").trim();
+
+      const FORM_STORAGE_KEY = "aw_contract_mce_trial_2026";
+
+      const saveFormState = () => {
+        const data = {};
+        document.querySelectorAll("input[name], textarea[name]").forEach((field) => {
+          data[field.name] = field.value;
+        });
+        localStorage.setItem(FORM_STORAGE_KEY, JSON.stringify(data));
+      };
+
+      const loadFormState = () => {
+        try {
+          const raw = localStorage.getItem(FORM_STORAGE_KEY);
+          if (!raw) return;
+          const data = JSON.parse(raw);
+          Object.entries(data).forEach(([name, value]) => {
+            const field = document.querySelector(`[name="${name}"]`);
+            if (field && value !== undefined) field.value = value;
+          });
+        } catch (_error) {}
+      };
+
+      loadFormState();
+
+      document.querySelectorAll("input[name], textarea[name]").forEach((field) => {
+        field.addEventListener("input", saveFormState);
+        field.addEventListener("change", saveFormState);
+      });
+
+      function updatePaymentLink() {
+        if (!paymentButton) return;
+        const url = paymentInput?.value?.trim();
+        paymentButton.href = url || "https://www.paypal.com/invoice/p/#PMQJM7ZQ6DTCN79U";
+      }
+
+      if (paymentInput) {
+        paymentInput.addEventListener("input", updatePaymentLink);
+        updatePaymentLink();
+      }
 
       const escapeHtml = (value) => String(value || "")
         .replace(/&/g, "&amp;")
@@ -2015,8 +1895,9 @@
           closeModal();
           return;
         }
-        if (document.body.classList.contains("sidebar-open")) {
-          setSidebar(false);
+        const sidebar = document.getElementById("sidebar");
+        if (sidebar && !sidebar.classList.contains("collapsed") && window.innerWidth > 960) {
+          toggleSidebar();
         }
       });
 
@@ -2026,7 +1907,6 @@
 
       updateSignatureStatus("Draw directly here or use the larger signature box.");
       updateSendStatus("");
-      setSidebar(false);
       window.signaturePads = { visiblePad, modalPad };
     })();
   </script>

@@ -493,9 +493,16 @@
       max-width: var(--content-max);
       margin: 0 auto;
       display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 1rem;
+      flex-direction: column;
+      align-items: stretch;
+      gap: 0.75rem;
+    }
+
+    .mobile-bar-title {
+      display: block;
+      font-size: 1rem;
+      letter-spacing: 0.12em;
+      color: #fff;
     }
 
     .signature-controls,
@@ -944,9 +951,14 @@
       display: flex;
       align-items: center;
       justify-content: flex-end;
-      gap: 0.75rem;
+      gap: 0.65rem;
       margin-top: 0;
-      flex-wrap: wrap;
+      flex-wrap: nowrap;
+    }
+
+    .mobile-actions .round-button {
+      width: auto;
+      flex: 0 1 auto;
     }
 
     .dispatch-actions {
@@ -957,15 +969,12 @@
     }
 
     .dispatch-actions .round-button,
-    .mobile-actions .round-button {
+    .dispatch-actions .button.round-button {
       width: 100%;
     }
 
-    .mobile-actions .icon-action {
-      width: 40px;
-    }
-
     .icon-action {
+      position: relative;
       width: 40px;
       height: 40px;
       min-height: 40px;
@@ -1099,6 +1108,22 @@
         grid-template-columns: 1fr;
       }
 
+      .mobile-actions {
+        display: grid;
+        grid-template-columns: 1fr;
+        align-items: stretch;
+      }
+
+      .mobile-actions .round-button,
+      .mobile-actions .icon-action {
+        width: 100%;
+        flex: none;
+      }
+
+      .icon-action {
+        height: 44px;
+      }
+
       .section-shell {
         gap: 1rem;
         margin-top: 4rem;
@@ -1133,17 +1158,24 @@
     @media print {
       @page {
         size: Letter;
-        margin: 0.55in;
+        margin: 0;
       }
 
       html,
       body {
         margin: 0 !important;
         padding: 0 !important;
+        width: 8.5in !important;
+        min-height: 11in !important;
         background: #05020a !important;
         color: #e5e7eb !important;
         -webkit-print-color-adjust: exact !important;
         print-color-adjust: exact !important;
+        overflow: visible !important;
+      }
+
+      body {
+        padding: 0.38in !important;
       }
 
       .stars,
@@ -1155,7 +1187,15 @@
       .signature-canvas,
       button,
       nav,
-      .send-panel {
+      .send-panel,
+      .signature-status,
+      .send-status,
+      .button-status-text,
+      .button-status-dot,
+      .status-dot,
+      .sidebar-signature-button,
+      .sidebar-signature-label,
+      .sidebar-signature-status {
         display: none !important;
       }
 
@@ -1164,46 +1204,79 @@
         padding: 0 !important;
         width: 100% !important;
         position: static !important;
+        overflow: visible !important;
       }
 
       .page-wrap {
         width: 100% !important;
-        max-width: 6.65in !important;
+        max-width: 7.15in !important;
         margin: 0 auto !important;
         padding: 0 !important;
       }
 
       header {
-        margin: 0 0 0.28in !important;
+        margin: 0 0 0.2in !important;
+      }
+
+      .eyebrow {
+        display: inline-block !important;
+        font-size: 6.6pt !important;
+        line-height: 1.2 !important;
+        letter-spacing: 0.08em !important;
+        margin: 0 0 0.08in !important;
+        padding: 0.04in 0.07in !important;
+        color: #c4b5fd !important;
+        border: 1px solid rgba(168,85,247,0.45) !important;
+        background: rgba(168,85,247,0.08) !important;
       }
 
       .header-title {
-        font-size: 24pt !important;
+        font-size: 20pt !important;
         line-height: 1.12 !important;
-        margin: 0 0 0.12in !important;
+        margin: 0 0 0.1in !important;
         color: #fff !important;
+        letter-spacing: normal !important;
+        word-spacing: normal !important;
+      }
+
+      .header-title br {
+        display: none !important;
+      }
+
+      .header-title .accent {
+        color: #fbbf24 !important;
+      }
+
+      .header-rule {
+        width: 0.9in !important;
+        height: 1px !important;
+        background: linear-gradient(to right, #a855f7, rgba(251,191,36,0.8), transparent) !important;
       }
 
       .section-shell {
         display: block !important;
-        margin: 0 0 0.26in !important;
+        margin: 0 0 0.2in !important;
         padding: 0 !important;
         break-inside: avoid !important;
-      }
-
-      .section-title {
-        font-size: 11pt !important;
-        line-height: 1.35 !important;
-        letter-spacing: 0.04em !important;
-        margin: 0 0 0.1in !important;
-        padding-bottom: 0.05in !important;
-        color: #fff !important;
-        border-bottom: 1px solid rgba(168,85,247,0.35) !important;
-        word-spacing: 0.03em !important;
+        page-break-inside: avoid !important;
       }
 
       .section-num {
         display: none !important;
+      }
+
+      .section-title {
+        font-size: 9.5pt !important;
+        line-height: 1.3 !important;
+        letter-spacing: 0.035em !important;
+        word-spacing: normal !important;
+        margin: 0 0 0.08in !important;
+        padding-bottom: 0.04in !important;
+        color: #fff !important;
+        border-bottom: 1px solid rgba(168,85,247,0.35) !important;
+        word-break: normal !important;
+        overflow-wrap: normal !important;
+        hyphens: none !important;
       }
 
       .rune-card,
@@ -1211,10 +1284,14 @@
       .practitioner-seal {
         background: rgba(13, 7, 24, 0.94) !important;
         border: 1px solid rgba(168,85,247,0.35) !important;
-        border-radius: 0.08in !important;
-        padding: 0.16in !important;
+        border-radius: 0.07in !important;
+        padding: 0.12in !important;
         color: #e5e7eb !important;
         break-inside: avoid !important;
+        page-break-inside: avoid !important;
+        box-shadow: none !important;
+        backdrop-filter: none !important;
+        -webkit-backdrop-filter: none !important;
       }
 
       .hero-grid,
@@ -1224,7 +1301,7 @@
       .chip-list {
         display: grid !important;
         grid-template-columns: 1fr 1fr !important;
-        gap: 0.16in !important;
+        gap: 0.12in !important;
       }
 
       .field.full {
@@ -1235,65 +1312,71 @@
       .section-copy p,
       .section-copy li,
       .chip p {
-        font-size: 9pt !important;
-        line-height: 1.55 !important;
+        font-size: 8pt !important;
+        line-height: 1.42 !important;
         color: #e5e7eb !important;
         word-break: normal !important;
         overflow-wrap: normal !important;
         hyphens: none !important;
-        word-spacing: 0.04em !important;
+        word-spacing: normal !important;
+        letter-spacing: normal !important;
       }
 
       .section-copy p {
-        margin: 0 0 0.1in !important;
+        margin: 0 0 0.075in !important;
       }
 
       .section-copy ul {
         margin: 0 !important;
-        padding-left: 0.18in !important;
+        padding-left: 0.16in !important;
       }
 
       .meta-kicker,
       .field-label,
       .meta-subtitle,
       .practitioner-role,
-      .detail-row {
-        font-size: 7.4pt !important;
-        line-height: 1.35 !important;
-        letter-spacing: 0.06em !important;
+      .detail-row,
+      .chip h4 {
+        font-size: 6.5pt !important;
+        line-height: 1.25 !important;
+        letter-spacing: 0.045em !important;
+        word-spacing: normal !important;
         color: #c4b5fd !important;
+        word-break: normal !important;
+        overflow-wrap: normal !important;
+        hyphens: none !important;
       }
 
       .meta-title {
-        font-size: 14pt !important;
-        line-height: 1.25 !important;
-        margin: 0 0 0.06in !important;
+        font-size: 12pt !important;
+        line-height: 1.2 !important;
+        margin: 0 0 0.045in !important;
         color: #fff !important;
       }
 
       .detail-pairs {
-        gap: 0.09in !important;
+        gap: 0.07in !important;
       }
 
       .detail-row {
-        padding-bottom: 0.07in !important;
+        padding-bottom: 0.055in !important;
         border-bottom: 1px solid rgba(168,85,247,0.28) !important;
       }
 
       .field-grid {
-        margin-top: 0.12in !important;
+        margin-top: 0.09in !important;
       }
 
       .field {
-        gap: 0.05in !important;
+        gap: 0.035in !important;
       }
 
       .field input,
       .field textarea {
-        font-size: 9pt !important;
-        line-height: 1.35 !important;
-        min-height: 0.24in !important;
-        padding: 0.05in 0 !important;
+        font-size: 8pt !important;
+        line-height: 1.25 !important;
+        min-height: 0.19in !important;
+        padding: 0.035in 0 !important;
         color: #e5e7eb !important;
         background: transparent !important;
         border-bottom: 1px solid rgba(168,85,247,0.45) !important;
@@ -1301,17 +1384,19 @@
 
       .signature-area,
       .practitioner-seal {
-        min-height: 0.85in !important;
+        min-height: 0.7in !important;
         height: auto !important;
       }
 
       .signature-image {
         display: block !important;
+        visibility: visible !important;
+        opacity: 1 !important;
         position: static !important;
         width: 100% !important;
-        height: 0.72in !important;
+        height: 0.58in !important;
         object-fit: contain !important;
-        padding: 0.05in !important;
+        padding: 0.035in !important;
       }
 
       .signature-image:not([src]),
@@ -1320,12 +1405,12 @@
       }
 
       .practitioner-script {
-        font-size: 18pt !important;
+        font-size: 15pt !important;
         color: #fff !important;
       }
 
       .font-serif-heading {
-        font-size: 28pt !important;
+        font-size: 23pt !important;
         color: #fbbf24 !important;
       }
 
@@ -1391,9 +1476,7 @@
 
       <div class="mobile-bar screen-only">
     <div class="mobile-bar-inner">
-      <div>
-        <div class="font-magical" style="font-size:1rem;letter-spacing:0.12em;color:#fff;">Monthly Content Engine Agreement</div>
-      </div>
+      <div class="mobile-bar-title font-magical">Monthly Content Engine Agreement</div>
       <div class="mobile-actions">
         <button class="button round-button neutral-action status-action" type="button" id="mobileOpenModal">
           <span class="button-label">Open Signature Box</span>
@@ -1852,6 +1935,7 @@
 
       class SignaturePad {
         constructor(canvas, image) {
+          if (!canvas || !image) return;
           this.canvas = canvas;
           this.image = image;
           this.ctx = canvas.getContext("2d");
@@ -1989,14 +2073,12 @@
         }
       }
 
-      const visiblePad = new SignaturePad(
-        document.getElementById("visibleSignatureCanvas"),
-        document.getElementById("visibleSignatureImage")
-      );
-      const modalPad = new SignaturePad(
-        document.getElementById("modalSignatureCanvas"),
-        document.getElementById("modalSignatureImage")
-      );
+      const visibleCanvas = document.getElementById("visibleSignatureCanvas");
+      const visibleImage = document.getElementById("visibleSignatureImage");
+      const modalCanvas = document.getElementById("modalSignatureCanvas");
+      const modalImage = document.getElementById("modalSignatureImage");
+      const visiblePad = visibleCanvas && visibleImage ? new SignaturePad(visibleCanvas, visibleImage) : null;
+      const modalPad = modalCanvas && modalImage ? new SignaturePad(modalCanvas, modalImage) : null;
 
       const modal = document.getElementById("signatureModal");
       const signatureStatus = document.getElementById("signatureStatus");
@@ -2127,24 +2209,28 @@
         return date.toLocaleDateString(undefined, { year: "numeric", month: "long", day: "numeric" });
       };
 
-      const currentSignature = () => visiblePad.exportDataUrl() || visiblePad.savedDataUrl || modalPad.exportDataUrl() || modalPad.savedDataUrl || "";
+      const currentSignature = () => visiblePad?.exportDataUrl?.() || visiblePad?.savedDataUrl || modalPad?.exportDataUrl?.() || modalPad?.savedDataUrl || "";
 
       const syncPads = (dataUrl) => {
-        visiblePad.clear(false);
-        modalPad.clear(false);
+        visiblePad?.clear?.(false);
+        modalPad?.clear?.(false);
 
-        visiblePad.setSavedDataUrl(dataUrl);
-        modalPad.savedDataUrl = dataUrl || "";
+        visiblePad?.setSavedDataUrl?.(dataUrl);
+        if (modalPad) modalPad.savedDataUrl = dataUrl || "";
 
         if (dataUrl) {
-          visiblePad.image.src = dataUrl;
-          visiblePad.image.style.display = "block";
-          modalPad.image.removeAttribute("src");
-          modalPad.image.style.display = "none";
-          modalPad.loadFromDataUrl(dataUrl, false);
+          if (visiblePad?.image) {
+            visiblePad.image.src = dataUrl;
+            visiblePad.image.style.display = "block";
+          }
+          if (modalPad?.image) {
+            modalPad.image.removeAttribute("src");
+            modalPad.image.style.display = "none";
+          }
+          modalPad?.loadFromDataUrl?.(dataUrl, false);
         } else {
-          visiblePad.setSavedDataUrl("");
-          modalPad.setSavedDataUrl("");
+          visiblePad?.setSavedDataUrl?.("");
+          modalPad?.setSavedDataUrl?.("");
         }
       };
 
@@ -2181,16 +2267,17 @@
 
       const openModal = () => {
         syncPads(currentSignature());
-        modal.hidden = false;
+        if (modal) modal.hidden = false;
       };
       // Sidebar signature button will open modal (single listener) - defined above
       document.getElementById("sidebarSignatureButton")?.addEventListener("click", openModal);
 
       const closeModal = () => {
-        modal.hidden = true;
+        if (modal) modal.hidden = true;
       };
 
       const saveSignature = (pad) => {
+        if (!pad) return;
         const dataUrl = pad.exportDataUrl() || pad.savedDataUrl;
         if (!dataUrl) {
           updateSignatureStatus("No signature detected yet. Draw a signature before saving.", "error");
@@ -2391,7 +2478,7 @@
       });
       document.addEventListener("keydown", (event) => {
         if (event.key !== "Escape") return;
-        if (!modal.hidden) {
+        if (modal && !modal.hidden) {
           closeModal();
           return;
         }

@@ -1099,13 +1099,18 @@
         display: none !important;
       }
       .page-wrap {
-        width: 7in !important;
-        max-width: 7in !important;
+        width: 6.75in !important;
+        max-width: 6.75in !important;
         margin: 0 auto !important;
         padding: 0 !important;
       }
       .main-content {
-        padding: 0.5in 0 !important;
+        margin: 0 !important;
+        padding: 0.45in 0 !important;
+        width: 100% !important;
+        max-width: none !important;
+        overflow: visible !important;
+        position: static !important;
       }
       .section-copy,
       .section-copy p,
@@ -1116,11 +1121,46 @@
         overflow-wrap: normal !important;
         hyphens: none !important;
       }
+      
+      .section-title,
+      .meta-kicker,
+      .field-label,
+      .detail-row,
+      .chip h4 {
+        letter-spacing: 0.015em !important;
+        word-break: normal !important;
+        overflow-wrap: normal !important;
+        hyphens: none !important;
+        white-space: normal !important;
+      }
+      .section-copy,
+      .section-copy p,
+      .section-copy li {
+        font-size: 7.5pt !important;
+        line-height: 1.42 !important;
+        word-break: normal !important;
+        overflow-wrap: normal !important;
+        hyphens: none !important;
+      }
+      .section-title {
+        font-size: 8.5pt !important;
+        line-height: 1.25 !important;
+      }
       .signature-image {
         display: block !important;
         width: 100% !important;
         height: 0.5in !important;
         object-fit: contain !important;
+      }
+      /* Hide signature artifact when printing */
+      .signature-status,
+      .send-status,
+      .button-status-text,
+      .button-status-dot,
+      .status-dot,
+      .signature-canvas,
+      .signature-image {
+        display: none !important;
       }
       .signature-canvas { display: none !important; }
       .button-status-text,
@@ -1140,9 +1180,7 @@
         display: none !important;
       }
 
-      /* duplicate main-content rule removed to keep a single print rule */
-
-      /* Removed duplicate print .page-wrap rule to keep single 7in rule above */
+      /* ensure only the single, correct print layout rules apply */
 
       header {
         margin: 0 0 0.055in !important;
@@ -1433,11 +1471,22 @@
           <span class="button-status-text" id="topSendText">Not Sent</span>
           <span class="button-status-dot" id="topSendDot" data-state="pending"></span>
         </button>
+        </div>
+        <!-- Additional actions: Save contract and Reset saved data -->
+        <button class="button round-button neutral-action status-action" type="button" id="mobileSaveButton">
+          <span class="button-label">Save Contract</span>
+          <span class="button-status-text" id="topSaveText">Unsaved</span>
+          <span class="button-status-dot" id="topSaveDot" data-state="idle"></span>
+        </button>
+        <button class="button round-button danger-action status-action" type="button" id="mobileResetButton">
+          <span class="button-label">Reset Saved Data</span>
+          <span class="button-status-text" id="topResetText">Clear Local</span>
+          <span class="button-status-dot" id="topResetDot" data-state="idle"></span>
+        </button>
       </div>
-    </div>
   </div>
 
-  <main class="main-content">
+      <main class="main-content">
     <div class="page-wrap">
       <div class="print-header">
         <div>Monthly Content Engine Agreement</div>
@@ -1818,12 +1867,12 @@
     </div>
   </div>
 
-  <script>
+      <script>
     window.CONTRACT_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbxmMfltr4LjiaKhTCwH6SFRnUYs9LT8dTypU6Uslxgncx_dt-PZ9Ph_QTOhSAZbJKMkOw/exec";
 
     window.CONTRACT_BACKEND_CONFIG = window.CONTRACT_BACKEND_CONFIG || {};
 
-    (() => {
+      (() => {
       let backendConfig = window.CONTRACT_BACKEND_CONFIG || {};
       window.CONTRACT_BACKEND_CONFIG = backendConfig;
       const CONTRACT_META = {
@@ -2016,6 +2065,44 @@
       const contractorEmailField = document.getElementById("contractorEmail");
       const paymentButton = document.getElementById("dynamicPaymentLink");
       const openButtons = [document.getElementById("openModalButton"), document.getElementById("mobileOpenModal")].filter(Boolean);
+      // New save/reset buttons for top bar in mobile as well as status tracking
+      const saveBtn = document.getElementById("mobileSaveButton");
+      const resetBtn = document.getElementById("mobileResetButton");
+      const topSaveText = document.getElementById("topSaveText");
+      const topSaveDot = document.getElementById("topSaveDot");
+      const LOCAL_SAVE_KEY = "contract_saved_v1";
+
+      function setSaveState(state) {
+        if (topSaveText) topSaveText.textContent = state === "saved" ? "Saved" : "Unsaved";
+        if (topSaveDot) topSaveDot.dataset.state = state;
+      }
+
+      // Load initial save state
+      try {
+        const exists = localStorage.getItem(LOCAL_SAVE_KEY) !== null;
+        setSaveState(exists ? "saved" : "unsaved");
+      } catch (_) {
+        setSaveState("unsaved");
+      }
+
+      if (saveBtn) {
+        saveBtn.addEventListener("click", () => {
+          try {
+            localStorage.setItem(LOCAL_SAVE_KEY, JSON.stringify({ savedAt: new Date().toISOString() }));
+            setSaveState("saved");
+          } catch (e) {
+            setSaveState("unsaved");
+          }
+        });
+      }
+      if (resetBtn) {
+        resetBtn.addEventListener("click", () => {
+          const ok = confirm("Clear saved contract data on this device?");
+          if (!ok) return;
+          localStorage.removeItem(LOCAL_SAVE_KEY);
+          setSaveState("unsaved");
+        });
+      }
       // Allow opening signature modal from the sidebar
       const sendButtons = [document.getElementById("sendContractButton"), document.getElementById("mobileSendButton")].filter(Boolean);
 
@@ -2389,9 +2476,42 @@
 
       // Initialize signature state based on whether a signature exists
       setSignatureState(currentSignature() ? "saved" : "pending");
+      // Initialize save state from localStorage if present
+      try {
+        const saved = localStorage.getItem("contract_saved_v1");
+        setSaveState(saved ? "saved" : "unsaved");
+      } catch (_) {
+        setSaveState("unsaved");
+      }
       updateSendStatus("");
       window.signaturePads = { visiblePad, modalPad };
     })();
   </script>
 </body>
 </html>
+      .signature-grid {
+        display: grid !important;
+        grid-template-columns: 1fr 1fr !important;
+        gap: 0.18in !important;
+      }
+      .signature-area,
+      .practitioner-seal {
+        min-height: 0.8in !important;
+        height: 0.8in !important;
+        border: 1px solid rgba(168,85,247,0.34) !important;
+        background: rgba(5,2,10,0.72) !important;
+      }
+      .signature-image {
+        display: block !important;
+        position: static !important;
+        width: 100% !important;
+        height: 0.72in !important;
+        object-fit: contain !important;
+        padding: 0.04in !important;
+      }
+      .signature-canvas {
+        display: none !important;
+      }
+      .practitioner-script {
+        font-size: 15pt !important;
+      }

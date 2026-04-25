@@ -104,55 +104,54 @@
     .sidebar {
       position: fixed;
       inset: 0 auto 0 0;
-      width: var(--sidebar-expanded);
+      width: min(320px, calc(100vw - 48px));
       display: flex;
       flex-direction: column;
       padding: 2rem 0 1.5rem;
       background: linear-gradient(to bottom, rgba(13, 7, 24, 0.96), rgba(5, 2, 10, 0.96));
       border-right: 1px solid var(--line);
       box-shadow: var(--shadow);
-      transition: width 0.35s ease;
-      z-index: 20;
+      transform: translateX(-100%);
+      transition: transform 0.28s ease;
+      z-index: 50;
     }
 
-    .sidebar.collapsed {
-      width: var(--sidebar-collapsed);
+    body.sidebar-open .sidebar {
+      transform: translateX(0);
     }
 
     .main-content {
-      margin-left: 0;
+      margin-left: 0 !important;
       min-height: 100vh;
-      overflow-y: auto;
       position: relative;
       z-index: 10;
-      transition: margin-left 0.35s ease;
-    }
-
-    body.sidebar-open .main-content {
-      margin-left: var(--sidebar-expanded);
-    }
-
-    body:not(.sidebar-open) .main-content,
-    body.sidebar-collapsed .main-content {
-      margin-left: 0;
     }
 
     .toggle-btn {
-      position: absolute;
-      right: -12px;
-      top: 40px;
-      width: 24px;
-      height: 24px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      background: var(--accent);
-      color: #fff;
-      border-radius: 4px;
-      box-shadow: 0 0 10px rgba(168, 85, 247, 0.5);
+      position: fixed;
+      left: 1rem;
+      top: 1rem;
+      width: 44px;
+      height: 44px;
+      display: grid;
+      place-items: center;
+      background: rgba(12, 6, 26, 0.88);
+      color: #e5e7eb;
+      border: 1px solid rgba(168, 85, 247, 0.38);
+      border-radius: 999px;
+      box-shadow: 0 18px 48px rgba(0,0,0,0.35);
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
       cursor: pointer;
-      z-index: 25;
-      border: 0;
+      z-index: 70;
+    }
+
+    .toggle-btn i {
+      font-size: 1.25rem;
+    }
+
+    body.sidebar-open .toggle-btn {
+      left: calc(min(320px, calc(100vw - 48px)) + 1rem);
     }
 
     .sidebar-inner {
@@ -167,13 +166,6 @@
     .sidebar-footer,
     .nav-text {
       transition: opacity 0.25s ease;
-    }
-
-    .sidebar.collapsed .nav-text,
-    .sidebar.collapsed .sidebar-meta,
-    .sidebar.collapsed .sidebar-footer {
-      opacity: 0;
-      pointer-events: none;
     }
 
     .brand-row {
@@ -257,9 +249,19 @@
     }
 
     .page-wrap {
-      max-width: 900px;
+      width: min(960px, calc(100% - 2rem));
+      max-width: 960px;
       margin: 0 auto;
-      padding: 5rem 1.5rem;
+      padding: 5.5rem 0 6rem;
+    }
+
+    .sidebar-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 40;
+      background: rgba(0, 0, 0, 0.48);
+      backdrop-filter: blur(2px);
+      -webkit-backdrop-filter: blur(2px);
     }
 
     .mobile-bar {
@@ -754,20 +756,12 @@
     }
 
     @media (max-width: 960px) {
-      body.sidebar-open .main-content,
-      .main-content {
-        margin-left: 0;
-      }
-
-      .sidebar {
-        display: none;
-      }
-
       .mobile-bar {
         display: block;
       }
 
       .page-wrap {
+        width: min(100%, calc(100% - 1.5rem));
         padding-top: 2rem;
       }
     }
@@ -794,7 +788,8 @@
       }
 
       .page-wrap {
-        padding: 2rem 1rem 7rem;
+        width: min(100%, calc(100% - 1rem));
+        padding: 2rem 0 7rem;
       }
 
       .header-title {
@@ -806,113 +801,263 @@
       }
     }
 
-    @page {
-      size: Letter;
-      margin: 0.5in;
-    }
-
-    @media print {
-      body {
-        background: #fff !important;
-        color: #000 !important;
-      }
-
-      .stars,
-      .sidebar,
-      .mobile-bar,
-      .toggle-btn,
-      .button,
-      .screen-only,
-      .modal,
-      .signature-canvas {
-        display: none !important;
-      }
-
-      .main-content {
-        margin: 0 !important;
-        overflow: visible;
-      }
-
-      .page-wrap {
-        max-width: none;
-        padding: 0;
-      }
-
-      .print-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: baseline;
-        margin-bottom: 0.25in;
-        font-family: "JetBrains Mono", monospace;
-        color: #000;
-      }
-
-      .eyebrow,
-      .header-title,
-      .section-title,
-      .meta-title,
-      .meta-kicker,
-      .meta-subtitle,
-      .section-copy,
-      .section-copy li,
-      .detail-row,
-      .detail-row span,
-      .field-label,
-      .signature-status,
-      .send-status,
-      .utility-note,
-      .practitioner-role,
-      .practitioner-script {
-        color: #000 !important;
-        text-shadow: none !important;
-      }
-
-      .rune-card,
-      .send-panel,
-      .practitioner-seal,
-      .chip {
-        background: #fff !important;
-        border-color: #999 !important;
-        box-shadow: none !important;
-      }
-
-      .field input,
-      .field textarea {
-        border-bottom-color: #999 !important;
-        color: #000 !important;
-      }
-
-      .signature-area {
-        background: #fff !important;
-        border-color: #999 !important;
-      }
-
-      .signature-image {
-        display: block !important;
-      }
-
-      .section-shell,
-      .rune-card,
-      .signature-area,
-      .practitioner-seal,
-      .send-panel {
-        break-inside: avoid;
-        page-break-inside: avoid;
-      }
-    }
-
     @keyframes pulse {
       0%, 100% { opacity: 0.3; }
       50% { opacity: 0.8; }
     }
+
+    @page {
+      size: Letter;
+      margin: 0.6in;
+    }
+
+    @media print {
+      html,
+      body {
+        margin: 0 !important;
+        padding: 0 !important;
+        background: #fff !important;
+        color: #111 !important;
+        overflow: visible !important;
+        width: auto !important;
+        min-height: auto !important;
+      }
+
+      body * {
+        box-shadow: none !important;
+        text-shadow: none !important;
+        backdrop-filter: none !important;
+        -webkit-backdrop-filter: none !important;
+        animation: none !important;
+        transition: none !important;
+      }
+
+      .stars,
+      .bg-grid,
+      .sidebar,
+      .sidebar-overlay,
+      .toggle-btn,
+      .mobile-bar,
+      .screen-only,
+      .modal,
+      .signature-canvas,
+      button,
+      nav {
+        display: none !important;
+      }
+
+      .main-content,
+      .page-wrap {
+        display: block !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        width: 100% !important;
+        max-width: none !important;
+        overflow: visible !important;
+        position: static !important;
+      }
+
+      .print-header {
+        display: flex !important;
+        justify-content: space-between !important;
+        align-items: baseline !important;
+        margin: 0 0 0.25in !important;
+        padding: 0 0 0.1in !important;
+        border-bottom: 1px solid #999 !important;
+        color: #111 !important;
+        font: 9pt Arial, Helvetica, sans-serif !important;
+      }
+
+      header {
+        margin: 0 0 0.22in !important;
+        padding: 0 !important;
+      }
+
+      .eyebrow {
+        display: block !important;
+        margin: 0 0 0.08in !important;
+        padding: 0 !important;
+        border: 0 !important;
+        color: #555 !important;
+        font: 8pt Arial, Helvetica, sans-serif !important;
+        letter-spacing: 0.08em !important;
+        text-transform: uppercase !important;
+      }
+
+      .header-title {
+        margin: 0 0 0.12in !important;
+        color: #111 !important;
+        font-family: Georgia, "Times New Roman", serif !important;
+        font-size: 22pt !important;
+        line-height: 1.15 !important;
+        text-transform: none !important;
+      }
+
+      .header-title .accent {
+        color: #111 !important;
+      }
+
+      .header-rule {
+        display: none !important;
+      }
+
+      .section-shell {
+        display: block !important;
+        margin: 0 0 0.18in !important;
+        padding: 0 !important;
+        break-inside: avoid !important;
+        page-break-inside: avoid !important;
+      }
+
+      .section-num {
+        display: none !important;
+      }
+
+      .section-content {
+        display: block !important;
+        width: 100% !important;
+      }
+
+      .section-title {
+        margin: 0 0 0.08in !important;
+        padding: 0 0 0.04in !important;
+        border-bottom: 1px solid #bbb !important;
+        color: #111 !important;
+        font-family: Arial, Helvetica, sans-serif !important;
+        font-size: 10.5pt !important;
+        letter-spacing: 0.06em !important;
+        text-transform: uppercase !important;
+      }
+
+      .hero-grid,
+      .card-grid,
+      .signature-grid,
+      .field-grid,
+      .chip-list {
+        display: grid !important;
+        grid-template-columns: 1fr 1fr !important;
+        gap: 0.14in !important;
+      }
+
+      .field.full {
+        grid-column: 1 / -1 !important;
+      }
+
+      .rune-card,
+      .send-panel,
+      .chip,
+      .practitioner-seal {
+        background: #fff !important;
+        border: 1px solid #bbb !important;
+        color: #111 !important;
+        padding: 0.14in !important;
+        break-inside: avoid !important;
+        page-break-inside: avoid !important;
+      }
+
+      .rune-card::before,
+      .rune-card::after,
+      .send-panel::before,
+      .send-panel::after,
+      .practitioner-seal::before {
+        display: none !important;
+        content: none !important;
+      }
+
+      .section-copy,
+      .section-copy p,
+      .section-copy li,
+      .chip p,
+      .utility-note {
+        color: #111 !important;
+        font-family: Arial, Helvetica, sans-serif !important;
+        font-size: 9.5pt !important;
+        line-height: 1.45 !important;
+      }
+
+      .section-copy p {
+        margin: 0 0 0.08in !important;
+      }
+
+      .section-copy ul {
+        margin: 0 !important;
+        padding-left: 0.18in !important;
+      }
+
+      .meta-kicker,
+      .meta-subtitle,
+      .field-label,
+      .practitioner-role,
+      .detail-row {
+        color: #555 !important;
+        font-family: Arial, Helvetica, sans-serif !important;
+        font-size: 7.5pt !important;
+        letter-spacing: 0.06em !important;
+        text-transform: uppercase !important;
+      }
+
+      .meta-title {
+        color: #111 !important;
+        font-family: Georgia, "Times New Roman", serif !important;
+        font-size: 14pt !important;
+        margin: 0 0 0.05in !important;
+      }
+
+      .field input,
+      .field textarea {
+        display: block !important;
+        width: 100% !important;
+        min-height: 0.28in !important;
+        padding: 0.04in 0 !important;
+        border: 0 !important;
+        border-bottom: 1px solid #999 !important;
+        background: #fff !important;
+        color: #111 !important;
+        font-family: Arial, Helvetica, sans-serif !important;
+        font-size: 9pt !important;
+      }
+
+      .signature-area {
+        position: relative !important;
+        min-height: 0.9in !important;
+        height: 0.9in !important;
+        background: #fff !important;
+        border: 1px solid #999 !important;
+        overflow: hidden !important;
+      }
+
+      .signature-image {
+        display: block !important;
+        position: static !important;
+        width: 100% !important;
+        height: 0.85in !important;
+        object-fit: contain !important;
+        padding: 0.05in !important;
+      }
+
+      .practitioner-script {
+        color: #111 !important;
+        font-family: Georgia, "Times New Roman", serif !important;
+        font-size: 18pt !important;
+      }
+
+      .action-row,
+      .send-panel.screen-only {
+        display: none !important;
+      }
+
+      a[href]::after {
+        content: "" !important;
+      }
+    }
   </style>
 </head>
-<body class="grimoire-grid sidebar-collapsed">
+<body class="grimoire-grid">
   <div class="stars" id="starField" aria-hidden="true"></div>
 
-  <aside id="sidebar" class="sidebar collapsed">
+  <aside id="sidebar" class="sidebar">
     <div class="toggle-btn screen-only" id="toggleSidebarButton" aria-label="Toggle sidebar">
-      <i id="toggleIcon" class="ph ph-caret-right"></i>
+      <i id="toggleIcon" class="ph ph-list"></i>
     </div>
     <div class="sidebar-inner">
       <div class="brand-row">
@@ -973,6 +1118,7 @@
       </div>
     </div>
   </aside>
+  <div id="sidebarOverlay" class="sidebar-overlay screen-only" hidden></div>
 
   <div class="mobile-bar screen-only">
     <div class="mobile-bar-inner">
@@ -1173,7 +1319,7 @@
         <div class="section-content">
           <h2 class="section-title">Independent Contractor Status</h2>
           <div class="rune-card" style="padding:2.5rem;">
-            <p class="section-copy">The Contractor is an independent contractor and not an employee, partner, joint venturer, or agent of the Client. The Contractor controls the manner and means of performing the services and may use subcontractors, assistants, tools, and workflows of the Contractor's choosing, provided the Contractor remains responsible for the services delivered under this Agreement.</p>
+            <p class="section-copy">Contractor is an independent contractor and is not an employee, partner, agent, or joint venturer of Client. Contractor controls the manner and means of performing the services, subject to the agreed scope, timeline, and deliverables. Nothing in this Agreement creates an employment relationship or gives either party authority to bind the other.</p>
           </div>
         </div>
       </section>
@@ -1183,7 +1329,7 @@
         <div class="section-content">
           <h2 class="section-title">Taxes</h2>
           <div class="rune-card" style="padding:2.5rem;">
-            <p class="section-copy">The Contractor is responsible for the Contractor's own federal, state, and local taxes in the United States, including income and self-employment taxes. Unless required by law, the Client will not withhold payroll taxes or provide employee benefits. If any tax forms, cross-border vendor records, or compliance information are reasonably required for payment, both parties will cooperate in good faith.</p>
+            <p class="section-copy">Contractor is responsible for all federal, state, and local taxes arising from payments received under this Agreement. Client will not withhold payroll taxes, provide employee benefits, or treat Contractor as an employee. Fees are stated in United States Dollars unless otherwise agreed in writing.</p>
           </div>
         </div>
       </section>
@@ -1193,7 +1339,8 @@
         <div class="section-content">
           <h2 class="section-title">Intellectual Property</h2>
           <div class="rune-card" style="padding:2.5rem;">
-            <p class="section-copy">Upon full payment of all amounts due under this Agreement, the Client receives the right to use the final deliverables created specifically for the Client during the trial for the Client's internal and external business purposes. The Contractor retains ownership of pre-existing materials, templates, systems, methodologies, know-how, prompts, frameworks, and reusable production infrastructure that are not unique final deliverables created solely for the Client.</p>
+            <p class="section-copy">After full payment is received, Client receives ownership of the final approved deliverables created specifically for Client under this Agreement. Contractor retains ownership of pre-existing materials, templates, strategy frameworks, working files, processes, know-how, and reusable systems. Contractor may reuse general knowledge and non-confidential methods developed during the engagement.</p>
+            <p class="section-copy">Contractor may reference the work in a portfolio, case study, or professional materials unless Client requests confidentiality in writing.</p>
           </div>
         </div>
       </section>
@@ -1233,7 +1380,7 @@
         <div class="section-content">
           <h2 class="section-title">Limitation of Liability</h2>
           <div class="rune-card" style="padding:2.5rem;">
-            <p class="section-copy">To the fullest extent permitted by law, the Contractor's total liability arising out of or related to this Agreement will not exceed the total amount actually paid by the Client under this Agreement. Neither party will be liable to the other for indirect, incidental, special, consequential, or punitive damages, including lost profits, lost opportunity, or reputational harm.</p>
+            <p class="section-copy">To the fullest extent permitted by law, Contractor’s total liability under this Agreement is limited to the amount actually paid by Client under this Agreement. Contractor is not liable for indirect, incidental, consequential, special, punitive, or lost-profit damages.</p>
           </div>
         </div>
       </section>
@@ -1243,7 +1390,7 @@
         <div class="section-content">
           <h2 class="section-title">Governing Law</h2>
           <div class="rune-card" style="padding:2.5rem;">
-            <p class="section-copy">This Agreement is governed by the laws of the State of <span class="font-mono-code">[STATE]</span>, United States, without regard to conflict of law rules.</p>
+            <p class="section-copy">This Agreement is governed by the laws of the State of [STATE], United States, without regard to conflict of law principles. The parties agree to work in good faith to resolve any dispute informally before pursuing formal remedies.</p>
             <div class="field-grid">
               <div class="field">
                 <label class="field-label" for="governingLawState">Governing Law State</label>
@@ -1317,15 +1464,11 @@
             <p>Send the signed agreement as a branded HTML email with a PDF attachment to both parties.</p>
             <div class="field-grid">
               <div class="field">
-                <label class="field-label" for="appsScriptUrl">Apps Script Web App URL</label>
-                <input id="appsScriptUrl" name="appsScriptUrl" type="url" placeholder="[GOOGLE_APPS_SCRIPT_WEB_APP_URL]">
-              </div>
-              <div class="field">
                 <label class="field-label" for="paymentLink">Payment Link (Optional)</label>
                 <input id="paymentLink" name="paymentLink" type="url" placeholder="https://">
               </div>
             </div>
-            <p class="utility-note" style="margin-top:1rem;">The send action uses a `text/plain;charset=utf-8` POST payload for Apps Script compatibility.</p>
+            <p class="utility-note" style="margin-top:1rem;">Signed contracts are sent through the configured backend email script.</p>
             <div class="send-status" id="sendStatus" data-state="idle"></div>
           </div>
         </div>
@@ -1351,25 +1494,36 @@
 
   <script>
     (() => {
+      let backendConfig = window.CONTRACT_BACKEND_CONFIG || {};
+      try {
+        backendConfig = Object.assign({}, backendConfig, JSON.parse('<?= typeof contractConfigJson !== "undefined" ? contractConfigJson : "{}" ?>'));
+      } catch (error) {
+        backendConfig = window.CONTRACT_BACKEND_CONFIG || {};
+      }
+      window.CONTRACT_BACKEND_CONFIG = backendConfig;
       const CONTRACT_META = {
         contractorName: "Cassandre Arkema",
         contractTitle: "Monthly Content Engine Agreement",
         contractId: "AW-MCE-TRIAL-2026",
         totalFee: "$1,500 USD",
-        upfrontPayment: "$750 USD",
-        defaultWebAppUrl: "[GOOGLE_APPS_SCRIPT_WEB_APP_URL]"
+        upfrontPayment: "$750 USD"
       };
 
-      function toggleSidebar() {
-        const sidebar = document.getElementById("sidebar");
+      const overlay = document.getElementById("sidebarOverlay");
+
+      function setSidebar(open) {
+        document.body.classList.toggle("sidebar-open", open);
         const icon = document.getElementById("toggleIcon");
-        const isOpen = document.body.classList.toggle("sidebar-open");
-        sidebar.classList.toggle("collapsed", !isOpen);
-        document.body.classList.toggle("sidebar-collapsed", !isOpen);
-        icon.className = isOpen ? "ph ph-caret-left" : "ph ph-caret-right";
+        if (icon) icon.className = open ? "ph ph-x" : "ph ph-list";
+        if (overlay) overlay.hidden = !open;
       }
 
-      document.getElementById("toggleSidebarButton").addEventListener("click", toggleSidebar);
+      function toggleSidebar() {
+        setSidebar(!document.body.classList.contains("sidebar-open"));
+      }
+
+      document.getElementById("toggleSidebarButton")?.addEventListener("click", toggleSidebar);
+      overlay?.addEventListener("click", () => setSidebar(false));
 
       const starField = document.getElementById("starField");
       for (let index = 0; index < 150; index += 1) {
@@ -1537,8 +1691,13 @@
       const modal = document.getElementById("signatureModal");
       const signatureStatus = document.getElementById("signatureStatus");
       const sendStatus = document.getElementById("sendStatus");
+      const contractorEmailField = document.getElementById("contractorEmail");
       const openButtons = [document.getElementById("openModalButton"), document.getElementById("mobileOpenModal")].filter(Boolean);
       const sendButtons = [document.getElementById("sendContractButton"), document.getElementById("mobileSendButton")].filter(Boolean);
+
+      if (contractorEmailField && backendConfig.contractorEmail) {
+        contractorEmailField.value = backendConfig.contractorEmail;
+      }
 
       const readField = (name) => document.querySelector(`[name="${name}"]`);
       const getValue = (name) => (readField(name)?.value || "").trim();
@@ -1691,9 +1850,9 @@
       });
 
       const sendViaFetch = async (payload) => {
-        const endpoint = getValue("appsScriptUrl") || window.CONTRACT_WEB_APP_URL || CONTRACT_META.defaultWebAppUrl;
-        if (!endpoint || endpoint.includes("[GOOGLE_APPS_SCRIPT_WEB_APP_URL]")) {
-          throw new Error("Apps Script Web App URL is required.");
+        const endpoint = window.CONTRACT_WEB_APP_URL || "";
+        if (!endpoint) {
+          throw new Error("Contract email backend is not configured. Add window.CONTRACT_WEB_APP_URL or deploy through Apps Script HtmlService.");
         }
 
         const response = await fetch(endpoint, {
@@ -1721,11 +1880,13 @@
           return;
         }
 
+        const signatureDataUrl = currentSignature();
+
         const payload = {
           action: "sendSignedContract",
           clientEmail: getValue("clientEmail"),
           clientName: getValue("clientRepresentative") || getValue("clientPrintedName"),
-          clientOrganization: getValue("clientOrganization") || "Climate Emergency BC",
+          clientOrganization: getValue("clientOrganization") || "Client Organization",
           clientAddress: getValue("clientAddress"),
           contractorEmail: getValue("contractorEmail"),
           contractorName: CONTRACT_META.contractorName,
@@ -1737,7 +1898,7 @@
           endDate: formatDate(getValue("endDate")),
           totalFee: CONTRACT_META.totalFee,
           upfrontPayment: CONTRACT_META.upfrontPayment,
-          signatureDataUrl: currentSignature(),
+          signatureDataUrl,
           governingLawState: getValue("governingLawState")
         };
 
@@ -1745,7 +1906,9 @@
         sendButtons.forEach((button) => { button.disabled = true; });
 
         try {
-          const result = window.google?.script?.run ? await sendViaGoogleScript(payload) : await sendViaFetch(payload);
+          const result = window.google?.script?.run
+            ? await sendViaGoogleScript(payload)
+            : await sendViaFetch(payload);
           if (!result?.ok) throw new Error(result?.error || "Unable to send signed contract.");
           updateSendStatus("Signed contract sent to both parties.", "success");
         } catch (error) {

@@ -1402,7 +1402,7 @@
 </div>
 <script>
 const APP_CONFIG = {
-  APP_SCRIPT_URL: "https://script.google.com/macros/s/AKfycbx_TCr0h2IWyoROIewUAtJHPVKIyABJuJmeqP-1XSN66KTPfWAPX0GhvRT1pvLHi3SckA/exec",
+  APP_SCRIPT_URL: "https://script.google.com/macros/s/AKfycbzrzBmtcbU2Vanv-HTDZJWMHA4mKqcFcFsYUzHYjH20n93ZR5z6HXYLKzUsLY12tUnW/exec",
   ENABLE_REMOTE_SYNC: true,
   STORAGE_KEY: "stellarsync_local_state_v4",
   SHELL_LAYOUT_KEY: "stellarsync_shell_layout_v1"
@@ -1562,6 +1562,48 @@ function normalizeDisplayText(value) {
     .replace(/[_-]+/g, " ")
     .replace(/\s+/g, " ")
     .trim();
+}
+
+function normalizeCampaignName(value) {
+  return normalizeDisplayText(value);
+}
+
+function getCampaignById(id, campaigns = appState.campaigns || []) {
+  const target = String(id || "").trim();
+  if (!target) return null;
+  return campaigns.find((campaign) => String(campaign.campaignId || "").trim() === target) || null;
+}
+
+function getCampaignByName(name, campaigns = appState.campaigns || []) {
+  const target = normalizeLookupValue(normalizeCampaignName(name));
+  if (!target) return null;
+  return campaigns.find((campaign) => normalizeLookupValue(normalizeCampaignName(campaign.campaignName)) === target) || null;
+}
+
+function hydratePostCampaign(post, campaigns = appState.campaigns || []) {
+  const matchedCampaign = getCampaignById(post?.campaignId, campaigns) || getCampaignByName(post?.campaignName, campaigns);
+  const pillar = normalizePillar(post?.pillar || matchedCampaign?.pillar || post?.hubPillarLabel || "education");
+  return {
+    ...post,
+    pillar,
+    hubPillarLabel: formatContentPillarLabel(pillar),
+    campaignId: String(post?.campaignId || matchedCampaign?.campaignId || "").trim(),
+    campaignName: normalizeCampaignName(post?.campaignName || matchedCampaign?.campaignName || ""),
+    hubTitle: String(post?.hubTitle || matchedCampaign?.campaignName || post?.title || "").trim()
+  };
+}
+
+function renderCampaignOptions(campaigns = [], selectedCampaignId = "") {
+  const activeCampaignId = String(selectedCampaignId || "").trim();
+  const options = ['<option value="">No campaign</option>']
+    .concat((campaigns || [])
+      .filter((campaign) => !campaign.isArchived)
+      .map((campaign) => `<option value="${escapeHtml(campaign.campaignId)}">${escapeHtml(formatCampaignDisplayName(campaign.campaignName))}</option>`));
+
+  return {
+    html: options.join(""),
+    selectedCampaignId: activeCampaignId
+  };
 }
 
 const CANONICAL_PILLAR_MAP = {
@@ -2488,6 +2530,12 @@ function buildAuditSummary() {
 }
 
 function initApp() {
+  appState.campaigns = (appState.campaigns || []).map((campaign) => normalizeRemoteCampaign(campaign));
+  appState.posts = (appState.posts || []).map((post) => hydratePostCampaign({
+    ...post,
+    pillar: normalizePillar(post?.pillar || post?.hubPillarLabel || "education")
+  }, appState.campaigns || []));
+
   seedStars();
   cleanInvalidImportantToken();
   setupPWAInstall();
@@ -2755,14 +2803,9 @@ function populateCampaignDropdown() {
   if (!campaignSelect) return;
 
   const currentValue = campaignSelect.value || "";
-
-  const options = ['<option value="">No campaign</option>']
-    .concat((appState.campaigns || []).map(campaign => {
-      return `<option value="${escapeHtml(campaign.campaignId)}">${escapeHtml(formatCampaignDisplayName(campaign.campaignName))}</option>`;
-    }));
-
-  campaignSelect.innerHTML = options.join("");
-  campaignSelect.value = currentValue;
+  const { html, selectedCampaignId } = renderCampaignOptions(appState.campaigns || [], currentValue);
+  campaignSelect.innerHTML = html;
+  campaignSelect.value = selectedCampaignId;
 }
 
 function normalizePillar(value) {
@@ -3029,7 +3072,9 @@ function renderLedger() {
   }
 
   if (ledgerFilters.campaign !== "all") {
-    posts = posts.filter(post => String(post.campaignId || "") === ledgerFilters.campaign);
+    posts = posts
+      .map((post) => hydratePostCampaign(post))
+      .filter((post) => String(post.campaignId || "") === ledgerFilters.campaign);
   }
 
   if (ledgerFilters.type !== "all") {
@@ -3162,7 +3207,11 @@ function buildConstellationRows() {
 
   return campaigns.map((campaign) => {
     const posts = [...(appState.posts || [])]
-      .filter(post => String(post.campaignId || "") === String(campaign.campaignId || ""))
+      .map((post) => hydratePostCampaign(post, campaigns))
+      .filter((post) => {
+        if (String(post.campaignId || "") === String(campaign.campaignId || "")) return true;
+        return normalizeLookupValue(post.campaignName || "") === normalizeLookupValue(campaign.campaignName || "");
+      })
       .sort((a, b) => {
         const aTime = a.date ? new Date(a.date).getTime() : 0;
         const bTime = b.date ? new Date(b.date).getTime() : 0;
@@ -3402,7 +3451,7 @@ async function promptCreateCampaignRow() {
 }
 
 function createPostForCampaign(campaignId) {
-  const campaign = (appState.campaigns || []).find(c => String(c.campaignId || "") === String(campaignId || ""));
+  const campaign = getCampaignById(campaignId);
   if (!campaign) return;
 
   openPostModal(
@@ -4359,14 +4408,26 @@ function openPostModal(
   currentEditingPostId = postId;
   currentModalAsset = null;
 
+  const matched = hydratePostCampaign(
+    (appState.posts || []).find(post => post.id === postId) || {
+      id: postId,
+      title,
+      platform,
+      pillar: pillarClass,
+      date,
+      status,
+      description,
+      postType
+    }
+  );
+
   if (titleInput) titleInput.value = title;
   if (platSelect) platSelect.value = platform || "linkedin";
   if (dateInput) dateInput.value = date || formatDateTimeLocal(new Date());
   if (statusSelect) statusSelect.value = status || "draft";
   if (postTypeSelect) postTypeSelect.value = postType || "text";
-  if (descInput) descInput.value = description || "";
+  if (descInput) descInput.value = matched?.description || description || "";
 
-  const matched = (appState.posts || []).find(post => post.id === postId);
   const requestedPillar = matched
     ? getPostContentPillar(matched)
     : pillarClass || "";
@@ -4376,7 +4437,7 @@ function openPostModal(
   setPillar(activePillar);
 
   if (campaignSelect) {
-    campaignSelect.value = String(matched?.campaignId || "");
+    campaignSelect.value = String(matched?.campaignId || getCampaignByName(matched?.campaignName)?.campaignId || "");
   }
 
   const linkedAsset = findLinkedAssetForPost(matched);
@@ -4495,11 +4556,11 @@ function setupSaveHandler() {
 
   saveButton.addEventListener("click", async () => {
     const existing = currentEditingPostId
-      ? (appState.posts || []).find(p => p.id === currentEditingPostId)
+      ? hydratePostCampaign((appState.posts || []).find(p => p.id === currentEditingPostId))
       : null;
 
     const selectedCampaignId = campaignSelect?.value || "";
-    const selectedCampaign = (appState.campaigns || []).find(campaign => String(campaign.campaignId || "") === String(selectedCampaignId || ""));
+    const selectedCampaign = getCampaignById(selectedCampaignId);
     const selectedContentPillar = normalizePillar(selectedCampaign?.pillar || getActivePillar() || existing?.hubPillarLabel || existing?.pillar || "education");
 
     const payload = {
@@ -4517,7 +4578,7 @@ function setupSaveHandler() {
       mediaLabel: currentModalAsset?.title || existing?.mediaLabel || "",
       createdFromInspoId: existing?.createdFromInspoId || "",
       campaignId: selectedCampaignId,
-      campaignName: selectedCampaign?.campaignName || "",
+      campaignName: selectedCampaign?.campaignName || existing?.campaignName || "",
       impressions: existing?.impressions || 0,
       reach: existing?.reach || 0,
       likes: existing?.likes || 0,
@@ -5034,13 +5095,13 @@ function normalizeRemoteBoolean(value) {
 
 function normalizeRemotePost(post, campaigns = [], mediaItems = []) {
   const campaignId = String(pickRemoteValue(post?.campaignId, post?.campaign_id, post?.campaignID, "")).trim();
-  const matchedCampaign = campaigns.find(campaign => String(campaign.campaignId || "") === campaignId);
+  const incomingCampaignName = normalizeCampaignName(pickRemoteValue(post?.campaignName, post?.campaign_name, ""));
+  const matchedCampaign = getCampaignById(campaignId, campaigns) || getCampaignByName(incomingCampaignName, campaigns);
   const postId = String(pickRemoteValue(post?.postId, post?.post_id, post?.id, "")).trim();
   const title = String(pickRemoteValue(post?.title, post?.postTitle, "")).trim();
   const scheduledAt = String(pickRemoteValue(post?.scheduledAt, post?.scheduled_at, post?.date, "")).trim();
   const linkedAsset = mediaItems.find(asset => String(asset.postId || asset.linkedPostId || "") === postId);
-
-  return {
+  const normalizedPost = {
     id: postId || `remote-${normalizeLookupValue(title || "post")}-${scheduledAt || "undated"}`,
     title,
     platform: String(pickRemoteValue(post?.platform, "linkedin")).trim() || "linkedin",
@@ -5048,14 +5109,15 @@ function normalizeRemotePost(post, campaigns = [], mediaItems = []) {
     date: scheduledAt,
     status: String(pickRemoteValue(post?.status, "draft")).trim() || "draft",
     postType: String(pickRemoteValue(post?.postType, post?.post_type, "text")).trim() || "text",
-    description: String(pickRemoteValue(post?.description, post?.ledgerExcerpt, post?.ledger_excerpt, "")).trim(),
+    description: String(pickRemoteValue(post?.description, post?.caption, post?.body, "")).trim(),
+    ledgerExcerpt: String(pickRemoteValue(post?.ledgerExcerpt, post?.ledger_excerpt, "")).trim(),
     assetId: String(pickRemoteValue(post?.assetId, post?.asset_id, "")).trim(),
     hubTitle: String(pickRemoteValue(post?.hubTitle, post?.hub_title, title)).trim(),
     hubPillarLabel: formatContentPillarLabel(pickRemoteValue(post?.hubPillarLabel, post?.hub_pillar_label, post?.pillar, matchedCampaign?.pillar, "education")),
     mediaLabel: String(pickRemoteValue(post?.mediaLabel, post?.media_label, linkedAsset?.title, linkedAsset?.assetName, "")).trim(),
     createdFromInspoId: String(pickRemoteValue(post?.createdFromInspoId, post?.created_from_inspo_id, "")).trim(),
-    campaignId,
-    campaignName: String(pickRemoteValue(post?.campaignName, post?.campaign_name, matchedCampaign?.campaignName, "")).trim(),
+    campaignId: String(campaignId || matchedCampaign?.campaignId || "").trim(),
+    campaignName: normalizeCampaignName(pickRemoteValue(post?.campaignName, post?.campaign_name, matchedCampaign?.campaignName, "")),
     impressions: normalizeMetricNumber(pickRemoteValue(post?.impressions, 0)),
     reach: normalizeMetricNumber(pickRemoteValue(post?.reach, 0)),
     likes: normalizeMetricNumber(pickRemoteValue(post?.likes, 0)),
@@ -5065,6 +5127,8 @@ function normalizeRemotePost(post, campaigns = [], mediaItems = []) {
     clicks: normalizeMetricNumber(pickRemoteValue(post?.clicks, 0)),
     engagementRate: normalizeMetricNumber(pickRemoteValue(post?.engagementRate, post?.engagement_rate, 0))
   };
+
+  return hydratePostCampaign(normalizedPost, campaigns);
 }
 
 function normalizeRemoteCampaign(campaign) {
@@ -5159,29 +5223,31 @@ async function apiSaveCampaign(campaign) {
 }
 
 async function apiSavePost(post) {
+  const hydratedPost = hydratePostCampaign(post);
   return apiPost("savePost", {
-    postId: post.id || null,
-    title: post.title || "",
-    platform: post.platform || "linkedin",
-    pillar: normalizePillar(post.pillar || post.hubPillarLabel || "education"),
-    scheduledAt: post.date || "",
-    status: post.status || "draft",
-    postType: post.postType || "text",
-    description: post.description || "",
-    assetId: post.assetId || "",
-    hubTitle: post.hubTitle || post.title || "",
-    hubPillarLabel: formatContentPillarLabel(post.hubPillarLabel || post.pillar || "education"),
-    mediaLabel: post.mediaLabel || "",
-    createdFromInspoId: post.createdFromInspoId || "",
-    campaignId: post.campaignId || "",
-    impressions: post.impressions || 0,
-    reach: post.reach || 0,
-    likes: post.likes || 0,
-    comments: post.comments || 0,
-    shares: post.shares || 0,
-    saves: post.saves || 0,
-    clicks: post.clicks || 0,
-    engagementRate: post.engagementRate || 0
+    postId: hydratedPost.id || null,
+    title: hydratedPost.title || "",
+    platform: hydratedPost.platform || "linkedin",
+    pillar: normalizePillar(hydratedPost.pillar || hydratedPost.hubPillarLabel || "education"),
+    scheduledAt: hydratedPost.date || "",
+    status: hydratedPost.status || "draft",
+    postType: hydratedPost.postType || "text",
+    description: hydratedPost.description || "",
+    assetId: hydratedPost.assetId || "",
+    hubTitle: hydratedPost.hubTitle || hydratedPost.title || "",
+    hubPillarLabel: formatContentPillarLabel(hydratedPost.hubPillarLabel || hydratedPost.pillar || "education"),
+    mediaLabel: hydratedPost.mediaLabel || "",
+    createdFromInspoId: hydratedPost.createdFromInspoId || "",
+    campaignId: hydratedPost.campaignId || "",
+    campaignName: hydratedPost.campaignName || "",
+    impressions: hydratedPost.impressions || 0,
+    reach: hydratedPost.reach || 0,
+    likes: hydratedPost.likes || 0,
+    comments: hydratedPost.comments || 0,
+    shares: hydratedPost.shares || 0,
+    saves: hydratedPost.saves || 0,
+    clicks: hydratedPost.clicks || 0,
+    engagementRate: hydratedPost.engagementRate || 0
   });
 }
 
@@ -5208,6 +5274,7 @@ async function apiDuplicatePost(postId) {
       mediaLabel: source.mediaLabel || "",
       createdFromInspoId: source.createdFromInspoId || "",
       campaignId: source.campaignId || "",
+      campaignName: source.campaignName || "",
       impressions: source.impressions || 0,
       reach: source.reach || 0,
       likes: source.likes || 0,

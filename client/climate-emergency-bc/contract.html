@@ -24,7 +24,7 @@
       --success: #4ade80;
       --danger: #fda4af;
       --sidebar-expanded: 320px;
-      --sidebar-collapsed: 72px;
+      --sidebar-collapsed: 52px;
       --content-max: 900px;
       --shadow: 0 24px 56px rgba(0, 0, 0, 0.35);
     }
@@ -140,19 +140,19 @@
 
     .toggle-btn {
       position: absolute;
-      right: -14px;
-      top: 40px;
-      width: 28px;
-      height: 28px;
+      right: -19px;
+      top: 44px;
+      width: 38px;
+      height: 38px;
       display: grid;
       place-items: center;
       background: var(--accent);
       color: #fff;
-      border: 1px solid rgba(255,255,255,0.18);
+      border: 4px solid #05020a;
       border-radius: 999px;
-      box-shadow: 0 0 16px rgba(168,85,247,0.55);
+      box-shadow: 0 0 18px rgba(168,85,247,0.6);
       cursor: pointer;
-      z-index: 80;
+      z-index: 90;
     }
 
     .toggle-btn i {
@@ -256,17 +256,36 @@
     .sidebar.collapsed .brand-row {
       justify-content: center;
       padding: 0;
+      margin-bottom: 2rem;
+    }
+
+    .sidebar.collapsed .brand-sigil {
+      width: 2rem;
+      height: 2rem;
+      border-radius: 0.65rem;
     }
 
     .sidebar.collapsed .nav-item {
       justify-content: center;
+      gap: 0;
       padding: 0;
+      height: 3rem;
+    }
+
+    .sidebar.collapsed .nav-item i {
+      display: block;
+      font-size: 1.15rem;
+      color: var(--text-soft);
+      opacity: 1;
     }
 
     .sidebar.collapsed .nav-text,
     .sidebar.collapsed .sidebar-meta,
     .sidebar.collapsed .sidebar-footer {
       opacity: 0;
+      width: 0;
+      max-width: 0;
+      overflow: hidden;
       pointer-events: none;
     }
 
@@ -716,6 +735,44 @@
       line-height: 1.7;
     }
 
+    .dispatch-actions {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 0.85rem;
+      margin-top: 1.25rem;
+    }
+
+    .dispatch-button {
+      min-height: 3.25rem;
+      width: 100%;
+      border-radius: 999px;
+      letter-spacing: 0.12em;
+    }
+
+    .primary-action {
+      background: rgba(168, 85, 247, 0.16);
+      border-color: rgba(168, 85, 247, 0.65);
+      color: #f3e8ff;
+    }
+
+    .primary-action:hover,
+    .primary-action:focus-visible {
+      background: #a855f7;
+      color: #fff;
+    }
+
+    .payment-action {
+      background: rgba(251, 191, 36, 0.14);
+      border-color: rgba(251, 191, 36, 0.75);
+      color: #fef3c7;
+    }
+
+    .payment-action:hover,
+    .payment-action:focus-visible {
+      background: #fbbf24;
+      color: #05020a;
+    }
+
     .screen-only {
       display: block;
     }
@@ -797,6 +854,10 @@
         grid-template-columns: 1fr;
       }
 
+      .dispatch-actions {
+        grid-template-columns: 1fr;
+      }
+
       .section-shell {
         gap: 1rem;
         margin-top: 4rem;
@@ -830,7 +891,7 @@
 
     @page {
       size: Letter;
-      margin: 0.45in;
+      margin: 0.18in;
     }
 
     @media print {
@@ -838,23 +899,15 @@
       body {
         margin: 0 !important;
         padding: 0 !important;
-        width: auto !important;
-        min-height: auto !important;
-        overflow: visible !important;
         background: #05020a !important;
         color: #e5e7eb !important;
         -webkit-print-color-adjust: exact !important;
         print-color-adjust: exact !important;
-      }
-
-      body {
-        background:
-          radial-gradient(circle at 50% 0%, rgba(88, 28, 135, 0.22), transparent 42%),
-          radial-gradient(circle at 15% 18%, rgba(168, 85, 247, 0.10), transparent 24%),
-          #05020a !important;
+        overflow: visible !important;
       }
 
       body * {
+        box-shadow: none !important;
         text-shadow: none !important;
         backdrop-filter: none !important;
         -webkit-backdrop-filter: none !important;
@@ -870,7 +923,9 @@
       .modal,
       .signature-canvas,
       button,
-      nav {
+      nav,
+      .print-header,
+      .send-panel {
         display: none !important;
       }
 
@@ -885,48 +940,33 @@
 
       .page-wrap {
         width: 100% !important;
-        max-width: 7.5in !important;
+        max-width: 8.15in !important;
         margin: 0 auto !important;
         padding: 0 !important;
         overflow: visible !important;
         position: static !important;
       }
 
-      .print-header {
-        display: flex !important;
-        justify-content: space-between !important;
-        align-items: baseline !important;
-        margin: 0 0 0.22in !important;
-        padding: 0 0 0.08in !important;
-        border: 0 !important;
-        border-bottom: 1px solid rgba(168,85,247,0.55) !important;
-        color: #c4b5fd !important;
-        font-family: Inter, Arial, Helvetica, sans-serif !important;
-        font-size: 8.5pt !important;
-        letter-spacing: 0.04em !important;
-      }
-
       header {
-        margin: 0 0 0.26in !important;
+        margin: 0 0 0.08in !important;
         padding: 0 !important;
-        border: 0 !important;
       }
 
       .eyebrow {
-        display: inline-block !important;
-        margin: 0 0 0.09in !important;
-        padding: 0.03in 0.08in !important;
-        border: 1px solid rgba(168,85,247,0.45) !important;
-        background: rgba(168,85,247,0.08) !important;
+        font-size: 6pt !important;
+        letter-spacing: 0.08em !important;
+        margin: 0 0 0.035in !important;
+        padding: 0.018in 0.045in !important;
         color: #c4b5fd !important;
+        border-color: rgba(168,85,247,0.45) !important;
+        background: rgba(168,85,247,0.08) !important;
       }
 
       .header-title {
+        font-size: 16pt !important;
+        line-height: 1.03 !important;
+        margin: 0 0 0.04in !important;
         color: #fff !important;
-        font-family: "Cinzel Decorative", Georgia, serif !important;
-        font-size: 24pt !important;
-        line-height: 1.12 !important;
-        margin: 0 0 0.1in !important;
       }
 
       .header-title .accent {
@@ -934,36 +974,31 @@
       }
 
       .header-rule {
-        display: block !important;
-        width: 1.15in !important;
+        width: 0.85in !important;
         height: 1px !important;
         background: linear-gradient(to right, #a855f7, rgba(251,191,36,0.8), transparent) !important;
       }
 
       .section-shell {
         display: block !important;
-        margin: 0 0 0.18in !important;
+        margin: 0 0 0.055in !important;
         padding: 0 !important;
         break-inside: avoid !important;
         page-break-inside: avoid !important;
       }
 
       .section-num {
-        display: inline-block !important;
-        writing-mode: initial !important;
-        height: auto !important;
-        padding: 0 !important;
-        margin: 0 0 0.04in !important;
-        border: 0 !important;
-        color: #c4b5fd !important;
-        opacity: 1 !important;
+        display: none !important;
       }
 
       .section-title {
+        font-size: 6.8pt !important;
+        letter-spacing: 0.055em !important;
+        line-height: 1.1 !important;
+        margin: 0 0 0.03in !important;
+        padding-bottom: 0.018in !important;
         color: #fff !important;
         border-bottom: 1px solid rgba(168,85,247,0.35) !important;
-        margin: 0 0 0.08in !important;
-        padding-bottom: 0.05in !important;
       }
 
       .hero-grid,
@@ -973,7 +1008,7 @@
       .chip-list {
         display: grid !important;
         grid-template-columns: 1fr 1fr !important;
-        gap: 0.13in !important;
+        gap: 0.045in !important;
       }
 
       .field.full {
@@ -984,22 +1019,18 @@
       .chip,
       .practitioner-seal {
         background: rgba(13, 7, 24, 0.94) !important;
-        border: 1px solid rgba(168,85,247,0.35) !important;
+        border: 1px solid rgba(168,85,247,0.32) !important;
         color: #e5e7eb !important;
-        box-shadow: none !important;
-        border-radius: 0.08in !important;
-        padding: 0.13in !important;
+        border-radius: 0.035in !important;
+        padding: 0.055in !important;
         break-inside: avoid !important;
         page-break-inside: avoid !important;
       }
 
-      .rune-card::before,
-      .rune-card::after,
-      .chip::before,
-      .chip::after,
-      .practitioner-seal::before {
-        display: none !important;
-        content: none !important;
+      .hero-grid .rune-card,
+      .card-grid .rune-card,
+      .signature-grid .rune-card {
+        padding: 0.055in !important;
       }
 
       .section-copy,
@@ -1008,40 +1039,105 @@
       .chip p,
       .field input,
       .field textarea {
+        font-size: 6.4pt !important;
+        line-height: 1.18 !important;
         color: #e5e7eb !important;
       }
 
+      .section-copy p {
+        margin: 0 0 0.025in !important;
+      }
+
+      .section-copy ul {
+        margin: 0 !important;
+        padding-left: 0.1in !important;
+      }
+
+      .chip-list {
+        margin-top: 0.045in !important;
+      }
+
+      .chip {
+        gap: 0.045in !important;
+      }
+
+      .chip i {
+        display: none !important;
+      }
+
+      .chip h4,
       .meta-kicker,
       .field-label,
       .meta-subtitle,
       .practitioner-role,
       .detail-row {
+        font-size: 5.3pt !important;
+        letter-spacing: 0.035em !important;
+        line-height: 1.1 !important;
         color: #c4b5fd !important;
       }
 
-      .meta-title,
-      .practitioner-script {
+      .meta-kicker {
+        margin-bottom: 0.025in !important;
+      }
+
+      .meta-title {
+        font-size: 8.5pt !important;
+        margin: 0 0 0.015in !important;
         color: #fff !important;
+      }
+
+      .field-grid {
+        margin-top: 0.04in !important;
+      }
+
+      .field {
+        gap: 0.012in !important;
       }
 
       .field input,
       .field textarea {
+        min-height: 0.13in !important;
+        padding: 0.01in 0 !important;
         background: transparent !important;
-        border-bottom: 1px solid rgba(168,85,247,0.45) !important;
+        border-bottom: 1px solid rgba(168,85,247,0.4) !important;
       }
 
-      .signature-area {
-        background: rgba(5,2,10,0.75) !important;
-        border: 1px solid rgba(168,85,247,0.45) !important;
+      .field textarea {
+        min-height: 0.22in !important;
+      }
+
+      .font-serif-heading {
+        font-size: 18pt !important;
+        color: #fbbf24 !important;
+      }
+
+      .detail-pairs {
+        gap: 0.035in !important;
+      }
+
+      .detail-row {
+        padding-bottom: 0.025in !important;
+      }
+
+      .signature-area,
+      .practitioner-seal {
+        min-height: 0.42in !important;
+        height: 0.42in !important;
       }
 
       .signature-image {
         display: block !important;
         position: static !important;
         width: 100% !important;
-        height: 0.88in !important;
+        height: 0.38in !important;
         object-fit: contain !important;
-        padding: 0.05in !important;
+        padding: 0.015in !important;
+      }
+
+      .practitioner-script {
+        font-size: 10pt !important;
+        color: #fff !important;
       }
 
       a[href]::after {
@@ -1072,16 +1168,10 @@
       </div>
 
       <div class="sidebar-meta" style="padding:0 1.25rem;margin-bottom:2rem;">
-        <div style="margin-bottom:1rem;">
-          <p class="font-mono-code" style="margin:0;font-size:0.56rem;color:var(--text-faint);text-transform:uppercase;">Status</p>
-          <div style="display:flex;align-items:center;gap:0.5rem;margin-top:0.25rem;">
-            <div class="status-seal"></div>
-            <span class="font-mono-code" style="font-size:0.62rem;color:#4ade80;">READY_FOR_SEALS</span>
-          </div>
-        </div>
-        <div>
-          <p class="font-mono-code" style="margin:0;font-size:0.56rem;color:var(--text-faint);text-transform:uppercase;">Registry ID</p>
-          <span class="font-mono-code" style="font-size:0.68rem;color:#fff;">AW-MCE-TRIAL-2026</span>
+        <p class="font-mono-code" style="margin:0;font-size:0.56rem;color:var(--text-faint);text-transform:uppercase;">Status</p>
+        <div style="display:flex;align-items:center;gap:0.5rem;margin-top:0.25rem;">
+          <div class="status-seal"></div>
+          <span class="font-mono-code" style="font-size:0.62rem;color:#4ade80;">READY_FOR_SEALS</span>
         </div>
       </div>
 
@@ -1115,8 +1205,7 @@
   <div class="mobile-bar screen-only">
     <div class="mobile-bar-inner">
       <div>
-        <div class="font-mono-code" style="font-size:0.58rem;letter-spacing:0.26em;text-transform:uppercase;color:var(--accent);">AW-MCE-TRIAL-2026</div>
-        <div class="font-magical" style="margin-top:0.4rem;font-size:1rem;letter-spacing:0.12em;color:#fff;">Algorithm Witch Contract</div>
+        <div class="font-magical" style="font-size:1rem;letter-spacing:0.12em;color:#fff;">Monthly Content Engine Agreement</div>
       </div>
       <div class="mobile-actions">
         <button class="button subtle" type="button" id="mobileOpenModal">Open Signature Box</button>
@@ -1130,7 +1219,6 @@
     <div class="page-wrap">
       <div class="print-header">
         <div>Monthly Content Engine Agreement</div>
-        <div>AW-MCE-TRIAL-2026</div>
       </div>
 
       <header>
@@ -1452,26 +1540,24 @@
 
           <div class="send-panel screen-only">
             <h3>Contract Dispatch</h3>
-            <p>Send the signed agreement to both parties. The client can pay now using the invoice link below, or use the payment link included in the follow-up email.</p>
-            <div class="field-grid">
-              <div class="field">
-                <label class="field-label" for="paymentLink">Payment Link (Optional)</label>
-                <input id="paymentLink" name="paymentLink" type="url" value="https://www.paypal.com/invoice/p/#PMQJM7ZQ6DTCN79U">
-              </div>
+            <p>Send the signed agreement to both parties, then complete the deposit to begin the 30-day trial.</p>
+
+            <div class="dispatch-actions">
+              <button class="button dispatch-button primary-action" type="button" id="sendContractButton">
+                Send Signed Contract
+              </button>
+
+              <a
+                id="dynamicPaymentLink"
+                href="https://www.paypal.com/invoice/p/#PMQJM7ZQ6DTCN79U"
+                target="_blank"
+                rel="noopener noreferrer"
+                class="button dispatch-button payment-action"
+              >
+                Pay $750 Deposit
+              </a>
             </div>
-            <a
-              id="dynamicPaymentLink"
-              href="https://www.paypal.com/invoice/p/#PMQJM7ZQ6DTCN79U"
-              target="_blank"
-              rel="noopener noreferrer"
-              class="button"
-              style="margin-top:1rem;"
-            >
-              Pay $750 Deposit
-            </a>
-            <div class="action-row" style="margin-top:1rem;">
-              <button class="button" type="button" id="sendContractButton">Send Signed Contract</button>
-            </div>
+
             <div class="send-status" id="sendStatus" data-state="idle"></div>
           </div>
         </div>
@@ -1506,7 +1592,7 @@
       const CONTRACT_META = {
         contractorName: "Cassandre Arkema",
         contractTitle: "Monthly Content Engine Agreement",
-        contractId: "AW-MCE-TRIAL-2026",
+        contractId: "monthly-content-engine-climate-emergency-bc-2026",
         totalFee: "$1,500 USD",
         upfrontPayment: "$750 USD"
       };
@@ -1691,7 +1777,6 @@
       const signatureStatus = document.getElementById("signatureStatus");
       const sendStatus = document.getElementById("sendStatus");
       const contractorEmailField = document.getElementById("contractorEmail");
-      const paymentInput = document.getElementById("paymentLink");
       const paymentButton = document.getElementById("dynamicPaymentLink");
       const openButtons = [document.getElementById("openModalButton"), document.getElementById("mobileOpenModal")].filter(Boolean);
       const sendButtons = [document.getElementById("sendContractButton"), document.getElementById("mobileSendButton")].filter(Boolean);
@@ -1733,26 +1818,7 @@
       });
 
       const DEFAULT_PAYMENT_LINK = "https://www.paypal.com/invoice/p/#PMQJM7ZQ6DTCN79U";
-
-      function updatePaymentLink() {
-        if (!paymentButton) return;
-        const url = paymentInput?.value?.trim() || DEFAULT_PAYMENT_LINK;
-        paymentButton.href = url;
-      }
-
-      if (paymentInput) {
-        if (!paymentInput.value) paymentInput.value = DEFAULT_PAYMENT_LINK;
-        paymentInput.addEventListener("input", () => {
-          updatePaymentLink();
-          if (typeof saveFormState === "function") saveFormState();
-        });
-        paymentInput.addEventListener("change", () => {
-          updatePaymentLink();
-          if (typeof saveFormState === "function") saveFormState();
-        });
-      }
-
-      updatePaymentLink();
+      if (paymentButton) paymentButton.href = DEFAULT_PAYMENT_LINK;
 
       const escapeHtml = (value) => String(value || "")
         .replace(/&/g, "&amp;")
@@ -1946,7 +2012,7 @@
           contractTitle: CONTRACT_META.contractTitle,
           contractId: CONTRACT_META.contractId,
           contractHtml: buildEmailContractHtml(),
-          paymentLink: getValue("paymentLink"),
+          paymentLink: DEFAULT_PAYMENT_LINK,
           startDate: formatDate(getValue("startDate")),
           endDate: formatDate(getValue("endDate")),
           totalFee: CONTRACT_META.totalFee,

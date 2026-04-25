@@ -151,16 +151,29 @@
 
     .sidebar .toggle-btn {
       position: absolute;
-      right: -26px;
-      top: 84px;
+      right: -22px;
+      top: 92px;
+      width: 40px;
+      height: 40px;
+      padding: 0;
+      display: grid;
+      place-items: center;
+      border-radius: 999px;
+      border: 1px solid rgba(255,255,255,0.18);
+      background: #a855f7;
+      color: #fff;
+      box-shadow: 0 0 18px rgba(168,85,247,0.65);
+      z-index: 999;
+      cursor: pointer;
     }
 
-    .toggle-btn i {
-      font-size: 1.1rem;
+    .sidebar .toggle-btn i {
+      color: #fff;
+      font-size: 1.15rem;
     }
 
     .sidebar.collapsed .toggle-btn {
-      right: -26px;
+      right: -22px;
     }
 
     .sidebar-inner {
@@ -341,9 +354,27 @@
   width: 0.72rem;
   height: 0.72rem;
 }
-    /* Collapse: hide label/status text, keep dot visible */
-    .sidebar.collapsed .sidebar-signature-button .sidebar-signature-label { display: none !important; }
-    .sidebar.collapsed .sidebar-signature-button .sidebar-signature-status { display: none !important; }
+    .sidebar.collapsed .sidebar-signature-button {
+      width: 2.35rem;
+      height: 2.35rem;
+      min-height: 2.35rem;
+      margin: 0 auto 1.25rem;
+      padding: 0;
+      display: flex !important;
+      align-items: center;
+      justify-content: center;
+      border-radius: 999px;
+    }
+
+    .sidebar.collapsed .sidebar-signature-button .sidebar-signature-label,
+    .sidebar.collapsed .sidebar-signature-button .sidebar-signature-status {
+      display: none !important;
+    }
+
+    .sidebar.collapsed .sidebar-signature-button .status-dot {
+      width: 0.75rem;
+      height: 0.75rem;
+    }
     
 
     .status-dot {
@@ -462,8 +493,9 @@
       max-width: var(--content-max);
       margin: 0 auto;
       display: flex;
-      flex-direction: column;
-      gap: 0.75rem;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
     }
 
     .signature-controls,
@@ -751,7 +783,13 @@
       object-fit: contain;
       padding: 0.5rem;
       pointer-events: none;
-      display: none;
+      opacity: 0;
+      visibility: hidden;
+    }
+
+    .signature-image[src] {
+      opacity: 1;
+      visibility: visible;
     }
 
     .button {
@@ -902,8 +940,16 @@
       white-space: nowrap;
     }
 
-    .dispatch-actions,
     .mobile-actions {
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      gap: 0.75rem;
+      margin-top: 0;
+      flex-wrap: wrap;
+    }
+
+    .dispatch-actions {
       display: grid;
       grid-template-columns: repeat(3, minmax(0, 1fr));
       gap: 0.85rem;
@@ -913,6 +959,32 @@
     .dispatch-actions .round-button,
     .mobile-actions .round-button {
       width: 100%;
+    }
+
+    .mobile-actions .icon-action {
+      width: 40px;
+    }
+
+    .icon-action {
+      width: 40px;
+      height: 40px;
+      min-height: 40px;
+      padding: 0;
+      border-radius: 999px;
+      flex: 0 0 40px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .icon-action i {
+      font-size: 1rem;
+    }
+
+    .icon-action .button-status-dot {
+      position: absolute;
+      right: -2px;
+      top: -2px;
     }
 
     .primary-action {
@@ -1023,8 +1095,7 @@
         grid-template-columns: 1fr;
       }
 
-      .dispatch-actions,
-      .mobile-actions {
+      .dispatch-actions {
         grid-template-columns: 1fr;
       }
 
@@ -1059,12 +1130,12 @@
       50% { opacity: 0.8; }
     }
 
-    @page {
-      size: Letter;
-      margin: 0;
-    }
+    @media print {
+      @page {
+        size: Letter;
+        margin: 0.55in;
+      }
 
-  @media print {
       html,
       body {
         margin: 0 !important;
@@ -1073,16 +1144,6 @@
         color: #e5e7eb !important;
         -webkit-print-color-adjust: exact !important;
         print-color-adjust: exact !important;
-        overflow: visible !important;
-      }
-
-      body * {
-        box-shadow: none !important;
-        text-shadow: none !important;
-        backdrop-filter: none !important;
-        -webkit-backdrop-filter: none !important;
-        animation: none !important;
-        transition: none !important;
       }
 
       .stars,
@@ -1094,150 +1155,66 @@
       .signature-canvas,
       button,
       nav,
-      .print-header,
       .send-panel {
         display: none !important;
       }
+
+      .main-content {
+        margin: 0 !important;
+        padding: 0 !important;
+        width: 100% !important;
+        position: static !important;
+      }
+
       .page-wrap {
-        width: 6.75in !important;
-        max-width: 6.75in !important;
+        width: 100% !important;
+        max-width: 6.65in !important;
         margin: 0 auto !important;
         padding: 0 !important;
       }
-      .main-content {
-        margin: 0 !important;
-        padding: 0.45in 0 !important;
-        width: 100% !important;
-        max-width: none !important;
-        overflow: visible !important;
-        position: static !important;
-      }
-      .section-copy,
-      .section-copy p,
-      .section-copy li,
-      .meta-title,
-      .section-title {
-        word-break: normal !important;
-        overflow-wrap: normal !important;
-        hyphens: none !important;
-      }
-      
-      .section-title,
-      .meta-kicker,
-      .field-label,
-      .detail-row,
-      .chip h4 {
-        letter-spacing: 0.015em !important;
-        word-break: normal !important;
-        overflow-wrap: normal !important;
-        hyphens: none !important;
-        white-space: normal !important;
-      }
-      .section-copy,
-      .section-copy p,
-      .section-copy li {
-        font-size: 7.5pt !important;
-        line-height: 1.42 !important;
-        word-break: normal !important;
-        overflow-wrap: normal !important;
-        hyphens: none !important;
-      }
-      .section-title {
-        font-size: 8.5pt !important;
-        line-height: 1.25 !important;
-      }
-      .signature-image {
-        display: block !important;
-        width: 100% !important;
-        height: 0.5in !important;
-        object-fit: contain !important;
-      }
-      /* Hide signature artifact when printing */
-      .signature-status,
-      .send-status,
-      .button-status-text,
-      .button-status-dot,
-      .status-dot,
-      .signature-canvas,
-      .signature-image {
-        display: none !important;
-      }
-      .signature-canvas { display: none !important; }
-      .button-status-text,
-      .button-status-dot,
-      .status-dot {
-        display: none !important;
-      }
-      .sidebar.collapsed .sidebar-signature-button .sidebar-signature-label { display: none !important; }
-      .sidebar.collapsed .sidebar-signature-button .sidebar-signature-status { display: none !important; }
-
-      /* Do not print signature text/status inside top/mobile controls */
-      .button-label,
-      .button-status-text,
-      .sidebar-signature-label,
-      .sidebar-signature-status,
-      .sidebar-signature-button {
-        display: none !important;
-      }
-
-      /* ensure only the single, correct print layout rules apply */
 
       header {
-        margin: 0 0 0.055in !important;
-        padding: 0 !important;
-      }
-
-      .eyebrow {
-        font-size: 5.8pt !important;
-        letter-spacing: 0.06em !important;
-        margin: 0 0 0.025in !important;
-        padding: 0.015in 0.04in !important;
-        color: #c4b5fd !important;
-        border-color: rgba(168,85,247,0.45) !important;
-        background: rgba(168,85,247,0.08) !important;
+        margin: 0 0 0.28in !important;
       }
 
       .header-title {
-        font-size: 14pt !important;
-        line-height: 1 !important;
-        margin: 0 0 0.03in !important;
+        font-size: 24pt !important;
+        line-height: 1.12 !important;
+        margin: 0 0 0.12in !important;
         color: #fff !important;
-      }
-
-      .header-title br {
-        display: none !important;
-      }
-
-      .header-title .accent {
-        color: #fbbf24 !important;
-      }
-
-      .header-rule {
-        width: 0.7in !important;
-        height: 1px !important;
-        background: linear-gradient(to right, #a855f7, rgba(251,191,36,0.8), transparent) !important;
       }
 
       .section-shell {
         display: block !important;
-        margin: 0 0 0.038in !important;
+        margin: 0 0 0.26in !important;
         padding: 0 !important;
         break-inside: avoid !important;
-        page-break-inside: avoid !important;
+      }
+
+      .section-title {
+        font-size: 11pt !important;
+        line-height: 1.35 !important;
+        letter-spacing: 0.04em !important;
+        margin: 0 0 0.1in !important;
+        padding-bottom: 0.05in !important;
+        color: #fff !important;
+        border-bottom: 1px solid rgba(168,85,247,0.35) !important;
+        word-spacing: 0.03em !important;
       }
 
       .section-num {
         display: none !important;
       }
 
-      .section-title {
-        font-size: 6pt !important;
-        letter-spacing: 0.04em !important;
-        line-height: 1.05 !important;
-        margin: 0 0 0.022in !important;
-        padding-bottom: 0.014in !important;
-        color: #fff !important;
-        border-bottom: 1px solid rgba(168,85,247,0.28) !important;
+      .rune-card,
+      .chip,
+      .practitioner-seal {
+        background: rgba(13, 7, 24, 0.94) !important;
+        border: 1px solid rgba(168,85,247,0.35) !important;
+        border-radius: 0.08in !important;
+        padding: 0.16in !important;
+        color: #e5e7eb !important;
+        break-inside: avoid !important;
       }
 
       .hero-grid,
@@ -1247,147 +1224,109 @@
       .chip-list {
         display: grid !important;
         grid-template-columns: 1fr 1fr !important;
-        gap: 0.035in !important;
+        gap: 0.16in !important;
       }
 
       .field.full {
         grid-column: 1 / -1 !important;
       }
 
-      .rune-card,
-      .chip,
-      .practitioner-seal {
-        background: rgba(13, 7, 24, 0.94) !important;
-        border: 1px solid rgba(168,85,247,0.28) !important;
-        color: #e5e7eb !important;
-        border-radius: 0.028in !important;
-        padding: 0.04in !important;
-        break-inside: avoid !important;
-        page-break-inside: avoid !important;
-      }
-
-      .hero-grid .rune-card,
-      .card-grid .rune-card,
-      .signature-grid .rune-card,
-      .section-content > .rune-card {
-        padding: 0.04in !important;
-      }
-
       .section-copy,
       .section-copy p,
       .section-copy li,
-      .chip p,
-      .field input,
-      .field textarea {
-        font-size: 5.75pt !important;
-        line-height: 1.1 !important;
+      .chip p {
+        font-size: 9pt !important;
+        line-height: 1.55 !important;
         color: #e5e7eb !important;
+        word-break: normal !important;
+        overflow-wrap: normal !important;
+        hyphens: none !important;
+        word-spacing: 0.04em !important;
       }
 
       .section-copy p {
-        margin: 0 0 0.018in !important;
+        margin: 0 0 0.1in !important;
       }
 
       .section-copy ul {
         margin: 0 !important;
-        padding-left: 0.085in !important;
+        padding-left: 0.18in !important;
       }
 
-      .chip-list {
-        margin-top: 0.03in !important;
-      }
-
-      .chip {
-        gap: 0.03in !important;
-      }
-
-      .chip i {
-        display: none !important;
-      }
-
-      .chip h4,
       .meta-kicker,
       .field-label,
       .meta-subtitle,
       .practitioner-role,
       .detail-row {
-        font-size: 4.8pt !important;
-        letter-spacing: 0.025em !important;
-        line-height: 1.05 !important;
+        font-size: 7.4pt !important;
+        line-height: 1.35 !important;
+        letter-spacing: 0.06em !important;
         color: #c4b5fd !important;
       }
 
-      .meta-kicker {
-        margin-bottom: 0.015in !important;
-      }
-
       .meta-title {
-        font-size: 7.8pt !important;
-        margin: 0 0 0.01in !important;
+        font-size: 14pt !important;
+        line-height: 1.25 !important;
+        margin: 0 0 0.06in !important;
         color: #fff !important;
       }
 
+      .detail-pairs {
+        gap: 0.09in !important;
+      }
+
+      .detail-row {
+        padding-bottom: 0.07in !important;
+        border-bottom: 1px solid rgba(168,85,247,0.28) !important;
+      }
+
       .field-grid {
-        margin-top: 0.025in !important;
+        margin-top: 0.12in !important;
       }
 
       .field {
-        gap: 0.008in !important;
+        gap: 0.05in !important;
       }
 
       .field input,
       .field textarea {
-        min-height: 0.105in !important;
-        padding: 0.006in 0 !important;
+        font-size: 9pt !important;
+        line-height: 1.35 !important;
+        min-height: 0.24in !important;
+        padding: 0.05in 0 !important;
+        color: #e5e7eb !important;
         background: transparent !important;
-        border-bottom: 1px solid rgba(168,85,247,0.34) !important;
-      }
-
-      .field textarea {
-        min-height: 0.17in !important;
-      }
-
-      .font-serif-heading {
-        font-size: 14pt !important;
-        color: #fbbf24 !important;
-      }
-
-      .detail-pairs {
-        gap: 0.02in !important;
-      }
-
-      .detail-row {
-        padding-bottom: 0.015in !important;
+        border-bottom: 1px solid rgba(168,85,247,0.45) !important;
       }
 
       .signature-area,
       .practitioner-seal {
-        min-height: 0.32in !important;
-        height: 0.32in !important;
+        min-height: 0.85in !important;
+        height: auto !important;
       }
 
       .signature-image {
         display: block !important;
         position: static !important;
         width: 100% !important;
-        height: 0.29in !important;
+        height: 0.72in !important;
         object-fit: contain !important;
-        padding: 0.01in !important;
+        padding: 0.05in !important;
       }
 
-      /* Hide empty or non-sourced signature images in print */
       .signature-image:not([src]),
       .signature-image[src=""] {
         display: none !important;
       }
 
       .practitioner-script {
-        font-size: 8.5pt !important;
+        font-size: 18pt !important;
         color: #fff !important;
       }
 
-      .utility-note {
-        display: none !important;
+      .font-serif-heading {
+        font-size: 28pt !important;
+        color: #fbbf24 !important;
       }
 
       a[href]::after {
@@ -1471,19 +1410,15 @@
           <span class="button-status-text" id="topSendText">Not Sent</span>
           <span class="button-status-dot" id="topSendDot" data-state="pending"></span>
         </button>
-        </div>
-        <!-- Additional actions: Save contract and Reset saved data -->
-        <button class="button round-button neutral-action status-action" type="button" id="mobileSaveButton">
-          <span class="button-label">Save Contract</span>
-          <span class="button-status-text" id="topSaveText">Unsaved</span>
-          <span class="button-status-dot" id="topSaveDot" data-state="idle"></span>
+        <button class="button icon-action save-action" type="button" id="mobileSaveButton" aria-label="Save contract" title="Save contract">
+          <i class="ph ph-floppy-disk"></i>
+          <span class="button-status-dot" id="topSaveDot" data-state="pending"></span>
         </button>
-        <button class="button round-button danger-action status-action" type="button" id="mobileResetButton">
-          <span class="button-label">Reset Saved Data</span>
-          <span class="button-status-text" id="topResetText">Clear Local</span>
-          <span class="button-status-dot" id="topResetDot" data-state="idle"></span>
+        <button class="button icon-action reset-action" type="button" id="mobileResetButton" aria-label="Reset saved data" title="Reset saved data">
+          <i class="ph ph-arrow-counter-clockwise"></i>
         </button>
       </div>
+    </div>
   </div>
 
       <main class="main-content">
@@ -1867,7 +1802,7 @@
     </div>
   </div>
 
-      <script>
+<script>
     window.CONTRACT_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbxmMfltr4LjiaKhTCwH6SFRnUYs9LT8dTypU6Uslxgncx_dt-PZ9Ph_QTOhSAZbJKMkOw/exec";
 
     window.CONTRACT_BACKEND_CONFIG = window.CONTRACT_BACKEND_CONFIG || {};
@@ -1875,6 +1810,7 @@
       (() => {
       let backendConfig = window.CONTRACT_BACKEND_CONFIG || {};
       window.CONTRACT_BACKEND_CONFIG = backendConfig;
+      const FORM_STORAGE_KEY = "aw_contract_mce_trial_2026";
       const CONTRACT_META = {
         contractorName: "Cassandre Arkema",
         contractTitle: "Monthly Content Engine Agreement",
@@ -1897,18 +1833,21 @@
       toggleButton?.addEventListener("click", toggleSidebar);
 
       const starField = document.getElementById("starField");
-      for (let index = 0; index < 150; index += 1) {
-        const star = document.createElement("div");
-        star.style.position = "absolute";
-        star.style.left = `${Math.random() * 100}%`;
-        star.style.top = `${Math.random() * 100}%`;
-        star.style.width = `${Math.random() * 2}px`;
-        star.style.height = star.style.width;
-        star.style.backgroundColor = "white";
-        star.style.borderRadius = "50%";
-        star.style.opacity = Math.random();
-        star.style.animation = `pulse ${Math.random() * 3 + 2}s infinite ease-in-out`;
-        starField.appendChild(star);
+      if (starField) {
+        starField.innerHTML = "";
+        for (let index = 0; index < 150; index += 1) {
+          const star = document.createElement("div");
+          star.style.position = "absolute";
+          star.style.left = `${Math.random() * 100}%`;
+          star.style.top = `${Math.random() * 100}%`;
+          star.style.width = `${Math.random() * 2}px`;
+          star.style.height = star.style.width;
+          star.style.backgroundColor = "white";
+          star.style.borderRadius = "50%";
+          star.style.opacity = Math.random();
+          star.style.animation = `pulse ${Math.random() * 3 + 2}s infinite ease-in-out`;
+          starField.appendChild(star);
+        }
       }
 
       class SignaturePad {
@@ -2065,13 +2004,10 @@
       const contractorEmailField = document.getElementById("contractorEmail");
       const paymentButton = document.getElementById("dynamicPaymentLink");
       const openButtons = [document.getElementById("openModalButton"), document.getElementById("mobileOpenModal")].filter(Boolean);
-      // New save/reset buttons for top bar in mobile as well as status tracking
-      const saveBtn = document.getElementById("saveContractButton");
-      const resetBtn = document.getElementById("resetContractButton");
+      const saveBtn = document.getElementById("mobileSaveButton");
+      const resetBtn = document.getElementById("mobileResetButton");
       const topSaveText = document.getElementById("topSaveText");
       const topSaveDot = document.getElementById("topSaveDot");
-      // FORM_STORAGE_KEY defined for consistent use across load/save
-      const FORM_STORAGE_KEY = "aw_contract_mce_trial_2026";
 
       function setSaveState(state) {
         if (topSaveText) topSaveText.textContent = state === "saved" ? "Saved" : "Unsaved";
@@ -2142,10 +2078,6 @@
         setDot("topPrintDot", state);
         setText("topPrintText", state === "ready" ? "Ready" : "Exporting");
       }
-
-      // (duplicate removed) centralized helpers declared above
-
-      const FORM_STORAGE_KEY = "aw_contract_mce_trial_2026";
 
       const saveFormState = () => {
         const data = {};
@@ -2300,34 +2232,34 @@
   <meta charset="UTF-8">
   <title>${escapeHtml(CONTRACT_META.contractTitle)}</title>
   <style>
-    @page { size: Letter; margin: 0; }
+    @page { size: Letter; margin: 0.55in; }
     * { box-sizing: border-box; }
     body { margin: 0; font-family: Inter, Arial, Helvetica, sans-serif; background: #05020a; color: #e5e7eb; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-    .page-wrap { width: 100%; max-width: none; margin: 0; padding: 0.16in; }
+    .page-wrap { width: 100%; max-width: 6.65in; margin: 0 auto; padding: 0; }
     .print-header { display: none; }
-    .eyebrow { display: inline-block; border: 1px solid rgba(168, 85, 247, 0.45); background: rgba(168, 85, 247, 0.08); padding: 2px 6px; margin-bottom: 8px; font-size: 5.8pt; text-transform: uppercase; letter-spacing: 0.06em; color: #c4b5fd; }
-    .header-title { margin: 0 0 6px; font-family: "Cinzel Decorative", Georgia, serif; font-size: 14pt; line-height: 1; font-weight: 400; color: #fff; }
+    .eyebrow { display: inline-block; border: 1px solid rgba(168, 85, 247, 0.45); background: rgba(168, 85, 247, 0.08); padding: 0.05in 0.08in; margin-bottom: 0.1in; font-size: 7.4pt; text-transform: uppercase; letter-spacing: 0.06em; color: #c4b5fd; }
+    .header-title { margin: 0 0 0.12in; font-family: "Cinzel Decorative", Georgia, serif; font-size: 24pt; line-height: 1.12; font-weight: 400; color: #fff; }
     .header-title br { display: none; }
     .header-title .accent { color: #fbbf24; font-style: italic; }
-    .header-rule { width: 0.7in; height: 1px; background: linear-gradient(to right, #a855f7, rgba(251, 191, 36, 0.8), transparent); }
-    .section-shell { display: block; gap: 0; margin-top: 0.038in; break-inside: avoid; page-break-inside: avoid; }
+    .header-rule { width: 1in; height: 1px; background: linear-gradient(to right, #a855f7, rgba(251, 191, 36, 0.8), transparent); }
+    .section-shell { display: block; gap: 0; margin-top: 0; margin-bottom: 0.26in; break-inside: avoid; page-break-inside: avoid; }
     .section-num { display: none; }
     .section-content { flex: 1; }
-    .section-title { margin: 0 0 0.022in; padding-bottom: 0.014in; border-bottom: 1px solid rgba(168, 85, 247, 0.28); font-family: "Cinzel Decorative", Georgia, serif; font-size: 6pt; text-transform: uppercase; letter-spacing: 0.04em; font-weight: 400; color: #fff; }
-    .rune-card, .send-panel, .chip, .practitioner-seal { border: 1px solid rgba(168, 85, 247, 0.28); border-radius: 0.028in; padding: 0.04in; background: rgba(13, 7, 24, 0.94); color: #e5e7eb; break-inside: avoid; page-break-inside: avoid; }
-    .hero-grid, .card-grid, .signature-grid, .field-grid, .chip-list { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.035in; }
-    .meta-kicker, .field-label, .practitioner-role { font-size: 4.8pt; text-transform: uppercase; letter-spacing: 0.025em; color: #c4b5fd; }
-    .meta-title { margin: 0 0 0.01in; font-family: "Playfair Display", Georgia, serif; font-size: 7.8pt; font-style: italic; color: #fff; }
-    .meta-subtitle { margin: 0 0 0.01in; font-size: 4.8pt; text-transform: uppercase; letter-spacing: 0.025em; color: #c4b5fd; }
-    .section-copy, .section-copy li, .chip p, .detail-row { line-height: 1.1; color: #e5e7eb; font-size: 5.75pt; }
-    .section-copy p { margin: 0 0 0.018in; }
-    .section-copy ul { margin: 0; padding-left: 0.085in; }
-    .chip h4 { margin: 0 0 0.01in; font-size: 4.8pt; text-transform: uppercase; letter-spacing: 0.025em; color: #c4b5fd; }
-    .detail-row { display: flex; justify-content: space-between; gap: 8px; padding-bottom: 0.015in; border-bottom: 1px solid rgba(168, 85, 247, 0.18); font-size: 4.8pt; text-transform: uppercase; color: #c4b5fd; }
-    .pdf-field-value { min-height: 0.105in; padding: 0.006in 0; border-bottom: 1px solid rgba(168, 85, 247, 0.34); white-space: pre-wrap; font-size: 5.75pt; line-height: 1.1; color: #e5e7eb; }
-    .signature-area { min-height: 0.32in; border: 1px solid rgba(168, 85, 247, 0.28); border-radius: 0.028in; background: rgba(13, 7, 24, 0.94); overflow: hidden; }
-    .signature-image { width: 100%; height: 0.29in; object-fit: contain; padding: 0.01in; }
-    .practitioner-script { margin: 0; font-family: "Playfair Display", Georgia, serif; font-size: 8.5pt; font-style: italic; color: #fff; }
+    .section-title { margin: 0 0 0.1in; padding-bottom: 0.05in; border-bottom: 1px solid rgba(168, 85, 247, 0.35); font-family: "Cinzel Decorative", Georgia, serif; font-size: 11pt; text-transform: uppercase; letter-spacing: 0.04em; font-weight: 400; color: #fff; }
+    .rune-card, .send-panel, .chip, .practitioner-seal { border: 1px solid rgba(168, 85, 247, 0.35); border-radius: 0.08in; padding: 0.16in; background: rgba(13, 7, 24, 0.94); color: #e5e7eb; break-inside: avoid; page-break-inside: avoid; }
+    .hero-grid, .card-grid, .signature-grid, .field-grid, .chip-list { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.16in; }
+    .meta-kicker, .field-label, .practitioner-role { font-size: 7.4pt; text-transform: uppercase; letter-spacing: 0.06em; color: #c4b5fd; }
+    .meta-title { margin: 0 0 0.06in; font-family: "Playfair Display", Georgia, serif; font-size: 14pt; font-style: italic; color: #fff; }
+    .meta-subtitle { margin: 0 0 0.06in; font-size: 7.4pt; text-transform: uppercase; letter-spacing: 0.06em; color: #c4b5fd; }
+    .section-copy, .section-copy li, .chip p, .detail-row { line-height: 1.55; color: #e5e7eb; font-size: 9pt; }
+    .section-copy p { margin: 0 0 0.1in; }
+    .section-copy ul { margin: 0; padding-left: 0.18in; }
+    .chip h4 { margin: 0 0 0.06in; font-size: 7.4pt; text-transform: uppercase; letter-spacing: 0.06em; color: #c4b5fd; }
+    .detail-row { display: flex; justify-content: space-between; gap: 8px; padding-bottom: 0.07in; border-bottom: 1px solid rgba(168, 85, 247, 0.28); font-size: 7.4pt; text-transform: uppercase; color: #c4b5fd; }
+    .pdf-field-value { min-height: 0.24in; padding: 0.05in 0; border-bottom: 1px solid rgba(168, 85, 247, 0.45); white-space: pre-wrap; font-size: 9pt; line-height: 1.35; color: #e5e7eb; }
+    .signature-area { min-height: 0.85in; border: 1px solid rgba(168, 85, 247, 0.35); border-radius: 0.08in; background: rgba(13, 7, 24, 0.94); overflow: hidden; }
+    .signature-image { width: 100%; height: 0.72in; object-fit: contain; padding: 0.05in; }
+    .practitioner-script { margin: 0; font-family: "Playfair Display", Georgia, serif; font-size: 18pt; font-style: italic; color: #fff; }
     @media (max-width: 700px) {
       .hero-grid, .card-grid, .signature-grid, .field-grid, .chip-list { grid-template-columns: 1fr; }
       .section-shell { display: block; }
@@ -2440,21 +2372,21 @@
       openButtons.forEach((button) => button.addEventListener("click", openModal));
       sendButtons.forEach((button) => button.addEventListener("click", sendSignedContract));
 
-      document.getElementById("saveSignatureButton").addEventListener("click", () => saveSignature(visiblePad));
-      document.getElementById("clearSignatureButton").addEventListener("click", () => {
+      document.getElementById("saveSignatureButton")?.addEventListener("click", () => saveSignature(visiblePad));
+      document.getElementById("clearSignatureButton")?.addEventListener("click", () => {
         syncPads("");
         updateSignatureStatus("Signature cleared.", "idle");
       });
-      document.getElementById("modalSaveButton").addEventListener("click", () => {
+      document.getElementById("modalSaveButton")?.addEventListener("click", () => {
         saveSignature(modalPad);
         closeModal();
       });
-      document.getElementById("modalClearButton").addEventListener("click", () => {
+      document.getElementById("modalClearButton")?.addEventListener("click", () => {
         syncPads("");
         updateSignatureStatus("Signature cleared.", "idle");
       });
-      document.getElementById("modalCloseButton").addEventListener("click", closeModal);
-      modal.addEventListener("click", (event) => {
+      document.getElementById("modalCloseButton")?.addEventListener("click", closeModal);
+      modal?.addEventListener("click", (event) => {
         if (event.target === modal) closeModal();
       });
       document.addEventListener("keydown", (event) => {
@@ -2470,8 +2402,8 @@
       });
 
       const printHandler = () => window.print();
-      document.getElementById("printButton").addEventListener("click", () => { setPrintState(); printHandler(); });
-      document.getElementById("mobilePrintButton").addEventListener("click", () => { setPrintState(); printHandler(); });
+      document.getElementById("printButton")?.addEventListener("click", () => { setPrintState(); printHandler(); });
+      document.getElementById("mobilePrintButton")?.addEventListener("click", () => { setPrintState(); printHandler(); });
 
       // Initialize signature state based on whether a signature exists
       setSignatureState(currentSignature() ? "saved" : "pending");

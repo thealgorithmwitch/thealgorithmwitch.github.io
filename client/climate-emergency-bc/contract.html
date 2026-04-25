@@ -10,23 +10,23 @@
   <script src="https://unpkg.com/@phosphor-icons/web"></script>
   <style>
     :root {
-      --bg-deep: #030008;
-      --panel-bg: rgba(10, 5, 18, 0.7);
-      --panel-bg-strong: rgba(12, 7, 22, 0.9);
-      --accent-violet: #8b5cf6;
-      --accent-violet-soft: rgba(139, 92, 246, 0.18);
-      --accent-gold: #eab308;
-      --accent-gold-soft: rgba(234, 179, 8, 0.12);
-      --text-main: #d1d5db;
-      --text-soft: #9ca3af;
-      --text-dim: #6b7280;
-      --text-bright: #ffffff;
+      --bg: #05020a;
+      --panel: #0d0718;
+      --panel-soft: rgba(13, 7, 24, 0.82);
+      --line: rgba(168, 85, 247, 0.2);
+      --line-strong: rgba(88, 28, 135, 0.5);
+      --text: #e5e7eb;
+      --text-soft: #aeb5c4;
+      --text-faint: #7d8798;
+      --gold: #fbbf24;
+      --accent: #a855f7;
+      --accent-soft: rgba(168, 85, 247, 0.18);
       --success: #4ade80;
       --danger: #fda4af;
       --sidebar-expanded: 320px;
       --sidebar-collapsed: 72px;
       --content-max: 900px;
-      --shadow: 0 24px 60px rgba(0, 0, 0, 0.35);
+      --shadow: 0 24px 56px rgba(0, 0, 0, 0.35);
     }
 
     * {
@@ -48,11 +48,13 @@
       min-height: 100vh;
       overflow-x: hidden;
       background:
-        radial-gradient(circle at 15% 20%, rgba(139, 92, 246, 0.08), transparent 22%),
-        radial-gradient(circle at 80% 10%, rgba(234, 179, 8, 0.08), transparent 18%),
-        #030008;
-      color: var(--text-main);
-      font-family: "Inter", sans-serif;
+        radial-gradient(circle at 50% 0%, rgba(88, 28, 135, 0.26), transparent 42%),
+        radial-gradient(circle at 15% 18%, rgba(168, 85, 247, 0.12), transparent 24%),
+        radial-gradient(circle at 80% 76%, rgba(34, 211, 238, 0.08), transparent 18%),
+        var(--bg);
+      color: var(--text);
+      font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      -webkit-font-smoothing: antialiased;
     }
 
     button,
@@ -67,13 +69,13 @@
       text-decoration: none;
     }
 
-    .font-magical { font-family: "Cinzel Decorative", serif; }
-    .font-serif-heading { font-family: "Playfair Display", serif; }
+    .font-magical { font-family: "Cinzel Decorative", Georgia, serif; font-weight: 400; }
+    .font-serif-heading { font-family: "Playfair Display", Georgia, serif; }
     .font-mono-code { font-family: "JetBrains Mono", monospace; }
 
     .grimoire-grid {
-      background-image: radial-gradient(circle at 2px 2px, rgba(139, 92, 246, 0.05) 1px, transparent 0);
-      background-size: 32px 32px;
+      background-image: linear-gradient(to right, rgba(168, 85, 247, 0.03) 1px, transparent 1px), linear-gradient(to bottom, rgba(168, 85, 247, 0.03) 1px, transparent 1px);
+      background-size: 40px 40px;
     }
 
     .stars {
@@ -81,7 +83,22 @@
       inset: 0;
       pointer-events: none;
       z-index: 0;
-      opacity: 0.4;
+      opacity: 0.78;
+    }
+
+    .glass-panel {
+      background: rgba(12, 6, 26, 0.82);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.28);
+      backdrop-filter: blur(18px);
+      -webkit-backdrop-filter: blur(18px);
+    }
+
+    .sharp-panel {
+      position: relative;
+      background: var(--panel-soft);
+      border: 1px solid var(--line-strong);
+      box-shadow: var(--shadow);
     }
 
     .sidebar {
@@ -91,8 +108,9 @@
       display: flex;
       flex-direction: column;
       padding: 2rem 0 1.5rem;
-      background: linear-gradient(to bottom, #0d0718, #05020a);
-      border-right: 1px solid rgba(139, 92, 246, 0.15);
+      background: linear-gradient(to bottom, rgba(13, 7, 24, 0.96), rgba(5, 2, 10, 0.96));
+      border-right: 1px solid var(--line);
+      box-shadow: var(--shadow);
       transition: width 0.35s ease;
       z-index: 20;
     }
@@ -102,7 +120,7 @@
     }
 
     .main-content {
-      margin-left: var(--sidebar-expanded);
+      margin-left: 0;
       min-height: 100vh;
       overflow-y: auto;
       position: relative;
@@ -110,8 +128,13 @@
       transition: margin-left 0.35s ease;
     }
 
-    .sidebar.collapsed + .main-content {
-      margin-left: var(--sidebar-collapsed);
+    body.sidebar-open .main-content {
+      margin-left: var(--sidebar-expanded);
+    }
+
+    body:not(.sidebar-open) .main-content,
+    body.sidebar-collapsed .main-content {
+      margin-left: 0;
     }
 
     .toggle-btn {
@@ -123,12 +146,13 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      background: var(--accent-violet);
+      background: var(--accent);
       color: #fff;
       border-radius: 4px;
-      box-shadow: 0 0 10px rgba(139, 92, 246, 0.5);
+      box-shadow: 0 0 10px rgba(168, 85, 247, 0.5);
       cursor: pointer;
       z-index: 25;
+      border: 0;
     }
 
     .sidebar-inner {
@@ -162,21 +186,39 @@
     }
 
     .brand-sigil {
-      width: 2rem;
-      height: 2rem;
+      width: 2.75rem;
+      height: 2.75rem;
       flex-shrink: 0;
-      border: 1px solid rgba(139, 92, 246, 0.5);
-      transform: rotate(45deg);
+      border-radius: 0.95rem;
       display: flex;
       align-items: center;
       justify-content: center;
-      background: #000;
+      background: rgba(12, 6, 26, 0.82);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.28);
+      backdrop-filter: blur(18px);
+      -webkit-backdrop-filter: blur(18px);
     }
 
-    .brand-sigil i {
-      transform: rotate(-45deg);
-      color: #a78bfa;
-      font-size: 0.9rem;
+    .brand-sigil .relative {
+      position: relative;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .brand-sigil .sparkle {
+      font-size: 1.45rem;
+      color: var(--accent);
+    }
+
+    .brand-sigil .sparkle-accent {
+      position: absolute;
+      top: -0.35rem;
+      right: -0.55rem;
+      font-size: 0.62rem;
+      color: var(--gold);
+      animation: pulse 2s ease-in-out infinite;
     }
 
     .status-seal {
@@ -208,14 +250,14 @@
 
     .nav-item:hover,
     .nav-item:focus-visible {
-      color: var(--text-bright);
-      background: rgba(76, 29, 149, 0.1);
-      border-left-color: var(--accent-violet);
+      color: var(--text);
+      background: var(--accent-soft);
+      border-left-color: var(--accent);
       outline: none;
     }
 
     .page-wrap {
-      max-width: var(--content-max);
+      max-width: 900px;
       margin: 0 auto;
       padding: 5rem 1.5rem;
     }
@@ -227,8 +269,8 @@
       z-index: 18;
       padding: 1rem;
       backdrop-filter: blur(12px);
-      background: rgba(3, 0, 8, 0.92);
-      border-bottom: 1px solid rgba(139, 92, 246, 0.12);
+      background: rgba(5, 2, 10, 0.92);
+      border-bottom: 1px solid var(--line);
     }
 
     .mobile-bar-inner {
@@ -239,49 +281,50 @@
       gap: 0.75rem;
     }
 
-    .mobile-actions {
+    .mobile-actions,
+    .signature-controls,
+    .action-row {
       display: flex;
       gap: 0.75rem;
       flex-wrap: wrap;
+      margin-top: 1rem;
     }
 
     .eyebrow {
       display: inline-block;
       padding: 0.25rem 0.75rem;
-      border: 1px solid rgba(139, 92, 246, 0.2);
+      border: 1px solid var(--line);
       margin-bottom: 1.5rem;
       font-family: "JetBrains Mono", monospace;
       font-size: 0.56rem;
       letter-spacing: 0.4em;
       text-transform: uppercase;
-      color: #a78bfa;
+      color: var(--accent);
     }
 
     .header-title {
       margin: 0 0 1.5rem;
-      font-family: "Cinzel Decorative", serif;
+      font-family: "Cinzel Decorative", Georgia, serif;
       font-size: clamp(2.8rem, 8vw, 4.3rem);
       line-height: 1.08;
-      color: var(--text-bright);
-      text-shadow: 0 0 10px rgba(139, 92, 246, 0.4);
+      color: var(--text);
     }
 
     .header-title .accent {
-      color: var(--accent-gold);
+      color: var(--gold);
       font-style: italic;
-      text-shadow: 0 0 12px rgba(234, 179, 8, 0.3);
     }
 
     .header-rule {
       width: 6rem;
       height: 1px;
-      background: linear-gradient(to right, var(--accent-violet), transparent);
+      background: linear-gradient(to right, var(--accent), transparent);
     }
 
     .section-shell {
       display: flex;
       gap: 2.5rem;
-      margin-top: 8rem;
+      margin-top: 6rem;
       break-inside: avoid;
       page-break-inside: avoid;
     }
@@ -292,11 +335,11 @@
       text-orientation: mixed;
       padding-left: 0.75rem;
       height: 5rem;
-      opacity: 0.4;
-      border-left: 1px solid var(--accent-violet);
+      opacity: 0.55;
+      border-left: 1px solid var(--accent);
       font-family: "JetBrains Mono", monospace;
       font-size: 0.65rem;
-      color: var(--accent-violet);
+      color: var(--accent);
     }
 
     .section-content {
@@ -306,18 +349,20 @@
 
     .section-title {
       margin: 0 0 2rem;
-      font-family: "Cinzel Decorative", serif;
-      font-size: 1.15rem;
+      font-family: "Cinzel Decorative", Georgia, serif;
+      font-size: 1.08rem;
       letter-spacing: 0.24em;
       text-transform: uppercase;
-      color: var(--text-bright);
+      color: var(--text);
     }
 
     .rune-card {
-      background: var(--panel-bg);
-      border: 1px solid rgba(139, 92, 246, 0.12);
-      backdrop-filter: blur(10px);
+      background: var(--panel-soft);
+      border: 1px solid var(--line);
       box-shadow: var(--shadow);
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+      border-radius: 1rem;
     }
 
     .hero-grid,
@@ -334,7 +379,6 @@
     .signature-grid .rune-card,
     .send-panel {
       padding: 2rem;
-      border-radius: 0;
     }
 
     .meta-kicker {
@@ -344,31 +388,31 @@
       font-size: 0.56rem;
       letter-spacing: 0.25em;
       text-transform: uppercase;
-      color: #a78bfa;
+      color: var(--accent);
     }
 
     .meta-title {
       margin: 0 0 0.5rem;
-      font-family: "Playfair Display", serif;
+      font-family: "Playfair Display", Georgia, serif;
       font-size: 1.7rem;
       font-style: italic;
-      color: var(--text-bright);
+      color: var(--text);
     }
 
     .meta-subtitle {
       margin: 0 0 0.75rem;
-      font-family: "Cinzel Decorative", serif;
-      font-size: 0.6rem;
-      letter-spacing: 0.3em;
+      font-family: "JetBrains Mono", monospace;
+      font-size: 0.62rem;
+      letter-spacing: 0.28em;
       text-transform: uppercase;
-      color: var(--accent-gold);
+      color: var(--gold);
     }
 
     .section-copy,
     .section-copy li {
       font-size: 0.95rem;
       line-height: 1.75;
-      color: var(--text-main);
+      color: var(--text);
     }
 
     .section-copy p {
@@ -390,7 +434,7 @@
       justify-content: space-between;
       gap: 1rem;
       padding-bottom: 0.5rem;
-      border-bottom: 1px solid rgba(139, 92, 246, 0.12);
+      border-bottom: 1px solid var(--line);
       font-family: "JetBrains Mono", monospace;
       font-size: 0.68rem;
       text-transform: uppercase;
@@ -398,11 +442,11 @@
     }
 
     .detail-row span:first-child {
-      color: var(--text-dim);
+      color: var(--text-faint);
     }
 
     .detail-row span:last-child {
-      color: var(--text-bright);
+      color: var(--text);
       text-align: right;
     }
 
@@ -426,7 +470,7 @@
       font-size: 0.58rem;
       letter-spacing: 0.24em;
       text-transform: uppercase;
-      color: var(--text-dim);
+      color: var(--text-faint);
     }
 
     .field input,
@@ -435,8 +479,8 @@
       padding: 0.9rem 0;
       background: transparent;
       border: 0;
-      border-bottom: 1px solid rgba(139, 92, 246, 0.28);
-      color: var(--text-bright);
+      border-bottom: 1px solid var(--line-strong);
+      color: var(--text);
       outline: none;
     }
 
@@ -447,12 +491,12 @@
 
     .field input::placeholder,
     .field textarea::placeholder {
-      color: var(--text-dim);
+      color: var(--text-faint);
     }
 
     .field input:focus,
     .field textarea:focus {
-      border-color: var(--accent-violet);
+      border-color: var(--accent);
     }
 
     .chip-list {
@@ -467,13 +511,15 @@
       align-items: flex-start;
       gap: 1rem;
       padding: 1.5rem;
-      border: 1px solid rgba(139, 92, 246, 0.12);
-      background: rgba(46, 16, 101, 0.08);
+      border: 1px solid var(--line);
+      background: rgba(12, 6, 26, 0.62);
+      box-shadow: var(--shadow);
+      border-radius: 1rem;
     }
 
     .chip i {
       margin-top: 0.1rem;
-      color: var(--accent-gold);
+      color: var(--gold);
     }
 
     .chip h4 {
@@ -482,7 +528,7 @@
       font-size: 0.72rem;
       letter-spacing: 0.18em;
       text-transform: uppercase;
-      color: var(--text-bright);
+      color: var(--text);
     }
 
     .chip p {
@@ -495,9 +541,10 @@
     .signature-area {
       position: relative;
       min-height: 12rem;
-      border: 1px dashed rgba(139, 92, 246, 0.3);
-      background: #000;
+      border: 1px dashed var(--line-strong);
+      background: rgba(5, 2, 10, 0.72);
       overflow: hidden;
+      border-radius: 1rem;
     }
 
     .signature-canvas,
@@ -520,43 +567,39 @@
       object-fit: contain;
       padding: 0.5rem;
       pointer-events: none;
-    }
-
-    .signature-controls,
-    .action-row {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 0.75rem;
-      margin-top: 1rem;
+      display: none;
     }
 
     .button {
       padding: 1rem 1.35rem;
-      border: 1px solid rgba(234, 179, 8, 0.65);
+      border: 1px solid rgba(251, 191, 36, 0.65);
       background: transparent;
-      color: var(--accent-gold);
+      color: var(--gold);
       font-family: "JetBrains Mono", monospace;
       font-size: 0.78rem;
       letter-spacing: 0.2em;
       text-transform: uppercase;
       transition: all 0.25s ease;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
     }
 
     .button:hover,
     .button:focus-visible {
-      background: var(--accent-gold);
+      background: var(--gold);
       color: #000;
       outline: none;
     }
 
     .button.subtle {
-      border-color: rgba(139, 92, 246, 0.4);
-      color: #c4b5fd;
+      border-color: var(--line-strong);
+      color: #d8b4fe;
     }
 
     .button.subtle:hover,
     .button.subtle:focus-visible {
-      background: var(--accent-violet);
+      background: var(--accent);
       color: #fff;
     }
 
@@ -591,37 +634,36 @@
 
     .practitioner-seal {
       min-height: 12rem;
-      border: 1px solid rgba(76, 29, 149, 0.22);
-      background: rgba(46, 16, 101, 0.1);
+      border: 1px solid var(--line);
+      background: rgba(12, 6, 26, 0.62);
       display: flex;
       flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      text-align: center;
+      justify-content: flex-end;
+      text-align: left;
       padding: 1.5rem;
       position: relative;
       overflow: hidden;
+      border-radius: 1rem;
     }
 
     .practitioner-seal::before {
       content: "";
       position: absolute;
       inset: 0;
-      opacity: 0.06;
+      opacity: 0.08;
       background:
-        radial-gradient(circle, rgba(139, 92, 246, 0.5), transparent 45%),
-        linear-gradient(135deg, transparent 0%, rgba(139, 92, 246, 0.12) 50%, transparent 100%);
+        radial-gradient(circle at 15% 20%, rgba(168, 85, 247, 0.22), transparent 36%),
+        linear-gradient(135deg, transparent 0%, rgba(168, 85, 247, 0.06) 50%, transparent 100%);
     }
 
     .practitioner-script {
       position: relative;
       z-index: 1;
       margin: 0;
-      font-family: "Playfair Display", serif;
-      font-size: 2.5rem;
+      font-family: "Playfair Display", Georgia, serif;
+      font-size: 1.8rem;
       font-style: italic;
-      color: rgba(255, 255, 255, 0.85);
-      text-shadow: 0 0 10px rgba(139, 92, 246, 0.35);
+      color: var(--text);
     }
 
     .practitioner-role {
@@ -632,22 +674,24 @@
       font-size: 0.58rem;
       letter-spacing: 0.28em;
       text-transform: uppercase;
-      color: #a78bfa;
+      color: var(--text-soft);
     }
 
     .send-panel {
       margin-top: 2rem;
-      border: 1px solid rgba(139, 92, 246, 0.12);
-      background: var(--panel-bg-strong);
+      border: 1px solid var(--line);
+      background: var(--panel-soft);
+      box-shadow: var(--shadow);
+      border-radius: 1rem;
     }
 
     .send-panel h3 {
       margin: 0 0 0.75rem;
-      font-family: "Cinzel Decorative", serif;
+      font-family: "Cinzel Decorative", Georgia, serif;
       font-size: 1rem;
       letter-spacing: 0.18em;
       text-transform: uppercase;
-      color: var(--text-bright);
+      color: var(--text);
     }
 
     .send-panel p,
@@ -682,18 +726,21 @@
     .modal-panel {
       width: min(860px, 100%);
       padding: 2rem;
-      background: linear-gradient(to bottom, #0d0718, #05020a);
-      border: 1px solid rgba(139, 92, 246, 0.18);
+      background: linear-gradient(to bottom, rgba(13, 7, 24, 0.96), rgba(5, 2, 10, 0.96));
+      border: 1px solid var(--line-strong);
       box-shadow: var(--shadow);
+      border-radius: 1rem;
+      max-height: calc(100vh - 3rem);
+      overflow: auto;
     }
 
     .modal-title {
       margin: 0 0 1rem;
-      font-family: "Cinzel Decorative", serif;
+      font-family: "Cinzel Decorative", Georgia, serif;
       font-size: 1.1rem;
       letter-spacing: 0.2em;
       text-transform: uppercase;
-      color: var(--text-bright);
+      color: var(--text);
     }
 
     .modal-copy {
@@ -707,13 +754,13 @@
     }
 
     @media (max-width: 960px) {
-      .sidebar {
-        display: none;
+      body.sidebar-open .main-content,
+      .main-content {
+        margin-left: 0;
       }
 
-      .main-content,
-      .sidebar.collapsed + .main-content {
-        margin-left: 0;
+      .sidebar {
+        display: none;
       }
 
       .mobile-bar {
@@ -747,11 +794,15 @@
       }
 
       .page-wrap {
-        padding: 2rem 1rem 4rem;
+        padding: 2rem 1rem 7rem;
       }
 
       .header-title {
         font-size: 2.2rem;
+      }
+
+      .button {
+        width: 100%;
       }
     }
 
@@ -810,7 +861,8 @@
       .signature-status,
       .send-status,
       .utility-note,
-      .practitioner-role {
+      .practitioner-role,
+      .practitioner-script {
         color: #000 !important;
         text-shadow: none !important;
       }
@@ -842,7 +894,8 @@
       .section-shell,
       .rune-card,
       .signature-area,
-      .practitioner-seal {
+      .practitioner-seal,
+      .send-panel {
         break-inside: avoid;
         page-break-inside: avoid;
       }
@@ -854,62 +907,68 @@
     }
   </style>
 </head>
-<body class="grimoire-grid">
+<body class="grimoire-grid sidebar-collapsed">
   <div class="stars" id="starField" aria-hidden="true"></div>
 
-  <aside id="sidebar" class="sidebar">
+  <aside id="sidebar" class="sidebar collapsed">
     <div class="toggle-btn screen-only" id="toggleSidebarButton" aria-label="Toggle sidebar">
-      <i id="toggleIcon" class="ph ph-caret-left"></i>
+      <i id="toggleIcon" class="ph ph-caret-right"></i>
     </div>
     <div class="sidebar-inner">
       <div class="brand-row">
-        <div class="brand-sigil"><i class="ph-fill ph-pentagram"></i></div>
+        <div class="brand-sigil">
+          <div class="relative">
+            <i class="ph-fill ph-sparkle sparkle"></i>
+            <i class="ph-fill ph-star-four sparkle-accent"></i>
+          </div>
+        </div>
         <div class="nav-text">
           <h1 class="font-magical" style="margin:0;font-size:0.9rem;letter-spacing:0.2em;color:#fff;">ALGORITHM WITCH</h1>
-          <p class="font-mono-code" style="margin:0.1rem 0 0;font-size:0.5rem;color:#8b5cf6;text-transform:uppercase;">Contract Archive</p>
+          <p class="font-mono-code" style="margin:0.1rem 0 0;font-size:0.5rem;color:var(--accent);text-transform:uppercase;">Contract Archive</p>
         </div>
       </div>
 
       <div class="sidebar-meta" style="padding:0 1.25rem;margin-bottom:2rem;">
         <div style="margin-bottom:1rem;">
-          <p class="font-mono-code" style="margin:0;font-size:0.56rem;color:#6b7280;text-transform:uppercase;">Status</p>
+          <p class="font-mono-code" style="margin:0;font-size:0.56rem;color:var(--text-faint);text-transform:uppercase;">Status</p>
           <div style="display:flex;align-items:center;gap:0.5rem;margin-top:0.25rem;">
             <div class="status-seal"></div>
             <span class="font-mono-code" style="font-size:0.62rem;color:#4ade80;">READY_FOR_SEALS</span>
           </div>
         </div>
         <div>
-          <p class="font-mono-code" style="margin:0;font-size:0.56rem;color:#6b7280;text-transform:uppercase;">Registry ID</p>
+          <p class="font-mono-code" style="margin:0;font-size:0.56rem;color:var(--text-faint);text-transform:uppercase;">Registry ID</p>
           <span class="font-mono-code" style="font-size:0.68rem;color:#fff;">AW-MCE-TRIAL-2026</span>
         </div>
       </div>
 
       <nav class="nav-group" aria-label="Contract navigation">
         <div class="nav-text" style="padding:0 1.5rem;margin-bottom:0.5rem;">
-          <p class="font-mono-code" style="margin:0;font-size:0.56rem;color:#4b5563;text-transform:uppercase;letter-spacing:0.2em;">Covenant Map</p>
+          <p class="font-mono-code" style="margin:0;font-size:0.56rem;color:var(--text-faint);text-transform:uppercase;letter-spacing:0.2em;">Contract Map</p>
         </div>
         <a href="#parties" class="nav-item"><i class="ph ph-users-three"></i><span class="nav-text font-mono-code" style="font-size:0.7rem;text-transform:uppercase;letter-spacing:0.12em;">01. Parties</span></a>
-        <a href="#term" class="nav-item"><i class="ph ph-hourglass-medium"></i><span class="nav-text font-mono-code" style="font-size:0.7rem;text-transform:uppercase;letter-spacing:0.12em;">02. Term</span></a>
-        <a href="#scope" class="nav-item"><i class="ph ph-sparkle"></i><span class="nav-text font-mono-code" style="font-size:0.7rem;text-transform:uppercase;letter-spacing:0.12em;">03. Scope</span></a>
-        <a href="#deliverables" class="nav-item"><i class="ph ph-stack"></i><span class="nav-text font-mono-code" style="font-size:0.7rem;text-transform:uppercase;letter-spacing:0.12em;">04. Deliverables</span></a>
-        <a href="#payment" class="nav-item"><i class="ph ph-coins"></i><span class="nav-text font-mono-code" style="font-size:0.7rem;text-transform:uppercase;letter-spacing:0.12em;">05. Payment</span></a>
-        <a href="#responsibilities" class="nav-item"><i class="ph ph-check-square-offset"></i><span class="nav-text font-mono-code" style="font-size:0.7rem;text-transform:uppercase;letter-spacing:0.12em;">06. Client Duties</span></a>
-        <a href="#revisions" class="nav-item"><i class="ph ph-arrows-clockwise"></i><span class="nav-text font-mono-code" style="font-size:0.7rem;text-transform:uppercase;letter-spacing:0.12em;">07. Revisions</span></a>
-        <a href="#status" class="nav-item"><i class="ph ph-scales"></i><span class="nav-text font-mono-code" style="font-size:0.7rem;text-transform:uppercase;letter-spacing:0.12em;">08. Contractor</span></a>
-        <a href="#taxes" class="nav-item"><i class="ph ph-receipt"></i><span class="nav-text font-mono-code" style="font-size:0.7rem;text-transform:uppercase;letter-spacing:0.12em;">09. Taxes</span></a>
-        <a href="#ip" class="nav-item"><i class="ph ph-seal-check"></i><span class="nav-text font-mono-code" style="font-size:0.7rem;text-transform:uppercase;letter-spacing:0.12em;">10. IP</span></a>
-        <a href="#communication" class="nav-item"><i class="ph ph-chat-circle-text"></i><span class="nav-text font-mono-code" style="font-size:0.7rem;text-transform:uppercase;letter-spacing:0.12em;">11. Communication</span></a>
-        <a href="#confidentiality" class="nav-item"><i class="ph ph-lock-key"></i><span class="nav-text font-mono-code" style="font-size:0.7rem;text-transform:uppercase;letter-spacing:0.12em;">12. Confidentiality</span></a>
-        <a href="#termination" class="nav-item"><i class="ph ph-x-circle"></i><span class="nav-text font-mono-code" style="font-size:0.7rem;text-transform:uppercase;letter-spacing:0.12em;">13. Termination</span></a>
-        <a href="#liability" class="nav-item"><i class="ph ph-warning-circle"></i><span class="nav-text font-mono-code" style="font-size:0.7rem;text-transform:uppercase;letter-spacing:0.12em;">14. Liability</span></a>
-        <a href="#law" class="nav-item"><i class="ph ph-buildings"></i><span class="nav-text font-mono-code" style="font-size:0.7rem;text-transform:uppercase;letter-spacing:0.12em;">15. Governing Law</span></a>
-        <a href="#entire-agreement" class="nav-item"><i class="ph ph-scroll"></i><span class="nav-text font-mono-code" style="font-size:0.7rem;text-transform:uppercase;letter-spacing:0.12em;">16. Entire Agreement</span></a>
-        <a href="#signatures" class="nav-item"><i class="ph ph-seal"></i><span class="nav-text font-mono-code" style="font-size:0.7rem;text-transform:uppercase;letter-spacing:0.12em;">17. Ritual Seals</span></a>
+        <a href="#scope" class="nav-item"><i class="ph ph-sparkle"></i><span class="nav-text font-mono-code" style="font-size:0.7rem;text-transform:uppercase;letter-spacing:0.12em;">02. Scope</span></a>
+        <a href="#deliverables" class="nav-item"><i class="ph ph-stack"></i><span class="nav-text font-mono-code" style="font-size:0.7rem;text-transform:uppercase;letter-spacing:0.12em;">03. Deliverables</span></a>
+        <a href="#timeline" class="nav-item"><i class="ph ph-hourglass-medium"></i><span class="nav-text font-mono-code" style="font-size:0.7rem;text-transform:uppercase;letter-spacing:0.12em;">04. Timeline</span></a>
+        <a href="#payment" class="nav-item"><i class="ph ph-coins"></i><span class="nav-text font-mono-code" style="font-size:0.7rem;text-transform:uppercase;letter-spacing:0.12em;">05. Fees</span></a>
+        <a href="#deposit" class="nav-item"><i class="ph ph-credit-card"></i><span class="nav-text font-mono-code" style="font-size:0.7rem;text-transform:uppercase;letter-spacing:0.12em;">06. Deposit</span></a>
+        <a href="#late-payment" class="nav-item"><i class="ph ph-clock-countdown"></i><span class="nav-text font-mono-code" style="font-size:0.7rem;text-transform:uppercase;letter-spacing:0.12em;">07. Late Payment</span></a>
+        <a href="#revisions" class="nav-item"><i class="ph ph-arrows-clockwise"></i><span class="nav-text font-mono-code" style="font-size:0.7rem;text-transform:uppercase;letter-spacing:0.12em;">08. Revisions</span></a>
+        <a href="#responsibilities" class="nav-item"><i class="ph ph-check-square-offset"></i><span class="nav-text font-mono-code" style="font-size:0.7rem;text-transform:uppercase;letter-spacing:0.12em;">09. Client Duties</span></a>
+        <a href="#status" class="nav-item"><i class="ph ph-scales"></i><span class="nav-text font-mono-code" style="font-size:0.7rem;text-transform:uppercase;letter-spacing:0.12em;">10. Contractor</span></a>
+        <a href="#taxes" class="nav-item"><i class="ph ph-receipt"></i><span class="nav-text font-mono-code" style="font-size:0.7rem;text-transform:uppercase;letter-spacing:0.12em;">11. Taxes</span></a>
+        <a href="#ip" class="nav-item"><i class="ph ph-seal-check"></i><span class="nav-text font-mono-code" style="font-size:0.7rem;text-transform:uppercase;letter-spacing:0.12em;">12. IP</span></a>
+        <a href="#portfolio" class="nav-item"><i class="ph ph-images-square"></i><span class="nav-text font-mono-code" style="font-size:0.7rem;text-transform:uppercase;letter-spacing:0.12em;">13. Portfolio</span></a>
+        <a href="#confidentiality" class="nav-item"><i class="ph ph-lock-key"></i><span class="nav-text font-mono-code" style="font-size:0.7rem;text-transform:uppercase;letter-spacing:0.12em;">14. Confidentiality</span></a>
+        <a href="#termination" class="nav-item"><i class="ph ph-x-circle"></i><span class="nav-text font-mono-code" style="font-size:0.7rem;text-transform:uppercase;letter-spacing:0.12em;">15. Termination</span></a>
+        <a href="#liability" class="nav-item"><i class="ph ph-warning-circle"></i><span class="nav-text font-mono-code" style="font-size:0.7rem;text-transform:uppercase;letter-spacing:0.12em;">16. Liability</span></a>
+        <a href="#law" class="nav-item"><i class="ph ph-buildings"></i><span class="nav-text font-mono-code" style="font-size:0.7rem;text-transform:uppercase;letter-spacing:0.12em;">17. Governing Law</span></a>
+        <a href="#signatures" class="nav-item"><i class="ph ph-seal"></i><span class="nav-text font-mono-code" style="font-size:0.7rem;text-transform:uppercase;letter-spacing:0.12em;">Signatures</span></a>
       </nav>
 
       <div class="sidebar-footer" style="padding:0 1.25rem;">
-        <div style="padding-top:1.5rem;border-top:1px solid rgba(76,29,149,0.3);">
-          <p class="font-mono-code" style="margin:0;font-size:0.56rem;line-height:1.8;color:#4b5563;font-style:italic;">"Logic bound by digital ink."</p>
+        <div style="padding-top:1.5rem;border-top:1px solid var(--line);">
+          <p class="font-mono-code" style="margin:0;font-size:0.56rem;line-height:1.8;color:var(--text-faint);font-style:italic;">Template only. Not legal advice.</p>
         </div>
       </div>
     </div>
@@ -918,7 +977,7 @@
   <div class="mobile-bar screen-only">
     <div class="mobile-bar-inner">
       <div>
-        <div class="font-mono-code" style="font-size:0.58rem;letter-spacing:0.26em;text-transform:uppercase;color:#a78bfa;">AW-MCE-TRIAL-2026</div>
+        <div class="font-mono-code" style="font-size:0.58rem;letter-spacing:0.26em;text-transform:uppercase;color:var(--accent);">AW-MCE-TRIAL-2026</div>
         <div class="font-magical" style="margin-top:0.4rem;font-size:1rem;letter-spacing:0.12em;color:#fff;">Algorithm Witch Contract</div>
       </div>
       <div class="mobile-actions">
@@ -937,7 +996,7 @@
       </div>
 
       <header>
-        <div class="eyebrow">Service Provision Covenant</div>
+        <div class="eyebrow">Monthly Content Engine Agreement</div>
         <h1 class="header-title">
           Monthly Content <br>
           <span class="accent">Engine Agreement</span>
@@ -948,12 +1007,12 @@
       <section class="section-shell" id="parties">
         <div class="section-num">01</div>
         <div class="section-content">
-          <h2 class="section-title">Contractual Entities</h2>
+          <h2 class="section-title">Parties</h2>
           <div class="hero-grid">
             <div class="rune-card">
               <span class="meta-kicker">The Client</span>
               <h3 class="meta-title">[Client Organization]</h3>
-              <p class="section-copy">Canadian organization contact placeholders are included below for completion before signing.</p>
+              <p class="section-copy">Client details may be completed with placeholders and finalized before signature and dispatch.</p>
             </div>
             <div class="rune-card" style="border-left:4px solid rgba(234,179,8,0.5);">
               <span class="meta-kicker">The Practitioner</span>
@@ -991,12 +1050,43 @@
         </div>
       </section>
 
-      <section class="section-shell" id="term">
+      <section class="section-shell" id="scope">
         <div class="section-num">02</div>
         <div class="section-content">
-          <h2 class="section-title">The Term</h2>
+          <h2 class="section-title">Scope of Services</h2>
           <div class="rune-card" style="padding:2.5rem;">
-            <p class="section-copy">This Agreement covers a 30-day trial period beginning on the confirmed start date and ending 30 calendar days later. At the end of the trial, both parties may continue or conclude the engagement.</p>
+            <p class="section-copy">Contractor will provide a one-month trial of content and communications support for the Client. The work is intended to function as a compact monthly content engine and may include planning, drafting, design support, coordination, and publishing preparation reasonably related to the agreed channels and priorities.</p>
+            <div class="chip-list">
+              <div class="chip"><i class="ph ph-intersect-three"></i><div><h4>Social Content</h4><p>Content creation for Instagram, Bluesky, and LinkedIn, including writing, light editing, and posting support.</p></div></div>
+              <div class="chip"><i class="ph ph-spiral"></i><div><h4>Visual Posts</h4><p>Infographics, carousels, and related visual assets appropriate for the monthly trial.</p></div></div>
+              <div class="chip"><i class="ph ph-megaphone-simple"></i><div><h4>Event Promotion</h4><p>Invitations, promotional materials, and light support tied to events or campaign moments as needed.</p></div></div>
+              <div class="chip"><i class="ph ph-newspaper-clipping"></i><div><h4>Newsletter Support</h4><p>Newsletter drafting, editing, formatting, and/or temporary newsletter management during the trial.</p></div></div>
+              <div class="chip"><i class="ph ph-magic-wand"></i><div><h4>Coordination</h4><p>Light strategy and coordination reasonably necessary to move the agreed deliverables forward.</p></div></div>
+            </div>
+            <p class="section-copy" style="margin-top:1.5rem;">The exact monthly volume may be confirmed in writing by email before the trial begins. Work is scoped to a reasonable monthly volume aligned with the $1,500 USD engagement.</p>
+          </div>
+        </div>
+      </section>
+
+      <section class="section-shell" id="deliverables">
+        <div class="section-num">03</div>
+        <div class="section-content">
+          <h2 class="section-title">Deliverables</h2>
+          <div class="rune-card" style="padding:2.5rem;">
+            <div class="section-copy">
+              <p>Deliverables may include draft and final copy, social graphics, carousel layouts, event promotional materials, newsletter copy, newsletter production support, coordination notes, and related working files needed to complete the agreed content cycle during the 30-day trial.</p>
+              <p>Deliverables will be provided in digital form using tools and file types reasonably suited to the Client's workflow. Final deliverables do not include transfer of the Contractor's private templates, internal systems, reusable frameworks, or unpublished process materials unless expressly agreed in writing.</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="section-shell" id="timeline">
+        <div class="section-num">04</div>
+        <div class="section-content">
+          <h2 class="section-title">Timeline and 30-Day Trial Cadence</h2>
+          <div class="rune-card" style="padding:2.5rem;">
+            <p class="section-copy">This Agreement covers a 30-day trial period beginning on the confirmed start date and ending on the confirmed end date. During the trial, work may be delivered on a rolling basis rather than as a single batch, and the parties will coordinate by email or another agreed communication channel to confirm priorities, timing, and approvals.</p>
             <div class="field-grid">
               <div class="field">
                 <label class="field-label" for="startDate">Start Date</label>
@@ -1011,178 +1101,164 @@
         </div>
       </section>
 
-      <section class="section-shell" id="scope">
-        <div class="section-num">03</div>
-        <div class="section-content">
-          <h2 class="section-title">The Sacred Scope</h2>
-          <div class="rune-card" style="padding:2.5rem;">
-            <p class="section-copy">Contractor will provide ongoing content and communications support for a one-month trial period.</p>
-            <div class="chip-list">
-              <div class="chip"><i class="ph ph-intersect-three"></i><div><h4>Social Manifestations</h4><p>Content creation for social platforms (Instagram, Bluesky, LinkedIn).</p></div></div>
-              <div class="chip"><i class="ph ph-spiral"></i><div><h4>Data Geometry</h4><p>Design of infographics and carousel posts.</p></div></div>
-              <div class="chip"><i class="ph ph-megaphone-simple"></i><div><h4>Event Signals</h4><p>Light content support for events (invitations, promotional materials).</p></div></div>
-              <div class="chip"><i class="ph ph-newspaper-clipping"></i><div><h4>Newsletter Work</h4><p>Newsletter drafting and/or management.</p></div></div>
-              <div class="chip"><i class="ph ph-magic-wand"></i><div><h4>System Support</h4><p>General content system support as needed.</p></div></div>
-            </div>
-            <p class="section-copy" style="margin-top:1.5rem;">Work is scoped to a reasonable monthly volume aligned with the $1,500 engagement.</p>
-          </div>
-        </div>
-      </section>
-
-      <section class="section-shell" id="deliverables">
-        <div class="section-num">04</div>
-        <div class="section-content">
-          <h2 class="section-title">Deliverables</h2>
-          <div class="rune-card" style="padding:2.5rem;">
-            <div class="section-copy">
-              <p>Deliverables under this Agreement may include draft copy, designed social graphics, carousel layouts, promotional assets, newsletter copy or production support, and coordination communications necessary to move those items through review and publication during the trial period.</p>
-              <p>The Practitioner will deliver work in digital form using tools and formats reasonably suited to the Client's channels and workflow. Unless otherwise stated in writing, delivery deadlines depend on the Client providing timely source materials, approvals, and access.</p>
-            </div>
-          </div>
-        </div>
-      </section>
-
       <section class="section-shell" id="payment">
         <div class="section-num">05</div>
         <div class="section-content">
-          <h2 class="section-title">Financial Ritual</h2>
+          <h2 class="section-title">Fees and Payment Terms</h2>
           <div class="rune-card" style="padding:2.5rem;">
             <div class="hero-grid" style="align-items:center;">
               <div>
-                <div class="font-serif-heading" style="font-size:3.5rem;color:var(--accent-gold);text-shadow:0 0 12px rgba(234,179,8,0.3);">$1,500</div>
-                <div class="font-mono-code" style="font-size:0.62rem;letter-spacing:0.2em;text-transform:uppercase;color:#6b7280;">USD Total Fee</div>
-                <p class="section-copy" style="margin-top:1rem;">Work begins after upfront payment is received.</p>
+                <div class="font-serif-heading" style="font-size:3.5rem;color:var(--gold);">$1,500</div>
+                <div class="font-mono-code" style="font-size:0.62rem;letter-spacing:0.2em;text-transform:uppercase;color:var(--text-faint);">USD Total Fee</div>
+                <p class="section-copy" style="margin-top:1rem;">All fees under this Agreement are in United States dollars unless the parties agree otherwise in writing.</p>
               </div>
               <div class="detail-pairs">
                 <div class="detail-row"><span>Upfront</span><span>$750 due before work begins</span></div>
-                <div class="detail-row"><span>Final</span><span>$750 due at the end of the 30-day period</span></div>
+                <div class="detail-row"><span>Final</span><span>$750 due at the end of the 30-day trial</span></div>
               </div>
             </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="section-shell" id="deposit">
+        <div class="section-num">06</div>
+        <div class="section-content">
+          <h2 class="section-title">Upfront Payment and Deposit</h2>
+          <div class="rune-card" style="padding:2.5rem;">
+            <p class="section-copy">$750 USD is due upfront before work begins. The upfront payment reserves the Contractor's time for the trial, covers onboarding and early production work, and is non-refundable once work has started or once the Client has approved the trial start. Work may be paused until the upfront payment is received.</p>
+          </div>
+        </div>
+      </section>
+
+      <section class="section-shell" id="late-payment">
+        <div class="section-num">07</div>
+        <div class="section-content">
+          <h2 class="section-title">Late Payment</h2>
+          <div class="rune-card" style="padding:2.5rem;">
+            <p class="section-copy">The remaining $750 USD is due at the end of the 30-day trial unless the parties agree otherwise in writing. If payment is late, the Contractor may pause further work, withhold final files, or delay any extension of services until payment is brought current. The Client remains responsible for approved fees and completed work performed before any pause or termination.</p>
+          </div>
+        </div>
+      </section>
+
+      <section class="section-shell" id="revisions">
+        <div class="section-num">08</div>
+        <div class="section-content">
+          <h2 class="section-title">Revisions and Out-of-Scope Work</h2>
+          <div class="rune-card" style="padding:2.5rem;">
+            <p class="section-copy">Reasonable revisions are included for work created during the trial, provided the requests stay within the agreed scope, format, and monthly volume. Requests that materially expand the number of deliverables, add new channels, introduce major redesign work, require rush delivery, or otherwise fall outside the agreed trial may require a separate quote, a written change approval, or a future agreement.</p>
           </div>
         </div>
       </section>
 
       <section class="section-shell" id="responsibilities">
-        <div class="section-num">06</div>
+        <div class="section-num">09</div>
         <div class="section-content">
           <h2 class="section-title">Client Responsibilities</h2>
           <div class="rune-card" style="padding:2.5rem;">
             <div class="section-copy">
               <ul>
-                <li>Provide timely access to relevant brand materials, platform access, background information, and point-of-contact availability.</li>
-                <li>Review drafts and approvals within a commercially reasonable timeframe so the work can proceed during the 30-day trial.</li>
-                <li>Confirm any required priorities, deadlines, or campaign notes in writing.</li>
-                <li>Secure any rights or permissions needed for materials supplied by the Client.</li>
+                <li>Provide timely access to relevant brand materials, background information, source files, approvals, and any platform or tool access needed to complete the work.</li>
+                <li>Designate a point of contact authorized to provide feedback and approvals during the trial.</li>
+                <li>Review drafts, respond to questions, and communicate decisions within a commercially reasonable timeframe.</li>
+                <li>Ensure any materials supplied by the Client can lawfully be used for the project, including text, photographs, logos, and third-party assets.</li>
               </ul>
             </div>
           </div>
         </div>
       </section>
 
-      <section class="section-shell" id="revisions">
-        <div class="section-num">07</div>
-        <div class="section-content">
-          <h2 class="section-title">Review and Revisions</h2>
-          <div class="rune-card" style="padding:2.5rem;">
-            <p class="section-copy">Reasonable review and revision cycles are included for work created during the trial, provided the requested changes stay within the agreed scope. Requests that materially expand the scope, volume, or channel mix may require a revised fee or written amendment.</p>
-          </div>
-        </div>
-      </section>
-
       <section class="section-shell" id="status">
-        <div class="section-num">08</div>
+        <div class="section-num">10</div>
         <div class="section-content">
-          <h2 class="section-title">Independent Contractor</h2>
+          <h2 class="section-title">Independent Contractor Status</h2>
           <div class="rune-card" style="padding:2.5rem;">
-            <p class="section-copy">Contractor operates as an independent contractor.</p>
+            <p class="section-copy">The Contractor is an independent contractor and not an employee, partner, joint venturer, or agent of the Client. The Contractor controls the manner and means of performing the services and may use subcontractors, assistants, tools, and workflows of the Contractor's choosing, provided the Contractor remains responsible for the services delivered under this Agreement.</p>
           </div>
         </div>
       </section>
 
       <section class="section-shell" id="taxes">
-        <div class="section-num">09</div>
+        <div class="section-num">11</div>
         <div class="section-content">
           <h2 class="section-title">Taxes</h2>
           <div class="rune-card" style="padding:2.5rem;">
-            <p class="section-copy">Contractor is responsible for U.S. taxes. Client does not withhold Canadian taxes unless required.</p>
+            <p class="section-copy">The Contractor is responsible for the Contractor's own federal, state, and local taxes in the United States, including income and self-employment taxes. Unless required by law, the Client will not withhold payroll taxes or provide employee benefits. If any tax forms, cross-border vendor records, or compliance information are reasonably required for payment, both parties will cooperate in good faith.</p>
           </div>
         </div>
       </section>
 
       <section class="section-shell" id="ip">
-        <div class="section-num">10</div>
+        <div class="section-num">12</div>
         <div class="section-content">
           <h2 class="section-title">Intellectual Property</h2>
           <div class="rune-card" style="padding:2.5rem;">
-            <p class="section-copy">Client receives rights to final deliverables upon full payment. Contractor retains underlying systems and frameworks.</p>
+            <p class="section-copy">Upon full payment of all amounts due under this Agreement, the Client receives the right to use the final deliverables created specifically for the Client during the trial for the Client's internal and external business purposes. The Contractor retains ownership of pre-existing materials, templates, systems, methodologies, know-how, prompts, frameworks, and reusable production infrastructure that are not unique final deliverables created solely for the Client.</p>
           </div>
         </div>
       </section>
 
-      <section class="section-shell" id="communication">
-        <div class="section-num">11</div>
+      <section class="section-shell" id="portfolio">
+        <div class="section-num">13</div>
         <div class="section-content">
-          <h2 class="section-title">Communication</h2>
+          <h2 class="section-title">Portfolio Use</h2>
           <div class="rune-card" style="padding:2.5rem;">
-            <p class="section-copy">Client provides timely feedback and approvals. Work is delivered on a rolling basis.</p>
+            <p class="section-copy">Unless the Client requests otherwise in writing for confidential or sensitive work, the Contractor may reference the Client's name and display non-confidential final deliverables in the Contractor's portfolio, website, case studies, proposals, or social channels for the limited purpose of showcasing completed work. The Contractor will not disclose confidential strategy, unpublished materials, or private operating details without permission.</p>
           </div>
         </div>
       </section>
 
       <section class="section-shell" id="confidentiality">
-        <div class="section-num">12</div>
+        <div class="section-num">14</div>
         <div class="section-content">
           <h2 class="section-title">Confidentiality</h2>
           <div class="rune-card" style="padding:2.5rem;">
-            <p class="section-copy">Both parties agree to keep non-public information confidential.</p>
+            <p class="section-copy">Each party agrees to keep the other party's non-public business, operational, financial, and strategic information confidential and to use that information only as needed to perform or evaluate this Agreement. This obligation does not apply to information that is already public through no fault of the receiving party, was lawfully known before disclosure, or must be disclosed by law.</p>
           </div>
         </div>
       </section>
 
       <section class="section-shell" id="termination">
-        <div class="section-num">13</div>
+        <div class="section-num">15</div>
         <div class="section-content">
-          <h2 class="section-title">Cancellation / Termination</h2>
+          <h2 class="section-title">Cancellation and Termination</h2>
           <div class="rune-card" style="padding:2.5rem;">
-            <p class="section-copy">Either party may terminate with written notice. Upfront payment is non-refundable.</p>
+            <p class="section-copy">Either party may terminate this Agreement by written notice. If the Client terminates after work has begun, the upfront payment remains non-refundable and the Client remains responsible for payment for approved work completed through the termination date. If the Contractor terminates without cause before completing the trial, the Contractor will deliver any completed work prepared to date and discuss a fair prorated adjustment if appropriate.</p>
           </div>
         </div>
       </section>
 
       <section class="section-shell" id="liability">
-        <div class="section-num">14</div>
+        <div class="section-num">16</div>
         <div class="section-content">
           <h2 class="section-title">Limitation of Liability</h2>
           <div class="rune-card" style="padding:2.5rem;">
-            <p class="section-copy">Liability is limited to total amount paid.</p>
+            <p class="section-copy">To the fullest extent permitted by law, the Contractor's total liability arising out of or related to this Agreement will not exceed the total amount actually paid by the Client under this Agreement. Neither party will be liable to the other for indirect, incidental, special, consequential, or punitive damages, including lost profits, lost opportunity, or reputational harm.</p>
           </div>
         </div>
       </section>
 
       <section class="section-shell" id="law">
-        <div class="section-num">15</div>
+        <div class="section-num">17</div>
         <div class="section-content">
           <h2 class="section-title">Governing Law</h2>
           <div class="rune-card" style="padding:2.5rem;">
-            <p class="section-copy">Laws of [Province], Canada.</p>
-          </div>
-        </div>
-      </section>
-
-      <section class="section-shell" id="entire-agreement">
-        <div class="section-num">16</div>
-        <div class="section-content">
-          <h2 class="section-title">Entire Agreement</h2>
-          <div class="rune-card" style="padding:2.5rem;">
-            <p class="section-copy">This document represents the full agreement.</p>
+            <p class="section-copy">This Agreement is governed by the laws of the State of <span class="font-mono-code">[STATE]</span>, United States, without regard to conflict of law rules.</p>
+            <div class="field-grid">
+              <div class="field">
+                <label class="field-label" for="governingLawState">Governing Law State</label>
+                <input id="governingLawState" name="governingLawState" type="text" placeholder="[STATE]">
+              </div>
+            </div>
+            <p class="utility-note" style="margin-top:1rem;">This contract template is provided for workflow use and is not legal advice. Review with counsel if needed.</p>
           </div>
         </div>
       </section>
 
       <section class="section-shell" id="signatures">
-        <div class="section-num">17</div>
+        <div class="section-num">18</div>
         <div class="section-content">
-          <h2 class="section-title">The Ritual Seals</h2>
+          <h2 class="section-title">Signatures</h2>
           <div class="signature-grid">
             <div class="rune-card">
               <span class="meta-kicker">Signature of the Client</span>
@@ -1281,14 +1357,16 @@
         contractId: "AW-MCE-TRIAL-2026",
         totalFee: "$1,500 USD",
         upfrontPayment: "$750 USD",
-        defaultWebAppUrl: "[https://script.google.com/macros/s/AKfycbwF8T4JkOw9GdNzkxthxvDlKHxOpuJsgV8kayhyaI8_uZpuAlA2RM3KJxPey6c31G8T1g/exec]"
+        defaultWebAppUrl: "[GOOGLE_APPS_SCRIPT_WEB_APP_URL]"
       };
 
       function toggleSidebar() {
         const sidebar = document.getElementById("sidebar");
         const icon = document.getElementById("toggleIcon");
-        sidebar.classList.toggle("collapsed");
-        icon.className = sidebar.classList.contains("collapsed") ? "ph ph-caret-right" : "ph ph-caret-left";
+        const isOpen = document.body.classList.toggle("sidebar-open");
+        sidebar.classList.toggle("collapsed", !isOpen);
+        document.body.classList.toggle("sidebar-collapsed", !isOpen);
+        icon.className = isOpen ? "ph ph-caret-left" : "ph ph-caret-right";
       }
 
       document.getElementById("toggleSidebarButton").addEventListener("click", toggleSidebar);
@@ -1361,6 +1439,8 @@
 
         pointerDown(event) {
           event.preventDefault();
+          this.image.style.display = "none";
+          this.image.removeAttribute("src");
           this.canvas.setPointerCapture(event.pointerId);
           this.isDrawing = true;
           this.lastPoint = this.getPoint(event);
@@ -1428,7 +1508,13 @@
           image.onload = () => {
             this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
             this.ctx.drawImage(image, 0, 0, this.canvas.clientWidth, this.canvas.clientHeight);
-            if (persist) this.setSavedDataUrl(dataUrl);
+            if (persist) {
+              this.setSavedDataUrl(dataUrl);
+            } else {
+              this.savedDataUrl = dataUrl;
+              this.image.removeAttribute("src");
+              this.image.style.display = "none";
+            }
           };
           image.src = dataUrl;
         }
@@ -1474,10 +1560,22 @@
       const currentSignature = () => visiblePad.exportDataUrl() || visiblePad.savedDataUrl || modalPad.exportDataUrl() || modalPad.savedDataUrl || "";
 
       const syncPads = (dataUrl) => {
+        visiblePad.clear(false);
+        modalPad.clear(false);
+
         visiblePad.setSavedDataUrl(dataUrl);
-        modalPad.setSavedDataUrl(dataUrl);
-        visiblePad.loadFromDataUrl(dataUrl);
-        modalPad.loadFromDataUrl(dataUrl);
+        modalPad.savedDataUrl = dataUrl || "";
+
+        if (dataUrl) {
+          visiblePad.image.src = dataUrl;
+          visiblePad.image.style.display = "block";
+          modalPad.image.removeAttribute("src");
+          modalPad.image.style.display = "none";
+          modalPad.loadFromDataUrl(dataUrl, false);
+        } else {
+          visiblePad.setSavedDataUrl("");
+          modalPad.setSavedDataUrl("");
+        }
       };
 
       const updateSignatureStatus = (message, state = "idle") => {
@@ -1628,6 +1726,7 @@
           clientEmail: getValue("clientEmail"),
           clientName: getValue("clientRepresentative") || getValue("clientPrintedName"),
           clientOrganization: getValue("clientOrganization") || "Climate Emergency BC",
+          clientAddress: getValue("clientAddress"),
           contractorEmail: getValue("contractorEmail"),
           contractorName: CONTRACT_META.contractorName,
           contractTitle: CONTRACT_META.contractTitle,
@@ -1637,7 +1736,9 @@
           startDate: formatDate(getValue("startDate")),
           endDate: formatDate(getValue("endDate")),
           totalFee: CONTRACT_META.totalFee,
-          upfrontPayment: CONTRACT_META.upfrontPayment
+          upfrontPayment: CONTRACT_META.upfrontPayment,
+          signatureDataUrl: currentSignature(),
+          governingLawState: getValue("governingLawState")
         };
 
         updateSendStatus("Sending signed contract...", "idle");
@@ -1659,15 +1760,17 @@
 
       document.getElementById("saveSignatureButton").addEventListener("click", () => saveSignature(visiblePad));
       document.getElementById("clearSignatureButton").addEventListener("click", () => {
-        visiblePad.clear();
-        modalPad.clear();
+        syncPads("");
         updateSignatureStatus("Signature cleared.", "idle");
       });
       document.getElementById("modalSaveButton").addEventListener("click", () => {
         saveSignature(modalPad);
         closeModal();
       });
-      document.getElementById("modalClearButton").addEventListener("click", () => modalPad.clear());
+      document.getElementById("modalClearButton").addEventListener("click", () => {
+        syncPads("");
+        updateSignatureStatus("Signature cleared.", "idle");
+      });
       document.getElementById("modalCloseButton").addEventListener("click", closeModal);
       modal.addEventListener("click", (event) => {
         if (event.target === modal) closeModal();

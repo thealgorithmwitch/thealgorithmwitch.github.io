@@ -1,0 +1,1445 @@
+
+<html lang="en" vid="0"><head vid="1">
+    <meta charset="UTF-8" vid="2">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" vid="3">
+    <title vid="4">Contract Interface | The Algorithm Witch</title>
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com" vid="6">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="" vid="7">
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@400;700;900&amp;family=Inter:wght@300;400;500;600&amp;family=Playfair+Display:ital,wght@0,400;0,700;1,400&amp;family=JetBrains+Mono:wght@400;700&amp;display=swap" rel="stylesheet" vid="8">
+    <script src="https://unpkg.com/@phosphor-icons/web" vid="9"></script>
+    <style vid="10">
+        :root {
+            --bg-deep: #030008;
+            --panel-bg: #0a0512;
+            --accent-violet: #8b5cf6;
+            --accent-gold: #eab308;
+            --sidebar-expanded: 320px;
+            --sidebar-collapsed: 64px;
+        }
+
+        body {
+            background-color: var(--bg-deep);
+            color: #d1d5db;
+            font-family: 'Inter', sans-serif;
+            margin: 0;
+            overflow: hidden;
+            width: 1280px;
+            height: 960px;
+            border-radius: 20px;
+        }
+
+        .font-magical { font-family: 'Cinzel Decorative', serif; }
+        .font-serif-heading { font-family: 'Playfair Display', serif; }
+        .font-mono-code { font-family: 'JetBrains Mono', monospace; }
+
+        .grimoire-grid {
+            background-image: radial-gradient(circle at 2px 2px, rgba(139, 92, 246, 0.05) 1px, transparent 0);
+            background-size: 32px 32px;
+        }
+
+        
+        .sidebar {
+            width: var(--sidebar-expanded);
+            transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            background: linear-gradient(to bottom, #0d0718, #05020a);
+            border-right: 1px solid rgba(139, 92, 246, 0.15);
+            z-index: 50;
+        }
+
+        .sidebar.collapsed {
+            width: var(--sidebar-collapsed);
+        }
+
+        .main-content {
+            margin-left: var(--sidebar-expanded);
+            transition: margin-left 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .sidebar.collapsed + .main-content {
+            margin-left: var(--sidebar-collapsed);
+        }
+
+        
+        .nav-item {
+            transition: all 0.3s ease;
+            white-space: nowrap;
+            overflow: hidden;
+        }
+
+        .sidebar.collapsed .nav-text, 
+        .sidebar.collapsed .meta-content,
+        .sidebar.collapsed .sidebar-footer-text {
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .rune-card {
+            background: rgba(10, 5, 18, 0.6);
+            border: 1px solid rgba(139, 92, 246, 0.1);
+            backdrop-filter: blur(10px);
+        }
+
+        .glowing-text {
+            text-shadow: 0 0 10px rgba(139, 92, 246, 0.4);
+        }
+
+        .gold-glow {
+            text-shadow: 0 0 12px rgba(234, 179, 8, 0.3);
+        }
+
+        .toggle-btn {
+            position: absolute;
+            right: -12px;
+            top: 40px;
+            width: 24px;
+            height: 24px;
+            background: var(--accent-violet);
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            box-shadow: 0 0 10px rgba(139, 92, 246, 0.5);
+            z-index: 60;
+        }
+
+        .status-seal {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: #22c55e;
+            box-shadow: 0 0 10px #22c55e;
+        }
+
+        .signature-area {
+            background: #000;
+            border: 1px dashed rgba(139, 92, 246, 0.3);
+            cursor: crosshair;
+        }
+
+        ::-webkit-scrollbar { width: 5px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: rgba(139, 92, 246, 0.2); border-radius: 10px; }
+
+        .section-num {
+            writing-mode: vertical-rl;
+            text-orientation: mixed;
+            border-left: 1px solid var(--accent-violet);
+        }
+
+        .stars {
+            position: fixed;
+            inset: 0;
+            pointer-events: none;
+            z-index: 0;
+            opacity: 0.4;
+        }
+    </style>
+
+  <style type="text/css">
+*, ::before, ::after {
+  --tw-border-spacing-x: 0;
+  --tw-border-spacing-y: 0;
+  --tw-translate-x: 0;
+  --tw-translate-y: 0;
+  --tw-rotate: 0;
+  --tw-skew-x: 0;
+  --tw-skew-y: 0;
+  --tw-scale-x: 1;
+  --tw-scale-y: 1;
+  --tw-pan-x:  ;
+  --tw-pan-y:  ;
+  --tw-pinch-zoom:  ;
+  --tw-scroll-snap-strictness: proximity;
+  --tw-gradient-from-position:  ;
+  --tw-gradient-via-position:  ;
+  --tw-gradient-to-position:  ;
+  --tw-ordinal:  ;
+  --tw-slashed-zero:  ;
+  --tw-numeric-figure:  ;
+  --tw-numeric-spacing:  ;
+  --tw-numeric-fraction:  ;
+  --tw-ring-inset:  ;
+  --tw-ring-offset-width: 0px;
+  --tw-ring-offset-color: #fff;
+  --tw-ring-color: rgb(59 130 246 / 0.5);
+  --tw-ring-offset-shadow: 0 0 #0000;
+  --tw-ring-shadow: 0 0 #0000;
+  --tw-shadow: 0 0 #0000;
+  --tw-shadow-colored: 0 0 #0000;
+  --tw-blur:  ;
+  --tw-brightness:  ;
+  --tw-contrast:  ;
+  --tw-grayscale:  ;
+  --tw-hue-rotate:  ;
+  --tw-invert:  ;
+  --tw-saturate:  ;
+  --tw-sepia:  ;
+  --tw-drop-shadow:  ;
+  --tw-backdrop-blur:  ;
+  --tw-backdrop-brightness:  ;
+  --tw-backdrop-contrast:  ;
+  --tw-backdrop-grayscale:  ;
+  --tw-backdrop-hue-rotate:  ;
+  --tw-backdrop-invert:  ;
+  --tw-backdrop-opacity:  ;
+  --tw-backdrop-saturate:  ;
+  --tw-backdrop-sepia:  ;
+  --tw-contain-size:  ;
+  --tw-contain-layout:  ;
+  --tw-contain-paint:  ;
+  --tw-contain-style:  ;
+}
+
+::backdrop {
+  --tw-border-spacing-x: 0;
+  --tw-border-spacing-y: 0;
+  --tw-translate-x: 0;
+  --tw-translate-y: 0;
+  --tw-rotate: 0;
+  --tw-skew-x: 0;
+  --tw-skew-y: 0;
+  --tw-scale-x: 1;
+  --tw-scale-y: 1;
+  --tw-pan-x:  ;
+  --tw-pan-y:  ;
+  --tw-pinch-zoom:  ;
+  --tw-scroll-snap-strictness: proximity;
+  --tw-gradient-from-position:  ;
+  --tw-gradient-via-position:  ;
+  --tw-gradient-to-position:  ;
+  --tw-ordinal:  ;
+  --tw-slashed-zero:  ;
+  --tw-numeric-figure:  ;
+  --tw-numeric-spacing:  ;
+  --tw-numeric-fraction:  ;
+  --tw-ring-inset:  ;
+  --tw-ring-offset-width: 0px;
+  --tw-ring-offset-color: #fff;
+  --tw-ring-color: rgb(59 130 246 / 0.5);
+  --tw-ring-offset-shadow: 0 0 #0000;
+  --tw-ring-shadow: 0 0 #0000;
+  --tw-shadow: 0 0 #0000;
+  --tw-shadow-colored: 0 0 #0000;
+  --tw-blur:  ;
+  --tw-brightness:  ;
+  --tw-contrast:  ;
+  --tw-grayscale:  ;
+  --tw-hue-rotate:  ;
+  --tw-invert:  ;
+  --tw-saturate:  ;
+  --tw-sepia:  ;
+  --tw-drop-shadow:  ;
+  --tw-backdrop-blur:  ;
+  --tw-backdrop-brightness:  ;
+  --tw-backdrop-contrast:  ;
+  --tw-backdrop-grayscale:  ;
+  --tw-backdrop-hue-rotate:  ;
+  --tw-backdrop-invert:  ;
+  --tw-backdrop-opacity:  ;
+  --tw-backdrop-saturate:  ;
+  --tw-backdrop-sepia:  ;
+  --tw-contain-size:  ;
+  --tw-contain-layout:  ;
+  --tw-contain-paint:  ;
+  --tw-contain-style:  ;
+}/*
+! tailwindcss v3.4.17 | MIT License | https://tailwindcss.com
+*//*
+1. Prevent padding and border from affecting element width. (https://github.com/mozdevs/cssremedy/issues/4)
+2. Allow adding a border to an element by just adding a border-width. (https://github.com/tailwindcss/tailwindcss/pull/116)
+*/
+
+*,
+::before,
+::after {
+  box-sizing: border-box; /* 1 */
+  border-width: 0; /* 2 */
+  border-style: solid; /* 2 */
+  border-color: #e5e7eb; /* 2 */
+}
+
+::before,
+::after {
+  --tw-content: '';
+}
+
+/*
+1. Use a consistent sensible line-height in all browsers.
+2. Prevent adjustments of font size after orientation changes in iOS.
+3. Use a more readable tab size.
+4. Use the user's configured `sans` font-family by default.
+5. Use the user's configured `sans` font-feature-settings by default.
+6. Use the user's configured `sans` font-variation-settings by default.
+7. Disable tap highlights on iOS
+*/
+
+html,
+:host {
+  line-height: 1.5; /* 1 */
+  -webkit-text-size-adjust: 100%; /* 2 */
+  -moz-tab-size: 4; /* 3 */
+  tab-size: 4; /* 3 */
+  font-family: ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji"; /* 4 */
+  font-feature-settings: normal; /* 5 */
+  font-variation-settings: normal; /* 6 */
+  -webkit-tap-highlight-color: transparent; /* 7 */
+}
+
+/*
+1. Remove the margin in all browsers.
+2. Inherit line-height from `html` so users can set them as a class directly on the `html` element.
+*/
+
+body {
+  margin: 0; /* 1 */
+  line-height: inherit; /* 2 */
+}
+
+/*
+1. Add the correct height in Firefox.
+2. Correct the inheritance of border color in Firefox. (https://bugzilla.mozilla.org/show_bug.cgi?id=190655)
+3. Ensure horizontal rules are visible by default.
+*/
+
+hr {
+  height: 0; /* 1 */
+  color: inherit; /* 2 */
+  border-top-width: 1px; /* 3 */
+}
+
+/*
+Add the correct text decoration in Chrome, Edge, and Safari.
+*/
+
+abbr:where([title]) {
+  text-decoration: underline dotted;
+}
+
+/*
+Remove the default font size and weight for headings.
+*/
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  font-size: inherit;
+  font-weight: inherit;
+}
+
+/*
+Reset links to optimize for opt-in styling instead of opt-out.
+*/
+
+a {
+  color: inherit;
+  text-decoration: inherit;
+}
+
+/*
+Add the correct font weight in Edge and Safari.
+*/
+
+b,
+strong {
+  font-weight: bolder;
+}
+
+/*
+1. Use the user's configured `mono` font-family by default.
+2. Use the user's configured `mono` font-feature-settings by default.
+3. Use the user's configured `mono` font-variation-settings by default.
+4. Correct the odd `em` font sizing in all browsers.
+*/
+
+code,
+kbd,
+samp,
+pre {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; /* 1 */
+  font-feature-settings: normal; /* 2 */
+  font-variation-settings: normal; /* 3 */
+  font-size: 1em; /* 4 */
+}
+
+/*
+Add the correct font size in all browsers.
+*/
+
+small {
+  font-size: 80%;
+}
+
+/*
+Prevent `sub` and `sup` elements from affecting the line height in all browsers.
+*/
+
+sub,
+sup {
+  font-size: 75%;
+  line-height: 0;
+  position: relative;
+  vertical-align: baseline;
+}
+
+sub {
+  bottom: -0.25em;
+}
+
+sup {
+  top: -0.5em;
+}
+
+/*
+1. Remove text indentation from table contents in Chrome and Safari. (https://bugs.chromium.org/p/chromium/issues/detail?id=999088, https://bugs.webkit.org/show_bug.cgi?id=201297)
+2. Correct table border color inheritance in all Chrome and Safari. (https://bugs.chromium.org/p/chromium/issues/detail?id=935729, https://bugs.webkit.org/show_bug.cgi?id=195016)
+3. Remove gaps between table borders by default.
+*/
+
+table {
+  text-indent: 0; /* 1 */
+  border-color: inherit; /* 2 */
+  border-collapse: collapse; /* 3 */
+}
+
+/*
+1. Change the font styles in all browsers.
+2. Remove the margin in Firefox and Safari.
+3. Remove default padding in all browsers.
+*/
+
+button,
+input,
+optgroup,
+select,
+textarea {
+  font-family: inherit; /* 1 */
+  font-feature-settings: inherit; /* 1 */
+  font-variation-settings: inherit; /* 1 */
+  font-size: 100%; /* 1 */
+  font-weight: inherit; /* 1 */
+  line-height: inherit; /* 1 */
+  letter-spacing: inherit; /* 1 */
+  color: inherit; /* 1 */
+  margin: 0; /* 2 */
+  padding: 0; /* 3 */
+}
+
+/*
+Remove the inheritance of text transform in Edge and Firefox.
+*/
+
+button,
+select {
+  text-transform: none;
+}
+
+/*
+1. Correct the inability to style clickable types in iOS and Safari.
+2. Remove default button styles.
+*/
+
+button,
+input:where([type='button']),
+input:where([type='reset']),
+input:where([type='submit']) {
+  -webkit-appearance: button; /* 1 */
+  background-color: transparent; /* 2 */
+  background-image: none; /* 2 */
+}
+
+/*
+Use the modern Firefox focus style for all focusable elements.
+*/
+
+:-moz-focusring {
+  outline: auto;
+}
+
+/*
+Remove the additional `:invalid` styles in Firefox. (https://github.com/mozilla/gecko-dev/blob/2f9eacd9d3d995c937b4251a5557d95d494c9be1/layout/style/res/forms.css#L728-L737)
+*/
+
+:-moz-ui-invalid {
+  box-shadow: none;
+}
+
+/*
+Add the correct vertical alignment in Chrome and Firefox.
+*/
+
+progress {
+  vertical-align: baseline;
+}
+
+/*
+Correct the cursor style of increment and decrement buttons in Safari.
+*/
+
+::-webkit-inner-spin-button,
+::-webkit-outer-spin-button {
+  height: auto;
+}
+
+/*
+1. Correct the odd appearance in Chrome and Safari.
+2. Correct the outline style in Safari.
+*/
+
+[type='search'] {
+  -webkit-appearance: textfield; /* 1 */
+  outline-offset: -2px; /* 2 */
+}
+
+/*
+Remove the inner padding in Chrome and Safari on macOS.
+*/
+
+::-webkit-search-decoration {
+  -webkit-appearance: none;
+}
+
+/*
+1. Correct the inability to style clickable types in iOS and Safari.
+2. Change font properties to `inherit` in Safari.
+*/
+
+::-webkit-file-upload-button {
+  -webkit-appearance: button; /* 1 */
+  font: inherit; /* 2 */
+}
+
+/*
+Add the correct display in Chrome and Safari.
+*/
+
+summary {
+  display: list-item;
+}
+
+/*
+Removes the default spacing and border for appropriate elements.
+*/
+
+blockquote,
+dl,
+dd,
+h1,
+h2,
+h3,
+h4,
+h5,
+h6,
+hr,
+figure,
+p,
+pre {
+  margin: 0;
+}
+
+fieldset {
+  margin: 0;
+  padding: 0;
+}
+
+legend {
+  padding: 0;
+}
+
+ol,
+ul,
+menu {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+/*
+Reset default styling for dialogs.
+*/
+dialog {
+  padding: 0;
+}
+
+/*
+Prevent resizing textareas horizontally by default.
+*/
+
+textarea {
+  resize: vertical;
+}
+
+/*
+1. Reset the default placeholder opacity in Firefox. (https://github.com/tailwindlabs/tailwindcss/issues/3300)
+2. Set the default placeholder color to the user's configured gray 400 color.
+*/
+
+input::placeholder,
+textarea::placeholder {
+  opacity: 1; /* 1 */
+  color: #9ca3af; /* 2 */
+}
+
+/*
+Set the default cursor for buttons.
+*/
+
+button,
+[role="button"] {
+  cursor: pointer;
+}
+
+/*
+Make sure disabled buttons don't get the pointer cursor.
+*/
+:disabled {
+  cursor: default;
+}
+
+/*
+1. Make replaced elements `display: block` by default. (https://github.com/mozdevs/cssremedy/issues/14)
+2. Add `vertical-align: middle` to align replaced elements more sensibly by default. (https://github.com/jensimmons/cssremedy/issues/14#issuecomment-634934210)
+   This can trigger a poorly considered lint error in some tools but is included by design.
+*/
+
+img,
+svg,
+video,
+canvas,
+audio,
+iframe,
+embed,
+object {
+  display: block; /* 1 */
+  vertical-align: middle; /* 2 */
+}
+
+/*
+Constrain images and videos to the parent width and preserve their intrinsic aspect ratio. (https://github.com/mozdevs/cssremedy/issues/14)
+*/
+
+img,
+video {
+  max-width: 100%;
+  height: auto;
+}
+
+/* Make elements with the HTML hidden attribute stay hidden by default */
+[hidden]:where(:not([hidden="until-found"])) {
+  display: none;
+}
+.pointer-events-none {
+  pointer-events: none;
+}
+.fixed {
+  position: fixed;
+}
+.absolute {
+  position: absolute;
+}
+.relative {
+  position: relative;
+}
+.inset-0 {
+  inset: 0px;
+}
+.bottom-4 {
+  bottom: 1rem;
+}
+.right-4 {
+  right: 1rem;
+}
+.z-10 {
+  z-index: 10;
+}
+.mx-auto {
+  margin-left: auto;
+  margin-right: auto;
+}
+.mb-1 {
+  margin-bottom: 0.25rem;
+}
+.mb-10 {
+  margin-bottom: 2.5rem;
+}
+.mb-12 {
+  margin-bottom: 3rem;
+}
+.mb-2 {
+  margin-bottom: 0.5rem;
+}
+.mb-24 {
+  margin-bottom: 6rem;
+}
+.mb-3 {
+  margin-bottom: 0.75rem;
+}
+.mb-4 {
+  margin-bottom: 1rem;
+}
+.mb-6 {
+  margin-bottom: 1.5rem;
+}
+.mb-8 {
+  margin-bottom: 2rem;
+}
+.mt-1 {
+  margin-top: 0.25rem;
+}
+.mt-24 {
+  margin-top: 6rem;
+}
+.mt-4 {
+  margin-top: 1rem;
+}
+.block {
+  display: block;
+}
+.inline-block {
+  display: inline-block;
+}
+.flex {
+  display: flex;
+}
+.grid {
+  display: grid;
+}
+.hidden {
+  display: none;
+}
+.h-10 {
+  height: 2.5rem;
+}
+.h-12 {
+  height: 3rem;
+}
+.h-20 {
+  height: 5rem;
+}
+.h-48 {
+  height: 12rem;
+}
+.h-8 {
+  height: 2rem;
+}
+.h-full {
+  height: 100%;
+}
+.h-px {
+  height: 1px;
+}
+.w-24 {
+  width: 6rem;
+}
+.w-48 {
+  width: 12rem;
+}
+.w-8 {
+  width: 2rem;
+}
+.w-full {
+  width: 100%;
+}
+.w-px {
+  width: 1px;
+}
+.max-w-4xl {
+  max-width: 56rem;
+}
+.flex-1 {
+  flex: 1 1 0%;
+}
+.flex-shrink-0 {
+  flex-shrink: 0;
+}
+.flex-grow {
+  flex-grow: 1;
+}
+.-rotate-45 {
+  --tw-rotate: -45deg;
+  transform: translate(var(--tw-translate-x), var(--tw-translate-y)) rotate(var(--tw-rotate)) skewX(var(--tw-skew-x)) skewY(var(--tw-skew-y)) scaleX(var(--tw-scale-x)) scaleY(var(--tw-scale-y));
+}
+.rotate-45 {
+  --tw-rotate: 45deg;
+  transform: translate(var(--tw-translate-x), var(--tw-translate-y)) rotate(var(--tw-rotate)) skewX(var(--tw-skew-x)) skewY(var(--tw-skew-y)) scaleX(var(--tw-scale-x)) scaleY(var(--tw-scale-y));
+}
+@keyframes pulse {
+
+  50% {
+    opacity: .5;
+  }
+}
+.animate-pulse {
+  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+.resize {
+  resize: both;
+}
+.grid-cols-2 {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+.flex-col {
+  flex-direction: column;
+}
+.items-start {
+  align-items: flex-start;
+}
+.items-center {
+  align-items: center;
+}
+.items-baseline {
+  align-items: baseline;
+}
+.justify-center {
+  justify-content: center;
+}
+.justify-between {
+  justify-content: space-between;
+}
+.gap-10 {
+  gap: 2.5rem;
+}
+.gap-16 {
+  gap: 4rem;
+}
+.gap-2 {
+  gap: 0.5rem;
+}
+.gap-3 {
+  gap: 0.75rem;
+}
+.gap-4 {
+  gap: 1rem;
+}
+.gap-6 {
+  gap: 1.5rem;
+}
+.gap-8 {
+  gap: 2rem;
+}
+.space-y-1 > :not([hidden]) ~ :not([hidden]) {
+  --tw-space-y-reverse: 0;
+  margin-top: calc(0.25rem * calc(1 - var(--tw-space-y-reverse)));
+  margin-bottom: calc(0.25rem * var(--tw-space-y-reverse));
+}
+.space-y-3 > :not([hidden]) ~ :not([hidden]) {
+  --tw-space-y-reverse: 0;
+  margin-top: calc(0.75rem * calc(1 - var(--tw-space-y-reverse)));
+  margin-bottom: calc(0.75rem * var(--tw-space-y-reverse));
+}
+.space-y-32 > :not([hidden]) ~ :not([hidden]) {
+  --tw-space-y-reverse: 0;
+  margin-top: calc(8rem * calc(1 - var(--tw-space-y-reverse)));
+  margin-bottom: calc(8rem * var(--tw-space-y-reverse));
+}
+.space-y-4 > :not([hidden]) ~ :not([hidden]) {
+  --tw-space-y-reverse: 0;
+  margin-top: calc(1rem * calc(1 - var(--tw-space-y-reverse)));
+  margin-bottom: calc(1rem * var(--tw-space-y-reverse));
+}
+.overflow-hidden {
+  overflow: hidden;
+}
+.overflow-y-auto {
+  overflow-y: auto;
+}
+.whitespace-nowrap {
+  white-space: nowrap;
+}
+.border {
+  border-width: 1px;
+}
+.border-b {
+  border-bottom-width: 1px;
+}
+.border-l-2 {
+  border-left-width: 2px;
+}
+.border-l-4 {
+  border-left-width: 4px;
+}
+.border-t {
+  border-top-width: 1px;
+}
+.border-transparent {
+  border-color: transparent;
+}
+.border-violet-500\/20 {
+  border-color: rgb(139 92 246 / 0.2);
+}
+.border-violet-500\/50 {
+  border-color: rgb(139 92 246 / 0.5);
+}
+.border-violet-900\/20 {
+  border-color: rgb(76 29 149 / 0.2);
+}
+.border-violet-900\/30 {
+  border-color: rgb(76 29 149 / 0.3);
+}
+.border-violet-900\/50 {
+  border-color: rgb(76 29 149 / 0.5);
+}
+.border-yellow-500 {
+  --tw-border-opacity: 1;
+  border-color: rgb(234 179 8 / var(--tw-border-opacity, 1));
+}
+.border-l-yellow-500\/50 {
+  border-left-color: rgb(234 179 8 / 0.5);
+}
+.bg-black {
+  --tw-bg-opacity: 1;
+  background-color: rgb(0 0 0 / var(--tw-bg-opacity, 1));
+}
+.bg-transparent {
+  background-color: transparent;
+}
+.bg-violet-900\/30 {
+  background-color: rgb(76 29 149 / 0.3);
+}
+.bg-violet-950\/10 {
+  background-color: rgb(46 16 101 / 0.1);
+}
+.bg-gradient-to-r {
+  background-image: linear-gradient(to right, var(--tw-gradient-stops));
+}
+.from-violet-500 {
+  --tw-gradient-from: #8b5cf6 var(--tw-gradient-from-position);
+  --tw-gradient-to: rgb(139 92 246 / 0) var(--tw-gradient-to-position);
+  --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to);
+}
+.to-transparent {
+  --tw-gradient-to: transparent var(--tw-gradient-to-position);
+}
+.p-10 {
+  padding: 2.5rem;
+}
+.p-8 {
+  padding: 2rem;
+}
+.px-12 {
+  padding-left: 3rem;
+  padding-right: 3rem;
+}
+.px-16 {
+  padding-left: 4rem;
+  padding-right: 4rem;
+}
+.px-3 {
+  padding-left: 0.75rem;
+  padding-right: 0.75rem;
+}
+.px-5 {
+  padding-left: 1.25rem;
+  padding-right: 1.25rem;
+}
+.px-6 {
+  padding-left: 1.5rem;
+  padding-right: 1.5rem;
+}
+.py-1 {
+  padding-top: 0.25rem;
+  padding-bottom: 0.25rem;
+}
+.py-24 {
+  padding-top: 6rem;
+  padding-bottom: 6rem;
+}
+.py-3 {
+  padding-top: 0.75rem;
+  padding-bottom: 0.75rem;
+}
+.py-6 {
+  padding-top: 1.5rem;
+  padding-bottom: 1.5rem;
+}
+.pb-24 {
+  padding-bottom: 6rem;
+}
+.pb-6 {
+  padding-bottom: 1.5rem;
+}
+.pl-3 {
+  padding-left: 0.75rem;
+}
+.pt-3 {
+  padding-top: 0.75rem;
+}
+.pt-6 {
+  padding-top: 1.5rem;
+}
+.pt-8 {
+  padding-top: 2rem;
+}
+.text-center {
+  text-align: center;
+}
+.text-2xl {
+  font-size: 1.5rem;
+  line-height: 2rem;
+}
+.text-4xl {
+  font-size: 2.25rem;
+  line-height: 2.5rem;
+}
+.text-5xl {
+  font-size: 3rem;
+  line-height: 1;
+}
+.text-6xl {
+  font-size: 3.75rem;
+  line-height: 1;
+}
+.text-\[10px\] {
+  font-size: 10px;
+}
+.text-\[11px\] {
+  font-size: 11px;
+}
+.text-\[140px\] {
+  font-size: 140px;
+}
+.text-\[8px\] {
+  font-size: 8px;
+}
+.text-\[9px\] {
+  font-size: 9px;
+}
+.text-sm {
+  font-size: 0.875rem;
+  line-height: 1.25rem;
+}
+.text-xl {
+  font-size: 1.25rem;
+  line-height: 1.75rem;
+}
+.text-xs {
+  font-size: 0.75rem;
+  line-height: 1rem;
+}
+.uppercase {
+  text-transform: uppercase;
+}
+.italic {
+  font-style: italic;
+}
+.leading-\[1\.1\] {
+  line-height: 1.1;
+}
+.leading-relaxed {
+  line-height: 1.625;
+}
+.tracking-\[0\.2em\] {
+  letter-spacing: 0.2em;
+}
+.tracking-\[0\.3em\] {
+  letter-spacing: 0.3em;
+}
+.tracking-\[0\.4em\] {
+  letter-spacing: 0.4em;
+}
+.tracking-wider {
+  letter-spacing: 0.05em;
+}
+.tracking-widest {
+  letter-spacing: 0.1em;
+}
+.text-gray-400 {
+  --tw-text-opacity: 1;
+  color: rgb(156 163 175 / var(--tw-text-opacity, 1));
+}
+.text-gray-500 {
+  --tw-text-opacity: 1;
+  color: rgb(107 114 128 / var(--tw-text-opacity, 1));
+}
+.text-gray-600 {
+  --tw-text-opacity: 1;
+  color: rgb(75 85 99 / var(--tw-text-opacity, 1));
+}
+.text-green-400 {
+  --tw-text-opacity: 1;
+  color: rgb(74 222 128 / var(--tw-text-opacity, 1));
+}
+.text-violet-400 {
+  --tw-text-opacity: 1;
+  color: rgb(167 139 250 / var(--tw-text-opacity, 1));
+}
+.text-violet-500 {
+  --tw-text-opacity: 1;
+  color: rgb(139 92 246 / var(--tw-text-opacity, 1));
+}
+.text-white {
+  --tw-text-opacity: 1;
+  color: rgb(255 255 255 / var(--tw-text-opacity, 1));
+}
+.text-white\/80 {
+  color: rgb(255 255 255 / 0.8);
+}
+.text-yellow-500 {
+  --tw-text-opacity: 1;
+  color: rgb(234 179 8 / var(--tw-text-opacity, 1));
+}
+.opacity-40 {
+  opacity: 0.4;
+}
+.opacity-5 {
+  opacity: 0.05;
+}
+.outline-none {
+  outline: 2px solid transparent;
+  outline-offset: 2px;
+}
+.blur {
+  --tw-blur: blur(8px);
+  filter: var(--tw-blur) var(--tw-brightness) var(--tw-contrast) var(--tw-grayscale) var(--tw-hue-rotate) var(--tw-invert) var(--tw-saturate) var(--tw-sepia) var(--tw-drop-shadow);
+}
+.backdrop-filter {
+  -webkit-backdrop-filter: var(--tw-backdrop-blur) var(--tw-backdrop-brightness) var(--tw-backdrop-contrast) var(--tw-backdrop-grayscale) var(--tw-backdrop-hue-rotate) var(--tw-backdrop-invert) var(--tw-backdrop-opacity) var(--tw-backdrop-saturate) var(--tw-backdrop-sepia);
+  backdrop-filter: var(--tw-backdrop-blur) var(--tw-backdrop-brightness) var(--tw-backdrop-contrast) var(--tw-backdrop-grayscale) var(--tw-backdrop-hue-rotate) var(--tw-backdrop-invert) var(--tw-backdrop-opacity) var(--tw-backdrop-saturate) var(--tw-backdrop-sepia);
+}
+.transition {
+  transition-property: color, background-color, border-color, text-decoration-color, fill, stroke, opacity, box-shadow, transform, filter, backdrop-filter;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  transition-duration: 150ms;
+}
+.transition-all {
+  transition-property: all;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  transition-duration: 150ms;
+}
+.transition-colors {
+  transition-property: color, background-color, border-color, text-decoration-color, fill, stroke;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  transition-duration: 150ms;
+}
+.transition-opacity {
+  transition-property: opacity;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  transition-duration: 150ms;
+}
+.duration-300 {
+  transition-duration: 300ms;
+}
+.ease-in-out {
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+}
+.hover\:border-violet-500:hover {
+  --tw-border-opacity: 1;
+  border-color: rgb(139 92 246 / var(--tw-border-opacity, 1));
+}
+.hover\:bg-violet-900\/10:hover {
+  background-color: rgb(76 29 149 / 0.1);
+}
+.hover\:bg-yellow-500:hover {
+  --tw-bg-opacity: 1;
+  background-color: rgb(234 179 8 / var(--tw-bg-opacity, 1));
+}
+.hover\:text-black:hover {
+  --tw-text-opacity: 1;
+  color: rgb(0 0 0 / var(--tw-text-opacity, 1));
+}
+.hover\:text-white:hover {
+  --tw-text-opacity: 1;
+  color: rgb(255 255 255 / var(--tw-text-opacity, 1));
+}
+.focus\:border-violet-500:focus {
+  --tw-border-opacity: 1;
+  border-color: rgb(139 92 246 / var(--tw-border-opacity, 1));
+}* {
+      -ms-overflow-style: none !important;
+      scrollbar-width: none !important;
+    }
+
+    *::-webkit-scrollbar {
+      display: none !important;
+      width: 0 !important;
+      height: 0 !important;
+    }
+  </style></head>
+<body class="grimoire-grid relative" vid="11">
+    <div class="stars" id="starField" vid="12"></div>
+
+    
+    <aside id="sidebar" class="sidebar fixed h-full flex flex-col pt-8 pb-6" vid="13">
+        <div class="toggle-btn" onclick="toggleSidebar()" vid="14">
+            <i id="toggleIcon" class="ph ph-caret-left text-[10px] text-white" vid="15"></i>
+        </div>
+
+        
+        <div class="px-5 mb-10 flex items-center gap-4 overflow-hidden h-12" vid="16">
+            <div class="w-8 h-8 flex-shrink-0 border border-violet-500/50 rotate-45 flex items-center justify-center bg-black" vid="17">
+                <i class="ph-fill ph-pentagram text-violet-400 -rotate-45 text-sm" vid="18"></i>
+            </div>
+            <div class="nav-text transition-opacity duration-300" vid="19">
+                <h1 class="font-magical text-sm tracking-[0.2em] text-white whitespace-nowrap" vid="20">ALGORITHM WITCH</h1>
+                <p class="font-mono-code text-[8px] text-violet-500 uppercase" vid="21">Digital Archive</p>
+            </div>
+        </div>
+
+        
+        <div class="px-5 mb-10 meta-content transition-opacity duration-300" vid="22">
+            <div class="space-y-4" vid="23">
+                <div vid="24">
+                    <p class="text-[9px] font-mono-code text-gray-500 uppercase" vid="25">Status</p>
+                    <div class="flex items-center gap-2 mt-1" vid="26">
+                        <div class="status-seal animate-pulse" vid="27"></div>
+                        <span class="text-[10px] font-mono-code text-green-400" vid="28">AWAITING_SEALS</span>
+                    </div>
+                </div>
+                <div vid="29">
+                    <p class="text-[9px] font-mono-code text-gray-500 uppercase" vid="30">Registry ID</p>
+                    <span class="text-[10px] font-mono-code text-white" vid="31">AW-COV-2024-X</span>
+                </div>
+            </div>
+        </div>
+
+        
+        <nav class="flex-grow space-y-1" vid="32">
+            <div class="px-6 mb-2 nav-text transition-opacity duration-300" vid="33">
+                <p class="text-[9px] font-mono-code text-gray-600 uppercase tracking-widest" vid="34">Covenant Map</p>
+            </div>
+            <a href="#parties" class="nav-item flex items-center h-12 px-5 gap-6 text-gray-400 hover:text-white hover:bg-violet-900/10 border-l-2 border-transparent hover:border-violet-500" vid="35">
+                <i class="ph ph-users-three text-xl" vid="36"></i>
+                <span class="nav-text text-xs font-mono-code uppercase tracking-wider" vid="37">01. Parties</span>
+            </a>
+            <a href="#scope" class="nav-item flex items-center h-12 px-5 gap-6 text-gray-400 hover:text-white hover:bg-violet-900/10 border-l-2 border-transparent hover:border-violet-500" vid="38">
+                <i class="ph ph-sparkle text-xl" vid="39"></i>
+                <span class="nav-text text-xs font-mono-code uppercase tracking-wider" vid="40">02. The Scope</span>
+            </a>
+            <a href="#payment" class="nav-item flex items-center h-12 px-5 gap-6 text-gray-400 hover:text-white hover:bg-violet-900/10 border-l-2 border-transparent hover:border-violet-500" vid="41">
+                <i class="ph ph-coins text-xl" vid="42"></i>
+                <span class="nav-text text-xs font-mono-code uppercase tracking-wider" vid="43">03. The Tribute</span>
+            </a>
+            <a href="#seals" class="nav-item flex items-center h-12 px-5 gap-6 text-gray-400 hover:text-white hover:bg-violet-900/10 border-l-2 border-transparent hover:border-violet-500" vid="44">
+                <i class="ph ph-seal text-xl" vid="45"></i>
+                <span class="nav-text text-xs font-mono-code uppercase tracking-wider" vid="46">04. Ritual Seals</span>
+            </a>
+        </nav>
+
+        
+        <div class="px-5 sidebar-footer-text transition-opacity duration-300" vid="47">
+            <div class="pt-6 border-t border-violet-900/30" vid="48">
+                <p class="text-[9px] font-mono-code text-gray-600 leading-relaxed italic" vid="49">
+                    "Logic bound by digital ink."
+                </p>
+            </div>
+        </div>
+    </aside>
+
+    
+    <main class="main-content h-full overflow-y-auto relative z-10" vid="50">
+        <div class="max-w-4xl mx-auto py-24 px-12" vid="51">
+            
+            
+            <header class="mb-24" vid="52">
+                <div class="inline-block px-3 py-1 border border-violet-500/20 mb-6 font-mono-code text-[9px] text-violet-400 uppercase tracking-[0.4em]" vid="53">
+                    Service Provision Covenant
+                </div>
+                <h1 class="font-magical text-6xl text-white mb-6 leading-[1.1] glowing-text" vid="54">
+                    Monthly Content <br vid="55">
+                    <span class="text-yellow-500 italic gold-glow" vid="56">Engine Agreement</span>
+                </h1>
+                <div class="h-px w-24 bg-gradient-to-r from-violet-500 to-transparent" vid="57"></div>
+            </header>
+
+            <div class="space-y-32" vid="58">
+                
+                
+                <section id="parties" class="flex gap-10" vid="59">
+                    <div class="section-num text-[10px] font-mono-code text-violet-500 pl-3 h-20 opacity-40" vid="60">01</div>
+                    <div class="flex-1" vid="61">
+                        <h2 class="font-magical text-xl text-white mb-8 tracking-widest" vid="62">Contractual Entities</h2>
+                        <div class="grid grid-cols-2 gap-8" vid="63">
+                            <div class="rune-card p-8" vid="64">
+                                <span class="block text-[9px] font-mono-code text-violet-400 mb-4 uppercase tracking-widest" vid="65">The Client</span>
+                                <div class="font-serif-heading text-2xl text-white italic mb-2" vid="66">[Organization_Name]</div>
+                                <p class="text-xs text-gray-500 font-mono-code" vid="67">[Business_Location_Placeholder]</p>
+                            </div>
+                            <div class="rune-card p-8 border-l-4 border-l-yellow-500/50" vid="68">
+                                <span class="block text-[9px] font-mono-code text-violet-400 mb-4 uppercase tracking-widest" vid="69">The Practitioner</span>
+                                <div class="font-serif-heading text-2xl text-white italic mb-1" vid="70">Akim Farrow</div>
+                                <p class="font-magical text-[10px] text-yellow-500 tracking-widest mb-3" vid="71">THE ALGORITHM WITCH</p>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                
+                <section id="scope" class="flex gap-10" vid="72">
+                    <div class="section-num text-[10px] font-mono-code text-violet-500 pl-3 h-20 opacity-40" vid="73">02</div>
+                    <div class="flex-1" vid="74">
+                        <h2 class="font-magical text-xl text-white mb-8 tracking-widest" vid="75">The Sacred Scope</h2>
+                        <div class="rune-card p-10" vid="76">
+                            <p class="text-sm text-gray-400 leading-relaxed mb-8" vid="77">
+                                The Practitioner shall weave a tapestry of digital content for a thirty-day trial cycle, deploying strategic assets across the following domains:
+                            </p>
+                            <div class="grid grid-cols-2 gap-10" vid="78">
+                                <div class="flex items-start gap-4" vid="79">
+                                    <i class="ph ph-intersect-three text-yellow-500 mt-1" vid="80"></i>
+                                    <div vid="81">
+                                        <h4 class="text-xs font-mono-code text-white mb-2 uppercase tracking-widest" vid="82">Social Manifestations</h4>
+                                        <p class="text-[11px] text-gray-500" vid="83">Rolling content for IG, Bluesky, and LinkedIn.</p>
+                                    </div>
+                                </div>
+                                <div class="flex items-start gap-4" vid="84">
+                                    <i class="ph ph-spiral text-violet-400 mt-1" vid="85"></i>
+                                    <div vid="86">
+                                        <h4 class="text-xs font-mono-code text-white mb-2 uppercase tracking-widest" vid="87">Data Geometry</h4>
+                                        <p class="text-[11px] text-gray-500" vid="88">Custom infographics and carousel designs.</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                
+                <section id="payment" class="flex gap-10" vid="89">
+                    <div class="section-num text-[10px] font-mono-code text-violet-500 pl-3 h-20 opacity-40" vid="90">03</div>
+                    <div class="flex-1" vid="91">
+                        <h2 class="font-magical text-xl text-white mb-8 tracking-widest" vid="92">Financial Ritual</h2>
+                        <div class="rune-card p-10 flex items-center justify-between" vid="93">
+                            <div vid="94">
+                                <div class="flex items-baseline gap-3 mb-2" vid="95">
+                                    <span class="font-serif-heading text-5xl text-yellow-500 gold-glow" vid="96">$1,500</span>
+                                    <span class="text-[10px] font-mono-code text-gray-500 uppercase" vid="97">USD Retainer</span>
+                                </div>
+                                <p class="text-xs text-gray-400 italic" vid="98">Split equally into Initial Offering and Final Manifestation.</p>
+                            </div>
+                            <div class="h-20 w-px bg-violet-900/30" vid="99"></div>
+                            <div class="space-y-3" vid="100">
+                                <div class="flex justify-between w-48 text-[10px] font-mono-code" vid="101">
+                                    <span class="text-gray-500" vid="102">UPFRONT:</span>
+                                    <span class="text-white" vid="103">$750</span>
+                                </div>
+                                <div class="flex justify-between w-48 text-[10px] font-mono-code" vid="104">
+                                    <span class="text-gray-500" vid="105">DELIVERY:</span>
+                                    <span class="text-white" vid="106">$750</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                
+                <section id="seals" class="pb-24" vid="107">
+                    <div class="flex gap-10 mb-12" vid="108">
+                        <div class="section-num text-[10px] font-mono-code text-violet-500 pl-3 h-10 opacity-40" vid="109">04</div>
+                        <h2 class="font-magical text-xl text-white tracking-widest" vid="110">The Ritual Seals</h2>
+                    </div>
+                    
+                    <div class="grid grid-cols-2 gap-16" vid="111">
+                        <div vid="112">
+                            <label class="block font-mono-code text-[9px] text-gray-600 uppercase mb-4 tracking-[0.3em]" vid="113">Signature of the Client</label>
+                            <div class="signature-area h-48 w-full relative group" vid="114">
+                                <canvas id="clientSig" class="w-full h-full" vid="115"></canvas>
+                                <button onclick="clearCanvas()" class="absolute bottom-4 right-4 text-[8px] font-mono-code text-gray-600 hover:text-white uppercase transition-colors" vid="116">[ Clear Seal ]</button>
+                            </div>
+                            <input type="text" placeholder="PRINTED NAME &amp; DATE" class="mt-4 w-full bg-transparent border-b border-violet-900/50 py-3 text-xs font-mono-code text-white outline-none focus:border-violet-500 transition-colors" vid="117">
+                        </div>
+                        <div vid="118">
+                            <label class="block font-mono-code text-[9px] text-gray-600 uppercase mb-4 tracking-[0.3em]" vid="119">Seal of the Practitioner</label>
+                            <div class="h-48 border border-violet-900/20 bg-violet-950/10 flex items-center justify-center flex-col relative overflow-hidden" vid="120">
+                                <div class="absolute inset-0 opacity-5 flex items-center justify-center pointer-events-none" vid="121">
+                                    <i class="ph-fill ph-shield-checkered text-[140px] text-violet-500" vid="122"></i>
+                                </div>
+                                <div class="font-serif-heading text-4xl text-white/80 italic glowing-text relative z-10" vid="123">Akim Farrow</div>
+                                <div class="font-mono-code text-[8px] text-violet-500 mt-4 tracking-widest z-10" vid="124">VERIFIED_SIGNATURE_NODE_092</div>
+                            </div>
+                            <div class="mt-4 pt-3 flex justify-between items-center text-[10px] font-mono-code text-gray-600" vid="125">
+                                <span vid="126">2024-05-15_UTC</span>
+                                <span class="text-violet-500" vid="127">VALIDATED</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mt-24 text-center" vid="128">
+                        <button class="px-16 py-6 border border-yellow-500 text-yellow-500 font-mono-code text-sm uppercase tracking-[0.2em] hover:bg-yellow-500 hover:text-black transition-all duration-300" vid="129">
+                            Crystalize &amp; Export Agreement
+                        </button>
+                    </div>
+                </section>
+
+            </div>
+        </div>
+    </main>
+
+    <script vid="130">
+        function toggleSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            const icon = document.getElementById('toggleIcon');
+            sidebar.classList.toggle('collapsed');
+            
+            if (sidebar.classList.contains('collapsed')) {
+                icon.classList.remove('ph-caret-left');
+                icon.classList.add('ph-caret-right');
+            } else {
+                icon.classList.remove('ph-caret-right');
+                icon.classList.add('ph-caret-left');
+            }
+        }
+
+        
+        const starField = document.getElementById('starField');
+        for (let i = 0; i < 150; i++) {
+            const star = document.createElement('div');
+            star.style.position = 'absolute';
+            star.style.left = Math.random() * 100 + '%';
+            star.style.top = Math.random() * 100 + '%';
+            star.style.width = Math.random() * 2 + 'px';
+            star.style.height = star.style.width;
+            star.style.backgroundColor = 'white';
+            star.style.borderRadius = '50%';
+            star.style.opacity = Math.random();
+            star.style.animation = `pulse ${Math.random() * 3 + 2}s infinite ease-in-out`;
+            starField.appendChild(star);
+        }
+
+        
+        const canvas = document.getElementById('clientSig');
+        const ctx = canvas.getContext('2d');
+        let drawing = false;
+
+        function resizeCanvas() {
+            canvas.width = canvas.offsetWidth;
+            canvas.height = canvas.offsetHeight;
+        }
+
+        window.addEventListener('resize', resizeCanvas);
+        resizeCanvas();
+
+        canvas.addEventListener('mousedown', () => drawing = true);
+        window.addEventListener('mouseup', () => { drawing = false; ctx.beginPath(); });
+        canvas.addEventListener('mousemove', (e) => {
+            if (!drawing) return;
+            const rect = canvas.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
+
+            ctx.lineWidth = 2;
+            ctx.lineCap = 'round';
+            ctx.strokeStyle = '#8b5cf6';
+
+            ctx.lineTo(x, y);
+            ctx.stroke();
+            ctx.beginPath();
+            ctx.moveTo(x, y);
+        });
+
+        function clearCanvas() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+        }
+    </script>
+    
+    <style vid="131">
+        @keyframes pulse {
+            0%, 100% { opacity: 0.3; }
+            50% { opacity: 0.8; }
+        }
+    </style>
+
+
+</body></html>

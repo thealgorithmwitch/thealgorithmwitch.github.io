@@ -29,6 +29,10 @@
     overflow: hidden !important;
   }
 
+  #view-ledger {
+    overflow: visible !important;
+  }
+
   #view-constellation > .absolute {
     overflow: visible !important;
   }
@@ -45,6 +49,7 @@
   }
 
   .ledger-dropdown-panel {
+    position: fixed;
     overflow: visible !important;
   }
 
@@ -69,6 +74,63 @@
   .view-section {
     min-height: 0;
     min-width: 0;
+  }
+
+  .pillar-shape {
+    width: 10px;
+    height: 10px;
+    display: inline-block;
+    flex: 0 0 auto;
+    color: #c4b5fd;
+    background: currentColor;
+  }
+
+  .pillar-shape-authority {
+    clip-path: polygon(50% 0, 0 100%, 100% 100%);
+  }
+
+  .pillar-shape-distribution {
+    border-radius: 999px;
+  }
+
+  .pillar-shape-identity {
+    transform: rotate(45deg);
+    border-radius: 1px;
+  }
+
+  .pillar-shape-application {
+    border-radius: 2px;
+  }
+
+  .campaign-color-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 999px;
+    display: inline-block;
+    flex: 0 0 auto;
+  }
+
+  .campaign-inline-meta,
+  .pillar-inline-meta {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    min-width: 0;
+  }
+
+  .modal-campaign-preview {
+    margin-top: 0.5rem;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    min-height: 1.9rem;
+    padding: 0 0.75rem;
+    border-radius: 999px;
+    border: 1px solid rgba(255,255,255,0.08);
+    background: #181125;
+    color: #cbd5e1;
+    font-size: 11px;
+    font-weight: 600;
   }
 
   .constellation-label-btn {
@@ -485,9 +547,9 @@
             <button onclick="openModal()" class="px-6 py-2 bg-gradient-to-r from-[#9d4edd] to-[#c77dff] hover:opacity-90 text-white text-xs uppercase tracking-wider font-bold rounded-xl transition-all flex items-center gap-2 shadow-[0_0_20px_rgba(157,78,221,0.2)] border border-white/10" vid="26">
                 <i class="ph-bold ph-plus" vid="27"></i> New Post
             </button>
-            <div class="w-10 h-10 rounded-xl bg-[#1e152d] border border-white/5 flex items-center justify-center text-xs font-bold cursor-pointer text-gray-300 hover:text-white transition-colors" vid="28">
+            <button id="return-to-workspace-btn" type="button" title="Return to Workspace" class="w-10 h-10 rounded-xl bg-[#1e152d] border border-white/5 flex items-center justify-center text-xs font-bold cursor-pointer text-gray-300 hover:text-white transition-colors" vid="28">
                 AW
-            </div>
+            </button>
         </div>
     </header>
 
@@ -524,7 +586,7 @@
                 <span class="absolute left-16 bg-[#181125] border border-white/5 text-white text-[10px] px-3 py-1.5 rounded-lg opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity whitespace-nowrap shadow-xl" vid="46">Inspo Vault</span>
             </button>
             <div class="mt-auto" vid="47">
-                <button class="w-12 h-12 rounded-xl text-gray-500 hover:text-white hover:bg-[#1a1128] flex items-center justify-center transition-colors" vid="48">
+                <button id="workspace-settings-btn" title="Return to Workspace" class="w-12 h-12 rounded-xl text-gray-500 hover:text-white hover:bg-[#1a1128] flex items-center justify-center transition-colors" vid="48">
                     <i class="ph-fill ph-gear text-xl" vid="49"></i>
                 </button>
             </div>
@@ -1199,6 +1261,7 @@
                       Add
                     </button>
                   </div>
+                  <div id="modal-campaign-preview" class="modal-campaign-preview" hidden></div>
                 </div>
 
                 <div class="grid grid-cols-2 gap-6" vid="537">
@@ -1300,11 +1363,10 @@
       <div>
         <label class="block text-[10px] uppercase font-bold tracking-widest text-gray-500 mb-2">Default Pillar</label>
         <select id="campaign-pillar-input" class="form-input text-sm font-medium">
-          <option value="education">Education</option>
-          <option value="promotion">Promotion</option>
-          <option value="engagement">Engagement</option>
-          <option value="awareness">Awareness</option>
+          <option value="authority">Authority</option>
+          <option value="distribution">Distribution</option>
           <option value="identity">Identity</option>
+          <option value="application">Application</option>
         </select>
       </div>
     </div>
@@ -1402,7 +1464,7 @@
 </div>
 <script>
 const APP_CONFIG = {
-  APP_SCRIPT_URL: "https://script.google.com/macros/s/AKfycbzjP5ntW_euTwQH30GYm-u4V60hdt7665JGAnufulStnb47UvoN-k8kndAa2JccZPHv/exec",
+  APP_SCRIPT_URL: "https://script.google.com/macros/s/AKfycbyUNxLa6XBWQprjRgY5X2uQEcAs3tfBW1ws89Gc1uE2oY5g6yaFZn0PgpRmm6QF5RC_/exec",
   ENABLE_REMOTE_SYNC: true,
   STORAGE_KEY: "stellarsync_local_state_v4",
   SHELL_LAYOUT_KEY: "stellarsync_shell_layout_v1"
@@ -1411,6 +1473,35 @@ const APP_CONFIG = {
 const DEFAULT_STATE = {
   posts: [],
   campaigns: [],
+  settings: {
+    platforms: ["linkedin", "instagram", "both"],
+    pillars: ["authority", "distribution", "identity", "application"],
+    statuses: ["draft", "scheduled", "published"],
+    postTypes: ["image", "carousel", "video", "article", "text", "poll"],
+    campaigns: [
+      "Alternate Realities",
+      "Job Posts",
+      "Community Shout Outs",
+      "Algorithm Best Practices",
+      "Offerings",
+      "Long-Form Content Loop",
+      "Messaging"
+    ],
+    campaignColors: {
+      "Alternate Realities": "#c77dff",
+      "Job Posts": "#00ffaa",
+      "Community Shout Outs": "#ffd700",
+      "Algorithm Best Practices": "#00f0ff",
+      "Offerings": "#b25fff",
+      "Long-Form Content Loop": "#f472b6",
+      "Messaging": "#fb923c"
+    },
+    months: [],
+    queueLimit: "",
+    currentMonth: "",
+    currentYear: "",
+    mediaFolderId: ""
+  },
   inspo: [
   {
     id: "inspo-001",
@@ -1447,6 +1538,7 @@ let appState = loadLocalState();
 let currentView = "calendar";
 let currentEditingPostId = null;
 let currentModalAsset = null;
+let currentModalInspoId = null;
 let shellLayout = loadShellLayout();
 let deferredInstallPrompt = null;
 
@@ -1568,6 +1660,63 @@ function normalizeCampaignName(value) {
   return normalizeDisplayText(value);
 }
 
+function getDefaultSettings() {
+  return JSON.parse(JSON.stringify(DEFAULT_STATE.settings));
+}
+
+const PILLAR_SHAPES = {
+  authority: "triangle",
+  distribution: "circle",
+  identity: "diamond",
+  application: "square"
+};
+
+const FALLBACK_CAMPAIGN_COLORS = {
+  "Alternate Realities": "#c77dff",
+  "Job Posts": "#00ffaa",
+  "Community Shout Outs": "#ffd700",
+  "Algorithm Best Practices": "#00f0ff",
+  "Offerings": "#b25fff",
+  "Long-Form Content Loop": "#f472b6",
+  "Messaging": "#fb923c"
+};
+
+function getPillarShape(pillar) {
+  const canonical = normalizePillar(pillar);
+  return PILLAR_SHAPES[canonical] || "circle";
+}
+
+function renderPillarShape(pillar, extraClass = "", color = "#c4b5fd") {
+  const canonical = normalizePillar(pillar);
+  const shape = getPillarShape(canonical);
+  const className = ["pillar-shape", `pillar-shape-${canonical}`, extraClass].filter(Boolean).join(" ");
+  return `<span class="${className}" style="color:${escapeHtml(color)}" aria-hidden="true"></span>`;
+}
+
+function getCampaignColorMap() {
+  const settingsMap = appState.settings?.campaignColors || {};
+  const colorMap = { ...FALLBACK_CAMPAIGN_COLORS };
+  Object.entries(settingsMap).forEach(([name, color]) => {
+    const normalizedName = normalizeCampaignName(name);
+    const normalizedColor = String(color || "").trim();
+    if (normalizedName && normalizedColor) colorMap[normalizedName] = normalizedColor;
+  });
+  return colorMap;
+}
+
+function getCampaignColor(campaignOrName, fallbackPillar = "") {
+  const campaignName = typeof campaignOrName === "string"
+    ? normalizeCampaignName(campaignOrName)
+    : normalizeCampaignName(campaignOrName?.campaignName || campaignOrName?.campaign_name || "");
+  const explicitColor = typeof campaignOrName === "object"
+    ? String(campaignOrName?.color || "").trim()
+    : "";
+  if (explicitColor) return explicitColor;
+  const colorMap = getCampaignColorMap();
+  if (campaignName && colorMap[campaignName]) return colorMap[campaignName];
+  return getPillarTheme(fallbackPillar || (typeof campaignOrName === "object" ? campaignOrName?.pillar : ""));
+}
+
 function getCampaignById(id, campaigns = appState.campaigns || []) {
   const target = String(id || "").trim();
   if (!target) return null;
@@ -1582,23 +1731,28 @@ function getCampaignByName(name, campaigns = appState.campaigns || []) {
 
 function hydratePostCampaign(post, campaigns = appState.campaigns || []) {
   const matchedCampaign = getCampaignById(post?.campaignId, campaigns) || getCampaignByName(post?.campaignName, campaigns);
-  const pillar = normalizePillar(post?.pillar || matchedCampaign?.pillar || post?.hubPillarLabel || "education");
+  const pillar = normalizePillar(post?.pillar || matchedCampaign?.pillar || post?.hubPillarLabel || (appState.settings?.pillars || [])[0] || "authority");
   return {
     ...post,
     pillar,
     hubPillarLabel: formatContentPillarLabel(pillar),
     campaignId: String(post?.campaignId || matchedCampaign?.campaignId || "").trim(),
     campaignName: normalizeCampaignName(post?.campaignName || matchedCampaign?.campaignName || ""),
+    campaignColor: getCampaignColor(matchedCampaign || post?.campaignName || "", pillar),
     hubTitle: String(post?.hubTitle || matchedCampaign?.campaignName || post?.title || "").trim()
   };
 }
 
 function renderCampaignOptions(campaigns = [], selectedCampaignId = "") {
   const activeCampaignId = String(selectedCampaignId || "").trim();
+  const allowedCampaigns = appState.settings?.campaigns || [];
   const options = ['<option value="">No campaign</option>']
-    .concat((campaigns || [])
-      .filter((campaign) => !campaign.isArchived)
-      .map((campaign) => `<option value="${escapeHtml(campaign.campaignId)}">${escapeHtml(formatCampaignDisplayName(campaign.campaignName))}</option>`));
+    .concat((allowedCampaigns || [])
+      .map((campaignName) => {
+        const matchedCampaign = getCampaignByName(campaignName, campaigns || []);
+        const value = String(matchedCampaign?.campaignId || "").trim() || normalizeCampaignName(campaignName);
+        return `<option value="${escapeHtml(value)}">${escapeHtml(formatCampaignDisplayName(campaignName))}</option>`;
+      }));
 
   return {
     html: options.join(""),
@@ -1606,20 +1760,61 @@ function renderCampaignOptions(campaigns = [], selectedCampaignId = "") {
   };
 }
 
+function getAvailableCampaignRecords() {
+  const records = [];
+  const seen = new Set();
+  const pillarTokens = new Set((appState.settings?.pillars || []).map((value) => normalizePillarToken(value)));
+  const pushRecord = (campaignName, matchedCampaign = null, index = records.length) => {
+    const normalizedName = normalizeCampaignName(campaignName);
+    const key = normalizeLookupValue(normalizedName);
+    if (!normalizedName || seen.has(key) || pillarTokens.has(normalizePillarToken(normalizedName))) return;
+    seen.add(key);
+    const fallbackCampaignId = `CMP-${normalizeLookupValue(normalizedName).replace(/[^a-z0-9]+/g, "").slice(0, 8).toUpperCase() || "MANUAL"}`;
+    records.push({
+      campaignId: String(matchedCampaign?.campaignId || fallbackCampaignId).trim(),
+      campaignName: normalizedName,
+      pillar: normalizePillar(matchedCampaign?.pillar || ""),
+      color: getCampaignColor(matchedCampaign || normalizedName, matchedCampaign?.pillar || ""),
+      sortOrder: Number(matchedCampaign?.sortOrder ?? index) || index,
+      isArchived: !!matchedCampaign?.isArchived,
+      x: Number(matchedCampaign?.x || 0) || 0,
+      y: Number(matchedCampaign?.y || 0) || 0
+    });
+  };
+
+  (appState.settings?.campaigns || []).forEach((campaignName, index) => {
+    pushRecord(campaignName, getCampaignByName(campaignName, appState.campaigns || []), index);
+  });
+
+  (appState.posts || []).forEach((post) => {
+    const hydrated = hydratePostCampaign(post, appState.campaigns || []);
+    pushRecord(hydrated.campaignName, getCampaignByName(hydrated.campaignName, appState.campaigns || []));
+  });
+
+  return records;
+}
+
+function updateModalCampaignPreview() {
+  const preview = document.getElementById("modal-campaign-preview");
+  if (!preview) return;
+  const selectedCampaignId = campaignSelect?.value || "";
+  const selectedCampaign = getCampaignById(selectedCampaignId, getAvailableCampaignRecords()) || getCampaignByName(selectedCampaignId, getAvailableCampaignRecords());
+  if (!selectedCampaign) {
+    preview.hidden = true;
+    preview.innerHTML = "";
+    return;
+  }
+  preview.hidden = false;
+  preview.innerHTML = `<span class="campaign-color-dot" style="background:${escapeHtml(getCampaignColor(selectedCampaign, selectedCampaign.pillar))}"></span><span>${escapeHtml(formatCampaignDisplayName(selectedCampaign.campaignName))}</span>`;
+}
+
 const CANONICAL_PILLAR_MAP = {
   iden: "identity",
   ident: "identity",
   identity: "identity",
-  edu: "education",
-  education: "education",
-  educational: "education",
-  promo: "promotion",
-  promotion: "promotion",
-  promotional: "promotion",
-  engage: "engagement",
-  engagement: "engagement",
-  aware: "awareness",
-  awareness: "awareness"
+  authority: "authority",
+  distribution: "distribution",
+  application: "application"
 };
 
 function getCanonicalPillarValue(value, fallback = "") {
@@ -1628,10 +1823,9 @@ function getCanonicalPillarValue(value, fallback = "") {
   const normalized = normalizeLookupValue(cleaned);
   if (CANONICAL_PILLAR_MAP[normalized]) return CANONICAL_PILLAR_MAP[normalized];
   if (normalized.includes("identity")) return "identity";
-  if (normalized.includes("educat")) return "education";
-  if (normalized.includes("promo")) return "promotion";
-  if (normalized.includes("engage")) return "engagement";
-  if (normalized.includes("aware")) return "awareness";
+  if (normalized.includes("author")) return "authority";
+  if (normalized.includes("distribut")) return "distribution";
+  if (normalized.includes("applic")) return "application";
   return fallback ? getCanonicalPillarValue(fallback, "") : "";
 }
 
@@ -1712,40 +1906,13 @@ function getCampaignContentPillar(campaign) {
 }
 
 function getAvailableContentPillars() {
-  const seen = new Set();
-  const ordered = [];
-
-  (appState.campaigns || [])
-    .filter(campaign => !campaign.isArchived)
-    .sort((a, b) => Number(a.sortOrder || 0) - Number(b.sortOrder || 0))
-    .forEach((campaign) => {
-      const pillar = getDisplayCampaignContentPillar(campaign);
-      const key = normalizePillarToken(pillar);
-      if (key && !seen.has(key)) {
-        seen.add(key);
-        ordered.push(pillar);
-      }
-    });
-
-  (appState.posts || []).forEach((post) => {
-    const pillar = getDisplayPostContentPillar(post);
-    const key = normalizePillarToken(pillar);
-    if (key && !seen.has(key)) {
-      seen.add(key);
-      ordered.push(pillar);
-    }
-  });
-
-  return ordered;
+  return (appState.settings?.pillars || [])
+    .map((pillar) => getCanonicalPillarValue(pillar))
+    .filter(Boolean);
 }
 
 function getPillarTheme(pillarValue) {
   const normalized = normalizePillarToken(pillarValue);
-  const matchedCampaign = (appState.campaigns || []).find(campaign => {
-    return normalizePillarToken(getDisplayCampaignContentPillar(campaign)) === normalized;
-  });
-
-  if (matchedCampaign?.color) return matchedCampaign.color;
   if (!normalized) return "#6b7280";
 
   const pillars = getAvailableContentPillars();
@@ -1849,7 +2016,7 @@ function renderSignalsOverview() {
     return `
       <div class="bg-[#181125] border border-white/5 rounded-lg px-3 py-2.5 flex items-center justify-between gap-3 min-w-0">
         <div class="min-w-0 flex items-center gap-2">
-          <div class="w-2 h-2 rounded-sm shrink-0" style="background:${escapeHtml(color)}"></div>
+          ${renderPillarShape(pillar, "", color)}
           <span class="text-gray-300 font-medium signal-label-fit min-w-0" title="${escapeHtml(pillar)}">${escapeHtml(formatContentPillarLabel(pillar))}</span>
         </div>
         <span class="text-[10px] font-bold text-gray-500 shrink-0">${count}</span>
@@ -1882,6 +2049,9 @@ function renderOverviewPanel() {
       if (topPostRank) topPostRank.textContent = "No match";
     } else {
       const linkedAsset = findLinkedAssetForPost(topPost);
+      const topPostPillar = getDisplayPostContentPillar(topPost) || "";
+      const topPostPillarColor = getPillarTheme(topPostPillar);
+      const topPostCampaignColor = getCampaignColor(topPost, topPostPillar);
       topPostCard.innerHTML = `
         <button type="button" class="w-full text-left" onclick="openModalById('${escapeHtml(topPost.id)}')">
           <div class="p-4 rounded-xl bg-[#181125] border border-white/5 hover:border-white/10 transition-colors">
@@ -1894,11 +2064,17 @@ function renderOverviewPanel() {
             <div class="grid grid-cols-2 gap-2 text-[10px]">
               <div class="px-2 py-2 rounded-lg bg-[#120c1d] border border-white/5">
                 <div class="text-gray-500 uppercase tracking-widest mb-1">Campaign</div>
-                <div class="text-gray-200 wrap-safe">${escapeHtml(formatCampaignDisplayName(topPost.campaignName || "Unassigned"))}</div>
+                <div class="text-gray-200 wrap-safe campaign-inline-meta">
+                  <span class="campaign-color-dot" style="background:${escapeHtml(topPostCampaignColor)}"></span>
+                  <span>${escapeHtml(formatCampaignDisplayName(topPost.campaignName || "Unassigned"))}</span>
+                </div>
               </div>
               <div class="px-2 py-2 rounded-lg bg-[#120c1d] border border-white/5">
                 <div class="text-gray-500 uppercase tracking-widest mb-1">Pillar</div>
-                <div class="text-gray-200 signal-label-fit">${escapeHtml(formatContentPillarLabel(getDisplayPostContentPillar(topPost) || "Missing"))}</div>
+                <div class="text-gray-200 signal-label-fit pillar-inline-meta">
+                  ${renderPillarShape(topPostPillar, "", topPostPillarColor)}
+                  <span>${escapeHtml(formatContentPillarLabel(topPostPillar || "Missing"))}</span>
+                </div>
               </div>
               <div class="px-2 py-2 rounded-lg bg-[#120c1d] border border-white/5">
                 <div class="text-gray-500 uppercase tracking-widest mb-1">Platform</div>
@@ -1931,10 +2107,11 @@ function renderOverviewPanel() {
   }
 
   if (campaignSnapshot) {
+    const topPillarColor = getPillarTheme(topPillar ? topPillar[0] : "");
     campaignSnapshot.innerHTML = `
       <div class="flex items-center justify-between gap-3"><span class="text-[11px] text-gray-500">Active campaigns</span><span class="text-sm font-bold text-white">${countPostsBy(filteredPosts, post => post.campaignName || "").length}</span></div>
-      <div class="flex items-center justify-between gap-3"><span class="text-[11px] text-gray-500">Top campaign</span><span class="text-sm font-bold text-white campaign-title-safe text-right">${escapeHtml(topCampaign ? formatCampaignDisplayName(topCampaign[0]) : "None")}</span></div>
-      <div class="flex items-center justify-between gap-3"><span class="text-[11px] text-gray-500">Top pillar</span><span class="text-sm font-bold text-white signal-label-fit text-right">${escapeHtml(topPillar ? formatContentPillarLabel(topPillar[0]) : "None")}</span></div>
+      <div class="flex items-center justify-between gap-3"><span class="text-[11px] text-gray-500">Top campaign</span><span class="text-sm font-bold text-white campaign-title-safe text-right campaign-inline-meta"><span class="campaign-color-dot" style="background:${escapeHtml(getCampaignColor(topCampaign ? topCampaign[0] : "", ""))}"></span><span>${escapeHtml(topCampaign ? formatCampaignDisplayName(topCampaign[0]) : "None")}</span></span></div>
+      <div class="flex items-center justify-between gap-3"><span class="text-[11px] text-gray-500">Top pillar</span><span class="text-sm font-bold text-white signal-label-fit text-right pillar-inline-meta">${topPillar ? renderPillarShape(topPillar[0], "", topPillarColor) : ""}<span>${escapeHtml(topPillar ? formatContentPillarLabel(topPillar[0]) : "None")}</span></span></div>
       <div class="flex items-center justify-between gap-3"><span class="text-[11px] text-gray-500">Pillar values</span><span class="text-sm font-bold text-white">${countPostsBy(filteredPosts, post => getDisplayPostContentPillar(post)).length}</span></div>
     `;
   }
@@ -2090,7 +2267,10 @@ function renderPerformanceView() {
       })
       .slice(0, 4);
     topPostsTarget.innerHTML = topPosts.length
-      ? topPosts.map((post, index) => `
+      ? topPosts.map((post, index) => {
+        const hydrated = hydratePostCampaign(post);
+        const postPillar = getDisplayPostContentPillar(hydrated) || "";
+        return `
         <button type="button" onclick="openModalById('${escapeHtml(post.id)}')" class="w-full text-left p-3 rounded-xl bg-[#181125] border border-white/5 hover:border-white/10 transition-colors">
           <div class="flex items-center justify-between gap-3 mb-2">
             <span class="text-[10px] font-bold text-[#c77dff]">#${index + 1}</span>
@@ -2098,10 +2278,15 @@ function renderPerformanceView() {
           </div>
           <div class="text-sm font-bold text-white wrap-safe mb-1" title="${escapeHtml(post.title || "")}">${escapeHtml(getDisplayTitle(post.title))}</div>
           <div class="text-[11px] text-gray-400 wrap-safe">${escapeHtml(getDisplayExcerpt(post.description, post.ledgerExcerpt || ""))}</div>
-          <div class="mt-2 text-[10px] text-gray-500">${escapeHtml(formatCampaignDisplayName(post.campaignName || "Unassigned"))} • ${escapeHtml(formatContentPillarLabel(getDisplayPostContentPillar(post) || "Missing"))}</div>
+          <div class="mt-2 text-[10px] text-gray-500 flex items-center gap-2 flex-wrap">
+            <span class="campaign-inline-meta"><span class="campaign-color-dot" style="background:${escapeHtml(getCampaignColor(hydrated, hydrated.pillar))}"></span><span>${escapeHtml(formatCampaignDisplayName(hydrated.campaignName || "Unassigned"))}</span></span>
+            <span>•</span>
+            <span class="pillar-inline-meta">${renderPillarShape(postPillar, "", getPillarTheme(postPillar))}<span>${escapeHtml(formatContentPillarLabel(postPillar || "Missing"))}</span></span>
+          </div>
           <div class="mt-1 text-[10px] text-gray-500">${escapeHtml(getInsightSummaryLine(post, filteredPosts))}</div>
         </button>
-      `).join("")
+      `;
+      }).join("")
       : `<div class="pillar-empty-state">No posts available for ${escapeHtml(getRangeLabel(performanceFilters.range))} on ${escapeHtml(performanceFilters.platform === "all" ? "all platforms" : toTitleCase(performanceFilters.platform))}.</div>`;
   }
 }
@@ -2238,10 +2423,10 @@ function renderModalPillarButtons(activePillar = "") {
     return `
       <button
         type="button"
-        class="pillar-btn px-3 py-2 text-[10px] font-bold uppercase tracking-wider wrap-safe"
+        class="pillar-btn px-3 py-2 text-[10px] font-bold uppercase tracking-wider wrap-safe flex items-center justify-center gap-2"
         data-pillar="${escapeHtml(pillar)}"
         title="${escapeHtml(pillar)}"
-      >${escapeHtml(formatContentPillarLabel(pillar))}</button>
+      >${renderPillarShape(pillar, "", getPillarTheme(pillar))}<span>${escapeHtml(formatContentPillarLabel(pillar))}</span></button>
     `;
   }).join("");
 
@@ -2530,10 +2715,11 @@ function buildAuditSummary() {
 }
 
 function initApp() {
+  appState.settings = normalizeRemoteSettings(appState.settings || {});
   appState.campaigns = (appState.campaigns || []).map((campaign) => normalizeRemoteCampaign(campaign));
   appState.posts = (appState.posts || []).map((post) => hydratePostCampaign({
     ...post,
-    pillar: normalizePillar(post?.pillar || post?.hubPillarLabel || "education")
+    pillar: normalizePillar(post?.pillar || post?.hubPillarLabel || (appState.settings?.pillars || [])[0] || "authority")
   }, appState.campaigns || []));
 
   seedStars();
@@ -2556,6 +2742,7 @@ function initApp() {
 
   setupInspoModal();
   setupCampaignControls();
+  setupWorkspaceReturnButtons();
   setupConstellationInteractions();
   setupLedgerControls();
   setupMediaAdvancedFilters();
@@ -2687,7 +2874,7 @@ async function saveInspoFromModal() {
     summary: notes,
     domainOrMeta: deriveDomainLabel(url),
     suggestedPlatform: currentInspoType === "video" || currentInspoType === "image" ? "instagram" : currentInspoType === "trend" ? "both" : "linkedin",
-    suggestedPillar: currentInspoType === "trend" ? "engagement" : currentInspoType === "image" || currentInspoType === "video" ? "awareness" : "education",
+    suggestedPillar: currentInspoType === "trend" ? "distribution" : currentInspoType === "image" || currentInspoType === "video" ? "application" : "authority",
     createPostTitle: title,
     createPostDescription: notes,
     createPostType: currentInspoType === "video" ? "video" : currentInspoType === "article" ? "article" : currentInspoType === "image" ? "image" : "text",
@@ -2799,39 +2986,59 @@ function setupCampaignControls() {
   });
 }
 
+function setupWorkspaceReturnButtons() {
+  const returnButtons = [
+    document.getElementById("return-to-workspace-btn"),
+    document.getElementById("workspace-settings-btn")
+  ].filter(Boolean);
+
+  returnButtons.forEach((button) => {
+    button.addEventListener("click", () => {
+      document.getElementById("ledger-filter-dropdown")?.classList.add("hidden");
+      document.getElementById("ledger-sort-dropdown")?.classList.add("hidden");
+      document.getElementById("media-filter-dropdown")?.classList.add("hidden");
+      closeModal();
+      closeInspoModal?.();
+      switchView("calendar");
+    });
+  });
+}
+
 function populateCampaignDropdown() {
   if (!campaignSelect) return;
 
   const currentValue = campaignSelect.value || "";
-  const { html, selectedCampaignId } = renderCampaignOptions(appState.campaigns || [], currentValue);
+  const { html, selectedCampaignId } = renderCampaignOptions(getAvailableCampaignRecords(), currentValue);
   campaignSelect.innerHTML = html;
   campaignSelect.value = selectedCampaignId;
+  updateModalCampaignPreview();
 }
 
 function normalizePillar(value) {
   const v = String(value || "").toLowerCase();
   if (v.includes("identity") || v.includes("iden") || v.includes("ident")) return "identity";
-  if (v.includes("promo") || v.includes("violet") || v.includes("purple")) return "promotion";
-  if (v.includes("engage") || v.includes("gold") || v.includes("yellow")) return "engagement";
-  if (v.includes("aware") || v.includes("green")) return "awareness";
-  if (v.includes("edu") || v.includes("cyan") || v.includes("blue")) return "education";
-  return getCanonicalPillarValue(value, "education") || "education";
+  if (v.includes("author")) return "authority";
+  if (v.includes("distribut")) return "distribution";
+  if (v.includes("applic")) return "application";
+  return getCanonicalPillarValue(value, (appState.settings?.pillars || [])[0] || "authority") || ((appState.settings?.pillars || [])[0] || "authority");
 }
 
-function defaultCampaignColor(pillar) {
-  const canonical = normalizePillar(pillar);
-  return canonical === "education" ? "#00f0ff" :
-         canonical === "promotion" ? "#b25fff" :
-         canonical === "engagement" ? "#ffd700" :
-         canonical === "identity" ? "#fb7185" :
-         "#00ffaa";
+function defaultCampaignColor(campaignName, pillar) {
+  return getCampaignColor(campaignName || "", pillar || "");
 }
 
-function openCampaignModal(defaultPillar = "education") {
+function renderCampaignPillarInputOptions(selectedPillar = "") {
+  if (!campaignPillarInput) return;
+  const pillars = getAvailableContentPillars();
+  campaignPillarInput.innerHTML = pillars.map((pillar) => `<option value="${escapeHtml(pillar)}">${escapeHtml(formatContentPillarLabel(pillar))}</option>`).join("");
+  campaignPillarInput.value = normalizePillar(selectedPillar || pillars[0] || "authority");
+}
+
+function openCampaignModal(defaultPillar = "authority") {
   if (!campaignModal || !campaignModalCard) return;
 
   if (campaignNameInput) campaignNameInput.value = "";
-  if (campaignPillarInput) campaignPillarInput.value = defaultPillar;
+  renderCampaignPillarInputOptions(defaultPillar);
 
   campaignModal.classList.remove("opacity-0", "pointer-events-none");
   campaignModalCard.classList.remove("scale-95");
@@ -2847,20 +3054,20 @@ function closeCampaignModal() {
 
   setTimeout(() => {
     if (campaignNameInput) campaignNameInput.value = "";
-    if (campaignPillarInput) campaignPillarInput.value = "education";
+    if (campaignPillarInput) campaignPillarInput.value = "authority";
   }, 200);
 }
 
 async function saveCampaignFromModal() {
   const campaignName = campaignNameInput?.value.trim() || "";
-  const pillar = normalizePillar(campaignPillarInput?.value || "education");
+  const pillar = normalizePillar(campaignPillarInput?.value || "authority");
 
   if (!campaignName) {
     showToast("Missing name", "Please enter a campaign name.", "ph-warning", "text-yellow-400");
     return;
   }
 
-  const color = defaultCampaignColor(pillar);
+  const color = defaultCampaignColor(campaignName, pillar);
 
   const nextSortOrder = ((appState.campaigns || []).reduce((max, item) => {
     return Math.max(max, Number(item.sortOrder || 0));
@@ -3048,11 +3255,14 @@ function renderCalendarPill(post, isWeekMode = false) {
   const pillTitle = isWeekMode
     ? `${formatLocalQueueTime(post.date)} ${displayTitle}`
     : displayTitle;
-  const pillColor = getPillarTheme(getPostContentPillar(post));
+  const hydrated = hydratePostCampaign(post);
+  const campaignColor = getCampaignColor(hydrated, getPostContentPillar(hydrated));
+  const pillarColor = getPillarTheme(getPostContentPillar(hydrated));
 
   return `
-    <button type="button" class="post-pill mt-1 text-left" onclick="openModalById('${escapeHtml(post.id)}')" title="${escapeHtml(post.title || "")}" style="background:${pillColor}14;border:1px solid ${pillColor}30;">
+    <button type="button" class="post-pill mt-1 text-left" onclick="openModalById('${escapeHtml(post.id)}')" title="${escapeHtml(post.title || "")}" style="background:${campaignColor}14;border:1px solid ${campaignColor}30;box-shadow:inset 3px 0 0 ${campaignColor};">
       <div class="flex items-center gap-1.5 w-full">
+        ${renderPillarShape(getPostContentPillar(hydrated), "", pillarColor)}
         ${iconBlock}
         <div class="w-1.5 h-1.5 rounded-full ml-auto" style="background:${statusColor}"></div>
       </div>
@@ -3074,7 +3284,11 @@ function renderLedger() {
   if (ledgerFilters.campaign !== "all") {
     posts = posts
       .map((post) => hydratePostCampaign(post))
-      .filter((post) => String(post.campaignId || "") === ledgerFilters.campaign);
+      .filter((post) => {
+        if (String(post.campaignId || "") === ledgerFilters.campaign) return true;
+        const selectedCampaign = getAvailableCampaignRecords().find((campaign) => String(campaign.campaignId || "") === String(ledgerFilters.campaign || ""));
+        return normalizeLookupValue(post.campaignName || "") === normalizeLookupValue(selectedCampaign?.campaignName || "");
+      });
   }
 
   if (ledgerFilters.type !== "all") {
@@ -3119,14 +3333,16 @@ function renderLedger() {
   }
 
   ledgerList.innerHTML = posts.map(post => {
+    const hydrated = hydratePostCampaign(post);
     const badgeClass =
       post.status === "published" ? "badge-pub" :
       post.status === "scheduled" ? "badge-sch" :
       "badge-drf";
 
-    const pillarValue = getPostContentPillar(post);
-    const displayPillarValue = getDisplayPostContentPillar(post);
+    const pillarValue = getPostContentPillar(hydrated);
+    const displayPillarValue = getDisplayPostContentPillar(hydrated);
     const pillarLabel = displayPillarValue ? formatContentPillarLabel(displayPillarValue) : "No Pillar";
+    const campaignColor = getCampaignColor(hydrated, pillarValue);
 
     const platformIcon =
       post.platform === "instagram" ? "ph-instagram-logo" :
@@ -3137,6 +3353,8 @@ function renderLedger() {
     const displayTitle = getDisplayTitle(post.title);
     const displayDescription = getDisplayExcerpt(post.description, post.ledgerExcerpt || "");
     const platformIconClass = post.platform === "linkedin" ? "ledger-linkedin" : "";
+    const campaignLabel = formatCampaignDisplayName(hydrated.campaignName || "Unassigned");
+    const pillarShape = renderPillarShape(pillarValue, "", getPillarTheme(pillarValue));
 
     return `
       <div class="ledger-card glass-card p-5" data-post-id="${escapeHtml(post.id)}">
@@ -3147,7 +3365,8 @@ function renderLedger() {
           <div class="flex-1 min-w-0">
             <div class="flex items-center gap-3 mb-2 flex-wrap">
               <span class="badge ${badgeClass} text-[8px]">${escapeHtml(String(post.status || "draft").toUpperCase())}</span>
-              <span class="px-2 py-1 bg-[#120c1d] border border-white/5 rounded text-[9px] text-gray-300 font-medium">${escapeHtml(pillarLabel)}</span>
+              <span class="px-2 py-1 bg-[#120c1d] border border-white/5 rounded text-[9px] text-gray-300 font-medium pillar-inline-meta">${pillarShape}<span>${escapeHtml(pillarLabel)}</span></span>
+              <span class="px-2 py-1 bg-[#120c1d] border border-white/5 rounded text-[9px] text-gray-300 font-medium campaign-inline-meta"><span class="campaign-color-dot" style="background:${escapeHtml(campaignColor)}"></span><span>${escapeHtml(campaignLabel)}</span></span>
               <span class="text-gray-500 text-[10px] font-medium">${escapeHtml(formatLedgerDate(post.date))}</span>
             </div>
             <h3 class="text-white font-bold text-base mb-2 wrap-safe" title="${escapeHtml(post.title || "")}">${escapeHtml(displayTitle)}</h3>
@@ -3197,7 +3416,7 @@ function wireLedgerActions() {
 }
 
 function buildConstellationRows() {
-  const campaigns = [...(appState.campaigns || [])]
+  const campaigns = [...getAvailableCampaignRecords()]
     .filter(campaign => !campaign.isArchived)
     .sort((a, b) => {
       const aSort = Number(a.sortOrder || 0);
@@ -3218,8 +3437,11 @@ function buildConstellationRows() {
         return aTime - bTime;
       });
 
+    const derivedPillar = normalizePillar(campaign.pillar || posts[0]?.pillar || (appState.settings?.pillars || [])[0] || "authority");
+
     return {
       ...campaign,
+      pillar: derivedPillar,
       posts
     };
   });
@@ -3243,7 +3465,7 @@ function renderConstellation() {
   rows.forEach((campaign, index) => {
     const rowY = rowStartY + (index * rowHeight);
     const pillarValue = getCampaignContentPillar(campaign);
-    const color = getPillarTheme(pillarValue);
+    const color = getCampaignColor(campaign, pillarValue);
 
     const rowGroup = document.createElement("div");
     rowGroup.className = "absolute left-0 w-full";
@@ -3305,6 +3527,8 @@ function renderConstellation() {
     rowPosts.forEach((post, postIndex) => {
       const dotX = firstDotX + (postIndex * dotGap);
 
+      const postPillar = getPostContentPillar(post);
+      const pillarShape = renderPillarShape(postPillar, "", getPillarTheme(postPillar));
       const dot = document.createElement("button");
       dot.type = "button";
       dot.className = "absolute rounded-full transition-all";
@@ -3335,7 +3559,10 @@ function renderConstellation() {
       dotLabel.style.left = `${dotX + 18}px`;
       dotLabel.style.top = "90px";
       dotLabel.style.borderColor = `${color}40`;
-      dotLabel.textContent = getConstellationLabel(post.title);
+      dotLabel.innerHTML = `${pillarShape}<span>${escapeHtml(getConstellationLabel(post.title))}</span>`;
+      dotLabel.style.display = "inline-flex";
+      dotLabel.style.alignItems = "center";
+      dotLabel.style.gap = "8px";
       dotLabel.title = post.title || "Open post";
       dotLabel.addEventListener("click", () => openModalById(post.id));
 
@@ -3412,8 +3639,8 @@ async function promptCreateCampaignRow() {
   const campaignName = window.prompt("Campaign name");
   if (!campaignName) return null;
 
-  const pillar = normalizePillar(window.prompt("Default pillar: education, promotion, engagement, awareness, identity", "education") || "education");
-  const color = defaultCampaignColor(pillar);
+  const pillar = normalizePillar(window.prompt("Default pillar: authority, distribution, identity, application", "authority") || "authority");
+  const color = defaultCampaignColor(campaignName, pillar);
 
   const nextSortOrder = ((appState.campaigns || []).reduce((max, item) => {
     return Math.max(max, Number(item.sortOrder || 0));
@@ -3744,22 +3971,23 @@ async function editCampaignById(campaignId) {
   const nextName = window.prompt("Edit campaign name", campaign.campaignName);
   if (nextName === null) return;
 
-  const nextPillar = normalizePillar(window.prompt("Edit default pillar: education, promotion, engagement, awareness, identity", campaign.pillar) || campaign.pillar);
+  const nextPillar = normalizePillar(window.prompt("Edit default pillar: authority, distribution, identity, application", campaign.pillar || "authority") || campaign.pillar || "authority");
   const archiveAnswer = window.prompt("Archive this campaign? yes / no", campaign.isArchived ? "yes" : "no");
   if (archiveAnswer === null) return;
 
   const nextArchived = String(archiveAnswer).trim().toLowerCase().startsWith("y");
-  const nextColor = defaultCampaignColor(nextPillar);
+  const resolvedName = nextName.trim() || campaign.campaignName;
+  const nextColor = defaultCampaignColor(resolvedName, nextPillar);
 
-    const updated = {
-      campaignId: campaign.campaignId,
-      campaignName: nextName.trim() || campaign.campaignName,
-      pillar: nextPillar,
-      color: nextColor,
-      sortOrder: Number(campaign.sortOrder || 0),
-      isArchived: nextArchived,
-      createdAt: campaign.createdAt || ""
-    };
+  const updated = {
+    campaignId: campaign.campaignId,
+    campaignName: resolvedName,
+    pillar: nextPillar,
+    color: nextColor,
+    sortOrder: Number(campaign.sortOrder || 0),
+    isArchived: nextArchived,
+    createdAt: campaign.createdAt || ""
+  };
 
   try {
     await apiUpdateCampaign(updated);
@@ -4065,11 +4293,12 @@ async function refreshMediaFromRemote() {
 
 function getUniqueLedgerCampaignOptions() {
   const seen = new Set();
-  return (appState.campaigns || [])
+  return getAvailableCampaignRecords()
     .filter(c => !c.isArchived)
     .map(c => ({
       value: String(c.campaignId || "").trim(),
-      label: String(c.campaignName || "").trim()
+      label: String(c.campaignName || "").trim(),
+      color: getCampaignColor(c, c.pillar || "")
     }))
     .filter(item => {
       if (!item.value || !item.label) return false;
@@ -4081,24 +4310,10 @@ function getUniqueLedgerCampaignOptions() {
 }
 
 function getUniqueLedgerPillarOptions() {
-  const seen = new Set();
-  const sourceValues = [
-    ...(appState.posts || []).map(post => post.pillar || post.hubPillarLabel),
-    ...(appState.campaigns || []).map(campaign => campaign.pillar)
-  ];
-
-  return sourceValues
-    .map(value => normalizePillarLabel(value))
-    .filter(Boolean)
-    .filter(label => {
-      const token = normalizePillarToken(label);
-      if (!token || seen.has(token)) return false;
-      seen.add(token);
-      return true;
-    })
+  return getAvailableContentPillars()
     .map(label => ({
       value: normalizePillarToken(label),
-      label
+      label: normalizePillarLabel(label)
     }))
     .sort((a, b) => a.label.localeCompare(b.label));
 }
@@ -4118,7 +4333,7 @@ function renderLedgerFilterMenus() {
         data-filter-value="all"
         class="ledger-filter-option w-full px-3 py-2 rounded-lg hover:bg-[#2d1b4e] text-left text-xs text-gray-300 hover:text-white transition-all flex items-center gap-2"
       >
-        <div class="w-2 h-2 rounded-full bg-gray-500"></div>
+        <span class="campaign-color-dot" style="background:#6b7280"></span>
         All Pillars
       </button>
       ${pillarOptions.map(option => `
@@ -4128,7 +4343,7 @@ function renderLedgerFilterMenus() {
           data-filter-value="${escapeHtml(option.value)}"
           class="ledger-filter-option w-full px-3 py-2 rounded-lg hover:bg-[#2d1b4e] text-left text-xs text-gray-300 hover:text-white transition-all flex items-center gap-2"
         >
-          <div class="w-2 h-2 rounded-full bg-[#c77dff]"></div>
+          ${renderPillarShape(option.value, "", getPillarTheme(option.value))}
           ${escapeHtml(option.label)}
         </button>
       `).join("")}
@@ -4146,7 +4361,7 @@ function renderLedgerFilterMenus() {
         data-filter-value="all"
         class="ledger-filter-option w-full px-3 py-2 rounded-lg hover:bg-[#2d1b4e] text-left text-xs text-gray-300 hover:text-white transition-all flex items-center gap-2"
       >
-        <div class="w-2 h-2 rounded-full bg-gray-500"></div>
+        <span class="campaign-color-dot" style="background:#6b7280"></span>
         All Campaigns
       </button>
       ${campaignOptions.map(option => `
@@ -4156,7 +4371,7 @@ function renderLedgerFilterMenus() {
           data-filter-value="${escapeHtml(option.value)}"
           class="ledger-filter-option w-full px-3 py-2 rounded-lg hover:bg-[#2d1b4e] text-left text-xs text-gray-300 hover:text-white transition-all flex items-center gap-2"
         >
-          <div class="w-2 h-2 rounded-full bg-[#c77dff]"></div>
+          <span class="campaign-color-dot" style="background:${escapeHtml(option.color || getCampaignColor(option.label))}"></span>
           ${escapeHtml(option.label)}
         </button>
       `).join("")}
@@ -4177,7 +4392,7 @@ function updateLedgerFilterLabels() {
   if (campaignLabel) {
     campaignLabel.textContent = ledgerFilters.campaign === "all"
       ? "All"
-      : formatCampaignDisplayName((appState.campaigns || []).find(c => String(c.campaignId || "") === String(ledgerFilters.campaign || ""))?.campaignName || "All");
+      : formatCampaignDisplayName(getAvailableCampaignRecords().find(c => String(c.campaignId || "") === String(ledgerFilters.campaign || ""))?.campaignName || "All");
   }
 
   if (typeLabel) {
@@ -4206,6 +4421,7 @@ function updateLedgerFilterLabels() {
 
 function setupPillarButtons() {
   renderModalPillarButtons();
+  campaignSelect?.addEventListener("change", updateModalCampaignPreview);
 }
 
 function getActivePillar() {
@@ -4222,6 +4438,18 @@ function setPillar(pillar) {
     btn.style.color = isActive ? color : "#94a3b8";
     btn.style.background = isActive ? `${color}14` : "#181125";
   });
+}
+
+function positionLedgerDropdown(panel, toggle) {
+  if (!panel || !toggle || panel.classList.contains("hidden")) return;
+  const rect = toggle.getBoundingClientRect();
+  const panelWidth = panel.offsetWidth || 288;
+  const left = Math.min(rect.left, window.innerWidth - panelWidth - 12);
+  panel.style.position = "fixed";
+  panel.style.top = `${rect.bottom + 8}px`;
+  panel.style.left = `${Math.max(12, left)}px`;
+  panel.style.maxHeight = `${Math.max(220, window.innerHeight - rect.bottom - 20)}px`;
+  panel.style.overflow = "visible";
 }
 
 function setupModalControls() {
@@ -4267,12 +4495,14 @@ function setupLedgerControls() {
     e.stopPropagation();
     sortDropdown?.classList.add("hidden");
     filterDropdown?.classList.toggle("hidden");
+    positionLedgerDropdown(filterDropdown, filterToggle);
   });
 
   sortToggle?.addEventListener("click", (e) => {
     e.stopPropagation();
     filterDropdown?.classList.add("hidden");
     sortDropdown?.classList.toggle("hidden");
+    positionLedgerDropdown(sortDropdown, sortToggle);
   });
 
   filterDropdown?.addEventListener("click", (e) => {
@@ -4328,6 +4558,11 @@ function setupLedgerControls() {
     if (!e.target.closest("#media-filter-dropdown") && !e.target.closest("#media-filter-toggle")) {
       document.getElementById("media-filter-dropdown")?.classList.add("hidden");
     }
+  });
+
+  window.addEventListener("resize", () => {
+    positionLedgerDropdown(filterDropdown, filterToggle);
+    positionLedgerDropdown(sortDropdown, sortToggle);
   });
 }
     
@@ -4398,7 +4633,7 @@ function populateMediaCampaignFilter() {
 function openPostModal(
   title = "",
   platform = "linkedin",
-  pillarClass = "education",
+  pillarClass = "authority",
   date = "",
   status = "draft",
   description = "",
@@ -4431,14 +4666,15 @@ function openPostModal(
   const requestedPillar = matched
     ? getPostContentPillar(matched)
     : pillarClass || "";
-  const activePillar = requestedPillar || getAvailableContentPillars()[0] || "";
+  const activePillar = requestedPillar || getAvailableContentPillars()[0] || "authority";
 
   renderModalPillarButtons(activePillar);
   setPillar(activePillar);
 
   if (campaignSelect) {
-    campaignSelect.value = String(matched?.campaignId || getCampaignByName(matched?.campaignName)?.campaignId || "");
+    campaignSelect.value = String(matched?.campaignId || getCampaignByName(matched?.campaignName, getAvailableCampaignRecords())?.campaignId || matched?.campaignName || "");
   }
+  updateModalCampaignPreview();
 
   const linkedAsset = findLinkedAssetForPost(matched);
 
@@ -4467,7 +4703,7 @@ function populateLedgerCampaignMenu() {
         data-filter-value="all"
         class="ledger-filter-option w-full px-3 py-2 rounded-lg hover:bg-[#2d1b4e] text-left text-xs text-gray-300 hover:text-white transition-all flex items-center gap-2"
       >
-        <div class="w-2 h-2 rounded-full bg-gray-500"></div> All Campaigns
+        <span class="campaign-color-dot" style="background:#6b7280"></span> All Campaigns
       </button>
 
       ${campaigns.map(c => `
@@ -4477,7 +4713,7 @@ function populateLedgerCampaignMenu() {
           data-filter-value="${escapeHtml(c.campaignId)}"
           class="ledger-filter-option w-full px-3 py-2 rounded-lg hover:bg-[#2d1b4e] text-left text-xs text-gray-300 hover:text-white transition-all flex items-center gap-2"
         >
-          <div class="w-2 h-2 rounded-full" style="background:${escapeHtml(c.color || pillarColor(c.pillar || 'education'))}"></div>
+          <span class="campaign-color-dot" style="background:${escapeHtml(getCampaignColor(c, c.pillar || 'authority'))}"></span>
           ${escapeHtml(formatCampaignDisplayName(c.campaignName))}
         </button>
       `).join("")}
@@ -4512,7 +4748,7 @@ function populateLedgerPillarMenu() {
   submenu.innerHTML = `
     <div class="p-2">
       <button type="button" data-filter-key="pillar" data-filter-value="all" class="ledger-filter-option w-full px-3 py-2 rounded-lg hover:bg-[#2d1b4e] text-left text-xs text-gray-300 hover:text-white transition-all flex items-center gap-2">
-        <div class="w-2 h-2 rounded-full bg-gray-500"></div> All Pillars
+        <span class="campaign-color-dot" style="background:#6b7280"></span> All Pillars
       </button>
       ${pillars.map((pillar) => `
         <button
@@ -4521,7 +4757,7 @@ function populateLedgerPillarMenu() {
           data-filter-value="${escapeHtml(pillar)}"
           class="ledger-filter-option w-full px-3 py-2 rounded-lg hover:bg-[#2d1b4e] text-left text-xs text-gray-300 hover:text-white transition-all flex items-center gap-2"
         >
-          <div class="w-2 h-2 rounded-full" style="background:${escapeHtml(getPillarTheme(pillar))}"></div>
+          ${renderPillarShape(pillar, "", getPillarTheme(pillar))}
           <span class="signal-label-fit">${escapeHtml(formatContentPillarLabel(pillar))}</span>
         </button>
       `).join("")}
@@ -4544,8 +4780,10 @@ function closeModal() {
   document.body.style.overflow = "";
   currentEditingPostId = null;
   currentModalAsset = null;
+  currentModalInspoId = null;
   if (modalMediaStatus) modalMediaStatus.textContent = "No media linked";
   if (campaignSelect) campaignSelect.value = "";
+  updateModalCampaignPreview();
 }
 
 function setupSaveHandler() {
@@ -4558,10 +4796,12 @@ function setupSaveHandler() {
     const existing = currentEditingPostId
       ? hydratePostCampaign((appState.posts || []).find(p => p.id === currentEditingPostId))
       : null;
+    const inspoIdToConvert = currentModalInspoId || existing?.createdFromInspoId || "";
 
     const selectedCampaignId = campaignSelect?.value || "";
-    const selectedCampaign = getCampaignById(selectedCampaignId);
-    const selectedContentPillar = normalizePillar(selectedCampaign?.pillar || getActivePillar() || existing?.hubPillarLabel || existing?.pillar || "education");
+    const selectedCampaign = getCampaignById(selectedCampaignId, getAvailableCampaignRecords()) || getCampaignByName(selectedCampaignId, getAvailableCampaignRecords());
+    const selectedContentPillar = normalizePillar(getActivePillar() || existing?.hubPillarLabel || existing?.pillar || (appState.settings?.pillars || [])[0] || "authority");
+    const selectedCampaignName = selectedCampaign?.campaignName || normalizeCampaignName(selectedCampaignId);
 
     const payload = {
       id: currentEditingPostId || generateId("post"),
@@ -4573,12 +4813,12 @@ function setupSaveHandler() {
       postType: postTypeSelect?.value || "text",
       description: descInput?.value.trim() || "",
       assetId: currentModalAsset?.id || existing?.assetId || "",
-      hubTitle: selectedCampaign?.campaignName || existing?.hubTitle || titleInput?.value.trim() || "",
+      hubTitle: selectedCampaignName || existing?.hubTitle || titleInput?.value.trim() || "",
       hubPillarLabel: formatContentPillarLabel(selectedContentPillar),
       mediaLabel: currentModalAsset?.title || existing?.mediaLabel || "",
-      createdFromInspoId: existing?.createdFromInspoId || "",
-      campaignId: selectedCampaignId,
-      campaignName: selectedCampaign?.campaignName || existing?.campaignName || "",
+      createdFromInspoId: inspoIdToConvert,
+      campaignId: selectedCampaign?.campaignId || existing?.campaignId || "",
+      campaignName: selectedCampaignName || existing?.campaignName || "",
       impressions: existing?.impressions || 0,
       reach: existing?.reach || 0,
       likes: existing?.likes || 0,
@@ -4608,13 +4848,20 @@ function setupSaveHandler() {
 
     if (APP_CONFIG.ENABLE_REMOTE_SYNC && isRemoteConfigured()) {
       try {
-        await apiSavePost(payload);
+        const result = await apiSavePost(payload);
+        if (inspoIdToConvert) {
+          await apiArchiveInspo(inspoIdToConvert, result?.post?.postId || result?.postId || payload.id);
+        }
         await syncRemoteIfConfigured();
         showToast("Synced", "Post synced to Google Sheets.", "ph-cloud-check", "text-[#00ffaa]");
       } catch (err) {
         console.error(err);
         showToast("Local only", "Save worked locally. Remote sync failed.", "ph-warning", "text-yellow-400");
       }
+    } else if (inspoIdToConvert) {
+      appState.inspo = (appState.inspo || []).filter((item) => item.id !== inspoIdToConvert);
+      persistLocalState();
+      rerenderAll();
     }
   });
 }
@@ -4856,42 +5103,39 @@ function inspoToPost(inspoIdOrTitle, type, description) {
     description
   };
 
-  showToast("AI Assistant", "Creating post from inspiration...", "ph-magic-wand");
+  let platform = source.suggestedPlatform || "linkedin";
+  let pillar = source.suggestedPillar || "authority";
+  let postType = source.createPostType || "text";
 
-  setTimeout(() => {
-    let platform = "linkedin";
-    let pillar = "education";
-    let postType = "text";
+  const sourceType = String(source.type || "").toLowerCase();
 
-    const sourceType = String(source.type || "").toLowerCase();
+  if (!source.suggestedPlatform && ["video", "image", "carousel", "visual"].includes(sourceType)) {
+    platform = "instagram";
+    pillar = "application";
+    postType = sourceType === "video" ? "video" : "image";
+  } else if (!source.suggestedPlatform && sourceType === "trend") {
+    platform = "both";
+    pillar = "distribution";
+    postType = "text";
+  } else if (!source.suggestedPlatform && sourceType === "article") {
+    platform = "linkedin";
+    pillar = "authority";
+    postType = "article";
+  }
 
-    if (["video", "image", "carousel", "visual"].includes(sourceType)) {
-      platform = "instagram";
-      pillar = "awareness";
-      postType = sourceType === "video" ? "video" : "image";
-    } else if (sourceType === "trend") {
-      platform = "both";
-      pillar = "engagement";
-      postType = "text";
-    } else if (sourceType === "article") {
-      platform = "linkedin";
-      pillar = "education";
-      postType = "article";
-    }
+  currentModalInspoId = source.id || "";
+  openPostModal(
+    source.createPostTitle || source.title || "",
+    platform,
+    pillar,
+    "",
+    "draft",
+    source.createPostDescription || source.description || "",
+    postType,
+    null
+  );
 
-    openPostModal(
-      source.title || "",
-      platform,
-      pillar,
-      "",
-      "draft",
-      source.description || "",
-      postType,
-      null
-    );
-
-    showToast("Success", "Post created from inspo!", "ph-check", "text-[#00ffaa]");
-  }, 700);
+  showToast("Ready", "Post modal opened from inspiration. The inspo item will be removed after save.", "ph-lightbulb", "text-[#00ffaa]");
 }
     
 function renderInspo() {
@@ -4989,17 +5233,21 @@ async function syncRemoteIfConfigured() {
   if (!APP_CONFIG.ENABLE_REMOTE_SYNC || !isRemoteConfigured()) return;
 
   try {
-    const [postsResult, mediaResult, inspoResult, campaignsResult] = await Promise.allSettled([
+    const [settingsResult, postsResult, mediaResult, inspoResult, campaignsResult] = await Promise.allSettled([
+      apiGetSettings(),
       apiGetPosts(),
       apiGetMedia(),
       apiGetInspo(),
       apiGetCampaigns()
     ]);
 
+    const settings = settingsResult.status === "fulfilled" ? settingsResult.value : {};
     const posts = postsResult.status === "fulfilled" ? postsResult.value : [];
     const media = mediaResult.status === "fulfilled" ? mediaResult.value : [];
     const inspo = inspoResult.status === "fulfilled" ? inspoResult.value : [];
     const campaigns = campaignsResult.status === "fulfilled" ? campaignsResult.value : [];
+
+    appState.settings = normalizeRemoteSettings(settings);
 
     if (Array.isArray(campaigns)) {
       appState.campaigns = campaigns.map(campaign => normalizeRemoteCampaign(campaign));
@@ -5080,6 +5328,11 @@ async function apiGetCampaigns() {
   return result.items || result.campaigns || result.data || [];
 }
 
+async function apiGetSettings() {
+  const result = await apiGet("getSettings");
+  return result.settings || result.data || result.items || {};
+}
+
 function pickRemoteValue(...values) {
   for (const value of values) {
     if (value !== undefined && value !== null && value !== "") return value;
@@ -5091,6 +5344,31 @@ function normalizeRemoteBoolean(value) {
   if (value === true || value === false) return value;
   const normalized = String(value || "").trim().toLowerCase();
   return normalized === "true" || normalized === "1" || normalized === "yes" || normalized === "y";
+}
+
+function normalizeRemoteSettings(settings) {
+  const defaults = getDefaultSettings();
+  const normalizeList = (values, fallback, formatter) => {
+    const source = Array.isArray(values) ? values : fallback;
+    return source
+      .map((value) => formatter(value))
+      .filter(Boolean)
+      .filter((value, index, list) => list.indexOf(value) === index);
+  };
+
+  return {
+    platforms: normalizeList(settings?.platforms, defaults.platforms, (value) => String(value || "").trim().toLowerCase()),
+    pillars: normalizeList(settings?.pillars, defaults.pillars, (value) => normalizePillar(value)),
+    statuses: normalizeList(settings?.statuses, defaults.statuses, (value) => String(value || "").trim().toLowerCase()),
+    postTypes: normalizeList(settings?.postTypes || settings?.post_types, defaults.postTypes, (value) => String(value || "").trim().toLowerCase()),
+    campaigns: normalizeList(settings?.campaigns, defaults.campaigns, (value) => normalizeCampaignName(value)),
+    campaignColors: { ...(defaults.campaignColors || {}), ...(settings?.campaignColors || settings?.campaign_colors || {}) },
+    months: Array.isArray(settings?.months) ? settings.months.map((value) => String(value || "").trim()).filter(Boolean) : defaults.months.slice(),
+    queueLimit: settings?.queueLimit || settings?.queue_limit || defaults.queueLimit,
+    currentMonth: settings?.currentMonth || settings?.current_month || defaults.currentMonth,
+    currentYear: settings?.currentYear || settings?.current_year || defaults.currentYear,
+    mediaFolderId: settings?.mediaFolderId || settings?.media_folder_id || defaults.mediaFolderId
+  };
 }
 
 function normalizeRemotePost(post, campaigns = [], mediaItems = []) {
@@ -5105,7 +5383,7 @@ function normalizeRemotePost(post, campaigns = [], mediaItems = []) {
     id: postId || `remote-${normalizeLookupValue(title || "post")}-${scheduledAt || "undated"}`,
     title,
     platform: String(pickRemoteValue(post?.platform, "linkedin")).trim() || "linkedin",
-    pillar: getCanonicalPillarValue(pickRemoteValue(post?.pillar, post?.hubPillarLabel, post?.hub_pillar_label, matchedCampaign?.pillar), "education") || "education",
+    pillar: getCanonicalPillarValue(pickRemoteValue(post?.pillar, post?.hubPillarLabel, post?.hub_pillar_label, matchedCampaign?.pillar), (appState.settings?.pillars || [])[0] || "authority") || ((appState.settings?.pillars || [])[0] || "authority"),
     date: scheduledAt,
     status: String(pickRemoteValue(post?.status, "draft")).trim() || "draft",
     postType: String(pickRemoteValue(post?.postType, post?.post_type, "text")).trim() || "text",
@@ -5113,7 +5391,7 @@ function normalizeRemotePost(post, campaigns = [], mediaItems = []) {
     ledgerExcerpt: String(pickRemoteValue(post?.ledgerExcerpt, post?.ledger_excerpt, "")).trim(),
     assetId: String(pickRemoteValue(post?.assetId, post?.asset_id, "")).trim(),
     hubTitle: String(pickRemoteValue(post?.hubTitle, post?.hub_title, title)).trim(),
-    hubPillarLabel: formatContentPillarLabel(pickRemoteValue(post?.hubPillarLabel, post?.hub_pillar_label, post?.pillar, matchedCampaign?.pillar, "education")),
+    hubPillarLabel: formatContentPillarLabel(pickRemoteValue(post?.hubPillarLabel, post?.hub_pillar_label, post?.pillar, matchedCampaign?.pillar, (appState.settings?.pillars || [])[0] || "authority")),
     mediaLabel: String(pickRemoteValue(post?.mediaLabel, post?.media_label, linkedAsset?.title, linkedAsset?.assetName, "")).trim(),
     createdFromInspoId: String(pickRemoteValue(post?.createdFromInspoId, post?.created_from_inspo_id, "")).trim(),
     campaignId: String(campaignId || matchedCampaign?.campaignId || "").trim(),
@@ -5137,7 +5415,7 @@ function normalizeRemoteCampaign(campaign) {
     campaignId: String(pickRemoteValue(campaign?.campaignId, campaign?.campaign_id, campaign?.campaignID, campaign?.id, "")).trim(),
     campaignName: String(pickRemoteValue(campaign?.campaignName, campaign?.campaign_name, campaign?.title, "")).trim(),
     pillar,
-    color: String(pickRemoteValue(campaign?.color, pillar ? pillarColor(pillar) : "#6b7280")).trim() || "#6b7280",
+    color: String(pickRemoteValue(campaign?.color, getCampaignColor(campaign?.campaignName || campaign?.campaign_name || "", pillar), "#6b7280")).trim() || "#6b7280",
     x: Number(pickRemoteValue(campaign?.x, 0)) || 0,
     y: Number(pickRemoteValue(campaign?.y, 0)) || 0,
     sortOrder: Number(pickRemoteValue(campaign?.sortOrder, campaign?.sort_order, 0)) || 0,
@@ -5155,11 +5433,13 @@ function normalizeRemoteInspo(item) {
     sourceLabel: String(pickRemoteValue(item?.sourceLabel, item?.source_label, "")).trim(),
     domainOrMeta: String(pickRemoteValue(item?.domainOrMeta, item?.domain_or_meta, "")).trim(),
     suggestedPlatform: String(pickRemoteValue(item?.suggestedPlatform, item?.suggested_platform, "")).trim(),
-    suggestedPillar: getCanonicalPillarValue(pickRemoteValue(item?.suggestedPillar, item?.suggested_pillar, ""), "education") || "education",
+    suggestedPillar: getCanonicalPillarValue(pickRemoteValue(item?.suggestedPillar, item?.suggested_pillar, ""), (appState.settings?.pillars || [])[0] || "authority") || ((appState.settings?.pillars || [])[0] || "authority"),
     createPostTitle: String(pickRemoteValue(item?.createPostTitle, item?.create_post_title, "")).trim(),
     createPostType: String(pickRemoteValue(item?.createPostType, item?.create_post_type, "")).trim(),
     notes: String(pickRemoteValue(item?.notes, "")).trim(),
-    url: String(pickRemoteValue(item?.url, item?.notes, item?.domainOrMeta, item?.domain_or_meta, "")).trim()
+    url: String(pickRemoteValue(item?.url, item?.notes, item?.domainOrMeta, item?.domain_or_meta, "")).trim(),
+    status: String(pickRemoteValue(item?.status, "active")).trim() || "active",
+    convertedPostId: String(pickRemoteValue(item?.convertedPostId, item?.converted_post_id, "")).trim()
   };
 }
 
@@ -5228,14 +5508,14 @@ async function apiSavePost(post) {
     postId: hydratedPost.id || null,
     title: hydratedPost.title || "",
     platform: hydratedPost.platform || "linkedin",
-    pillar: normalizePillar(hydratedPost.pillar || hydratedPost.hubPillarLabel || "education"),
+    pillar: normalizePillar(hydratedPost.pillar || hydratedPost.hubPillarLabel || (appState.settings?.pillars || [])[0] || "authority"),
     scheduledAt: hydratedPost.date || "",
     status: hydratedPost.status || "draft",
     postType: hydratedPost.postType || "text",
     description: hydratedPost.description || "",
     assetId: hydratedPost.assetId || "",
     hubTitle: hydratedPost.hubTitle || hydratedPost.title || "",
-    hubPillarLabel: formatContentPillarLabel(hydratedPost.hubPillarLabel || hydratedPost.pillar || "education"),
+    hubPillarLabel: formatContentPillarLabel(hydratedPost.hubPillarLabel || hydratedPost.pillar || (appState.settings?.pillars || [])[0] || "authority"),
     mediaLabel: hydratedPost.mediaLabel || "",
     createdFromInspoId: hydratedPost.createdFromInspoId || "",
     campaignId: hydratedPost.campaignId || "",
@@ -5263,14 +5543,14 @@ async function apiDuplicatePost(postId) {
     duplicate: {
       title: `${source.title} Copy`,
       platform: source.platform,
-      pillar: normalizePillar(source.pillar || source.hubPillarLabel || "education"),
+      pillar: normalizePillar(source.pillar || source.hubPillarLabel || (appState.settings?.pillars || [])[0] || "authority"),
       scheduledAt: source.date,
       status: "draft",
       postType: source.postType,
       description: source.description,
       assetId: source.assetId || "",
       hubTitle: source.hubTitle || "",
-      hubPillarLabel: formatContentPillarLabel(source.hubPillarLabel || source.pillar || "education"),
+      hubPillarLabel: formatContentPillarLabel(source.hubPillarLabel || source.pillar || (appState.settings?.pillars || [])[0] || "authority"),
       mediaLabel: source.mediaLabel || "",
       createdFromInspoId: source.createdFromInspoId || "",
       campaignId: source.campaignId || "",
@@ -5291,6 +5571,10 @@ async function apiSaveInspo(inspo) {
   return apiPost("saveInspo", inspo);
 }
 
+async function apiArchiveInspo(inspoId, convertedPostId = "") {
+  return apiPost("archiveInspo", { inspoId, convertedPostId });
+}
+
 function renderQueue(queueItems) {
   const queueList = document.getElementById("queue-list");
   const badge = document.getElementById("queue-count-badge");
@@ -5301,7 +5585,9 @@ function renderQueue(queueItems) {
   const items = allItems.slice(0, 3);
 
   queueList.innerHTML = items.map(item => {
-    const color = getPillarTheme(item.pillar);
+    const hydrated = hydratePostCampaign(item);
+    const color = getCampaignColor(hydrated, hydrated.pillar);
+    const pillarColor = getPillarTheme(hydrated.pillar);
 
     const platformIcons =
       item.platform === "both"
@@ -5326,6 +5612,7 @@ function renderQueue(queueItems) {
         <div class="min-w-0">
           <p class="text-white text-sm font-bold wrap-safe mb-1">${escapeHtml(item.displayTitle || getDisplayTitle(item.title))}</p>
           <div class="flex items-center gap-2 text-[10px] text-gray-500 font-medium">
+            ${renderPillarShape(hydrated.pillar, "", pillarColor)}
             ${platformIcons}
             <span>${escapeHtml(item.queueTimeLabel || "")}</span>
           </div>
@@ -5348,6 +5635,7 @@ function loadLocalState() {
     return {
       posts: Array.isArray(parsed.posts) ? parsed.posts : structuredCloneState(DEFAULT_STATE.posts),
       campaigns: Array.isArray(parsed.campaigns) ? parsed.campaigns : structuredCloneState(DEFAULT_STATE.campaigns),
+      settings: parsed.settings ? normalizeRemoteSettings(parsed.settings) : structuredCloneState(DEFAULT_STATE.settings),
       inspo: Array.isArray(parsed.inspo) ? parsed.inspo : structuredCloneState(DEFAULT_STATE.inspo),
       media: Array.isArray(parsed.media) ? parsed.media : structuredCloneState(DEFAULT_STATE.media)
     };
@@ -5515,9 +5803,9 @@ function clamp(value, min, max) {
 
 function pillarColor(pillar) {
   const canonical = normalizePillar(pillar);
-  return canonical === "education" ? "#00f0ff" :
-         canonical === "promotion" ? "#b25fff" :
-         canonical === "engagement" ? "#ffd700" :
+  return canonical === "authority" ? "#00f0ff" :
+         canonical === "distribution" ? "#b25fff" :
+         canonical === "application" ? "#ffd700" :
          canonical === "identity" ? "#fb7185" :
          "#00ffaa";
 }
@@ -5569,7 +5857,7 @@ window.setPillar = setPillar;
 window.openModal = function(
   title = "",
   platform = "linkedin",
-  pillarClass = "education",
+  pillarClass = "authority",
   date = "",
   status = "draft",
   description = "",

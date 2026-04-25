@@ -118,7 +118,7 @@
       transform: none;
       transition: width 0.28s ease;
       z-index: 50;
-      overflow: hidden;
+      overflow: visible !important;
     }
 
     .sidebar.collapsed {
@@ -129,7 +129,7 @@
       min-height: 100vh;
       position: relative;
       z-index: 10;
-      margin-left: 0;
+      margin-left: 0 !important;
       transition: padding-left 0.28s ease;
       padding-left: var(--sidebar-expanded);
     }
@@ -140,27 +140,32 @@
 
     .toggle-btn {
       position: absolute;
-      right: -22px;
-      top: 52px;
-      width: 40px;
-      height: 40px;
+      right: -24px;
+      top: 72px;
+      width: 44px;
+      height: 44px;
       display: grid;
       place-items: center;
       background: var(--accent);
       color: #fff;
       border: 5px solid #05020a;
       border-radius: 999px;
-      box-shadow: 0 0 18px rgba(168,85,247,0.65);
+      box-shadow: 0 0 20px rgba(168,85,247,0.7);
       cursor: pointer;
-      z-index: 100;
+      z-index: 200;
     }
 
     .toggle-btn i {
-      font-size: 1rem;
+      font-size: 1.1rem;
+    }
+
+    .sidebar.collapsed .toggle-btn {
+      right: -24px;
     }
 
     .sidebar-inner {
-      overflow: visible;
+      overflow-y: auto;
+      overflow-x: hidden;
       height: 100%;
       display: flex;
       flex-direction: column;
@@ -275,19 +280,93 @@
 
     .sidebar.collapsed .nav-item i {
       display: block;
-      font-size: 1.15rem;
+      width: 100%;
+      text-align: center;
+      font-size: 1.18rem;
       color: var(--text-soft);
       opacity: 1;
     }
 
     .sidebar.collapsed .nav-text,
-    .sidebar.collapsed .sidebar-meta,
-    .sidebar.collapsed .sidebar-footer {
+    .sidebar.collapsed .sidebar-footer-text {
       opacity: 0;
       width: 0;
       max-width: 0;
       overflow: hidden;
       pointer-events: none;
+    }
+
+    .sidebar-status-button {
+      width: calc(100% - 2rem);
+      margin: 0 1rem 1.25rem;
+      min-height: 2.35rem;
+      display: flex;
+      align-items: center;
+      gap: 0.65rem;
+      padding: 0 0.75rem;
+      border: 1px solid rgba(168,85,247,0.34);
+      border-radius: 999px;
+      background: rgba(168,85,247,0.10);
+      color: #ddd6fe;
+      cursor: pointer;
+    }
+
+    .status-dot {
+      width: 0.55rem;
+      height: 0.55rem;
+      flex: 0 0 auto;
+      border-radius: 999px;
+      background: #a78bfa;
+      box-shadow: 0 0 10px rgba(167,139,250,0.55);
+    }
+
+    .status-dot[data-state="saved"],
+    .status-dot[data-state="sent"],
+    .status-dot[data-state="ready"] {
+      background: #4ade80;
+      box-shadow: 0 0 10px rgba(74,222,128,0.55);
+    }
+
+    .status-dot[data-state="error"] {
+      background: #fda4af;
+      box-shadow: 0 0 10px rgba(253,164,175,0.55);
+    }
+
+    .sidebar.collapsed .sidebar-status-button {
+      width: 2.3rem;
+      height: 2.3rem;
+      margin: 0 auto 1.25rem;
+      padding: 0;
+      justify-content: center;
+    }
+
+    .sidebar.collapsed .sidebar-status-button .sidebar-meta-text {
+      display: none;
+    }
+
+    .status-action {
+      position: relative;
+    }
+
+    .button-status-dot {
+      width: 0.5rem;
+      height: 0.5rem;
+      border-radius: 999px;
+      background: #a78bfa;
+      box-shadow: 0 0 10px rgba(167,139,250,0.55);
+      position: absolute;
+      top: -0.2rem;
+      right: -0.2rem;
+    }
+
+    .button-status-dot[data-state="saved"],
+    .button-status-dot[data-state="sent"],
+    .button-status-dot[data-state="ready"] {
+      background: #4ade80;
+    }
+
+    .button-status-dot[data-state="error"] {
+      background: #fda4af;
     }
 
     .page-wrap {
@@ -1198,6 +1277,12 @@
         padding: 0.01in !important;
       }
 
+      /* Hide empty or non-sourced signature images in print */
+      .signature-image:not([src]),
+      .signature-image[src=""] {
+        display: none !important;
+      }
+
       .practitioner-script {
         font-size: 8.5pt !important;
         color: #fff !important;
@@ -1234,13 +1319,10 @@
         </div>
       </div>
 
-      <div class="sidebar-meta" style="padding:0 1.25rem;margin-bottom:2rem;">
-        <p class="font-mono-code" style="margin:0;font-size:0.56rem;color:var(--text-faint);text-transform:uppercase;">Status</p>
-        <div style="display:flex;align-items:center;gap:0.5rem;margin-top:0.25rem;">
-          <div class="status-seal"></div>
-          <span class="font-mono-code" style="font-size:0.62rem;color:#4ade80;">READY TO SIGN</span>
-        </div>
-      </div>
+      <button class="sidebar-status-button screen-only" type="button" id="sidebarSignatureButton">
+        <span class="status-dot" id="sidebarSignatureDot" data-state="pending"></span>
+        <span class="sidebar-meta-text">Signature pending</span>
+      </button>
 
       <nav class="nav-group" aria-label="Contract navigation">
         <div class="nav-text" style="padding:0 1.5rem;margin-bottom:0.5rem;">
@@ -1275,9 +1357,18 @@
         <div class="font-magical" style="font-size:1rem;letter-spacing:0.12em;color:#fff;">Monthly Content Engine Agreement</div>
       </div>
       <div class="mobile-actions">
-        <button class="button round-button neutral-action" type="button" id="mobileOpenModal">Open Signature Box</button>
-        <button class="button round-button neutral-action" type="button" id="mobilePrintButton">Print / Export PDF</button>
-        <button class="button round-button primary-action" type="button" id="mobileSendButton">Send Signed Contract</button>
+        <button class="button round-button neutral-action status-action" type="button" id="mobileOpenModal">
+          <span class="button-status-dot" id="topSignatureDot" data-state="pending"></span>
+          Open Signature Box
+        </button>
+        <button class="button round-button neutral-action status-action" type="button" id="mobilePrintButton">
+          <span class="button-status-dot" id="topPrintDot" data-state="ready"></span>
+          Print / Export PDF
+        </button>
+        <button class="button round-button primary-action status-action" type="button" id="mobileSendButton">
+          <span class="button-status-dot" id="topSendDot" data-state="pending"></span>
+          Send Signed Contract
+        </button>
       </div>
     </div>
   </div>
@@ -1327,8 +1418,24 @@
                 <input id="clientRepresentative" name="clientRepresentative" type="text" placeholder="[Client Representative]">
               </div>
               <div class="field full">
-                <label class="field-label" for="clientAddress">Client Address</label>
-                <textarea id="clientAddress" name="clientAddress" placeholder="[Client Address]"></textarea>
+                <label class="field-label" for="clientStreet">Street Address</label>
+                <input id="clientStreet" name="clientStreet" type="text" placeholder="Street address">
+              </div>
+              <div class="field">
+                <label class="field-label" for="clientCity">City</label>
+                <input id="clientCity" name="clientCity" type="text" placeholder="City">
+              </div>
+              <div class="field">
+                <label class="field-label" for="clientStateProvince">State / Province</label>
+                <input id="clientStateProvince" name="clientStateProvince" type="text" placeholder="State or province">
+              </div>
+              <div class="field">
+                <label class="field-label" for="clientPostalCode">ZIP / Postal Code</label>
+                <input id="clientPostalCode" name="clientPostalCode" type="text" placeholder="ZIP or postal code">
+              </div>
+              <div class="field">
+                <label class="field-label" for="clientCountry">Country</label>
+                <input id="clientCountry" name="clientCountry" type="text" placeholder="Country" value="Canada">
               </div>
               <div class="field">
                 <label class="field-label" for="clientEmail">Client Email</label>
@@ -1851,6 +1958,7 @@
       const contractorEmailField = document.getElementById("contractorEmail");
       const paymentButton = document.getElementById("dynamicPaymentLink");
       const openButtons = [document.getElementById("openModalButton"), document.getElementById("mobileOpenModal")].filter(Boolean);
+      // Allow opening signature modal from the sidebar
       const sendButtons = [document.getElementById("sendContractButton"), document.getElementById("mobileSendButton")].filter(Boolean);
 
       if (contractorEmailField && backendConfig.contractorEmail) {
@@ -1866,6 +1974,25 @@
         pill.textContent = text;
         pill.dataset.state = state;
       }
+
+      // Centralized status dot helpers (single source of truth for dots)
+      const setDot = (id, state) => {
+        const el = document.getElementById(id);
+        if (!el) return;
+        el.dataset.state = state;
+      };
+
+      const setSignatureState = (state) => {
+        setDot("topSignatureDot", state);
+        setDot("sidebarSignatureDot", state);
+        const sidebarText = document.querySelector("#sidebarSignatureButton .sidebar-meta-text");
+        if (sidebarText) sidebarText.textContent = state === "saved" ? "Signature saved" : "Signature pending";
+        const pill = document.getElementById("signatureStatusPill");
+        if (pill) {
+          pill.textContent = state === "saved" ? "Signature saved" : "Signature pending";
+          pill.dataset.state = state;
+        }
+      };
 
       const FORM_STORAGE_KEY = "aw_contract_mce_trial_2026";
 
@@ -1943,11 +2070,11 @@
         signatureStatus.textContent = message;
         signatureStatus.dataset.state = state;
         if (state === "saved") {
-          setPill("signatureStatusPill", "Signature saved", "saved");
+          setSignatureState("saved");
         } else if (state === "error") {
-          setPill("signatureStatusPill", "Signature missing", "error");
+          setSignatureState("error");
         } else {
-          setPill("signatureStatusPill", "Signature pending", "pending");
+          setSignatureState("pending");
         }
       };
 
@@ -1955,12 +2082,20 @@
         sendStatus.textContent = message;
         sendStatus.dataset.state = state;
         if (state === "success") {
+          setDot("topSendDot", "sent");
+          setDot("dispatchSendDot", "sent");
           setPill("sendStatusPill", "Sent", "sent");
         } else if (state === "error") {
+          setDot("topSendDot", "error");
+          setDot("dispatchSendDot", "error");
           setPill("sendStatusPill", "Send error", "error");
         } else if (message) {
+          setDot("topSendDot", "pending");
+          setDot("dispatchSendDot", "pending");
           setPill("sendStatusPill", "Sending", "pending");
         } else {
+          setDot("topSendDot", "pending");
+          setDot("dispatchSendDot", "pending");
           setPill("sendStatusPill", "Not sent", "pending");
         }
       };
@@ -1969,6 +2104,8 @@
         syncPads(currentSignature());
         modal.hidden = false;
       };
+      // Bind sidebar signature button after openModal is defined to ensure function exists
+      document.getElementById("sidebarSignatureButton")?.addEventListener("click", openModal);
 
       const closeModal = () => {
         modal.hidden = true;
@@ -1989,6 +2126,8 @@
         const signatureDataUrl = currentSignature();
 
         clone.querySelectorAll(".screen-only, .mobile-bar, .modal").forEach((node) => node.remove());
+        // Remove non-printable status panels from the email HTML
+        clone.querySelectorAll(".signature-status, .send-status, .send-panel").forEach((node) => node.remove());
         clone.querySelectorAll(".signature-canvas").forEach((node) => node.remove());
         clone.querySelectorAll("input, textarea").forEach((field) => {
           const value = field.value.trim() || field.placeholder || field.getAttribute("value") || "";
@@ -2104,12 +2243,20 @@
 
         const signatureDataUrl = currentSignature();
 
+        const buildClientAddress = () => [
+          getValue("clientStreet"),
+          getValue("clientCity"),
+          getValue("clientStateProvince"),
+          getValue("clientPostalCode"),
+          getValue("clientCountry")
+        ].filter(Boolean).join(", ");
+
         const payload = {
           action: "sendSignedContract",
           clientEmail: getValue("clientEmail"),
           clientName: getValue("clientRepresentative") || getValue("clientPrintedName"),
           clientOrganization: getValue("clientOrganization") || "Client Organization",
-          clientAddress: getValue("clientAddress"),
+          clientAddress: buildClientAddress(),
           contractorEmail: getValue("contractorEmail"),
           contractorName: CONTRACT_META.contractorName,
           contractTitle: CONTRACT_META.contractTitle,
@@ -2173,8 +2320,8 @@
       });
 
       const printHandler = () => window.print();
-      document.getElementById("printButton").addEventListener("click", printHandler);
-      document.getElementById("mobilePrintButton").addEventListener("click", printHandler);
+      document.getElementById("printButton").addEventListener("click", () => { setDot("topPrintDot", "ready"); setDot("dispatchPrintDot", "ready"); printHandler(); });
+      document.getElementById("mobilePrintButton").addEventListener("click", () => { setDot("topPrintDot", "ready"); setDot("dispatchPrintDot", "ready"); printHandler(); });
 
       updateSignatureStatus("Draw directly here or use the larger signature box.");
       updateSendStatus("");

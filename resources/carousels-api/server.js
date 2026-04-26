@@ -120,6 +120,13 @@ async function captureElements(page, selector, outputDir) {
   for (const [index, handle] of handles.entries()) {
     const filename = `slide-${String(index + 1).padStart(2, "0")}.png`;
     const outputPath = path.join(outputDir, filename);
+    const bounds = await handle.boundingBox();
+    console.log("Capturing element", {
+      selector,
+      index: index + 1,
+      width: bounds ? Math.round(bounds.width) : null,
+      height: bounds ? Math.round(bounds.height) : null
+    });
     await handle.screenshot({
       path: outputPath,
       type: "png"
@@ -144,9 +151,10 @@ async function zipFilesToResponse(files, zipName, response, tempDir) {
   response.on("finish", cleanup);
   response.on("close", cleanup);
   archive.on("error", async (error) => {
+    console.error("ZIP archive failure", error);
     await cleanup();
     if (!response.headersSent) {
-      response.status(500).json({ ok: false, error: error.message || "Could not build ZIP archive." });
+      response.status(500).json({ error: "Could not build ZIP archive." });
     } else {
       response.destroy(error);
     }
@@ -171,8 +179,12 @@ app.post("/api/export-html", async (request, response) => {
     tempDir = await fsp.mkdtemp(path.join(os.tmpdir(), `${payload.codexName}-`));
 
     browser = await puppeteer.launch({
-      headless: true,
-      args: ["--no-sandbox", "--disable-setuid-sandbox"]
+      headless: "new",
+      args: [
+        "--no-sandbox",
+        "--disable-setuid-sandbox",
+        "--disable-dev-shm-usage"
+      ]
     });
 
     const page = await browser.newPage();
@@ -200,6 +212,7 @@ app.post("/api/export-html", async (request, response) => {
 
     await zipFilesToResponse(files, payload.codexName, response, tempDir);
   } catch (error) {
+    console.error("Export route failure", error);
     if (browser) {
       await browser.close().catch(() => undefined);
     }
@@ -209,9 +222,13 @@ app.post("/api/export-html", async (request, response) => {
 
     const message = error && error.message ? String(error.message) : "Export failed.";
     const status = /required|invalid|must be|No elements matched|could not find|Request body/i.test(message) ? 400 : 500;
+    if (status === 400) {
+      response.status(status).json({ error: message });
+      return;
+    }
     response.status(status).json({
-      ok: false,
-      error: message
+      error: "Export failed",
+      detail: message
     });
   }
 });

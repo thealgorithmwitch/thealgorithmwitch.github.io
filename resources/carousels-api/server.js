@@ -109,6 +109,13 @@ async function captureFullPage(page, outputPath) {
 }
 
 async function captureElements(page, selector, outputDir, payload) {
+  if (payload.mode === "slide") {
+    const slideCount = await page.$$eval(".slide", (nodes) => nodes.length).catch(() => 0);
+    if (!slideCount) {
+      throw new Error('No elements matched selector ".slide".');
+    }
+  }
+
   let handles;
   try {
     handles = await page.$$(selector);
@@ -241,6 +248,17 @@ app.post("/api/export-html", async (request, response) => {
       window.__SCRYER_EXPORT_HEIGHT__ = height;
     }, payload.width, payload.height);
     await waitForAssets(page);
+    await page.addStyleTag({
+      content: `
+        html, body { margin: 0 !important; padding: 0 !important; overflow: hidden !important; }
+        .slide, .page {
+          width: ${payload.width}px !important;
+          min-height: ${payload.height}px !important;
+          box-sizing: border-box !important;
+          overflow: hidden !important;
+        }
+      `
+    });
 
     const files = [];
     if (payload.mode === "full") {

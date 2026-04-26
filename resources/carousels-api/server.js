@@ -12,6 +12,7 @@ const PORT = process.env.PORT || 3000;
 const MAX_HTML_SIZE = "5mb";
 const MIN_DIMENSION = 200;
 const MAX_DIMENSION = 4000;
+const executablePath = process.env.PUPPETEER_EXECUTABLE_PATH || puppeteer.executablePath();
 
 app.use(cors({
   origin: "*",
@@ -22,7 +23,12 @@ app.use(express.json({ limit: MAX_HTML_SIZE }));
 app.use(express.static(__dirname));
 
 app.get("/health", (_request, response) => {
-  response.json({ ok: true, service: "html-scryer-api" });
+  response.json({
+    ok: true,
+    service: "html-scryer-api",
+    executablePath,
+    node: process.version
+  });
 });
 
 function sanitizeCodexName(value) {
@@ -129,6 +135,7 @@ async function captureElements(page, selector, outputDir, payload) {
         : bodyComputed.backgroundColor;
 
       element.style.width = `${window.__SCRYER_EXPORT_WIDTH__}px`;
+      element.style.height = `${window.__SCRYER_EXPORT_HEIGHT__}px`;
       element.style.minHeight = `${window.__SCRYER_EXPORT_HEIGHT__}px`;
       element.style.boxSizing = "border-box";
       element.style.overflow = "hidden";
@@ -142,10 +149,8 @@ async function captureElements(page, selector, outputDir, payload) {
     if (!bounds) {
       throw new Error(`Could not measure selector "${selector}" at index ${index + 1}.`);
     }
-    const clipWidth = Math.max(Math.round(bounds.width), payload.width);
-    const clipHeight = payload.mode === "slide"
-      ? payload.height
-      : Math.max(Math.round(bounds.height), payload.height);
+    const clipWidth = payload.width;
+    const clipHeight = payload.height;
     console.log("Capturing element", {
       selector,
       index: index + 1,
@@ -214,11 +219,13 @@ app.post("/api/export-html", async (request, response) => {
     tempDir = await fsp.mkdtemp(path.join(os.tmpdir(), `${payload.codexName}-`));
 
     browser = await puppeteer.launch({
+      executablePath,
       headless: "new",
       args: [
         "--no-sandbox",
         "--disable-setuid-sandbox",
-        "--disable-dev-shm-usage"
+        "--disable-dev-shm-usage",
+        "--disable-gpu"
       ]
     });
 
@@ -277,6 +284,7 @@ app.listen(PORT, () => {
   console.log("HTML Scryer startup", {
     cwd: process.cwd(),
     puppeteerCacheDir,
+    executablePath,
     defaultPuppeteerCacheExists: fs.existsSync("/opt/render/.cache/puppeteer")
   });
   console.log(`HTML Scryer API listening on ${PORT}`);

@@ -140,6 +140,29 @@
             transform: translateY(-1px);
         }
 
+        .preview-stage-frame {
+            --preview-width: 1080;
+            --preview-height: 1350;
+            --preview-ratio: calc(var(--preview-width) / var(--preview-height));
+            --preview-bg: transparent;
+            width: 100%;
+            height: 100%;
+            max-width: 100%;
+            max-height: 100%;
+            padding: 24px;
+            box-sizing: border-box;
+            background: var(--preview-bg, #fff);
+            position: relative;
+            overflow: visible;
+        }
+
+        #preview-frame {
+            background: transparent !important;
+            border: 0;
+            position: absolute;
+            transform-origin: top left;
+        }
+
         .device-frame {
             border: 12px solid #1a1625;
             border-radius: 24px;
@@ -1336,10 +1359,11 @@ video {
                         <label class="block font-mono-tech text-[10px] text-gray-500 uppercase tracking-widest mb-2" vid="65">Output Size</label>
                         <select id="output-size" class="w-full px-4 py-2.5 rounded-lg input-dark font-mono-tech text-xs appearance-none" vid="66">
                             <option value="1080x1350" selected vid="67">Vertical Scroll (1080×1350)</option>
-                            <option value="1080x1080" vid="68">Square Portal (1080×1080)</option>
-                            <option value="1920x1080" vid="69">Standard (1920×1080)</option>
-                            <option value="1350x1080" vid="70">Wide Landscape (1350×1080)</option>
-                            <option value="custom" vid="71">Custom Dimensions</option>
+                            <option value="1080x1920" vid="68">Story Tall (1080×1920)</option>
+                            <option value="1080x1080" vid="69">Square Portal (1080×1080)</option>
+                            <option value="1920x1080" vid="70">Standard (1920×1080)</option>
+                            <option value="1350x1080" vid="71">Wide Landscape (1350×1080)</option>
+                            <option value="custom" vid="72">Custom Dimensions</option>
                         </select>
                         <div id="custom-size-inputs" class="hidden grid grid-cols-2 gap-2 mt-2" vid="71a">
                             <input id="custom-width" type="number" min="200" max="4000" value="1080" placeholder="Width" class="w-full px-4 py-2 rounded-lg input-dark font-mono-tech text-xs" vid="71b">
@@ -1385,8 +1409,8 @@ video {
 
                 <div class="flex-1 relative flex items-center justify-center bg-black/40 rounded-xl overflow-hidden border border-white/5" vid="85">
                     
-                    <div id="preview-stage" class="device-frame w-[80%] aspect-square bg-white relative overflow-hidden flex items-center justify-center" vid="86">
-                        <iframe id="preview-frame" class="bg-white border-0 shrink-0" vid="87"></iframe>
+                    <div id="preview-stage" class="device-frame preview-stage-frame relative" vid="86">
+                        <iframe id="preview-frame" class="border-0 shrink-0" vid="87"></iframe>
                         
                         
                         <div class="absolute bottom-4 right-4 flex gap-2" vid="91">
@@ -1521,9 +1545,10 @@ video {
         const manifestSize = document.getElementById('manifest-size');
         const previewZoomButton = document.getElementById('preview-zoom-btn');
         const previewOpenButton = document.getElementById('preview-open-btn');
-        const previewScales = [0.5, 0.75, 1];
-        let previewScaleIndex = 1;
+        const zoomModes = ['fit', 0.5, 0.75, 1];
+        let previewZoomIndex = 0;
         let currentPreviewBlobUrl = null;
+        let currentPreviewBackground = 'transparent';
 
         function syncModeInputs() {
             customInput.classList.toggle('hidden', !customRadio.checked);
@@ -1590,52 +1615,180 @@ video {
             exportStatus.className = `${textClass} normal-case tracking-normal leading-relaxed`;
         }
 
+        function buildScryerCaptureStyles(width, height, background) {
+            return `
+    @import url('https://fonts.googleapis.com/css2?family=Noto+Color+Emoji&display=swap');
+    html, body {
+      margin: 0 !important;
+      padding: 0 !important;
+      width: ${width}px !important;
+      height: ${height}px !important;
+      overflow: hidden !important;
+    }
+
+    *, *::before, *::after {
+      box-sizing: border-box !important;
+    }
+
+    .slide, .page {
+      width: ${width}px !important;
+      height: ${height}px !important;
+      min-width: ${width}px !important;
+      min-height: ${height}px !important;
+      max-width: ${width}px !important;
+      max-height: ${height}px !important;
+      overflow: hidden !important;
+    }
+
+    .slide:not([style*="padding"]), .page:not([style*="padding"]) {
+      padding: var(--scryer-safe-padding, 96px) !important;
+    }
+
+    .slide > *, .page > * {
+      max-width: calc(${width}px - 192px) !important;
+    }
+
+    body, .slide, .page, .slide *, .page * {
+      font-family: "Inter", "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", sans-serif !important;
+    }
+
+    body {
+      background: ${background};
+      --scryer-safe-padding: 96px;
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after {
+        animation-duration: 0.001s !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0s !important;
+      }
+    }
+  `;
+        }
+
         function buildPreviewDocument() {
             const size = getSize();
             return `<!doctype html>
 <html>
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=${size.width}, initial-scale=1.0">
   <style>
-    html, body { margin:0; padding:0; width:${size.width}px; min-height:${size.height}px; overflow:auto; }
-    body { background: transparent; }
-    .slide { box-sizing: border-box; overflow: hidden; }
+${buildScryerCaptureStyles(size.width, size.height, currentPreviewBackground || "transparent")}
   </style>
 </head>
-<body>${htmlCode.value}</body>
+<body>${htmlCode.value}
+<script>
+  (() => {
+    const width = ${size.width};
+    const height = ${size.height};
+    const safePadding = 96;
+    const roots = Array.from(document.querySelectorAll('.slide, .page'));
+    roots.forEach((root) => {
+      if (root.querySelector(':scope > #__scryer_fit_inner__')) return;
+      root.style.position = 'relative';
+      root.style.display = 'flex';
+      root.style.alignItems = 'center';
+      root.style.justifyContent = 'center';
+      root.style.overflow = 'hidden';
+      root.style.boxSizing = 'border-box';
+      const inner = document.createElement('div');
+      inner.id = '__scryer_fit_inner__';
+      inner.style.display = 'block';
+      inner.style.transformOrigin = 'center center';
+      while (root.firstChild) {
+        inner.appendChild(root.firstChild);
+      }
+      root.appendChild(inner);
+      const rect = inner.getBoundingClientRect();
+      const scale = Math.min(
+        1,
+        (width - safePadding * 2) / Math.max(rect.width, 1),
+        (height - safePadding * 2) / Math.max(rect.height, 1)
+      );
+      inner.style.transform = \`scale(\${scale})\`;
+    });
+  })();
+</script>
+</body>
 </html>`;
+        }
+
+        function syncPreviewBackground() {
+            try {
+                const doc = previewFrame.contentDocument;
+                const target = doc.querySelector('.slide:first-of-type, .page:first-of-type, body');
+                const bg = window.getComputedStyle(target).backgroundColor;
+                const resolvedBg = bg && bg !== 'rgba(0, 0, 0, 0)' ? bg : 'transparent';
+                currentPreviewBackground = resolvedBg;
+                previewStage.style.setProperty('--preview-bg', resolvedBg);
+                previewStage.style.background = resolvedBg;
+                previewFrame.style.background = resolvedBg;
+                doc.documentElement.style.background = resolvedBg;
+                doc.body.style.background = resolvedBg;
+            } catch (error) {
+                currentPreviewBackground = 'transparent';
+                previewStage.style.setProperty('--preview-bg', 'transparent');
+                previewStage.style.background = 'transparent';
+                previewFrame.style.background = 'transparent';
+            }
         }
 
         function updatePreviewScale() {
             const size = getSize();
-            const stageRect = previewStage.getBoundingClientRect();
-            const fitScale = Math.min(stageRect.width / size.width, stageRect.height / size.height, 1);
-            const scale = Math.min(previewScales[previewScaleIndex], fitScale);
+            const previewPanel = previewStage.parentElement;
+            const panelStyle = window.getComputedStyle(previewPanel);
+            const panelPadX = parseFloat(panelStyle.paddingLeft) + parseFloat(panelStyle.paddingRight);
+            const panelPadY = parseFloat(panelStyle.paddingTop) + parseFloat(panelStyle.paddingBottom);
+            const maxStageWidth = Math.max(previewPanel.clientWidth - panelPadX, 0);
+            const maxStageHeight = Math.max(previewPanel.clientHeight - panelPadY, 0);
+            const stageRatio = size.width / size.height;
+            const fittedStageWidth = Math.min(maxStageWidth, maxStageHeight * stageRatio);
+            const fittedStageHeight = Math.min(maxStageHeight, maxStageWidth / stageRatio);
+
+            previewStage.style.width = `${fittedStageWidth}px`;
+            previewStage.style.height = `${fittedStageHeight}px`;
+            previewStage.style.setProperty('--preview-ratio', stageRatio);
+
+            const style = window.getComputedStyle(previewStage);
+            const padX = parseFloat(style.paddingLeft) + parseFloat(style.paddingRight);
+            const padY = parseFloat(style.paddingTop) + parseFloat(style.paddingBottom);
+            const availableWidth = previewStage.clientWidth - padX;
+            const availableHeight = previewStage.clientHeight - padY;
+            const fitScale = Math.min(availableWidth / size.width, availableHeight / size.height, 1);
+            const mode = zoomModes[previewZoomIndex];
+            const scale = mode === 'fit' ? fitScale : Math.min(mode, fitScale);
+            const offsetLeft = (availableWidth - size.width * scale) / 2;
+            const offsetTop = (availableHeight - size.height * scale) / 2;
             previewFrame.style.width = `${size.width}px`;
             previewFrame.style.height = `${size.height}px`;
-            previewFrame.style.transformOrigin = 'center center';
+            previewFrame.style.left = `${offsetLeft + parseFloat(style.paddingLeft)}px`;
+            previewFrame.style.top = `${offsetTop + parseFloat(style.paddingTop)}px`;
             previewFrame.style.transform = `scale(${scale})`;
-            previewScaleLabel.textContent = `Scale: ${Math.round(scale * 100)}%`;
+            previewScaleLabel.textContent = mode === 'fit'
+                ? `Scale: fit ${Math.round(scale * 100)}%`
+                : `Scale: ${Math.round(scale * 100)}%`;
         }
 
         function renderPreview() {
+            const size = getSize();
+            previewStage.style.setProperty('--preview-width', size.width);
+            previewStage.style.setProperty('--preview-height', size.height);
+            previewStage.style.setProperty('--preview-ratio', size.width / size.height);
+            previewFrame.onload = () => {
+                syncPreviewBackground();
+                updatePreviewScale();
+            };
             previewFrame.srcdoc = buildPreviewDocument();
             updateSizeLabels();
-            requestAnimationFrame(updatePreviewScale);
         }
 
-        const API_BASE_URL =
-            window.HTML_SCRYER_API_BASE_URL ||
-            'https://thealgorithmwitch-github-io.onrender.com';
+        const API_BASE_URL = 'https://thealgorithmwitch-github-io.onrender.com';
 
         async function runExport() {
             const mode = getSelectedMode();
             const size = getSize();
-            if (API_BASE_URL.includes('YOUR-DEPLOYED-BACKEND-URL')) {
-                setExportState('error', 'Backend URL is not configured. Deploy carousels API and update API_BASE_URL.');
-                return;
-            }
 
             const payload = {
                 codexName: document.getElementById('codex-name').value.trim() || 'html-scryer-export',
@@ -1695,7 +1848,7 @@ video {
 
         previewButton.addEventListener('click', renderPreview);
         previewZoomButton.addEventListener('click', () => {
-            previewScaleIndex = (previewScaleIndex + 1) % previewScales.length;
+            previewZoomIndex = (previewZoomIndex + 1) % zoomModes.length;
             updatePreviewScale();
         });
         previewOpenButton.addEventListener('click', () => {
@@ -1709,6 +1862,7 @@ video {
         exportButton.addEventListener('click', runExport);
         outputSize.addEventListener('change', () => {
             syncModeInputs();
+            previewZoomIndex = 0;
             renderPreview();
         });
         customWidth.addEventListener('input', renderPreview);

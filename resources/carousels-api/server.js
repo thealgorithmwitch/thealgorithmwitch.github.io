@@ -130,20 +130,6 @@ function buildScryerCaptureStyles(width, height) {
       caret-color: transparent !important;
     }
 
-    .slide, .page {
-      width: ${width}px !important;
-      height: ${height}px !important;
-      min-width: ${width}px !important;
-      min-height: ${height}px !important;
-      max-width: ${width}px !important;
-      max-height: ${height}px !important;
-      overflow: hidden !important;
-    }
-
-    .slide:not([style*="padding"]), .page:not([style*="padding"]) {
-      padding: var(--scryer-safe-padding, 72px) !important;
-    }
-
     body {
       --scryer-safe-padding: 72px;
       font-family: "Inter", "Space Grotesk", "JetBrains Mono", "Playfair Display", "Cinzel Decorative", "DM Serif Display", "Cormorant Garamond", "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", sans-serif !important;
@@ -289,12 +275,6 @@ async function captureElements(page, selector, outputDir, payload) {
       }
 
       const clone = original.cloneNode(true);
-      clone.style.width = `${width}px`;
-      clone.style.height = `${height}px`;
-      clone.style.minWidth = `${width}px`;
-      clone.style.minHeight = `${height}px`;
-      clone.style.maxWidth = `${width}px`;
-      clone.style.maxHeight = `${height}px`;
       clone.style.margin = "0";
       clone.style.position = "relative";
       clone.style.left = "auto";
@@ -303,9 +283,9 @@ async function captureElements(page, selector, outputDir, payload) {
       clone.style.bottom = "auto";
       clone.style.transform = "none";
       clone.style.boxSizing = "border-box";
-      clone.style.overflow = "hidden";
       clone.style.background = background;
       clone.style.zIndex = "1";
+      clone.style.flexShrink = "0";
 
       const fitInner = document.createElement("div");
       fitInner.id = "__scryer_fit_inner__";
@@ -315,99 +295,13 @@ async function captureElements(page, selector, outputDir, payload) {
       fitInner.appendChild(clone);
       root.appendChild(fitInner);
       document.body.appendChild(root);
-
-      const visibleDescendants = () => Array.from(clone.querySelectorAll("*")).filter((el) => {
-        const rect = el.getBoundingClientRect();
-        const style = window.getComputedStyle(el);
-        return rect.width > 0 && rect.height > 0 && style.display !== "none" && style.visibility !== "hidden" && style.opacity !== "0";
-      });
-      const overlapArea = (a, b) => {
-        const left = Math.max(a.left, b.left);
-        const right = Math.min(a.right, b.right);
-        const top = Math.max(a.top, b.top);
-        const bottom = Math.min(a.bottom, b.bottom);
-        if (right <= left || bottom <= top) return 0;
-        return (right - left) * (bottom - top);
-      };
-      const nudgeBadge = (el) => {
-        const style = window.getComputedStyle(el);
-        if (!/(absolute|fixed|sticky)/.test(style.position)) return;
-        const rect = el.getBoundingClientRect();
-        if (rect.left < 48) el.style.left = "48px";
-        if (rect.right > width - 48) el.style.right = "48px";
-        if (rect.top < 48) el.style.top = "48px";
-        if (rect.bottom > height - 48) el.style.bottom = "48px";
-      };
-      const shrinkText = (el) => {
-        const text = (el.textContent || "").trim();
-        if (!text) return;
-        const style = window.getComputedStyle(el);
-        const fontSize = Number.parseFloat(style.fontSize);
-        if (Number.isFinite(fontSize) && fontSize > 10) {
-          const reduced = Math.max(fontSize * 0.88, fontSize * 0.94);
-          el.style.fontSize = `${reduced}px`;
-        }
-        if (text.length > 18) {
-          el.style.maxWidth = `calc(${width}px - 144px)`;
-          el.style.whiteSpace = "normal";
-          el.style.overflowWrap = "break-word";
-        }
-      };
-      const expandGap = (parent) => {
-        if (!parent) return;
-        const style = window.getComputedStyle(parent);
-        if (!/(flex|grid)/.test(style.display)) return;
-        const baseGap = Number.parseFloat(style.gap) || 0;
-        const nextGap = Math.min(baseGap + 8, 16);
-        parent.style.gap = `${nextGap}px`;
-        parent.style.rowGap = `${nextGap}px`;
-        parent.style.columnGap = `${nextGap}px`;
-      };
-
-      for (let pass = 0; pass < 2; pass += 1) {
-        const candidates = visibleDescendants().slice(0, 120);
-        for (let a = 0; a < candidates.length; a += 1) {
-          for (let b = a + 1; b < candidates.length; b += 1) {
-            const rectA = candidates[a].getBoundingClientRect();
-            const rectB = candidates[b].getBoundingClientRect();
-            if (overlapArea(rectA, rectB) > 8) {
-              expandGap(candidates[a].parentElement);
-              expandGap(candidates[b].parentElement);
-              shrinkText(candidates[a]);
-              shrinkText(candidates[b]);
-              nudgeBadge(candidates[a]);
-              nudgeBadge(candidates[b]);
-            }
-          }
-        }
-      }
-
-      const descendants = visibleDescendants();
+      const naturalRect = clone.getBoundingClientRect();
+      const naturalWidth = Math.max(naturalRect.width, 1);
+      const naturalHeight = Math.max(naturalRect.height, 1);
       const safeWidth = width - safePadding * 2;
       const safeHeight = height - safePadding * 2;
-      let minLeft = width;
-      let minTop = height;
-      let maxRight = 0;
-      let maxBottom = 0;
-      descendants.forEach((el) => {
-        const rect = el.getBoundingClientRect();
-        minLeft = Math.min(minLeft, rect.left);
-        minTop = Math.min(minTop, rect.top);
-        maxRight = Math.max(maxRight, rect.right);
-        maxBottom = Math.max(maxBottom, rect.bottom);
-      });
-      const contentWidth = Math.max(maxRight - minLeft, 1);
-      const contentHeight = Math.max(maxBottom - minTop, 1);
-      const rawScale = Math.min(1, safeWidth / contentWidth, safeHeight / contentHeight);
-      const scaleAtMin = 0.88;
-      const fitsAtMinScale = contentWidth * scaleAtMin <= safeWidth && contentHeight * scaleAtMin <= safeHeight;
-      let finalScale = rawScale;
-      if (rawScale < scaleAtMin) {
-        finalScale = fitsAtMinScale ? scaleAtMin : rawScale;
-      }
-      if (contentWidth > safeWidth || contentHeight > safeHeight) {
-        fitInner.style.transform = `scale(${finalScale})`;
-      }
+      const scale = Math.min(1, safeWidth / naturalWidth, safeHeight / naturalHeight);
+      fitInner.style.transform = `scale(${scale})`;
     }, {
       selector,
       index,

@@ -83,24 +83,17 @@ function validatePayload(payload) {
 }
 
 async function waitForAssets(page) {
+  await page.evaluate(() => document.fonts && document.fonts.ready ? document.fonts.ready : Promise.resolve()).catch(() => {});
+  await page.waitForFunction(() => document.readyState === "complete", { timeout: 10000 }).catch(() => {});
   await page.evaluate(async () => {
-    const fontsReady = document.fonts?.ready?.catch?.(() => undefined) || Promise.resolve();
-    const imagePromises = Array.from(document.images || []).map((image) => {
-      if (image.complete) return Promise.resolve();
-      return new Promise((resolve) => {
-        image.addEventListener("load", resolve, { once: true });
-        image.addEventListener("error", resolve, { once: true });
-      });
-    });
-    await Promise.all([fontsReady, ...imagePromises]);
-  });
-
-  await page.evaluate(() => new Promise((resolve) => requestAnimationFrame(() => resolve())));
-  try {
-    await page.waitForNetworkIdle({ idleTime: 500, timeout: 5000 });
-  } catch (_error) {
-    await page.waitForFunction(() => document.readyState === "complete");
-  }
+    const imgs = Array.from(document.images || []);
+    await Promise.allSettled(imgs.map((img) => img.complete ? Promise.resolve() : new Promise((resolve) => {
+      img.onload = resolve;
+      img.onerror = resolve;
+      setTimeout(resolve, 3000);
+    })));
+  }).catch(() => {});
+  await new Promise((resolve) => setTimeout(resolve, 500));
 }
 
 async function captureFullPage(page, outputPath) {
@@ -239,7 +232,10 @@ app.post("/api/export-html", async (request, response) => {
       height: payload.height,
       deviceScaleFactor: 1
     });
-    await page.setContent(payload.html, { waitUntil: "networkidle0" });
+    await page.setContent(payload.html, {
+      waitUntil: "domcontentloaded",
+      timeout: 60000
+    });
     await page.evaluate((width, height) => {
       window.__SCRYER_EXPORT_WIDTH__ = width;
       window.__SCRYER_EXPORT_HEIGHT__ = height;

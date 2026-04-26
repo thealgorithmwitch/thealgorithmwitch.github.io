@@ -1,0 +1,1298 @@
+
+<html lang="en" vid="0"><head vid="1">
+    <meta charset="UTF-8" vid="2">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" vid="3">
+    <title vid="4">Personal Reflection Carousel</title>
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com" vid="6">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="" vid="7">
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@300..700&amp;family=Quicksand:wght@300..700&amp;display=swap" rel="stylesheet" vid="8">
+    <style vid="9">
+        :root {
+            --pink-soft: #FFF0F3;
+            --pink-accent: #FFB3C1;
+            --lavender-soft: #F3E8FF;
+            --lavender-accent: #C084FC;
+            --mint-soft: #E8FFF3;
+            --mint-accent: #81E6D9;
+            --cream-soft: #FFFBF2;
+            --cream-accent: #F6AD55;
+            --text-main: #4A4A4A;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: #f0f0f0;
+            font-family: 'Quicksand', sans-serif;
+            color: var(--text-main);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        #app-container {
+            width: 1080px;
+            height: 1080px;
+            background: white;
+            position: relative;
+            overflow: hidden;
+            border-radius: 24px;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.1);
+        }
+
+        .slides-wrapper {
+            display: flex;
+            width: 100%;
+            height: 100%;
+            transition: transform 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+
+        .slide {
+            min-width: 1080px;
+            height: 1080px;
+            padding: 80px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            position: relative;
+            box-sizing: border-box;
+        }
+
+        .font-bubble {
+            font-family: 'Fredoka', sans-serif;
+        }
+
+        .sticker {
+            position: absolute;
+            background: white;
+            padding: 12px 24px;
+            border-radius: 100px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+            font-weight: 600;
+            font-size: 24px;
+            pointer-events: none;
+            z-index: 10;
+        }
+
+        .floating {
+            animation: float 4s ease-in-out infinite;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0) rotate(-2deg); }
+            50% { transform: translateY(-15px) rotate(2deg); }
+        }
+
+        .blob {
+            position: absolute;
+            z-index: 0;
+            filter: blur(60px);
+            opacity: 0.4;
+        }
+
+        .nav-dots {
+            position: absolute;
+            bottom: 60px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 12px;
+            z-index: 50;
+        }
+
+        .dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: rgba(0,0,0,0.1);
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .dot.active {
+            width: 32px;
+            border-radius: 10px;
+            background: var(--text-main);
+        }
+
+        .btn-nav {
+            position: absolute;
+            bottom: 45px;
+            background: white;
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            cursor: pointer;
+            z-index: 60;
+            font-size: 24px;
+            transition: transform 0.2s;
+        }
+
+        .btn-nav:hover { transform: scale(1.1); }
+        .btn-prev { left: 80px; }
+        .btn-next { right: 80px; }
+    </style>
+
+  <style type="text/css">
+*, ::before, ::after {
+  --tw-border-spacing-x: 0;
+  --tw-border-spacing-y: 0;
+  --tw-translate-x: 0;
+  --tw-translate-y: 0;
+  --tw-rotate: 0;
+  --tw-skew-x: 0;
+  --tw-skew-y: 0;
+  --tw-scale-x: 1;
+  --tw-scale-y: 1;
+  --tw-pan-x:  ;
+  --tw-pan-y:  ;
+  --tw-pinch-zoom:  ;
+  --tw-scroll-snap-strictness: proximity;
+  --tw-gradient-from-position:  ;
+  --tw-gradient-via-position:  ;
+  --tw-gradient-to-position:  ;
+  --tw-ordinal:  ;
+  --tw-slashed-zero:  ;
+  --tw-numeric-figure:  ;
+  --tw-numeric-spacing:  ;
+  --tw-numeric-fraction:  ;
+  --tw-ring-inset:  ;
+  --tw-ring-offset-width: 0px;
+  --tw-ring-offset-color: #fff;
+  --tw-ring-color: rgb(59 130 246 / 0.5);
+  --tw-ring-offset-shadow: 0 0 #0000;
+  --tw-ring-shadow: 0 0 #0000;
+  --tw-shadow: 0 0 #0000;
+  --tw-shadow-colored: 0 0 #0000;
+  --tw-blur:  ;
+  --tw-brightness:  ;
+  --tw-contrast:  ;
+  --tw-grayscale:  ;
+  --tw-hue-rotate:  ;
+  --tw-invert:  ;
+  --tw-saturate:  ;
+  --tw-sepia:  ;
+  --tw-drop-shadow:  ;
+  --tw-backdrop-blur:  ;
+  --tw-backdrop-brightness:  ;
+  --tw-backdrop-contrast:  ;
+  --tw-backdrop-grayscale:  ;
+  --tw-backdrop-hue-rotate:  ;
+  --tw-backdrop-invert:  ;
+  --tw-backdrop-opacity:  ;
+  --tw-backdrop-saturate:  ;
+  --tw-backdrop-sepia:  ;
+  --tw-contain-size:  ;
+  --tw-contain-layout:  ;
+  --tw-contain-paint:  ;
+  --tw-contain-style:  ;
+}
+
+::backdrop {
+  --tw-border-spacing-x: 0;
+  --tw-border-spacing-y: 0;
+  --tw-translate-x: 0;
+  --tw-translate-y: 0;
+  --tw-rotate: 0;
+  --tw-skew-x: 0;
+  --tw-skew-y: 0;
+  --tw-scale-x: 1;
+  --tw-scale-y: 1;
+  --tw-pan-x:  ;
+  --tw-pan-y:  ;
+  --tw-pinch-zoom:  ;
+  --tw-scroll-snap-strictness: proximity;
+  --tw-gradient-from-position:  ;
+  --tw-gradient-via-position:  ;
+  --tw-gradient-to-position:  ;
+  --tw-ordinal:  ;
+  --tw-slashed-zero:  ;
+  --tw-numeric-figure:  ;
+  --tw-numeric-spacing:  ;
+  --tw-numeric-fraction:  ;
+  --tw-ring-inset:  ;
+  --tw-ring-offset-width: 0px;
+  --tw-ring-offset-color: #fff;
+  --tw-ring-color: rgb(59 130 246 / 0.5);
+  --tw-ring-offset-shadow: 0 0 #0000;
+  --tw-ring-shadow: 0 0 #0000;
+  --tw-shadow: 0 0 #0000;
+  --tw-shadow-colored: 0 0 #0000;
+  --tw-blur:  ;
+  --tw-brightness:  ;
+  --tw-contrast:  ;
+  --tw-grayscale:  ;
+  --tw-hue-rotate:  ;
+  --tw-invert:  ;
+  --tw-saturate:  ;
+  --tw-sepia:  ;
+  --tw-drop-shadow:  ;
+  --tw-backdrop-blur:  ;
+  --tw-backdrop-brightness:  ;
+  --tw-backdrop-contrast:  ;
+  --tw-backdrop-grayscale:  ;
+  --tw-backdrop-hue-rotate:  ;
+  --tw-backdrop-invert:  ;
+  --tw-backdrop-opacity:  ;
+  --tw-backdrop-saturate:  ;
+  --tw-backdrop-sepia:  ;
+  --tw-contain-size:  ;
+  --tw-contain-layout:  ;
+  --tw-contain-paint:  ;
+  --tw-contain-style:  ;
+}/*
+! tailwindcss v3.4.17 | MIT License | https://tailwindcss.com
+*//*
+1. Prevent padding and border from affecting element width. (https://github.com/mozdevs/cssremedy/issues/4)
+2. Allow adding a border to an element by just adding a border-width. (https://github.com/tailwindcss/tailwindcss/pull/116)
+*/
+
+*,
+::before,
+::after {
+  box-sizing: border-box; /* 1 */
+  border-width: 0; /* 2 */
+  border-style: solid; /* 2 */
+  border-color: #e5e7eb; /* 2 */
+}
+
+::before,
+::after {
+  --tw-content: '';
+}
+
+/*
+1. Use a consistent sensible line-height in all browsers.
+2. Prevent adjustments of font size after orientation changes in iOS.
+3. Use a more readable tab size.
+4. Use the user's configured `sans` font-family by default.
+5. Use the user's configured `sans` font-feature-settings by default.
+6. Use the user's configured `sans` font-variation-settings by default.
+7. Disable tap highlights on iOS
+*/
+
+html,
+:host {
+  line-height: 1.5; /* 1 */
+  -webkit-text-size-adjust: 100%; /* 2 */
+  -moz-tab-size: 4; /* 3 */
+  tab-size: 4; /* 3 */
+  font-family: ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji"; /* 4 */
+  font-feature-settings: normal; /* 5 */
+  font-variation-settings: normal; /* 6 */
+  -webkit-tap-highlight-color: transparent; /* 7 */
+}
+
+/*
+1. Remove the margin in all browsers.
+2. Inherit line-height from `html` so users can set them as a class directly on the `html` element.
+*/
+
+body {
+  margin: 0; /* 1 */
+  line-height: inherit; /* 2 */
+}
+
+/*
+1. Add the correct height in Firefox.
+2. Correct the inheritance of border color in Firefox. (https://bugzilla.mozilla.org/show_bug.cgi?id=190655)
+3. Ensure horizontal rules are visible by default.
+*/
+
+hr {
+  height: 0; /* 1 */
+  color: inherit; /* 2 */
+  border-top-width: 1px; /* 3 */
+}
+
+/*
+Add the correct text decoration in Chrome, Edge, and Safari.
+*/
+
+abbr:where([title]) {
+  text-decoration: underline dotted;
+}
+
+/*
+Remove the default font size and weight for headings.
+*/
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  font-size: inherit;
+  font-weight: inherit;
+}
+
+/*
+Reset links to optimize for opt-in styling instead of opt-out.
+*/
+
+a {
+  color: inherit;
+  text-decoration: inherit;
+}
+
+/*
+Add the correct font weight in Edge and Safari.
+*/
+
+b,
+strong {
+  font-weight: bolder;
+}
+
+/*
+1. Use the user's configured `mono` font-family by default.
+2. Use the user's configured `mono` font-feature-settings by default.
+3. Use the user's configured `mono` font-variation-settings by default.
+4. Correct the odd `em` font sizing in all browsers.
+*/
+
+code,
+kbd,
+samp,
+pre {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; /* 1 */
+  font-feature-settings: normal; /* 2 */
+  font-variation-settings: normal; /* 3 */
+  font-size: 1em; /* 4 */
+}
+
+/*
+Add the correct font size in all browsers.
+*/
+
+small {
+  font-size: 80%;
+}
+
+/*
+Prevent `sub` and `sup` elements from affecting the line height in all browsers.
+*/
+
+sub,
+sup {
+  font-size: 75%;
+  line-height: 0;
+  position: relative;
+  vertical-align: baseline;
+}
+
+sub {
+  bottom: -0.25em;
+}
+
+sup {
+  top: -0.5em;
+}
+
+/*
+1. Remove text indentation from table contents in Chrome and Safari. (https://bugs.chromium.org/p/chromium/issues/detail?id=999088, https://bugs.webkit.org/show_bug.cgi?id=201297)
+2. Correct table border color inheritance in all Chrome and Safari. (https://bugs.chromium.org/p/chromium/issues/detail?id=935729, https://bugs.webkit.org/show_bug.cgi?id=195016)
+3. Remove gaps between table borders by default.
+*/
+
+table {
+  text-indent: 0; /* 1 */
+  border-color: inherit; /* 2 */
+  border-collapse: collapse; /* 3 */
+}
+
+/*
+1. Change the font styles in all browsers.
+2. Remove the margin in Firefox and Safari.
+3. Remove default padding in all browsers.
+*/
+
+button,
+input,
+optgroup,
+select,
+textarea {
+  font-family: inherit; /* 1 */
+  font-feature-settings: inherit; /* 1 */
+  font-variation-settings: inherit; /* 1 */
+  font-size: 100%; /* 1 */
+  font-weight: inherit; /* 1 */
+  line-height: inherit; /* 1 */
+  letter-spacing: inherit; /* 1 */
+  color: inherit; /* 1 */
+  margin: 0; /* 2 */
+  padding: 0; /* 3 */
+}
+
+/*
+Remove the inheritance of text transform in Edge and Firefox.
+*/
+
+button,
+select {
+  text-transform: none;
+}
+
+/*
+1. Correct the inability to style clickable types in iOS and Safari.
+2. Remove default button styles.
+*/
+
+button,
+input:where([type='button']),
+input:where([type='reset']),
+input:where([type='submit']) {
+  -webkit-appearance: button; /* 1 */
+  background-color: transparent; /* 2 */
+  background-image: none; /* 2 */
+}
+
+/*
+Use the modern Firefox focus style for all focusable elements.
+*/
+
+:-moz-focusring {
+  outline: auto;
+}
+
+/*
+Remove the additional `:invalid` styles in Firefox. (https://github.com/mozilla/gecko-dev/blob/2f9eacd9d3d995c937b4251a5557d95d494c9be1/layout/style/res/forms.css#L728-L737)
+*/
+
+:-moz-ui-invalid {
+  box-shadow: none;
+}
+
+/*
+Add the correct vertical alignment in Chrome and Firefox.
+*/
+
+progress {
+  vertical-align: baseline;
+}
+
+/*
+Correct the cursor style of increment and decrement buttons in Safari.
+*/
+
+::-webkit-inner-spin-button,
+::-webkit-outer-spin-button {
+  height: auto;
+}
+
+/*
+1. Correct the odd appearance in Chrome and Safari.
+2. Correct the outline style in Safari.
+*/
+
+[type='search'] {
+  -webkit-appearance: textfield; /* 1 */
+  outline-offset: -2px; /* 2 */
+}
+
+/*
+Remove the inner padding in Chrome and Safari on macOS.
+*/
+
+::-webkit-search-decoration {
+  -webkit-appearance: none;
+}
+
+/*
+1. Correct the inability to style clickable types in iOS and Safari.
+2. Change font properties to `inherit` in Safari.
+*/
+
+::-webkit-file-upload-button {
+  -webkit-appearance: button; /* 1 */
+  font: inherit; /* 2 */
+}
+
+/*
+Add the correct display in Chrome and Safari.
+*/
+
+summary {
+  display: list-item;
+}
+
+/*
+Removes the default spacing and border for appropriate elements.
+*/
+
+blockquote,
+dl,
+dd,
+h1,
+h2,
+h3,
+h4,
+h5,
+h6,
+hr,
+figure,
+p,
+pre {
+  margin: 0;
+}
+
+fieldset {
+  margin: 0;
+  padding: 0;
+}
+
+legend {
+  padding: 0;
+}
+
+ol,
+ul,
+menu {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+/*
+Reset default styling for dialogs.
+*/
+dialog {
+  padding: 0;
+}
+
+/*
+Prevent resizing textareas horizontally by default.
+*/
+
+textarea {
+  resize: vertical;
+}
+
+/*
+1. Reset the default placeholder opacity in Firefox. (https://github.com/tailwindlabs/tailwindcss/issues/3300)
+2. Set the default placeholder color to the user's configured gray 400 color.
+*/
+
+input::placeholder,
+textarea::placeholder {
+  opacity: 1; /* 1 */
+  color: #9ca3af; /* 2 */
+}
+
+/*
+Set the default cursor for buttons.
+*/
+
+button,
+[role="button"] {
+  cursor: pointer;
+}
+
+/*
+Make sure disabled buttons don't get the pointer cursor.
+*/
+:disabled {
+  cursor: default;
+}
+
+/*
+1. Make replaced elements `display: block` by default. (https://github.com/mozdevs/cssremedy/issues/14)
+2. Add `vertical-align: middle` to align replaced elements more sensibly by default. (https://github.com/jensimmons/cssremedy/issues/14#issuecomment-634934210)
+   This can trigger a poorly considered lint error in some tools but is included by design.
+*/
+
+img,
+svg,
+video,
+canvas,
+audio,
+iframe,
+embed,
+object {
+  display: block; /* 1 */
+  vertical-align: middle; /* 2 */
+}
+
+/*
+Constrain images and videos to the parent width and preserve their intrinsic aspect ratio. (https://github.com/mozdevs/cssremedy/issues/14)
+*/
+
+img,
+video {
+  max-width: 100%;
+  height: auto;
+}
+
+/* Make elements with the HTML hidden attribute stay hidden by default */
+[hidden]:where(:not([hidden="until-found"])) {
+  display: none;
+}
+.visible {
+  visibility: visible;
+}
+.absolute {
+  position: absolute;
+}
+.relative {
+  position: relative;
+}
+.-left-1\/4 {
+  left: -25%;
+}
+.-right-12 {
+  right: -3rem;
+}
+.-top-1\/2 {
+  top: -50%;
+}
+.-top-12 {
+  top: -3rem;
+}
+.bottom-1\/4 {
+  bottom: 25%;
+}
+.bottom-20 {
+  bottom: 5rem;
+}
+.bottom-32 {
+  bottom: 8rem;
+}
+.bottom-40 {
+  bottom: 10rem;
+}
+.bottom-48 {
+  bottom: 12rem;
+}
+.bottom-\[-100px\] {
+  bottom: -100px;
+}
+.left-20 {
+  left: 5rem;
+}
+.left-32 {
+  left: 8rem;
+}
+.left-40 {
+  left: 10rem;
+}
+.left-64 {
+  left: 16rem;
+}
+.left-\[-100px\] {
+  left: -100px;
+}
+.right-20 {
+  right: 5rem;
+}
+.right-32 {
+  right: 8rem;
+}
+.right-40 {
+  right: 10rem;
+}
+.right-64 {
+  right: 16rem;
+}
+.right-\[-100px\] {
+  right: -100px;
+}
+.top-1\/2 {
+  top: 50%;
+}
+.top-1\/4 {
+  top: 25%;
+}
+.top-20 {
+  top: 5rem;
+}
+.top-32 {
+  top: 8rem;
+}
+.top-40 {
+  top: 10rem;
+}
+.top-\[-100px\] {
+  top: -100px;
+}
+.z-10 {
+  z-index: 10;
+}
+.mx-auto {
+  margin-left: auto;
+  margin-right: auto;
+}
+.mb-12 {
+  margin-bottom: 3rem;
+}
+.mb-16 {
+  margin-bottom: 4rem;
+}
+.mb-4 {
+  margin-bottom: 1rem;
+}
+.mb-6 {
+  margin-bottom: 1.5rem;
+}
+.mb-8 {
+  margin-bottom: 2rem;
+}
+.mt-12 {
+  margin-top: 3rem;
+}
+.mt-16 {
+  margin-top: 4rem;
+}
+.mt-8 {
+  margin-top: 2rem;
+}
+.inline-block {
+  display: inline-block;
+}
+.flex {
+  display: flex;
+}
+.hidden {
+  display: none;
+}
+.h-1 {
+  height: 0.25rem;
+}
+.h-4 {
+  height: 1rem;
+}
+.h-\[500px\] {
+  height: 500px;
+}
+.h-\[600px\] {
+  height: 600px;
+}
+.h-\[800px\] {
+  height: 800px;
+}
+.w-24 {
+  width: 6rem;
+}
+.w-4 {
+  width: 1rem;
+}
+.w-\[500px\] {
+  width: 500px;
+}
+.w-\[600px\] {
+  width: 600px;
+}
+.w-\[800px\] {
+  width: 800px;
+}
+.w-full {
+  width: 100%;
+}
+.max-w-2xl {
+  max-width: 42rem;
+}
+.max-w-3xl {
+  max-width: 48rem;
+}
+.max-w-4xl {
+  max-width: 56rem;
+}
+.translate-x-12 {
+  --tw-translate-x: 3rem;
+  transform: translate(var(--tw-translate-x), var(--tw-translate-y)) rotate(var(--tw-rotate)) skewX(var(--tw-skew-x)) skewY(var(--tw-skew-y)) scaleX(var(--tw-scale-x)) scaleY(var(--tw-scale-y));
+}
+.translate-x-24 {
+  --tw-translate-x: 6rem;
+  transform: translate(var(--tw-translate-x), var(--tw-translate-y)) rotate(var(--tw-rotate)) skewX(var(--tw-skew-x)) skewY(var(--tw-skew-y)) scaleX(var(--tw-scale-x)) scaleY(var(--tw-scale-y));
+}
+.-rotate-1 {
+  --tw-rotate: -1deg;
+  transform: translate(var(--tw-translate-x), var(--tw-translate-y)) rotate(var(--tw-rotate)) skewX(var(--tw-skew-x)) skewY(var(--tw-skew-y)) scaleX(var(--tw-scale-x)) scaleY(var(--tw-scale-y));
+}
+.rotate-1 {
+  --tw-rotate: 1deg;
+  transform: translate(var(--tw-translate-x), var(--tw-translate-y)) rotate(var(--tw-rotate)) skewX(var(--tw-skew-x)) skewY(var(--tw-skew-y)) scaleX(var(--tw-scale-x)) scaleY(var(--tw-scale-y));
+}
+.transform {
+  transform: translate(var(--tw-translate-x), var(--tw-translate-y)) rotate(var(--tw-rotate)) skewX(var(--tw-skew-x)) skewY(var(--tw-skew-y)) scaleX(var(--tw-scale-x)) scaleY(var(--tw-scale-y));
+}
+.flex-col {
+  flex-direction: column;
+}
+.items-center {
+  align-items: center;
+}
+.gap-4 {
+  gap: 1rem;
+}
+.gap-6 {
+  gap: 1.5rem;
+}
+.rounded-\[40px\] {
+  border-radius: 40px;
+}
+.rounded-\[50px\] {
+  border-radius: 50px;
+}
+.rounded-\[60px\] {
+  border-radius: 60px;
+}
+.rounded-\[80px\] {
+  border-radius: 80px;
+}
+.rounded-full {
+  border-radius: 9999px;
+}
+.border-2 {
+  border-width: 2px;
+}
+.border-4 {
+  border-width: 4px;
+}
+.border-dashed {
+  border-style: dashed;
+}
+.border-orange-100 {
+  --tw-border-opacity: 1;
+  border-color: rgb(255 237 213 / var(--tw-border-opacity, 1));
+}
+.border-orange-200 {
+  --tw-border-opacity: 1;
+  border-color: rgb(254 215 170 / var(--tw-border-opacity, 1));
+}
+.border-pink-100 {
+  --tw-border-opacity: 1;
+  border-color: rgb(252 231 243 / var(--tw-border-opacity, 1));
+}
+.border-teal-200 {
+  --tw-border-opacity: 1;
+  border-color: rgb(153 246 228 / var(--tw-border-opacity, 1));
+}
+.bg-pink-200 {
+  --tw-bg-opacity: 1;
+  background-color: rgb(251 207 232 / var(--tw-bg-opacity, 1));
+}
+.bg-pink-300 {
+  --tw-bg-opacity: 1;
+  background-color: rgb(249 168 212 / var(--tw-bg-opacity, 1));
+}
+.bg-pink-400 {
+  --tw-bg-opacity: 1;
+  background-color: rgb(244 114 182 / var(--tw-bg-opacity, 1));
+}
+.bg-purple-200 {
+  --tw-bg-opacity: 1;
+  background-color: rgb(233 213 255 / var(--tw-bg-opacity, 1));
+}
+.bg-teal-50 {
+  --tw-bg-opacity: 1;
+  background-color: rgb(240 253 250 / var(--tw-bg-opacity, 1));
+}
+.bg-white {
+  --tw-bg-opacity: 1;
+  background-color: rgb(255 255 255 / var(--tw-bg-opacity, 1));
+}
+.bg-white\/40 {
+  background-color: rgb(255 255 255 / 0.4);
+}
+.bg-white\/80 {
+  background-color: rgb(255 255 255 / 0.8);
+}
+.p-10 {
+  padding: 2.5rem;
+}
+.p-12 {
+  padding: 3rem;
+}
+.p-16 {
+  padding: 4rem;
+}
+.p-20 {
+  padding: 5rem;
+}
+.px-12 {
+  padding-left: 3rem;
+  padding-right: 3rem;
+}
+.py-6 {
+  padding-top: 1.5rem;
+  padding-bottom: 1.5rem;
+}
+.text-2xl {
+  font-size: 1.5rem;
+  line-height: 2rem;
+}
+.text-3xl {
+  font-size: 1.875rem;
+  line-height: 2.25rem;
+}
+.text-4xl {
+  font-size: 2.25rem;
+  line-height: 2.5rem;
+}
+.text-5xl {
+  font-size: 3rem;
+  line-height: 1;
+}
+.text-6xl {
+  font-size: 3.75rem;
+  line-height: 1;
+}
+.text-7xl {
+  font-size: 4.5rem;
+  line-height: 1;
+}
+.text-8xl {
+  font-size: 6rem;
+  line-height: 1;
+}
+.text-9xl {
+  font-size: 8rem;
+  line-height: 1;
+}
+.font-medium {
+  font-weight: 500;
+}
+.font-semibold {
+  font-weight: 600;
+}
+.uppercase {
+  text-transform: uppercase;
+}
+.italic {
+  font-style: italic;
+}
+.leading-snug {
+  line-height: 1.375;
+}
+.leading-tight {
+  line-height: 1.25;
+}
+.tracking-\[0\.2em\] {
+  letter-spacing: 0.2em;
+}
+.tracking-widest {
+  letter-spacing: 0.1em;
+}
+.text-orange-400 {
+  --tw-text-opacity: 1;
+  color: rgb(251 146 60 / var(--tw-text-opacity, 1));
+}
+.text-orange-500 {
+  --tw-text-opacity: 1;
+  color: rgb(249 115 22 / var(--tw-text-opacity, 1));
+}
+.text-orange-600 {
+  --tw-text-opacity: 1;
+  color: rgb(234 88 12 / var(--tw-text-opacity, 1));
+}
+.text-orange-700 {
+  --tw-text-opacity: 1;
+  color: rgb(194 65 12 / var(--tw-text-opacity, 1));
+}
+.text-pink-500 {
+  --tw-text-opacity: 1;
+  color: rgb(236 72 153 / var(--tw-text-opacity, 1));
+}
+.text-pink-600 {
+  --tw-text-opacity: 1;
+  color: rgb(219 39 119 / var(--tw-text-opacity, 1));
+}
+.text-pink-700 {
+  --tw-text-opacity: 1;
+  color: rgb(190 24 93 / var(--tw-text-opacity, 1));
+}
+.text-purple-500 {
+  --tw-text-opacity: 1;
+  color: rgb(168 85 247 / var(--tw-text-opacity, 1));
+}
+.text-purple-600 {
+  --tw-text-opacity: 1;
+  color: rgb(147 51 234 / var(--tw-text-opacity, 1));
+}
+.text-purple-700 {
+  --tw-text-opacity: 1;
+  color: rgb(126 34 206 / var(--tw-text-opacity, 1));
+}
+.text-teal-500 {
+  --tw-text-opacity: 1;
+  color: rgb(20 184 166 / var(--tw-text-opacity, 1));
+}
+.text-teal-600 {
+  --tw-text-opacity: 1;
+  color: rgb(13 148 136 / var(--tw-text-opacity, 1));
+}
+.text-teal-700 {
+  --tw-text-opacity: 1;
+  color: rgb(15 118 110 / var(--tw-text-opacity, 1));
+}
+.text-teal-800 {
+  --tw-text-opacity: 1;
+  color: rgb(17 94 89 / var(--tw-text-opacity, 1));
+}
+.text-yellow-600 {
+  --tw-text-opacity: 1;
+  color: rgb(202 138 4 / var(--tw-text-opacity, 1));
+}
+.opacity-50 {
+  opacity: 0.5;
+}
+.opacity-60 {
+  opacity: 0.6;
+}
+.opacity-70 {
+  opacity: 0.7;
+}
+.opacity-80 {
+  opacity: 0.8;
+}
+.shadow-md {
+  --tw-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+  --tw-shadow-colored: 0 4px 6px -1px var(--tw-shadow-color), 0 2px 4px -2px var(--tw-shadow-color);
+  box-shadow: var(--tw-ring-offset-shadow, 0 0 #0000), var(--tw-ring-shadow, 0 0 #0000), var(--tw-shadow);
+}
+.shadow-sm {
+  --tw-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+  --tw-shadow-colored: 0 1px 2px 0 var(--tw-shadow-color);
+  box-shadow: var(--tw-ring-offset-shadow, 0 0 #0000), var(--tw-ring-shadow, 0 0 #0000), var(--tw-shadow);
+}
+.shadow-xl {
+  --tw-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
+  --tw-shadow-colored: 0 20px 25px -5px var(--tw-shadow-color), 0 8px 10px -6px var(--tw-shadow-color);
+  box-shadow: var(--tw-ring-offset-shadow, 0 0 #0000), var(--tw-ring-shadow, 0 0 #0000), var(--tw-shadow);
+}
+.blur {
+  --tw-blur: blur(8px);
+  filter: var(--tw-blur) var(--tw-brightness) var(--tw-contrast) var(--tw-grayscale) var(--tw-hue-rotate) var(--tw-invert) var(--tw-saturate) var(--tw-sepia) var(--tw-drop-shadow);
+}
+.filter {
+  filter: var(--tw-blur) var(--tw-brightness) var(--tw-contrast) var(--tw-grayscale) var(--tw-hue-rotate) var(--tw-invert) var(--tw-saturate) var(--tw-sepia) var(--tw-drop-shadow);
+}
+.transition {
+  transition-property: color, background-color, border-color, text-decoration-color, fill, stroke, opacity, box-shadow, transform, filter, backdrop-filter;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  transition-duration: 150ms;
+}
+.ease-in-out {
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+}* {
+      -ms-overflow-style: none !important;
+      scrollbar-width: none !important;
+    }
+
+    *::-webkit-scrollbar {
+      display: none !important;
+      width: 0 !important;
+      height: 0 !important;
+    }
+  </style></head>
+<body vid="10">
+
+    <div id="app-container" vid="11">
+        
+        <div class="btn-nav btn-prev" onclick="moveSlide(-1)" vid="12">←</div>
+        <div class="btn-nav btn-next" onclick="moveSlide(1)" vid="13">→</div>
+        <div class="nav-dots" id="dots-container" vid="14"></div>
+
+        <div class="slides-wrapper" id="slider" vid="15">
+            
+            
+            <div class="slide" style="background-color: var(--pink-soft);" vid="16">
+                <div class="blob w-[600px] h-[600px] bg-pink-200 rounded-full top-[-100px] left-[-100px]" vid="17"></div>
+                <div class="blob w-[500px] h-[500px] bg-purple-200 rounded-full bottom-[-100px] right-[-100px]" vid="18"></div>
+                
+                <div class="sticker floating top-40 left-40 text-pink-500" vid="19">✨ Lesson Learned</div>
+                <div class="sticker floating bottom-40 right-40 text-purple-500" vid="20">💼 Growth</div>
+
+                <p class="text-3xl font-medium mb-6 opacity-60" vid="21">it's a good lesson 💭</p>
+                <h1 class="font-bubble text-8xl leading-tight text-pink-600" vid="22">first interview<br vid="23">after being laid off</h1>
+                <div class="mt-12 h-1 w-24 bg-pink-300 rounded-full" vid="24"></div>
+                <p class="mt-8 text-2xl opacity-50 uppercase tracking-[0.2em]" vid="25">Slide 01</p>
+            </div>
+
+            
+            <div class="slide" style="background-color: var(--lavender-soft);" vid="26">
+                <div class="sticker floating top-32 right-32 text-purple-500" vid="27">💫 Vision</div>
+                <div class="sticker floating bottom-32 left-32 text-pink-500" vid="28">💭 Intent</div>
+
+                <h2 class="text-4xl font-semibold mb-12 opacity-80" vid="29">they meant ✨</h2>
+                
+                <div class="flex flex-col gap-6 w-full max-w-2xl" vid="30">
+                    <div class="bg-white p-10 rounded-[40px] shadow-sm transform -rotate-1" vid="31">
+                        <p class="font-bubble text-5xl text-purple-600" vid="32">build a personal brand</p>
+                    </div>
+                    <div class="bg-white p-10 rounded-[40px] shadow-sm transform rotate-1" vid="33">
+                        <p class="font-bubble text-5xl text-pink-600" vid="34">define your narrative</p>
+                    </div>
+                    <div class="bg-white p-10 rounded-[40px] shadow-sm transform -rotate-1" vid="35">
+                        <p class="font-bubble text-5xl text-purple-600" vid="36">be more visible</p>
+                    </div>
+                </div>
+            </div>
+
+            
+            <div class="slide" style="background-color: var(--mint-soft);" vid="37">
+                <div class="sticker floating top-1/4 left-20 text-teal-600" vid="38">🌿 Perspective</div>
+                <div class="sticker floating bottom-1/4 right-20 text-pink-600" vid="39">🎀 Gentle</div>
+
+                <h1 class="font-bubble text-7xl leading-tight text-teal-700 max-w-4xl" vid="40">
+                    that framing stayed with me 🌿
+                </h1>
+                <p class="text-4xl mt-12 font-medium text-teal-800 opacity-60" vid="41">
+                    but not in the way<br vid="42">they intended ✨
+                </p>
+            </div>
+
+            
+            <div class="slide" style="background-color: var(--cream-soft);" vid="43">
+                <div class="sticker floating top-32 right-64 text-orange-500" vid="44">🎯 Outcome</div>
+                <div class="sticker floating bottom-48 left-64 text-yellow-600" vid="45">💫 Spark</div>
+
+                <h2 class="text-4xl font-semibold mb-8 opacity-70" vid="46">because it assumes... 💭</h2>
+                <div class="bg-white/80 p-20 rounded-[60px] border-4 border-dashed border-orange-200" vid="47">
+                    <h1 class="font-bubble text-8xl text-orange-600" vid="48">the outcome is recognition 🎯</h1>
+                </div>
+            </div>
+
+            
+            <div class="slide" style="background-color: var(--pink-soft);" vid="49">
+                <div class="sticker floating top-1/2 left-20 text-pink-600" vid="50">✨ Truth</div>
+                <h1 class="font-bubble text-7xl leading-tight text-pink-700 max-w-4xl" vid="51">
+                    and recognition isn’t the same as anything changing 🎀
+                </h1>
+                <div class="mt-16 flex gap-4" vid="52">
+                    <div class="w-4 h-4 bg-pink-400 rounded-full" vid="53"></div>
+                    <div class="w-4 h-4 bg-pink-300 rounded-full" vid="54"></div>
+                    <div class="w-4 h-4 bg-pink-200 rounded-full" vid="55"></div>
+                </div>
+            </div>
+
+            
+            <div class="slide" style="background-color: var(--mint-soft);" vid="56">
+                <div class="sticker floating top-20 right-20 text-teal-600" vid="57">🌱 Growth</div>
+                <div class="sticker floating bottom-20 left-20 text-teal-500" vid="58">✨ Reach</div>
+
+                <p class="text-4xl font-medium mb-12 opacity-80 text-teal-800" vid="59">i did become more visible 🌱</p>
+                
+                <div class="relative" vid="60">
+                    <div class="absolute -top-12 -right-12 text-8xl" vid="61">✨</div>
+                    <div class="bg-white p-16 rounded-[80px] shadow-xl" vid="62">
+                        <h2 class="font-bubble text-9xl text-teal-600 mb-4" vid="63">2,000</h2>
+                        <p class="text-3xl font-semibold opacity-60 uppercase tracking-widest" vid="64">people found me</p>
+                    </div>
+                </div>
+                
+                <p class="text-4xl mt-12 font-bubble text-teal-700" vid="65">just from being consistent ✨</p>
+            </div>
+
+            
+            <div class="slide" style="background-color: var(--lavender-soft);" vid="66">
+                <div class="sticker floating top-1/4 right-32 text-purple-500" vid="67">💭 Deep</div>
+                <h1 class="font-bubble text-7xl leading-tight text-purple-700 max-w-4xl" vid="68">
+                    but visibility didn’t answer the real question 💫
+                </h1>
+                <div class="mt-12 text-6xl" vid="69">💭</div>
+            </div>
+
+            
+            <div class="slide" style="background-color: var(--cream-soft);" vid="70">
+                <div class="sticker floating top-20 left-20 text-orange-500" vid="71">💌 Meaning</div>
+                <div class="sticker floating bottom-20 right-20 text-orange-400" vid="72">💫 Legacy</div>
+
+                <h1 class="font-bubble text-6xl text-orange-700 mb-16 max-w-4xl leading-tight" vid="73">
+                    does anything continue after someone sees your work? 💌
+                </h1>
+                
+                <div class="flex flex-col gap-4 items-center" vid="74">
+                    <div class="flex items-center gap-6 bg-white px-12 py-6 rounded-full border-2 border-orange-100 shadow-sm w-[600px]" vid="75">
+                        <span class="text-4xl" vid="76">💫</span>
+                        <p class="font-bubble text-4xl text-orange-600" vid="77">does it carry</p>
+                    </div>
+                    <div class="flex items-center gap-6 bg-white px-12 py-6 rounded-full border-2 border-orange-100 shadow-sm w-[600px] translate-x-12" vid="78">
+                        <span class="text-4xl" vid="79">🌿</span>
+                        <p class="font-bubble text-4xl text-orange-600" vid="80">does it connect</p>
+                    </div>
+                    <div class="flex items-center gap-6 bg-white px-12 py-6 rounded-full border-2 border-orange-100 shadow-sm w-[600px] translate-x-24" vid="81">
+                        <span class="text-4xl" vid="82">🎯</span>
+                        <p class="font-bubble text-4xl text-orange-600" vid="83">does it lead somewhere</p>
+                    </div>
+                </div>
+            </div>
+
+            
+            <div class="slide" style="background-color: var(--pink-soft);" vid="84">
+                <div class="blob w-[800px] h-[800px] bg-white/40 rounded-full absolute -top-1/2 -left-1/4" vid="85"></div>
+                
+                <div class="sticker floating top-40 right-40 text-pink-500" vid="86">🎀 Impact</div>
+                <div class="sticker floating bottom-40 left-40 text-teal-600" vid="87">🌿 Truth</div>
+
+                <div class="relative z-10 w-full" vid="88">
+                    <h1 class="font-bubble text-6xl text-pink-700 mb-4" vid="89">you can build a personal brand</h1>
+                    <p class="text-4xl font-medium opacity-60 mb-16 italic" vid="90">and still leave nothing behind 💭</p>
+                    
+                    <div class="bg-teal-50 p-12 rounded-[50px] border-4 border-teal-200 mb-12 max-w-3xl mx-auto shadow-sm" vid="91">
+                        <p class="text-4xl font-bubble text-teal-700 leading-snug" vid="92">
+                            i shared climate roles →<br vid="93">thousands found jobs 🌱
+                        </p>
+                    </div>
+                    
+                    <p class="text-5xl font-bubble text-pink-600 mb-8" vid="94">that’s what stayed with me ✨</p>
+                    
+                    <div class="bg-white inline-block px-12 py-6 rounded-full shadow-md border-2 border-pink-100" vid="95">
+                        <p class="text-4xl font-semibold text-pink-500" vid="96">what stayed with you? 💌</p>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <script vid="97">
+        let currentSlide = 0;
+        const totalSlides = 9;
+        const slider = document.getElementById('slider');
+        const dotsContainer = document.getElementById('dots-container');
+
+        
+        for (let i = 0; i < totalSlides; i++) {
+            const dot = document.createElement('div');
+            dot.className = `dot ${i === 0 ? 'active' : ''}`;
+            dot.onclick = () => goToSlide(i);
+            dotsContainer.appendChild(dot);
+        }
+
+        function updateDots() {
+            const dots = document.querySelectorAll('.dot');
+            dots.forEach((dot, index) => {
+                dot.className = `dot ${index === currentSlide ? 'active' : ''}`;
+            });
+        }
+
+        function moveSlide(direction) {
+            currentSlide = (currentSlide + direction + totalSlides) % totalSlides;
+            slider.style.transform = `translateX(-${currentSlide * 1080}px)`;
+            updateDots();
+        }
+
+        function goToSlide(index) {
+            currentSlide = index;
+            slider.style.transform = `translateX(-${currentSlide * 1080}px)`;
+            updateDots();
+        }
+
+        
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'ArrowRight') moveSlide(1);
+            if (e.key === 'ArrowLeft') moveSlide(-1);
+        });
+    </script>
+
+</body></html>

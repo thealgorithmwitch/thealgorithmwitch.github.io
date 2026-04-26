@@ -1938,7 +1938,7 @@
   </div>
 
 <script>
-    window.CONTRACT_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbzp9YbWpWHyBxH0YxMIGOUqFOKIa-oyWukdBHPQeG3gUnUV3JEHYOej4nyL6Ss9rlQwww/exec";
+    window.CONTRACT_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbwm2OjK_OpbX9H_hptipKwIy811qXFUIYXsux_QlyZDOeQREokzWKDd3osd1ddC4gxyBA/exec";
 
     window.CONTRACT_BACKEND_CONFIG = window.CONTRACT_BACKEND_CONFIG || {};
 
@@ -1946,6 +1946,7 @@
       let backendConfig = window.CONTRACT_BACKEND_CONFIG || {};
       window.CONTRACT_BACKEND_CONFIG = backendConfig;
       const FORM_STORAGE_KEY = "aw_contract_mce_trial_2026";
+      const SIGNATURE_STORAGE_KEY = `${FORM_STORAGE_KEY}_signature`;
       const CONTRACT_META = {
         contractorName: "Cassandre Arkema",
         contractTitle: "Monthly Content Engine Agreement",
@@ -2067,6 +2068,7 @@
           this.ctx.lineTo(point.x, point.y);
           this.ctx.stroke();
           this.ctx.closePath();
+          window.dispatchEvent(new CustomEvent("contract-signature-drawn"));
           this.lastPoint = null;
         }
 
@@ -2261,7 +2263,17 @@
         return date.toLocaleDateString(undefined, { year: "numeric", month: "long", day: "numeric" });
       };
 
-      const currentSignature = () => visiblePad?.exportDataUrl?.() || visiblePad?.savedDataUrl || modalPad?.exportDataUrl?.() || modalPad?.savedDataUrl || "";
+      const currentSignature = () => {
+        try {
+          const saved = localStorage.getItem(SIGNATURE_STORAGE_KEY);
+          if (saved) return saved;
+        } catch (_) {}
+        return visiblePad?.exportDataUrl?.()
+          || visiblePad?.savedDataUrl
+          || modalPad?.exportDataUrl?.()
+          || modalPad?.savedDataUrl
+          || "";
+      };
 
       const syncPads = (dataUrl) => {
         visiblePad?.clear?.(false);
@@ -2298,6 +2310,14 @@
         }
       };
 
+      try {
+        const savedSignature = localStorage.getItem(SIGNATURE_STORAGE_KEY);
+        if (savedSignature) {
+          syncPads(savedSignature);
+          updateSignatureStatus("Saved signature loaded.", "saved");
+        }
+      } catch (_) {}
+
       const updateSendStatus = (message, state = "idle") => {
         sendStatus.textContent = message;
         sendStatus.dataset.state = state;
@@ -2329,14 +2349,18 @@
       };
 
       const saveSignature = (pad) => {
-        if (!pad) return;
+        if (!pad) return false;
         const dataUrl = pad.exportDataUrl() || pad.savedDataUrl;
         if (!dataUrl) {
           updateSignatureStatus("No signature detected yet. Draw a signature before saving.", "error");
-          return;
+          return false;
         }
         syncPads(dataUrl);
+        localStorage.setItem(SIGNATURE_STORAGE_KEY, dataUrl);
+        saveFormState();
+        updateSignatureStatus("Signature saved.", "saved");
         setSignatureState("saved");
+        return true;
       };
 
       const buildEmailContractHtml = () => {
@@ -2468,6 +2492,11 @@
       };
 
       const sendSignedContract = async () => {
+        if (!currentSignature()) {
+          updateSendStatus("Please save the client signature before sending the contract.", "error");
+          openModal();
+          return;
+        }
         const errors = validateBeforeSend();
         if (errors.length) {
           updateSendStatus(errors.join(" "), "error");
@@ -2526,6 +2555,9 @@
       document.getElementById("saveSignatureButton")?.addEventListener("click", () => saveSignature(visiblePad));
       document.getElementById("clearSignatureButton")?.addEventListener("click", () => {
         syncPads("");
+        try {
+          localStorage.removeItem(SIGNATURE_STORAGE_KEY);
+        } catch (_) {}
         updateSignatureStatus("Signature cleared.", "idle");
       });
       document.getElementById("modalSaveButton")?.addEventListener("click", () => {
@@ -2534,6 +2566,9 @@
       });
       document.getElementById("modalClearButton")?.addEventListener("click", () => {
         syncPads("");
+        try {
+          localStorage.removeItem(SIGNATURE_STORAGE_KEY);
+        } catch (_) {}
         updateSignatureStatus("Signature cleared.", "idle");
       });
       document.getElementById("modalCloseButton")?.addEventListener("click", closeModal);
@@ -2555,6 +2590,15 @@
       const printHandler = () => window.print();
       document.getElementById("printButton")?.addEventListener("click", () => { setPrintState(); printHandler(); });
       document.getElementById("mobilePrintButton")?.addEventListener("click", () => { setPrintState(); printHandler(); });
+
+      window.addEventListener("contract-signature-drawn", () => {
+        const dataUrl = currentSignature();
+        if (!dataUrl) return;
+        syncPads(dataUrl);
+        localStorage.setItem(SIGNATURE_STORAGE_KEY, dataUrl);
+        saveFormState();
+        updateSignatureStatus("Signature auto-saved.", "saved");
+      });
 
       // Initialize signature state based on whether a signature exists
       setSignatureState(currentSignature() ? "saved" : "pending");

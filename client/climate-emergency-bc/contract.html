@@ -2311,9 +2311,9 @@
         const signatureDataUrl = currentSignature();
 
         clone.querySelectorAll(".screen-only, .mobile-bar, .modal").forEach((node) => node.remove());
-        // Remove non-printable status panels from the email HTML
         clone.querySelectorAll(".signature-status, .send-status, .send-panel").forEach((node) => node.remove());
         clone.querySelectorAll(".signature-canvas").forEach((node) => node.remove());
+        clone.querySelectorAll(".ph, .ph-fill, .ph-bold").forEach((node) => node.remove());
         clone.querySelectorAll("input, textarea").forEach((field) => {
           const value = field.value.trim() || field.placeholder || field.getAttribute("value") || "";
           const replacement = document.createElement("div");
@@ -2338,34 +2338,46 @@
   <meta charset="UTF-8">
   <title>${escapeHtml(CONTRACT_META.contractTitle)}</title>
   <style>
-    @page { size: Letter; margin: 0.55in; }
+    @page { size: Letter; margin: 0.48in 0.58in 0.52in; }
     * { box-sizing: border-box; }
-    body { margin: 0; font-family: Inter, Arial, Helvetica, sans-serif; background: #05020a; color: #e5e7eb; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-    .page-wrap { width: 100%; max-width: 6.65in; margin: 0 auto; padding: 0; }
+    html, body { margin: 0; padding: 0; background: #05020a; color: #e5e7eb; -webkit-print-color-adjust: exact; print-color-adjust: exact; overflow: visible; }
+    body { font-family: Inter, Arial, Helvetica, sans-serif; }
+    body::before, body::after { content: ""; position: fixed; left: 0; right: 0; height: 0.12in; background: #2e1065; z-index: 9999; }
+    body::before { top: 0; }
+    body::after { bottom: 0; }
+    .page-wrap { width: 100%; max-width: 6.85in; margin: 0 auto; padding: 0; }
     .print-header { display: none; }
-    .eyebrow { display: inline-block; border: 1px solid rgba(168, 85, 247, 0.45); background: rgba(168, 85, 247, 0.08); padding: 0.05in 0.08in; margin-bottom: 0.1in; font-size: 7.4pt; text-transform: uppercase; letter-spacing: 0.06em; color: #c4b5fd; }
-    .header-title { margin: 0 0 0.12in; font-family: "Cinzel Decorative", Georgia, serif; font-size: 24pt; line-height: 1.12; font-weight: 400; color: #fff; }
+    .ph, .ph-fill, .ph-bold, .screen-only, .mobile-bar, .modal, .signature-canvas, .send-panel, .signature-status, .send-status, button, nav { display: none !important; }
+    header { margin: 0 0 0.2in; padding: 0; }
+    .eyebrow { display: inline-block; border: 1px solid rgba(168, 85, 247, 0.45); background: rgba(168, 85, 247, 0.1); padding: 0.035in 0.065in; margin: 0 0 0.07in; font-size: 6.6pt; line-height: 1.2; text-transform: uppercase; letter-spacing: 0.08em; color: #c4b5fd; }
+    .header-title { margin: 0 0 0.09in; font-family: "Cinzel Decorative", Georgia, serif; font-size: 20pt; line-height: 1.08; font-weight: 400; color: #fff; }
     .header-title br { display: none; }
     .header-title .accent { color: #fbbf24; font-style: italic; }
-    .header-rule { width: 1in; height: 1px; background: linear-gradient(to right, #a855f7, rgba(251, 191, 36, 0.8), transparent); }
-    .section-shell { display: block; gap: 0; margin-top: 0; margin-bottom: 0.26in; break-inside: avoid; page-break-inside: avoid; }
+    .header-rule { width: 0.85in; height: 1px; background: linear-gradient(to right, #a855f7, rgba(251, 191, 36, 0.8), transparent); }
+    .section-shell { display: block; gap: 0; margin-top: 0; margin-bottom: 0.18in; break-inside: auto; page-break-inside: auto; }
     .section-num { display: none; }
     .section-content { flex: 1; }
-    .section-title { margin: 0 0 0.1in; padding-bottom: 0.05in; border-bottom: 1px solid rgba(168, 85, 247, 0.35); font-family: "Cinzel Decorative", Georgia, serif; font-size: 11pt; text-transform: uppercase; letter-spacing: 0.04em; font-weight: 400; color: #fff; }
-    .rune-card, .send-panel, .chip, .practitioner-seal { border: 1px solid rgba(168, 85, 247, 0.35); border-radius: 0.08in; padding: 0.16in; background: rgba(13, 7, 24, 0.94); color: #e5e7eb; break-inside: avoid; page-break-inside: avoid; }
-    .hero-grid, .card-grid, .signature-grid, .field-grid, .chip-list { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.16in; }
-    .meta-kicker, .field-label, .practitioner-role { font-size: 7.4pt; text-transform: uppercase; letter-spacing: 0.06em; color: #c4b5fd; }
-    .meta-title { margin: 0 0 0.06in; font-family: "Playfair Display", Georgia, serif; font-size: 14pt; font-style: italic; color: #fff; }
-    .meta-subtitle { margin: 0 0 0.06in; font-size: 7.4pt; text-transform: uppercase; letter-spacing: 0.06em; color: #c4b5fd; }
-    .section-copy, .section-copy li, .chip p, .detail-row { line-height: 1.55; color: #e5e7eb; font-size: 9pt; }
-    .section-copy p { margin: 0 0 0.1in; }
-    .section-copy ul { margin: 0; padding-left: 0.18in; }
-    .chip h4 { margin: 0 0 0.06in; font-size: 7.4pt; text-transform: uppercase; letter-spacing: 0.06em; color: #c4b5fd; }
-    .detail-row { display: flex; justify-content: space-between; gap: 8px; padding-bottom: 0.07in; border-bottom: 1px solid rgba(168, 85, 247, 0.28); font-size: 7.4pt; text-transform: uppercase; color: #c4b5fd; }
-    .pdf-field-value { min-height: 0.24in; padding: 0.05in 0; border-bottom: 1px solid rgba(168, 85, 247, 0.45); white-space: pre-wrap; font-size: 9pt; line-height: 1.35; color: #e5e7eb; }
-    .signature-area { min-height: 0.85in; border: 1px solid rgba(168, 85, 247, 0.35); border-radius: 0.08in; background: rgba(13, 7, 24, 0.94); overflow: hidden; }
-    .signature-image { width: 100%; height: 0.72in; object-fit: contain; padding: 0.05in; }
-    .practitioner-script { margin: 0; font-family: "Playfair Display", Georgia, serif; font-size: 18pt; font-style: italic; color: #fff; }
+    .section-title { margin: 0 0 0.075in; padding-bottom: 0.04in; border-bottom: 1px solid rgba(168, 85, 247, 0.35); font-family: "Cinzel Decorative", Georgia, serif; font-size: 9.4pt; line-height: 1.25; text-transform: uppercase; letter-spacing: 0.035em; font-weight: 400; color: #fff; word-break: normal; overflow-wrap: normal; hyphens: none; }
+    .rune-card, .chip, .practitioner-seal { border: 1px solid rgba(168, 85, 247, 0.35); border-radius: 0.07in; padding: 0.12in; background: rgba(13, 7, 24, 0.94); color: #e5e7eb; box-shadow: none; backdrop-filter: none; -webkit-backdrop-filter: none; break-inside: avoid; page-break-inside: avoid; }
+    .signature-grid > * { break-inside: avoid; page-break-inside: avoid; }
+    .hero-grid, .card-grid, .signature-grid, .field-grid, .chip-list { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.12in; }
+    .meta-kicker, .field-label, .practitioner-role, .meta-subtitle, .detail-row, .chip h4 { font-size: 6.4pt; line-height: 1.25; text-transform: uppercase; letter-spacing: 0.04em; color: #c4b5fd; }
+    .meta-title { margin: 0 0 0.04in; font-family: "Playfair Display", Georgia, serif; font-size: 11.5pt; line-height: 1.2; font-style: italic; color: #fff; }
+    .section-copy, .section-copy li, .chip p { line-height: 1.42; color: #e5e7eb; font-size: 8pt; word-break: normal; overflow-wrap: normal; hyphens: none; letter-spacing: normal; word-spacing: normal; }
+    .section-copy p { margin: 0 0 0.07in; }
+    .section-copy ul { margin: 0; padding-left: 0.16in; }
+    .chip h4 { margin: 0 0 0.04in; }
+    .detail-row { display: flex; justify-content: space-between; gap: 8px; padding-bottom: 0.05in; border-bottom: 1px solid rgba(168, 85, 247, 0.28); }
+    .detail-pairs { gap: 0.06in; }
+    .field-grid { margin-top: 0.08in; }
+    .field { gap: 0.03in; }
+    .pdf-field-value { min-height: 0.18in; padding: 0.03in 0; border-bottom: 1px solid rgba(168, 85, 247, 0.45); white-space: pre-wrap; font-size: 8pt; line-height: 1.25; color: #e5e7eb; }
+    .signature-area { min-height: 0.68in; border: 1px solid rgba(168, 85, 247, 0.35); border-radius: 0.07in; background: rgba(13, 7, 24, 0.94); overflow: hidden; }
+    .signature-image { display: block; visibility: visible; opacity: 1; width: 100%; height: 0.56in; object-fit: contain; padding: 0.03in; }
+    .signature-image:not([src]), .signature-image[src=""] { display: none; }
+    .practitioner-script { margin: 0; font-family: "Playfair Display", Georgia, serif; font-size: 15pt; font-style: italic; color: #fff; }
+    .font-serif-heading { font-size: 22pt; color: #fbbf24; }
+    a[href]::after { content: ""; }
     @media (max-width: 700px) {
       .hero-grid, .card-grid, .signature-grid, .field-grid, .chip-list { grid-template-columns: 1fr; }
       .section-shell { display: block; }

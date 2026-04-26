@@ -114,7 +114,7 @@ async function waitForAssets(page) {
 
 function buildScryerCaptureStyles(width, height) {
   return `
-    @import url('https://fonts.googleapis.com/css2?family=Noto+Color+Emoji&display=swap');
+    @import url('https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@400;700;900&family=Playfair+Display:wght@400;600;700&family=JetBrains+Mono:wght@400;700&family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@400;500;700&family=DM+Serif+Display:ital@0;1&family=Cormorant+Garamond:wght@400;500;600;700&family=Noto+Color+Emoji&display=swap');
     html, body {
       margin: 0 !important;
       padding: 0 !important;
@@ -141,19 +141,16 @@ function buildScryerCaptureStyles(width, height) {
     }
 
     .slide:not([style*="padding"]), .page:not([style*="padding"]) {
-      padding: var(--scryer-safe-padding, 96px) !important;
-    }
-
-    .slide > *, .page > * {
-      max-width: calc(${width}px - 192px) !important;
-    }
-
-    body, .slide, .page, .slide *, .page * {
-      font-family: "Inter", "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", sans-serif !important;
+      padding: var(--scryer-safe-padding, 72px) !important;
     }
 
     body {
-      --scryer-safe-padding: 96px;
+      --scryer-safe-padding: 72px;
+      font-family: "Inter", "Space Grotesk", "JetBrains Mono", "Playfair Display", "Cinzel Decorative", "DM Serif Display", "Cormorant Garamond", "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", sans-serif !important;
+    }
+
+    button, .button, [role="button"], svg, i[class^="ph-"], i[class*=" ph-"] {
+      visibility: visible !important;
     }
 
     @media (prefers-reduced-motion: reduce) {
@@ -216,22 +213,32 @@ async function captureElements(page, selector, outputDir, payload) {
     });
     await page.evaluate(({ selector: selectorValue, index: itemIndex, width, height }) => {
       const nodes = Array.from(document.querySelectorAll(selectorValue));
-      const target = nodes[itemIndex];
-      if (!target) throw new Error(`Could not find slide ${itemIndex + 1}`);
+      const original = nodes[itemIndex];
+      if (!original) throw new Error(`Could not find slide ${itemIndex + 1}`);
       window.__scryerRestore = [];
-      const safePadding = 96;
+      const safePadding = 72;
       const save = (el) => {
         window.__scryerRestore.push([el, el.getAttribute("style")]);
       };
       save(document.documentElement);
       save(document.body);
-      save(target);
-      const computed = window.getComputedStyle(target);
+      const computed = window.getComputedStyle(original);
       const bodyComputed = window.getComputedStyle(document.body);
       const background =
         computed.backgroundColor && computed.backgroundColor !== "rgba(0, 0, 0, 0)"
           ? computed.backgroundColor
           : bodyComputed.backgroundColor || "transparent";
+      const backgroundImage =
+        computed.backgroundImage && computed.backgroundImage !== "none"
+          ? computed.backgroundImage
+          : bodyComputed.backgroundImage || "none";
+      const colorMatch = background.match(/rgba?\(([^)]+)\)/);
+      let isPlainDark = false;
+      if (colorMatch) {
+        const [r, g, b] = colorMatch[1].split(",").slice(0, 3).map((value) => Number.parseFloat(value.trim()) || 0);
+        const luminance = (0.2126 * r + 0.7152 * g + 0.0722 * b) / 255;
+        isPlainDark = backgroundImage === "none" && luminance < 0.35;
+      }
       document.documentElement.style.cssText += `
         margin:0!important;
         padding:0!important;
@@ -248,48 +255,159 @@ async function captureElements(page, selector, outputDir, payload) {
         background:${background}!important;
       `;
       nodes.forEach((node) => {
-        if (node !== target) {
+        if (node !== original) {
           save(node);
           node.style.display = "none";
         }
       });
-      target.style.cssText += `
-        display:flex!important;
-        position:fixed!important;
-        inset:0!important;
-        width:${width}px!important;
-        height:${height}px!important;
-        min-width:${width}px!important;
-        min-height:${height}px!important;
-        max-width:${width}px!important;
-        max-height:${height}px!important;
-        margin:0!important;
-        transform:none!important;
-        overflow:hidden!important;
-        box-sizing:border-box!important;
-        z-index:2147483647!important;
-        align-items:center!important;
-        justify-content:center!important;
-        padding:${safePadding}px!important;
-        background:${background}!important;
-      `;
 
-      const inner = document.createElement("div");
-      inner.id = "__scryer_fit_inner__";
-      inner.style.display = "block";
-      inner.style.transformOrigin = "center center";
-      inner.style.willChange = "transform";
-      while (target.firstChild) {
-        inner.appendChild(target.firstChild);
+      document.getElementById("__scryer_capture_root__")?.remove();
+
+      const root = document.createElement("div");
+      root.id = "__scryer_capture_root__";
+      root.style.position = "fixed";
+      root.style.inset = "0";
+      root.style.width = `${width}px`;
+      root.style.height = `${height}px`;
+      root.style.overflow = "hidden";
+      root.style.background = background;
+      root.style.display = "flex";
+      root.style.alignItems = "center";
+      root.style.justifyContent = "center";
+      root.style.zIndex = "2147483647";
+
+      if (isPlainDark) {
+        const grid = document.createElement("div");
+        grid.style.position = "absolute";
+        grid.style.inset = "0";
+        grid.style.pointerEvents = "none";
+        grid.style.opacity = "0.08";
+        grid.style.backgroundImage = "linear-gradient(rgba(255,255,255,0.18) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.18) 1px, transparent 1px)";
+        grid.style.backgroundSize = "48px 48px";
+        grid.style.zIndex = "0";
+        root.appendChild(grid);
       }
-      target.appendChild(inner);
-      const innerRect = inner.getBoundingClientRect();
-      const scale = Math.min(
-        1,
-        (width - safePadding * 2) / Math.max(innerRect.width, 1),
-        (height - safePadding * 2) / Math.max(innerRect.height, 1)
-      );
-      inner.style.transform = `scale(${scale})`;
+
+      const clone = original.cloneNode(true);
+      clone.style.width = `${width}px`;
+      clone.style.height = `${height}px`;
+      clone.style.minWidth = `${width}px`;
+      clone.style.minHeight = `${height}px`;
+      clone.style.maxWidth = `${width}px`;
+      clone.style.maxHeight = `${height}px`;
+      clone.style.margin = "0";
+      clone.style.position = "relative";
+      clone.style.left = "auto";
+      clone.style.right = "auto";
+      clone.style.top = "auto";
+      clone.style.bottom = "auto";
+      clone.style.transform = "none";
+      clone.style.boxSizing = "border-box";
+      clone.style.overflow = "hidden";
+      clone.style.background = background;
+      clone.style.zIndex = "1";
+
+      const fitInner = document.createElement("div");
+      fitInner.id = "__scryer_fit_inner__";
+      fitInner.style.display = "block";
+      fitInner.style.transformOrigin = "center center";
+      fitInner.style.willChange = "transform";
+      fitInner.appendChild(clone);
+      root.appendChild(fitInner);
+      document.body.appendChild(root);
+
+      const visibleDescendants = () => Array.from(clone.querySelectorAll("*")).filter((el) => {
+        const rect = el.getBoundingClientRect();
+        const style = window.getComputedStyle(el);
+        return rect.width > 0 && rect.height > 0 && style.display !== "none" && style.visibility !== "hidden" && style.opacity !== "0";
+      });
+      const overlapArea = (a, b) => {
+        const left = Math.max(a.left, b.left);
+        const right = Math.min(a.right, b.right);
+        const top = Math.max(a.top, b.top);
+        const bottom = Math.min(a.bottom, b.bottom);
+        if (right <= left || bottom <= top) return 0;
+        return (right - left) * (bottom - top);
+      };
+      const nudgeBadge = (el) => {
+        const style = window.getComputedStyle(el);
+        if (!/(absolute|fixed|sticky)/.test(style.position)) return;
+        const rect = el.getBoundingClientRect();
+        if (rect.left < 48) el.style.left = "48px";
+        if (rect.right > width - 48) el.style.right = "48px";
+        if (rect.top < 48) el.style.top = "48px";
+        if (rect.bottom > height - 48) el.style.bottom = "48px";
+      };
+      const shrinkText = (el) => {
+        const text = (el.textContent || "").trim();
+        if (!text) return;
+        const style = window.getComputedStyle(el);
+        const fontSize = Number.parseFloat(style.fontSize);
+        if (Number.isFinite(fontSize) && fontSize > 10) {
+          const reduced = Math.max(fontSize * 0.88, fontSize * 0.94);
+          el.style.fontSize = `${reduced}px`;
+        }
+        if (text.length > 18) {
+          el.style.maxWidth = `calc(${width}px - 144px)`;
+          el.style.whiteSpace = "normal";
+          el.style.overflowWrap = "break-word";
+        }
+      };
+      const expandGap = (parent) => {
+        if (!parent) return;
+        const style = window.getComputedStyle(parent);
+        if (!/(flex|grid)/.test(style.display)) return;
+        const baseGap = Number.parseFloat(style.gap) || 0;
+        const nextGap = Math.min(baseGap + 8, 16);
+        parent.style.gap = `${nextGap}px`;
+        parent.style.rowGap = `${nextGap}px`;
+        parent.style.columnGap = `${nextGap}px`;
+      };
+
+      for (let pass = 0; pass < 2; pass += 1) {
+        const candidates = visibleDescendants().slice(0, 120);
+        for (let a = 0; a < candidates.length; a += 1) {
+          for (let b = a + 1; b < candidates.length; b += 1) {
+            const rectA = candidates[a].getBoundingClientRect();
+            const rectB = candidates[b].getBoundingClientRect();
+            if (overlapArea(rectA, rectB) > 8) {
+              expandGap(candidates[a].parentElement);
+              expandGap(candidates[b].parentElement);
+              shrinkText(candidates[a]);
+              shrinkText(candidates[b]);
+              nudgeBadge(candidates[a]);
+              nudgeBadge(candidates[b]);
+            }
+          }
+        }
+      }
+
+      const descendants = visibleDescendants();
+      const safeWidth = width - safePadding * 2;
+      const safeHeight = height - safePadding * 2;
+      let minLeft = width;
+      let minTop = height;
+      let maxRight = 0;
+      let maxBottom = 0;
+      descendants.forEach((el) => {
+        const rect = el.getBoundingClientRect();
+        minLeft = Math.min(minLeft, rect.left);
+        minTop = Math.min(minTop, rect.top);
+        maxRight = Math.max(maxRight, rect.right);
+        maxBottom = Math.max(maxBottom, rect.bottom);
+      });
+      const contentWidth = Math.max(maxRight - minLeft, 1);
+      const contentHeight = Math.max(maxBottom - minTop, 1);
+      const rawScale = Math.min(1, safeWidth / contentWidth, safeHeight / contentHeight);
+      const scaleAtMin = 0.88;
+      const fitsAtMinScale = contentWidth * scaleAtMin <= safeWidth && contentHeight * scaleAtMin <= safeHeight;
+      let finalScale = rawScale;
+      if (rawScale < scaleAtMin) {
+        finalScale = fitsAtMinScale ? scaleAtMin : rawScale;
+      }
+      if (contentWidth > safeWidth || contentHeight > safeHeight) {
+        fitInner.style.transform = `scale(${finalScale})`;
+      }
     }, {
       selector,
       index,
@@ -308,15 +426,8 @@ async function captureElements(page, selector, outputDir, payload) {
       }
     });
     await page.evaluate(() => {
+      document.getElementById("__scryer_capture_root__")?.remove();
       if (window.__scryerRestore) {
-        const inner = document.getElementById("__scryer_fit_inner__");
-        if (inner?.parentElement) {
-          const parent = inner.parentElement;
-          while (inner.firstChild) {
-            parent.insertBefore(inner.firstChild, inner);
-          }
-          inner.remove();
-        }
         for (const [el, style] of window.__scryerRestore.reverse()) {
           if (style === null) el.removeAttribute("style");
           else el.setAttribute("style", style);

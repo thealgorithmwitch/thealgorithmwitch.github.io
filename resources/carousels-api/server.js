@@ -27,7 +27,8 @@ app.get("/health", (_request, response) => {
     ok: true,
     service: "html-scryer-api",
     executablePath,
-    node: process.version
+    node: process.version,
+    warning: "Render may still miss some emoji glyphs. Replace critical emoji with inline SVG or image assets for deterministic exports."
   });
 });
 
@@ -87,12 +88,27 @@ async function waitForAssets(page) {
   await page.waitForFunction(() => document.readyState === "complete", { timeout: 10000 }).catch(() => {});
   await page.evaluate(async () => {
     const imgs = Array.from(document.images || []);
+    const stylesheets = Array.from(document.querySelectorAll('link[rel="stylesheet"]'));
     await Promise.allSettled(imgs.map((img) => img.complete ? Promise.resolve() : new Promise((resolve) => {
       img.onload = resolve;
       img.onerror = resolve;
       setTimeout(resolve, 3000);
     })));
+    await Promise.allSettled(stylesheets.map((sheet) => new Promise((resolve) => {
+      if (sheet.sheet) {
+        resolve();
+        return;
+      }
+      sheet.addEventListener("load", resolve, { once: true });
+      sheet.addEventListener("error", resolve, { once: true });
+      setTimeout(resolve, 3000);
+    })));
   }).catch(() => {});
+  await page.waitForFunction(() => {
+    const icons = Array.from(document.querySelectorAll('i[class^="ph-"], i[class*=" ph-"]'));
+    if (!icons.length) return true;
+    return icons.every((icon) => (icon.textContent || "").trim().length > 0);
+  }, { timeout: 1000 }).catch(() => {});
   await new Promise((resolve) => setTimeout(resolve, 500));
 }
 
@@ -110,110 +126,93 @@ async function captureFullPage(page, outputPath, payload) {
 }
 
 async function captureElements(page, selector, outputDir, payload) {
-  if (payload.mode === "slide") {
-    const slideCount = await page.$$eval(".slide", (nodes) => nodes.length).catch(() => 0);
-    if (!slideCount) {
-      throw new Error('No elements matched selector ".slide".');
-    }
-  }
-
-  let handles;
+  let count;
   try {
-    handles = await page.$$(selector);
-  } catch (error) {
+    count = await page.$$eval(selector, (nodes) => nodes.length);
+  } catch (_error) {
     throw new Error(`Invalid selector "${selector}".`);
   }
-
-  if (!handles.length) {
-    throw new Error(`No elements matched selector "${selector}".`);
-  }
+  if (!count) throw new Error(`No elements matched selector "${selector}".`);
 
   const files = [];
-  for (const [index, handle] of handles.entries()) {
+  for (let index = 0; index < count; index += 1) {
     const filename = `slide-${String(index + 1).padStart(2, "0")}.png`;
     const outputPath = path.join(outputDir, filename);
-    const backgroundColor = await handle.evaluate((element, width, height) => {
-      const computed = window.getComputedStyle(element);
-      const bodyComputed = window.getComputedStyle(document.body);
-      const resolvedBackground = computed.backgroundColor && computed.backgroundColor !== "rgba(0, 0, 0, 0)"
-        ? computed.backgroundColor
-        : bodyComputed.backgroundColor;
-
-      const existingWrapper = document.getElementById("__html_scryer_capture_wrapper__");
-      if (existingWrapper) {
-        existingWrapper.remove();
-      }
-
-      const wrapper = document.createElement("div");
-      wrapper.id = "__html_scryer_capture_wrapper__";
-      wrapper.style.position = "fixed";
-      wrapper.style.left = "0";
-      wrapper.style.top = "0";
-      wrapper.style.width = `${width}px`;
-      wrapper.style.height = `${height}px`;
-      wrapper.style.overflow = "hidden";
-      wrapper.style.background = resolvedBackground;
-      wrapper.style.display = "flex";
-      wrapper.style.alignItems = "center";
-      wrapper.style.justifyContent = "center";
-      wrapper.style.zIndex = "2147483647";
-      wrapper.style.fontFamily = 'Inter, Arial, "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", sans-serif';
-
-      const clone = element.cloneNode(true);
-      clone.style.width = `${width}px`;
-      clone.style.height = `${height}px`;
-      clone.style.minHeight = `${height}px`;
-      clone.style.maxWidth = `${width}px`;
-      clone.style.boxSizing = "border-box";
-      clone.style.overflow = "hidden";
-      clone.style.transform = "none";
-      clone.style.left = "auto";
-      clone.style.right = "auto";
-      clone.style.margin = "0";
-      clone.style.fontFamily = 'Inter, Arial, "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", sans-serif';
-      clone.style.position = "relative";
-      clone.style.inset = "auto";
-      clone.style.display = "block";
-      clone.style.flexShrink = "0";
-      clone.style.maxHeight = `${height}px`;
-      if (!computed.backgroundColor || computed.backgroundColor === "rgba(0, 0, 0, 0)") {
-        clone.style.backgroundColor = resolvedBackground;
-      }
-
-      wrapper.appendChild(clone);
-      document.body.appendChild(wrapper);
-
-      return resolvedBackground;
-    }, payload.width, payload.height);
-    const clipWidth = payload.width;
-    const clipHeight = payload.height;
-    console.log("Capturing element", {
+    await page.evaluate(({ selector: selectorValue, index: itemIndex, width, height }) => {
+      const nodes = Array.from(document.querySelectorAll(selectorValue));
+      const target = nodes[itemIndex];
+      if (!target) throw new Error(`Could not find slide ${itemIndex + 1}`);
+      window.__scryerRestore = [];
+      const save = (el) => {
+        window.__scryerRestore.push([el, el.getAttribute("style")]);
+      };
+      save(document.documentElement);
+      save(document.body);
+      save(target);
+      document.documentElement.style.cssText += `
+        margin:0!important;
+        padding:0!important;
+        width:${width}px!important;
+        height:${height}px!important;
+        overflow:hidden!important;
+      `;
+      document.body.style.cssText += `
+        margin:0!important;
+        padding:0!important;
+        width:${width}px!important;
+        height:${height}px!important;
+        overflow:hidden!important;
+      `;
+      nodes.forEach((node) => {
+        if (node !== target) {
+          save(node);
+          node.style.display = "none";
+        }
+      });
+      target.style.cssText += `
+        display:block!important;
+        position:fixed!important;
+        inset:0!important;
+        width:${width}px!important;
+        height:${height}px!important;
+        min-width:${width}px!important;
+        min-height:${height}px!important;
+        max-width:${width}px!important;
+        max-height:${height}px!important;
+        margin:0!important;
+        transform:none!important;
+        overflow:hidden!important;
+        box-sizing:border-box!important;
+        z-index:2147483647!important;
+      `;
+    }, {
       selector,
-      index: index + 1,
-      width: clipWidth,
-      height: clipHeight,
-      clipWidth,
-      clipHeight,
-      backgroundColor
+      index,
+      width: payload.width,
+      height: payload.height
     });
+    await waitForAssets(page);
     await page.screenshot({
       path: outputPath,
       type: "png",
-      captureBeyondViewport: true,
       clip: {
         x: 0,
         y: 0,
-        width: clipWidth,
-        height: clipHeight
+        width: payload.width,
+        height: payload.height
       }
     });
     await page.evaluate(() => {
-      document.getElementById("__html_scryer_capture_wrapper__")?.remove();
+      if (window.__scryerRestore) {
+        for (const [el, style] of window.__scryerRestore.reverse()) {
+          if (style === null) el.removeAttribute("style");
+          else el.setAttribute("style", style);
+        }
+      }
+      delete window.__scryerRestore;
     });
     files.push(outputPath);
   }
-
-  await Promise.all(handles.map((handle) => handle.dispose()));
   return files;
 }
 
@@ -287,31 +286,27 @@ app.post("/api/export-html", async (request, response) => {
       content: `
         @import url('https://fonts.googleapis.com/css2?family=Noto+Color+Emoji&display=swap');
         html, body {
-          width: ${payload.width}px !important;
-          height: ${payload.height}px !important;
           margin: 0 !important;
           padding: 0 !important;
+          width: ${payload.width}px !important;
+          height: ${payload.height}px !important;
           overflow: hidden !important;
         }
-        body, .slide, .page {
-          font-family: Inter, Arial, "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", sans-serif !important;
+        *, *::before, *::after {
+          box-sizing: border-box !important;
         }
         .slide, .page {
           width: ${payload.width}px !important;
           height: ${payload.height}px !important;
+          min-width: ${payload.width}px !important;
           min-height: ${payload.height}px !important;
           max-width: ${payload.width}px !important;
-          box-sizing: border-box !important;
+          max-height: ${payload.height}px !important;
           overflow: hidden !important;
-          transform: none !important;
-          left: auto !important;
-          right: auto !important;
+          margin: 0 !important;
         }
-        .slide *, .page * {
-          box-sizing: border-box !important;
-        }
-        .slide > *, .page > * {
-          max-width: calc(${payload.width}px - 160px) !important;
+        body, .slide, .page, .slide *, .page * {
+          font-family: "Inter", "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", sans-serif !important;
         }
       `
     });
@@ -348,7 +343,8 @@ app.post("/api/export-html", async (request, response) => {
     }
     response.status(status).json({
       error: "Export failed",
-      detail: message
+      detail: message,
+      warning: "Emoji glyphs may not render consistently on Render. Replace critical emoji with inline SVG or image assets for deterministic exports."
     });
   }
 });

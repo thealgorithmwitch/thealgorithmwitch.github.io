@@ -1,19 +1,28 @@
 const express = require("express");
+const cors = require("cors");
 const puppeteer = require("puppeteer");
 const archiver = require("archiver");
-const fs = require("fs");
 const fsp = require("fs/promises");
 const os = require("os");
 const path = require("path");
 
 const app = express();
-const PORT = Number(process.env.PORT || 3000);
+const PORT = process.env.PORT || 3000;
 const MAX_HTML_SIZE = "5mb";
 const MIN_DIMENSION = 200;
 const MAX_DIMENSION = 4000;
 
+app.use(cors({
+  origin: "*",
+  methods: ["GET", "POST", "OPTIONS"],
+  allowedHeaders: ["Content-Type"]
+}));
 app.use(express.json({ limit: MAX_HTML_SIZE }));
 app.use(express.static(__dirname));
+
+app.get("/health", (_request, response) => {
+  response.json({ ok: true, service: "html-scryer-api" });
+});
 
 function sanitizeCodexName(value) {
   const cleaned = String(value || "html-scryer-export")
@@ -208,5 +217,5 @@ app.post("/api/export-html", async (request, response) => {
 });
 
 app.listen(PORT, () => {
-  console.log(`Carousel exporter listening on http://localhost:${PORT}`);
+  console.log(`HTML Scryer API listening on ${PORT}`);
 });

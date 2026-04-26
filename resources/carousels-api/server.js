@@ -219,6 +219,7 @@ async function captureElements(page, selector, outputDir, payload) {
       const target = nodes[itemIndex];
       if (!target) throw new Error(`Could not find slide ${itemIndex + 1}`);
       window.__scryerRestore = [];
+      const safePadding = 96;
       const save = (el) => {
         window.__scryerRestore.push([el, el.getAttribute("style")]);
       };
@@ -253,7 +254,7 @@ async function captureElements(page, selector, outputDir, payload) {
         }
       });
       target.style.cssText += `
-        display:block!important;
+        display:flex!important;
         position:fixed!important;
         inset:0!important;
         width:${width}px!important;
@@ -267,11 +268,28 @@ async function captureElements(page, selector, outputDir, payload) {
         overflow:hidden!important;
         box-sizing:border-box!important;
         z-index:2147483647!important;
-        display:flex!important;
         align-items:center!important;
         justify-content:center!important;
+        padding:${safePadding}px!important;
         background:${background}!important;
       `;
+
+      const inner = document.createElement("div");
+      inner.id = "__scryer_fit_inner__";
+      inner.style.display = "block";
+      inner.style.transformOrigin = "center center";
+      inner.style.willChange = "transform";
+      while (target.firstChild) {
+        inner.appendChild(target.firstChild);
+      }
+      target.appendChild(inner);
+      const innerRect = inner.getBoundingClientRect();
+      const scale = Math.min(
+        1,
+        (width - safePadding * 2) / Math.max(innerRect.width, 1),
+        (height - safePadding * 2) / Math.max(innerRect.height, 1)
+      );
+      inner.style.transform = `scale(${scale})`;
     }, {
       selector,
       index,
@@ -291,6 +309,14 @@ async function captureElements(page, selector, outputDir, payload) {
     });
     await page.evaluate(() => {
       if (window.__scryerRestore) {
+        const inner = document.getElementById("__scryer_fit_inner__");
+        if (inner?.parentElement) {
+          const parent = inner.parentElement;
+          while (inner.firstChild) {
+            parent.insertBefore(inner.firstChild, inner);
+          }
+          inner.remove();
+        }
         for (const [el, style] of window.__scryerRestore.reverse()) {
           if (style === null) el.removeAttribute("style");
           else el.setAttribute("style", style);

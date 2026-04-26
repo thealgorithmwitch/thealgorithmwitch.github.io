@@ -275,39 +275,42 @@
     }
 
     .sidebar.collapsed .brand-row {
-      position: relative !important;
-      width: var(--sidebar-collapsed) !important;
+      width: 100% !important;
       height: 3rem !important;
+      min-height: 3rem !important;
       padding: 0 !important;
       margin: 0 0 1.25rem !important;
-      display: block !important;
+      display: grid !important;
+      place-items: center !important;
     }
 
     .sidebar.collapsed .brand-sigil {
-      position: absolute !important;
-      left: 50% !important;
-      top: 0 !important;
-      transform: translateX(-50%) !important;
+      position: relative !important;
+      inset: auto !important;
+      transform: none !important;
       width: 2rem !important;
       height: 2rem !important;
-      border-radius: 0.65rem;
+      border-radius: 0.65rem !important;
       margin: 0 !important;
-      flex: none !important;
+      flex: 0 0 2rem !important;
+      overflow: hidden !important;
     }
 
     .sidebar.collapsed .brand-sigil .relative {
-      width: 100%;
-      height: 100%;
+      width: 100% !important;
+      height: 100% !important;
+      display: grid !important;
+      place-items: center !important;
     }
 
     .sidebar.collapsed .brand-sigil .sparkle {
-      font-size: 1.1rem;
+      font-size: 1.08rem !important;
     }
 
     .sidebar.collapsed .brand-sigil .sparkle-accent {
-      top: -0.22rem;
-      right: -0.26rem;
-      font-size: 0.5rem;
+      top: 0.18rem !important;
+      right: 0.18rem !important;
+      font-size: 0.38rem !important;
     }
 
     .sidebar.collapsed .toggle-btn {
@@ -1189,7 +1192,7 @@
     @media print {
       @page {
         size: Letter;
-        margin: 0.55in 0.58in 0.62in;
+        margin: 0.62in 0.58in 0.68in;
       }
 
       html,
@@ -1205,17 +1208,9 @@
 
       body::before,
       body::after {
-        content: "";
-        position: fixed;
-        left: 0;
-        right: 0;
-        height: 0.14in;
-        background: #2e1065;
-        z-index: 9999;
+        display: none !important;
+        content: none !important;
       }
-
-      body::before { top: 0; }
-      body::after { bottom: 0; }
 
       .stars,
       .sidebar,
@@ -1247,7 +1242,9 @@
         width: 100% !important;
         max-width: 6.75in !important;
         margin: 0 auto !important;
-        padding: 0 !important;
+        padding: 0.18in 0 0.18in !important;
+        border-top: 0.12in solid #2e1065 !important;
+        border-bottom: 0.12in solid #2e1065 !important;
       }
 
       header {
@@ -1292,7 +1289,7 @@
 
       .section-shell {
         display: block !important;
-        margin: 0 0 0.22in !important;
+        margin: 0 0 0.18in !important;
         padding: 0 !important;
         break-inside: avoid !important;
         page-break-inside: avoid !important;
@@ -1321,7 +1318,7 @@
         background: rgba(13, 7, 24, 0.94) !important;
         border: 1px solid rgba(168,85,247,0.35) !important;
         border-radius: 0.07in !important;
-        padding: 0.13in !important;
+        padding: 0.115in !important;
         color: #e5e7eb !important;
         break-inside: avoid !important;
         page-break-inside: avoid !important;
@@ -1348,8 +1345,8 @@
       .section-copy p,
       .section-copy li,
       .chip p {
-        font-size: 8.2pt !important;
-        line-height: 1.45 !important;
+        font-size: 8pt !important;
+        line-height: 1.42 !important;
         color: #e5e7eb !important;
         word-break: normal !important;
         overflow-wrap: normal !important;
@@ -1914,7 +1911,7 @@
   </div>
 
 <script>
-    window.CONTRACT_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbzoBCfTP8jQEsv5GiuRkZh_IK2o7-aRh0MpfGot9xkZczsm-ezr_29DVts1QyJgMLFm_g/exec";
+    window.CONTRACT_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbwm2OjK_OpbX9H_hptipKwIy811qXFUIYXsux_QlyZDOeQREokzWKDd3osd1ddC4gxyBA/exec";
 
     window.CONTRACT_BACKEND_CONFIG = window.CONTRACT_BACKEND_CONFIG || {};
 
@@ -2347,14 +2344,12 @@
   <meta charset="UTF-8">
   <title>${escapeHtml(CONTRACT_META.contractTitle)}</title>
   <style>
-    @page { size: Letter; margin: 0.55in 0.58in 0.62in; }
+    @page { size: Letter; margin: 0.62in 0.58in 0.68in; }
     * { box-sizing: border-box; }
     html, body { margin: 0; padding: 0; background: #05020a; color: #e5e7eb; -webkit-print-color-adjust: exact; print-color-adjust: exact; overflow: visible; }
     body { font-family: Inter, Arial, Helvetica, sans-serif; }
-    body::before, body::after { content: ""; position: fixed; left: 0; right: 0; height: 0.14in; background: #2e1065; z-index: 9999; }
-    body::before { top: 0; }
-    body::after { bottom: 0; }
-    .page-wrap { width: 100%; max-width: 6.75in; margin: 0 auto; padding: 0; }
+    body::before, body::after { display: none !important; content: none !important; }
+    .page-wrap { width: 100%; max-width: 6.75in; margin: 0 auto; padding: 0.18in 0 0.18in; border-top: 0.12in solid #2e1065; border-bottom: 0.12in solid #2e1065; }
     .print-header { display: none; }
     .ph, .ph-fill, .ph-bold, .screen-only, .mobile-bar, .modal, .signature-canvas, .send-panel, .signature-status, .send-status, button, nav { display: none !important; }
     header { margin: 0 0 0.2in; padding: 0; }
@@ -2367,7 +2362,7 @@
     .section-num { display: none; }
     .section-content { flex: 1; }
     .section-title { margin: 0 0 0.075in; padding-bottom: 0.04in; border-bottom: 1px solid rgba(168, 85, 247, 0.35); font-family: "Cinzel Decorative", Georgia, serif; font-size: 9.4pt; line-height: 1.25; text-transform: uppercase; letter-spacing: 0.035em; font-weight: 400; color: #fff; word-break: normal; overflow-wrap: normal; hyphens: none; }
-    .rune-card, .chip, .practitioner-seal { border: 1px solid rgba(168, 85, 247, 0.35); border-radius: 0.07in; padding: 0.12in; background: rgba(13, 7, 24, 0.94); color: #e5e7eb; box-shadow: none; backdrop-filter: none; -webkit-backdrop-filter: none; break-inside: avoid; page-break-inside: avoid; }
+    .rune-card, .chip, .practitioner-seal { border: 1px solid rgba(168, 85, 247, 0.35); border-radius: 0.07in; padding: 0.115in; background: rgba(13, 7, 24, 0.94); color: #e5e7eb; box-shadow: none; backdrop-filter: none; -webkit-backdrop-filter: none; break-inside: avoid; page-break-inside: avoid; }
     .signature-grid > * { break-inside: avoid; page-break-inside: avoid; }
     .hero-grid, .card-grid, .signature-grid, .field-grid, .chip-list { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.12in; }
     .meta-kicker, .field-label, .practitioner-role, .meta-subtitle, .detail-row, .chip h4 { font-size: 6.4pt; line-height: 1.25; text-transform: uppercase; letter-spacing: 0.04em; color: #c4b5fd; }

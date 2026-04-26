@@ -3,8 +3,8 @@ services:
     name: html-scryer-api
     env: node
     plan: free
-    buildCommand: npm install && npx puppeteer browsers install chrome
-    startCommand: npm start
+    buildCommand: if [ -d resources/carousels-api ]; then cd resources/carousels-api && npm install && npx puppeteer browsers install chrome; else npm install && npx puppeteer browsers install chrome; fi
+    startCommand: if [ -d resources/carousels-api ]; then cd resources/carousels-api && npm start; else npm start; fi
     healthCheckPath: /health
     envVars:
       - key: NODE_ENV

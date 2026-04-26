@@ -275,7 +275,7 @@
     }
 
     .sidebar.collapsed .brand-row {
-      width: 100% !important;
+      width: var(--sidebar-collapsed) !important;
       height: 3rem !important;
       min-height: 3rem !important;
       padding: 0 !important;
@@ -285,14 +285,15 @@
     }
 
     .sidebar.collapsed .brand-sigil {
-      position: relative !important;
-      inset: auto !important;
+      position: static !important;
       transform: none !important;
       width: 2rem !important;
       height: 2rem !important;
       border-radius: 0.65rem !important;
       margin: 0 !important;
-      flex: 0 0 2rem !important;
+      flex: none !important;
+      display: grid !important;
+      place-items: center !important;
       overflow: hidden !important;
     }
 
@@ -1192,40 +1193,25 @@
     @media print {
       @page {
         size: Letter;
-        margin: 0.6in;
+        margin: 0;
       }
 
       html,
       body {
         margin: 0 !important;
         padding: 0 !important;
-        background: #05020a !important;
+        background: #2e1065 !important;
         color: #e5e7eb !important;
         -webkit-print-color-adjust: exact !important;
         print-color-adjust: exact !important;
         overflow: visible !important;
       }
 
-      body::before {
-        content: "";
-        position: fixed;
-        top: -0.75in;
-        bottom: -0.75in;
-        left: -0.75in;
-        right: -0.75in;
-        background:
-          linear-gradient(
-            to bottom,
-            #2e1065 0,
-            #2e1065 0.18in,
-            #05020a 0.18in,
-            #05020a calc(100% - 0.18in),
-            #2e1065 calc(100% - 0.18in),
-            #2e1065 100%
-          );
-        z-index: -1;
+      body {
+        padding: 0.62in 0.58in 0.68in !important;
       }
 
+      body::before,
       body::after {
         display: none !important;
         content: none !important;
@@ -1245,7 +1231,10 @@
       .send-status,
       .button-status-text,
       .button-status-dot,
-      .status-dot {
+      .status-dot,
+      .ph,
+      .ph-fill,
+      .ph-bold {
         display: none !important;
       }
 
@@ -1261,7 +1250,10 @@
         width: 100% !important;
         max-width: 6.75in !important;
         margin: 0 auto !important;
-        padding: 0.25in 0 !important;
+        padding: 0.18in 0 !important;
+        background: #05020a !important;
+        border-top: none !important;
+        border-bottom: none !important;
       }
 
       header {
@@ -1308,8 +1300,8 @@
         display: block !important;
         margin: 0 0 0.18in !important;
         padding: 0 !important;
-        break-inside: avoid !important;
-        page-break-inside: avoid !important;
+        break-inside: auto !important;
+        page-break-inside: auto !important;
       }
 
       .section-num {
@@ -2361,13 +2353,12 @@
   <meta charset="UTF-8">
   <title>${escapeHtml(CONTRACT_META.contractTitle)}</title>
   <style>
-    @page { size: Letter; margin: 0.6in; }
+    @page { size: Letter; margin: 0; }
     * { box-sizing: border-box; }
-    html, body { margin: 0; padding: 0; background: #05020a; color: #e5e7eb; -webkit-print-color-adjust: exact; print-color-adjust: exact; overflow: visible; }
-    body { font-family: Inter, Arial, Helvetica, sans-serif; }
-    body::before { content: ""; position: fixed; top: -0.75in; bottom: -0.75in; left: -0.75in; right: -0.75in; background: linear-gradient(to bottom, #2e1065 0, #2e1065 0.18in, #05020a 0.18in, #05020a calc(100% - 0.18in), #2e1065 calc(100% - 0.18in), #2e1065 100%); z-index: -1; }
-    body::after { display: none !important; content: none !important; }
-    .page-wrap { width: 100%; max-width: 6.75in; margin: 0 auto; padding: 0.25in 0; }
+    html, body { margin: 0; padding: 0; background: #2e1065; color: #e5e7eb; -webkit-print-color-adjust: exact; print-color-adjust: exact; overflow: visible; }
+    body { font-family: Inter, Arial, Helvetica, sans-serif; padding: 0.62in 0.58in 0.68in; }
+    body::before, body::after { display: none !important; content: none !important; }
+    .page-wrap { width: 100%; max-width: 6.75in; margin: 0 auto; padding: 0.18in 0; background: #05020a; border-top: none !important; border-bottom: none !important; }
     .print-header { display: none; }
     .ph, .ph-fill, .ph-bold, .screen-only, .mobile-bar, .modal, .signature-canvas, .send-panel, .signature-status, .send-status, button, nav { display: none !important; }
     header { margin: 0 0 0.2in; padding: 0; }

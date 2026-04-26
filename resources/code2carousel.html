@@ -1581,9 +1581,17 @@ video {
             previewHeight.textContent = `H: ${size.height}px`;
         }
 
+        const API_BASE_URL =
+            window.HTML_SCRYER_API_BASE_URL ||
+            'https://YOUR-DEPLOYED-BACKEND-URL';
+
         async function runExport() {
             const mode = getSelectedMode();
             const size = getSize();
+            if (API_BASE_URL.includes('YOUR-DEPLOYED-BACKEND-URL')) {
+                alert('Backend URL is not configured. Deploy carousels API and update API_BASE_URL.');
+                return;
+            }
             const payload = {
                 codexName: document.getElementById('codex-name').value.trim() || 'html-scryer-export',
                 html: document.getElementById('html-code').value,
@@ -1592,7 +1600,7 @@ video {
                 width: size.width,
                 height: size.height
             };
-            const response = await fetch('/api/export-html', {
+            const response = await fetch(`${API_BASE_URL}/api/export-html`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(payload)

@@ -131,35 +131,61 @@ async function captureElements(page, selector, outputDir, payload) {
   for (const [index, handle] of handles.entries()) {
     const filename = `slide-${String(index + 1).padStart(2, "0")}.png`;
     const outputPath = path.join(outputDir, filename);
-    const backgroundColor = await handle.evaluate((element) => {
+    const backgroundColor = await handle.evaluate((element, width, height) => {
       const computed = window.getComputedStyle(element);
       const bodyComputed = window.getComputedStyle(document.body);
       const resolvedBackground = computed.backgroundColor && computed.backgroundColor !== "rgba(0, 0, 0, 0)"
         ? computed.backgroundColor
         : bodyComputed.backgroundColor;
 
-      element.style.width = `${window.__SCRYER_EXPORT_WIDTH__}px`;
-      element.style.height = `${window.__SCRYER_EXPORT_HEIGHT__}px`;
-      element.style.minHeight = `${window.__SCRYER_EXPORT_HEIGHT__}px`;
-      element.style.boxSizing = "border-box";
-      element.style.overflow = "hidden";
-      if (!computed.backgroundColor || computed.backgroundColor === "rgba(0, 0, 0, 0)") {
-        element.style.backgroundColor = resolvedBackground;
+      const existingWrapper = document.getElementById("__html_scryer_capture_wrapper__");
+      if (existingWrapper) {
+        existingWrapper.remove();
       }
 
+      const wrapper = document.createElement("div");
+      wrapper.id = "__html_scryer_capture_wrapper__";
+      wrapper.style.position = "fixed";
+      wrapper.style.left = "0";
+      wrapper.style.top = "0";
+      wrapper.style.width = `${width}px`;
+      wrapper.style.height = `${height}px`;
+      wrapper.style.overflow = "hidden";
+      wrapper.style.background = resolvedBackground;
+      wrapper.style.display = "flex";
+      wrapper.style.alignItems = "center";
+      wrapper.style.justifyContent = "center";
+      wrapper.style.zIndex = "2147483647";
+      wrapper.style.fontFamily = 'inherit, "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", sans-serif';
+
+      const clone = element.cloneNode(true);
+      clone.style.width = `${width}px`;
+      clone.style.height = `${height}px`;
+      clone.style.minHeight = `${height}px`;
+      clone.style.maxWidth = `${width}px`;
+      clone.style.boxSizing = "border-box";
+      clone.style.overflow = "hidden";
+      clone.style.transform = "none";
+      clone.style.left = "auto";
+      clone.style.right = "auto";
+      clone.style.margin = "0";
+      clone.style.fontFamily = 'inherit, "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", sans-serif';
+      if (!computed.backgroundColor || computed.backgroundColor === "rgba(0, 0, 0, 0)") {
+        clone.style.backgroundColor = resolvedBackground;
+      }
+
+      wrapper.appendChild(clone);
+      document.body.appendChild(wrapper);
+
       return resolvedBackground;
-    });
-    const bounds = await handle.boundingBox();
-    if (!bounds) {
-      throw new Error(`Could not measure selector "${selector}" at index ${index + 1}.`);
-    }
+    }, payload.width, payload.height);
     const clipWidth = payload.width;
     const clipHeight = payload.height;
     console.log("Capturing element", {
       selector,
       index: index + 1,
-      width: Math.round(bounds.width),
-      height: Math.round(bounds.height),
+      width: clipWidth,
+      height: clipHeight,
       clipWidth,
       clipHeight,
       backgroundColor
@@ -169,11 +195,14 @@ async function captureElements(page, selector, outputDir, payload) {
       type: "png",
       captureBeyondViewport: true,
       clip: {
-        x: Math.max(0, bounds.x),
-        y: Math.max(0, bounds.y),
+        x: 0,
+        y: 0,
         width: clipWidth,
         height: clipHeight
       }
+    });
+    await page.evaluate(() => {
+      document.getElementById("__html_scryer_capture_wrapper__")?.remove();
     });
     files.push(outputPath);
   }
@@ -250,12 +279,24 @@ app.post("/api/export-html", async (request, response) => {
     await waitForAssets(page);
     await page.addStyleTag({
       content: `
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Color+Emoji&display=swap');
+        body, .slide, .page {
+          font-family: inherit, "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", sans-serif !important;
+        }
         html, body { margin: 0 !important; padding: 0 !important; overflow: hidden !important; }
         .slide, .page {
           width: ${payload.width}px !important;
+          height: ${payload.height}px !important;
           min-height: ${payload.height}px !important;
+          max-width: ${payload.width}px !important;
           box-sizing: border-box !important;
           overflow: hidden !important;
+          transform: none !important;
+          left: auto !important;
+          right: auto !important;
+        }
+        .slide > *, .page > * {
+          max-width: calc(${payload.width}px - 160px) !important;
         }
       `
     });

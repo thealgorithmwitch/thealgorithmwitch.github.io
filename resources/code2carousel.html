@@ -1294,35 +1294,35 @@ video {
                 <div class="space-y-5" vid="36">
                     <div vid="37">
                         <label class="block font-mono-tech text-[10px] text-gray-500 uppercase tracking-widest mb-2" vid="38">Codex Name</label>
-                        <input type="text" placeholder="personal-brand-carousel" class="w-full px-4 py-2.5 rounded-lg input-dark font-mono-tech text-xs" vid="39">
+                        <input id="codex-name" type="text" placeholder="personal-brand-carousel" class="w-full px-4 py-2.5 rounded-lg input-dark font-mono-tech text-xs" vid="39">
                     </div>
 
                     <div vid="40">
                         <label class="block font-mono-tech text-[10px] text-gray-500 uppercase tracking-widest mb-2" vid="41">Export Mode</label>
                         <div class="space-y-2" vid="42">
                             <label class="flex items-center gap-3 p-3 rounded-lg bg-white/5 border border-white/5 cursor-pointer hover:border-purple-500/30 transition-all group" vid="43">
-                                <input type="radio" name="mode" class="accent-purple-500" checked="" vid="44">
+                                <input type="radio" name="mode" value="full" class="accent-purple-500" checked="" vid="44">
                                 <div vid="45">
                                     <p class="text-xs text-white" vid="46">Full Page Grimoire</p>
                                     <p class="text-[10px] text-gray-500" vid="47">Capture entire document</p>
                                 </div>
                             </label>
                             <label class="flex items-center gap-3 p-3 rounded-lg bg-white/5 border border-white/5 cursor-pointer hover:border-purple-500/30 transition-all group" vid="48">
-                                <input type="radio" name="mode" class="accent-purple-500" vid="49">
+                                <input type="radio" name="mode" value="slide" class="accent-purple-500" vid="49">
                                 <div vid="50">
                                     <p class="text-xs text-white" vid="51">Slide Sigils</p>
                                     <p class="text-[10px] text-gray-500" vid="52">Each .slide element</p>
                                 </div>
                             </label>
                             <label class="flex items-center gap-3 p-3 rounded-lg bg-white/5 border border-white/5 cursor-pointer hover:border-purple-500/30 transition-all group" vid="53">
-                                <input type="radio" name="mode" class="accent-purple-500" vid="54">
+                                <input type="radio" name="mode" value="page" class="accent-purple-500" vid="54">
                                 <div vid="55">
                                     <p class="text-xs text-white" vid="56">Page Runes</p>
                                     <p class="text-[10px] text-gray-500" vid="57">Each .page element</p>
                                 </div>
                             </label>
                             <label class="flex items-center gap-3 p-3 rounded-lg bg-white/5 border border-white/5 cursor-pointer hover:border-purple-500/30 transition-all group" vid="58">
-                                <input type="radio" name="mode" class="accent-purple-500" id="custom-selector-radio" vid="59">
+                                <input type="radio" name="mode" value="custom" class="accent-purple-500" id="custom-selector-radio" vid="59">
                                 <div vid="60">
                                     <p class="text-xs text-white" vid="61">Custom Selector</p>
                                     <p class="text-[10px] text-gray-500" vid="62">Define CSS selector</p>
@@ -1334,17 +1334,18 @@ video {
 
                     <div vid="64">
                         <label class="block font-mono-tech text-[10px] text-gray-500 uppercase tracking-widest mb-2" vid="65">Output Size</label>
-                        <select class="w-full px-4 py-2.5 rounded-lg input-dark font-mono-tech text-xs appearance-none" vid="66">
-                            <option vid="67">Square Portal (1080×1080)</option>
-                            <option vid="68">Vertical Scroll (1080×1350)</option>
-                            <option vid="69">Standard (1920×1080)</option>
-                            <option vid="70">Custom Dimensions</option>
+                        <select id="output-size" class="w-full px-4 py-2.5 rounded-lg input-dark font-mono-tech text-xs appearance-none" vid="66">
+                            <option value="1080x1080" vid="67">Square Portal (1080×1080)</option>
+                            <option value="1080x1350" vid="68">Vertical Scroll (1080×1350)</option>
+                            <option value="1350x1080" vid="69">Wide Carousel (1350×1080)</option>
+                            <option value="1920x1080" vid="70">Standard (1920×1080)</option>
+                            <option value="custom" vid="71">Custom Dimensions</option>
                         </select>
                     </div>
 
-                    <div class="flex-1 min-h-[200px] flex flex-col" vid="71">
-                        <label class="block font-mono-tech text-[10px] text-gray-500 uppercase tracking-widest mb-2" vid="72">Incantation Code</label>
-                        <textarea class="flex-1 w-full p-4 rounded-lg input-dark font-mono-tech text-[11px] leading-relaxed resize-none scrollbar-mystic" placeholder="<div class='slide'>...</div>" vid="73">&lt;style&gt;
+                    <div class="flex-1 min-h-[200px] flex flex-col" vid="72">
+                        <label class="block font-mono-tech text-[10px] text-gray-500 uppercase tracking-widest mb-2" vid="73">Incantation Code</label>
+                        <textarea id="html-code" class="flex-1 w-full p-4 rounded-lg input-dark font-mono-tech text-[11px] leading-relaxed resize-none scrollbar-mystic" placeholder="<div class='slide'>...</div>" vid="74">&lt;style&gt;
   .slide { 
     background: #02000a;
     color: white; 
@@ -1356,8 +1357,8 @@ video {
 &lt;/div&gt;</textarea>
                     </div>
 
-                    <button class="w-full py-4 rounded-xl btn-ritual font-mono-tech text-xs uppercase tracking-[0.2em] text-white transition-all flex items-center justify-center gap-2 mt-4" vid="74">
-                        <i class="ph-duotone ph-sparkle text-lg" vid="75"></i>
+                    <button id="preview-btn" class="w-full py-4 rounded-xl btn-ritual font-mono-tech text-xs uppercase tracking-[0.2em] text-white transition-all flex items-center justify-center gap-2 mt-4" vid="75">
+                        <i class="ph-duotone ph-sparkle text-lg" vid="76"></i>
                         Preview Ritual
                     </button>
                 </div>
@@ -1381,12 +1382,7 @@ video {
                 <div class="flex-1 relative flex items-center justify-center bg-black/40 rounded-xl overflow-hidden border border-white/5" vid="85">
                     
                     <div class="device-frame w-[80%] aspect-square bg-white relative overflow-hidden flex items-center justify-center" vid="86">
-                        
-                        <div class="absolute inset-0 flex flex-col items-center justify-center bg-[#02000a] text-center p-12" vid="87">
-                            <h3 class="font-cinzel text-4xl text-glow-gold mb-6" vid="88">Ethereal Visions</h3>
-                            <div class="w-24 h-1 bg-purple-500 mb-8" vid="89"></div>
-                            <p class="text-gray-400 font-light max-w-md" vid="90">Capturing the essence of the digital void through semantic structures and mystical styling.</p>
-                        </div>
+                        <iframe id="preview-frame" class="w-full h-full bg-white border-0" vid="87"></iframe>
                         
                         
                         <div class="absolute bottom-4 right-4 flex gap-2" vid="91">
@@ -1401,9 +1397,9 @@ video {
 
                 <div class="mt-4 flex justify-center gap-6" vid="97">
                     <div class="flex items-center gap-2 text-gray-500 font-mono-tech text-[10px]" vid="98">
-                        <span class="text-white" vid="99">W: 1080px</span>
+                        <span class="text-white" id="preview-width" vid="99">W: 1080px</span>
                         <span vid="100">/</span>
-                        <span class="text-white" vid="101">H: 1080px</span>
+                        <span class="text-white" id="preview-height" vid="101">H: 1080px</span>
                     </div>
                     <div class="flex items-center gap-2 text-gray-500 font-mono-tech text-[10px]" vid="102">
                         <span class="text-white" vid="103">Scale: 75%</span>
@@ -1490,7 +1486,7 @@ video {
                 </div>
 
                 <div class="mt-6 pt-6 border-t border-white/5" vid="153">
-                    <button class="w-full py-4 rounded-xl bg-cyan-500/10 border border-cyan-500/40 text-cyan-400 font-mono-tech text-xs uppercase tracking-[0.2em] hover:bg-cyan-500 hover:text-white transition-all flex items-center justify-center gap-3 shadow-[0_0_20px_rgba(6,182,212,0.1)]" vid="154">
+                    <button id="export-btn" class="w-full py-4 rounded-xl bg-cyan-500/10 border border-cyan-500/40 text-cyan-400 font-mono-tech text-xs uppercase tracking-[0.2em] hover:bg-cyan-500 hover:text-white transition-all flex items-center justify-center gap-3 shadow-[0_0_20px_rgba(6,182,212,0.1)]" vid="154">
                         <i class="ph-bold ph-file-zip text-lg" vid="155"></i>
                         Download ZIP
                     </button>
@@ -1538,6 +1534,13 @@ video {
         const customRadio = document.getElementById('custom-selector-radio');
         const customInput = document.getElementById('custom-selector-input');
         const allRadios = document.querySelectorAll('input[name="mode"]');
+        const outputSize = document.getElementById('output-size');
+        const previewWidth = document.getElementById('preview-width');
+        const previewHeight = document.getElementById('preview-height');
+        const previewFrame = document.getElementById('preview-frame');
+        const htmlCode = document.getElementById('html-code');
+        const previewButton = document.getElementById('preview-btn');
+        const exportButton = document.getElementById('export-btn');
 
         allRadios.forEach(radio => {
             radio.addEventListener('change', () => {
@@ -1548,6 +1551,73 @@ video {
                 }
             });
         });
+
+        function getSelectedMode() {
+            return document.querySelector('input[name="mode"]:checked')?.value || 'full';
+        }
+
+        function getSize() {
+            const value = document.getElementById('output-size').value;
+            const [width, height] = value.split('x').map(Number);
+            return {
+                preset: value,
+                width: Number.isFinite(width) ? width : 1080,
+                height: Number.isFinite(height) ? height : 1080
+            };
+        }
+
+        function getSelector(mode) {
+            if (mode === 'slide') return '.slide';
+            if (mode === 'page') return '.page';
+            if (mode === 'custom') {
+                return document.getElementById('custom-selector-input').value.trim();
+            }
+            return 'body';
+        }
+
+        function updateSizeLabels() {
+            const size = getSize();
+            previewWidth.textContent = `W: ${size.width}px`;
+            previewHeight.textContent = `H: ${size.height}px`;
+        }
+
+        async function runExport() {
+            const mode = getSelectedMode();
+            const size = getSize();
+            const payload = {
+                codexName: document.getElementById('codex-name').value.trim() || 'html-scryer-export',
+                html: document.getElementById('html-code').value,
+                mode,
+                selector: getSelector(mode),
+                width: size.width,
+                height: size.height
+            };
+            const response = await fetch('/api/export-html', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+            if (!response.ok) {
+                alert('Export failed.');
+                return;
+            }
+            const blob = await response.blob();
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `${payload.codexName}.zip`;
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+
+        previewButton.addEventListener('click', () => {
+            previewFrame.srcdoc = htmlCode.value;
+        });
+
+        exportButton.addEventListener('click', runExport);
+        outputSize.addEventListener('change', updateSizeLabels);
+        updateSizeLabels();
+        previewFrame.srcdoc = htmlCode.value;
     </script>
 
 

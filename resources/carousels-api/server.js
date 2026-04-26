@@ -96,7 +96,11 @@ async function waitForAssets(page) {
   });
 
   await page.evaluate(() => new Promise((resolve) => requestAnimationFrame(() => resolve())));
-  await page.waitForTimeout(250);
+  try {
+    await page.waitForNetworkIdle({ idleTime: 500, timeout: 5000 });
+  } catch (_error) {
+    await page.waitForFunction(() => document.readyState === "complete");
+  }
 }
 
 async function captureFullPage(page, outputPath) {

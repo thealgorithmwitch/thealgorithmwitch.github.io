@@ -104,7 +104,7 @@ async function captureFullPage(page, outputPath) {
   });
 }
 
-async function captureElements(page, selector, outputDir) {
+async function captureElements(page, selector, outputDir, payload) {
   let handles;
   try {
     handles = await page.$$(selector);
@@ -120,16 +120,50 @@ async function captureElements(page, selector, outputDir) {
   for (const [index, handle] of handles.entries()) {
     const filename = `slide-${String(index + 1).padStart(2, "0")}.png`;
     const outputPath = path.join(outputDir, filename);
+    const backgroundColor = await handle.evaluate((element) => {
+      const computed = window.getComputedStyle(element);
+      const bodyComputed = window.getComputedStyle(document.body);
+      const resolvedBackground = computed.backgroundColor && computed.backgroundColor !== "rgba(0, 0, 0, 0)"
+        ? computed.backgroundColor
+        : bodyComputed.backgroundColor;
+
+      element.style.width = `${window.__SCRYER_EXPORT_WIDTH__}px`;
+      element.style.minHeight = `${window.__SCRYER_EXPORT_HEIGHT__}px`;
+      element.style.boxSizing = "border-box";
+      element.style.overflow = "hidden";
+      if (!computed.backgroundColor || computed.backgroundColor === "rgba(0, 0, 0, 0)") {
+        element.style.backgroundColor = resolvedBackground;
+      }
+
+      return resolvedBackground;
+    });
     const bounds = await handle.boundingBox();
+    if (!bounds) {
+      throw new Error(`Could not measure selector "${selector}" at index ${index + 1}.`);
+    }
+    const clipWidth = Math.max(Math.round(bounds.width), payload.width);
+    const clipHeight = payload.mode === "slide"
+      ? payload.height
+      : Math.max(Math.round(bounds.height), payload.height);
     console.log("Capturing element", {
       selector,
       index: index + 1,
-      width: bounds ? Math.round(bounds.width) : null,
-      height: bounds ? Math.round(bounds.height) : null
+      width: Math.round(bounds.width),
+      height: Math.round(bounds.height),
+      clipWidth,
+      clipHeight,
+      backgroundColor
     });
-    await handle.screenshot({
+    await page.screenshot({
       path: outputPath,
-      type: "png"
+      type: "png",
+      captureBeyondViewport: true,
+      clip: {
+        x: Math.max(0, bounds.x),
+        y: Math.max(0, bounds.y),
+        width: clipWidth,
+        height: clipHeight
+      }
     });
     files.push(outputPath);
   }
@@ -194,6 +228,10 @@ app.post("/api/export-html", async (request, response) => {
       deviceScaleFactor: 1
     });
     await page.setContent(payload.html, { waitUntil: "networkidle0" });
+    await page.evaluate((width, height) => {
+      window.__SCRYER_EXPORT_WIDTH__ = width;
+      window.__SCRYER_EXPORT_HEIGHT__ = height;
+    }, payload.width, payload.height);
     await waitForAssets(page);
 
     const files = [];
@@ -202,7 +240,7 @@ app.post("/api/export-html", async (request, response) => {
       await captureFullPage(page, outputPath);
       files.push(outputPath);
     } else {
-      const captured = await captureElements(page, payload.selector, tempDir);
+      const captured = await captureElements(page, payload.selector, tempDir, payload);
       files.push(...captured);
     }
 

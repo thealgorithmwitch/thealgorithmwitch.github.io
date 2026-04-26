@@ -96,15 +96,16 @@ async function waitForAssets(page) {
   await new Promise((resolve) => setTimeout(resolve, 500));
 }
 
-async function captureFullPage(page, outputPath) {
-  const body = await page.$("body");
-  if (!body) {
-    throw new Error("Could not find <body> in the submitted HTML.");
-  }
-
-  await body.screenshot({
+async function captureFullPage(page, outputPath, payload) {
+  await page.screenshot({
     path: outputPath,
-    type: "png"
+    type: "png",
+    clip: {
+      x: 0,
+      y: 0,
+      width: payload.width,
+      height: payload.height
+    }
   });
 }
 
@@ -156,7 +157,7 @@ async function captureElements(page, selector, outputDir, payload) {
       wrapper.style.alignItems = "center";
       wrapper.style.justifyContent = "center";
       wrapper.style.zIndex = "2147483647";
-      wrapper.style.fontFamily = 'inherit, "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", sans-serif';
+      wrapper.style.fontFamily = 'Inter, Arial, "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", sans-serif';
 
       const clone = element.cloneNode(true);
       clone.style.width = `${width}px`;
@@ -169,7 +170,12 @@ async function captureElements(page, selector, outputDir, payload) {
       clone.style.left = "auto";
       clone.style.right = "auto";
       clone.style.margin = "0";
-      clone.style.fontFamily = 'inherit, "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", sans-serif';
+      clone.style.fontFamily = 'Inter, Arial, "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", sans-serif';
+      clone.style.position = "relative";
+      clone.style.inset = "auto";
+      clone.style.display = "block";
+      clone.style.flexShrink = "0";
+      clone.style.maxHeight = `${height}px`;
       if (!computed.backgroundColor || computed.backgroundColor === "rgba(0, 0, 0, 0)") {
         clone.style.backgroundColor = resolvedBackground;
       }
@@ -280,10 +286,16 @@ app.post("/api/export-html", async (request, response) => {
     await page.addStyleTag({
       content: `
         @import url('https://fonts.googleapis.com/css2?family=Noto+Color+Emoji&display=swap');
-        body, .slide, .page {
-          font-family: inherit, "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", sans-serif !important;
+        html, body {
+          width: ${payload.width}px !important;
+          height: ${payload.height}px !important;
+          margin: 0 !important;
+          padding: 0 !important;
+          overflow: hidden !important;
         }
-        html, body { margin: 0 !important; padding: 0 !important; overflow: hidden !important; }
+        body, .slide, .page {
+          font-family: Inter, Arial, "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", sans-serif !important;
+        }
         .slide, .page {
           width: ${payload.width}px !important;
           height: ${payload.height}px !important;
@@ -295,6 +307,9 @@ app.post("/api/export-html", async (request, response) => {
           left: auto !important;
           right: auto !important;
         }
+        .slide *, .page * {
+          box-sizing: border-box !important;
+        }
         .slide > *, .page > * {
           max-width: calc(${payload.width}px - 160px) !important;
         }
@@ -304,7 +319,7 @@ app.post("/api/export-html", async (request, response) => {
     const files = [];
     if (payload.mode === "full") {
       const outputPath = path.join(tempDir, `${payload.codexName}.png`);
-      await captureFullPage(page, outputPath);
+      await captureFullPage(page, outputPath, payload);
       files.push(outputPath);
     } else {
       const captured = await captureElements(page, payload.selector, tempDir, payload);

@@ -2,6 +2,7 @@ const express = require("express");
 const cors = require("cors");
 const puppeteer = require("puppeteer");
 const archiver = require("archiver");
+const fs = require("fs");
 const fsp = require("fs/promises");
 const os = require("os");
 const path = require("path");
@@ -272,5 +273,11 @@ app.post("/api/export-html", async (request, response) => {
 });
 
 app.listen(PORT, () => {
+  const puppeteerCacheDir = process.env.PUPPETEER_CACHE_DIR || "";
+  console.log("HTML Scryer startup", {
+    cwd: process.cwd(),
+    puppeteerCacheDir,
+    defaultPuppeteerCacheExists: fs.existsSync("/opt/render/.cache/puppeteer")
+  });
   console.log(`HTML Scryer API listening on ${PORT}`);
 });

@@ -1341,6 +1341,10 @@ video {
                             <option value="1920x1080" vid="70">Standard (1920×1080)</option>
                             <option value="custom" vid="71">Custom Dimensions</option>
                         </select>
+                        <div id="custom-size-inputs" class="hidden grid grid-cols-2 gap-2 mt-2" vid="71a">
+                            <input id="custom-width" type="number" min="200" max="4000" value="1080" placeholder="Width" class="w-full px-4 py-2 rounded-lg input-dark font-mono-tech text-xs" vid="71b">
+                            <input id="custom-height" type="number" min="200" max="4000" value="1080" placeholder="Height" class="w-full px-4 py-2 rounded-lg input-dark font-mono-tech text-xs" vid="71c">
+                        </div>
                     </div>
 
                     <div class="flex-1 min-h-[200px] flex flex-col" vid="72">
@@ -1381,13 +1385,13 @@ video {
 
                 <div class="flex-1 relative flex items-center justify-center bg-black/40 rounded-xl overflow-hidden border border-white/5" vid="85">
                     
-                    <div class="device-frame w-[80%] aspect-square bg-white relative overflow-hidden flex items-center justify-center" vid="86">
-                        <iframe id="preview-frame" class="w-full h-full bg-white border-0" vid="87"></iframe>
+                    <div id="preview-stage" class="device-frame w-[80%] aspect-square bg-white relative overflow-hidden flex items-center justify-center" vid="86">
+                        <iframe id="preview-frame" class="bg-white border-0 shrink-0" vid="87"></iframe>
                         
                         
                         <div class="absolute bottom-4 right-4 flex gap-2" vid="91">
-                            <button class="p-2 bg-black/60 rounded-lg hover:bg-black transition-colors border border-white/10" vid="92"><i class="ph ph-magnifying-glass-plus text-white" vid="93"></i></button>
-                            <button class="p-2 bg-black/60 rounded-lg hover:bg-black transition-colors border border-white/10" vid="94"><i class="ph ph-arrows-out text-white" vid="95"></i></button>
+                            <button id="preview-zoom-btn" class="p-2 bg-black/60 rounded-lg hover:bg-black transition-colors border border-white/10" vid="92"><i class="ph ph-magnifying-glass-plus text-white" vid="93"></i></button>
+                            <button id="preview-open-btn" class="p-2 bg-black/60 rounded-lg hover:bg-black transition-colors border border-white/10" vid="94"><i class="ph ph-arrows-out text-white" vid="95"></i></button>
                         </div>
                     </div>
                     
@@ -1402,7 +1406,7 @@ video {
                         <span class="text-white" id="preview-height" vid="101">H: 1080px</span>
                     </div>
                     <div class="flex items-center gap-2 text-gray-500 font-mono-tech text-[10px]" vid="102">
-                        <span class="text-white" vid="103">Scale: 75%</span>
+                        <span class="text-white" id="preview-scale" vid="103">Scale: 75%</span>
                     </div>
                 </div>
             </div>
@@ -1418,68 +1422,31 @@ video {
 
                 <div class="mb-6" vid="109">
                     <div class="flex justify-between items-center mb-2" vid="110">
-                        <span class="font-mono-tech text-[10px] text-gray-500 uppercase" vid="111">Batch Rendering</span>
-                        <span class="font-mono-tech text-[10px] text-amber-400" vid="112">3 / 5 Ready</span>
+                        <span class="font-mono-tech text-[10px] text-gray-500 uppercase" vid="111">Export Status</span>
+                        <span id="manifest-status" class="font-mono-tech text-[10px] text-amber-400" vid="112">Awaiting Export</span>
                     </div>
                     <div class="h-1.5 w-full bg-white/5 rounded-full overflow-hidden" vid="113">
-                        <div class="h-full bg-gradient-to-r from-amber-500 to-amber-300 w-[60%] shadow-[0_0_8px_rgba(245,158,11,0.4)]" vid="114"></div>
+                        <div id="manifest-progress" class="h-full bg-gradient-to-r from-amber-500 to-amber-300 w-0 shadow-[0_0_8px_rgba(245,158,11,0.4)] transition-all" vid="114"></div>
                     </div>
                 </div>
 
                 <div class="flex-1 overflow-y-auto scrollbar-mystic pr-2" vid="115">
-                    <div class="grid grid-cols-1 gap-4" vid="116">
-                        
-                        <div class="glass-panel bg-white/5 rounded-lg p-3 group relative border-white/5 hover:border-amber-500/30 transition-all" vid="117">
-                            <div class="aspect-square bg-black rounded border border-white/10 mb-3 overflow-hidden relative" vid="118">
-                                <div class="absolute inset-0 flex items-center justify-center opacity-30 group-hover:opacity-100 transition-opacity" vid="119">
-                                    <button class="p-2 bg-amber-500 text-white rounded-full shadow-lg" vid="120"><i class="ph ph-eye" vid="121"></i></button>
-                                </div>
-                                <div class="w-full h-full bg-[#02000a] flex flex-col items-center justify-center p-4" vid="122">
-                                    <div class="w-8 h-8 rounded bg-amber-500/20 flex items-center justify-center" vid="123"><i class="ph ph-image text-amber-500" vid="124"></i></div>
-                                </div>
+                    <div class="glass-panel bg-white/5 rounded-lg p-4 border-white/5" vid="116">
+                        <div class="space-y-3 font-mono-tech text-[10px] uppercase tracking-widest" vid="116a">
+                            <div class="flex justify-between gap-4" vid="116b">
+                                <span class="text-gray-500">Codex</span>
+                                <span id="manifest-codex" class="text-white text-right normal-case tracking-normal">Not exported yet</span>
                             </div>
-                            <div class="flex justify-between items-end" vid="125">
-                                <div vid="126">
-                                    <p class="font-mono-tech text-[10px] text-white truncate w-24" vid="127">slide-01.png</p>
-                                    <p class="font-mono-tech text-[8px] text-gray-500" vid="128">1080 × 1080 • 1.2MB</p>
-                                </div>
-                                <button class="p-2 rounded bg-white/5 hover:bg-amber-500/20 text-gray-400 hover:text-amber-400 transition-all" vid="129">
-                                    <i class="ph-bold ph-download-simple" vid="130"></i>
-                                </button>
+                            <div class="flex justify-between gap-4" vid="116c">
+                                <span class="text-gray-500">Mode</span>
+                                <span id="manifest-mode" class="text-white text-right normal-case tracking-normal">Pending</span>
                             </div>
-                        </div>
-
-                        <div class="glass-panel bg-white/5 rounded-lg p-3 group border-white/5 hover:border-amber-500/30 transition-all" vid="131">
-                            <div class="aspect-square bg-black rounded border border-white/10 mb-3 overflow-hidden" vid="132">
-                                <div class="w-full h-full bg-[#02000a] flex flex-col items-center justify-center p-4" vid="133">
-                                    <div class="w-8 h-8 rounded bg-amber-500/20 flex items-center justify-center" vid="134"><i class="ph ph-image text-amber-500" vid="135"></i></div>
-                                </div>
+                            <div class="flex justify-between gap-4" vid="116d">
+                                <span class="text-gray-500">Size</span>
+                                <span id="manifest-size" class="text-white text-right normal-case tracking-normal">Pending</span>
                             </div>
-                            <div class="flex justify-between items-end" vid="136">
-                                <div vid="137">
-                                    <p class="font-mono-tech text-[10px] text-white truncate w-24" vid="138">slide-02.png</p>
-                                    <p class="font-mono-tech text-[8px] text-gray-500" vid="139">1080 × 1080 • 1.1MB</p>
-                                </div>
-                                <button class="p-2 rounded bg-white/5 hover:bg-amber-500/20 text-gray-400 hover:text-amber-400 transition-all" vid="140">
-                                    <i class="ph-bold ph-download-simple" vid="141"></i>
-                                </button>
-                            </div>
-                        </div>
-
-                        <div class="glass-panel bg-white/5 rounded-lg p-3 group border-white/5 hover:border-amber-500/30 transition-all" vid="142">
-                            <div class="aspect-square bg-black rounded border border-white/10 mb-3 overflow-hidden" vid="143">
-                                <div class="w-full h-full bg-[#02000a] flex flex-col items-center justify-center p-4" vid="144">
-                                    <div class="w-8 h-8 rounded bg-amber-500/20 flex items-center justify-center" vid="145"><i class="ph ph-image text-amber-500" vid="146"></i></div>
-                                </div>
-                            </div>
-                            <div class="flex justify-between items-end" vid="147">
-                                <div vid="148">
-                                    <p class="font-mono-tech text-[10px] text-white truncate w-24" vid="149">slide-03.png</p>
-                                    <p class="font-mono-tech text-[8px] text-gray-500" vid="150">1080 × 1080 • 1.4MB</p>
-                                </div>
-                                <button class="p-2 rounded bg-white/5 hover:bg-amber-500/20 text-gray-400 hover:text-amber-400 transition-all" vid="151">
-                                    <i class="ph-bold ph-download-simple" vid="152"></i>
-                                </button>
+                            <div class="pt-2 border-t border-white/5" vid="116e">
+                                <p id="export-status" class="text-gray-400 normal-case tracking-normal leading-relaxed">Ready to render when your backend is configured.</p>
                             </div>
                         </div>
                     </div>
@@ -1535,21 +1502,36 @@ video {
         const customInput = document.getElementById('custom-selector-input');
         const allRadios = document.querySelectorAll('input[name="mode"]');
         const outputSize = document.getElementById('output-size');
+        const customSizeInputs = document.getElementById('custom-size-inputs');
+        const customWidth = document.getElementById('custom-width');
+        const customHeight = document.getElementById('custom-height');
         const previewWidth = document.getElementById('preview-width');
         const previewHeight = document.getElementById('preview-height');
+        const previewScaleLabel = document.getElementById('preview-scale');
         const previewFrame = document.getElementById('preview-frame');
+        const previewStage = document.getElementById('preview-stage');
         const htmlCode = document.getElementById('html-code');
         const previewButton = document.getElementById('preview-btn');
         const exportButton = document.getElementById('export-btn');
+        const exportStatus = document.getElementById('export-status');
+        const manifestStatus = document.getElementById('manifest-status');
+        const manifestProgress = document.getElementById('manifest-progress');
+        const manifestCodex = document.getElementById('manifest-codex');
+        const manifestMode = document.getElementById('manifest-mode');
+        const manifestSize = document.getElementById('manifest-size');
+        const previewZoomButton = document.getElementById('preview-zoom-btn');
+        const previewOpenButton = document.getElementById('preview-open-btn');
+        const previewScales = [0.5, 0.75, 1];
+        let previewScaleIndex = 1;
+        let currentPreviewBlobUrl = null;
 
-        allRadios.forEach(radio => {
-            radio.addEventListener('change', () => {
-                if (customRadio.checked) {
-                    customInput.classList.remove('hidden');
-                } else {
-                    customInput.classList.add('hidden');
-                }
-            });
+        function syncModeInputs() {
+            customInput.classList.toggle('hidden', !customRadio.checked);
+            customSizeInputs.classList.toggle('hidden', outputSize.value !== 'custom');
+        }
+
+        allRadios.forEach((radio) => {
+            radio.addEventListener('change', syncModeInputs);
         });
 
         function getSelectedMode() {
@@ -1557,7 +1539,14 @@ video {
         }
 
         function getSize() {
-            const value = document.getElementById('output-size').value;
+            const value = outputSize.value;
+            if (value === 'custom') {
+                return {
+                    preset: value,
+                    width: Math.max(Number(customWidth.value) || 1080, 200),
+                    height: Math.max(Number(customHeight.value) || 1080, 200)
+                };
+            }
             const [width, height] = value.split('x').map(Number);
             return {
                 preset: value,
@@ -1569,63 +1558,164 @@ video {
         function getSelector(mode) {
             if (mode === 'slide') return '.slide';
             if (mode === 'page') return '.page';
-            if (mode === 'custom') {
-                return document.getElementById('custom-selector-input').value.trim();
-            }
+            if (mode === 'custom') return customInput.value.trim();
             return 'body';
+        }
+
+        function modeLabel(mode) {
+            if (mode === 'slide') return 'Slide Sigils';
+            if (mode === 'page') return 'Page Runes';
+            if (mode === 'custom') return 'Custom Selector';
+            return 'Full Page Grimoire';
         }
 
         function updateSizeLabels() {
             const size = getSize();
             previewWidth.textContent = `W: ${size.width}px`;
             previewHeight.textContent = `H: ${size.height}px`;
+            manifestSize.textContent = `${size.width} × ${size.height}`;
+        }
+
+        function setExportState(state, message) {
+            const classes = {
+                idle: ['Awaiting Export', 'w-0', 'text-gray-400'],
+                loading: ['Rendering', 'w-1/2', 'text-gray-300'],
+                success: ['Export Complete', 'w-full', 'text-emerald-300'],
+                error: ['Export Error', 'w-full', 'text-rose-300']
+            };
+            const [label, widthClass, textClass] = classes[state] || classes.idle;
+            manifestStatus.textContent = label;
+            manifestProgress.className = `h-full bg-gradient-to-r from-amber-500 to-amber-300 ${widthClass} shadow-[0_0_8px_rgba(245,158,11,0.4)] transition-all`;
+            exportStatus.textContent = message;
+            exportStatus.className = `${textClass} normal-case tracking-normal leading-relaxed`;
+        }
+
+        function buildPreviewDocument() {
+            const size = getSize();
+            return `<!doctype html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    html, body { margin: 0; width: ${size.width}px; min-height: ${size.height}px; overflow: auto; }
+    body { background: white; }
+  </style>
+</head>
+<body>${htmlCode.value}</body>
+</html>`;
+        }
+
+        function updatePreviewScale() {
+            const size = getSize();
+            const stageRect = previewStage.getBoundingClientRect();
+            const fitScale = Math.min(stageRect.width / size.width, stageRect.height / size.height, 1);
+            const scale = Math.min(previewScales[previewScaleIndex], fitScale);
+            previewFrame.style.width = `${size.width}px`;
+            previewFrame.style.height = `${size.height}px`;
+            previewFrame.style.transformOrigin = 'center center';
+            previewFrame.style.transform = `scale(${scale})`;
+            previewScaleLabel.textContent = `Scale: ${Math.round(scale * 100)}%`;
+        }
+
+        function renderPreview() {
+            previewFrame.srcdoc = buildPreviewDocument();
+            updateSizeLabels();
+            requestAnimationFrame(updatePreviewScale);
         }
 
         const API_BASE_URL =
             window.HTML_SCRYER_API_BASE_URL ||
-            'https://thealgorithmwitch-github-io.onrender.com';
+            'https://YOUR-DEPLOYED-BACKEND-URL';
 
         async function runExport() {
             const mode = getSelectedMode();
             const size = getSize();
             if (API_BASE_URL.includes('YOUR-DEPLOYED-BACKEND-URL')) {
-                alert('Backend URL is not configured. Deploy carousels API and update API_BASE_URL.');
+                setExportState('error', 'Backend URL is not configured. Deploy carousels API and update API_BASE_URL.');
                 return;
             }
+
             const payload = {
                 codexName: document.getElementById('codex-name').value.trim() || 'html-scryer-export',
-                html: document.getElementById('html-code').value,
+                html: htmlCode.value,
                 mode,
                 selector: getSelector(mode),
                 width: size.width,
                 height: size.height
             };
-            const response = await fetch(`${API_BASE_URL}/api/export-html`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(payload)
-            });
-            if (!response.ok) {
-                alert('Export failed.');
-                return;
+
+            manifestCodex.textContent = payload.codexName;
+            manifestMode.textContent = modeLabel(mode);
+            manifestSize.textContent = `${size.width} × ${size.height}`;
+
+            const originalMarkup = exportButton.innerHTML;
+            exportButton.disabled = true;
+            exportButton.innerHTML = '<i class="ph-bold ph-spinner-gap text-lg animate-spin"></i> Rendering...';
+            setExportState('loading', `Rendering ${modeLabel(mode)} at ${size.width} × ${size.height}...`);
+
+            try {
+                const response = await fetch(`${API_BASE_URL}/api/export-html`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                if (!response.ok) {
+                    const raw = await response.text();
+                    let message = raw;
+                    try {
+                        const parsed = JSON.parse(raw);
+                        message = parsed.detail || parsed.error || raw;
+                    } catch (_) {}
+                    throw new Error(message || 'Export failed.');
+                }
+
+                const blob = await response.blob();
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `${payload.codexName}.zip`;
+                a.click();
+                URL.revokeObjectURL(url);
+                setExportState('success', `Export complete for ${payload.codexName}.`);
+            } catch (error) {
+                console.error('HTML Scryer export failed:', error);
+                const message = error?.message || 'Export failed.';
+                setExportState('error', message);
+                if (!message) {
+                    alert('Export failed.');
+                }
+            } finally {
+                exportButton.disabled = false;
+                exportButton.innerHTML = originalMarkup;
             }
-            const blob = await response.blob();
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = `${payload.codexName}.zip`;
-            a.click();
-            URL.revokeObjectURL(url);
         }
 
-        previewButton.addEventListener('click', () => {
-            previewFrame.srcdoc = htmlCode.value;
+        previewButton.addEventListener('click', renderPreview);
+        previewZoomButton.addEventListener('click', () => {
+            previewScaleIndex = (previewScaleIndex + 1) % previewScales.length;
+            updatePreviewScale();
+        });
+        previewOpenButton.addEventListener('click', () => {
+            if (currentPreviewBlobUrl) {
+                URL.revokeObjectURL(currentPreviewBlobUrl);
+            }
+            currentPreviewBlobUrl = URL.createObjectURL(new Blob([buildPreviewDocument()], { type: 'text/html' }));
+            window.open(currentPreviewBlobUrl, '_blank', 'noopener,noreferrer');
         });
 
         exportButton.addEventListener('click', runExport);
-        outputSize.addEventListener('change', updateSizeLabels);
-        updateSizeLabels();
-        previewFrame.srcdoc = htmlCode.value;
+        outputSize.addEventListener('change', () => {
+            syncModeInputs();
+            renderPreview();
+        });
+        customWidth.addEventListener('input', renderPreview);
+        customHeight.addEventListener('input', renderPreview);
+        window.addEventListener('resize', updatePreviewScale);
+
+        syncModeInputs();
+        renderPreview();
     </script>
 
 

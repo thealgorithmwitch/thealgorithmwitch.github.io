@@ -1697,20 +1697,20 @@ ${buildScryerCaptureStyles(size.width, size.height, currentPreviewBackground || 
       inner.id = '__scryer_fit_inner__';
       inner.style.display = 'block';
       inner.style.transformOrigin = 'center center';
-      while (root.firstChild) {
-        inner.appendChild(root.firstChild);
-      }
+      while (root.firstChild) inner.appendChild(root.firstChild);
       root.appendChild(inner);
-      const rect = inner.getBoundingClientRect();
-      const scale = Math.min(
-        1,
-        (width - safePadding * 2) / Math.max(rect.width, 1),
-        (height - safePadding * 2) / Math.max(rect.height, 1)
-      );
-      inner.style.transform = \`scale(\${scale})\`;
+      requestAnimationFrame(() => {
+        const rect = inner.getBoundingClientRect();
+        const scale = Math.min(
+          1,
+          (width - safePadding * 2) / Math.max(rect.width, 1),
+          (height - safePadding * 2) / Math.max(rect.height, 1)
+        );
+        inner.style.transform = \`scale(\${scale})\`;
+      });
     });
   })();
-</script>
+<\/script>
 </body>
 </html>`;
         }
@@ -1749,7 +1749,7 @@ ${buildScryerCaptureStyles(size.width, size.height, currentPreviewBackground || 
 
             previewStage.style.width = `${fittedStageWidth}px`;
             previewStage.style.height = `${fittedStageHeight}px`;
-            previewStage.style.setProperty('--preview-ratio', stageRatio);
+            previewStage.style.setProperty('--preview-ratio', String(stageRatio));
 
             const style = window.getComputedStyle(previewStage);
             const padX = parseFloat(style.paddingLeft) + parseFloat(style.paddingRight);

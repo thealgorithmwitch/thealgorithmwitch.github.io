@@ -1200,15 +1200,11 @@
       body {
         margin: 0 !important;
         padding: 0 !important;
+        width: 8.5in !important;
+        min-height: 11in !important;
         background: #2e1065 !important;
-        color: #e5e7eb !important;
         -webkit-print-color-adjust: exact !important;
         print-color-adjust: exact !important;
-        overflow: visible !important;
-      }
-
-      body {
-        padding: 0.62in 0.58in 0.68in !important;
       }
 
       body::before,
@@ -1240,17 +1236,19 @@
 
       .main-content {
         margin: 0 !important;
-        padding: 0 !important;
-        width: 100% !important;
+        padding: 0.62in 0.58in 0.68in !important;
+        width: 8.5in !important;
+        min-height: 11in !important;
+        background: #2e1065 !important;
         position: static !important;
         overflow: visible !important;
       }
 
       .page-wrap {
         width: 100% !important;
-        max-width: 6.75in !important;
+        max-width: none !important;
         margin: 0 auto !important;
-        padding: 0.18in 0 !important;
+        padding: 0.18in !important;
         background: #05020a !important;
         border-top: none !important;
         border-bottom: none !important;
@@ -2355,10 +2353,11 @@
   <style>
     @page { size: Letter; margin: 0; }
     * { box-sizing: border-box; }
-    html, body { margin: 0; padding: 0; background: #2e1065; color: #e5e7eb; -webkit-print-color-adjust: exact; print-color-adjust: exact; overflow: visible; }
-    body { font-family: Inter, Arial, Helvetica, sans-serif; padding: 0.62in 0.58in 0.68in; }
+    html, body { margin: 0; padding: 0; width: 8.5in; min-height: 11in; background: #2e1065; color: #e5e7eb; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    body { font-family: Inter, Arial, Helvetica, sans-serif; }
     body::before, body::after { display: none !important; content: none !important; }
-    .page-wrap { width: 100%; max-width: 6.75in; margin: 0 auto; padding: 0.18in 0; background: #05020a; border-top: none !important; border-bottom: none !important; }
+    .pdf-page-shell { width: 8.5in; min-height: 11in; padding: 0.62in 0.58in 0.68in; background: #2e1065; }
+    .page-wrap { width: 100%; max-width: none; margin: 0 auto; padding: 0.18in; background: #05020a; border-top: none !important; border-bottom: none !important; }
     .print-header { display: none; }
     .ph, .ph-fill, .ph-bold, .screen-only, .mobile-bar, .modal, .signature-canvas, .send-panel, .signature-status, .send-status, button, nav { display: none !important; }
     header { margin: 0 0 0.2in; padding: 0; }
@@ -2398,7 +2397,9 @@
   </style>
 </head>
 <body>
-  ${clone.outerHTML}
+  <div class="pdf-page-shell">
+    ${clone.outerHTML}
+  </div>
 </body>
 </html>`;
       };

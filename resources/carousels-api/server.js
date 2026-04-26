@@ -112,6 +112,60 @@ async function waitForAssets(page) {
   await new Promise((resolve) => setTimeout(resolve, 500));
 }
 
+function buildScryerCaptureStyles(width, height) {
+  return `
+    @import url('https://fonts.googleapis.com/css2?family=Noto+Color+Emoji&display=swap');
+    html, body {
+      margin: 0 !important;
+      padding: 0 !important;
+      width: ${width}px !important;
+      height: ${height}px !important;
+      overflow: hidden !important;
+    }
+
+    *, *::before, *::after {
+      box-sizing: border-box !important;
+      animation-play-state: paused !important;
+      transition: none !important;
+      caret-color: transparent !important;
+    }
+
+    .slide, .page {
+      width: ${width}px !important;
+      height: ${height}px !important;
+      min-width: ${width}px !important;
+      min-height: ${height}px !important;
+      max-width: ${width}px !important;
+      max-height: ${height}px !important;
+      overflow: hidden !important;
+    }
+
+    .slide:not([style*="padding"]), .page:not([style*="padding"]) {
+      padding: var(--scryer-safe-padding, 96px) !important;
+    }
+
+    .slide > *, .page > * {
+      max-width: calc(${width}px - 192px) !important;
+    }
+
+    body, .slide, .page, .slide *, .page * {
+      font-family: "Inter", "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", sans-serif !important;
+    }
+
+    body {
+      --scryer-safe-padding: 96px;
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after {
+        animation-duration: 0.001s !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0s !important;
+      }
+    }
+  `;
+}
+
 async function captureFullPage(page, outputPath, payload) {
   await page.screenshot({
     path: outputPath,
@@ -133,11 +187,33 @@ async function captureElements(page, selector, outputDir, payload) {
     throw new Error(`Invalid selector "${selector}".`);
   }
   if (!count) throw new Error(`No elements matched selector "${selector}".`);
+  console.log("HTML Scryer selector export", {
+    mode: payload.mode,
+    selector,
+    countFound: count,
+    viewport: {
+      width: payload.width,
+      height: payload.height
+    }
+  });
 
   const files = [];
   for (let index = 0; index < count; index += 1) {
     const filename = `slide-${String(index + 1).padStart(2, "0")}.png`;
     const outputPath = path.join(outputDir, filename);
+    const targetBoundingBox = await page.evaluate(({ selector: selectorValue, index: itemIndex }) => {
+      const target = Array.from(document.querySelectorAll(selectorValue))[itemIndex];
+      if (!target) return null;
+      const box = target.getBoundingClientRect();
+      return { x: box.x, y: box.y, width: box.width, height: box.height };
+    }, {
+      selector,
+      index
+    });
+    console.log("HTML Scryer capture target", {
+      screenshot: filename,
+      targetBoundingBox
+    });
     await page.evaluate(({ selector: selectorValue, index: itemIndex, width, height }) => {
       const nodes = Array.from(document.querySelectorAll(selectorValue));
       const target = nodes[itemIndex];
@@ -149,6 +225,12 @@ async function captureElements(page, selector, outputDir, payload) {
       save(document.documentElement);
       save(document.body);
       save(target);
+      const computed = window.getComputedStyle(target);
+      const bodyComputed = window.getComputedStyle(document.body);
+      const background =
+        computed.backgroundColor && computed.backgroundColor !== "rgba(0, 0, 0, 0)"
+          ? computed.backgroundColor
+          : bodyComputed.backgroundColor || "transparent";
       document.documentElement.style.cssText += `
         margin:0!important;
         padding:0!important;
@@ -162,6 +244,7 @@ async function captureElements(page, selector, outputDir, payload) {
         width:${width}px!important;
         height:${height}px!important;
         overflow:hidden!important;
+        background:${background}!important;
       `;
       nodes.forEach((node) => {
         if (node !== target) {
@@ -184,6 +267,10 @@ async function captureElements(page, selector, outputDir, payload) {
         overflow:hidden!important;
         box-sizing:border-box!important;
         z-index:2147483647!important;
+        display:flex!important;
+        align-items:center!important;
+        justify-content:center!important;
+        background:${background}!important;
       `;
     }, {
       selector,
@@ -283,32 +370,7 @@ app.post("/api/export-html", async (request, response) => {
     }, payload.width, payload.height);
     await waitForAssets(page);
     await page.addStyleTag({
-      content: `
-        @import url('https://fonts.googleapis.com/css2?family=Noto+Color+Emoji&display=swap');
-        html, body {
-          margin: 0 !important;
-          padding: 0 !important;
-          width: ${payload.width}px !important;
-          height: ${payload.height}px !important;
-          overflow: hidden !important;
-        }
-        *, *::before, *::after {
-          box-sizing: border-box !important;
-        }
-        .slide, .page {
-          width: ${payload.width}px !important;
-          height: ${payload.height}px !important;
-          min-width: ${payload.width}px !important;
-          min-height: ${payload.height}px !important;
-          max-width: ${payload.width}px !important;
-          max-height: ${payload.height}px !important;
-          overflow: hidden !important;
-          margin: 0 !important;
-        }
-        body, .slide, .page, .slide *, .page * {
-          font-family: "Inter", "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", sans-serif !important;
-        }
-      `
+      content: buildScryerCaptureStyles(payload.width, payload.height)
     });
 
     const files = [];

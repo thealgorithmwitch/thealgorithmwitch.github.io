@@ -1617,7 +1617,7 @@ video {
 
         function buildScryerCaptureStyles(width, height, background) {
             return `
-    @import url('https://fonts.googleapis.com/css2?family=Noto+Color+Emoji&display=swap');
+    @import url('https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@400;700;900&family=Playfair+Display:wght@400;600;700&family=JetBrains+Mono:wght@400;700&family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@400;500;700&family=DM+Serif+Display:ital@0;1&family=Cormorant+Garamond:wght@400;500;600;700&family=Noto+Color+Emoji&display=swap');
     html, body {
       margin: 0 !important;
       padding: 0 !important;
@@ -1628,33 +1628,30 @@ video {
 
     *, *::before, *::after {
       box-sizing: border-box !important;
-    }
-
-    .slide, .page {
-      width: ${width}px !important;
-      height: ${height}px !important;
-      min-width: ${width}px !important;
-      min-height: ${height}px !important;
-      max-width: ${width}px !important;
-      max-height: ${height}px !important;
-      overflow: hidden !important;
-    }
-
-    .slide:not([style*="padding"]), .page:not([style*="padding"]) {
-      padding: var(--scryer-safe-padding, 96px) !important;
-    }
-
-    .slide > *, .page > * {
-      max-width: calc(${width}px - 192px) !important;
-    }
-
-    body, .slide, .page, .slide *, .page * {
-      font-family: "Inter", "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", sans-serif !important;
+      animation-play-state: paused !important;
+      transition: none !important;
+      caret-color: transparent !important;
     }
 
     body {
       background: ${background};
-      --scryer-safe-padding: 96px;
+      --scryer-safe-padding: 72px;
+    }
+
+    body, .slide, .page {
+      font-family: "Inter", "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", sans-serif;
+    }
+
+    .ph,
+    [class^="ph-"],
+    [class*=" ph-"],
+    i[class*="ph"] {
+      font-family: "Phosphor" !important;
+    }
+
+    .emoji,
+    [data-emoji="true"] {
+      font-family: "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", sans-serif !important;
     }
 
     @media (prefers-reduced-motion: reduce) {
@@ -1678,40 +1675,7 @@ video {
 ${buildScryerCaptureStyles(size.width, size.height, currentPreviewBackground || "transparent")}
   </style>
 </head>
-<body>${htmlCode.value}
-<script>
-  (() => {
-    const width = ${size.width};
-    const height = ${size.height};
-    const safePadding = 96;
-    const roots = Array.from(document.querySelectorAll('.slide, .page'));
-    roots.forEach((root) => {
-      if (root.querySelector(':scope > #__scryer_fit_inner__')) return;
-      root.style.position = 'relative';
-      root.style.display = 'flex';
-      root.style.alignItems = 'center';
-      root.style.justifyContent = 'center';
-      root.style.overflow = 'hidden';
-      root.style.boxSizing = 'border-box';
-      const inner = document.createElement('div');
-      inner.id = '__scryer_fit_inner__';
-      inner.style.display = 'block';
-      inner.style.transformOrigin = 'center center';
-      while (root.firstChild) inner.appendChild(root.firstChild);
-      root.appendChild(inner);
-      requestAnimationFrame(() => {
-        const rect = inner.getBoundingClientRect();
-        const scale = Math.min(
-          1,
-          (width - safePadding * 2) / Math.max(rect.width, 1),
-          (height - safePadding * 2) / Math.max(rect.height, 1)
-        );
-        inner.style.transform = \`scale(\${scale})\`;
-      });
-    });
-  })();
-<\/script>
-</body>
+<body>${htmlCode.value}</body>
 </html>`;
         }
 
@@ -1796,7 +1760,10 @@ ${buildScryerCaptureStyles(size.width, size.height, currentPreviewBackground || 
                 mode,
                 selector: getSelector(mode),
                 width: size.width,
-                height: size.height
+                height: size.height,
+                autoCenter: true,
+                safePadding: null,
+                emojiFallback: true
             };
 
             manifestCodex.textContent = payload.codexName;

@@ -112,6 +112,79 @@ async function waitForAssets(page) {
   await new Promise((resolve) => setTimeout(resolve, 500));
 }
 
+await page.addStyleTag({
+  content: `
+    html, body {
+      margin: 0 !important;
+      padding: 0 !important;
+      width: ${payload.width}px !important;
+      height: ${payload.height}px !important;
+      overflow: hidden !important;
+      background: transparent !important;
+    }
+
+    #carousel-root {
+      width: ${payload.width}px !important;
+      height: ${payload.height}px !important;
+      max-width: ${payload.width}px !important;
+      max-height: ${payload.height}px !important;
+      aspect-ratio: auto !important;
+      box-shadow: none !important;
+      overflow: hidden !important;
+    }
+
+    #slides-container {
+      display: block !important;
+      width: ${payload.width}px !important;
+      height: ${payload.height}px !important;
+      transform: none !important;
+      transition: none !important;
+    }
+
+    .slide {
+      width: ${payload.width}px !important;
+      height: ${payload.height}px !important;
+      min-width: ${payload.width}px !important;
+      min-height: ${payload.height}px !important;
+      max-width: ${payload.width}px !important;
+      max-height: ${payload.height}px !important;
+      flex: none !important;
+      flex-basis: auto !important;
+      display: flex !important;
+      box-sizing: border-box !important;
+      overflow: hidden !important;
+      position: relative !important;
+      padding: 100px !important;
+    }
+
+    .nav-controls {
+      display: none !important;
+    }
+
+    .slide * {
+      box-sizing: border-box !important;
+    }
+
+    .slide h1,
+    .slide h2,
+    .slide h3 {
+      text-wrap: balance;
+      max-width: 880px !important;
+    }
+
+    .stat-box {
+      max-width: 760px !important;
+    }
+
+    .break-all {
+      word-break: normal !important;
+      overflow-wrap: anywhere !important;
+      font-size: 26px !important;
+      line-height: 1.15 !important;
+    }
+  `
+});
+
 function buildScryerCaptureStyles(width, height) {
   return `
     @import url('https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@400;700;900&family=Playfair+Display:wght@400;600;700&family=JetBrains+Mono:wght@400;700&family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@400;500;700&family=DM+Serif+Display:ital@0;1&family=Cormorant+Garamond:wght@400;500;600;700&family=Noto+Color+Emoji&display=swap');

@@ -132,22 +132,7 @@ function buildScryerCaptureStyles(width, height) {
 
     body {
       --scryer-safe-padding: 72px;
-    }
-
-    body, .slide, .page {
-      font-family: "Inter", "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", sans-serif;
-    }
-
-    .ph,
-    [class^="ph-"],
-    [class*=" ph-"],
-    i[class*="ph"] {
-      font-family: "Phosphor" !important;
-    }
-
-    .emoji,
-    [data-emoji="true"] {
-      font-family: "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", sans-serif !important;
+      font-family: "Inter", "Space Grotesk", "JetBrains Mono", "Playfair Display", "Cinzel Decorative", "DM Serif Display", "Cormorant Garamond", "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", sans-serif !important;
     }
 
     button, .button, [role="button"], svg, i[class^="ph-"], i[class*=" ph-"] {
@@ -301,22 +286,22 @@ async function captureElements(page, selector, outputDir, payload) {
       clone.style.background = background;
       clone.style.zIndex = "1";
       clone.style.flexShrink = "0";
-      root.appendChild(clone);
+
+      const fitInner = document.createElement("div");
+      fitInner.id = "__scryer_fit_inner__";
+      fitInner.style.display = "block";
+      fitInner.style.transformOrigin = "center center";
+      fitInner.style.willChange = "transform";
+      fitInner.appendChild(clone);
+      root.appendChild(fitInner);
       document.body.appendChild(root);
+      const naturalRect = clone.getBoundingClientRect();
+      const naturalWidth = Math.max(naturalRect.width, 1);
+      const naturalHeight = Math.max(naturalRect.height, 1);
       const safeWidth = width - safePadding * 2;
       const safeHeight = height - safePadding * 2;
-      const graphics = Array.from(clone.querySelectorAll('svg, canvas, img, .chart, .graph, .diagram, .visual, .timeline, .network, .constellation, [data-scryer-scale="graphic"]'));
-      graphics.forEach((graphic) => {
-        const rect = graphic.getBoundingClientRect();
-        const scale = Math.min(1, safeWidth / Math.max(rect.width, 1), safeHeight / Math.max(rect.height, 1));
-        if (scale < 1) {
-          graphic.style.transformOrigin = "center center";
-          const existingTransform = window.getComputedStyle(graphic).transform;
-          graphic.style.transform = existingTransform && existingTransform !== "none"
-            ? `${existingTransform} scale(${scale})`
-            : `scale(${scale})`;
-        }
-      });
+      const scale = Math.min(1, safeWidth / naturalWidth, safeHeight / naturalHeight);
+      fitInner.style.transform = `scale(${scale})`;
     }, {
       selector,
       index,

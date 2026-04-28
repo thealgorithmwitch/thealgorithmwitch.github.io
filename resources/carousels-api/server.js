@@ -406,14 +406,6 @@ async function captureElementsPreserveLayout(page, selector, outputDir, payload)
         font-family: "Phosphor" !important;
         visibility: visible !important;
       }
-      body, .slide, .slide * {
-        font-family:
-          inherit,
-          "Apple Color Emoji",
-          "Segoe UI Emoji",
-          "Noto Color Emoji",
-          sans-serif;
-      }
     `
   }).catch(() => {});
   await page.evaluate(async () => {
@@ -437,24 +429,81 @@ async function captureElementsPreserveLayout(page, selector, outputDir, payload)
       outputDir,
       `slide-${String(index + 1).padStart(2, "0")}.png`
     );
-    const clip = await page.evaluate(({ selector: selectorValue, index: itemIndex, width, height }) => {
+    const prepared = await page.evaluate(({ selector: selectorValue, index: itemIndex, width, height }) => {
       const el = document.querySelectorAll(selectorValue)[itemIndex];
       if (!el) return null;
-      el.scrollIntoView({ block: "start", inline: "start" });
-      const rect = el.getBoundingClientRect();
-      return {
-        x: Math.max(0, Math.round(rect.left + window.scrollX)),
-        y: Math.max(0, Math.round(rect.top + window.scrollY)),
-        width,
-        height
+
+      document.getElementById("__scryer_preserve_capture_root__")?.remove();
+
+      const isVisibleBg = (style) => {
+        if (!style) return false;
+        const color = style.backgroundColor;
+        const image = style.backgroundImage;
+        return (image && image !== "none") || (color && color !== "rgba(0, 0, 0, 0)" && color !== "transparent");
       };
+      const resolveBackground = (node) => {
+        let current = node;
+        while (current && current.nodeType === 1) {
+          const style = window.getComputedStyle(current);
+          if (isVisibleBg(style)) return style.background;
+          current = current.parentElement;
+        }
+        const bodyStyle = window.getComputedStyle(document.body);
+        if (isVisibleBg(bodyStyle)) return bodyStyle.background;
+        return "#ffffff";
+      };
+
+      el.scrollIntoView({ block: "start", inline: "start" });
+      const background = resolveBackground(el);
+      const root = document.createElement("div");
+      root.id = "__scryer_preserve_capture_root__";
+      root.style.position = "fixed";
+      root.style.left = "0";
+      root.style.top = "0";
+      root.style.width = `${width}px`;
+      root.style.height = `${height}px`;
+      root.style.overflow = "hidden";
+      root.style.background = background;
+      root.style.zIndex = "2147483647";
+      root.style.isolation = "isolate";
+
+      const clone = el.cloneNode(true);
+      clone.removeAttribute("id");
+      clone.style.width = `${width}px`;
+      clone.style.height = `${height}px`;
+      clone.style.minWidth = `${width}px`;
+      clone.style.minHeight = `${height}px`;
+      clone.style.maxWidth = `${width}px`;
+      clone.style.maxHeight = `${height}px`;
+      clone.style.margin = "0";
+      clone.style.position = "relative";
+      clone.style.left = "auto";
+      clone.style.top = "auto";
+      clone.style.right = "auto";
+      clone.style.bottom = "auto";
+      clone.style.overflow = "hidden";
+      clone.style.boxSizing = "border-box";
+      clone.style.flex = "0 0 auto";
+
+      if (clone.style.transform && clone.style.transform !== "none") {
+        clone.style.transform = "none";
+      }
+
+      const cloneStyle = window.getComputedStyle(el);
+      const hasOwnBg = cloneStyle.backgroundImage !== "none" ||
+        (cloneStyle.backgroundColor && cloneStyle.backgroundColor !== "rgba(0, 0, 0, 0)" && cloneStyle.backgroundColor !== "transparent");
+      if (!hasOwnBg) clone.style.background = background;
+
+      root.appendChild(clone);
+      document.body.appendChild(root);
+      return true;
     }, {
       selector,
       index,
       width: payload.width,
       height: payload.height
     });
-    if (!clip) {
+    if (!prepared) {
       throw new Error(`Could not measure slide ${index + 1}.`);
     }
     await page.evaluate(() => document.fonts && document.fonts.ready ? document.fonts.ready : Promise.resolve()).catch(() => {});
@@ -462,9 +511,12 @@ async function captureElementsPreserveLayout(page, selector, outputDir, payload)
     await page.screenshot({
       path: outputPath,
       type: "png",
-      clip,
+      clip: { x: 0, y: 0, width: payload.width, height: payload.height },
       omitBackground: false
     });
+    await page.evaluate(() => {
+      document.getElementById("__scryer_preserve_capture_root__")?.remove();
+    }).catch(() => {});
     files.push(outputPath);
   }
   return files;

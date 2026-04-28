@@ -221,6 +221,7 @@ async function installExportRuntime(page, payload) {
       const pointerNone = style.pointerEvents === "none";
       const slideRect = slide.getBoundingClientRect();
       const areaRatio = (rect.width * rect.height) / Math.max(slideRect.width * slideRect.height, 1);
+      if (hasText) return true;
       if (opacity < 0.12) return false;
       if (pointerNone && !hasText && !isMedia) return false;
       if (areaRatio > 0.7 && !hasText) return false;
@@ -328,6 +329,12 @@ async function installExportRuntime(page, payload) {
         if (bounds2.right > width - safePadding) adjustX -= bounds2.right - (width - safePadding);
         if (bounds2.top < safePadding) adjustY += safePadding - bounds2.top;
         if (bounds2.bottom > height - safePadding) adjustY -= bounds2.bottom - (height - safePadding);
+        const minGutter = Math.max(56, Math.round(width * 0.07));
+        const minVerticalGutter = Math.max(48, Math.round(height * 0.05));
+        if (bounds2.left + adjustX < minGutter) adjustX += minGutter - (bounds2.left + adjustX);
+        if (bounds2.right + adjustX > width - minGutter) adjustX -= (bounds2.right + adjustX) - (width - minGutter);
+        if (bounds2.top + adjustY < minVerticalGutter) adjustY += minVerticalGutter - (bounds2.top + adjustY);
+        if (bounds2.bottom + adjustY > height - minVerticalGutter) adjustY -= (bounds2.bottom + adjustY) - (height - minVerticalGutter);
         if (adjustX || adjustY) {
           inner.style.transform = `translate(${tx + adjustX}px, ${ty + adjustY}px) scale(${scale})`;
         }

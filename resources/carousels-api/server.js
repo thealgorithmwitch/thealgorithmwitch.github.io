@@ -558,7 +558,6 @@ async function captureElementsPreserveLayout(page, selector, outputDir, payload)
       root.style.isolation = "isolate";
 
       const clone = el.cloneNode(true);
-      clone.removeAttribute("id");
       clone.style.width = `${width}px`;
       clone.style.height = `${height}px`;
       clone.style.minWidth = `${width}px`;
@@ -573,7 +572,6 @@ async function captureElementsPreserveLayout(page, selector, outputDir, payload)
       clone.style.bottom = "auto";
       clone.style.overflow = "hidden";
       clone.style.boxSizing = "border-box";
-      clone.style.flex = "0 0 auto";
 
       if (clone.style.transform && clone.style.transform !== "none") {
         clone.style.transform = "none";

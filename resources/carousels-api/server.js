@@ -393,6 +393,35 @@ async function captureOne(page, outputPath, payload, selector, index) {
 }
 
 async function captureElementsPreserveLayout(page, selector, outputDir, payload) {
+  await page.addStyleTag({
+    url: "https://unpkg.com/@phosphor-icons/web/src/regular/style.css"
+  }).catch(() => {});
+  await page.addStyleTag({
+    url: "https://unpkg.com/@phosphor-icons/web/src/fill/style.css"
+  }).catch(() => {});
+  await page.addStyleTag({
+    content: `
+      @import url('https://fonts.googleapis.com/css2?family=Noto+Color+Emoji&display=swap');
+      .ph, .ph-bold, .ph-duotone, .ph-fill {
+        font-family: "Phosphor" !important;
+        visibility: visible !important;
+      }
+      body, .slide, .slide * {
+        font-family:
+          inherit,
+          "Apple Color Emoji",
+          "Segoe UI Emoji",
+          "Noto Color Emoji",
+          sans-serif;
+      }
+    `
+  }).catch(() => {});
+  await page.evaluate(async () => {
+    if (document.fonts && document.fonts.ready) {
+      await document.fonts.ready;
+    }
+    await new Promise((resolve) => setTimeout(resolve, 750));
+  }).catch(() => {});
   let count;
   try {
     count = await page.$$eval(selector, (nodes) => nodes.length);

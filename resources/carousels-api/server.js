@@ -64,6 +64,7 @@ function validatePayload(payload) {
     height,
     autoCenter: payload.autoCenter !== false,
     emojiFallback: payload.emojiFallback !== false,
+    preserveLayout: payload.preserveLayout === true,
     safePadding: Number.isFinite(Number(payload.safePadding)) ? Math.max(0, Number(payload.safePadding)) : null,
     exportPadding: Number.isFinite(Number(payload.exportPadding))
       ? Math.min(MAX_EXPORT_PADDING, Math.max(0, Number(payload.exportPadding)))
@@ -391,7 +392,45 @@ async function captureOne(page, outputPath, payload, selector, index) {
   await page.evaluate(() => window.__scryerCleanupCapture && window.__scryerCleanupCapture()).catch(() => {});
 }
 
+async function captureElementsPreserveLayout(page, selector, outputDir, payload) {
+  const handles = await page.$$(selector);
+  if (!handles.length) {
+    throw new Error(`No elements matched selector "${selector}".`);
+  }
+  const files = [];
+  for (let index = 0; index < handles.length; index += 1) {
+    const handle = handles[index];
+    await handle.evaluate((node) => {
+      node.scrollIntoView({ block: "start", inline: "nearest" });
+    });
+    await page.evaluate(() => document.fonts && document.fonts.ready ? document.fonts.ready : Promise.resolve()).catch(() => {});
+    await new Promise((resolve) => setTimeout(resolve, 300));
+    const box = await handle.boundingBox();
+    if (!box) {
+      throw new Error(`Could not measure element ${index + 1}.`);
+    }
+    const filename = `slide-${String(index + 1).padStart(2, "0")}.png`;
+    const outputPath = path.join(outputDir, filename);
+    await page.screenshot({
+      path: outputPath,
+      type: "png",
+      clip: {
+        x: Math.max(0, Math.round(box.x)),
+        y: Math.max(0, Math.round(box.y)),
+        width: payload.width,
+        height: payload.height
+      },
+      omitBackground: false
+    });
+    files.push(outputPath);
+  }
+  return files;
+}
+
 async function captureTargets(page, payload, outputDir) {
+  if (payload.preserveLayout && payload.mode !== "full") {
+    return captureElementsPreserveLayout(page, payload.selector, outputDir, payload);
+  }
   let count = 1;
   if (payload.mode !== "full") {
     try {
@@ -467,8 +506,10 @@ app.post("/api/export-html", async (request, response) => {
       timeout: 60000
     });
     await waitForAssets(page);
-    await installExportRuntime(page, payload);
-    await waitForAssets(page);
+    if (!payload.preserveLayout) {
+      await installExportRuntime(page, payload);
+      await waitForAssets(page);
+    }
     const files = await captureTargets(page, payload, tempDir);
     await page.close();
     await browser.close();

@@ -12,6 +12,7 @@ const PORT = process.env.PORT || 3000;
 const MAX_HTML_SIZE = "8mb";
 const MIN_DIMENSION = 200;
 const MAX_DIMENSION = 4000;
+const MAX_EXPORT_PADDING = 400;
 const executablePath = process.env.PUPPETEER_EXECUTABLE_PATH || puppeteer.executablePath();
 
 app.use(cors({ origin: "*", methods: ["GET", "POST", "OPTIONS"], allowedHeaders: ["Content-Type"] }));
@@ -64,7 +65,9 @@ function validatePayload(payload) {
     autoCenter: payload.autoCenter !== false,
     emojiFallback: payload.emojiFallback !== false,
     safePadding: Number.isFinite(Number(payload.safePadding)) ? Math.max(0, Number(payload.safePadding)) : null,
-    exportPadding: Number.isFinite(Number(payload.exportPadding)) ? Math.max(0, Number(payload.exportPadding)) : 0
+    exportPadding: Number.isFinite(Number(payload.exportPadding))
+      ? Math.min(MAX_EXPORT_PADDING, Math.max(0, Number(payload.exportPadding)))
+      : 0
   };
 }
 

@@ -455,6 +455,96 @@ async function captureElementsPreserveLayout(page, selector, outputDir, payload)
 
       el.scrollIntoView({ block: "start", inline: "start" });
       const background = resolveBackground(el);
+      const emojiFallbackMap = {
+        "🎨": {
+          type: "svg",
+          value: '<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12 3C7.03 3 3 6.58 3 11c0 2.34 1.17 4.44 3.03 5.9.55.43.85 1.1.74 1.79L6.5 21l2.82-.94c.53-.18 1.11-.12 1.61.12.35.17.71.31 1.07.42 4.45 1.33 9-1.7 9-6.1C21 7.7 17.03 3 12 3Z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/><circle cx="8.5" cy="11" r="1.1" fill="currentColor"/><circle cx="11.5" cy="8.5" r="1.1" fill="currentColor"/><circle cx="15" cy="10" r="1.1" fill="currentColor"/><circle cx="14" cy="14" r="1.1" fill="currentColor"/></svg>'
+        },
+        "📖": {
+          type: "svg",
+          value: '<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M4.5 5.5A2.5 2.5 0 0 1 7 3h11v16H7a2.5 2.5 0 0 0-2.5 2.5V5.5Z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/><path d="M18 3v16M7 6.5h7" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>'
+        },
+        "🗣️": {
+          type: "svg",
+          value: '<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M4 10a6 6 0 0 1 10.24-4.24A6 6 0 0 1 20 10c0 1.61-.63 3.08-1.66 4.16L19 18l-3.28-.66A5.97 5.97 0 0 1 14 18h-4a6 6 0 0 1-6-6Z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/><path d="M9.5 10.5c.8-.2 1.7-.82 2.42-1.83.3-.42.97-.18.94.34v3.98c.03.52-.64.76-.94.34-.72-1.01-1.62-1.63-2.42-1.83" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/><path d="M15.8 9.2c.55.5.9 1.23.9 2.05 0 .82-.35 1.55-.9 2.05" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>'
+        },
+        "🔍": {
+          type: "svg",
+          value: '<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="11" cy="11" r="5.5" stroke="currentColor" stroke-width="1.9"/><path d="M15.2 15.2 20 20" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/></svg>'
+        },
+        "🏆": {
+          type: "svg",
+          value: '<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M8 4h8v2a4 4 0 0 1-8 0V4Z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/><path d="M6 5H4.5A1.5 1.5 0 0 0 3 6.5C3 8.99 5.01 11 7.5 11H8m8-6h1.5A1.5 1.5 0 0 1 19 6.5C19 8.99 16.99 11 14.5 11H14" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/><path d="M12 10v4m-3 6h6m-5-3h4" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>'
+        },
+        "✨": { type: "text", value: "✦" },
+        "💖": { type: "text", value: "♥" },
+        "🎯": { type: "text", value: "◎" },
+        "🌱": { type: "text", value: "⌁" },
+        "🔮": { type: "text", value: "◌" },
+        "🧠": { type: "text", value: "◉" }
+      };
+      const createFallbackSpan = (entry) => {
+        const span = document.createElement("span");
+        span.style.display = "inline-flex";
+        span.style.alignItems = "center";
+        span.style.justifyContent = "center";
+        span.style.width = "1em";
+        span.style.height = "1em";
+        span.style.verticalAlign = "-0.12em";
+        span.style.color = "currentColor";
+        span.style.lineHeight = "1";
+        span.style.whiteSpace = "nowrap";
+        if (entry.type === "svg") {
+          span.innerHTML = entry.value;
+          const svg = span.querySelector("svg");
+          if (svg) {
+            svg.style.width = "100%";
+            svg.style.height = "100%";
+            svg.style.display = "block";
+          }
+        } else {
+          span.textContent = entry.value;
+        }
+        return span;
+      };
+      const applyEmojiFallbacks = (root) => {
+        const emojiPattern = /🎨|📖|🗣️|🔍|🏆|✨|💖|🎯|🌱|🔮|🧠/g;
+        const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, {
+          acceptNode(node) {
+            if (!node.nodeValue || !node.nodeValue.trim()) return NodeFilter.FILTER_REJECT;
+            const parent = node.parentElement;
+            if (!parent || parent.closest("script, style, textarea, svg")) return NodeFilter.FILTER_REJECT;
+            return NodeFilter.FILTER_ACCEPT;
+          }
+        });
+        const nodes = [];
+        while (walker.nextNode()) nodes.push(walker.currentNode);
+        let replacedCount = 0;
+        for (const node of nodes) {
+          const text = node.nodeValue;
+          if (!text) continue;
+          emojiPattern.lastIndex = 0;
+          if (!emojiPattern.test(text)) continue;
+          emojiPattern.lastIndex = 0;
+          const frag = document.createDocumentFragment();
+          let cursor = 0;
+          for (const match of text.matchAll(emojiPattern)) {
+            const symbol = match[0];
+            const index = match.index ?? 0;
+            if (index > cursor) {
+              frag.appendChild(document.createTextNode(text.slice(cursor, index)));
+            }
+            frag.appendChild(createFallbackSpan(emojiFallbackMap[symbol]));
+            replacedCount += 1;
+            cursor = index + symbol.length;
+          }
+          if (cursor < text.length) {
+            frag.appendChild(document.createTextNode(text.slice(cursor)));
+          }
+          node.replaceWith(frag);
+        }
+        console.log("Scryer preserve emoji fallbacks replaced:", replacedCount);
+      };
       const root = document.createElement("div");
       root.id = "__scryer_preserve_capture_root__";
       root.style.position = "fixed";
@@ -494,6 +584,7 @@ async function captureElementsPreserveLayout(page, selector, outputDir, payload)
         (cloneStyle.backgroundColor && cloneStyle.backgroundColor !== "rgba(0, 0, 0, 0)" && cloneStyle.backgroundColor !== "transparent");
       if (!hasOwnBg) clone.style.background = background;
 
+      applyEmojiFallbacks(clone);
       root.appendChild(clone);
       document.body.appendChild(root);
       return true;

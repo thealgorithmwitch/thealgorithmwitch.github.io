@@ -1481,6 +1481,10 @@ video {
                         <i class="ph-bold ph-file-zip text-lg" vid="155"></i>
                         Download ZIP
                     </button>
+                    <label class="mt-4 flex items-center justify-center gap-3 text-[11px] text-slate-400">
+                        <input id="preserve-layout" type="checkbox" class="rounded border border-slate-500/50 bg-transparent">
+                        <span>Preserve layout if export differs from preview</span>
+                    </label>
                     <p class="text-center font-mono-tech text-[8px] text-gray-600 mt-4 uppercase tracking-widest" vid="156">Archive valid for 24 hours</p>
                 </div>
             </div>
@@ -1537,6 +1541,7 @@ video {
         const htmlCode = document.getElementById('html-code');
         const previewButton = document.getElementById('preview-btn');
         const exportButton = document.getElementById('export-btn');
+        const preserveLayoutInput = document.getElementById('preserve-layout');
         const exportStatus = document.getElementById('export-status');
         const manifestStatus = document.getElementById('manifest-status');
         const manifestProgress = document.getElementById('manifest-progress');
@@ -1763,7 +1768,8 @@ ${buildScryerCaptureStyles(size.width, size.height, currentPreviewBackground || 
                 height: size.height,
                 autoCenter: true,
                 safePadding: null,
-                emojiFallback: true
+                emojiFallback: true,
+                preserveLayout: preserveLayoutInput?.checked === true
             };
 
             manifestCodex.textContent = payload.codexName;

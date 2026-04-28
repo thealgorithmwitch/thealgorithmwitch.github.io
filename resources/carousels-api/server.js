@@ -63,7 +63,8 @@ function validatePayload(payload) {
     height,
     autoCenter: payload.autoCenter !== false,
     emojiFallback: payload.emojiFallback !== false,
-    safePadding: Number.isFinite(Number(payload.safePadding)) ? Math.max(0, Number(payload.safePadding)) : null
+    safePadding: Number.isFinite(Number(payload.safePadding)) ? Math.max(0, Number(payload.safePadding)) : null,
+    exportPadding: Number.isFinite(Number(payload.exportPadding)) ? Math.max(0, Number(payload.exportPadding)) : 0
   };
 }
 
@@ -108,8 +109,6 @@ async function installExportRuntime(page, payload) {
         position: fixed !important;
         left: 0 !important;
         top: 0 !important;
-        width: ${payload.width}px !important;
-        height: ${payload.height}px !important;
         overflow: hidden !important;
         z-index: 2147483647 !important;
         isolation: isolate !important;
@@ -242,10 +241,13 @@ async function installExportRuntime(page, payload) {
     window.__scryerPrepareClone = function(original, width, height, options) {
       document.getElementById("__scryer_capture_viewport__")?.remove();
       const bg = window.__scryerResolveBackground(original);
+      const exportPadding = Number.isFinite(options.exportPadding) ? Math.max(0, options.exportPadding) : 0;
+      const canvasWidth = width + exportPadding * 2;
+      const canvasHeight = height + exportPadding * 2;
       const viewport = document.createElement("div");
       viewport.id = "__scryer_capture_viewport__";
-      viewport.style.width = `${width}px`;
-      viewport.style.height = `${height}px`;
+      viewport.style.width = `${canvasWidth}px`;
+      viewport.style.height = `${canvasHeight}px`;
       viewport.style.background = bg;
       viewport.style.overflow = "hidden";
       const stage = document.createElement("div");
@@ -290,6 +292,15 @@ async function installExportRuntime(page, payload) {
       clone.querySelectorAll(".nav-controls, .slide-counter").forEach((el) => {
         el.style.display = "none";
       });
+      if (exportPadding > 0) {
+        stage.appendChild(clone);
+        viewport.appendChild(stage);
+        document.body.appendChild(viewport);
+        document.body.classList.add("__scryer_capturing__");
+        window.__scryerWrapEmojiTextNodes(clone);
+        window.__scryerApplyEmojiFallbacks(clone);
+        return { background: bg };
+      }
       const inner = document.createElement("div");
       inner.id = "__scryer_inner__";
       inner.style.position = "absolute";
@@ -343,11 +354,19 @@ async function installExportRuntime(page, payload) {
 }
 
 async function captureOne(page, outputPath, payload, selector, index) {
-  await page.evaluate(({ selector, index, width, height, autoCenter, safePadding, emojiFallback }) => {
+  const exportPadding = selector === "body" ? 0 : payload.exportPadding;
+  const clipWidth = payload.width + exportPadding * 2;
+  const clipHeight = payload.height + exportPadding * 2;
+  await page.setViewport({
+    width: clipWidth,
+    height: clipHeight,
+    deviceScaleFactor: 1
+  });
+  await page.evaluate(({ selector, index, width, height, autoCenter, safePadding, emojiFallback, exportPadding }) => {
     const nodes = selector === "body" ? [document.body] : Array.from(document.querySelectorAll(selector));
     const original = nodes[index];
     if (!original) throw new Error(`No capture target found for ${selector} at index ${index}.`);
-    window.__scryerPrepareClone(original, width, height, { autoCenter, safePadding, emojiFallback });
+    window.__scryerPrepareClone(original, width, height, { autoCenter, safePadding, emojiFallback, exportPadding });
   }, {
     selector,
     index,
@@ -355,14 +374,15 @@ async function captureOne(page, outputPath, payload, selector, index) {
     height: payload.height,
     autoCenter: payload.autoCenter,
     safePadding: payload.safePadding,
-    emojiFallback: payload.emojiFallback
+    emojiFallback: payload.emojiFallback,
+    exportPadding
   });
   await page.evaluate(() => document.fonts && document.fonts.ready ? document.fonts.ready : Promise.resolve()).catch(() => {});
   await new Promise((resolve) => setTimeout(resolve, 300));
   await page.screenshot({
     path: outputPath,
     type: "png",
-    clip: { x: 0, y: 0, width: payload.width, height: payload.height },
+    clip: { x: 0, y: 0, width: clipWidth, height: clipHeight },
     omitBackground: false
   });
   await page.evaluate(() => window.__scryerCleanupCapture && window.__scryerCleanupCapture()).catch(() => {});

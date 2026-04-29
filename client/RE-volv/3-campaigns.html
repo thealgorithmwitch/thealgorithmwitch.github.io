@@ -1,21 +1,41 @@
 
-<html lang="en" vid="0"><head vid="1">
+<html lang="en" style="background:#030014;color:#e2e8f0" vid="0"><head vid="1">
+    <script>
+        document.documentElement.classList.add('js');
+    </script>
     <meta charset="UTF-8" vid="2">
     <meta name="viewport" content="width=device-width, initial-scale=1.0" vid="3">
+    <meta name="theme-color" content="#030014">
+    <meta name="color-scheme" content="dark">
     <title vid="4">Campaign Naming Alignment | Alchemical Data</title>
     
     <link rel="preconnect" href="https://fonts.googleapis.com" vid="6">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="" vid="7">
-    <link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@400;700;900&amp;family=Inter:wght@300;400;500;600&amp;family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&amp;display=swap" rel="stylesheet" vid="8">
-    <script src="https://unpkg.com/@phosphor-icons/web" vid="9"></script>
+    <style>
+        html, body { background:#030014; margin:0; padding:0; }
+        body { color:#e2e8f0; font-family:system-ui, -apple-system, Segoe UI, Roboto, Inter, Arial, sans-serif; }
+    </style>
+    <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@400;700;900&amp;family=Inter:wght@300;400;500;600&amp;family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&amp;display=swap" onload="this.onload=null;this.rel='stylesheet'" vid="8">
+    <noscript><link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@400;700;900&amp;family=Inter:wght@300;400;500;600&amp;family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&amp;display=swap" rel="stylesheet"></noscript>
+    <script defer src="https://unpkg.com/@phosphor-icons/web" vid="9"></script>
     <style vid="10">
         :root {
             --color-bg: #030014;
+            --color-card: rgba(20, 15, 45, 0.6);
             --color-purple: #a855f7;
             --color-gold: #fde047;
             --color-cyan: #06b6d4;
             --color-amber: #f59e0b;
             --color-emerald: #10b981;
+            --color-fuchsia: #d946ef;
+        }
+
+        html,
+        body {
+            width: 100%;
+            min-height: 100%;
+            overflow-x: hidden;
+            -webkit-text-size-adjust: 100%;
         }
 
         body {
@@ -25,8 +45,9 @@
             margin: 0;
             padding: 0;
             overflow: hidden;
-            width: 100vw;
-            height: 100vh;
+            width: 100%;
+            height: 100dvh;
+            min-height: 100vh;
         }
 
         .font-magical { font-family: 'Cinzel Decorative', cursive; }
@@ -65,6 +86,7 @@
             transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
             position: relative;
             overflow: hidden;
+            contain: layout paint;
         }
         
         .glass-card::before {
@@ -90,15 +112,251 @@
         
         .nav-btn { position: fixed; top: 50%; transform: translateY(-50%); z-index: 50; width: 48px; height: 48px; border-radius: 50%; background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1); color: rgba(255, 255, 255, 0.5); display: flex; align-items: center; justify-content: center; cursor: pointer; backdrop-filter: blur(8px); transition: all 0.3s ease; }
         .nav-btn:hover { background: rgba(255, 255, 255, 0.1); color: white; border-color: rgba(168, 85, 247, 0.5); box-shadow: 0 0 20px rgba(168, 85, 247, 0.3); }
+        .nav-btn:active { transform: translateY(-50%) scale(0.95); }
         .nav-prev { left: 2rem; }
         .nav-next { right: 2rem; }
         
         .presentation-controls { position: fixed; bottom: 2rem; left: 50%; transform: translateX(-50%); z-index: 50; display: flex; align-items: center; gap: 2rem; padding: 0.75rem 2rem; border-radius: 9999px; background: rgba(0, 0, 0, 0.4); border: 1px solid rgba(255, 255, 255, 0.1); backdrop-filter: blur(12px); }
         .dots-container { display: flex; gap: 0.75rem; }
         .dot { width: 8px; height: 8px; border-radius: 50%; background: rgba(255, 255, 255, 0.2); cursor: pointer; transition: all 0.3s ease; }
+        .dot:hover { background: rgba(255, 255, 255, 0.5); }
         .dot.active { background: var(--color-purple); transform: scale(1.5); box-shadow: 0 0 10px var(--color-purple); }
-        
-        .content-container { width: 100%; max-width: 1200px; max-height: 100%; display: flex; flex-direction: column; justify-content: center; }
+
+        .slide-counter { font-family: 'Inter', sans-serif; font-size: 0.75rem; letter-spacing: 0.2em; color: rgba(255, 255, 255, 0.5); font-weight: 600; }
+        .content-container { width: 100%; max-width: 1200px; max-height: calc(100dvh - 8rem); display: flex; flex-direction: column; justify-content: center; min-width: 0; overflow-y: auto; overflow-x: hidden; padding-block: 1.5rem; }
+        .slide { overflow-x: hidden; }
+        .slide .glass-card,
+        .slide .glass-panel,
+        .slide .grid > *,
+        .slide .flex > * { min-width: 0; }
+        .slide .glass-card,
+        .slide .glass-panel { height: auto; }
+        .slide h1,
+        .slide h2,
+        .slide h3,
+        .slide h4,
+        .slide p,
+        .slide li,
+        .slide span { overflow-wrap: anywhere; }
+
+        .mobile-swipe-text,
+        .mobile-read-hint {
+            display: none;
+        }
+
+        body.preload .ambient-glow {
+            filter: blur(72px);
+            opacity: 0.14;
+            transition: none;
+        }
+
+        body.preload .star {
+            animation: none;
+            opacity: 0;
+        }
+
+        body.preload .slide,
+        body.preload .glass-card,
+        body.preload .nav-btn,
+        body.preload .dot {
+            transition: none !important;
+        }
+
+        @media (max-width: 768px) {
+            .ambient-glow {
+                filter: blur(90px);
+                opacity: 0.18;
+            }
+        }
+
+        @media (max-width: 768px) {
+            :root {
+                --mobile-top-offset: 5.5rem;
+                --mobile-bottom-offset: 6.5rem;
+            }
+
+            body {
+                width: 100%;
+                height: 100dvh;
+                min-height: 100dvh;
+                overflow-x: hidden;
+                overflow-y: hidden;
+            }
+
+            #page-presentation {
+                width: 100%;
+                height: 100dvh;
+                min-height: 100dvh;
+                overflow: hidden;
+                overscroll-behavior: contain;
+                touch-action: pan-x pinch-zoom;
+            }
+
+            .slide {
+                box-sizing: border-box;
+                height: 100dvh;
+                max-height: 100dvh;
+                padding: var(--mobile-top-offset) 1rem var(--mobile-bottom-offset);
+                align-items: stretch;
+                justify-content: center;
+                overflow-y: auto;
+                -webkit-overflow-scrolling: touch;
+                overscroll-behavior-y: contain;
+                scroll-padding-top: var(--mobile-top-offset);
+                scroll-padding-bottom: var(--mobile-bottom-offset);
+                touch-action: pan-y pinch-zoom;
+            }
+
+            .content-container {
+                width: 100%;
+                max-width: 100%;
+                min-height: calc(100dvh - var(--mobile-top-offset) - var(--mobile-bottom-offset));
+                max-height: calc(100dvh - var(--mobile-top-offset) - var(--mobile-bottom-offset));
+                justify-content: center;
+                overflow-y: auto;
+                overscroll-behavior: contain;
+            }
+
+            .mobile-home-link {
+                top: 1rem !important;
+                left: 1rem !important;
+                right: 1rem;
+                gap: 0.65rem;
+            }
+
+            .mobile-home-link .font-magical {
+                font-size: 0.9rem;
+                line-height: 1.1;
+            }
+
+            .nav-btn {
+                display: none;
+            }
+
+            .presentation-controls {
+                bottom: 0.75rem;
+                gap: 0.75rem;
+                padding: 0.6rem 0.9rem;
+                width: calc(100vw - 1rem);
+                max-width: calc(100vw - 1rem);
+                justify-content: center;
+            }
+
+            .mobile-swipe-text {
+                display: block;
+                font-size: 0.58rem;
+                letter-spacing: 0.14em;
+                text-transform: uppercase;
+                color: rgba(255, 255, 255, 0.55);
+                white-space: nowrap;
+            }
+
+            .mobile-read-hint {
+                position: fixed;
+                left: 50%;
+                bottom: 4.9rem;
+                transform: translateX(-50%);
+                z-index: 55;
+                width: 4.15rem;
+                height: 4.15rem;
+                border-radius: 9999px;
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                justify-content: center;
+                gap: 0.2rem;
+                background: rgba(0, 0, 0, 0.38);
+                border: 1px solid rgba(255, 255, 255, 0.12);
+                backdrop-filter: blur(10px);
+                color: rgba(255, 255, 255, 0.72);
+                pointer-events: none;
+            }
+
+            .mobile-read-hint span {
+                font-size: 0.5rem;
+                letter-spacing: 0.12em;
+                text-transform: uppercase;
+                line-height: 1;
+            }
+
+            .slide-counter {
+                font-size: 0.62rem;
+                letter-spacing: 0.12em;
+            }
+
+            .dots-container {
+                gap: 0.5rem;
+            }
+
+            .dot {
+                width: 7px;
+                height: 7px;
+            }
+
+            .slide .grid,
+            .slide .grid-cols-2,
+            .slide .md\:grid-cols-2,
+            .slide .md\:grid-cols-3,
+            .slide .lg\:grid-cols-12 {
+                grid-template-columns: 1fr !important;
+            }
+
+            .slide .md\:flex-row,
+            .slide .lg\:flex-row {
+                flex-direction: column !important;
+            }
+
+            .slide .text-8xl { font-size: 3rem !important; line-height: 1.05 !important; }
+            .slide .text-7xl { font-size: 2.75rem !important; line-height: 1.05 !important; }
+            .slide .text-6xl { font-size: 2.25rem !important; line-height: 1.08 !important; }
+            .slide .text-5xl { font-size: 2rem !important; line-height: 1.08 !important; }
+            .slide .text-4xl { font-size: 1.6rem !important; line-height: 1.12 !important; }
+            .slide .text-3xl { font-size: 1.35rem !important; line-height: 1.15 !important; }
+            .slide .text-2xl { font-size: 1.1rem !important; line-height: 1.45 !important; }
+            .slide .text-xl { font-size: 1rem !important; line-height: 1.45 !important; }
+
+            .slide .p-10 { padding: 1.25rem !important; }
+            .slide .p-8 { padding: 1rem !important; }
+            .slide .p-6 { padding: 0.9rem !important; }
+            .slide .gap-8 { gap: 1rem !important; }
+            .slide .gap-6 { gap: 0.85rem !important; }
+            .slide .mb-12 { margin-bottom: 1.5rem !important; }
+            .slide .mb-8 { margin-bottom: 1rem !important; }
+
+            .slide img,
+            .slide svg {
+                max-width: 100%;
+                height: auto;
+            }
+
+            .slide .h-full {
+                height: auto !important;
+            }
+
+            .slide .max-w-7xl,
+            .slide .max-w-6xl,
+            .slide .max-w-5xl,
+            .slide .max-w-4xl,
+            .slide .max-w-3xl {
+                max-width: 100% !important;
+            }
+
+            .slide .absolute.-right-6.top-1\/4 {
+                position: static !important;
+                margin-top: 0.9rem;
+                display: inline-flex;
+                align-self: flex-start;
+            }
+
+            .slide .absolute.bottom-10.left-10.right-10 {
+                position: relative !important;
+                inset: auto !important;
+                left: auto !important;
+                right: auto !important;
+                bottom: auto !important;
+                margin-top: 1.5rem;
+            }
+        }
 
         .diagram-node {
             background: rgba(255, 255, 255, 0.05);
@@ -1150,7 +1408,7 @@ video {
       height: 0 !important;
     }
   </style></head>
-<body class="selection:bg-purple-600 selection:text-white antialiased text-base" vid="11">
+<body class="preload selection:bg-purple-600 selection:text-white antialiased text-base" style="background:#030014;color:#e2e8f0" vid="11">
 
     <div id="star-container" class="stars" vid="12"></div>
 
@@ -1158,13 +1416,13 @@ video {
         <div id="ambient-1" class="ambient-glow w-[800px] h-[800px] top-[-20%] left-[-10%] bg-purple-900/30 mix-blend-screen" vid="14"></div>
         <div id="ambient-2" class="ambient-glow w-[600px] h-[600px] bottom-[-10%] right-[-10%] bg-indigo-900/20 mix-blend-screen" vid="15"></div>
 
-        <div class="fixed top-6 left-8 z-50 flex items-center gap-3" vid="16">
+        <a href="/" class="mobile-home-link fixed top-6 left-8 z-50 flex items-center gap-3" aria-label="Return to homepage" vid="16">
             <div class="relative" vid="17">
-                <i class="ph-fill ph-crystal-ball text-purple-400 text-2xl" vid="18"></i>
-                <i class="ph-fill ph-sparkle text-yellow-300 text-xs absolute -top-1 -right-2 animate-pulse" vid="19"></i>
+                <i class="ph-fill ph-sparkle text-purple-400 text-2xl" vid="18"></i>
+                <i class="ph-fill ph-star-four text-yellow-300 text-xs absolute -top-1 -right-2 animate-pulse" vid="19"></i>
             </div>
-            <span class="font-magical text-xl text-white tracking-widest opacity-80 uppercase text-sm" vid="20">Alchemical Data</span>
-        </div>
+            <span class="font-magical text-xl text-white tracking-widest opacity-80 uppercase text-sm" vid="20">The Algorithm Witch</span>
+        </a>
 
         <button id="btn-prev" class="nav-btn nav-prev" aria-label="Previous Slide" vid="21">
             <i class="ph-bold ph-caret-left text-xl" vid="22"></i>
@@ -1173,10 +1431,16 @@ video {
             <i class="ph-bold ph-caret-right text-xl" vid="24"></i>
         </button>
 
+        <div class="mobile-read-hint" aria-hidden="true">
+            <i class="ph-bold ph-arrow-down"></i>
+            <span>Read More</span>
+        </div>
+
         <div class="presentation-controls" vid="25">
             <div class="dots-container" id="dots-container" vid="26"></div>
+            <div class="mobile-swipe-text">Swipe left/right</div>
             <div class="w-px h-4 bg-white/20" vid="27"></div>
-            <div class="slide-counter text-xs tracking-widest text-white/50 font-bold" id="slide-counter" vid="28">1 / 5</div>
+            <div class="slide-counter" id="slide-counter" vid="28">1 / 5</div>
         </div>
 
         <main id="slides-container" class="relative w-full h-full" vid="29">
@@ -1517,57 +1781,95 @@ video {
     </div>
 
     <script vid="246">
-        document.addEventListener('DOMContentLoaded', () => {
-            const starContainer = document.getElementById('star-container');
-            const starCount = 150;
-            for (let i = 0; i < starCount; i++) {
-                const star = document.createElement('div');
-                star.classList.add('star');
-                star.style.left = `${Math.random() * 100}%`;
-                star.style.top = `${Math.random() * 100}%`;
-                const size = Math.random() < 0.1 ? 3 : (Math.random() < 0.4 ? 2 : 1);
-                star.style.width = `${size}px`;
-                star.style.height = `${size}px`;
-                star.style.setProperty('--duration', `${2 + Math.random() * 4}s`);
-                star.style.setProperty('--delay', `${Math.random() * 5}s`);
-                star.style.setProperty('--opacity', 0.2 + Math.random() * 0.6);
-                starContainer.appendChild(star);
+        function scheduleNonCritical(task) {
+            if ('requestIdleCallback' in window) {
+                window.requestIdleCallback(task, { timeout: 600 });
+            } else {
+                window.setTimeout(task, 1);
             }
+        }
 
-            document.addEventListener('mousemove', e => {
-                document.querySelectorAll('.glass-card').forEach(card => {
-                    const rect = card.getBoundingClientRect();
-                    card.style.setProperty('--mouse-x', `${e.clientX - rect.left}px`);
-                    card.style.setProperty('--mouse-y', `${e.clientY - rect.top}px`);
-                });
+        function initCampaignPresentation() {
+            document.body.classList.remove('preload');
+            const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+            const isSmallScreen = window.matchMedia('(max-width: 768px)').matches;
+            const canHover = window.matchMedia('(hover: hover) and (pointer: fine)').matches;
+
+            const starContainer = document.getElementById('star-container');
+            scheduleNonCritical(() => {
+                if (!starContainer || starContainer.dataset.built) return;
+                starContainer.dataset.built = 'true';
+
+                const starCount = prefersReducedMotion ? 0 : (isSmallScreen ? 18 : 120);
+                const frag = document.createDocumentFragment();
+
+                for (let i = 0; i < starCount; i++) {
+                    const star = document.createElement('div');
+                    star.classList.add('star');
+                    star.style.left = `${Math.random() * 100}%`;
+                    star.style.top = `${Math.random() * 100}%`;
+                    const size = Math.random() < 0.1 ? 3 : (Math.random() < 0.4 ? 2 : 1);
+                    star.style.width = `${size}px`;
+                    star.style.height = `${size}px`;
+                    star.style.setProperty('--duration', `${2 + Math.random() * 4}s`);
+                    star.style.setProperty('--delay', `${Math.random() * 5}s`);
+                    star.style.setProperty('--opacity', 0.2 + Math.random() * 0.6);
+                    frag.appendChild(star);
+                }
+
+                starContainer.appendChild(frag);
             });
+
+            if (canHover) {
+                const cards = Array.from(document.querySelectorAll('.glass-card'));
+                let rafPending = false;
+                let lastX = 0;
+                let lastY = 0;
+
+                document.addEventListener('mousemove', (e) => {
+                    lastX = e.clientX;
+                    lastY = e.clientY;
+                    if (rafPending) return;
+                    rafPending = true;
+
+                    requestAnimationFrame(() => {
+                        cards.forEach((card) => {
+                            const rect = card.getBoundingClientRect();
+                            card.style.setProperty('--mouse-x', `${lastX - rect.left}px`);
+                            card.style.setProperty('--mouse-y', `${lastY - rect.top}px`);
+                        });
+                        rafPending = false;
+                    });
+                }, { passive: true });
+            }
 
             const slides = document.querySelectorAll('.slide');
             const totalSlides = slides.length;
             let currentSlide = 0;
             let isAnimating = false;
-            
+
             const btnPrev = document.getElementById('btn-prev');
             const btnNext = document.getElementById('btn-next');
             const counterEl = document.getElementById('slide-counter');
             const dotsContainer = document.getElementById('dots-container');
             const ambient1 = document.getElementById('ambient-1');
             const ambient2 = document.getElementById('ambient-2');
+            const presentationPage = document.getElementById('page-presentation');
 
             for (let i = 0; i < totalSlides; i++) {
                 const dot = document.createElement('div');
                 dot.classList.add('dot');
-                if(i === 0) dot.classList.add('active');
+                if (i === 0) dot.classList.add('active');
                 dot.addEventListener('click', () => goToSlide(i));
                 dotsContainer.appendChild(dot);
             }
             const dots = document.querySelectorAll('.dot');
-            
+
             counterEl.innerText = `1 / ${totalSlides}`;
 
             function updateAmbientGlow() {
                 const currentThemeData = slides[currentSlide].getAttribute('data-ambient');
-                if(currentThemeData) {
+                if (currentThemeData) {
                     const classes = currentThemeData.split(',');
                     ambient1.className = `ambient-glow w-[800px] h-[800px] top-[-20%] left-[-10%] mix-blend-screen ${classes[0]}`;
                     ambient2.className = `ambient-glow w-[600px] h-[600px] bottom-[-10%] right-[-10%] mix-blend-screen ${classes[1] || classes[0]}`;
@@ -1581,8 +1883,8 @@ video {
                 const currentEl = slides[currentSlide];
                 const nextEl = slides[newIndex];
 
-                nextEl.classList.remove('opacity-0', 'pointer-events-none', 'z-0', 'active');
-                
+                nextEl.classList.remove('opacity-0', 'pointer-events-none', 'z-0', 'active', 'previous');
+
                 if (direction === 'next') {
                     nextEl.style.transform = 'translateY(40px) scale(0.98)';
                     currentEl.style.transform = 'translateY(-40px) scale(0.98)';
@@ -1591,23 +1893,23 @@ video {
                     currentEl.style.transform = 'translateY(40px) scale(0.98)';
                 }
 
-                void nextEl.offsetWidth; 
+                void nextEl.offsetWidth;
 
                 currentEl.classList.remove('active');
                 currentEl.classList.add('opacity-0', 'pointer-events-none', 'z-0');
-                
-                nextEl.style.transform = ''; 
+
+                nextEl.style.transform = '';
                 nextEl.classList.add('active');
 
                 dots[currentSlide].classList.remove('active');
                 dots[newIndex].classList.add('active');
                 currentSlide = newIndex;
                 counterEl.innerText = `${currentSlide + 1} / ${totalSlides}`;
-                
+
                 updateAmbientGlow();
 
                 setTimeout(() => {
-                    currentEl.style.transform = ''; 
+                    currentEl.style.transform = '';
                     isAnimating = false;
                 }, 800);
             }
@@ -1621,7 +1923,7 @@ video {
             }
 
             function goToSlide(index) {
-                if(index > currentSlide) {
+                if (index > currentSlide) {
                     updateSlides(index, 'next');
                 } else if (index < currentSlide) {
                     updateSlides(index, 'prev');
@@ -1643,9 +1945,10 @@ video {
 
             let wheelTimeout;
             document.addEventListener('wheel', (e) => {
+                if (isMobilePresentation()) return;
                 if (isAnimating) return;
-                if (Math.abs(e.deltaY) < 40) return; 
-                
+                if (Math.abs(e.deltaY) < 40) return;
+
                 clearTimeout(wheelTimeout);
                 wheelTimeout = setTimeout(() => {
                     if (e.deltaY > 0) {
@@ -1653,11 +1956,69 @@ video {
                     } else {
                         prevSlide();
                     }
-                }, 100);
+                }, 50);
             }, { passive: false });
 
+            let touchStartX = 0;
+            let touchStartY = 0;
+            let touchEndX = 0;
+            let touchEndY = 0;
+            let touchActive = false;
+
+            function isMobilePresentation() {
+                return window.matchMedia('(max-width: 768px)').matches;
+            }
+
+            presentationPage.addEventListener('touchstart', (e) => {
+                if (!isMobilePresentation()) return;
+                if (!e.touches || e.touches.length !== 1) return;
+
+                touchActive = true;
+                touchStartX = e.touches[0].clientX;
+                touchStartY = e.touches[0].clientY;
+                touchEndX = touchStartX;
+                touchEndY = touchStartY;
+            }, { passive: true });
+
+            presentationPage.addEventListener('touchmove', (e) => {
+                if (!touchActive || !e.touches || e.touches.length !== 1) return;
+                touchEndX = e.touches[0].clientX;
+                touchEndY = e.touches[0].clientY;
+            }, { passive: true });
+
+            presentationPage.addEventListener('touchend', () => {
+                if (!touchActive || isAnimating || !isMobilePresentation()) {
+                    touchActive = false;
+                    return;
+                }
+
+                const deltaX = touchEndX - touchStartX;
+                const deltaY = touchEndY - touchStartY;
+                const absX = Math.abs(deltaX);
+                const absY = Math.abs(deltaY);
+                const threshold = 40;
+
+                if (absX < threshold && absY < threshold) {
+                    touchActive = false;
+                    return;
+                }
+
+                if (absX > absY) {
+                    if (deltaX < 0) nextSlide();
+                    else prevSlide();
+                }
+
+                touchActive = false;
+            }, { passive: true });
+
             updateAmbientGlow();
-        });
+        }
+
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', () => requestAnimationFrame(initCampaignPresentation), { once: true });
+        } else {
+            requestAnimationFrame(initCampaignPresentation);
+        }
     </script>
 
 </body></html>

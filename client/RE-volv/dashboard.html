@@ -1149,7 +1149,7 @@
 
 <script>
   const APP_CONFIG = {
-    APPS_SCRIPT_URL: "https://script.google.com/macros/s/AKfycbwQ4hocSMXLSiqNZYjmvMLz_KB4LZU4I39Sdk0wD7jc4hDDYuSR_AgjoXMs-TFCqlMIVw/exec",
+    API_BASE: "https://script.google.com/macros/s/AKfycbzkp0XCxJtcWn1Mz4-uceJD0oNlivQhwjY_4hohTjXQG9tu-UmEbBBxQjND76X2HoC-/exec",
     AUTO_SYNC_PERFORMANCE_ON_LOAD: false
   };
 
@@ -1209,6 +1209,9 @@
   let currentPerformanceTrend = [];
   let currentPerformanceComparison = null;
   let currentReportsLoaded = false;
+  let currentRegistryLoaded = false;
+  let currentAuditLoaded = false;
+  let currentResourcesLoaded = false;
   let currentHomeSummary = {};
   let currentHomeComparison = null;
   let currentRecentRegistryLinks = [];
@@ -1229,6 +1232,7 @@
   }
 
 document.addEventListener("DOMContentLoaded", async () => {
+  console.time("startup");
   try { applyConfig(); } catch (error) { console.error("applyConfig failed:", error); }
   try { initStars(); } catch (error) { console.error("initStars failed:", error); }
   try { bindNavigation(); } catch (error) { console.error("bindNavigation failed:", error); }
@@ -1247,52 +1251,6 @@ document.addEventListener("DOMContentLoaded", async () => {
   renderLoadingPerformanceState();
   renderHomeLoadingState();
   setDataStatus("loading", "Loading 30 day overview data...");
-
-  try {
-    await loadSettingsFromSheet();
-    applyWorkspaceConfig();
-  } catch (error) {
-    console.error("Initial settings load failed:", error);
-  }
-
-  const setupResults = await Promise.allSettled([
-    loadRegistryFromSheet(),
-    loadAuditFromSheet(),
-    loadResourcesFromSheet(),
-    loadAuditHighlights()
-  ]);
-
-  setupResults.forEach((result, index) => {
-    const names = [
-      "loadRegistryFromSheet",
-      "loadAuditFromSheet",
-      "loadResourcesFromSheet",
-      "loadAuditHighlights"
-    ];
-    if (result.status === "rejected") {
-      console.error(`${names[index]} failed:`, result.reason);
-    }
-  });
-
-  const registryResult = setupResults[0];
-  const utmStatus = document.getElementById("utm-builder-status");
-  if (utmStatus) {
-    if (registryResult.status === "fulfilled") {
-      utmStatus.textContent = `Loaded ${Array.isArray(currentRegistryItems) ? currentRegistryItems.length : 0} tracking links`;
-      utmStatus.classList.remove("text-gray-500", "text-amber-400");
-      utmStatus.classList.add("text-emerald-400");
-    } else {
-      utmStatus.textContent = "Registry load failed";
-      utmStatus.classList.remove("text-gray-500", "text-emerald-400");
-      utmStatus.classList.add("text-amber-400");
-    }
-  }
-
-  try {
-    populateReportFilterOptionsFromRegistry();
-  } catch (error) {
-    console.error("populateReportFilterOptionsFromRegistry failed:", error);
-  }
 
   const reportDefaults = {
     "filter-date-range": "30",
@@ -1318,27 +1276,22 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   overviewResults.forEach((result, index) => {
     if (result.status === "rejected") {
-      overviewFailures.push(overviewNames[index]);
+      overviewFailures.push(result.reason?.message || overviewNames[index]);
       console.error(`${overviewNames[index]} failed:`, result.reason);
     }
   });
 
   if (overviewFailures.length) {
-    setDataStatus("error", `Some dashboard data failed to load: ${overviewFailures.join(", ")}`);
+    setDataStatus("error", overviewFailures.join(" | "));
   } else {
     setDataStatus("loaded", "30 day overview data loaded successfully.");
-  }
-
-  try {
-    await loadReportsSnapshot({ updatedText: "Updated: Just now" });
-  } catch (error) {
-    console.error("Initial Visual Intelligence load failed:", error);
   }
 
   if (!hasRenderedAuditContent_(currentAuditHighlights)) {
     renderAuditHighlights(currentAuditHighlights);
   }
 
+  console.timeEnd("startup");
 });
 
   function normalizeText(value) {
@@ -1681,12 +1634,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     const data = await apiGet("getSettings");
     if (!data.ok) throw new Error(data.error || "Failed to load settings");
 
-    PORTAL_CONFIG.clientName = data.settings?.clientName || "Client";
-    PORTAL_CONFIG.lookerStudioUrl = data.settings?.lookerEmbedUrl || "";
-    PORTAL_CONFIG.primaryDomain = data.settings?.primaryDomain || "https://re-volv.org";
-    PORTAL_CONFIG.siteUrl = data.settings?.siteUrl || "https://re-volv.org";
-
-    applyConfig();
+    applyPortalSettings_(data.settings || {});
   }
 
   async function loadRegistryFromSheet(query = "") {
@@ -1694,8 +1642,12 @@ document.addEventListener("DOMContentLoaded", async () => {
     if (!data.ok) throw new Error(data.error || "Failed to load registry");
 
     currentRegistryItems = Array.isArray(data.registry) ? data.registry : [];
+    currentRegistryLoaded = true;
     populateUtmFilterOptions(currentRegistryItems);
     applyUtmRegistryFilters();
+    if (!String(query || "").trim()) {
+      populateReportFilterOptionsFromRegistry();
+    }
 
     const utmStatus = document.getElementById("utm-builder-status");
     if (utmStatus) {
@@ -1737,6 +1689,7 @@ async function loadAuditFromSheet(status = "all") {
     };
   });
 
+  currentAuditLoaded = true;
   renderAuditTable(currentAuditItems, normalizedStatus);
 }
 
@@ -1745,6 +1698,7 @@ async function loadAuditFromSheet(status = "all") {
     if (!data.ok) throw new Error(data.error || "Failed to load resource links");
 
     currentResourceLinks = Array.isArray(data.links) ? data.links : [];
+    currentResourcesLoaded = true;
     renderResourceLinks(currentResourceLinks);
   }
 
@@ -1783,36 +1737,33 @@ async function loadPerformanceComparisonFromSheet() {
 }
 
 async function loadHomeSnapshot() {
-  const requests = await Promise.allSettled([
-    apiGet("getPerformanceSummary", { range_type: "30", rangeType: "30", source: "all", campaign: "all", landing_page: "all" }),
-    apiGet("getPerformanceComparison", { range_type: "30", rangeType: "30", source: "all", campaign: "all", landing_page: "all" }),
-    apiGet("getRecentRegistryLinks", { range_type: "30", rangeType: "30" }),
-    apiGet("getAuditHighlights"),
-    apiGet("getStrategicNote"),
-    apiGet("getGtmHealthSummary")
-  ]);
+  console.time("loadHomeSnapshot");
+  try {
+    const data = await apiGet("getHomeInsights");
+    const insights = data.insights || {};
+    const warnings = Array.isArray(data.warnings) ? data.warnings : [];
 
-  const [summaryRes, comparisonRes, recentRes, highlightsRes, noteRes, gtmRes] = requests;
+    warnings.forEach((warning) => {
+      const section = String(warning?.section || "unknown");
+      const message = String(warning?.error || "Unknown optional section failure");
+      console.warn(`getHomeInsights optional section failed: ${section}`, warning);
 
-  const summaryFailed = summaryRes.status !== "fulfilled" || !summaryRes.value?.ok;
-  if (summaryFailed) {
-    console.error("getPerformanceSummary failed:", summaryRes.status === "rejected" ? summaryRes.reason : summaryRes.value);
-    throw new Error(
-      summaryRes.status === "fulfilled"
-        ? (summaryRes.value?.error || "Failed to load performance summary")
-        : "Failed to load performance summary"
-    );
-  }
+      if (section === "settings") console.warn(`getSettings fallback applied: ${message}`);
+      if (section === "comparison30") console.warn(`getPerformanceComparison fallback applied: ${message}`);
+      if (section === "recentLinks") console.warn(`getRecentRegistryLinks fallback applied: ${message}`);
+      if (section === "auditHighlights") console.warn(`getAuditHighlights fallback applied: ${message}`);
+      if (section === "strategicNote") console.warn(`getStrategicNote fallback applied: ${message}`);
+      if (section === "gtmSummary") console.warn(`getGtmHealthSummary fallback applied: ${message}`);
+    });
 
-  currentHomeSummary = summaryRes.value.summary || {};
-  currentHomeComparison = comparisonRes.status === "fulfilled" && comparisonRes.value?.ok ? (comparisonRes.value.comparison || null) : null;
-  currentRecentRegistryLinks = recentRes.status === "fulfilled" && recentRes.value?.ok && Array.isArray(recentRes.value.links)
-    ? recentRes.value.links
-    : [];
+    applyPortalSettings_(insights.settings || {});
+    applyWorkspaceConfig();
 
-  if (highlightsRes.status === "fulfilled" && highlightsRes.value?.ok) {
-    const incomingHighlights = normalizeAuditHighlightsPayload(highlightsRes.value.highlights || {});
+    currentHomeSummary = insights.summary30 || {};
+    currentHomeComparison = insights.comparison30 || null;
+    currentRecentRegistryLinks = Array.isArray(insights.recentLinks) ? insights.recentLinks : [];
 
+    const incomingHighlights = normalizeAuditHighlightsPayload(insights.auditHighlights || {});
     const currentHasSignal = hasAuditHighlightSignal_(currentAuditHighlights);
     const incomingHasSignal = hasAuditHighlightSignal_(incomingHighlights);
     const currentFallbackOnly = isFallbackOnlyAuditHighlights_(currentAuditHighlights);
@@ -1821,59 +1772,55 @@ async function loadHomeSnapshot() {
     if (!currentHasSignal || (incomingHasSignal && (!incomingFallbackOnly || currentFallbackOnly))) {
       currentAuditHighlights = incomingHighlights;
     }
-  }
 
-  if (noteRes.status === "rejected" || !noteRes.value?.ok) {
-    console.error("getStrategicNote failed:", noteRes.status === "rejected" ? noteRes.reason : noteRes.value);
-  }
-  if (recentRes.status === "rejected" || !recentRes.value?.ok) {
-    console.error("getRecentRegistryLinks failed:", recentRes.status === "rejected" ? recentRes.reason : recentRes.value);
-  }
-  if (highlightsRes.status === "rejected" || !highlightsRes.value?.ok) {
-    console.error("getAuditHighlights failed:", highlightsRes.status === "rejected" ? highlightsRes.reason : highlightsRes.value);
-  }
-  if (gtmRes.status === "rejected" || !gtmRes.value?.ok) {
-    console.error("getGtmHealthSummary failed:", gtmRes.status === "rejected" ? gtmRes.reason : gtmRes.value);
-  }
-  if (comparisonRes.status === "rejected" || !comparisonRes.value?.ok) {
-    console.error("getPerformanceComparison failed:", comparisonRes.status === "rejected" ? comparisonRes.reason : comparisonRes.value);
-  }
+    const fallbackStrategicNote = buildFallbackStrategicNote_(
+      currentAuditHighlights,
+      currentHomeSummary
+    );
+    const strategicNote = normalizeStrategicNote_(insights.strategicNote || fallbackStrategicNote);
+    const gtmSummary = insights.gtmSummary || {
+      totalChecks: 0,
+      failCount: 0,
+      passCount: 0,
+      latestDate: "",
+      topIssue: ""
+    };
 
-  const fallbackStrategicNote = buildFallbackStrategicNote_(
-    currentAuditHighlights,
-    currentHomeSummary
-  );
-  const existingStrategicNote = currentHomeInsights?.strategicNote || null;
-  const incomingStrategicNote = noteRes.status === "fulfilled" && noteRes.value?.ok
-    ? normalizeStrategicNote_(noteRes.value.note || fallbackStrategicNote)
-    : normalizeStrategicNote_(fallbackStrategicNote);
-  const strategicNote = shouldReplaceStrategicNote_(existingStrategicNote, incomingStrategicNote)
-    ? incomingStrategicNote
-    : normalizeStrategicNote_(existingStrategicNote);
+    currentHomeInsights = {
+      settings: insights.settings || {},
+      summary30: currentHomeSummary,
+      comparison30: currentHomeComparison,
+      recentLinks: currentRecentRegistryLinks,
+      auditHighlights: currentAuditHighlights,
+      strategicNote,
+      gtmSummary,
+      generatedAt: insights.generatedAt || "",
+      warnings
+    };
 
-  currentHomeInsights = {
-    summary: currentHomeSummary,
-    comparison: currentHomeComparison,
-    recentLinks: currentRecentRegistryLinks,
-    auditHighlights: currentAuditHighlights,
-    strategicNote: strategicNote,
-    gtmSummary: gtmRes.status === "fulfilled" && gtmRes.value?.ok ? (gtmRes.value.summary || {}) : {}
-  };
-
-  [
-    ["renderHomeOverviewSnapshot", () => renderHomeOverviewSnapshot(currentHomeSummary, currentHomeComparison)],
-    ["renderHomeStrategicNote", () => renderHomeStrategicNote(currentHomeInsights.strategicNote)],
-    ["renderHomeGtmStatus", () => renderHomeGtmStatus(currentHomeInsights.gtmSummary || {})],
-    ["renderHomeRecentUtmLinks", () => renderHomeRecentUtmLinks(currentRecentRegistryLinks)],
-    ["renderAuditHighlights", () => renderAuditHighlights(currentAuditHighlights)]
-  ].forEach(([label, renderFn]) => {
-    try {
-      renderFn();
-    } catch (error) {
-      console.error(`${label} failed:`, error);
+    renderHomeOverviewSnapshot(currentHomeSummary, currentHomeComparison);
+    renderHomeRecentUtmLinks(currentRecentRegistryLinks);
+    renderAuditHighlights(currentAuditHighlights);
+    renderHomeStrategicNote(strategicNote);
+    renderHomeGtmStatus(gtmSummary);
+  } catch (error) {
+    if (error?.action === "getHomeInsights") {
+      const uiError = new Error(`Performance summary failed: ${extractPerformanceSummaryFailure_(error?.responseJson?.error || error?.message || "Unknown backend error")}`);
+      uiError.action = error.action;
+      uiError.url = error.url;
+      uiError.responseJson = error.responseJson || null;
+      error = uiError;
     }
-  });
-
+    console.error("loadHomeSnapshot failed:", {
+      message: error?.message || String(error),
+      action: error?.action || "getHomeInsights",
+      url: error?.url || `${APP_CONFIG.API_BASE}?action=getHomeInsights`,
+      responseJson: error?.responseJson || null
+    });
+    throw error;
+  } finally {
+    console.timeEnd("loadHomeSnapshot");
+  }
 }
 
 function buildFallbackStrategicNote_(auditHighlights, summary) {
@@ -2058,6 +2005,11 @@ function getCurrentReportFilterParams() {
     updateHeaderDatePillForView(viewId);
 
     if (viewId === "reports" && !currentReportsLoaded) {
+      if (!currentRegistryLoaded) {
+        loadRegistryFromSheet().catch((error) => {
+          console.error("Deferred registry load for reports failed:", error);
+        });
+      }
       loadReportsSnapshot({ updatedText: "Updated: Just now" }).catch((error) => {
         console.error("Deferred Visual Intelligence load failed:", error);
       });
@@ -2090,6 +2042,19 @@ function getCurrentReportFilterParams() {
       if (updateHash) history.replaceState(null, "", `#${viewId}`);
       if (scrollWrap) scrollWrap.scrollTo({ top: 0, behavior: "smooth" });
       return;
+    }
+
+    if (viewId === "audit") {
+      if (!currentAuditLoaded) {
+        loadAuditFromSheet("all").catch((error) => {
+          console.error("Deferred audit notes load failed:", error);
+        });
+      }
+      if (!currentResourcesLoaded) {
+        loadResourcesFromSheet().catch((error) => {
+          console.error("Deferred resource links load failed:", error);
+        });
+      }
     }
 
     if (updateHash) history.replaceState(null, "", `#${viewId}`);
@@ -3620,8 +3585,33 @@ function populateSelectFromValues(selectId, values, allLabel) {
       .slice(0, limit);
   }
 
+  function getApiFailureReason_(action, contentType, preview, status) {
+    const normalizedPreview = String(preview || "").toLowerCase();
+    const normalizedType = String(contentType || "").toLowerCase();
+
+    if (
+      normalizedType.includes("text/html") &&
+      (normalizedPreview.includes("access denied") || normalizedPreview.includes("you need access"))
+    ) {
+      return `Apps Script access denied for ${action}`;
+    }
+
+    return `GET ${action} returned invalid JSON (${status})`;
+  }
+
+  function buildApiError(action, url, message, details = {}) {
+    const error = new Error(message);
+    error.action = action;
+    error.url = url;
+    error.responseJson = details.responseJson || null;
+    error.status = details.status;
+    error.statusText = details.statusText;
+    error.preview = details.preview || "";
+    return error;
+  }
+
   async function apiGet(action, params = {}) {
-    const url = new URL(APP_CONFIG.APPS_SCRIPT_URL);
+    const url = new URL(APP_CONFIG.API_BASE);
     url.searchParams.set("action", action);
 
     Object.entries(params).forEach(([key, value]) => {
@@ -3640,7 +3630,7 @@ function populateSelectFromValues(selectId, values, allLabel) {
         params,
         error: error?.message || error
       });
-      throw new Error(`GET ${action} network failure`);
+      throw buildApiError(action, url.toString(), `GET ${action} network failure: ${error?.message || "Unknown network error"}`);
     }
 
     const text = await response.text();
@@ -3656,7 +3646,11 @@ function populateSelectFromValues(selectId, values, allLabel) {
         contentType,
         preview
       });
-      throw new Error(`GET ${action} failed (${response.status})`);
+      throw buildApiError(action, url.toString(), `GET ${action} failed (${response.status})`, {
+        status: response.status,
+        statusText: response.statusText,
+        preview
+      });
     }
 
     try {
@@ -3668,9 +3662,16 @@ function populateSelectFromValues(selectId, values, allLabel) {
           error: parsed.error || "Unknown backend error",
           payload: parsed
         });
+        throw buildApiError(action, url.toString(), parsed.error || `GET ${action} returned ok:false`, {
+          responseJson: parsed,
+          status: response.status,
+          statusText: response.statusText,
+          preview
+        });
       }
       return parsed;
     } catch (error) {
+      if (error?.action) throw error;
       console.error("Non-JSON GET response", {
         action,
         url: url.toString(),
@@ -3678,12 +3679,15 @@ function populateSelectFromValues(selectId, values, allLabel) {
         contentType,
         preview
       });
-      throw new Error(`GET ${action} returned invalid JSON (${response.status})`);
+      throw buildApiError(action, url.toString(), getApiFailureReason_(action, contentType, preview, response.status), {
+        status: response.status,
+        preview
+      });
     }
   }
 
   async function apiPost(action, payload = {}) {
-    const response = await fetch(APP_CONFIG.APPS_SCRIPT_URL, {
+    const response = await fetch(APP_CONFIG.API_BASE, {
       method: "POST",
       headers: { "Content-Type": "text/plain;charset=utf-8" },
       body: JSON.stringify({ action, payload })
@@ -3699,6 +3703,29 @@ function populateSelectFromValues(selectId, values, allLabel) {
       console.error("Non-JSON POST response for", action, text);
       throw new Error(`POST ${action} returned invalid JSON`);
     }
+  }
+
+  function applyPortalSettings_(settings) {
+    PORTAL_CONFIG.clientName = settings?.clientName || "Client";
+    PORTAL_CONFIG.lookerStudioUrl = settings?.lookerEmbedUrl || "";
+    PORTAL_CONFIG.primaryDomain = settings?.primaryDomain || "https://re-volv.org";
+    PORTAL_CONFIG.siteUrl = settings?.siteUrl || "https://re-volv.org";
+    applyConfig();
+  }
+
+  function extractPerformanceSummaryFailure_(message) {
+    const text = String(message || "").trim();
+    const prefixes = [
+      "getHomeInsights summary30 failed:",
+      "homeInsights summary30 failed:"
+    ];
+    for (let index = 0; index < prefixes.length; index += 1) {
+      const prefix = prefixes[index];
+      if (text.startsWith(prefix)) {
+        return text.slice(prefix.length).trim() || "Unknown backend error";
+      }
+    }
+    return text || "Unknown backend error";
   }
 
   function buildTrendLabels(labels) {

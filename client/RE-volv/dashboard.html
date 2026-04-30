@@ -1224,11 +1224,14 @@
   let currentActiveView = "home";
   let overviewWarmPrefetchScheduled = false;
   let overviewLoadPromise = null;
+  let homeSnapshotRetryTimer = null;
   let auditLoadPromise = null;
   let recentLinksLoadPromise = null;
   let registryLoadPromise = null;
   let utmLoadPromise = null;
   let reportsLoadPromise = null;
+  const HOME_SUMMARY_CACHE_KEY = "revolv.homeSummary.v1";
+  const HOME_SUMMARY_CACHE_TTL_MS = 10 * 60 * 1000;
   const dashboardLoadState = {
     overview: "idle",
     overviewOptional: "idle",
@@ -1256,6 +1259,40 @@
         nextAction: false
       }
     };
+  }
+
+  function getCachedHomeSummary_() {
+    try {
+      const raw = localStorage.getItem(HOME_SUMMARY_CACHE_KEY);
+      if (!raw) return null;
+      const parsed = JSON.parse(raw);
+      if (!parsed || !parsed.savedAt || !parsed.summary) return null;
+      if (Date.now() - Number(parsed.savedAt) > HOME_SUMMARY_CACHE_TTL_MS) return null;
+      return parsed.summary;
+    } catch (error) {
+      console.warn("[overview] cache read failed", error);
+      return null;
+    }
+  }
+
+  function setCachedHomeSummary_(summary) {
+    try {
+      if (!summary || !Number(summary.recordCount || 0)) return;
+      localStorage.setItem(HOME_SUMMARY_CACHE_KEY, JSON.stringify({
+        savedAt: Date.now(),
+        summary
+      }));
+    } catch (error) {
+      console.warn("[overview] cache write failed", error);
+    }
+  }
+
+  function isHomeViewActive_() {
+    return document.getElementById("view-home")?.classList.contains("active");
+  }
+
+  function isAuditViewActive_() {
+    return document.getElementById("view-audit")?.classList.contains("active");
   }
 
   function setDashboardLoadState_(section, state, message = "") {
@@ -1972,12 +2009,16 @@ async function loadAuditFromSheet(status = "all") {
     }
   }
 
-  async function loadAuditPanelData() {
-    if (auditLoadPromise) return auditLoadPromise;
+  async function loadAuditPanelData(options = {}) {
+    const force = Boolean(options.force);
+    if (auditLoadPromise && !force) return auditLoadPromise;
+    if (force) auditLoadPromise = null;
     const timeoutMessage = "Audit & Strategy is taking longer than expected. Overview and UTM Builder are still available.";
     const failureMessage = "Audit & Strategy data is unavailable. Run daily audit refresh or check backend logs.";
     setDashboardLoadState_("audit", "loading", "Overview is loaded. Audit & Strategy is still loading.");
-    renderAuditLoadingState("Loading Audit & Strategy...");
+    if (isAuditViewActive_()) {
+      renderAuditLoadingState("Loading Audit & Strategy...");
+    }
 
     auditLoadPromise = (async () => {
       try {
@@ -1994,13 +2035,17 @@ async function loadAuditFromSheet(status = "all") {
 
           if (isTimeout) {
             setDashboardLoadState_("audit", "partial", timeoutMessage);
-            renderAuditFallbackState("Audit & Strategy is taking longer than expected.", "Overview and UTM Builder are still available.");
+            if (isAuditViewActive_()) {
+              renderAuditFallbackState("Audit & Strategy is taking longer than expected.", "Overview and UTM Builder are still available.");
+            }
             return { state: "partial" };
           }
 
-          setDashboardLoadState_("audit", "error", failureMessage);
-          renderAuditFallbackState("Audit & Strategy data is unavailable.", "Run daily audit refresh or check backend logs.");
-          return { state: "error" };
+          setDashboardLoadState_("audit", "partial", failureMessage);
+          if (isAuditViewActive_()) {
+            renderAuditFallbackState("Audit & Strategy data is unavailable.", "Run daily audit refresh or check backend logs.");
+          }
+          return { state: "partial" };
         }
 
         const panel = response.panel || {};
@@ -2038,13 +2083,17 @@ async function loadAuditFromSheet(status = "all") {
 
         if (isTimeout) {
           setDashboardLoadState_("audit", "partial", timeoutMessage);
-          renderAuditFallbackState("Audit & Strategy is taking longer than expected.", "Overview and UTM Builder are still available.");
+          if (isAuditViewActive_()) {
+            renderAuditFallbackState("Audit & Strategy is taking longer than expected.", "Overview and UTM Builder are still available.");
+          }
           return { state: "partial" };
         }
 
-        setDashboardLoadState_("audit", "error", failureMessage);
-        renderAuditFallbackState("Audit & Strategy data is unavailable.", "Run daily audit refresh or check backend logs.");
-        return { state: "error" };
+        setDashboardLoadState_("audit", "partial", failureMessage);
+        if (isAuditViewActive_()) {
+          renderAuditFallbackState("Audit & Strategy data is unavailable.", "Run daily audit refresh or check backend logs.");
+        }
+        return { state: "partial" };
       } finally {
         auditLoadPromise = null;
       }
@@ -2097,11 +2146,32 @@ async function loadPerformanceComparisonFromSheet() {
   renderPerformanceComparison(currentPerformanceComparison);
 }
 
-async function loadHomeSnapshot() {
+function scheduleHomeSnapshotRetry_() {
+  if (homeSnapshotRetryTimer) return;
+  homeSnapshotRetryTimer = window.setTimeout(() => {
+    homeSnapshotRetryTimer = null;
+    loadHomeSnapshot({ forceRefresh: true }).catch((error) => console.error("[overview] retry failed", error));
+  }, 20000);
+}
+
+async function loadHomeSnapshot(options = {}) {
+  const forceRefresh = Boolean(options.forceRefresh);
   console.time("loadHomeSnapshot");
   const unavailableMessage = "Overview metrics are unavailable. Audit, Reports, and UTM Builder are still available.";
   const partialMessage = "Overview loaded. Metrics are temporarily unavailable, and other dashboard sections are available.";
+  const cachedSummary = forceRefresh ? null : getCachedHomeSummary_();
+  const retainedSummaryVisible = Boolean(currentHomeSummary && Object.keys(currentHomeSummary).length);
   try {
+    console.log("[overview] cached summary used", Boolean(cachedSummary));
+    if (cachedSummary) {
+      currentHomeSummary = cachedSummary;
+      renderHomeOverviewSnapshot(cachedSummary, currentHomeComparison || null);
+      setDashboardLoadState_("overview", "loaded", "30 day Overview loaded from recent cache.");
+      updateGlobalDataStatus();
+      scheduleOverviewWarmPrefetch_();
+    }
+    await new Promise((resolve) => setTimeout(resolve, cachedSummary ? 3000 : 500));
+    console.log("[overview] live summary refresh started");
     console.log("[overview] summary started");
     console.log("[overview] summary url", buildApiUrl("getPerformanceSummary", {
       range_type: "30",
@@ -2129,11 +2199,19 @@ async function loadHomeSnapshot() {
       cpa: !!document.getElementById("home-kpi-cpa")
     });
     if (!response || response.ok !== true || !summary) {
+      const error = new Error(response?.detail || response?.error || "Unknown backend error");
+      console.log("[overview] live summary refresh failed", error);
       console.error("loadHomeSnapshot received fallback response:", {
         action: "getPerformanceSummary",
         detail: response?.detail || response?.error || "Unknown backend error",
         responseJson: response || null
       });
+      if (cachedSummary || (forceRefresh && retainedSummaryVisible)) {
+        setDashboardLoadState_("overview", "partial", "30 day Overview loaded from recent cache. Live refresh is temporarily delayed.");
+        updateGlobalDataStatus();
+        scheduleHomeSnapshotRetry_();
+        return { state: "partial" };
+      }
       let fallbackState = "";
       try {
         fallbackState = await loadHomeSummaryFallback_();
@@ -2146,15 +2224,22 @@ async function loadHomeSnapshot() {
       renderNetworkFallback(unavailableMessage);
       setDashboardSectionStatus_("overview", "partial", partialMessage);
       updateGlobalDataStatus();
+      scheduleHomeSnapshotRetry_();
       return { state: "partial" };
     }
 
     currentHomeSummary = summary;
+    setCachedHomeSummary_(summary);
     currentHomeInsights = Object.assign({}, currentHomeInsights || {}, {
       summary30: summary
     });
     renderHomeOverviewSnapshot(summary, currentHomeComparison || null);
+    console.log("[overview] live summary refresh succeeded");
     console.log("[overview] KPIs rendered");
+    if (homeSnapshotRetryTimer) {
+      window.clearTimeout(homeSnapshotRetryTimer);
+      homeSnapshotRetryTimer = null;
+    }
 
     setDashboardLoadState_("overview", "loaded", "30 day Overview loaded.");
     updateGlobalDataStatus();
@@ -2172,6 +2257,7 @@ async function loadHomeSnapshot() {
 
     return { state: "loaded" };
   } catch (error) {
+    console.log("[overview] live summary refresh failed", error);
     console.error("[overview] getPerformanceSummary failed", error);
     console.error("loadHomeSnapshot failed:", {
       message: error?.message || String(error),
@@ -2179,6 +2265,12 @@ async function loadHomeSnapshot() {
       url: error?.url || `${APP_CONFIG.API_BASE}?action=getPerformanceSummary`,
       responseJson: error?.responseJson || null
     });
+    if (cachedSummary || (forceRefresh && retainedSummaryVisible)) {
+      setDashboardLoadState_("overview", "partial", "30 day Overview loaded from recent cache. Live refresh is temporarily delayed.");
+      updateGlobalDataStatus();
+      scheduleHomeSnapshotRetry_();
+      return { state: "partial" };
+    }
     let fallbackState = "";
     try {
       fallbackState = await loadHomeSummaryFallback_();
@@ -2191,6 +2283,7 @@ async function loadHomeSnapshot() {
     renderNetworkFallback(unavailableMessage);
     setDashboardLoadState_("overview", "partial", partialMessage);
     updateGlobalDataStatus();
+    scheduleHomeSnapshotRetry_();
     return { state: "partial" };
   } finally {
     console.timeEnd("loadHomeSnapshot");
@@ -2207,6 +2300,7 @@ async function loadHomeSnapshot() {
   }
 
   currentHomeSummary = summary;
+  setCachedHomeSummary_(summary);
   currentHomeComparison = insights.comparison30 || currentHomeComparison || null;
   currentHomeInsights = Object.assign({}, currentHomeInsights || {}, {
     summary30: summary,
@@ -2234,8 +2328,12 @@ function scheduleOverviewWarmPrefetch_() {
       }
     };
 
-    if (recentLinksLoadPromise) {
-      recentLinksLoadPromise.finally(startPrefetch);
+    const waits = [];
+    if (recentLinksLoadPromise) waits.push(recentLinksLoadPromise.catch(() => null));
+    if (auditLoadPromise) waits.push(auditLoadPromise.catch(() => null));
+
+    if (waits.length) {
+      Promise.allSettled(waits).finally(startPrefetch);
     } else {
       startPrefetch();
     }
@@ -2542,16 +2640,14 @@ function getCurrentReportFilterParams() {
           console.error("Deferred resource link load failed:", error);
         });
       }
-      if (currentAuditPanelData) {
+      if (currentAuditPanelData && dashboardLoadState.audit !== "partial") {
         renderAuditPanelData_(currentAuditPanelData);
         setDashboardLoadState_("audit", "loaded");
-      } else if (!currentAuditPanelLoaded) {
-        setDashboardLoadState_("audit", "loading", "Overview is loaded. Audit & Strategy is still loading.");
-        ensureAuditLoaded_().catch((error) => {
-          console.error("Deferred audit load failed:", error);
-        });
       } else {
-        setDashboardLoadState_("audit", "loaded");
+        renderAuditLoadingState("Loading Audit & Strategy...");
+        loadAuditPanelData({ force: true }).catch((error) => {
+          console.error("[audit] active tab retry failed", error);
+        });
       }
     }
 
@@ -2561,7 +2657,9 @@ function getCurrentReportFilterParams() {
       }
       if (recentLinksLoaded && currentRecentRegistryLinks.length) {
         renderHomeRecentUtmLinks(currentRecentRegistryLinks);
-      } else if (!recentLinksLoadPromise) {
+      } else if (recentLinksLoadPromise) {
+        renderHomeRecentUtmLinksMessage("Loading recent UTM links...");
+      } else {
         loadOverviewRecentLinks().catch((error) => {
           console.error("[recent-links] home revisit load failed", error);
         });
@@ -3224,18 +3322,24 @@ function applyUtmRegistryFilters() {
 
     console.log("[recent-links] started");
     setDashboardLoadState_("overviewOptional", "loading");
-    renderHomeRecentUtmLinksMessage("Loading recent UTM links...");
+    if (isHomeViewActive_()) {
+      renderHomeRecentUtmLinksMessage("Loading recent UTM links...");
+    }
 
     recentLinksLoadPromise = apiGet("getRecentRegistryLinks", {
       range_type: "30",
       rangeType: "30"
     }, {
-      timeoutMs: 30000
+      timeoutMs: 240000
     }).then((response) => {
       console.log("[recent-links] raw response", response);
 
       if (!response || response.ok === false) {
         console.log("[recent-links] failed", response);
+        if (!isHomeViewActive_()) {
+          setDashboardLoadState_("overviewOptional", "loading");
+          return { state: "loading" };
+        }
         setDashboardLoadState_("overviewOptional", "warning");
         renderHomeRecentUtmLinksMessage("Recent UTM links unavailable. Open UTM Builder for the full registry.");
         return { state: "warning" };
@@ -3255,6 +3359,10 @@ function applyUtmRegistryFilters() {
         action: "getRecentRegistryLinks",
         message: error?.message || String(error)
       });
+      if (!isHomeViewActive_()) {
+        setDashboardLoadState_("overviewOptional", "loading");
+        return { state: "loading" };
+      }
       setDashboardLoadState_("overviewOptional", "warning");
       renderHomeRecentUtmLinksMessage("Recent UTM links unavailable. Open UTM Builder for the full registry.");
       return { state: "warning" };

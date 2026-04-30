@@ -1149,7 +1149,7 @@
 
 <script>
   const APP_CONFIG = {
-    API_BASE: "https://script.google.com/macros/s/AKfycbzkamBecICUhIQdu4eMFCjWL2X3BCgUkB_MBjitdxutsRGqc1c2ylrI77RaZQVXhGap/exec",
+    API_BASE: "https://script.google.com/macros/s/AKfycbxu-M-In1y9ZXJvrEOQlP3r0gIYdA5OfxSENy0bTQwzwgVdOYfX5tG4WkKGNKmZtpjk/exec",
     AUTO_SYNC_PERFORMANCE_ON_LOAD: false
   };
   console.log("API_BASE:", APP_CONFIG.API_BASE);
@@ -1218,20 +1218,25 @@
   let currentHomeComparison = null;
   let currentRecentRegistryLinks = [];
   let currentHomeInsights = null;
+  let currentAuditPanelData = null;
   let currentAuditHighlights = createEmptyAuditHighlights();
   let currentActiveView = "home";
-  let currentHomeSnapshotState = "loading";
-  let currentHomeSnapshotMessage = "";
-  const dashboardStatusState = {
+  let overviewLoadPromise = null;
+  let auditLoadPromise = null;
+  let recentLinksLoadPromise = null;
+  let utmLoadPromise = null;
+  let reportsLoadPromise = null;
+  const dashboardLoadState = {
     overview: "idle",
-    recentLinks: "idle",
+    overviewOptional: "idle",
     reports: "idle",
     audit: "idle",
-    utm: "idle"
+    utm: "idle",
+    lastUpdated: ""
   };
-  const dashboardStatusMessage = {
+  const dashboardLoadMessage = {
     overview: "",
-    recentLinks: "",
+    overviewOptional: "",
     reports: "",
     audit: "",
     utm: ""
@@ -1250,92 +1255,120 @@
     };
   }
 
-  function setDashboardSectionStatus_(section, state, message = "") {
-    if (!Object.prototype.hasOwnProperty.call(dashboardStatusState, section)) return;
-    dashboardStatusState[section] = state;
-    dashboardStatusMessage[section] = message;
-    updateDashboardStatus_();
+  function setDashboardLoadState_(section, state, message = "") {
+    if (!Object.prototype.hasOwnProperty.call(dashboardLoadState, section)) return;
+    dashboardLoadState[section] = state;
+    if (section !== "lastUpdated") {
+      dashboardLoadMessage[section] = message;
+    }
+    dashboardLoadState.lastUpdated = new Date().toISOString();
+    console.log(`[stage] ${section} ${state}`);
+    console.log("[load-state]", dashboardLoadState);
+    updateGlobalDataStatus();
   }
 
-  function updateDashboardStatus_() {
+  function setDashboardSectionStatus_(section, state, message = "") {
+    setDashboardLoadState_(section, state, message);
+  }
+
+  function updateGlobalDataStatus() {
     const activeView = currentActiveView || "home";
+    const overviewReady = dashboardLoadState.overview === "loaded" || dashboardLoadState.overview === "partial";
+    const auditReady = dashboardLoadState.audit === "loaded" || dashboardLoadState.audit === "partial";
+    const utmReady = dashboardLoadState.utm === "loaded" || dashboardLoadState.utm === "partial";
+    const reportsReady = dashboardLoadState.reports === "loaded" || dashboardLoadState.reports === "partial";
+    const overviewOptionalFallback =
+      dashboardLoadState.overviewOptional === "partial" ||
+      dashboardLoadState.overviewOptional === "warning";
 
-    if (dashboardStatusState.overview === "loading" || dashboardStatusState.overview === "idle") {
-      setDataStatus("loading", "Loading 30 day overview data...");
+    if (dashboardLoadState.overview === "loading" || dashboardLoadState.overview === "idle") {
+      setDataStatus("booting", "Loading 30 day Overview. Audit, UTM Builder, and Reports will hydrate in stages.");
       return;
     }
 
-    if (activeView === "home") {
-      if (dashboardStatusState.overview === "error") {
-        setDataStatus("error", dashboardStatusMessage.overview || "Overview data is unavailable.");
-        return;
-      }
-
-      if (dashboardStatusState.overview === "partial") {
-        setDataStatus("loaded", dashboardStatusMessage.overview || "30 day Overview loaded with partial fallback data.");
-        return;
-      }
-
-      if (dashboardStatusState.recentLinks === "loading") {
-        setDataStatus("loaded", "30 day Overview loaded. Recent UTM links and audit guidance are still loading.");
-        return;
-      }
-
-      setDataStatus("loaded", "30 day Overview loaded. Reports, UTM Builder, and Audit & Strategy are available from the sidebar.");
+    if (dashboardLoadState.overview === "error" && activeView === "home") {
+      setDataStatus("error", dashboardLoadMessage.overview || "Overview data is unavailable.");
       return;
     }
 
-    if (activeView === "audit") {
-      if (dashboardStatusState.audit === "loaded") {
-        setDataStatus("loaded", "Overview and Audit & Strategy are loaded. Reports and UTM Builder are available from the sidebar.");
-        return;
-      }
-
-      if (dashboardStatusState.audit === "error") {
-        setDataStatus("error", dashboardStatusMessage.audit || "Audit & Strategy data is unavailable. Run daily audit refresh or check backend logs.");
-        return;
-      }
-
-      if (dashboardStatusState.audit === "loading") {
-        setDataStatus("loaded", dashboardStatusMessage.audit || "Overview is loaded. Audit & Strategy is still loading.");
-        return;
-      }
+    if (activeView === "audit" && dashboardLoadState.audit === "error") {
+      setDataStatus("error", dashboardLoadMessage.audit || "Audit & Strategy data is unavailable. Run daily audit refresh or check backend logs.");
+      return;
     }
 
-    if (activeView === "reports") {
-      if (dashboardStatusState.reports === "loaded") {
-        setDataStatus("loaded", "Reports loaded. Overview, UTM Builder, and Audit & Strategy are available.");
-        return;
-      }
-
-      if (dashboardStatusState.reports === "error") {
-        setDataStatus("error", dashboardStatusMessage.reports || "Reports data is unavailable.");
-        return;
-      }
-
-      if (dashboardStatusState.reports === "loading") {
-        const message = dashboardStatusMessage.reports || "Loading Reports...";
-        const isTimeout = /taking longer than expected/i.test(message);
-        setDataStatus(isTimeout ? "loaded" : "loading", message);
-        return;
-      }
+    if (activeView === "reports" && dashboardLoadState.reports === "error") {
+      setDataStatus("error", dashboardLoadMessage.reports || "Reports unavailable. Overview, Audit & Strategy, and UTM Builder are still available.");
+      return;
     }
 
-    if (activeView === "utm") {
-      if (dashboardStatusState.utm === "loaded") {
-        setDataStatus("loaded", "UTM Builder loaded. Overview, Reports, and Audit & Strategy are available.");
-        return;
-      }
+    if (activeView === "utm" && dashboardLoadState.utm === "error") {
+      setDataStatus("error", dashboardLoadMessage.utm || "UTM registry unavailable. You can still create tracking links if required fields are available.");
+      return;
+    }
 
-      if (dashboardStatusState.utm === "error") {
-        setDataStatus("error", dashboardStatusMessage.utm || "UTM registry unavailable. You can still create tracking links if required fields are available.");
-        return;
-      }
+    if (activeView === "reports" && dashboardLoadState.reports === "loading") {
+      setDataStatus("loading", dashboardLoadMessage.reports || "Reports are loading. Overview, Audit & Strategy, and UTM Builder are available.");
+      return;
+    }
 
-      if (dashboardStatusState.utm === "loading") {
-        setDataStatus("loading", dashboardStatusMessage.utm || "Loading UTM registry...");
-        return;
-      }
+    if (activeView === "utm" && dashboardLoadState.utm === "loading") {
+      setDataStatus("loading", dashboardLoadMessage.utm || "Loading UTM registry...");
+      return;
+    }
+
+    if (activeView === "audit" && dashboardLoadState.audit === "loading") {
+      setDataStatus("loading", dashboardLoadMessage.audit || "Overview is loaded. Audit & Strategy is still loading.");
+      return;
+    }
+
+    if (activeView === "home" && dashboardLoadState.audit === "loading") {
+      setDataStatus("loading", "30 day Overview loaded. Audit & Strategy is still loading.");
+      return;
+    }
+
+    if (auditReady && dashboardLoadState.utm === "loading") {
+      setDataStatus("loading", "Overview and Audit & Strategy loaded. UTM registry is still loading.");
+      return;
+    }
+
+    if (activeView === "reports" && reportsReady) {
+      setDataStatus("loaded", "Reports loaded. Overview, UTM Builder, and Audit & Strategy are available.");
+      return;
+    }
+
+    if (activeView === "utm" && utmReady) {
+      setDataStatus("loaded", "UTM Builder loaded. Overview, Reports, and Audit & Strategy are available.");
+      return;
+    }
+
+    if (activeView === "audit" && auditReady) {
+      setDataStatus("loaded", "Overview and Audit & Strategy are loaded. Reports and UTM Builder are available from the sidebar.");
+      return;
+    }
+
+    if (reportsReady && auditReady && utmReady) {
+      setDataStatus("loaded", "Overview, Audit & Strategy, UTM Builder, and Reports are loaded.");
+      return;
+    }
+
+    if (overviewReady && auditReady && utmReady && dashboardLoadState.reports === "idle") {
+      setDataStatus("loaded", "Overview, Audit & Strategy, and UTM Builder are available. Reports will load when opened.");
+      return;
+    }
+
+    if (dashboardLoadState.reports === "loading") {
+      setDataStatus("loading", "Reports are loading. Overview, Audit & Strategy, and UTM Builder are available.");
+      return;
+    }
+
+    if (dashboardLoadState.overview === "partial") {
+      setDataStatus("warning", dashboardLoadMessage.overview || "Core dashboard data loaded. Some required sections are using fallback data.");
+      return;
+    }
+
+    if (overviewOptionalFallback) {
+      setDataStatus("loaded", "Core dashboard data loaded. Some optional widgets are using fallback data.");
+      return;
     }
 
     setDataStatus("loaded", "30 day Overview loaded. Reports, UTM Builder, and Audit & Strategy are available from the sidebar.");
@@ -1382,7 +1415,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   renderHomeRecentUtmLinks([]);
   renderLoadingPerformanceState();
   renderHomeLoadingState();
-  setDashboardSectionStatus_("overview", "loading", "Loading 30 day overview data...");
+  setDashboardLoadState_("overview", "loading", "Loading 30 day Overview. Audit, UTM Builder, and Reports will hydrate in stages.");
 
   const reportDefaults = {
     "filter-date-range": "30",
@@ -1396,26 +1429,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   });
   updateHeaderDatePillForView("home");
 
-  const overviewResults = await Promise.allSettled([
-    loadHomeSnapshot()
-  ]);
-
-  const overviewNames = [
-    "loadHomeSnapshot"
-  ];
-
-  const overviewFailures = [];
-
-  overviewResults.forEach((result, index) => {
-    if (result.status === "rejected") {
-      overviewFailures.push(result.reason?.message || overviewNames[index]);
-      console.error(`${overviewNames[index]} failed:`, result.reason);
-    }
-  });
-
-  if (overviewFailures.length) {
-    setDashboardSectionStatus_("overview", "error", overviewFailures.join(" | "));
-  }
+  startDashboardHydration_();
 
   if (!hasRenderedAuditContent_(currentAuditHighlights)) {
     renderAuditHighlights(currentAuditHighlights);
@@ -1423,6 +1437,27 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   console.timeEnd("startup");
 });
+
+  function startDashboardHydration_() {
+    console.log("[stage] overview started");
+    void ensureOverviewLoaded_().catch((error) => {
+      console.error("Initial overview hydration failed:", error);
+    });
+
+    console.log("[stage] audit started");
+    void ensureAuditLoaded_().catch((error) => {
+      console.error("Initial audit hydration failed:", error);
+    });
+
+    console.log("[stage] utm started");
+    window.setTimeout(() => {
+      void ensureOverviewRecentLinksLoaded_().finally(() => {
+        void ensureUtmPrefetched_().catch((error) => {
+          console.error("Initial UTM hydration failed:", error);
+        });
+      });
+    }, 0);
+  }
 
   function normalizeText(value) {
     return String(value || "")
@@ -1857,66 +1892,113 @@ async function loadAuditFromSheet(status = "all") {
     }
   }
 
+  function renderAuditPanelData_(panel) {
+    const payload = panel || {};
+    const auditSummary = payload.auditSummary || {};
+    const notes = Array.isArray(payload.notes) ? payload.notes : [];
+    const gtmSummary = payload.gtmSummary || {
+      totalChecks: 0,
+      failCount: 0,
+      passCount: 0,
+      latestDate: "",
+      topIssue: ""
+    };
+    const highlights = normalizeAuditHighlightsPayload(payload.auditHighlights || {});
+    const highlightsFallbackOnly = !hasAuditHighlightSignal_(highlights) || Boolean(highlights.usedFallbacks === true);
+    const strategicHelper = highlightsFallbackOnly
+      ? "Strategic highlights are in light mode. Audit notes are loaded below."
+      : "";
+
+    currentAuditPanelData = payload;
+    currentAuditItems = notes.map(normalizeAuditNoteItem_);
+    currentAuditHighlights = highlights;
+    currentAuditLoaded = true;
+    currentAuditPanelLoaded = true;
+
+    renderAuditHighlights(highlights);
+    if (strategicHelper) {
+      const nextActionEl = document.getElementById("audit-next-action-text");
+      if (nextActionEl && (!String(nextActionEl.textContent || "").trim() || /No next action available/i.test(nextActionEl.textContent || ""))) {
+        nextActionEl.textContent = strategicHelper;
+      }
+    }
+
+    renderAuditTable(currentAuditItems, "all");
+
+    const detailPanel = document.getElementById("audit-detail-panel");
+    if (detailPanel && !notes.length) {
+      detailPanel.innerHTML = `
+        <div class="p-4 bg-black/20 rounded border border-white/5">
+          <h4 class="text-xs font-bold text-cyan-300 mb-2 uppercase tracking-wider">Audit Summary</h4>
+          <p class="text-xs text-gray-400 mb-2">Total notes: ${escapeHtml(formatNumber(auditSummary.total || 0))}</p>
+          <p class="text-xs text-gray-400">GTM checks: ${escapeHtml(formatNumber(gtmSummary.totalChecks || 0))} total, ${escapeHtml(formatNumber(gtmSummary.failCount || 0))} failing.</p>
+        </div>
+      `;
+    }
+  }
+
   async function loadAuditPanelData() {
-    const timeoutMessage = "Audit & Strategy is taking longer than expected. Overview, Reports, and UTM Builder are still available.";
+    if (auditLoadPromise) return auditLoadPromise;
+    const timeoutMessage = "Audit & Strategy is taking longer than expected. Overview and UTM Builder are still available.";
     const failureMessage = "Audit & Strategy data is unavailable. Run daily audit refresh or check backend logs.";
-    setDashboardSectionStatus_("audit", "loading", "Overview is loaded. Audit & Strategy is still loading.");
+    setDashboardLoadState_("audit", "loading", "Overview is loaded. Audit & Strategy is still loading.");
     renderAuditLoadingState("Loading Audit & Strategy...");
 
-    try {
-      const data = await apiGet("getAuditPanelData", {}, { timeoutMs: 20000 });
-      if (!data || data.ok === false) {
-        const detail = String(data?.detail || data?.error || "Unknown backend error");
+    auditLoadPromise = (async () => {
+      try {
+        const data = await apiGet("getAuditPanelData", {}, { timeoutMs: 20000 });
+        if (!data || data.ok === false) {
+          const detail = String(data?.detail || data?.error || "Unknown backend error");
+          const isTimeout = /timed out|timeout|abort/i.test(detail);
+          console.error("Audit panel load failed:", {
+            action: "getAuditPanelData",
+            detail,
+            responseJson: data || null
+          });
+
+          if (isTimeout) {
+            setDashboardLoadState_("audit", "loading", timeoutMessage);
+            renderAuditLoadingState("Audit & Strategy is taking longer than expected. Overview and UTM Builder are still available.");
+            return { state: "loading" };
+          }
+
+          setDashboardLoadState_("audit", "error", failureMessage);
+          renderAuditFallbackState("Audit & Strategy data is unavailable.", "Run daily audit refresh or check backend logs.");
+          return { state: "error" };
+        }
+
+        const panel = data.panel || {};
+        const warnings = Array.isArray(data.warnings) ? data.warnings : [];
+        warnings.forEach((warning) => {
+          console.warn("getAuditPanelData warning:", warning);
+        });
+
+        renderAuditPanelData_(panel);
+        setDashboardLoadState_("audit", "loaded");
+        return { state: "loaded", panel };
+      } catch (error) {
+        const detail = String(error?.message || "Unknown backend error");
         const isTimeout = /timed out|timeout|abort/i.test(detail);
-        console.error("Audit panel load failed:", {
+        console.error("Audit panel load exception:", {
           action: "getAuditPanelData",
-          detail,
-          responseJson: data || null
+          message: detail
         });
 
         if (isTimeout) {
-          setDashboardSectionStatus_("audit", "loading", timeoutMessage);
-          renderAuditFallbackState("Audit & Strategy is taking longer than expected.", "Overview, Reports, and UTM Builder are still available.");
-          return;
+          setDashboardLoadState_("audit", "loading", timeoutMessage);
+          renderAuditLoadingState("Audit & Strategy is taking longer than expected. Overview and UTM Builder are still available.");
+          return { state: "loading" };
         }
 
-        setDashboardSectionStatus_("audit", "error", failureMessage);
+        setDashboardLoadState_("audit", "error", failureMessage);
         renderAuditFallbackState("Audit & Strategy data is unavailable.", "Run daily audit refresh or check backend logs.");
-        return;
+        return { state: "error" };
+      } finally {
+        auditLoadPromise = null;
       }
+    })();
 
-      const panel = data.panel || {};
-      const warnings = Array.isArray(data.warnings) ? data.warnings : [];
-
-      warnings.forEach((warning) => {
-        console.warn("getAuditPanelData warning:", warning);
-      });
-
-      currentAuditHighlights = normalizeAuditHighlightsPayload(panel.auditHighlights || {});
-      currentAuditItems = (Array.isArray(panel.notes) ? panel.notes : []).map(normalizeAuditNoteItem_);
-      currentAuditLoaded = true;
-      currentAuditPanelLoaded = true;
-      setDashboardSectionStatus_("audit", "loaded");
-
-      renderAuditHighlights(currentAuditHighlights);
-      renderAuditTable(currentAuditItems, "all");
-    } catch (error) {
-      const detail = String(error?.message || "Unknown backend error");
-      const isTimeout = /timed out|timeout|abort/i.test(detail);
-      console.error("Audit panel load exception:", {
-        action: "getAuditPanelData",
-        message: detail
-      });
-
-      if (isTimeout) {
-        setDashboardSectionStatus_("audit", "loading", timeoutMessage);
-        renderAuditFallbackState("Audit & Strategy is taking longer than expected.", "Overview, Reports, and UTM Builder are still available.");
-        return;
-      }
-
-      setDashboardSectionStatus_("audit", "error", failureMessage);
-      renderAuditFallbackState("Audit & Strategy data is unavailable.", "Run daily audit refresh or check backend logs.");
-    }
+    return auditLoadPromise;
   }
 
   async function loadResourcesFromSheet() {
@@ -2056,7 +2138,6 @@ async function loadHomeSnapshot() {
     };
 
     renderHomeOverviewSnapshot(currentHomeSummary, currentHomeComparison);
-    loadOverviewRecentLinks();
     renderAuditHighlights(currentAuditHighlights);
     renderHomeStrategicNote(strategicNote);
     renderHomeGtmStatus(gtmSummary);
@@ -2066,18 +2147,24 @@ async function loadHomeSnapshot() {
       return !optionalWarningSections.has(section);
     });
     const summaryMissing = !currentHomeSummary || Number(currentHomeSummary.recordCount || 0) <= 0;
+    const optionalWarnings = warnings.filter((warning) => {
+      const section = String(warning?.section || "").trim();
+      return optionalWarningSections.has(section);
+    });
     if (blockingWarnings.length || summaryMissing) {
-      setDashboardSectionStatus_("overview", "partial", "Overview loaded with partial fallback data.");
+      setDashboardLoadState_("overview", "partial", "Core dashboard data loaded. Some required sections are using fallback data.");
+      setDashboardLoadState_("overviewOptional", optionalWarnings.length ? "warning" : "idle");
       return { state: "partial" };
     }
 
-    setDashboardSectionStatus_("overview", "loaded");
+    setDashboardLoadState_("overview", "loaded");
+    setDashboardLoadState_("overviewOptional", optionalWarnings.length ? "warning" : "idle");
     return { state: "loaded" };
   } catch (error) {
     const detail = String(error?.responseJson?.detail || error?.message || "Unknown backend error");
     const isTimeout = /timed out|timeout|abort/i.test(detail);
     renderNetworkFallback(isTimeout ? timeoutMessage : unavailableMessage);
-    setDashboardSectionStatus_("overview", isTimeout ? "loading" : "error", isTimeout ? timeoutMessage : unavailableMessage);
+    setDashboardLoadState_("overview", isTimeout ? "loading" : "error", isTimeout ? timeoutMessage : unavailableMessage);
 
     console.error("loadHomeSnapshot failed:", {
       message: error?.message || String(error),
@@ -2090,6 +2177,26 @@ async function loadHomeSnapshot() {
     console.timeEnd("loadHomeSnapshot");
   }
 }
+
+  function ensureOverviewLoaded_() {
+    if (overviewLoadPromise) return overviewLoadPromise;
+    overviewLoadPromise = loadHomeSnapshot().finally(() => {
+      overviewLoadPromise = null;
+    });
+    return overviewLoadPromise;
+  }
+
+  function ensureAuditLoaded_() {
+    return loadAuditPanelData();
+  }
+
+  function ensureReportsLoaded_() {
+    if (reportsLoadPromise) return reportsLoadPromise;
+    reportsLoadPromise = loadReportsSnapshot({ updatedText: "Updated: Just now" }).finally(() => {
+      reportsLoadPromise = null;
+    });
+    return reportsLoadPromise;
+  }
 
 function buildFallbackStrategicNote_(auditHighlights, summary) {
   const attentionItems = Array.isArray(auditHighlights?.needsAttention) ? auditHighlights.needsAttention : [];
@@ -2274,27 +2381,28 @@ function getCurrentReportFilterParams() {
     updateHeaderDatePillForView(viewId);
 
     if (viewId === "reports" && !currentReportsLoaded) {
-      setDashboardSectionStatus_("reports", "loading", "Loading Reports...");
+      setDashboardLoadState_("reports", "loading", "Loading Reports...");
       if (!currentRegistryLoaded) {
-        loadRegistryFromSheet().catch((error) => {
+        ensureUtmPrefetched_().catch((error) => {
           console.error("Deferred registry load for reports failed:", error);
         });
       }
-      loadReportsSnapshot({ updatedText: "Updated: Just now" }).catch((error) => {
+      ensureReportsLoaded_().catch((error) => {
         console.error("Deferred Visual Intelligence load failed:", error);
       });
     } else if (viewId === "reports") {
-      setDashboardSectionStatus_("reports", "loaded");
+      setDashboardLoadState_("reports", "loaded");
     }
 
     if (viewId === "utm") {
-      setDashboardSectionStatus_("utm", currentRegistryLoaded ? "loaded" : "loading", currentRegistryLoaded ? "" : "Loading UTM registry...");
+      setDashboardLoadState_("utm", currentRegistryLoaded ? "loaded" : "loading", currentRegistryLoaded ? "" : "Loading UTM registry...");
       updateHeaderDatePillForView("utm");
 
       const hasRegistryRows = Array.isArray(currentRegistryItems) && currentRegistryItems.length > 0;
       if (!hasRegistryRows) {
         renderUtmLoadingState("Loading UTM registry...");
-        loadRegistryFromSheet().then(() => {
+        ensureUtmPrefetched_().then((result) => {
+          if (!result || result.state !== "loaded") return;
           const utmStatus = document.getElementById("utm-builder-status");
           if (utmStatus) {
             utmStatus.textContent = `Loaded ${Array.isArray(currentRegistryItems) ? currentRegistryItems.length : 0} tracking links`;
@@ -2303,7 +2411,7 @@ function getCurrentReportFilterParams() {
           }
         }).catch((error) => {
           console.error("Deferred registry load failed:", error);
-          setDashboardSectionStatus_("utm", "error", "UTM registry unavailable. You can still create tracking links if required fields are available.");
+          setDashboardLoadState_("utm", "error", "UTM registry unavailable. You can still create tracking links if required fields are available.");
           const utmStatus = document.getElementById("utm-builder-status");
           if (utmStatus) {
             utmStatus.textContent = "Registry load failed";
@@ -2320,15 +2428,17 @@ function getCurrentReportFilterParams() {
 
     if (viewId === "audit") {
       if (!currentAuditPanelLoaded) {
-        setDashboardSectionStatus_("audit", "loading", "Overview is loaded. Audit & Strategy is still loading.");
-        loadAuditPanelData();
+        setDashboardLoadState_("audit", "loading", "Overview is loaded. Audit & Strategy is still loading.");
+        ensureAuditLoaded_().catch((error) => {
+          console.error("Deferred audit load failed:", error);
+        });
       } else {
-        setDashboardSectionStatus_("audit", "loaded");
+        setDashboardLoadState_("audit", "loaded");
       }
     }
 
     if (viewId === "home") {
-      updateDashboardStatus_();
+      updateGlobalDataStatus();
     }
 
     if (updateHash) history.replaceState(null, "", `#${viewId}`);
@@ -2971,7 +3081,7 @@ function applyUtmRegistryFilters() {
   }
 
   async function loadOverviewRecentLinks() {
-    setDashboardSectionStatus_("recentLinks", "loading");
+    setDashboardLoadState_("overviewOptional", "loading");
     renderHomeRecentUtmLinksMessage("Loading recent UTM links...");
 
     try {
@@ -2987,22 +3097,51 @@ function applyUtmRegistryFilters() {
           detail: data?.detail || data?.error || "Unknown backend error",
           responseJson: data || null
         });
-        setDashboardSectionStatus_("recentLinks", "error");
+        setDashboardLoadState_("overviewOptional", "warning");
         renderHomeRecentUtmLinksMessage("Recent UTM links unavailable. Open UTM Builder for the full registry.");
         return;
       }
 
       currentRecentRegistryLinks = Array.isArray(data.links) ? data.links : [];
-      setDashboardSectionStatus_("recentLinks", "loaded");
+      setDashboardLoadState_("overviewOptional", dashboardLoadState.overviewOptional === "warning" ? "warning" : "loaded");
       renderHomeRecentUtmLinks(currentRecentRegistryLinks);
     } catch (error) {
       console.error("Overview recent links load exception:", {
         action: "getRecentRegistryLinks",
         message: error?.message || String(error)
       });
-      setDashboardSectionStatus_("recentLinks", "error");
+      setDashboardLoadState_("overviewOptional", "warning");
       renderHomeRecentUtmLinksMessage("Recent UTM links unavailable. Open UTM Builder for the full registry.");
     }
+  }
+
+  function ensureOverviewRecentLinksLoaded_() {
+    if (recentLinksLoadPromise) return recentLinksLoadPromise;
+    recentLinksLoadPromise = loadOverviewRecentLinks().finally(() => {
+      recentLinksLoadPromise = null;
+    });
+    return recentLinksLoadPromise;
+  }
+
+  function ensureUtmPrefetched_() {
+    if (currentRegistryLoaded) {
+      setDashboardLoadState_("utm", "loaded");
+      return Promise.resolve({ state: "loaded" });
+    }
+    if (utmLoadPromise) return utmLoadPromise;
+
+    setDashboardLoadState_("utm", "loading", "Loading UTM registry...");
+    utmLoadPromise = loadRegistryFromSheet().then(() => {
+      setDashboardLoadState_("utm", "loaded");
+      return { state: "loaded" };
+    }).catch((error) => {
+      console.error("UTM registry prefetch failed:", error);
+      setDashboardLoadState_("utm", "error", "UTM registry unavailable. You can still create tracking links if required fields are available.");
+      return { state: "error" };
+    }).finally(() => {
+      utmLoadPromise = null;
+    });
+    return utmLoadPromise;
   }
 
   function renderPerformanceSummary(summary) {
@@ -4368,10 +4507,20 @@ function categoryBadgeClass(category) {
     if (!box || !indicator || !label || !text) return;
 
     const states = {
+      booting: {
+        boxClass: "border-cyan-400/20",
+        dot: "bg-cyan-400",
+        labelText: "Loading Data"
+      },
       loading: {
         boxClass: "border-amber-400/20",
         dot: "bg-amber-400",
         labelText: "Data Loading"
+      },
+      warning: {
+        boxClass: "border-amber-400/20",
+        dot: "bg-amber-400",
+        labelText: "Data Warning"
       },
       partial: {
         boxClass: "border-amber-400/20",

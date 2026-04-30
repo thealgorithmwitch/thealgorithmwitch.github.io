@@ -1149,9 +1149,10 @@
 
 <script>
   const APP_CONFIG = {
-    API_BASE: "https://script.google.com/macros/s/AKfycbyS9bXwskZh_1pzI9l9BTeQjcbYRAVq1lPqEkBcv63VQPT3BfrqqhVish59TgGK-uyZ/exec",
+    API_BASE: "https://script.google.com/macros/s/AKfycbyg_hnjth2HDvTg-GSJw-8WmhaOCp8pt5Ve_RZhN4mNMFIzzKGE79d5B0GWzcn-5A6Q/exec",
     AUTO_SYNC_PERFORMANCE_ON_LOAD: false
   };
+  console.log("API_BASE:", APP_CONFIG.API_BASE);
 
   let PORTAL_CONFIG = {
     clientName: "Loading...",
@@ -1211,6 +1212,7 @@
   let currentReportsLoaded = false;
   let currentRegistryLoaded = false;
   let currentAuditLoaded = false;
+  let currentAuditPanelLoaded = false;
   let currentResourcesLoaded = false;
   let currentHomeSummary = {};
   let currentHomeComparison = null;
@@ -1228,6 +1230,28 @@
         needsAttention: false,
         nextAction: false
       }
+    };
+  }
+
+  function normalizeAuditNoteItem_(item) {
+    const linkedLandingPage = String(item?.linkedLandingPage || "").trim();
+    const linkedCampaignId = String(item?.linkedCampaignId || "").trim();
+    const evidenceUrl = String(item?.evidenceUrl || "").trim();
+
+    let linkedTo = String(item?.linkedTo || linkedLandingPage || linkedCampaignId || "").trim();
+    if (!linkedTo && evidenceUrl) {
+      try {
+        const parsed = new URL(evidenceUrl);
+        linkedTo = parsed.hostname.replace(/^www\./, "");
+      } catch (error) {
+        linkedTo = evidenceUrl;
+      }
+    }
+
+    return {
+      ...item,
+      status: normalizeAuditStatus(item?.status),
+      linkedTo
     };
   }
 
@@ -1401,16 +1425,13 @@ document.addEventListener("DOMContentLoaded", async () => {
 }
 
   async function loadAuditHighlights() {
-  const data = await apiGet("getAuditHighlights");
-  if (!data.ok) throw new Error(data.error || "Failed to load audit highlights");
+    if (!currentAuditPanelLoaded) {
+      await loadAuditPanelData();
+      return;
+    }
 
-  currentAuditHighlights = normalizeAuditHighlightsPayload(data.highlights || {});
-  currentHomeInsights = {
-    ...(currentHomeInsights || {}),
-    auditHighlights: currentAuditHighlights
-  };
-  renderAuditHighlights(currentAuditHighlights);
-}
+    renderAuditHighlights(currentAuditHighlights);
+  }
 
   function formatAuditStatusLabel(value) {
     const normalized = normalizeAuditStatus(value);
@@ -1659,39 +1680,114 @@ document.addEventListener("DOMContentLoaded", async () => {
 
 async function loadAuditFromSheet(status = "all") {
   const normalizedStatus = status === "all" ? "all" : normalizeAuditStatus(status);
-
-  const data = await apiGet("getAuditNotes", {
-    status: normalizedStatus
-  });
-
-  if (!data.ok) throw new Error(data.error || "Failed to load audit notes");
-
-  currentAuditItems = (Array.isArray(data.notes) ? data.notes : []).map((item) => {
-    const linkedLandingPage = String(item.linkedLandingPage || "").trim();
-    const linkedCampaignId = String(item.linkedCampaignId || "").trim();
-    const evidenceUrl = String(item.evidenceUrl || "").trim();
-
-    let linkedTo = linkedLandingPage || linkedCampaignId || "";
-
-    if (!linkedTo && evidenceUrl) {
-      try {
-        const parsed = new URL(evidenceUrl);
-        linkedTo = parsed.hostname.replace(/^www\./, "");
-      } catch (error) {
-        linkedTo = evidenceUrl;
-      }
-    }
-
-    return {
-      ...item,
-      status: normalizeAuditStatus(item.status),
-      linkedTo
-    };
-  });
-
+  if (!currentAuditPanelLoaded) {
+    await loadAuditPanelData();
+    return;
+  }
   currentAuditLoaded = true;
   renderAuditTable(currentAuditItems, normalizedStatus);
 }
+
+  function renderAuditLoadingState() {
+    const tableBody = document.querySelector("#audit-recommendations-table tbody");
+    const detailPanel = document.getElementById("audit-detail-panel");
+
+    renderAuditHighlights(createEmptyAuditHighlights());
+
+    if (tableBody) {
+      tableBody.innerHTML = `
+        <tr>
+          <td colspan="6" class="text-sm text-gray-500">Loading audit panel...</td>
+        </tr>
+      `;
+    }
+
+    if (detailPanel) {
+      detailPanel.innerHTML = `
+        <div class="p-4 bg-black/20 rounded border border-white/5">
+          <p class="text-sm text-gray-400">Loading audit notes...</p>
+        </div>
+      `;
+    }
+  }
+
+  function renderAuditFallbackState() {
+    const title = "Audit data unavailable";
+    const body = "Run daily audit refresh or check backend logs.";
+    const tableBody = document.querySelector("#audit-recommendations-table tbody");
+    const detailPanel = document.getElementById("audit-detail-panel");
+
+    currentAuditLoaded = false;
+    currentAuditPanelLoaded = false;
+    currentAuditItems = [];
+    currentAuditHighlights = normalizeAuditHighlightsPayload(createEmptyAuditHighlights());
+
+    renderAuditHighlights({
+      whatsWorking: [{ title, detail: body }],
+      needsAttention: [{ title, detail: body }],
+      nextAction: { title, detail: body },
+      usedFallbacks: {
+        whatsWorking: true,
+        needsAttention: true,
+        nextAction: true
+      }
+    });
+
+    if (tableBody) {
+      tableBody.innerHTML = `
+        <tr>
+          <td colspan="6" class="text-sm text-gray-500">${title}. ${body}</td>
+        </tr>
+      `;
+    }
+
+    if (detailPanel) {
+      detailPanel.innerHTML = `
+        <div class="p-4 bg-black/20 rounded border border-white/5">
+          <h4 class="text-xs font-bold text-amber-300 mb-2 uppercase tracking-wider">${escapeHtml(title)}</h4>
+          <p class="text-xs text-gray-400">${escapeHtml(body)}</p>
+        </div>
+      `;
+    }
+  }
+
+  async function loadAuditPanelData() {
+    renderAuditLoadingState();
+
+    try {
+      const data = await apiGet("getAuditPanelData", {}, { timeoutMs: 20000 });
+      if (!data || data.ok === false) {
+        console.error("Audit panel load failed:", {
+          action: "getAuditPanelData",
+          detail: data?.detail || data?.error || "Unknown backend error",
+          responseJson: data || null
+        });
+        renderAuditFallbackState();
+        return;
+      }
+
+      const panel = data.panel || {};
+      const warnings = Array.isArray(data.warnings) ? data.warnings : [];
+
+      warnings.forEach((warning) => {
+        console.warn("getAuditPanelData warning:", warning);
+      });
+
+      currentAuditHighlights = normalizeAuditHighlightsPayload(panel.auditHighlights || {});
+      currentAuditItems = (Array.isArray(panel.notes) ? panel.notes : []).map(normalizeAuditNoteItem_);
+      currentAuditLoaded = true;
+      currentAuditPanelLoaded = true;
+
+      renderAuditHighlights(currentAuditHighlights);
+      renderAuditTable(currentAuditItems, "all");
+    } catch (error) {
+      console.error("Audit panel load exception:", {
+        action: "getAuditPanelData",
+        message: error?.message || String(error)
+      });
+      renderAuditFallbackState();
+    }
+  }
 
   async function loadResourcesFromSheet() {
     const data = await apiGet("getResourceLinks");
@@ -1738,8 +1834,29 @@ async function loadPerformanceComparisonFromSheet() {
 
 async function loadHomeSnapshot() {
   console.time("loadHomeSnapshot");
+  const timeoutMessage = "Overview is taking longer than expected. Reports and Audit can still be opened from the sidebar.";
+  const unavailableMessage = "Dashboard temporarily unavailable. Data sync may still be running.";
   try {
-    const data = await apiGet("getHomeInsights");
+    const data = await apiGet("getHomeInsights", {}, { timeoutMs: 12000 });
+    if (!data || data.ok === false) {
+      const detail = String(data?.detail || data?.error || "Unknown backend error");
+      const isTimeout = /timed out|timeout|abort/i.test(detail);
+      const message = isTimeout ? timeoutMessage : unavailableMessage;
+
+      console.error("loadHomeSnapshot received fallback response:", {
+        action: "getHomeInsights",
+        detail,
+        responseJson: data || null
+      });
+      renderNetworkFallback(message);
+
+      const uiError = new Error(message);
+      uiError.action = "getHomeInsights";
+      uiError.url = `${APP_CONFIG.API_BASE}?action=getHomeInsights`;
+      uiError.responseJson = data || null;
+      throw uiError;
+    }
+
     const insights = data.insights || {};
     const warnings = Array.isArray(data.warnings) ? data.warnings : [];
 
@@ -1804,13 +1921,10 @@ async function loadHomeSnapshot() {
     renderHomeStrategicNote(strategicNote);
     renderHomeGtmStatus(gtmSummary);
   } catch (error) {
-    if (error?.action === "getHomeInsights") {
-      const uiError = new Error(`Performance summary failed: ${extractPerformanceSummaryFailure_(error?.responseJson?.error || error?.message || "Unknown backend error")}`);
-      uiError.action = error.action;
-      uiError.url = error.url;
-      uiError.responseJson = error.responseJson || null;
-      error = uiError;
-    }
+    const detail = String(error?.responseJson?.detail || error?.message || "Unknown backend error");
+    const isTimeout = /timed out|timeout|abort/i.test(detail);
+    renderNetworkFallback(isTimeout ? timeoutMessage : unavailableMessage);
+
     console.error("loadHomeSnapshot failed:", {
       message: error?.message || String(error),
       action: error?.action || "getHomeInsights",
@@ -2045,15 +2159,8 @@ function getCurrentReportFilterParams() {
     }
 
     if (viewId === "audit") {
-      if (!currentAuditLoaded) {
-        loadAuditFromSheet("all").catch((error) => {
-          console.error("Deferred audit notes load failed:", error);
-        });
-      }
-      if (!currentResourcesLoaded) {
-        loadResourcesFromSheet().catch((error) => {
-          console.error("Deferred resource links load failed:", error);
-        });
+      if (!currentAuditPanelLoaded) {
+        loadAuditPanelData();
       }
     }
 
@@ -2758,6 +2865,74 @@ function renderHomeOverviewSnapshot(summary, comparison) {
   }
 }
 
+  function renderNetworkFallback(message = "Overview is loading slowly or unavailable. Reports and Audit tabs are still accessible.") {
+    const fallbackMessage = String(message || "Overview is loading slowly or unavailable. Reports and Audit tabs are still accessible.");
+    const sessionsValue = document.getElementById("home-kpi-sessions");
+    const sessionsDelta = document.getElementById("home-kpi-sessions-delta");
+    const conversionsValue = document.getElementById("home-kpi-conversions");
+    const conversionsDelta = document.getElementById("home-kpi-conversions-delta");
+    const rateValue = document.getElementById("home-kpi-rate");
+    const rateDelta = document.getElementById("home-kpi-rate-delta");
+    const costValue = document.getElementById("home-kpi-cost");
+    const costDelta = document.getElementById("home-kpi-cost-delta");
+    const cpaValue = document.getElementById("home-kpi-cpa");
+    const cpaDelta = document.getElementById("home-kpi-cpa-delta");
+
+    [sessionsValue, conversionsValue, rateValue, costValue, cpaValue].forEach((el) => {
+      if (el) el.textContent = "—";
+    });
+
+    [sessionsDelta, conversionsDelta, rateDelta, costDelta, cpaDelta].forEach((el) => {
+      if (!el) return;
+      el.className = "text-xs text-amber-400 flex items-center gap-1 font-medium";
+      el.textContent = fallbackMessage;
+    });
+
+    currentHomeSummary = {};
+    currentHomeComparison = null;
+    currentRecentRegistryLinks = [];
+    currentAuditHighlights = normalizeAuditHighlightsPayload({
+      whatsWorking: [],
+      needsAttention: [],
+      opportunities: [],
+      issues: [],
+      flags: [],
+      nextAction: null,
+      usedFallbacks: {
+        whatsWorking: true,
+        needsAttention: true,
+        nextAction: true
+      }
+    });
+    currentHomeInsights = {
+      settings: {},
+      summary30: currentHomeSummary,
+      comparison30: currentHomeComparison,
+      recentLinks: currentRecentRegistryLinks,
+      auditHighlights: currentAuditHighlights,
+      strategicNote: {
+        title: "Strategic Note",
+        body: fallbackMessage,
+        isFallback: true,
+        fallbackReason: "network_failure"
+      },
+      gtmSummary: {
+        totalChecks: 0,
+        failCount: 0,
+        passCount: 0,
+        latestDate: "",
+        topIssue: ""
+      },
+      generatedAt: "",
+      warnings: []
+    };
+
+    renderHomeRecentUtmLinks([]);
+    renderAuditHighlights(currentAuditHighlights);
+    renderHomeStrategicNote(currentHomeInsights.strategicNote);
+    renderHomeGtmStatus(currentHomeInsights.gtmSummary);
+  }
+
   function renderHomeStrategicNote(note) {
     const titleEl = document.getElementById("home-strategic-note-title");
     const bodyEl = document.getElementById("home-strategic-note-body");
@@ -3259,12 +3434,7 @@ async function filterAuditByStatus(status) {
       : "audit-filter-btn px-3 py-1 rounded text-xs bg-black/30 text-gray-400 border border-white/10 hover:bg-white/5";
   });
 
-  try {
-    await loadAuditFromSheet(normalizedStatus);
-  } catch (error) {
-    console.error(error);
-    showToast("Load Error", "Could not refresh audit notes.", "ph-warning", "text-amber-400");
-  }
+  renderAuditTable(currentAuditItems, normalizedStatus);
 }
 
 function renderAuditTable(items, activeStatus = "all") {
@@ -3596,6 +3766,10 @@ function populateSelectFromValues(selectId, values, allLabel) {
       return `Apps Script access denied for ${action}`;
     }
 
+    if (normalizedType.includes("text/html")) {
+      return `GET ${action} returned HTML instead of JSON (${status})`;
+    }
+
     return `GET ${action} returned invalid JSON (${status})`;
   }
 
@@ -3610,8 +3784,9 @@ function populateSelectFromValues(selectId, values, allLabel) {
     return error;
   }
 
-  async function apiGet(action, params = {}) {
-    const url = new URL(APP_CONFIG.API_BASE);
+  async function apiGet(action, params = {}, options = {}) {
+    const apiBase = String(APP_CONFIG.API_BASE || "").trim().replace(/\/+$/, "");
+    const url = new URL(apiBase);
     url.searchParams.set("action", action);
 
     Object.entries(params).forEach(([key, value]) => {
@@ -3620,9 +3795,18 @@ function populateSelectFromValues(selectId, values, allLabel) {
       }
     });
 
+    const timeoutMs = Number(options?.timeoutMs || 0);
+    const controller = typeof AbortController === "function" ? new AbortController() : null;
+    const timeoutId = controller && timeoutMs > 0
+      ? window.setTimeout(() => controller.abort(), timeoutMs)
+      : null;
+
     let response;
     try {
-      response = await fetch(url.toString(), { method: "GET" });
+      response = await fetch(url.toString(), {
+        method: "GET",
+        signal: controller ? controller.signal : undefined
+      });
     } catch (error) {
       console.error("GET request failed before a response was received", {
         action,
@@ -3630,7 +3814,15 @@ function populateSelectFromValues(selectId, values, allLabel) {
         params,
         error: error?.message || error
       });
-      throw buildApiError(action, url.toString(), `GET ${action} network failure: ${error?.message || "Unknown network error"}`);
+      return {
+        ok: false,
+        error: "network_failure",
+        detail: error?.name === "AbortError"
+          ? `GET ${action} timed out after ${timeoutMs || 0}ms`
+          : `GET ${action} network failure: ${error?.message || "Unknown network error"}`
+      };
+    } finally {
+      if (timeoutId) window.clearTimeout(timeoutId);
     }
 
     const text = await response.text();
@@ -3646,11 +3838,14 @@ function populateSelectFromValues(selectId, values, allLabel) {
         contentType,
         preview
       });
-      throw buildApiError(action, url.toString(), `GET ${action} failed (${response.status})`, {
+      return {
+        ok: false,
+        error: "network_failure",
+        detail: `GET ${action} failed (${response.status})`,
         status: response.status,
         statusText: response.statusText,
         preview
-      });
+      };
     }
 
     try {
@@ -3662,16 +3857,18 @@ function populateSelectFromValues(selectId, values, allLabel) {
           error: parsed.error || "Unknown backend error",
           payload: parsed
         });
-        throw buildApiError(action, url.toString(), parsed.error || `GET ${action} returned ok:false`, {
+        return {
+          ok: false,
+          error: String(parsed.error || "backend_failure"),
+          detail: String(parsed.error || `GET ${action} returned ok:false`),
           responseJson: parsed,
           status: response.status,
           statusText: response.statusText,
           preview
-        });
+        };
       }
       return parsed;
     } catch (error) {
-      if (error?.action) throw error;
       console.error("Non-JSON GET response", {
         action,
         url: url.toString(),
@@ -3679,10 +3876,13 @@ function populateSelectFromValues(selectId, values, allLabel) {
         contentType,
         preview
       });
-      throw buildApiError(action, url.toString(), getApiFailureReason_(action, contentType, preview, response.status), {
+      return {
+        ok: false,
+        error: "network_failure",
+        detail: getApiFailureReason_(action, contentType, preview, response.status),
         status: response.status,
         preview
-      });
+      };
     }
   }
 

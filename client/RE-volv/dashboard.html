@@ -2080,7 +2080,7 @@ async function loadHomeSnapshot() {
       campaign: "all",
       landing_page: "all",
       landingPage: "all"
-    }, { timeoutMs: 15000 });
+    }, { timeoutMs: 30000 });
     console.log("[overview] summary response", response);
     const summary = response && response.summary ? response.summary : null;
     console.log("[overview] response", response);
@@ -3262,47 +3262,6 @@ function renderHomeOverviewSnapshot(summary, comparison) {
 
     currentHomeSummary = {};
     currentHomeComparison = null;
-    currentRecentRegistryLinks = [];
-    currentAuditHighlights = normalizeAuditHighlightsPayload({
-      whatsWorking: [],
-      needsAttention: [],
-      opportunities: [],
-      issues: [],
-      flags: [],
-      nextAction: null,
-      usedFallbacks: {
-        whatsWorking: true,
-        needsAttention: true,
-        nextAction: true
-      }
-    });
-    currentHomeInsights = {
-      settings: {},
-      summary30: currentHomeSummary,
-      comparison30: currentHomeComparison,
-      recentLinks: currentRecentRegistryLinks,
-      auditHighlights: currentAuditHighlights,
-      strategicNote: {
-        title: "Strategic Note",
-        body: fallbackMessage,
-        isFallback: true,
-        fallbackReason: "network_failure"
-      },
-      gtmSummary: {
-        totalChecks: 0,
-        failCount: 0,
-        passCount: 0,
-        latestDate: "",
-        topIssue: ""
-      },
-      generatedAt: "",
-      warnings: []
-    };
-
-    renderHomeRecentUtmLinks([]);
-    renderAuditHighlights(currentAuditHighlights);
-    renderHomeStrategicNote(currentHomeInsights.strategicNote);
-    renderHomeGtmStatus(currentHomeInsights.gtmSummary);
   }
 
   function renderHomeStrategicNote(note) {

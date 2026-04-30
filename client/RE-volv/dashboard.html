@@ -1149,7 +1149,7 @@
 
 <script>
   const APP_CONFIG = {
-    API_BASE: "https://script.google.com/macros/s/AKfycbxu-M-In1y9ZXJvrEOQlP3r0gIYdA5OfxSENy0bTQwzwgVdOYfX5tG4WkKGNKmZtpjk/exec",
+    API_BASE: "https://script.google.com/macros/s/AKfycbwL8duCTvyC_p1ayNLU9IrXsLjNk33KtVCqVxusnY06jrsOhHt-s3Rgo-2JwWde_WE/exec",
     AUTO_SYNC_PERFORMANCE_ON_LOAD: false
   };
   console.log("API_BASE:", APP_CONFIG.API_BASE);
@@ -1277,12 +1277,11 @@
     const auditReady = dashboardLoadState.audit === "loaded" || dashboardLoadState.audit === "partial";
     const utmReady = dashboardLoadState.utm === "loaded" || dashboardLoadState.utm === "partial";
     const reportsReady = dashboardLoadState.reports === "loaded" || dashboardLoadState.reports === "partial";
-    const overviewOptionalFallback =
-      dashboardLoadState.overviewOptional === "partial" ||
-      dashboardLoadState.overviewOptional === "warning";
+    const recentLinksReady = dashboardLoadState.overviewOptional === "loaded";
+    const recentLinksFallback = dashboardLoadState.overviewOptional === "warning";
 
     if (dashboardLoadState.overview === "loading" || dashboardLoadState.overview === "idle") {
-      setDataStatus("booting", "Loading 30 day Overview. Audit, UTM Builder, and Reports will hydrate in stages.");
+      setDataStatus("booting", "Loading dashboard data...");
       return;
     }
 
@@ -1321,13 +1320,18 @@
       return;
     }
 
-    if (activeView === "home" && dashboardLoadState.audit === "loading") {
-      setDataStatus("loading", "30 day Overview loaded. Audit & Strategy is still loading.");
+    if (activeView === "home" && overviewReady && !auditReady && dashboardLoadState.audit !== "error") {
+      setDataStatus("loaded", "30 day Overview loaded.");
       return;
     }
 
-    if (auditReady && dashboardLoadState.utm === "loading") {
-      setDataStatus("loading", "Overview and Audit & Strategy loaded. UTM registry is still loading.");
+    if (activeView === "home" && overviewReady && auditReady && recentLinksReady) {
+      setDataStatus("loaded", "Overview, Audit & Strategy, and recent UTM links loaded.");
+      return;
+    }
+
+    if (activeView === "home" && overviewReady && auditReady) {
+      setDataStatus("loaded", "Overview and Audit & Strategy loaded.");
       return;
     }
 
@@ -1342,17 +1346,7 @@
     }
 
     if (activeView === "audit" && auditReady) {
-      setDataStatus("loaded", "Overview and Audit & Strategy are loaded. Reports and UTM Builder are available from the sidebar.");
-      return;
-    }
-
-    if (reportsReady && auditReady && utmReady) {
-      setDataStatus("loaded", "Overview, Audit & Strategy, UTM Builder, and Reports are loaded.");
-      return;
-    }
-
-    if (overviewReady && auditReady && utmReady && dashboardLoadState.reports === "idle") {
-      setDataStatus("loaded", "Overview, Audit & Strategy, and UTM Builder are available. Reports will load when opened.");
+      setDataStatus("loaded", "Overview and Audit & Strategy loaded.");
       return;
     }
 
@@ -1366,12 +1360,12 @@
       return;
     }
 
-    if (overviewOptionalFallback) {
-      setDataStatus("loaded", "Core dashboard data loaded. Some optional widgets are using fallback data.");
+    if (recentLinksFallback) {
+      setDataStatus("loaded", auditReady ? "Overview and Audit & Strategy loaded." : "30 day Overview loaded.");
       return;
     }
 
-    setDataStatus("loaded", "30 day Overview loaded. Reports, UTM Builder, and Audit & Strategy are available from the sidebar.");
+    setDataStatus("loaded", overviewReady ? "30 day Overview loaded." : "Loading dashboard data...");
   }
 
   function normalizeAuditNoteItem_(item) {
@@ -1496,7 +1490,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
 
     const title = String(item?.title || "").trim();
-    const detail = String(item?.detail || "").trim();
+    const detail = String(item?.detail || item?.recommendation || "").trim();
     const metricLabel = String(item?.metricLabel || "").trim();
     const metricValue = String(item?.metricValue || "").trim();
     const label = String(item?.label || "").trim();
@@ -1540,27 +1534,27 @@ document.addEventListener("DOMContentLoaded", async () => {
     const items = Array.isArray(normalized.whatsWorking) ? normalized.whatsWorking : [];
     workingEl.innerHTML = items.length
       ? items.map((item) => renderHighlightListItem(item, "ph-check", "text-emerald-400")).join("")
-      : `<li class="text-gray-500">No resolved wins yet.</li>`;
+      : `<li class="text-gray-500">No confirmed wins yet. Resolve audit items or run the daily audit refresh to surface wins.</li>`;
   }
 
   if (attentionEl) {
     const items = Array.isArray(normalized.needsAttention) ? normalized.needsAttention : [];
     attentionEl.innerHTML = items.length
       ? items.map((item) => renderHighlightListItem(item, "ph-warning", "text-amber-400")).join("")
-      : `<li class="text-gray-500">No active issues.</li>`;
+      : `<li class="text-gray-500">No priority issues returned.</li>`;
   }
 
   if (nextActionEl) {
     const nextAction = normalized.nextAction;
     if (typeof nextAction === "string") {
       nextActionEl.textContent = nextAction || "No next action available.";
-    } else if (nextAction && (nextAction.title || nextAction.detail)) {
+    } else if (nextAction && (nextAction.title || nextAction.detail || nextAction.recommendation)) {
       nextActionEl.innerHTML = `
         <span class="text-white font-medium">${escapeHtml(nextAction.title || "Next action")}</span>
-        <span class="block text-gray-400 mt-1">${escapeHtml(nextAction.detail || "")}</span>
+        <span class="block text-gray-400 mt-1">${escapeHtml(nextAction.detail || nextAction.recommendation || "")}</span>
       `;
     } else {
-      nextActionEl.textContent = "No next action available.";
+      nextActionEl.textContent = "No next action available yet.";
     }
   }
 }
@@ -1894,6 +1888,7 @@ async function loadAuditFromSheet(status = "all") {
 
   function renderAuditPanelData_(panel) {
     const payload = panel || {};
+    const strategicFallback = payload.strategicNote || null;
     const auditSummary = payload.auditSummary || {};
     const notes = Array.isArray(payload.notes) ? payload.notes : [];
     const gtmSummary = payload.gtmSummary || {
@@ -1904,10 +1899,19 @@ async function loadAuditFromSheet(status = "all") {
       topIssue: ""
     };
     const highlights = normalizeAuditHighlightsPayload(payload.auditHighlights || {});
-    const highlightsFallbackOnly = !hasAuditHighlightSignal_(highlights) || Boolean(highlights.usedFallbacks === true);
-    const strategicHelper = highlightsFallbackOnly
-      ? "Strategic highlights are in light mode. Audit notes are loaded below."
-      : "";
+    const nextAction = highlights.nextAction && typeof highlights.nextAction === "object"
+      ? highlights.nextAction
+      : null;
+    const strategicNote = normalizeStrategicNote_(
+      strategicFallback && strategicFallback.isFallback && nextAction && (nextAction.title || nextAction.detail || nextAction.recommendation)
+        ? {
+            title: nextAction.title || "Strategic Note",
+            body: nextAction.detail || nextAction.recommendation || "",
+            isFallback: true,
+            fallbackReason: "next_action_bridge"
+          }
+        : strategicFallback
+    );
 
     currentAuditPanelData = payload;
     currentAuditItems = notes.map(normalizeAuditNoteItem_);
@@ -1915,18 +1919,26 @@ async function loadAuditFromSheet(status = "all") {
     currentAuditLoaded = true;
     currentAuditPanelLoaded = true;
 
-    renderAuditHighlights(highlights);
-    if (strategicHelper) {
-      const nextActionEl = document.getElementById("audit-next-action-text");
-      if (nextActionEl && (!String(nextActionEl.textContent || "").trim() || /No next action available/i.test(nextActionEl.textContent || ""))) {
-        nextActionEl.textContent = strategicHelper;
-      }
-    }
+    console.log("[audit] panel", payload);
+    console.log("[audit] highlights", highlights);
+    console.log("[audit] whatsWorking", highlights.whatsWorking);
+    console.log("[audit] needsAttention", highlights.needsAttention);
+    console.log("[audit] nextAction", highlights.nextAction);
+    console.log("[audit] strategicNote", payload.strategicNote);
 
+    renderAuditHighlights(highlights);
     renderAuditTable(currentAuditItems, "all");
 
     const detailPanel = document.getElementById("audit-detail-panel");
-    if (detailPanel && !notes.length) {
+    if (detailPanel && strategicNote && (strategicNote.title || strategicNote.body)) {
+      detailPanel.innerHTML = `
+        <div class="p-4 bg-black/20 rounded border border-white/5">
+          <h4 class="text-xs font-bold text-amber-300 mb-2 uppercase tracking-wider">${escapeHtml(strategicNote.title || "Strategic Note")}</h4>
+          <p class="text-xs text-gray-300 mb-3">${escapeHtml(strategicNote.body || "No strong pattern detected yet.")}</p>
+          <p class="text-[11px] text-gray-500">Audit notes: ${escapeHtml(formatNumber(notes.length))} loaded. GTM checks: ${escapeHtml(formatNumber(gtmSummary.totalChecks || 0))} total, ${escapeHtml(formatNumber(gtmSummary.failCount || 0))} failing.</p>
+        </div>
+      `;
+    } else if (detailPanel && !notes.length) {
       detailPanel.innerHTML = `
         <div class="p-4 bg-black/20 rounded border border-white/5">
           <h4 class="text-xs font-bold text-cyan-300 mb-2 uppercase tracking-wider">Audit Summary</h4>
@@ -1946,14 +1958,15 @@ async function loadAuditFromSheet(status = "all") {
 
     auditLoadPromise = (async () => {
       try {
-        const data = await apiGet("getAuditPanelData", {}, { timeoutMs: 20000 });
-        if (!data || data.ok === false) {
-          const detail = String(data?.detail || data?.error || "Unknown backend error");
+        const response = await apiGet("getAuditPanelData", {}, { timeoutMs: 20000 });
+        console.log("[audit] full response", response);
+        if (!response || response.ok === false) {
+          const detail = String(response?.detail || response?.error || "Unknown backend error");
           const isTimeout = /timed out|timeout|abort/i.test(detail);
           console.error("Audit panel load failed:", {
             action: "getAuditPanelData",
             detail,
-            responseJson: data || null
+            responseJson: response || null
           });
 
           if (isTimeout) {
@@ -1967,8 +1980,15 @@ async function loadAuditFromSheet(status = "all") {
           return { state: "error" };
         }
 
-        const panel = data.panel || {};
-        const warnings = Array.isArray(data.warnings) ? data.warnings : [];
+        const panel = response.panel || {};
+        const highlights = panel.auditHighlights || {};
+        const warnings = Array.isArray(response.warnings) ? response.warnings : [];
+        console.log("[audit] panel", panel);
+        console.log("[audit] highlights", highlights);
+        console.log("[audit] whatsWorking", highlights.whatsWorking);
+        console.log("[audit] needsAttention", highlights.needsAttention);
+        console.log("[audit] nextAction", highlights.nextAction);
+        console.log("[audit] strategicNote", panel.strategicNote);
         warnings.forEach((warning) => {
           console.warn("getAuditPanelData warning:", warning);
         });
@@ -2427,7 +2447,10 @@ function getCurrentReportFilterParams() {
     }
 
     if (viewId === "audit") {
-      if (!currentAuditPanelLoaded) {
+      if (currentAuditPanelData) {
+        renderAuditPanelData_(currentAuditPanelData);
+        setDashboardLoadState_("audit", "loaded");
+      } else if (!currentAuditPanelLoaded) {
         setDashboardLoadState_("audit", "loading", "Overview is loaded. Audit & Strategy is still loading.");
         ensureAuditLoaded_().catch((error) => {
           console.error("Deferred audit load failed:", error);
@@ -3053,14 +3076,14 @@ function applyUtmRegistryFilters() {
           <div class="font-medium text-white mb-0.5">
             ${escapeHtml(item.campaignName || item.campaign || item.campaignId || "")}
           </div>
-          <div class="text-[11px] text-gray-500">${escapeHtml(getRegistryVariantDetails(item) || "Variant details unavailable")}</div>
-          ${getRegistryAdsDetails(item) ? `<div class="text-[11px] text-gray-500">${escapeHtml(getRegistryAdsDetails(item))}</div>` : ""}
-          ${getRegistryLinkMarkup(item)}
+          <div class="text-[11px] text-gray-500">${escapeHtml(item.landingPage || "Landing page unavailable")}</div>
+          <div class="text-[11px] text-gray-500">${escapeHtml(String(item.fullUtmLink || item.destinationUrl || "").trim() ? String(item.fullUtmLink || item.destinationUrl || "").trim() : "Detected from analytics")}</div>
         </td>
         <td>
-          <span class="badge ${getBadgeColor(item.source)}">${escapeHtml(item.source || "")}</span>
+          <span class="badge ${getBadgeColor(item.source)}">${escapeHtml(item.source || "unknown")}</span>
           <span class="text-gray-600 mx-1">/</span>
-          <span class="text-xs text-gray-300">${formatNumber(getRegistrySessionsValue(item))} sessions</span>
+          <span class="text-xs text-gray-300">${escapeHtml(item.medium || "unknown")}</span>
+          <div class="text-[11px] text-gray-500 mt-1">${formatNumber(item.sessions30d || 0)} sessions / ${formatNumber(item.conversions30d || 0)} conversions</div>
         </td>
         <td>
           <div class="text-xs text-gray-400">${escapeHtml(formatShortSlashDate(item.dateCreated))}</div>
@@ -3081,31 +3104,36 @@ function applyUtmRegistryFilters() {
   }
 
   async function loadOverviewRecentLinks() {
+    console.log("[stage] recent links started");
     setDashboardLoadState_("overviewOptional", "loading");
     renderHomeRecentUtmLinksMessage("Loading recent UTM links...");
 
     try {
-      const data = await apiGet("getRecentRegistryLinks", {
+      const response = await apiGet("getRecentRegistryLinks", {
         range_type: "30"
       }, {
         timeoutMs: 20000
       });
 
-      if (!data || data.ok === false) {
+      if (!response || response.ok === false) {
+        console.log("[stage] recent links failed", response);
         console.error("Overview recent links load failed:", {
           action: "getRecentRegistryLinks",
-          detail: data?.detail || data?.error || "Unknown backend error",
-          responseJson: data || null
+          detail: response?.detail || response?.error || "Unknown backend error",
+          responseJson: response || null
         });
         setDashboardLoadState_("overviewOptional", "warning");
         renderHomeRecentUtmLinksMessage("Recent UTM links unavailable. Open UTM Builder for the full registry.");
         return;
       }
 
-      currentRecentRegistryLinks = Array.isArray(data.links) ? data.links : [];
+      const links = Array.isArray(response.links) ? response.links : [];
+      currentRecentRegistryLinks = links;
+      console.log("[stage] recent links loaded", currentRecentRegistryLinks.length);
       setDashboardLoadState_("overviewOptional", dashboardLoadState.overviewOptional === "warning" ? "warning" : "loaded");
       renderHomeRecentUtmLinks(currentRecentRegistryLinks);
     } catch (error) {
+      console.log("[stage] recent links failed", error);
       console.error("Overview recent links load exception:", {
         action: "getRecentRegistryLinks",
         message: error?.message || String(error)
@@ -3901,9 +3929,33 @@ function renderAuditTable(items, activeStatus = "all") {
 function showAuditDetail(id) {
   const panel = document.getElementById("audit-detail-panel");
   if (!panel) return;
+  const strategicFallback = currentAuditPanelData?.strategicNote || null;
+  const highlights = normalizeAuditHighlightsPayload(currentAuditPanelData?.auditHighlights || {});
+  const nextAction = highlights.nextAction && typeof highlights.nextAction === "object"
+    ? highlights.nextAction
+    : null;
+  const strategicNote = normalizeStrategicNote_(
+    strategicFallback && strategicFallback.isFallback && nextAction && (nextAction.title || nextAction.detail || nextAction.recommendation)
+      ? {
+          title: nextAction.title || "Strategic Note",
+          body: nextAction.detail || nextAction.recommendation || "",
+          isFallback: true,
+          fallbackReason: "next_action_bridge"
+        }
+      : strategicFallback
+  );
+  const strategicBlock = strategicNote && (strategicNote.title || strategicNote.body)
+    ? `
+      <div class="p-4 bg-black/20 rounded border border-white/5">
+        <h4 class="text-xs font-bold text-amber-300 mb-2 uppercase tracking-wider">${escapeHtml(strategicNote.title || "Strategic Note")}</h4>
+        <p class="text-xs text-gray-300">${escapeHtml(strategicNote.body || "No strong pattern detected yet.")}</p>
+      </div>
+    `
+    : "";
 
   if (!id) {
     panel.innerHTML = `
+      ${strategicBlock}
       <div class="p-4 bg-black/20 rounded border border-white/5">
         <p class="text-sm text-gray-400">Select a recommendation to view details.</p>
       </div>
@@ -3989,6 +4041,7 @@ function showAuditDetail(id) {
     }
 
     panel.innerHTML = `
+      ${strategicBlock}
       <div class="p-4 bg-black/20 rounded border border-white/5">
         <h4 class="text-xs font-bold text-cyan-300 mb-2 uppercase tracking-wider">
           ${escapeHtml(liveItem.title || "")}
@@ -4009,6 +4062,7 @@ function showAuditDetail(id) {
   if (!detail) return;
 
   panel.innerHTML = `
+    ${strategicBlock}
     <div class="p-4 bg-black/20 rounded border border-white/5">
       <h4 class="text-xs font-bold text-cyan-300 mb-2 uppercase tracking-wider">${escapeHtml(detail.title)}</h4>
       <p class="text-xs text-gray-400 mb-3">${escapeHtml(detail.finding)}</p>

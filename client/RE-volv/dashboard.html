@@ -2018,6 +2018,13 @@ async function loadAuditFromSheet(status = "all") {
         });
 
         renderAuditPanelData_(panel);
+        const overviewRecommendation = buildOverviewRecommendationFromAudit_(panel);
+        currentHomeInsights = Object.assign({}, currentHomeInsights || {}, {
+          auditHighlights: highlights,
+          strategicNote: overviewRecommendation,
+          gtmSummary: panel.gtmSummary || currentHomeInsights?.gtmSummary || {}
+        });
+        renderHomeStrategicNote(overviewRecommendation);
         renderHomeGtmStatus(panel.gtmSummary || {});
         setDashboardLoadState_("audit", "loaded");
         return { state: "loaded", panel };
@@ -2259,16 +2266,19 @@ async function loadHomeComparisonForOverview() {
 }
 
 async function loadHomeStrategicNoteForOverview() {
-  const response = await apiGet("getStrategicNote", {}, { timeoutMs: 15000 });
-  if (!response || response.ok === false) {
-    throw new Error(response?.detail || response?.error || "Failed to load strategic note");
+  if (currentAuditPanelData) {
+    const note = buildOverviewRecommendationFromAudit_(currentAuditPanelData);
+    currentHomeInsights = Object.assign({}, currentHomeInsights || {}, {
+      strategicNote: note
+    });
+    renderHomeStrategicNote(note);
+    return;
   }
 
-  const note = response.note || buildFallbackStrategicNote_(currentAuditHighlights, currentHomeSummary);
-  currentHomeInsights = Object.assign({}, currentHomeInsights || {}, {
-    strategicNote: note
+  renderHomeStrategicNote({
+    title: "Live Recommendation",
+    body: "Loading live recommendation..."
   });
-  renderHomeStrategicNote(note);
 }
 
 async function loadHomeGtmForOverview() {
@@ -3402,6 +3412,24 @@ function renderHomeOverviewSnapshot(summary, comparison) {
         auditSummaryEl.textContent = "No active high-priority issues";
       }
     }
+  }
+
+  function buildOverviewRecommendationFromAudit_(panel) {
+    const highlights = panel?.auditHighlights || {};
+    const needsAttention = Array.isArray(highlights.needsAttention) ? highlights.needsAttention : [];
+    const primary = needsAttention[0] || highlights.nextAction || panel?.strategicNote || null;
+
+    if (primary && (primary.title || primary.detail || primary.recommendation || primary.body)) {
+      return {
+        title: primary.title || "Live Recommendation",
+        body: primary.recommendation || primary.detail || primary.body || "Review the top audit item before scaling campaign activity."
+      };
+    }
+
+    return {
+      title: "Live Recommendation",
+      body: "Audit notes are loaded. Review the highest-priority item before making campaign changes."
+    };
   }
 
   function normalizeStrategicNote_(note) {

@@ -1149,7 +1149,7 @@
 
 <script>
   const APP_CONFIG = {
-    API_BASE: "https://script.google.com/macros/s/AKfycbwKnMEnVqViojwV7EkkjehNtCsHLed4-ZZJjdj20gaibS3xaF1scb2LIjHohGjy6ink/exec",
+    API_BASE: "https://script.google.com/macros/s/AKfycbz-uD2Lud7_t09zNRdhUblBqI5GATExbd6zpW8y15HplxEQF6mHEnA1BSCBNWZqYc2k/exec",
     AUTO_SYNC_PERFORMANCE_ON_LOAD: false
   };
   console.log("API_BASE:", APP_CONFIG.API_BASE);
@@ -1219,6 +1219,8 @@
   let currentRecentRegistryLinks = [];
   let currentHomeInsights = null;
   let currentAuditHighlights = createEmptyAuditHighlights();
+  let currentHomeSnapshotState = "loading";
+  let currentHomeSnapshotMessage = "";
 
   function createEmptyAuditHighlights() {
     return {
@@ -1297,16 +1299,24 @@ document.addEventListener("DOMContentLoaded", async () => {
   ];
 
   const overviewFailures = [];
+  let overviewPartialMessage = "";
 
   overviewResults.forEach((result, index) => {
     if (result.status === "rejected") {
       overviewFailures.push(result.reason?.message || overviewNames[index]);
       console.error(`${overviewNames[index]} failed:`, result.reason);
+      return;
+    }
+
+    if (result.value?.state === "partial") {
+      overviewPartialMessage = result.value?.message || "";
     }
   });
 
   if (overviewFailures.length) {
     setDataStatus("error", overviewFailures.join(" | "));
+  } else if (overviewPartialMessage) {
+    setDataStatus("partial", overviewPartialMessage);
   } else {
     setDataStatus("loaded", "30 day overview data loaded successfully.");
   }
@@ -1834,10 +1844,10 @@ async function loadPerformanceComparisonFromSheet() {
 
 async function loadHomeSnapshot() {
   console.time("loadHomeSnapshot");
-  const timeoutMessage = "Overview is taking longer than expected. Reports and Audit can still be opened from the sidebar.";
+  const timeoutMessage = "Overview is still loading. Reports and Audit are available from the sidebar.";
   const unavailableMessage = "Dashboard temporarily unavailable. Data sync may still be running.";
   try {
-    const data = await apiGet("getHomeInsights", {}, { timeoutMs: 12000 });
+    const data = await apiGet("getHomeInsights", {}, { timeoutMs: 30000 });
     if (!data || data.ok === false) {
       const detail = String(data?.detail || data?.error || "Unknown backend error");
       const isTimeout = /timed out|timeout|abort/i.test(detail);
@@ -1849,6 +1859,15 @@ async function loadHomeSnapshot() {
         responseJson: data || null
       });
       renderNetworkFallback(message);
+
+      if (isTimeout) {
+        currentHomeSnapshotState = "partial";
+        currentHomeSnapshotMessage = message;
+        return {
+          state: "partial",
+          message
+        };
+      }
 
       const uiError = new Error(message);
       uiError.action = "getHomeInsights";
@@ -1920,10 +1939,20 @@ async function loadHomeSnapshot() {
     renderAuditHighlights(currentAuditHighlights);
     renderHomeStrategicNote(strategicNote);
     renderHomeGtmStatus(gtmSummary);
+    currentHomeSnapshotState = warnings.length ? "partial" : "loaded";
+    currentHomeSnapshotMessage = warnings.length ? "Overview loaded with partial fallback data." : "";
+    return warnings.length ? {
+      state: "partial",
+      message: currentHomeSnapshotMessage
+    } : {
+      state: "loaded"
+    };
   } catch (error) {
     const detail = String(error?.responseJson?.detail || error?.message || "Unknown backend error");
     const isTimeout = /timed out|timeout|abort/i.test(detail);
     renderNetworkFallback(isTimeout ? timeoutMessage : unavailableMessage);
+    currentHomeSnapshotState = isTimeout ? "partial" : "error";
+    currentHomeSnapshotMessage = isTimeout ? timeoutMessage : unavailableMessage;
 
     console.error("loadHomeSnapshot failed:", {
       message: error?.message || String(error),
@@ -4150,6 +4179,11 @@ function categoryBadgeClass(category) {
         boxClass: "border-amber-400/20",
         dot: "bg-amber-400",
         labelText: "Data Loading"
+      },
+      partial: {
+        boxClass: "border-amber-400/20",
+        dot: "bg-amber-400",
+        labelText: "Data Warning"
       },
       loaded: {
         boxClass: "border-emerald-400/20",

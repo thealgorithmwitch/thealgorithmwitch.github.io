@@ -2082,7 +2082,17 @@ async function loadHomeSnapshot() {
       landingPage: "all"
     }, { timeoutMs: 15000 });
     console.log("[overview] summary response", response);
-    if (!response || response.ok === false) {
+    const summary = response && response.summary ? response.summary : null;
+    console.log("[overview] response", response);
+    console.log("[overview] summary", summary);
+    console.log("[overview] render targets", {
+      sessions: !!document.getElementById("home-kpi-sessions"),
+      conversions: !!document.getElementById("home-kpi-conversions"),
+      rate: !!document.getElementById("home-kpi-rate"),
+      cost: !!document.getElementById("home-kpi-cost"),
+      cpa: !!document.getElementById("home-kpi-cpa")
+    });
+    if (!response || response.ok !== true || !summary) {
       console.error("loadHomeSnapshot received fallback response:", {
         action: "getPerformanceSummary",
         detail: response?.detail || response?.error || "Unknown backend error",
@@ -2094,7 +2104,6 @@ async function loadHomeSnapshot() {
       return { state: "error" };
     }
 
-    const summary = response.summary || {};
     currentHomeSummary = summary;
     currentHomeInsights = Object.assign({}, currentHomeInsights || {}, {
       summary30: summary
@@ -2102,7 +2111,7 @@ async function loadHomeSnapshot() {
     renderHomeOverviewSnapshot(summary, currentHomeComparison || null);
     console.log("[overview] KPIs rendered");
 
-    setDashboardLoadState_("overview", "loaded");
+    setDashboardLoadState_("overview", "loaded", "30 day Overview loaded.");
     updateGlobalDataStatus();
 
     loadHomeComparisonForOverview().catch((error) => {
@@ -3206,6 +3215,13 @@ function renderHomeOverviewSnapshot(summary, comparison) {
   if (rateValue) rateValue.textContent = formatPercent(summary?.conversionRate || 0);
   if (costValue) costValue.textContent = formatCurrencyOrPlaceholder(summary?.paidCost, summary?.hasPaidData);
   if (cpaValue) cpaValue.textContent = formatCurrencyOrPlaceholder(summary?.costPerConversion, summary?.hasPaidData && Number(summary?.paidConversions || 0) > 0);
+
+  if (!comparison) {
+    [sessionsDelta, conversionsDelta, rateDelta, costDelta, cpaDelta].forEach((el) => {
+      setNeutralDeltaText(el, "Comparison loading...");
+    });
+    return;
+  }
 
   const delta = comparison?.delta || {};
   const hasPaidComparison = Boolean(comparison?.current?.hasPaidData || comparison?.previous?.hasPaidData);

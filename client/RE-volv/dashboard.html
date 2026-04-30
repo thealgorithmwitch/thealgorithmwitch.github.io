@@ -1285,8 +1285,13 @@
       return;
     }
 
+    if (activeView === "home" && dashboardLoadState.overview === "partial") {
+      setDataStatus("loaded", dashboardLoadMessage.overview || "Overview loaded. Metrics are temporarily unavailable, and other dashboard sections are available.");
+      return;
+    }
+
     if (dashboardLoadState.overview === "error" && activeView === "home") {
-      setDataStatus("error", dashboardLoadMessage.overview || "Overview data is unavailable.");
+      setDataStatus("loaded", dashboardLoadMessage.overview || "Overview loaded. Metrics are temporarily unavailable, and other dashboard sections are available.");
       return;
     }
 
@@ -2071,8 +2076,15 @@ async function loadPerformanceComparisonFromSheet() {
 async function loadHomeSnapshot() {
   console.time("loadHomeSnapshot");
   const unavailableMessage = "Overview metrics are unavailable. Audit, Reports, and UTM Builder are still available.";
+  const partialMessage = "Overview loaded. Metrics are temporarily unavailable, and other dashboard sections are available.";
   try {
     console.log("[overview] summary started");
+    console.log("[overview] summary url", buildApiUrl("getPerformanceSummary", {
+      range_type: "30",
+      source: "all",
+      campaign: "all",
+      landing_page: "all"
+    }));
     const response = await apiGet("getPerformanceSummary", {
       range_type: "30",
       rangeType: "30",
@@ -2098,10 +2110,19 @@ async function loadHomeSnapshot() {
         detail: response?.detail || response?.error || "Unknown backend error",
         responseJson: response || null
       });
+      let fallbackState = "";
+      try {
+        fallbackState = await loadHomeSummaryFallback_();
+      } catch (fallbackError) {
+        console.error("[overview] getHomeInsights fallback failed", fallbackError);
+      }
+      if (fallbackState === "loaded") {
+        return { state: "loaded" };
+      }
       renderNetworkFallback(unavailableMessage);
-      setDashboardSectionStatus_("overview", "error", unavailableMessage);
+      setDashboardSectionStatus_("overview", "partial", partialMessage);
       updateGlobalDataStatus();
-      return { state: "error" };
+      return { state: "partial" };
     }
 
     currentHomeSummary = summary;
@@ -2126,20 +2147,50 @@ async function loadHomeSnapshot() {
 
     return { state: "loaded" };
   } catch (error) {
-    renderNetworkFallback(unavailableMessage);
-    setDashboardLoadState_("overview", "error", unavailableMessage);
-    updateGlobalDataStatus();
-
+    console.error("[overview] getPerformanceSummary failed", error);
     console.error("loadHomeSnapshot failed:", {
       message: error?.message || String(error),
       action: error?.action || "getPerformanceSummary",
       url: error?.url || `${APP_CONFIG.API_BASE}?action=getPerformanceSummary`,
       responseJson: error?.responseJson || null
     });
-    return { state: "error" };
+    let fallbackState = "";
+    try {
+      fallbackState = await loadHomeSummaryFallback_();
+    } catch (fallbackError) {
+      console.error("[overview] getHomeInsights fallback failed", fallbackError);
+    }
+    if (fallbackState === "loaded") {
+      return { state: "loaded" };
+    }
+    renderNetworkFallback(unavailableMessage);
+    setDashboardLoadState_("overview", "partial", partialMessage);
+    updateGlobalDataStatus();
+    return { state: "partial" };
   } finally {
     console.timeEnd("loadHomeSnapshot");
   }
+}
+
+async function loadHomeSummaryFallback_() {
+  const response = await apiGet("getHomeInsights", {}, { timeoutMs: 30000 });
+  const insights = response && response.insights ? response.insights : {};
+  const summary = insights && insights.summary30 ? insights.summary30 : null;
+
+  if (!response || response.ok !== true || !summary) {
+    throw new Error(response?.detail || response?.error || "Failed to load home insights fallback");
+  }
+
+  currentHomeSummary = summary;
+  currentHomeComparison = insights.comparison30 || currentHomeComparison || null;
+  currentHomeInsights = Object.assign({}, currentHomeInsights || {}, {
+    summary30: summary,
+    comparison30: currentHomeComparison
+  });
+  renderHomeOverviewSnapshot(summary, currentHomeComparison || null);
+  setDashboardLoadState_("overview", "loaded", "30 day Overview loaded.");
+  updateGlobalDataStatus();
+  return "loaded";
 }
 
 async function loadHomeComparisonForOverview() {
@@ -4173,7 +4224,7 @@ function populateSelectFromValues(selectId, values, allLabel) {
     return error;
   }
 
-  async function apiGet(action, params = {}, options = {}) {
+  function buildApiUrl(action, params = {}) {
     const apiBase = String(APP_CONFIG.API_BASE || "").trim().replace(/\/+$/, "");
     const url = new URL(apiBase);
     url.searchParams.set("action", action);
@@ -4183,6 +4234,12 @@ function populateSelectFromValues(selectId, values, allLabel) {
         url.searchParams.set(key, value);
       }
     });
+
+    return url.toString();
+  }
+
+  async function apiGet(action, params = {}, options = {}) {
+    const url = new URL(buildApiUrl(action, params));
 
     const timeoutMs = Number(options?.timeoutMs || 0);
     const controller = typeof AbortController === "function" ? new AbortController() : null;

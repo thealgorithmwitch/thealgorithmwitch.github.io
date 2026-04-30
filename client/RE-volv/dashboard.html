@@ -2070,80 +2070,116 @@ async function loadPerformanceComparisonFromSheet() {
 
 async function loadHomeSnapshot() {
   console.time("loadHomeSnapshot");
-  const timeoutMessage = "Overview is still loading. Reports and Audit are available from the sidebar.";
-  const unavailableMessage = "Dashboard temporarily unavailable. Data sync may still be running.";
+  const unavailableMessage = "Overview metrics are unavailable. Audit, Reports, and UTM Builder are still available.";
   try {
-    const response = await apiGet("getHomeInsights", {}, { timeoutMs: 30000 });
-    console.log("[overview] getHomeInsights response", response);
+    console.log("[overview] summary started");
+    const response = await apiGet("getPerformanceSummary", {
+      range_type: "30",
+      rangeType: "30",
+      source: "all",
+      campaign: "all",
+      landing_page: "all",
+      landingPage: "all"
+    }, { timeoutMs: 15000 });
+    console.log("[overview] summary response", response);
     if (!response || response.ok === false) {
-      const detail = String(response?.detail || response?.error || "Unknown backend error");
-      const isTimeout = /timed out|timeout|abort/i.test(detail);
-      const message = isTimeout ? timeoutMessage : unavailableMessage;
-
       console.error("loadHomeSnapshot received fallback response:", {
-        action: "getHomeInsights",
-        detail,
+        action: "getPerformanceSummary",
+        detail: response?.detail || response?.error || "Unknown backend error",
         responseJson: response || null
       });
-      renderNetworkFallback(message);
-
-      setDashboardSectionStatus_("overview", "error", message);
+      renderNetworkFallback(unavailableMessage);
+      setDashboardSectionStatus_("overview", "error", unavailableMessage);
       updateGlobalDataStatus();
       return { state: "error" };
     }
 
-    const insights = response.insights || {};
-    const summary = insights.summary30 || {};
-    const comparison = insights.comparison30 || null;
-    const recentLinks = Array.isArray(insights.recentLinks) ? insights.recentLinks : [];
-    const gtmSummary = insights.gtmSummary || {};
-    const strategicNote = insights.strategicNote || {};
-
-    applyPortalSettings_(insights.settings || {});
-    applyWorkspaceConfig();
-
+    const summary = response.summary || {};
     currentHomeSummary = summary;
-    currentHomeComparison = comparison;
-    currentRecentRegistryLinks = recentLinks;
-
-    currentHomeInsights = {
-      settings: insights.settings || {},
-      summary30: summary,
-      comparison30: comparison,
-      recentLinks: recentLinks,
-      strategicNote: strategicNote,
-      gtmSummary: gtmSummary,
-      generatedAt: insights.generatedAt || "",
-      warnings: Array.isArray(response.warnings) ? response.warnings : []
-    };
-
-    renderHomeOverviewSnapshot(summary, comparison);
-    renderHomeStrategicNote(strategicNote);
-    renderHomeGtmStatus(gtmSummary);
-    if (recentLinks.length) {
-      renderHomeRecentUtmLinks(recentLinks);
-    }
+    currentHomeInsights = Object.assign({}, currentHomeInsights || {}, {
+      summary30: summary
+    });
+    renderHomeOverviewSnapshot(summary, currentHomeComparison || null);
+    console.log("[overview] KPIs rendered");
 
     setDashboardLoadState_("overview", "loaded");
-    setDashboardLoadState_("overviewOptional", recentLinks.length ? "loaded" : "idle");
     updateGlobalDataStatus();
+
+    loadHomeComparisonForOverview().catch((error) => {
+      console.error("[overview] comparison failed", error);
+    });
+    loadHomeStrategicNoteForOverview().catch((error) => {
+      console.error("[overview] strategic note failed", error);
+    });
+    loadHomeGtmForOverview().catch((error) => {
+      console.error("[overview] gtm failed", error);
+    });
+
     return { state: "loaded" };
   } catch (error) {
-    const detail = String(error?.responseJson?.detail || error?.message || "Unknown backend error");
     renderNetworkFallback(unavailableMessage);
     setDashboardLoadState_("overview", "error", unavailableMessage);
     updateGlobalDataStatus();
 
     console.error("loadHomeSnapshot failed:", {
       message: error?.message || String(error),
-      action: error?.action || "getHomeInsights",
-      url: error?.url || `${APP_CONFIG.API_BASE}?action=getHomeInsights`,
+      action: error?.action || "getPerformanceSummary",
+      url: error?.url || `${APP_CONFIG.API_BASE}?action=getPerformanceSummary`,
       responseJson: error?.responseJson || null
     });
     return { state: "error" };
   } finally {
     console.timeEnd("loadHomeSnapshot");
   }
+}
+
+async function loadHomeComparisonForOverview() {
+  console.log("[overview] comparison started");
+  const response = await apiGet("getPerformanceComparison", {
+    range_type: "30",
+    rangeType: "30",
+    source: "all",
+    campaign: "all",
+    landing_page: "all",
+    landingPage: "all"
+  }, { timeoutMs: 20000 });
+
+  if (!response || response.ok === false) {
+    throw new Error(response?.detail || response?.error || "Failed to load overview comparison");
+  }
+
+  currentHomeComparison = response.comparison || null;
+  currentHomeInsights = Object.assign({}, currentHomeInsights || {}, {
+    comparison30: currentHomeComparison
+  });
+  renderHomeOverviewSnapshot(currentHomeSummary || {}, currentHomeComparison);
+  console.log("[overview] comparison rendered");
+}
+
+async function loadHomeStrategicNoteForOverview() {
+  const response = await apiGet("getStrategicNote", {}, { timeoutMs: 15000 });
+  if (!response || response.ok === false) {
+    throw new Error(response?.detail || response?.error || "Failed to load strategic note");
+  }
+
+  const note = response.note || buildFallbackStrategicNote_(currentAuditHighlights, currentHomeSummary);
+  currentHomeInsights = Object.assign({}, currentHomeInsights || {}, {
+    strategicNote: note
+  });
+  renderHomeStrategicNote(note);
+}
+
+async function loadHomeGtmForOverview() {
+  const response = await apiGet("getGtmHealthSummary", {}, { timeoutMs: 15000 });
+  if (!response || response.ok === false) {
+    throw new Error(response?.detail || response?.error || "Failed to load GTM summary");
+  }
+
+  const summary = response.summary || {};
+  currentHomeInsights = Object.assign({}, currentHomeInsights || {}, {
+    gtmSummary: summary
+  });
+  renderHomeGtmStatus(summary);
 }
 
   function ensureOverviewLoaded_() {

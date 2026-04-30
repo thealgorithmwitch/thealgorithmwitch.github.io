@@ -1149,7 +1149,7 @@
 
 <script>
   const APP_CONFIG = {
-    API_BASE: "https://script.google.com/macros/s/AKfycbwrjCHZQmkEmstVRswj-sb7gDSb7ZydVFZxVsAhAwY8KV8OMOeYyzmF23rkVOvPmAO8/exec",
+    API_BASE: "https://script.google.com/macros/s/AKfycbybXiQvztUj7QYcOuMAcdrCJzlFcyHNKm4KLdd6QSXJSw9Qj2OqYAf23oIyukNKW6qH/exec",
     AUTO_SYNC_PERFORMANCE_ON_LOAD: false
   };
   console.log("API_BASE:", APP_CONFIG.API_BASE);
@@ -1400,7 +1400,7 @@ window.addEventListener("unhandledrejection", (event) => {
   });
 });
 
-document.addEventListener("DOMContentLoaded", async () => {
+document.addEventListener("DOMContentLoaded", () => {
   console.log("[startup] DOMContentLoaded");
   console.time("startup");
   try { applyConfig(); } catch (error) { console.error("applyConfig failed:", error); }
@@ -1416,11 +1416,12 @@ document.addEventListener("DOMContentLoaded", async () => {
   updateLocalSyncTime();
   switchView(getInitialView(), false);
 
-  renderUtmLoadingState("Loading UTM registry...");
+  renderRegistry([]);
   renderHomeRecentUtmLinks([]);
   renderLoadingPerformanceState();
   renderHomeLoadingState();
-  setDashboardLoadState_("overview", "loading", "Loading 30 day Overview. Audit, UTM Builder, and Reports will hydrate in stages.");
+  setDashboardLoadState_("overview", "loading", "Loading dashboard data...");
+  setDataStatus("loading", "Loading dashboard data...");
 
   const reportDefaults = {
     "filter-date-range": "30",
@@ -1439,19 +1440,24 @@ document.addEventListener("DOMContentLoaded", async () => {
     console.error("[startup] loadHomeSnapshot failed", error);
   });
 
-  console.log("[startup] calling loadAuditPanelData");
-  loadAuditPanelData().catch((error) => {
-    console.error("[startup] loadAuditPanelData failed", error);
-  });
-
   console.log("[startup] calling loadOverviewRecentLinks");
   loadOverviewRecentLinks().catch((error) => {
     console.error("[startup] loadOverviewRecentLinks failed", error);
   });
 
+  console.log("[startup] calling loadAuditPanelData");
+  loadAuditPanelData().catch((error) => {
+    console.error("[startup] loadAuditPanelData failed", error);
+  });
+
+  console.log("[startup] calling loadResourcesFromSheet");
   loadResourcesFromSheet().catch((error) => {
     console.error("[startup] loadResourcesFromSheet failed", error);
   });
+
+  loadSettingsFromSheet()
+    .then(applyWorkspaceConfig)
+    .catch((error) => console.error("Initial settings load failed:", error));
 
   if (!hasRenderedAuditContent_(currentAuditHighlights)) {
     renderAuditHighlights(currentAuditHighlights);
@@ -1781,18 +1787,6 @@ document.addEventListener("DOMContentLoaded", async () => {
     return messages;
   }
 
-  async function loadRecentRegistryLinks() {
-    const data = await apiGet("getRecentRegistryLinks", {
-      range_type: "30",
-      rangeType: "30"
-    });
-
-    if (!data.ok) throw new Error(data.error || "Failed to load recent links");
-
-    currentRecentRegistryLinks = Array.isArray(data.links) ? data.links : [];
-    renderHomeRecentUtmLinks(currentRecentRegistryLinks);
-  }
-
   async function loadSettingsFromSheet() {
     const data = await apiGet("getSettings");
     if (!data.ok) throw new Error(data.error || "Failed to load settings");
@@ -1965,7 +1959,7 @@ async function loadAuditFromSheet(status = "all") {
 
     auditLoadPromise = (async () => {
       try {
-        const response = await apiGet("getAuditPanelData", {}, { timeoutMs: 20000 });
+        const response = await apiGet("getAuditPanelData", {}, { timeoutMs: 30000 });
         console.log("[audit] full response", response);
         if (!response || response.ok === false) {
           const detail = String(response?.detail || response?.error || "Unknown backend error");
@@ -1990,6 +1984,7 @@ async function loadAuditFromSheet(status = "all") {
         const panel = response.panel || {};
         const highlights = panel.auditHighlights || {};
         const warnings = Array.isArray(response.warnings) ? response.warnings : [];
+        console.log("[audit] panel loaded", panel);
         console.log("[audit] panel", panel);
         console.log("[audit] highlights", highlights);
         console.log("[audit] whatsWorking", highlights.whatsWorking);
@@ -2001,6 +1996,7 @@ async function loadAuditFromSheet(status = "all") {
         });
 
         renderAuditPanelData_(panel);
+        renderHomeGtmStatus(panel.gtmSummary || {});
         setDashboardLoadState_("audit", "loaded");
         return { state: "loaded", panel };
       } catch (error) {
@@ -2076,12 +2072,6 @@ async function loadHomeSnapshot() {
   console.time("loadHomeSnapshot");
   const timeoutMessage = "Overview is still loading. Reports and Audit are available from the sidebar.";
   const unavailableMessage = "Dashboard temporarily unavailable. Data sync may still be running.";
-  const optionalWarningSections = new Set([
-    "recentLinks",
-    "gtmSummary",
-    "comparison30",
-    "startup_light_mode"
-  ]);
   try {
     const response = await apiGet("getHomeInsights", {}, { timeoutMs: 30000 });
     console.log("[overview] getHomeInsights response", response);
@@ -2103,85 +2093,39 @@ async function loadHomeSnapshot() {
     }
 
     const insights = response.insights || {};
-    const warnings = Array.isArray(response.warnings) ? response.warnings : [];
-
-    warnings.forEach((warning) => {
-      const section = String(warning?.section || "unknown");
-      const message = String(warning?.error || "Unknown optional section failure");
-      console.warn(`getHomeInsights optional section failed: ${section}`, warning);
-
-      if (section === "settings") console.warn(`getSettings fallback applied: ${message}`);
-      if (section === "comparison30") console.warn(`getPerformanceComparison fallback applied: ${message}`);
-      if (section === "recentLinks") console.warn(`getRecentRegistryLinks fallback applied: ${message}`);
-      if (section === "auditHighlights") console.warn(`getAuditHighlights fallback applied: ${message}`);
-      if (section === "strategicNote") console.warn(`getStrategicNote fallback applied: ${message}`);
-      if (section === "gtmSummary") console.warn(`getGtmHealthSummary fallback applied: ${message}`);
-    });
+    const summary = insights.summary30 || {};
+    const comparison = insights.comparison30 || null;
+    const recentLinks = Array.isArray(insights.recentLinks) ? insights.recentLinks : [];
+    const gtmSummary = insights.gtmSummary || {};
+    const strategicNote = insights.strategicNote || {};
 
     applyPortalSettings_(insights.settings || {});
     applyWorkspaceConfig();
 
-    currentHomeSummary = insights.summary30 || {};
-    currentHomeComparison = insights.comparison30 || null;
-
-    const incomingHighlights = normalizeAuditHighlightsPayload(insights.auditHighlights || {});
-    const currentHasSignal = hasAuditHighlightSignal_(currentAuditHighlights);
-    const incomingHasSignal = hasAuditHighlightSignal_(incomingHighlights);
-    const currentFallbackOnly = isFallbackOnlyAuditHighlights_(currentAuditHighlights);
-    const incomingFallbackOnly = isFallbackOnlyAuditHighlights_(incomingHighlights);
-
-    if (!currentHasSignal || (incomingHasSignal && (!incomingFallbackOnly || currentFallbackOnly))) {
-      currentAuditHighlights = incomingHighlights;
-    }
-
-    const fallbackStrategicNote = buildFallbackStrategicNote_(
-      currentAuditHighlights,
-      currentHomeSummary
-    );
-    const strategicNote = normalizeStrategicNote_(insights.strategicNote || fallbackStrategicNote);
-    const gtmSummary = insights.gtmSummary || {
-      totalChecks: 0,
-      failCount: 0,
-      passCount: 0,
-      latestDate: "",
-      topIssue: ""
-    };
+    currentHomeSummary = summary;
+    currentHomeComparison = comparison;
+    currentRecentRegistryLinks = recentLinks;
 
     currentHomeInsights = {
       settings: insights.settings || {},
-      summary30: currentHomeSummary,
-      comparison30: currentHomeComparison,
-      recentLinks: [],
-      auditHighlights: currentAuditHighlights,
-      strategicNote,
-      gtmSummary,
+      summary30: summary,
+      comparison30: comparison,
+      recentLinks: recentLinks,
+      strategicNote: strategicNote,
+      gtmSummary: gtmSummary,
       generatedAt: insights.generatedAt || "",
-      warnings
+      warnings: Array.isArray(response.warnings) ? response.warnings : []
     };
 
-    renderHomeOverviewSnapshot(currentHomeSummary, currentHomeComparison);
-    renderAuditHighlights(currentAuditHighlights);
+    renderHomeOverviewSnapshot(summary, comparison);
     renderHomeStrategicNote(strategicNote);
     renderHomeGtmStatus(gtmSummary);
-
-    const blockingWarnings = warnings.filter((warning) => {
-      const section = String(warning?.section || "").trim();
-      return !optionalWarningSections.has(section);
-    });
-    const summaryMissing = !currentHomeSummary || Number(currentHomeSummary.recordCount || 0) <= 0;
-    const optionalWarnings = warnings.filter((warning) => {
-      const section = String(warning?.section || "").trim();
-      return optionalWarningSections.has(section);
-    });
-    if (blockingWarnings.length || summaryMissing) {
-      setDashboardLoadState_("overview", summaryMissing ? "error" : "loaded", summaryMissing ? unavailableMessage : "30 day Overview loaded.");
-      setDashboardLoadState_("overviewOptional", optionalWarnings.length ? "warning" : "idle");
-      updateGlobalDataStatus();
-      return { state: summaryMissing ? "error" : "loaded" };
+    if (recentLinks.length) {
+      renderHomeRecentUtmLinks(recentLinks);
     }
 
     setDashboardLoadState_("overview", "loaded");
-    setDashboardLoadState_("overviewOptional", optionalWarnings.length ? "warning" : "idle");
+    setDashboardLoadState_("overviewOptional", recentLinks.length ? "loaded" : "idle");
     updateGlobalDataStatus();
     return { state: "loaded" };
   } catch (error) {
@@ -2406,12 +2350,7 @@ function getCurrentReportFilterParams() {
 
     if (viewId === "reports" && !currentReportsLoaded) {
       setDashboardLoadState_("reports", "loading", "Loading Reports...");
-      if (!currentRegistryLoaded) {
-        ensureUtmPrefetched_().catch((error) => {
-          console.error("Deferred registry load for reports failed:", error);
-        });
-      }
-      ensureReportsLoaded_().catch((error) => {
+      loadReportsSnapshot({ updatedText: "Updated: Just now" }).catch((error) => {
         console.error("Deferred Visual Intelligence load failed:", error);
       });
     } else if (viewId === "reports") {
@@ -2425,8 +2364,7 @@ function getCurrentReportFilterParams() {
       const hasRegistryRows = Array.isArray(currentRegistryItems) && currentRegistryItems.length > 0;
       if (!hasRegistryRows) {
         renderUtmLoadingState("Loading UTM registry...");
-        ensureUtmPrefetched_().then((result) => {
-          if (!result || result.state !== "loaded") return;
+        loadRegistryFromSheet().then(() => {
           const utmStatus = document.getElementById("utm-builder-status");
           if (utmStatus) {
             utmStatus.textContent = `Loaded ${Array.isArray(currentRegistryItems) ? currentRegistryItems.length : 0} tracking links`;
@@ -3113,7 +3051,7 @@ function applyUtmRegistryFilters() {
   }
 
   async function loadOverviewRecentLinks() {
-    console.log("[stage] recent links started");
+    console.log("[recent-links] started");
     setDashboardLoadState_("overviewOptional", "loading");
     renderHomeRecentUtmLinksMessage("Loading recent UTM links...");
 
@@ -3123,9 +3061,10 @@ function applyUtmRegistryFilters() {
       }, {
         timeoutMs: 20000
       });
+      console.log("[recent-links] raw response", response);
 
       if (!response || response.ok === false) {
-        console.log("[stage] recent links failed", response);
+        console.log("[recent-links] failed", response);
         console.error("Overview recent links load failed:", {
           action: "getRecentRegistryLinks",
           detail: response?.detail || response?.error || "Unknown backend error",
@@ -3137,12 +3076,12 @@ function applyUtmRegistryFilters() {
       }
 
       const links = Array.isArray(response.links) ? response.links : [];
+      console.log("[recent-links] links count", links.length);
       currentRecentRegistryLinks = links;
-      console.log("[stage] recent links loaded", currentRecentRegistryLinks.length);
       setDashboardLoadState_("overviewOptional", dashboardLoadState.overviewOptional === "warning" ? "warning" : "loaded");
       renderHomeRecentUtmLinks(currentRecentRegistryLinks);
     } catch (error) {
-      console.log("[stage] recent links failed", error);
+      console.log("[recent-links] failed", error);
       console.error("Overview recent links load exception:", {
         action: "getRecentRegistryLinks",
         message: error?.message || String(error)
@@ -3150,14 +3089,6 @@ function applyUtmRegistryFilters() {
       setDashboardLoadState_("overviewOptional", "warning");
       renderHomeRecentUtmLinksMessage("Recent UTM links unavailable. Open UTM Builder for the full registry.");
     }
-  }
-
-  function ensureOverviewRecentLinksLoaded_() {
-    if (recentLinksLoadPromise) return recentLinksLoadPromise;
-    recentLinksLoadPromise = loadOverviewRecentLinks().finally(() => {
-      recentLinksLoadPromise = null;
-    });
-    return recentLinksLoadPromise;
   }
 
   function ensureUtmPrefetched_() {
@@ -3905,6 +3836,12 @@ function renderAuditTable(items, activeStatus = "all") {
     const rawLinks = Array.isArray(items) ? items : [];
     const renderedLinks = rawLinks.filter((item) => {
       const status = String(item?.status || "").trim().toLowerCase();
+      const label = String(item?.label || item?.category || "").trim().toLowerCase();
+      const url = String(item?.url || "").trim().toLowerCase();
+      if (label.includes("clarity") || (url.includes("clarity") && url.includes("microsoft"))) {
+        console.log("[resources] skipped link", item, "reason=clarity");
+        return false;
+      }
       if (!status) return true;
       const shouldRender = status === "active";
       if (!shouldRender) {

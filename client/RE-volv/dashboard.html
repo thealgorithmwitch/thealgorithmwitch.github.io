@@ -1149,7 +1149,7 @@
 
 <script>
   const APP_CONFIG = {
-    API_BASE: "https://script.google.com/macros/s/AKfycbz-uD2Lud7_t09zNRdhUblBqI5GATExbd6zpW8y15HplxEQF6mHEnA1BSCBNWZqYc2k/exec",
+    API_BASE: "https://script.google.com/macros/s/AKfycbyRA4m41Bt8J41mwgB1F8P5bCM21IPV7NH8gY61rjsSVJDjOMuBWqhM8OkCRj7KLU7G/exec",
     AUTO_SYNC_PERFORMANCE_ON_LOAD: false
   };
   console.log("API_BASE:", APP_CONFIG.API_BASE);
@@ -1846,6 +1846,12 @@ async function loadHomeSnapshot() {
   console.time("loadHomeSnapshot");
   const timeoutMessage = "Overview is still loading. Reports and Audit are available from the sidebar.";
   const unavailableMessage = "Dashboard temporarily unavailable. Data sync may still be running.";
+  const optionalWarningSections = new Set([
+    "recentLinks",
+    "gtmSummary",
+    "comparison30",
+    "startup_light_mode"
+  ]);
   try {
     const data = await apiGet("getHomeInsights", {}, { timeoutMs: 30000 });
     if (!data || data.ok === false) {
@@ -1897,7 +1903,6 @@ async function loadHomeSnapshot() {
 
     currentHomeSummary = insights.summary30 || {};
     currentHomeComparison = insights.comparison30 || null;
-    currentRecentRegistryLinks = Array.isArray(insights.recentLinks) ? insights.recentLinks : [];
 
     const incomingHighlights = normalizeAuditHighlightsPayload(insights.auditHighlights || {});
     const currentHasSignal = hasAuditHighlightSignal_(currentAuditHighlights);
@@ -1926,7 +1931,7 @@ async function loadHomeSnapshot() {
       settings: insights.settings || {},
       summary30: currentHomeSummary,
       comparison30: currentHomeComparison,
-      recentLinks: currentRecentRegistryLinks,
+      recentLinks: [],
       auditHighlights: currentAuditHighlights,
       strategicNote,
       gtmSummary,
@@ -1935,13 +1940,22 @@ async function loadHomeSnapshot() {
     };
 
     renderHomeOverviewSnapshot(currentHomeSummary, currentHomeComparison);
-    renderHomeRecentUtmLinks(currentRecentRegistryLinks);
+    loadOverviewRecentLinks();
     renderAuditHighlights(currentAuditHighlights);
     renderHomeStrategicNote(strategicNote);
     renderHomeGtmStatus(gtmSummary);
-    currentHomeSnapshotState = warnings.length ? "partial" : "loaded";
-    currentHomeSnapshotMessage = warnings.length ? "Overview loaded with partial fallback data." : "";
-    return warnings.length ? {
+
+    const blockingWarnings = warnings.filter((warning) => {
+      const section = String(warning?.section || "").trim();
+      return !optionalWarningSections.has(section);
+    });
+    const summaryMissing = !currentHomeSummary || Number(currentHomeSummary.recordCount || 0) <= 0;
+
+    currentHomeSnapshotState = (blockingWarnings.length || summaryMissing) ? "partial" : "loaded";
+    currentHomeSnapshotMessage = (blockingWarnings.length || summaryMissing)
+      ? "Overview loaded with partial fallback data."
+      : "";
+    return (blockingWarnings.length || summaryMissing) ? {
       state: "partial",
       message: currentHomeSnapshotMessage
     } : {
@@ -2819,6 +2833,48 @@ function applyUtmRegistryFilters() {
         </td>
       </tr>
     `).join("");
+  }
+
+  function renderHomeRecentUtmLinksMessage(message) {
+    const table = document.getElementById("home-recent-utm-tbody");
+    if (!table) return;
+
+    table.innerHTML = `
+      <tr>
+        <td colspan="3" class="text-sm text-gray-400">${escapeHtml(message || "Recent UTM links unavailable.")}</td>
+      </tr>
+    `;
+  }
+
+  async function loadOverviewRecentLinks() {
+    renderHomeRecentUtmLinksMessage("Loading recent UTM links...");
+
+    try {
+      const data = await apiGet("getRecentRegistryLinks", {
+        range_type: "30"
+      }, {
+        timeoutMs: 20000
+      });
+
+      if (!data || data.ok === false) {
+        console.error("Overview recent links load failed:", {
+          action: "getRecentRegistryLinks",
+          detail: data?.detail || data?.error || "Unknown backend error",
+          responseJson: data || null
+        });
+        renderHomeRecentUtmLinksMessage("Recent UTM links unavailable. Open UTM Builder for the full registry.");
+        return;
+      }
+
+      currentRecentRegistryLinks = Array.isArray(data.links) ? data.links : [];
+      renderHomeRecentUtmLinks(currentRecentRegistryLinks);
+    } catch (error) {
+      console.error("Overview recent links load exception:", {
+        action: "getRecentRegistryLinks",
+        message: error?.message || String(error)
+      });
+      renderHomeRecentUtmLinksMessage("Recent UTM links unavailable. Open UTM Builder for the full registry.");
+    }
   }
 
   function renderPerformanceSummary(summary) {

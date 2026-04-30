@@ -1149,7 +1149,7 @@
 
 <script>
   const APP_CONFIG = {
-    API_BASE: "https://script.google.com/macros/s/AKfycbwL8duCTvyC_p1ayNLU9IrXsLjNk33KtVCqVxusnY06jrsOhHt-s3Rgo-2JwWde_WE/exec",
+    API_BASE: "https://script.google.com/macros/s/AKfycbwrjCHZQmkEmstVRswj-sb7gDSb7ZydVFZxVsAhAwY8KV8OMOeYyzmF23rkVOvPmAO8/exec",
     AUTO_SYNC_PERFORMANCE_ON_LOAD: false
   };
   console.log("API_BASE:", APP_CONFIG.API_BASE);
@@ -1290,6 +1290,11 @@
       return;
     }
 
+    if (activeView === "home" && overviewReady) {
+      setDataStatus("loaded", "30 day Overview loaded.");
+      return;
+    }
+
     if (activeView === "audit" && dashboardLoadState.audit === "error") {
       setDataStatus("error", dashboardLoadMessage.audit || "Audit & Strategy data is unavailable. Run daily audit refresh or check backend logs.");
       return;
@@ -1317,21 +1322,6 @@
 
     if (activeView === "audit" && dashboardLoadState.audit === "loading") {
       setDataStatus("loading", dashboardLoadMessage.audit || "Overview is loaded. Audit & Strategy is still loading.");
-      return;
-    }
-
-    if (activeView === "home" && overviewReady && !auditReady && dashboardLoadState.audit !== "error") {
-      setDataStatus("loaded", "30 day Overview loaded.");
-      return;
-    }
-
-    if (activeView === "home" && overviewReady && auditReady && recentLinksReady) {
-      setDataStatus("loaded", "Overview, Audit & Strategy, and recent UTM links loaded.");
-      return;
-    }
-
-    if (activeView === "home" && overviewReady && auditReady) {
-      setDataStatus("loaded", "Overview and Audit & Strategy loaded.");
       return;
     }
 
@@ -1390,7 +1380,28 @@
     };
   }
 
+window.addEventListener("error", (event) => {
+  console.error("[startup] window error", {
+    message: event?.message || "",
+    source: event?.filename || "",
+    line: event?.lineno || 0,
+    column: event?.colno || 0,
+    error: event?.error || null,
+    stack: event?.error?.stack || ""
+  });
+});
+
+window.addEventListener("unhandledrejection", (event) => {
+  const reason = event?.reason;
+  console.error("[startup] unhandled rejection", {
+    reason,
+    message: reason?.message || String(reason || ""),
+    stack: reason?.stack || ""
+  });
+});
+
 document.addEventListener("DOMContentLoaded", async () => {
+  console.log("[startup] DOMContentLoaded");
   console.time("startup");
   try { applyConfig(); } catch (error) { console.error("applyConfig failed:", error); }
   try { initStars(); } catch (error) { console.error("initStars failed:", error); }
@@ -1423,7 +1434,24 @@ document.addEventListener("DOMContentLoaded", async () => {
   });
   updateHeaderDatePillForView("home");
 
-  startDashboardHydration_();
+  console.log("[startup] calling loadHomeSnapshot");
+  loadHomeSnapshot().catch((error) => {
+    console.error("[startup] loadHomeSnapshot failed", error);
+  });
+
+  console.log("[startup] calling loadAuditPanelData");
+  loadAuditPanelData().catch((error) => {
+    console.error("[startup] loadAuditPanelData failed", error);
+  });
+
+  console.log("[startup] calling loadOverviewRecentLinks");
+  loadOverviewRecentLinks().catch((error) => {
+    console.error("[startup] loadOverviewRecentLinks failed", error);
+  });
+
+  loadResourcesFromSheet().catch((error) => {
+    console.error("[startup] loadResourcesFromSheet failed", error);
+  });
 
   if (!hasRenderedAuditContent_(currentAuditHighlights)) {
     renderAuditHighlights(currentAuditHighlights);
@@ -1431,27 +1459,6 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   console.timeEnd("startup");
 });
-
-  function startDashboardHydration_() {
-    console.log("[stage] overview started");
-    void ensureOverviewLoaded_().catch((error) => {
-      console.error("Initial overview hydration failed:", error);
-    });
-
-    console.log("[stage] audit started");
-    void ensureAuditLoaded_().catch((error) => {
-      console.error("Initial audit hydration failed:", error);
-    });
-
-    console.log("[stage] utm started");
-    window.setTimeout(() => {
-      void ensureOverviewRecentLinksLoaded_().finally(() => {
-        void ensureUtmPrefetched_().catch((error) => {
-          console.error("Initial UTM hydration failed:", error);
-        });
-      });
-    }, 0);
-  }
 
   function normalizeText(value) {
     return String(value || "")
@@ -2022,10 +2029,11 @@ async function loadAuditFromSheet(status = "all") {
   }
 
   async function loadResourcesFromSheet() {
-    const data = await apiGet("getResourceLinks");
-    if (!data.ok) throw new Error(data.error || "Failed to load resource links");
+    const response = await apiGet("getResourceLinks");
+    if (!response.ok) throw new Error(response.error || "Failed to load resource links");
 
-    currentResourceLinks = Array.isArray(data.links) ? data.links : [];
+    console.log("[resources] raw links", response.links);
+    currentResourceLinks = Array.isArray(response.links) ? response.links : [];
     currentResourcesLoaded = true;
     renderResourceLinks(currentResourceLinks);
   }
@@ -2075,33 +2083,27 @@ async function loadHomeSnapshot() {
     "startup_light_mode"
   ]);
   try {
-    const data = await apiGet("getHomeInsights", {}, { timeoutMs: 30000 });
-    if (!data || data.ok === false) {
-      const detail = String(data?.detail || data?.error || "Unknown backend error");
+    const response = await apiGet("getHomeInsights", {}, { timeoutMs: 30000 });
+    console.log("[overview] getHomeInsights response", response);
+    if (!response || response.ok === false) {
+      const detail = String(response?.detail || response?.error || "Unknown backend error");
       const isTimeout = /timed out|timeout|abort/i.test(detail);
       const message = isTimeout ? timeoutMessage : unavailableMessage;
 
       console.error("loadHomeSnapshot received fallback response:", {
         action: "getHomeInsights",
         detail,
-        responseJson: data || null
+        responseJson: response || null
       });
       renderNetworkFallback(message);
 
-      if (isTimeout) {
-        setDashboardSectionStatus_("overview", "loading", message);
-        return { state: "loading" };
-      }
-
-      const uiError = new Error(message);
-      uiError.action = "getHomeInsights";
-      uiError.url = `${APP_CONFIG.API_BASE}?action=getHomeInsights`;
-      uiError.responseJson = data || null;
-      throw uiError;
+      setDashboardSectionStatus_("overview", "error", message);
+      updateGlobalDataStatus();
+      return { state: "error" };
     }
 
-    const insights = data.insights || {};
-    const warnings = Array.isArray(data.warnings) ? data.warnings : [];
+    const insights = response.insights || {};
+    const warnings = Array.isArray(response.warnings) ? response.warnings : [];
 
     warnings.forEach((warning) => {
       const section = String(warning?.section || "unknown");
@@ -2172,19 +2174,21 @@ async function loadHomeSnapshot() {
       return optionalWarningSections.has(section);
     });
     if (blockingWarnings.length || summaryMissing) {
-      setDashboardLoadState_("overview", "partial", "Core dashboard data loaded. Some required sections are using fallback data.");
+      setDashboardLoadState_("overview", summaryMissing ? "error" : "loaded", summaryMissing ? unavailableMessage : "30 day Overview loaded.");
       setDashboardLoadState_("overviewOptional", optionalWarnings.length ? "warning" : "idle");
-      return { state: "partial" };
+      updateGlobalDataStatus();
+      return { state: summaryMissing ? "error" : "loaded" };
     }
 
     setDashboardLoadState_("overview", "loaded");
     setDashboardLoadState_("overviewOptional", optionalWarnings.length ? "warning" : "idle");
+    updateGlobalDataStatus();
     return { state: "loaded" };
   } catch (error) {
     const detail = String(error?.responseJson?.detail || error?.message || "Unknown backend error");
-    const isTimeout = /timed out|timeout|abort/i.test(detail);
-    renderNetworkFallback(isTimeout ? timeoutMessage : unavailableMessage);
-    setDashboardLoadState_("overview", isTimeout ? "loading" : "error", isTimeout ? timeoutMessage : unavailableMessage);
+    renderNetworkFallback(unavailableMessage);
+    setDashboardLoadState_("overview", "error", unavailableMessage);
+    updateGlobalDataStatus();
 
     console.error("loadHomeSnapshot failed:", {
       message: error?.message || String(error),
@@ -2192,7 +2196,7 @@ async function loadHomeSnapshot() {
       url: error?.url || `${APP_CONFIG.API_BASE}?action=getHomeInsights`,
       responseJson: error?.responseJson || null
     });
-    throw error;
+    return { state: "error" };
   } finally {
     console.timeEnd("loadHomeSnapshot");
   }
@@ -2447,6 +2451,11 @@ function getCurrentReportFilterParams() {
     }
 
     if (viewId === "audit") {
+      if (!currentResourcesLoaded) {
+        loadResourcesFromSheet().catch((error) => {
+          console.error("Deferred resource link load failed:", error);
+        });
+      }
       if (currentAuditPanelData) {
         renderAuditPanelData_(currentAuditPanelData);
         setDashboardLoadState_("audit", "loaded");
@@ -3893,9 +3902,26 @@ function renderAuditTable(items, activeStatus = "all") {
 
     const target = resourceCard.querySelector(".space-y-3");
     if (!target) return;
-    if (!items.length) return;
+    const rawLinks = Array.isArray(items) ? items : [];
+    const renderedLinks = rawLinks.filter((item) => {
+      const status = String(item?.status || "").trim().toLowerCase();
+      if (!status) return true;
+      const shouldRender = status === "active";
+      if (!shouldRender) {
+        console.log("[resources] skipped link", item, "status=", status);
+      }
+      return shouldRender;
+    });
+    console.log("[resources] rendered links", renderedLinks);
 
-    target.innerHTML = items.slice(0, 6).map((item) => {
+    if (!renderedLinks.length) {
+      target.innerHTML = `
+        <div class="text-sm text-gray-500">No resource links available.</div>
+      `;
+      return;
+    }
+
+    target.innerHTML = renderedLinks.map((item) => {
       const category = String(item.category || "").toLowerCase();
       const iconClass =
         category.includes("report") || category.includes("dashboard") ? "ph-chart-line-up" :

@@ -1217,6 +1217,7 @@
   let currentHomeSummary = {};
   let currentHomeComparison = null;
   let currentRecentRegistryLinks = [];
+  let recentLinksLoaded = false;
   let currentHomeInsights = null;
   let currentAuditPanelData = null;
   let currentAuditHighlights = createEmptyAuditHighlights();
@@ -1992,9 +1993,9 @@ async function loadAuditFromSheet(status = "all") {
           });
 
           if (isTimeout) {
-            setDashboardLoadState_("audit", "loading", timeoutMessage);
-            renderAuditLoadingState("Audit & Strategy is taking longer than expected. Overview and UTM Builder are still available.");
-            return { state: "loading" };
+            setDashboardLoadState_("audit", "partial", timeoutMessage);
+            renderAuditFallbackState("Audit & Strategy is taking longer than expected.", "Overview and UTM Builder are still available.");
+            return { state: "partial" };
           }
 
           setDashboardLoadState_("audit", "error", failureMessage);
@@ -2029,9 +2030,9 @@ async function loadAuditFromSheet(status = "all") {
         });
 
         if (isTimeout) {
-          setDashboardLoadState_("audit", "loading", timeoutMessage);
-          renderAuditLoadingState("Audit & Strategy is taking longer than expected. Overview and UTM Builder are still available.");
-          return { state: "loading" };
+          setDashboardLoadState_("audit", "partial", timeoutMessage);
+          renderAuditFallbackState("Audit & Strategy is taking longer than expected.", "Overview and UTM Builder are still available.");
+          return { state: "partial" };
         }
 
         setDashboardLoadState_("audit", "error", failureMessage);
@@ -2216,12 +2217,20 @@ function scheduleOverviewWarmPrefetch_() {
   overviewWarmPrefetchScheduled = true;
 
   window.setTimeout(() => {
-    if (!currentRegistryItems.length) {
-      loadRegistryFromSheet().catch((error) => console.error("[prefetch] registry failed", error));
-    }
+    const startPrefetch = () => {
+      if (!currentRegistryItems.length) {
+        loadRegistryFromSheet().catch((error) => console.error("[prefetch] registry failed", error));
+      }
 
-    if (!currentReportsLoaded) {
-      loadReportsSnapshot({ updatedText: "Updated: Just now" }).catch((error) => console.error("[prefetch] reports failed", error));
+      if (!currentReportsLoaded) {
+        loadReportsSnapshot({ updatedText: "Updated: Just now" }).catch((error) => console.error("[prefetch] reports failed", error));
+      }
+    };
+
+    if (recentLinksLoadPromise) {
+      recentLinksLoadPromise.finally(startPrefetch);
+    } else {
+      startPrefetch();
     }
   }, 1500);
 }
@@ -2537,6 +2546,22 @@ function getCurrentReportFilterParams() {
     }
 
     if (viewId === "home") {
+      if (currentHomeSummary && Object.keys(currentHomeSummary).length) {
+        renderHomeOverviewSnapshot(currentHomeSummary, currentHomeComparison || null);
+      }
+      if (recentLinksLoaded && currentRecentRegistryLinks.length) {
+        renderHomeRecentUtmLinks(currentRecentRegistryLinks);
+      } else if (!recentLinksLoadPromise) {
+        loadOverviewRecentLinks().catch((error) => {
+          console.error("[recent-links] home revisit load failed", error);
+        });
+      }
+      if (currentHomeInsights?.strategicNote) {
+        renderHomeStrategicNote(currentHomeInsights.strategicNote);
+      }
+      if (currentHomeInsights?.gtmSummary) {
+        renderHomeGtmStatus(currentHomeInsights.gtmSummary);
+      }
       updateGlobalDataStatus();
     }
 
@@ -3180,36 +3205,41 @@ function applyUtmRegistryFilters() {
   }
 
   async function loadOverviewRecentLinks() {
+    if (recentLinksLoaded && currentRecentRegistryLinks.length) {
+      renderHomeRecentUtmLinks(currentRecentRegistryLinks);
+      return { state: "loaded" };
+    }
+
+    if (recentLinksLoadPromise) return recentLinksLoadPromise;
+
     console.log("[recent-links] started");
     setDashboardLoadState_("overviewOptional", "loading");
     renderHomeRecentUtmLinksMessage("Loading recent UTM links...");
 
-    try {
-      const response = await apiGet("getRecentRegistryLinks", {
-        range_type: "30"
-      }, {
-        timeoutMs: 20000
-      });
+    recentLinksLoadPromise = apiGet("getRecentRegistryLinks", {
+      range_type: "30",
+      rangeType: "30"
+    }, {
+      timeoutMs: 30000
+    }).then((response) => {
       console.log("[recent-links] raw response", response);
 
       if (!response || response.ok === false) {
         console.log("[recent-links] failed", response);
-        console.error("Overview recent links load failed:", {
-          action: "getRecentRegistryLinks",
-          detail: response?.detail || response?.error || "Unknown backend error",
-          responseJson: response || null
-        });
         setDashboardLoadState_("overviewOptional", "warning");
         renderHomeRecentUtmLinksMessage("Recent UTM links unavailable. Open UTM Builder for the full registry.");
-        return;
+        return { state: "warning" };
       }
 
       const links = Array.isArray(response.links) ? response.links : [];
       console.log("[recent-links] links count", links.length);
       currentRecentRegistryLinks = links;
-      setDashboardLoadState_("overviewOptional", dashboardLoadState.overviewOptional === "warning" ? "warning" : "loaded");
+      recentLinksLoaded = true;
+
+      setDashboardLoadState_("overviewOptional", "loaded");
       renderHomeRecentUtmLinks(currentRecentRegistryLinks);
-    } catch (error) {
+      return { state: "loaded", count: links.length };
+    }).catch((error) => {
       console.log("[recent-links] failed", error);
       console.error("Overview recent links load exception:", {
         action: "getRecentRegistryLinks",
@@ -3217,7 +3247,12 @@ function applyUtmRegistryFilters() {
       });
       setDashboardLoadState_("overviewOptional", "warning");
       renderHomeRecentUtmLinksMessage("Recent UTM links unavailable. Open UTM Builder for the full registry.");
-    }
+      return { state: "warning" };
+    }).finally(() => {
+      recentLinksLoadPromise = null;
+    });
+
+    return recentLinksLoadPromise;
   }
 
   function ensureUtmPrefetched_() {

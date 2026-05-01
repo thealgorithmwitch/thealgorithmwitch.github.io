@@ -235,7 +235,7 @@
           <ul>
             <li>This application does not grant dashboard access directly.</li>
             <li>Approved reviewers would be added to a private workflow later.</li>
-            <li>The browser generates a pending application object for now.</li>
+            <li>We review applications before inviting anyone into the curator flow.</li>
           </ul>
         </div>
       </div>
@@ -286,7 +286,7 @@
             </div>
 
             <div class="actions">
-              <button type="submit" class="btn-primary">Generate Pending Application JSON</button>
+              <button type="submit" class="btn-primary">Submit for Review</button>
               <a href="./" class="btn-secondary">Back to Board</a>
             </div>
           </form>
@@ -295,14 +295,14 @@
           <div id="success-message" class="success-message"></div>
 
           <div id="json-panel" class="json-panel">
-            <div class="eyebrow">Pending Application</div>
+            <div class="eyebrow">Submission Preview</div>
             <pre id="json-output"></pre>
             <div class="actions">
-              <button id="copy-json" type="button" class="btn-secondary">Copy JSON</button>
+              <button id="copy-json" type="button" class="btn-secondary">Copy Submission Details</button>
             </div>
           </div>
 
-          <div class="meta">Static mode only generates a pending application payload.</div>
+          <div class="meta">Applications are reviewed before anyone is invited to help curate the board.</div>
         </div>
       </div>
     </section>
@@ -403,20 +403,20 @@
         if (result.placeholder) {
           successMessage.innerHTML = `
             <div class="eyebrow">Pending Review</div>
-            <div style="font-family: var(--font-serif); font-size: 2rem; margin: 10px 0;">Your admin application is ready.</div>
-            <div style="color: var(--ink-secondary);">Copy the JSON for now, or paste the Apps Script Web App URL into <code>JOBS_BACKEND_URL</code> to submit into the private sheet.</div>
+            <div style="font-family: var(--font-serif); font-size: 2rem; margin: 10px 0;">Your application is ready for review.</div>
+            <div style="color: var(--ink-secondary);">This submission tool is in review mode. Copy these details and send them manually.</div>
           `;
         } else {
           successMessage.innerHTML = `
             <div class="eyebrow">Submitted</div>
             <div style="font-family: var(--font-serif); font-size: 2rem; margin: 10px 0;">Your admin application was sent for review.</div>
-            <div style="color: var(--ink-secondary);">Submission id: <code>${result.id || application.id || "admin-application"}</code>. The JSON fallback remains below.</div>
+            <div style="color: var(--ink-secondary);">Submission id: <code>${result.id || application.id || "admin-application"}</code>. We’ll review this before reaching out.</div>
           `;
         }
         successMessage.style.display = "block";
       } catch (error) {
         console.error(error);
-        errorList.innerHTML = `<div>${error.message || "Admin application failed."}</div><div style="margin-top:8px;color:var(--ink-secondary);">The JSON fallback is still available below.</div>`;
+        errorList.innerHTML = `<div>${error.message || "Admin application failed."}</div><div style="margin-top:8px;color:var(--ink-secondary);">This submission tool is in review mode. Copy these details and send them manually.</div>`;
         errorList.style.display = "block";
       }
     });
@@ -426,12 +426,12 @@
         await navigator.clipboard.writeText(jsonOutput.textContent);
         copyButton.textContent = "Copied";
         window.setTimeout(() => {
-          copyButton.textContent = "Copy JSON";
+          copyButton.textContent = "Copy Submission Details";
         }, 1600);
       } catch (error) {
         copyButton.textContent = "Copy Failed";
         window.setTimeout(() => {
-          copyButton.textContent = "Copy JSON";
+          copyButton.textContent = "Copy Submission Details";
         }, 1600);
       }
     });

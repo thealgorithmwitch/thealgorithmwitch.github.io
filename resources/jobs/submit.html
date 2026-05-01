@@ -272,9 +272,9 @@
         <div class="note">
           <div class="eyebrow" style="color: var(--accent-lavender);">What happens next</div>
           <ul>
-            <li>This form generates a pending job object with `status: "pending"`.</li>
+            <li>Your submission is marked for review before anything appears publicly.</li>
             <li>LinkedIn URL hints use only the URL string. No page fetch or scraping happens.</li>
-            <li>Publishing still requires a private backend or approval workflow.</li>
+            <li>We review shared roles before adding them to the board.</li>
           </ul>
         </div>
       </div>
@@ -379,7 +379,7 @@
             </div>
 
             <div class="actions">
-              <button type="submit" class="btn-primary">Generate Pending Job JSON</button>
+              <button type="submit" class="btn-primary">Submit for Review</button>
               <a href="./" class="btn-secondary">Back to Board</a>
             </div>
           </form>
@@ -388,14 +388,14 @@
           <div id="success-message" class="success-message"></div>
 
           <div id="json-panel" class="json-panel">
-            <div class="eyebrow">Pending Payload</div>
+            <div class="eyebrow">Submission Preview</div>
             <pre id="json-output"></pre>
             <div class="actions">
-              <button id="copy-json" type="button" class="btn-secondary">Copy JSON</button>
+              <button id="copy-json" type="button" class="btn-secondary">Copy Submission Details</button>
             </div>
           </div>
 
-          <div class="meta">Static mode only generates JSON locally. It does not write to `jobs.json` from the browser.</div>
+          <div class="meta">Submissions are reviewed before they appear publicly.</div>
         </div>
       </div>
     </section>
@@ -615,20 +615,20 @@
         if (result.placeholder) {
           successMessage.innerHTML = `
             <div class="eyebrow">Pending Review</div>
-            <div style="font-family: var(--font-serif); font-size: 2rem; margin: 10px 0;">Your job payload is ready for review.</div>
-            <div style="color: var(--ink-secondary);">Copy the JSON below for now, or paste the Apps Script Web App URL into <code>JOBS_BACKEND_URL</code> to send submissions into the private sheet.</div>
+            <div style="font-family: var(--font-serif); font-size: 2rem; margin: 10px 0;">Your submission is ready for review.</div>
+            <div style="color: var(--ink-secondary);">This submission tool is in review mode. Copy these details and send them manually.</div>
           `;
         } else {
           successMessage.innerHTML = `
             <div class="eyebrow">Submitted</div>
             <div style="font-family: var(--font-serif); font-size: 2rem; margin: 10px 0;">Your job was sent to the private review sheet.</div>
-            <div style="color: var(--ink-secondary);">Submission id: <code>${result.id || job.id}</code>. The JSON is still available below as a fallback record.</div>
+            <div style="color: var(--ink-secondary);">Submission id: <code>${result.id || job.id}</code>. We’ll review this before it appears publicly.</div>
           `;
         }
         successMessage.style.display = "block";
       } catch (error) {
         console.error(error);
-        errorList.innerHTML = `<div>${error.message || "Job submission failed."}</div><div style="margin-top:8px;color:var(--ink-secondary);">The JSON fallback is still available below.</div>`;
+        errorList.innerHTML = `<div>${error.message || "Job submission failed."}</div><div style="margin-top:8px;color:var(--ink-secondary);">This submission tool is in review mode. Copy these details and send them manually.</div>`;
         errorList.style.display = "block";
       }
     });
@@ -638,12 +638,12 @@
         await navigator.clipboard.writeText(jsonOutput.textContent);
         copyButton.textContent = "Copied";
         window.setTimeout(() => {
-          copyButton.textContent = "Copy JSON";
+          copyButton.textContent = "Copy Submission Details";
         }, 1600);
       } catch (error) {
         copyButton.textContent = "Copy Failed";
         window.setTimeout(() => {
-          copyButton.textContent = "Copy JSON";
+          copyButton.textContent = "Copy Submission Details";
         }, 1600);
       }
     });

@@ -7,9 +7,15 @@ const {
   writeJson
 } = require("./job-utils");
 const { dedupeJobs, routeSyncedJob } = require("./job-normalizer");
-const { fetchGreenhouseJobsForSource, fetchLeverJobsForSource } = require("./ats-clients");
+const {
+  fetchAshbyJobsForSource,
+  fetchBambooHrJobsForSource,
+  fetchGreenhouseJobsForSource,
+  fetchLeverJobsForSource,
+  fetchRecruiteeJobsForSource
+} = require("./ats-clients");
 
-const SUPPORTED_TYPES = new Set(["greenhouse", "lever"]);
+const SUPPORTED_TYPES = new Set(["greenhouse", "lever", "ashby", "bamboohr", "recruitee"]);
 
 function isManagedAtsJob(job, activeSourceIds) {
   return job.sync_origin === "ats" && activeSourceIds.has(String(job.source_id || ""));
@@ -22,11 +28,20 @@ async function fetchJobsForSource(source) {
   if (source.type === "lever") {
     return fetchLeverJobsForSource(source);
   }
+  if (source.type === "ashby") {
+    return fetchAshbyJobsForSource(source);
+  }
+  if (source.type === "bamboohr") {
+    return fetchBambooHrJobsForSource(source);
+  }
+  if (source.type === "recruitee") {
+    return fetchRecruiteeJobsForSource(source);
+  }
   throw new Error(`Unsupported source type: ${source.type}`);
 }
 
 async function runSyncForTypes(types = []) {
-  const requestedTypes = types.length ? new Set(types) : SUPPORTED_TYPES;
+  const requestedTypes = types.length ? new Set(types) : null;
   const [existingJobs, existingPending, sources] = await Promise.all([
     readJobs(),
     readPendingSyncedJobs(),
@@ -34,11 +49,13 @@ async function runSyncForTypes(types = []) {
   ]);
 
   const enabledSources = sources.filter((source) => {
-    return source.enabled && requestedTypes.has(source.type) && SUPPORTED_TYPES.has(source.type);
+    return source.enabled && (!requestedTypes || requestedTypes.has(source.type));
   });
 
   if (!enabledSources.length) {
-    console.log(`[jobs:sync-sources] No enabled sources for ${Array.from(requestedTypes).join(", ")}.`);
+    console.log(
+      `[jobs:sync-sources] No enabled sources for ${requestedTypes ? Array.from(requestedTypes).join(", ") : "configured source types"}.`
+    );
     return {
       publicJobs: existingJobs,
       pendingJobs: existingPending,
@@ -54,6 +71,12 @@ async function runSyncForTypes(types = []) {
   const counts = {};
 
   for (const source of enabledSources) {
+    if (!SUPPORTED_TYPES.has(source.type)) {
+      counts[source.id] = { fetched: 0, active: 0, pending: 0, skipped: true };
+      console.log(`[jobs:sync-sources] ${source.id}: Skipped: unsupported source type pending custom integration.`);
+      continue;
+    }
+
     try {
       const rawJobs = await fetchJobsForSource(source);
       counts[source.id] = { fetched: rawJobs.length, active: 0, pending: 0 };
@@ -75,6 +98,12 @@ async function runSyncForTypes(types = []) {
           ? `https://boards-api.greenhouse.io/v1/boards/${encodeURIComponent(source.board_token || "")}/jobs?content=true`
           : source.type === "lever"
             ? `https://api.lever.co/v0/postings/${encodeURIComponent(source.company_slug || "")}?mode=json`
+            : source.type === "ashby"
+              ? String(source.api_url || "https://jobs.ashbyhq.com/api/non-user-graphql?op=apiJobBoardWithTeams")
+              : source.type === "bamboohr"
+                ? String(source.api_url || source.source_url || "")
+                : source.type === "recruitee"
+                  ? String(source.api_url || `https://${source.company_slug || ""}.recruitee.com/api/offers/`)
             : String(source.api_url || source.source_url || "");
       console.error(
         `[jobs:sync-sources] source_id=${source.id} source_type=${source.type} url=${attemptedUrl} failure=${error.message}`

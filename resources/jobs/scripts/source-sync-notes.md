@@ -3,6 +3,10 @@
 - Prefer ATS APIs first.
 - Use the Greenhouse Job Board API when a board token is available.
 - Use Lever's public postings feed when a company slug is available.
+- Use Ashby's public hosted jobs endpoint when the organization slug is known.
+- Use Recruitee's public offers API when the company subdomain is known.
+- BambooHR sources need an explicit public API URL or endpoint discovery before enabling.
+- Comeet, Workday, ADP, and other custom portals stay classified only until a safe integration path is approved.
 - Org-specific career pages can be added later as approved sources.
 - Wide search should use API providers only and always route to pending review.
 - Never scrape LinkedIn.

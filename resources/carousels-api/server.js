@@ -72,6 +72,57 @@ function validatePayload(payload) {
   };
 }
 
+function buildServerCaptureDocument(payload) {
+  const alreadyFullDoc = /<html[\s>]/i.test(payload.html);
+  if (alreadyFullDoc) return payload.html;
+  return `<!doctype html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=${payload.width}, initial-scale=1.0">
+  <link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web/src/bold/style.css">
+  <link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web/src/duotone/style.css">
+  <link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web/src/regular/style.css">
+  <link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web/src/fill/style.css">
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@400;700;900&family=Playfair+Display:wght@400;600;700&family=JetBrains+Mono:wght@400;700&family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@400;500;700&family=DM+Serif+Display:ital@0;1&family=Cormorant+Garamond:wght@400;500;600;700&family=Noto+Color+Emoji&display=swap');
+    html, body {
+      margin: 0 !important;
+      padding: 0 !important;
+      width: ${payload.width}px !important;
+      height: ${payload.height}px !important;
+      overflow: hidden !important;
+    }
+    *, *::before, *::after {
+      box-sizing: border-box !important;
+      caret-color: transparent !important;
+    }
+    body, .slide, .page {
+      font-family: "Inter", "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", sans-serif;
+    }
+    .ph,
+    [class^="ph-"],
+    [class*=" ph-"],
+    i[class*="ph"] {
+      font-family: "Phosphor" !important;
+      visibility: visible !important;
+    }
+    .emoji,
+    [data-emoji="true"] {
+      font-family: "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", sans-serif !important;
+    }
+    .slide,
+    .page {
+      width: ${payload.width}px;
+      height: ${payload.height}px;
+      overflow: hidden;
+    }
+  </style>
+</head>
+<body>${payload.html}</body>
+</html>`;
+}
+
 async function waitForAssets(page) {
   await page.waitForFunction(() => document.readyState === "complete", { timeout: 15000 }).catch(() => {});
   await page.evaluate(() => document.fonts && document.fonts.ready ? document.fonts.ready : Promise.resolve()).catch(() => {});
@@ -382,7 +433,7 @@ async function captureOne(page, outputPath, payload, selector, index) {
     exportPadding
   });
   await page.evaluate(() => document.fonts && document.fonts.ready ? document.fonts.ready : Promise.resolve()).catch(() => {});
-  await new Promise((resolve) => setTimeout(resolve, 300));
+  await new Promise((resolve) => setTimeout(resolve, 900));
   await page.screenshot({
     path: outputPath,
     type: "png",
@@ -393,6 +444,12 @@ async function captureOne(page, outputPath, payload, selector, index) {
 }
 
 async function captureElementsPreserveLayout(page, selector, outputDir, payload) {
+  await page.addStyleTag({
+    url: "https://unpkg.com/@phosphor-icons/web/src/bold/style.css"
+  }).catch(() => {});
+  await page.addStyleTag({
+    url: "https://unpkg.com/@phosphor-icons/web/src/duotone/style.css"
+  }).catch(() => {});
   await page.addStyleTag({
     url: "https://unpkg.com/@phosphor-icons/web/src/regular/style.css"
   }).catch(() => {});
@@ -682,7 +739,7 @@ app.post("/api/export-html", async (request, response) => {
       height: payload.height,
       deviceScaleFactor: 1
     });
-    await page.setContent(payload.html, {
+    await page.setContent(buildServerCaptureDocument(payload), {
       waitUntil: "domcontentloaded",
       timeout: 60000
     });
@@ -693,6 +750,8 @@ app.post("/api/export-html", async (request, response) => {
       await waitForAssets(page);
       files = await captureTargets(page, payload, tempDir);
     } else if (payload.mode === "full") {
+      await installExportRuntime(page, payload);
+      await waitForAssets(page);
       files = await captureTargets(page, payload, tempDir);
     } else {
       files = await captureElementsPreserveLayout(page, payload.selector, tempDir, payload);

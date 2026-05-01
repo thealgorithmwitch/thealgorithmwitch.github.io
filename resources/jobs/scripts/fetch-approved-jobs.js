@@ -1,0 +1,65 @@
+const { dedupeJobs, normalizeJob, writeJson, JOBS_FILE } = require("./job-utils");
+
+const APPS_SCRIPT_URL =
+  process.env.JOBS_APPROVED_EXPORT_URL ||
+  "https://script.google.com/macros/s/AKfycbzOziSxt4U5KDHS1uRTzhY9zuP1lxZofCbrRYBzK6PET1DjCjvxBQ3Gc7W-SRYgKcI2/exec";
+
+function ensureExportShape(payload) {
+  if (!payload || typeof payload !== "object") {
+    throw new Error("Apps Script response was not a JSON object.");
+  }
+  if (!payload.ok) {
+    if (String(payload.error || "").trim() === "Invalid action.") {
+      throw new Error("Apps Script returned Invalid action. Update and redeploy the Web App with the new exportApprovedJobs action first.");
+    }
+    throw new Error(payload.error || "Apps Script exportApprovedJobs returned an error.");
+  }
+  if (!Array.isArray(payload.jobs)) {
+    throw new Error("Apps Script exportApprovedJobs did not return a jobs array.");
+  }
+  return payload.jobs;
+}
+
+function validateNormalizedJob(job) {
+  if (!job.id) throw new Error("Approved job is missing id.");
+  if (!job.title) throw new Error(`Approved job ${job.id} is missing title.`);
+  if (!job.organization) throw new Error(`Approved job ${job.id} is missing organization.`);
+  if (!job.apply_url) throw new Error(`Approved job ${job.id} is missing apply_url.`);
+}
+
+async function fetchApprovedJobs() {
+  const response = await fetch(APPS_SCRIPT_URL, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify({
+      action: "exportApprovedJobs"
+    })
+  });
+
+  const payload = await response.json();
+  if (!response.ok) {
+    throw new Error(`Apps Script request failed with HTTP ${response.status}.`);
+  }
+
+  return ensureExportShape(payload);
+}
+
+async function main() {
+  console.log(`[jobs:fetch-approved] Fetching approved jobs from ${APPS_SCRIPT_URL}`);
+  const rawJobs = await fetchApprovedJobs();
+  const normalized = rawJobs.map((job) => {
+    const next = normalizeJob(job);
+    validateNormalizedJob(next);
+    return next;
+  });
+  const deduped = dedupeJobs(normalized);
+  await writeJson(JOBS_FILE, deduped);
+  console.log(`[jobs:fetch-approved] Wrote ${deduped.length} jobs to ${JOBS_FILE}`);
+}
+
+main().catch((error) => {
+  console.error(`[jobs:fetch-approved] ${error.message}`);
+  process.exit(1);
+});

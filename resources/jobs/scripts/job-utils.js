@@ -52,6 +52,7 @@ function normalizeJob(input = {}) {
     title,
     organization,
     location: String(input.location || "Remote").trim(),
+    workplace_type: String(input.workplace_type || input.workplaceType || "").trim(),
     job_type: String(input.job_type || input.jobType || "Full-time").trim(),
     salary: String(input.salary || "").trim(),
     featured: Boolean(input.featured),

@@ -8,7 +8,11 @@
 - BambooHR sources need an explicit public API URL or endpoint discovery before enabling.
 - Comeet, Workday, ADP, and other custom portals stay classified only until a safe integration path is approved.
 - Org-specific career pages can be added later as approved sources.
-- Wide search should use API providers only and always route to pending review.
+- Official Greenhouse and Lever APIs are company-specific.
+- Broad discovery should use API and search providers only and always route to pending review.
+- Broad discovery results never auto-publish.
+- Org-specific trusted ATS sources can auto-publish only when explicitly trusted and approved.
+- Public submissions still require approval before they appear on the board.
 - Never scrape LinkedIn.
 - Never scrape Indeed directly.
 - Unknown sources are never auto-published.

@@ -195,6 +195,8 @@ function normalizeJob(input = {}) {
     tags,
     shared_by: String(input.shared_by || input.sharedBy || "").trim(),
     notes: String(input.notes || "").trim(),
+    review_reason: String(input.review_reason || input.reviewReason || "").trim(),
+    confidence: String(input.confidence || "").trim().toLowerCase(),
     trusted: typeof input.trusted === "boolean" ? input.trusted : undefined,
     auto_publish: typeof input.auto_publish === "boolean" ? input.auto_publish : undefined,
     sync_origin: String(input.sync_origin || "").trim()

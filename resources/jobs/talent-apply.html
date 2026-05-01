@@ -1,1 +1,460 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Apply to Be Featured | The Algorithm Witch</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,100..1000;1,9..40,100..1000&family=Instrument+Serif:ital@0;1&family=Space+Mono:ital,wght@0,400;0,700;1,400;1,700&display=swap');
+
+    :root {
+      --bg-paper: #0A1F15;
+      --ink-primary: #CFFBE3;
+      --ink-secondary: rgba(207, 251, 227, 0.7);
+      --ink-tertiary: rgba(207, 251, 227, 0.4);
+      --accent-chartreuse: #A8FF3E;
+      --accent-lavender: #D4C1FF;
+      --surface-card: #0D261A;
+      --surface-alt: #1A1429;
+      --border-divider: #163628;
+      --font-serif: 'Instrument Serif', serif;
+      --font-sans: 'DM Sans', sans-serif;
+      --font-mono: 'Space Mono', monospace;
+      --transition: 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: var(--bg-paper);
+      color: var(--ink-primary);
+      font-family: var(--font-sans);
+      padding: 0 24px 72px;
+    }
+    .shell { max-width: 1080px; margin: 0 auto; }
+    nav {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 16px;
+      padding: 24px 0;
+      border-bottom: 1px solid var(--border-divider);
+      flex-wrap: wrap;
+    }
+    .logo {
+      text-decoration: none;
+      color: var(--ink-primary);
+      display: flex;
+      align-items: baseline;
+      gap: 10px;
+    }
+    .logo h1 {
+      font-family: var(--font-serif);
+      font-size: 2rem;
+      font-weight: 400;
+    }
+    .logo span,
+    .eyebrow,
+    label,
+    .meta {
+      font-family: var(--font-mono);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+    .logo span,
+    .eyebrow {
+      color: var(--accent-chartreuse);
+      font-size: 0.75rem;
+    }
+    .hero {
+      display: grid;
+      grid-template-columns: 0.9fr 1.1fr;
+      gap: 32px;
+      padding-top: 56px;
+      align-items: start;
+    }
+    .hero h2 {
+      font-family: var(--font-serif);
+      font-size: clamp(2.8rem, 5vw, 4.4rem);
+      line-height: 0.95;
+      margin: 12px 0 20px;
+    }
+    .hero p {
+      color: var(--ink-secondary);
+      font-size: 1.05rem;
+      max-width: 520px;
+    }
+    .card,
+    .note,
+    .json-panel {
+      background: var(--surface-card);
+      border: 1px solid var(--border-divider);
+      padding: 32px;
+    }
+    .note {
+      margin-top: 24px;
+      background: var(--surface-alt);
+      border-color: rgba(212, 193, 255, 0.24);
+    }
+    .note ul {
+      margin-top: 14px;
+      padding-left: 18px;
+      color: var(--ink-secondary);
+    }
+    form {
+      display: grid;
+      gap: 18px;
+    }
+    .two-col {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 18px;
+    }
+    label {
+      display: block;
+      color: var(--ink-secondary);
+      font-size: 0.7rem;
+      margin-bottom: 8px;
+    }
+    input,
+    textarea,
+    select {
+      width: 100%;
+      border: 1px solid var(--border-divider);
+      background: transparent;
+      color: var(--ink-primary);
+      padding: 14px 16px;
+      font: inherit;
+      outline: none;
+      transition: var(--transition);
+    }
+    textarea {
+      min-height: 120px;
+      resize: vertical;
+    }
+    input:focus,
+    textarea:focus,
+    select:focus {
+      border-color: var(--accent-chartreuse);
+      box-shadow: inset 0 0 0 1px var(--accent-chartreuse);
+    }
+    .checkbox-row {
+      display: flex;
+      gap: 12px;
+      align-items: flex-start;
+      color: var(--ink-secondary);
+      font-size: 0.95rem;
+    }
+    .checkbox-row input {
+      width: auto;
+      margin-top: 4px;
+    }
+    .actions {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      align-items: center;
+      margin-top: 8px;
+    }
+    .btn-primary,
+    .btn-secondary {
+      border: 1px solid var(--accent-chartreuse);
+      padding: 12px 18px;
+      font-family: var(--font-mono);
+      font-size: 0.75rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      cursor: pointer;
+      transition: var(--transition);
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .btn-primary {
+      background: var(--accent-chartreuse);
+      color: var(--bg-paper);
+    }
+    .btn-secondary {
+      background: transparent;
+      color: var(--accent-chartreuse);
+      border-color: var(--border-divider);
+    }
+    .btn-primary:hover,
+    .btn-secondary:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 0 15px rgba(168, 255, 62, 0.25);
+    }
+    .error-list,
+    .success-message {
+      display: none;
+      margin-top: 18px;
+      padding: 18px;
+      border: 1px solid var(--border-divider);
+    }
+    .success-message { background: rgba(168, 255, 62, 0.06); }
+    .error-list {
+      background: rgba(212, 193, 255, 0.08);
+      border-color: rgba(212, 193, 255, 0.4);
+    }
+    .json-panel {
+      margin-top: 24px;
+      display: none;
+    }
+    .json-panel.visible { display: block; }
+    .json-panel pre {
+      margin-top: 16px;
+      padding: 18px;
+      border: 1px solid var(--border-divider);
+      background: rgba(0, 0, 0, 0.22);
+      white-space: pre-wrap;
+      word-break: break-word;
+      overflow-x: auto;
+      font-family: var(--font-mono);
+      font-size: 0.78rem;
+      line-height: 1.6;
+    }
+    .meta {
+      color: var(--ink-tertiary);
+      font-size: 0.68rem;
+      margin-top: 18px;
+    }
+    @media (max-width: 900px) {
+      .hero,
+      .two-col {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="shell">
+    <nav>
+      <a class="logo" href="./">
+        <h1>Fresh Roles</h1>
+        <span>The Algorithm Witch</span>
+      </a>
+      <a href="./" class="btn-secondary">Back to Board</a>
+    </nav>
+
+    <section class="hero">
+      <div>
+        <div class="eyebrow">Talent Archive</div>
+        <h2>Apply to be featured in the archive.</h2>
+        <p>Featured profiles are reviewed before they appear publicly. Share enough context to help the archive stay curated, specific, and actually useful to hiring teams.</p>
+
+        <div class="note">
+          <div class="eyebrow" style="color: var(--accent-lavender);">Review path</div>
+          <ul>
+            <li>This form generates a pending profile object only.</li>
+            <li>Nothing is published directly from the browser.</li>
+            <li>A private backend can replace the placeholder submit hook later.</li>
+          </ul>
+        </div>
+      </div>
+
+      <div>
+        <div class="card">
+          <form id="talent-form" novalidate>
+            <div class="two-col">
+              <div>
+                <label for="name">Name</label>
+                <input id="name" name="name" type="text" required placeholder="Your name">
+              </div>
+              <div>
+                <label for="email">Email</label>
+                <input id="email" name="email" type="email" required placeholder="you@example.com">
+              </div>
+            </div>
+
+            <div class="two-col">
+              <div>
+                <label for="current_role">Current Role / Title</label>
+                <input id="current_role" name="current_role" type="text" placeholder="Senior Visual Designer">
+              </div>
+              <div>
+                <label for="location">Location</label>
+                <input id="location" name="location" type="text" placeholder="Chicago, IL">
+              </div>
+            </div>
+
+            <div class="two-col">
+              <div>
+                <label for="remote_preference">Remote Preference</label>
+                <select id="remote_preference" name="remote_preference">
+                  <option value="">Select one</option>
+                  <option>Remote</option>
+                  <option>Hybrid</option>
+                  <option>On-site</option>
+                  <option>Flexible</option>
+                </select>
+              </div>
+              <div>
+                <label for="portfolio_url">Portfolio URL</label>
+                <input id="portfolio_url" name="portfolio_url" type="url" placeholder="https://portfolio.example">
+              </div>
+            </div>
+
+            <div class="two-col">
+              <div>
+                <label for="linkedin_url">LinkedIn URL</label>
+                <input id="linkedin_url" name="linkedin_url" type="url" placeholder="https://www.linkedin.com/in/...">
+              </div>
+              <div>
+                <label for="focus_areas">Focus Areas</label>
+                <input id="focus_areas" name="focus_areas" type="text" placeholder="climate storytelling, product design">
+              </div>
+            </div>
+
+            <div>
+              <label for="short_bio">Short Bio</label>
+              <textarea id="short_bio" name="short_bio" required placeholder="What do you work on and why should someone remember your profile?"></textarea>
+            </div>
+
+            <div>
+              <label for="desired_role">What kind of role do you want?</label>
+              <textarea id="desired_role" name="desired_role" required placeholder="What roles, teams, or problems are you looking for next?"></textarea>
+            </div>
+
+            <div>
+              <label for="tags_skills">Tags / Skills</label>
+              <input id="tags_skills" name="tags_skills" type="text" placeholder="figma, brand systems, climate, storytelling">
+            </div>
+
+            <label class="checkbox-row" for="consent_review">
+              <input id="consent_review" name="consent_review" type="checkbox" required>
+              <span>I consent to this profile being reviewed for possible public inclusion in the archive.</span>
+            </label>
+
+            <div class="actions">
+              <button type="submit" class="btn-primary">Generate Pending Profile JSON</button>
+              <a href="./" class="btn-secondary">Back to Board</a>
+            </div>
+          </form>
+
+          <div id="error-list" class="error-list"></div>
+          <div id="success-message" class="success-message"></div>
+
+          <div id="json-panel" class="json-panel">
+            <div class="eyebrow">Pending Profile</div>
+            <pre id="json-output"></pre>
+            <div class="actions">
+              <button id="copy-json" type="button" class="btn-secondary">Copy JSON</button>
+            </div>
+          </div>
+
+          <div class="meta">Static mode only generates a reviewed payload. It does not publish a profile.</div>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <script>
+    const form = document.getElementById("talent-form");
+    const errorList = document.getElementById("error-list");
+    const successMessage = document.getElementById("success-message");
+    const jsonPanel = document.getElementById("json-panel");
+    const jsonOutput = document.getElementById("json-output");
+    const copyButton = document.getElementById("copy-json");
+
+    function isValidUrl(value) {
+      if (!value) return true;
+      try {
+        const url = new URL(value);
+        return ["http:", "https:"].includes(url.protocol);
+      } catch (error) {
+        return false;
+      }
+    }
+
+    function isValidEmail(value) {
+      return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(value || "").trim());
+    }
+
+    function collectTags(value) {
+      return [...new Set(String(value || "").split(",").map((item) => item.trim().toLowerCase()).filter(Boolean))];
+    }
+
+    function buildPendingProfile() {
+      const formData = new FormData(form);
+      return {
+        name: String(formData.get("name") || "").trim(),
+        email: String(formData.get("email") || "").trim(),
+        current_role: String(formData.get("current_role") || "").trim(),
+        location: String(formData.get("location") || "").trim(),
+        remote_preference: String(formData.get("remote_preference") || "").trim(),
+        portfolio_url: String(formData.get("portfolio_url") || "").trim(),
+        linkedin_url: String(formData.get("linkedin_url") || "").trim(),
+        focus_areas: String(formData.get("focus_areas") || "").trim(),
+        short_bio: String(formData.get("short_bio") || "").trim(),
+        desired_role: String(formData.get("desired_role") || "").trim(),
+        tags_skills: collectTags(formData.get("tags_skills")),
+        consent_review: formData.get("consent_review") === "on",
+        status: "pending",
+        submitted_at: new Date().toISOString()
+      };
+    }
+
+    function validateProfile(profile) {
+      const errors = [];
+      if (!profile.name) errors.push("Name is required.");
+      if (!profile.email || !isValidEmail(profile.email)) errors.push("Email must be valid.");
+      if (profile.portfolio_url && !isValidUrl(profile.portfolio_url)) errors.push("Portfolio URL must be valid when provided.");
+      if (profile.linkedin_url && !isValidUrl(profile.linkedin_url)) errors.push("LinkedIn URL must be valid when provided.");
+      if (!profile.short_bio) errors.push("Short bio is required.");
+      if (!profile.desired_role) errors.push("Role preference is required.");
+      if (!profile.consent_review) errors.push("Consent is required before review.");
+      return errors;
+    }
+
+    async function submitTalentToBackend(profile) {
+      // Placeholder only. Connect this to Google Apps Script, Supabase, Airtable,
+      // or a GitHub-backed intake process when private review storage is ready.
+      return { ok: false, placeholder: true };
+    }
+
+    form.addEventListener("submit", async (event) => {
+      event.preventDefault();
+      errorList.style.display = "none";
+      successMessage.style.display = "none";
+
+      const profile = buildPendingProfile();
+      const errors = validateProfile(profile);
+
+      if (errors.length) {
+        errorList.innerHTML = errors.map((error) => `<div>${error}</div>`).join("");
+        errorList.style.display = "block";
+        jsonPanel.classList.remove("visible");
+        return;
+      }
+
+      jsonOutput.textContent = JSON.stringify(profile, null, 2);
+      jsonPanel.classList.add("visible");
+      await submitTalentToBackend(profile);
+
+      successMessage.innerHTML = `
+        <div class="eyebrow">Pending Review</div>
+        <div style="font-family: var(--font-serif); font-size: 2rem; margin: 10px 0;">Your archive application is ready.</div>
+        <div style="color: var(--ink-secondary);">Copy the JSON below for now, or connect the placeholder hook when private review storage is ready.</div>
+      `;
+      successMessage.style.display = "block";
+    });
+
+    copyButton.addEventListener("click", async () => {
+      try {
+        await navigator.clipboard.writeText(jsonOutput.textContent);
+        copyButton.textContent = "Copied";
+        window.setTimeout(() => {
+          copyButton.textContent = "Copy JSON";
+        }, 1600);
+      } catch (error) {
+        copyButton.textContent = "Copy Failed";
+        window.setTimeout(() => {
+          copyButton.textContent = "Copy JSON";
+        }, 1600);
+      }
+    });
+  </script>
+</body>
+</html>
 

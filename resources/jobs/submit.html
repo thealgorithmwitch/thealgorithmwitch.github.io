@@ -401,7 +401,9 @@
     </section>
   </div>
 
+  <script src="./scripts/jobs-backend-config.js"></script>
   <script>
+    const JOBS_BACKEND_URL = window.JOBS_BACKEND_CONFIG?.backendUrl || "";
     const form = document.getElementById("job-form");
     const helperBox = document.getElementById("linkedin-helper");
     const helperText = document.getElementById("linkedin-helper-text");
@@ -569,20 +571,26 @@
     }
 
     async function submitJobToBackend(job) {
-      // Placeholder only. Keep public forms static until a private backend is connected.
-      // Future options:
-      // 1. Google Apps Script endpoint
-      // 2. Supabase Edge Function or table insert
-      // 3. Airtable automation endpoint
-      // 4. GitHub-backed submission workflow
-      //
-      // Example:
-      // return fetch("https://example.com/jobs-submit", {
-      //   method: "POST",
-      //   headers: { "Content-Type": "application/json" },
-      //   body: JSON.stringify(job)
-      // });
-      return { ok: false, placeholder: true };
+      if (!JOBS_BACKEND_URL.trim()) {
+        return { ok: false, placeholder: true };
+      }
+
+      const response = await fetch(JOBS_BACKEND_URL, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          action: "submitJob",
+          payload: job
+        })
+      });
+
+      const data = await response.json();
+      if (!response.ok || !data.ok) {
+        throw new Error(data && data.error ? data.error : "Job submission failed.");
+      }
+      return data;
     }
 
     form.addEventListener("submit", async (event) => {
@@ -602,14 +610,27 @@
 
       jsonOutput.textContent = JSON.stringify(job, null, 2);
       jsonPanel.classList.add("visible");
-      await submitJobToBackend(job);
-
-      successMessage.innerHTML = `
-        <div class="eyebrow">Pending Review</div>
-        <div style="font-family: var(--font-serif); font-size: 2rem; margin: 10px 0;">Your job payload is ready for review.</div>
-        <div style="color: var(--ink-secondary);">Copy the JSON below or connect the placeholder backend hook when you are ready to route submissions into a private approval queue.</div>
-      `;
-      successMessage.style.display = "block";
+      try {
+        const result = await submitJobToBackend(job);
+        if (result.placeholder) {
+          successMessage.innerHTML = `
+            <div class="eyebrow">Pending Review</div>
+            <div style="font-family: var(--font-serif); font-size: 2rem; margin: 10px 0;">Your job payload is ready for review.</div>
+            <div style="color: var(--ink-secondary);">Copy the JSON below for now, or paste the Apps Script Web App URL into <code>JOBS_BACKEND_URL</code> to send submissions into the private sheet.</div>
+          `;
+        } else {
+          successMessage.innerHTML = `
+            <div class="eyebrow">Submitted</div>
+            <div style="font-family: var(--font-serif); font-size: 2rem; margin: 10px 0;">Your job was sent to the private review sheet.</div>
+            <div style="color: var(--ink-secondary);">Submission id: <code>${result.id || job.id}</code>. The JSON is still available below as a fallback record.</div>
+          `;
+        }
+        successMessage.style.display = "block";
+      } catch (error) {
+        console.error(error);
+        errorList.innerHTML = `<div>${error.message || "Job submission failed."}</div><div style="margin-top:8px;color:var(--ink-secondary);">The JSON fallback is still available below.</div>`;
+        errorList.style.display = "block";
+      }
     });
 
     copyButton.addEventListener("click", async () => {

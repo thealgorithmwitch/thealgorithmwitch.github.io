@@ -1,0 +1,474 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Private Admin Template | The Algorithm Witch</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,100..1000;1,9..40,100..1000&family=Instrument+Serif:ital@0;1&family=Space+Mono:ital,wght@0,400;0,700;1,400;1,700&display=swap');
+
+    :root {
+      --bg-paper: #0A1F15;
+      --ink-primary: #CFFBE3;
+      --ink-secondary: rgba(207, 251, 227, 0.7);
+      --ink-tertiary: rgba(207, 251, 227, 0.4);
+      --accent-chartreuse: #A8FF3E;
+      --accent-lavender: #D4C1FF;
+      --surface-card: #0D261A;
+      --surface-alt: #1A1429;
+      --border-divider: #163628;
+      --font-serif: 'Instrument Serif', serif;
+      --font-sans: 'DM Sans', sans-serif;
+      --font-mono: 'Space Mono', monospace;
+      --transition: 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: var(--bg-paper);
+      color: var(--ink-primary);
+      font-family: var(--font-sans);
+      padding: 0 24px 72px;
+    }
+    .shell {
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+    nav {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 16px;
+      padding: 24px 0;
+      border-bottom: 1px solid var(--border-divider);
+      flex-wrap: wrap;
+    }
+    .logo {
+      text-decoration: none;
+      color: var(--ink-primary);
+      display: flex;
+      align-items: baseline;
+      gap: 10px;
+    }
+    .logo h1 {
+      font-family: var(--font-serif);
+      font-size: 2rem;
+      font-weight: 400;
+    }
+    .logo span,
+    .eyebrow,
+    label,
+    .meta {
+      font-family: var(--font-mono);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+    .logo span,
+    .eyebrow {
+      color: var(--accent-chartreuse);
+      font-size: 0.75rem;
+    }
+    main {
+      padding-top: 48px;
+      display: grid;
+      gap: 28px;
+    }
+    .hero h2 {
+      font-family: var(--font-serif);
+      font-size: clamp(2.8rem, 5vw, 4.2rem);
+      line-height: 0.95;
+      margin: 12px 0 18px;
+    }
+    .hero p {
+      color: var(--ink-secondary);
+      max-width: 760px;
+      font-size: 1.02rem;
+    }
+    .card,
+    .queue-card {
+      background: var(--surface-card);
+      border: 1px solid var(--border-divider);
+      padding: 28px;
+    }
+    .settings-grid,
+    .queue-grid {
+      display: grid;
+      gap: 20px;
+    }
+    .settings-grid {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+    .queue-grid {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+    label {
+      display: block;
+      color: var(--ink-secondary);
+      font-size: 0.7rem;
+      margin-bottom: 8px;
+    }
+    input,
+    textarea {
+      width: 100%;
+      border: 1px solid var(--border-divider);
+      background: transparent;
+      color: var(--ink-primary);
+      padding: 14px 16px;
+      font: inherit;
+      outline: none;
+      transition: var(--transition);
+    }
+    textarea {
+      min-height: 96px;
+      resize: vertical;
+    }
+    input:focus,
+    textarea:focus {
+      border-color: var(--accent-chartreuse);
+      box-shadow: inset 0 0 0 1px var(--accent-chartreuse);
+    }
+    .btn-primary,
+    .btn-secondary {
+      border: 1px solid var(--accent-chartreuse);
+      padding: 12px 18px;
+      font-family: var(--font-mono);
+      font-size: 0.75rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      cursor: pointer;
+      transition: var(--transition);
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      background: transparent;
+    }
+    .btn-primary {
+      background: var(--accent-chartreuse);
+      color: var(--bg-paper);
+    }
+    .btn-secondary {
+      color: var(--accent-chartreuse);
+      border-color: var(--border-divider);
+    }
+    .btn-primary:hover,
+    .btn-secondary:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 0 15px rgba(168, 255, 62, 0.25);
+    }
+    .btn-danger {
+      border-color: rgba(212, 193, 255, 0.35);
+      color: var(--accent-lavender);
+    }
+    .actions {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin-top: 16px;
+    }
+    .queue-header {
+      display: flex;
+      justify-content: space-between;
+      gap: 16px;
+      align-items: baseline;
+      margin-bottom: 18px;
+    }
+    .queue-title {
+      font-family: var(--font-serif);
+      font-size: 2rem;
+    }
+    .pill {
+      display: inline-flex;
+      padding: 6px 10px;
+      border: 1px solid var(--border-divider);
+      font-family: var(--font-mono);
+      font-size: 0.68rem;
+      text-transform: uppercase;
+      color: var(--ink-secondary);
+    }
+    .queue-card h3 {
+      font-family: var(--font-serif);
+      font-size: 1.8rem;
+      margin: 10px 0 6px;
+    }
+    .queue-card p {
+      color: var(--ink-secondary);
+    }
+    .meta-list {
+      display: grid;
+      gap: 8px;
+      margin-top: 14px;
+      color: var(--ink-secondary);
+      font-size: 0.92rem;
+    }
+    .meta-list code {
+      color: var(--ink-primary);
+    }
+    .status-message {
+      display: none;
+      margin-top: 16px;
+      padding: 14px 16px;
+      border: 1px solid var(--border-divider);
+      background: rgba(168, 255, 62, 0.06);
+    }
+    .status-message.error {
+      background: rgba(212, 193, 255, 0.08);
+      border-color: rgba(212, 193, 255, 0.4);
+    }
+    .empty-state {
+      border: 1px dashed var(--border-divider);
+      padding: 24px;
+      color: var(--ink-tertiary);
+      text-align: center;
+    }
+    @media (max-width: 960px) {
+      .settings-grid,
+      .queue-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <!--
+    Private/local admin template only.
+    Do not link this page publicly from index.html.
+    If you publish it anywhere, protect it with authentication or keep it in a private environment.
+  -->
+  <div class="shell">
+    <nav>
+      <a class="logo" href="./">
+        <h1>Fresh Roles</h1>
+        <span>The Algorithm Witch</span>
+      </a>
+      <a href="./" class="btn-secondary">Back to Board</a>
+    </nav>
+
+    <main>
+      <section class="hero">
+        <div class="eyebrow">Private Review</div>
+        <h2>Pending jobs and talent, staged for approval.</h2>
+        <p>Use this file locally or in a protected internal environment. It is intentionally not linked from the public board. Approval actions rely on the Apps Script backend and a private admin token.</p>
+      </section>
+
+      <section class="card">
+        <div class="settings-grid">
+          <div>
+            <label for="backend-url">Apps Script Web App URL</label>
+            <input id="backend-url" type="url" placeholder="Paste deployed Apps Script URL">
+          </div>
+          <div>
+            <label for="admin-token">Admin Token</label>
+            <input id="admin-token" type="password" placeholder="Paste private ADMIN_TOKEN">
+          </div>
+        </div>
+        <div class="actions">
+          <button id="load-queues" type="button" class="btn-primary">Load Pending Queues</button>
+        </div>
+        <div id="status-message" class="status-message"></div>
+      </section>
+
+      <section>
+        <div class="queue-header">
+          <div>
+            <div class="eyebrow">Jobs</div>
+            <div class="queue-title">Pending Jobs</div>
+          </div>
+          <div id="jobs-count" class="pill">0 items</div>
+        </div>
+        <div id="jobs-queue" class="queue-grid"></div>
+      </section>
+
+      <section>
+        <div class="queue-header">
+          <div>
+            <div class="eyebrow">Talent</div>
+            <div class="queue-title">Pending Talent</div>
+          </div>
+          <div id="talent-count" class="pill">0 items</div>
+        </div>
+        <div id="talent-queue" class="queue-grid"></div>
+      </section>
+    </main>
+  </div>
+
+  <script src="./scripts/jobs-backend-config.js"></script>
+  <script>
+    const JOBS_BACKEND_URL = window.JOBS_BACKEND_CONFIG?.backendUrl || "";
+    const JOBS_ADMIN_TOKEN = window.JOBS_BACKEND_CONFIG?.adminToken || "";
+    const backendUrlInput = document.getElementById("backend-url");
+    const adminTokenInput = document.getElementById("admin-token");
+    const loadQueuesButton = document.getElementById("load-queues");
+    const jobsQueue = document.getElementById("jobs-queue");
+    const talentQueue = document.getElementById("talent-queue");
+    const jobsCount = document.getElementById("jobs-count");
+    const talentCount = document.getElementById("talent-count");
+    const statusMessage = document.getElementById("status-message");
+
+    backendUrlInput.value = JOBS_BACKEND_URL;
+    adminTokenInput.value = JOBS_ADMIN_TOKEN;
+
+    function setStatus(message, isError) {
+      statusMessage.textContent = message;
+      statusMessage.classList.toggle("error", Boolean(isError));
+      statusMessage.style.display = "block";
+    }
+
+    function clearStatus() {
+      statusMessage.style.display = "none";
+      statusMessage.textContent = "";
+      statusMessage.classList.remove("error");
+    }
+
+    async function postAction(action, extraPayload) {
+      const url = backendUrlInput.value.trim();
+      const adminToken = adminTokenInput.value.trim();
+
+      if (!url) {
+        throw new Error("Paste the Apps Script Web App URL first.");
+      }
+
+      const response = await fetch(url, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify(Object.assign({
+          action,
+          adminToken
+        }, extraPayload || {}))
+      });
+
+      const data = await response.json();
+      if (!response.ok || !data.ok) {
+        throw new Error(data && data.error ? data.error : "Request failed.");
+      }
+      return data;
+    }
+
+    function parseRawJson(item) {
+      try {
+        return JSON.parse(item.raw_json || "{}");
+      } catch (error) {
+        return {};
+      }
+    }
+
+    function renderEmptyState(container, message) {
+      container.innerHTML = `<div class="empty-state">${message}</div>`;
+    }
+
+    function buildJobCard(item) {
+      const raw = parseRawJson(item);
+      return `
+        <article class="queue-card" data-id="${item.id}">
+          <div class="pill">${item.status}</div>
+          <h3>${raw.title || item.title || "Untitled job"}</h3>
+          <p>${raw.organization || item.organization || "Unknown organization"}</p>
+          <div class="meta-list">
+            <div><strong>Apply:</strong> <code>${raw.apply_url || item.apply_url || ""}</code></div>
+            <div><strong>Shared by:</strong> ${raw.shared_by || item.shared_by || "Unknown"}</div>
+            <div><strong>Created:</strong> ${item.created_at || ""}</div>
+          </div>
+          <div class="actions">
+            <button type="button" class="btn-primary" data-action="approveJob">Approve</button>
+            <button type="button" class="btn-secondary btn-danger" data-action="rejectJob">Reject</button>
+          </div>
+        </article>
+      `;
+    }
+
+    function buildTalentCard(item) {
+      const raw = parseRawJson(item);
+      return `
+        <article class="queue-card" data-id="${item.id}">
+          <div class="pill">${item.status}</div>
+          <h3>${raw.name || item.name || "Unnamed profile"}</h3>
+          <p>${raw.current_role || item.current_role || "No current role listed"}</p>
+          <div class="meta-list">
+            <div><strong>Email:</strong> <code>${raw.email || item.email || ""}</code></div>
+            <div><strong>Location:</strong> ${raw.location || item.location || "Unknown"}</div>
+            <div><strong>Created:</strong> ${item.created_at || ""}</div>
+          </div>
+          <div class="actions">
+            <button type="button" class="btn-primary" data-action="approveTalent">Approve</button>
+            <button type="button" class="btn-secondary btn-danger" data-action="rejectTalent">Reject</button>
+          </div>
+        </article>
+      `;
+    }
+
+    async function loadQueues() {
+      clearStatus();
+      const [jobsResponse, talentResponse] = await Promise.all([
+        postAction("getPendingJobs"),
+        postAction("getPendingTalent")
+      ]);
+
+      const jobs = Array.isArray(jobsResponse.items) ? jobsResponse.items : [];
+      const talent = Array.isArray(talentResponse.items) ? talentResponse.items : [];
+
+      jobsCount.textContent = `${jobs.length} items`;
+      talentCount.textContent = `${talent.length} items`;
+
+      if (!jobs.length) {
+        renderEmptyState(jobsQueue, "No pending jobs.");
+      } else {
+        jobsQueue.innerHTML = jobs.map(buildJobCard).join("");
+      }
+
+      if (!talent.length) {
+        renderEmptyState(talentQueue, "No pending talent.");
+      } else {
+        talentQueue.innerHTML = talent.map(buildTalentCard).join("");
+      }
+
+      setStatus("Pending queues loaded.", false);
+    }
+
+    async function handleQueueAction(event, type) {
+      const button = event.target.closest("button[data-action]");
+      if (!button) return;
+      const card = button.closest("[data-id]");
+      if (!card) return;
+
+      const id = card.dataset.id;
+      const action = button.dataset.action;
+      const reviewer = window.prompt("Reviewer name or initials (optional):", "") || "";
+      const extraPayload = { id };
+
+      if (action === "approveJob" || action === "approveTalent") {
+        extraPayload.approvedBy = reviewer;
+      } else {
+        extraPayload.rejectedBy = reviewer;
+        extraPayload.reason = window.prompt("Optional rejection reason:", "") || "";
+      }
+
+      try {
+        await postAction(action, extraPayload);
+        await loadQueues();
+      } catch (error) {
+        setStatus(error.message || "Queue action failed.", true);
+      }
+    }
+
+    loadQueuesButton.addEventListener("click", async () => {
+      try {
+        await loadQueues();
+      } catch (error) {
+        setStatus(error.message || "Could not load queues.", true);
+      }
+    });
+
+    jobsQueue.addEventListener("click", (event) => {
+      handleQueueAction(event, "job");
+    });
+
+    talentQueue.addEventListener("click", (event) => {
+      handleQueueAction(event, "talent");
+    });
+  </script>
+</body>
+</html>

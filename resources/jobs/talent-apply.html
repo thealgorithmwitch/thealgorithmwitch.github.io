@@ -349,7 +349,9 @@
     </section>
   </div>
 
+  <script src="./scripts/jobs-backend-config.js"></script>
   <script>
+    const JOBS_BACKEND_URL = window.JOBS_BACKEND_CONFIG?.backendUrl || "";
     const form = document.getElementById("talent-form");
     const errorList = document.getElementById("error-list");
     const successMessage = document.getElementById("success-message");
@@ -408,9 +410,26 @@
     }
 
     async function submitTalentToBackend(profile) {
-      // Placeholder only. Connect this to Google Apps Script, Supabase, Airtable,
-      // or a GitHub-backed intake process when private review storage is ready.
-      return { ok: false, placeholder: true };
+      if (!JOBS_BACKEND_URL.trim()) {
+        return { ok: false, placeholder: true };
+      }
+
+      const response = await fetch(JOBS_BACKEND_URL, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          action: "submitTalent",
+          payload: profile
+        })
+      });
+
+      const data = await response.json();
+      if (!response.ok || !data.ok) {
+        throw new Error(data && data.error ? data.error : "Talent submission failed.");
+      }
+      return data;
     }
 
     form.addEventListener("submit", async (event) => {
@@ -430,14 +449,27 @@
 
       jsonOutput.textContent = JSON.stringify(profile, null, 2);
       jsonPanel.classList.add("visible");
-      await submitTalentToBackend(profile);
-
-      successMessage.innerHTML = `
-        <div class="eyebrow">Pending Review</div>
-        <div style="font-family: var(--font-serif); font-size: 2rem; margin: 10px 0;">Your archive application is ready.</div>
-        <div style="color: var(--ink-secondary);">Copy the JSON below for now, or connect the placeholder hook when private review storage is ready.</div>
-      `;
-      successMessage.style.display = "block";
+      try {
+        const result = await submitTalentToBackend(profile);
+        if (result.placeholder) {
+          successMessage.innerHTML = `
+            <div class="eyebrow">Pending Review</div>
+            <div style="font-family: var(--font-serif); font-size: 2rem; margin: 10px 0;">Your archive application is ready.</div>
+            <div style="color: var(--ink-secondary);">Copy the JSON below for now, or paste the Apps Script Web App URL into <code>JOBS_BACKEND_URL</code> to submit into the private sheet.</div>
+          `;
+        } else {
+          successMessage.innerHTML = `
+            <div class="eyebrow">Submitted</div>
+            <div style="font-family: var(--font-serif); font-size: 2rem; margin: 10px 0;">Your talent profile was sent for review.</div>
+            <div style="color: var(--ink-secondary);">Submission id: <code>${result.id || profile.id || "pending-talent"}</code>. The JSON fallback remains below.</div>
+          `;
+        }
+        successMessage.style.display = "block";
+      } catch (error) {
+        console.error(error);
+        errorList.innerHTML = `<div>${error.message || "Talent submission failed."}</div><div style="margin-top:8px;color:var(--ink-secondary);">The JSON fallback is still available below.</div>`;
+        errorList.style.display = "block";
+      }
     });
 
     copyButton.addEventListener("click", async () => {
@@ -457,4 +489,3 @@
   </script>
 </body>
 </html>
-

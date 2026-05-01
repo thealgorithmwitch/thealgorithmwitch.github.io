@@ -1,0 +1,590 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Review | The Algorithm Witch</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,100..1000;1,9..40,100..1000&family=Instrument+Serif:ital@0;1&family=Space+Mono:ital,wght@0,400;0,700;1,400;1,700&display=swap');
+
+    :root {
+      --bg-paper: #0A1F15;
+      --ink-primary: #CFFBE3;
+      --ink-secondary: rgba(207, 251, 227, 0.7);
+      --ink-tertiary: rgba(207, 251, 227, 0.4);
+      --accent-chartreuse: #A8FF3E;
+      --accent-lavender: #D4C1FF;
+      --surface-card: #0D261A;
+      --surface-alt: #1A1429;
+      --border-divider: #163628;
+      --font-serif: 'Instrument Serif', serif;
+      --font-sans: 'DM Sans', sans-serif;
+      --font-mono: 'Space Mono', monospace;
+      --transition: 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: var(--bg-paper);
+      color: var(--ink-primary);
+      font-family: var(--font-sans);
+      padding: 0 24px 72px;
+    }
+
+    .shell {
+      max-width: 1240px;
+      margin: 0 auto;
+    }
+
+    nav {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 16px;
+      padding: 24px 0;
+      border-bottom: 1px solid var(--border-divider);
+    }
+
+    .logo {
+      text-decoration: none;
+      color: var(--ink-primary);
+      display: flex;
+      align-items: baseline;
+      gap: 10px;
+    }
+
+    .logo h1 {
+      font-family: var(--font-serif);
+      font-size: 2rem;
+      font-weight: 400;
+    }
+
+    .logo span,
+    .eyebrow,
+    label,
+    .meta {
+      font-family: var(--font-mono);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .logo span,
+    .eyebrow {
+      color: var(--accent-chartreuse);
+      font-size: 0.75rem;
+    }
+
+    .hero {
+      padding: 56px 0 28px;
+      display: flex;
+      justify-content: space-between;
+      gap: 24px;
+      align-items: flex-end;
+      flex-wrap: wrap;
+    }
+
+    .hero h2 {
+      font-family: var(--font-serif);
+      font-size: clamp(2.8rem, 5vw, 4rem);
+      line-height: 0.95;
+      margin: 12px 0 16px;
+    }
+
+    .hero p {
+      color: var(--ink-secondary);
+      max-width: 700px;
+    }
+
+    .panel,
+    .review-card,
+    .state-card {
+      background: var(--surface-card);
+      border: 1px solid var(--border-divider);
+    }
+
+    .panel {
+      padding: 20px 24px;
+      margin-bottom: 24px;
+    }
+
+    .review-grid {
+      display: grid;
+      gap: 20px;
+    }
+
+    .review-card {
+      padding: 28px;
+    }
+
+    .review-header {
+      display: flex;
+      justify-content: space-between;
+      gap: 16px;
+      align-items: start;
+      margin-bottom: 18px;
+    }
+
+    .review-header h3 {
+      font-family: var(--font-serif);
+      font-size: 2rem;
+      line-height: 1;
+      margin-bottom: 8px;
+    }
+
+    .org {
+      color: var(--ink-secondary);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      font-size: 0.8rem;
+      font-weight: 600;
+    }
+
+    .status-pill {
+      border: 1px solid var(--border-divider);
+      color: var(--accent-chartreuse);
+      padding: 8px 12px;
+      font-family: var(--font-mono);
+      font-size: 0.7rem;
+      text-transform: uppercase;
+      white-space: nowrap;
+    }
+
+    .meta-grid,
+    .edit-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 18px;
+    }
+
+    .meta-item {
+      padding: 14px 16px;
+      border: 1px solid var(--border-divider);
+      background: rgba(255, 255, 255, 0.02);
+    }
+
+    .meta-item a {
+      color: var(--accent-chartreuse);
+      word-break: break-word;
+    }
+
+    .tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 16px;
+    }
+
+    .tag {
+      border: 1px solid var(--border-divider);
+      padding: 6px 10px;
+      color: var(--ink-secondary);
+      font-family: var(--font-mono);
+      font-size: 0.7rem;
+      text-transform: uppercase;
+    }
+
+    .edit-shell {
+      margin-top: 20px;
+      padding-top: 20px;
+      border-top: 1px solid var(--border-divider);
+    }
+
+    label {
+      display: block;
+      color: var(--ink-secondary);
+      font-size: 0.7rem;
+      margin-bottom: 8px;
+    }
+
+    input,
+    textarea {
+      width: 100%;
+      border: 1px solid var(--border-divider);
+      background: transparent;
+      color: var(--ink-primary);
+      padding: 12px 14px;
+      font: inherit;
+      outline: none;
+    }
+
+    textarea {
+      min-height: 108px;
+      resize: vertical;
+    }
+
+    input:focus,
+    textarea:focus {
+      border-color: var(--accent-chartreuse);
+      box-shadow: inset 0 0 0 1px var(--accent-chartreuse);
+    }
+
+    .actions {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin-top: 18px;
+    }
+
+    .btn-primary,
+    .btn-secondary,
+    .btn-danger {
+      border: 1px solid var(--accent-chartreuse);
+      padding: 12px 18px;
+      font-family: var(--font-mono);
+      font-size: 0.75rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      cursor: pointer;
+      transition: var(--transition);
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      background: transparent;
+    }
+
+    .btn-primary {
+      background: var(--accent-chartreuse);
+      color: var(--bg-paper);
+    }
+
+    .btn-secondary {
+      color: var(--accent-chartreuse);
+      border-color: var(--border-divider);
+    }
+
+    .btn-danger {
+      color: var(--accent-lavender);
+      border-color: rgba(212, 193, 255, 0.35);
+    }
+
+    .btn-primary:hover,
+    .btn-secondary:hover,
+    .btn-danger:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 0 15px rgba(168, 255, 62, 0.2);
+    }
+
+    .state-card {
+      padding: 34px;
+      color: var(--ink-secondary);
+    }
+
+    .note {
+      margin-top: 24px;
+      padding: 20px 24px;
+      background: var(--surface-alt);
+      border: 1px solid rgba(212, 193, 255, 0.2);
+      color: var(--ink-secondary);
+    }
+
+    .flash {
+      display: none;
+      margin-bottom: 18px;
+      padding: 16px 18px;
+      border: 1px solid var(--border-divider);
+      background: rgba(168, 255, 62, 0.06);
+    }
+
+    @media (max-width: 860px) {
+      .meta-grid,
+      .edit-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .review-header {
+        flex-direction: column;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="shell">
+    <nav>
+      <a class="logo" href="./jobs.html">
+        <h1>Fresh Roles</h1>
+        <span>The Algorithm Witch</span>
+      </a>
+      <div style="display: flex; gap: 12px; flex-wrap: wrap;">
+        <a href="./submit-job.html" class="btn-secondary">Submit Job</a>
+        <a href="./jobs.html" class="btn-primary">View Board</a>
+      </div>
+    </nav>
+
+    <section class="hero">
+      <div>
+        <div class="eyebrow">Admin Review</div>
+        <h2>Review pending jobs before they touch `jobs.json`.</h2>
+        <p>
+          This page is front-end only. It can inspect pending submissions, let you edit the fields, and simulate approve/reject outcomes locally. Final write access should be handled by Google Apps Script, GitHub Actions, or a small backend endpoint.
+        </p>
+      </div>
+      <div class="panel">
+        <div class="meta">Queue sources</div>
+        <div style="margin-top: 10px; color: var(--ink-secondary);">`pending-jobs.json` + local browser submissions stored at `algorithm-witch.pending-jobs`.</div>
+      </div>
+    </section>
+
+    <div id="flash" class="flash"></div>
+    <div id="review-list" class="review-grid"></div>
+
+    <div class="note">
+      Final publish path notes:
+      <br><br>
+      1. Google Apps Script can receive approved jobs from this page and append them into a Sheet or JSON endpoint.
+      <br>
+      2. GitHub Actions can merge approved queue data into `jobs.json` and commit the change.
+      <br>
+      3. A small backend endpoint can write directly to `pending-jobs.json` or another datastore.
+    </div>
+  </div>
+
+  <script>
+    const STORAGE_KEY = "algorithm-witch.pending-jobs";
+    const REVIEW_KEY = "algorithm-witch.review-overrides";
+    const flash = document.getElementById("flash");
+    const reviewList = document.getElementById("review-list");
+
+    function readJsonFile(url) {
+      return fetch(url, { cache: "no-store" }).then((response) => {
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        return response.json();
+      });
+    }
+
+    function readLocalJson(key) {
+      try {
+        const raw = localStorage.getItem(key);
+        return raw ? JSON.parse(raw) : [];
+      } catch (error) {
+        console.error(error);
+        return [];
+      }
+    }
+
+    function writeLocalJson(key, value) {
+      localStorage.setItem(key, JSON.stringify(value));
+    }
+
+    function showFlash(message) {
+      flash.textContent = message;
+      flash.style.display = "block";
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
+
+    function escapeHtml(value) {
+      return String(value || "")
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#39;");
+    }
+
+    function normalizePendingJob(job, index, sourceLabel) {
+      return {
+        id: job.id || `pending-${sourceLabel}-${index + 1}`,
+        title: job.title || "",
+        organization: job.organization || "",
+        source_url: job.source_url || "",
+        apply_url: job.apply_url || "",
+        description: job.description || "",
+        tags: Array.isArray(job.tags) ? job.tags : String(job.tags || "").split(",").map((item) => item.trim()).filter(Boolean),
+        location: job.location || "",
+        job_type: job.job_type || "",
+        sector: job.sector || "",
+        shared_by: job.shared_by || "",
+        notes: job.notes || "",
+        date_submitted: job.date_submitted || "",
+        status: String(job.status || "pending").toLowerCase(),
+        sourceLabel
+      };
+    }
+
+    function mergeQueues(fileQueue, localQueue) {
+      const overrides = readLocalJson(REVIEW_KEY);
+      const baseQueue = [
+        ...fileQueue.map((job, index) => normalizePendingJob(job, index, "file")),
+        ...localQueue.map((job, index) => normalizePendingJob(job, index, "local"))
+      ];
+
+      return baseQueue.map((job) => {
+        const override = overrides.find((item) => item.id === job.id);
+        return override ? { ...job, ...override } : job;
+      });
+    }
+
+    function saveReviewOverride(nextJob) {
+      // Front-end only review state:
+      // persist local draft decisions here for static hosting,
+      // then replace this with Google Apps Script, GitHub Actions, or a backend when you need shared write access.
+      const overrides = readLocalJson(REVIEW_KEY);
+      const index = overrides.findIndex((item) => item.id === nextJob.id);
+      if (index >= 0) {
+        overrides[index] = nextJob;
+      } else {
+        overrides.push(nextJob);
+      }
+      writeLocalJson(REVIEW_KEY, overrides);
+    }
+
+    function reviewCard(job) {
+      const tags = job.tags.length
+        ? job.tags.map((tag) => `<span class="tag">#${escapeHtml(tag)}</span>`).join("")
+        : `<span class="tag">No tags yet</span>`;
+
+      return `
+        <article class="review-card" data-job-id="${escapeHtml(job.id)}">
+          <div class="review-header">
+            <div>
+              <div class="eyebrow">${escapeHtml(job.sourceLabel)} queue</div>
+              <h3>${escapeHtml(job.title || "Untitled role")}</h3>
+              <div class="org">${escapeHtml(job.organization || "Unknown organization")}</div>
+            </div>
+            <div class="status-pill">${escapeHtml(job.status)}</div>
+          </div>
+
+          <div class="meta-grid">
+            <div class="meta-item">
+              <div class="meta">LinkedIn or Source URL</div>
+              <div style="margin-top: 6px;"><a href="${escapeHtml(job.source_url || "#")}" target="_blank" rel="noreferrer">${escapeHtml(job.source_url || "Missing source URL")}</a></div>
+            </div>
+            <div class="meta-item">
+              <div class="meta">Apply URL</div>
+              <div style="margin-top: 6px;"><a href="${escapeHtml(job.apply_url || "#")}" target="_blank" rel="noreferrer">${escapeHtml(job.apply_url || "Missing apply URL")}</a></div>
+            </div>
+          </div>
+
+          <div class="meta-item" style="margin-top: 18px;">
+            <div class="meta">Description</div>
+            <div style="margin-top: 8px; color: var(--ink-secondary);">${escapeHtml(job.description || "No description supplied.")}</div>
+            <div class="tags">${tags}</div>
+          </div>
+
+          <div class="edit-shell">
+            <div class="eyebrow">Edit before approval</div>
+            <div class="edit-grid" style="margin-top: 16px;">
+              <div>
+                <label>Title</label>
+                <input data-field="title" value="${escapeHtml(job.title)}">
+              </div>
+              <div>
+                <label>Organization</label>
+                <input data-field="organization" value="${escapeHtml(job.organization)}">
+              </div>
+              <div>
+                <label>Location</label>
+                <input data-field="location" value="${escapeHtml(job.location)}">
+              </div>
+              <div>
+                <label>Job Type</label>
+                <input data-field="job_type" value="${escapeHtml(job.job_type)}">
+              </div>
+              <div>
+                <label>Sector</label>
+                <input data-field="sector" value="${escapeHtml(job.sector)}">
+              </div>
+              <div>
+                <label>Shared By</label>
+                <input data-field="shared_by" value="${escapeHtml(job.shared_by)}">
+              </div>
+            </div>
+            <div style="margin-top: 18px;">
+              <label>Description</label>
+              <textarea data-field="description">${escapeHtml(job.description)}</textarea>
+            </div>
+            <div style="margin-top: 18px;">
+              <label>Tags (comma separated)</label>
+              <input data-field="tags" value="${escapeHtml(job.tags.join(", "))}">
+            </div>
+            <div style="margin-top: 18px;">
+              <label>Notes</label>
+              <textarea data-field="notes">${escapeHtml(job.notes)}</textarea>
+            </div>
+            <div class="actions">
+              <button class="btn-primary" type="button" data-action="approve">Approve</button>
+              <button class="btn-danger" type="button" data-action="reject">Reject</button>
+              <button class="btn-secondary" type="button" data-action="save">Save Draft Edits</button>
+            </div>
+          </div>
+        </article>
+      `;
+    }
+
+    function getCardDraft(card) {
+      const draft = { id: card.dataset.jobId };
+      card.querySelectorAll("[data-field]").forEach((field) => {
+        draft[field.dataset.field] = field.value;
+      });
+      draft.tags = String(draft.tags || "").split(",").map((item) => item.trim()).filter(Boolean);
+      return draft;
+    }
+
+    async function loadReviewQueue() {
+      try {
+        const [fileQueue, localQueue] = await Promise.all([
+          readJsonFile("./pending-jobs.json").catch(() => []),
+          Promise.resolve(readLocalJson(STORAGE_KEY))
+        ]);
+
+        const queue = mergeQueues(fileQueue, localQueue).filter((job) => job.status !== "merged");
+
+        if (!queue.length) {
+          reviewList.innerHTML = `
+            <div class="state-card">
+              <div class="eyebrow">Queue Clear</div>
+              <div style="font-family: var(--font-serif); font-size: 2rem; margin: 10px 0;">No pending jobs are waiting for review.</div>
+              <div>New local submissions from <code>submit-job.html</code> will appear here automatically.</div>
+            </div>
+          `;
+          return;
+        }
+
+        reviewList.innerHTML = queue.map(reviewCard).join("");
+      } catch (error) {
+        console.error(error);
+        reviewList.innerHTML = `
+          <div class="state-card">
+            <div class="eyebrow" style="color: var(--accent-lavender);">Queue Error</div>
+            <div style="font-family: var(--font-serif); font-size: 2rem; margin: 10px 0;">The pending queue could not be loaded.</div>
+            <div>Check <code>pending-jobs.json</code> and the browser console.</div>
+          </div>
+        `;
+      }
+    }
+
+    reviewList.addEventListener("click", (event) => {
+      const button = event.target.closest("button[data-action]");
+      if (!button) return;
+
+      const card = button.closest("[data-job-id]");
+      if (!card) return;
+
+      const draft = getCardDraft(card);
+      const action = button.dataset.action;
+
+      if (action === "save") {
+        saveReviewOverride({ ...draft, status: "pending" });
+        showFlash("Draft edits saved locally. Final write access still needs Apps Script, GitHub Actions, or a backend.");
+        return;
+      }
+
+      if (action === "approve") {
+        saveReviewOverride({ ...draft, status: "approved" });
+        card.querySelector(".status-pill").textContent = "approved";
+        showFlash("Job marked approved locally. Use scripts/merge-approved-jobs.js once your queue source can write approved records.");
+        return;
+      }
+
+      if (action === "reject") {
+        saveReviewOverride({ ...draft, status: "rejected" });
+        card.querySelector(".status-pill").textContent = "rejected";
+        showFlash("Job marked rejected locally. Shared persistence still requires Apps Script, GitHub Actions, or a backend.");
+      }
+    });
+
+    loadReviewQueue();
+  </script>
+</body>
+</html>

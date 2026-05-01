@@ -327,13 +327,12 @@
           <div id="error-list" class="error-list"></div>
           <div id="success-message" class="success-message"></div>
 
-          <details id="summary-details">
-            <summary>View submission summary</summary>
+          <details id="summary-details" style="display:none;">
+            <summary>Copy details for manual review</summary>
             <div class="summary-panel">
-              <div class="eyebrow">Submission Preview</div>
               <pre id="summary-output"></pre>
               <div class="actions">
-                <button id="copy-summary" type="button" class="btn-secondary">Copy Submission Details</button>
+                <button id="copy-summary" type="button" class="btn-secondary">Copy details for manual review</button>
               </div>
             </div>
           </details>
@@ -353,6 +352,17 @@
     const summaryDetails = document.getElementById("summary-details");
     const summaryOutput = document.getElementById("summary-output");
     const copySummary = document.getElementById("copy-summary");
+
+    function hideManualReview() {
+      summaryDetails.style.display = "none";
+      summaryDetails.open = false;
+    }
+
+    function showManualReview(detailsText) {
+      summaryOutput.textContent = detailsText;
+      summaryDetails.style.display = "block";
+      summaryDetails.open = true;
+    }
 
     function isValidUrl(value) {
       if (!value) return true;
@@ -434,6 +444,7 @@
       event.preventDefault();
       errorList.style.display = "none";
       successMessage.style.display = "none";
+      hideManualReview();
 
       const submission = buildSubmission();
       const errors = validateSubmission(submission);
@@ -444,28 +455,26 @@
         return;
       }
 
-      summaryOutput.textContent = JSON.stringify(submission, null, 2);
+      const fallbackDetails = JSON.stringify(submission, null, 2);
       try {
         const result = await submitFeaturedEmployerToBackend(submission);
         if (result.placeholder) {
-          summaryDetails.open = true;
-          successMessage.innerHTML = `
-            <div class="eyebrow">Review Mode</div>
-            <div style="font-family: var(--font-serif); font-size: 2rem; margin: 10px 0;">This submission tool is temporarily in review mode.</div>
-            <div style="color: var(--ink-secondary);">View the submission summary below, copy the details, and send them manually.</div>
-          `;
+          showManualReview(fallbackDetails);
+          errorList.innerHTML = `<div>We couldn’t send this just yet, but your details are saved below so you can still share them.</div>`;
+          errorList.style.display = "block";
         } else {
           successMessage.innerHTML = `
             <div class="eyebrow">Submitted</div>
-            <div style="font-family: var(--font-serif); font-size: 2rem; margin: 10px 0;">Your featured employer application was sent for review.</div>
-            <div style="color: var(--ink-secondary);">Submission id: <code>${result.id || submission.id}</code>. Applications are reviewed before any employer is featured.</div>
+            <div style="font-family: var(--font-serif); font-size: 2rem; margin: 10px 0;">Your featured employer application was received. We’ll review it before adding any employer features.</div>
+            <div style="color: var(--ink-secondary);">Thanks for helping more aligned roles reach the right people.</div>
           `;
+          form.reset();
         }
         successMessage.style.display = "block";
       } catch (error) {
         console.error(error);
-        summaryDetails.open = true;
-        errorList.innerHTML = `<div>We couldn’t reach the submission system. Your details are below so nothing gets lost.</div><div style="margin-top:8px;color:var(--ink-secondary);">This submission tool is in review mode. Copy these details and send them manually.</div>`;
+        showManualReview(fallbackDetails);
+        errorList.innerHTML = `<div>We couldn’t send this just yet, but your details are saved below so you can still share them.</div>`;
         errorList.style.display = "block";
       }
     });
@@ -475,12 +484,12 @@
         await navigator.clipboard.writeText(summaryOutput.textContent);
         copySummary.textContent = "Copied";
         window.setTimeout(() => {
-          copySummary.textContent = "Copy Submission Details";
+          copySummary.textContent = "Copy details for manual review";
         }, 1600);
       } catch (error) {
         copySummary.textContent = "Copy Failed";
         window.setTimeout(() => {
-          copySummary.textContent = "Copy Submission Details";
+          copySummary.textContent = "Copy details for manual review";
         }, 1600);
       }
     });

@@ -89,7 +89,7 @@
     }
     .card,
     .note,
-    .json-panel {
+    .manual-review-panel {
       background: var(--surface-card);
       border: 1px solid var(--border-divider);
       padding: 32px;
@@ -214,14 +214,25 @@
       background: rgba(212, 193, 255, 0.08);
       border-color: rgba(212, 193, 255, 0.4);
     }
-    .json-panel {
+    details.manual-review-details {
       margin-top: 24px;
       display: none;
     }
-    .json-panel.visible {
+    details.manual-review-details.visible {
       display: block;
     }
-    .json-panel pre {
+    details.manual-review-details summary {
+      cursor: pointer;
+      color: var(--accent-lavender);
+      font-family: var(--font-mono);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      font-size: 0.72rem;
+    }
+    .manual-review-panel {
+      margin-top: 12px;
+    }
+    .manual-review-panel pre {
       margin-top: 16px;
       padding: 18px;
       border: 1px solid var(--border-divider);
@@ -273,7 +284,7 @@
           <div class="eyebrow" style="color: var(--accent-lavender);">What happens next</div>
           <ul>
             <li>Your submission is marked for review before anything appears publicly.</li>
-            <li>LinkedIn URL hints use only the URL string. No page fetch or scraping happens.</li>
+            <li>We’ll use the link you share to help understand the opportunity.</li>
             <li>We review shared roles before adding them to the board.</li>
           </ul>
         </div>
@@ -287,7 +298,7 @@
               <input id="source_url" name="source_url" type="url" placeholder="https://www.linkedin.com/posts/person-name_activity-...">
               <div id="linkedin-helper" class="helper-box">
                 <div id="linkedin-helper-text" style="color: var(--ink-secondary);"></div>
-                <div class="helper-note">LinkedIn details are guessed from the URL and should be reviewed.</div>
+                <div class="helper-note">We’ll use this link as a reference while reviewing the role.</div>
               </div>
             </div>
 
@@ -397,13 +408,15 @@
           <div id="error-list" class="error-list"></div>
           <div id="success-message" class="success-message"></div>
 
-          <div id="json-panel" class="json-panel">
-            <div class="eyebrow">Submission Preview</div>
-            <pre id="json-output"></pre>
-            <div class="actions">
-              <button id="copy-json" type="button" class="btn-secondary">Copy Submission Details</button>
+          <details id="manual-review-details" class="manual-review-details">
+            <summary>Copy details for manual review</summary>
+            <div class="manual-review-panel">
+              <pre id="json-output"></pre>
+              <div class="actions">
+                <button id="copy-json" type="button" class="btn-secondary">Copy details for manual review</button>
+              </div>
             </div>
-          </div>
+          </details>
 
           <div class="meta">Submissions are reviewed before they appear publicly.</div>
         </div>
@@ -421,9 +434,20 @@
     const tagsInput = document.getElementById("tags");
     const errorList = document.getElementById("error-list");
     const successMessage = document.getElementById("success-message");
-    const jsonPanel = document.getElementById("json-panel");
+    const manualReviewDetails = document.getElementById("manual-review-details");
     const jsonOutput = document.getElementById("json-output");
     const copyButton = document.getElementById("copy-json");
+
+    function hideManualReview() {
+      manualReviewDetails.classList.remove("visible");
+      manualReviewDetails.open = false;
+    }
+
+    function showManualReview(detailsText) {
+      jsonOutput.textContent = detailsText;
+      manualReviewDetails.classList.add("visible");
+      manualReviewDetails.open = true;
+    }
 
     function isValidUrl(value) {
       try {
@@ -507,19 +531,19 @@
 
       const parts = [];
       if (hints.suggestedSharedBy) {
-        parts.push(`Suggested shared by: ${hints.suggestedSharedBy}`);
+        parts.push(`Suggested details to review: shared by ${hints.suggestedSharedBy}`);
         if (!sharedByInput.value.trim()) {
           sharedByInput.value = hints.suggestedSharedBy;
         }
       }
       if (hints.keywords.length) {
-        parts.push(`Possible keywords: ${hints.keywords.join(", ")}`);
+        parts.push(`Suggested details to review: ${hints.keywords.join(", ")}`);
         if (!tagsInput.value.trim()) {
           tagsInput.value = hints.keywords.join(", ");
         }
       }
 
-      helperText.textContent = parts.join(" // ") || "LinkedIn URL detected.";
+      helperText.textContent = parts.join(" // ") || "Suggested details to review";
       helperBox.classList.add("visible");
     }
 
@@ -606,6 +630,7 @@
       event.preventDefault();
       errorList.style.display = "none";
       successMessage.style.display = "none";
+      hideManualReview();
 
       const job = buildPendingJob();
       const errors = validateJob(job);
@@ -613,31 +638,31 @@
       if (errors.length) {
         errorList.innerHTML = errors.map((error) => `<div>${error}</div>`).join("");
         errorList.style.display = "block";
-        jsonPanel.classList.remove("visible");
         return;
       }
 
-      jsonOutput.textContent = JSON.stringify(job, null, 2);
-      jsonPanel.classList.add("visible");
+      const fallbackDetails = JSON.stringify(job, null, 2);
       try {
         const result = await submitJobToBackend(job);
         if (result.placeholder) {
-          successMessage.innerHTML = `
-            <div class="eyebrow">Pending Review</div>
-            <div style="font-family: var(--font-serif); font-size: 2rem; margin: 10px 0;">Your submission is ready for review.</div>
-            <div style="color: var(--ink-secondary);">This submission tool is in review mode. Copy these details and send them manually.</div>
-          `;
+          showManualReview(fallbackDetails);
+          errorList.innerHTML = `<div>We couldn’t send this just yet, but your details are saved below so you can still share them.</div>`;
+          errorList.style.display = "block";
         } else {
           successMessage.innerHTML = `
             <div class="eyebrow">Submitted</div>
-            <div style="font-family: var(--font-serif); font-size: 2rem; margin: 10px 0;">Your job was sent to the private review sheet.</div>
-            <div style="color: var(--ink-secondary);">Submission id: <code>${result.id || job.id}</code>. We’ll review this before it appears publicly.</div>
+            <div style="font-family: var(--font-serif); font-size: 2rem; margin: 10px 0;">Your submission was received. Thank you for helping keep this board useful and aligned.</div>
+            <div style="color: var(--ink-secondary);">We’ll review this before it appears publicly.</div>
           `;
+          form.reset();
+          helperBox.classList.remove("visible");
+          helperText.textContent = "";
         }
         successMessage.style.display = "block";
       } catch (error) {
         console.error(error);
-        errorList.innerHTML = `<div>We couldn’t reach the submission system. Your details are below so nothing gets lost.</div><div style="margin-top:8px;color:var(--ink-secondary);">This submission tool is in review mode. Copy these details and send them manually.</div>`;
+        showManualReview(fallbackDetails);
+        errorList.innerHTML = `<div>We couldn’t send this just yet, but your details are saved below so you can still share them.</div>`;
         errorList.style.display = "block";
       }
     });
@@ -647,12 +672,12 @@
         await navigator.clipboard.writeText(jsonOutput.textContent);
         copyButton.textContent = "Copied";
         window.setTimeout(() => {
-          copyButton.textContent = "Copy Submission Details";
+          copyButton.textContent = "Copy details for manual review";
         }, 1600);
       } catch (error) {
         copyButton.textContent = "Copy Failed";
         window.setTimeout(() => {
-          copyButton.textContent = "Copy Submission Details";
+          copyButton.textContent = "Copy details for manual review";
         }, 1600);
       }
     });

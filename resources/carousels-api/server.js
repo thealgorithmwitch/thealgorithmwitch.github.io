@@ -137,6 +137,243 @@ async function waitForAssets(page) {
   await new Promise((resolve) => setTimeout(resolve, 800));
 }
 
+function buildScryerCaptureStyles(width, height) {
+  return `
+    @import url('https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@400;700;900&family=Playfair+Display:wght@400;600;700&family=JetBrains+Mono:wght@400;700&family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@400;500;700&family=DM+Serif+Display:ital@0;1&family=Cormorant+Garamond:wght@400;500;600;700&family=Noto+Color+Emoji&display=swap');
+    html, body {
+      margin: 0 !important;
+      padding: 0 !important;
+      width: ${width}px !important;
+      height: ${height}px !important;
+      overflow: hidden !important;
+    }
+
+    *, *::before, *::after {
+      box-sizing: border-box !important;
+      animation-play-state: paused !important;
+      transition: none !important;
+      caret-color: transparent !important;
+    }
+
+    body {
+      --scryer-safe-padding: 72px;
+    }
+
+    body, .slide, .page {
+      font-family: "Inter", "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", sans-serif;
+    }
+
+    .ph,
+    [class^="ph-"],
+    [class*=" ph-"],
+    i[class*="ph"] {
+      font-family: "Phosphor" !important;
+    }
+
+    .emoji,
+    [data-emoji="true"] {
+      font-family: "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", sans-serif !important;
+    }
+
+    button, .button, [role="button"], svg, i[class^="ph-"], i[class*=" ph-"] {
+      visibility: visible !important;
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after {
+        animation-duration: 0.001s !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0s !important;
+      }
+    }
+  `;
+}
+
+async function captureFullPage(page, outputPath, payload) {
+  await page.screenshot({
+    path: outputPath,
+    type: "png",
+    clip: {
+      x: 0,
+      y: 0,
+      width: payload.width,
+      height: payload.height
+    }
+  });
+}
+
+async function captureElements(page, selector, outputDir, payload) {
+  let count;
+  try {
+    count = await page.$$eval(selector, (nodes) => nodes.length);
+  } catch (_error) {
+    throw new Error(`Invalid selector "${selector}".`);
+  }
+  if (!count) throw new Error(`No elements matched selector "${selector}".`);
+  console.log("HTML Scryer selector export", {
+    mode: payload.mode,
+    selector,
+    countFound: count,
+    viewport: {
+      width: payload.width,
+      height: payload.height
+    }
+  });
+
+  const files = [];
+  for (let index = 0; index < count; index += 1) {
+    const filename = `slide-${String(index + 1).padStart(2, "0")}.png`;
+    const outputPath = path.join(outputDir, filename);
+    const targetBoundingBox = await page.evaluate(({ selector: selectorValue, index: itemIndex }) => {
+      const target = Array.from(document.querySelectorAll(selectorValue))[itemIndex];
+      if (!target) return null;
+      const box = target.getBoundingClientRect();
+      return { x: box.x, y: box.y, width: box.width, height: box.height };
+    }, {
+      selector,
+      index
+    });
+    console.log("HTML Scryer capture target", {
+      screenshot: filename,
+      targetBoundingBox
+    });
+    await page.evaluate(({ selector: selectorValue, index: itemIndex, width, height }) => {
+      const nodes = Array.from(document.querySelectorAll(selectorValue));
+      const original = nodes[itemIndex];
+      if (!original) throw new Error(`Could not find slide ${itemIndex + 1}`);
+      window.__scryerRestore = [];
+      const safePadding = 72;
+      const save = (el) => {
+        window.__scryerRestore.push([el, el.getAttribute("style")]);
+      };
+      save(document.documentElement);
+      save(document.body);
+      const computed = window.getComputedStyle(original);
+      const bodyComputed = window.getComputedStyle(document.body);
+      const background =
+        computed.backgroundColor && computed.backgroundColor !== "rgba(0, 0, 0, 0)"
+          ? computed.backgroundColor
+          : bodyComputed.backgroundColor || "transparent";
+      const backgroundImage =
+        computed.backgroundImage && computed.backgroundImage !== "none"
+          ? computed.backgroundImage
+          : bodyComputed.backgroundImage || "none";
+      const colorMatch = background.match(/rgba?\(([^)]+)\)/);
+      let isPlainDark = false;
+      if (colorMatch) {
+        const [r, g, b] = colorMatch[1].split(",").slice(0, 3).map((value) => Number.parseFloat(value.trim()) || 0);
+        const luminance = (0.2126 * r + 0.7152 * g + 0.0722 * b) / 255;
+        isPlainDark = backgroundImage === "none" && luminance < 0.35;
+      }
+      document.documentElement.style.cssText += `
+        margin:0!important;
+        padding:0!important;
+        width:${width}px!important;
+        height:${height}px!important;
+        overflow:hidden!important;
+      `;
+      document.body.style.cssText += `
+        margin:0!important;
+        padding:0!important;
+        width:${width}px!important;
+        height:${height}px!important;
+        overflow:hidden!important;
+        background:${background}!important;
+      `;
+      nodes.forEach((node) => {
+        if (node !== original) {
+          save(node);
+          node.style.display = "none";
+        }
+      });
+
+      document.getElementById("__scryer_capture_root__")?.remove();
+
+      const root = document.createElement("div");
+      root.id = "__scryer_capture_root__";
+      root.style.position = "fixed";
+      root.style.inset = "0";
+      root.style.width = `${width}px`;
+      root.style.height = `${height}px`;
+      root.style.overflow = "hidden";
+      root.style.background = background;
+      root.style.display = "flex";
+      root.style.alignItems = "center";
+      root.style.justifyContent = "center";
+      root.style.zIndex = "2147483647";
+
+      if (isPlainDark) {
+        const grid = document.createElement("div");
+        grid.style.position = "absolute";
+        grid.style.inset = "0";
+        grid.style.pointerEvents = "none";
+        grid.style.opacity = "0.08";
+        grid.style.backgroundImage = "linear-gradient(rgba(255,255,255,0.18) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.18) 1px, transparent 1px)";
+        grid.style.backgroundSize = "48px 48px";
+        grid.style.zIndex = "0";
+        root.appendChild(grid);
+      }
+
+      const clone = original.cloneNode(true);
+      clone.style.margin = "0";
+      clone.style.position = "relative";
+      clone.style.left = "auto";
+      clone.style.right = "auto";
+      clone.style.top = "auto";
+      clone.style.bottom = "auto";
+      clone.style.transform = "none";
+      clone.style.boxSizing = "border-box";
+      clone.style.background = background;
+      clone.style.zIndex = "1";
+      clone.style.flexShrink = "0";
+      root.appendChild(clone);
+      document.body.appendChild(root);
+      const safeWidth = width - safePadding * 2;
+      const safeHeight = height - safePadding * 2;
+      const graphics = Array.from(clone.querySelectorAll('svg, canvas, img, .chart, .graph, .diagram, .visual, .timeline, .network, .constellation, [data-scryer-scale="graphic"]'));
+      graphics.forEach((graphic) => {
+        const rect = graphic.getBoundingClientRect();
+        const scale = Math.min(1, safeWidth / Math.max(rect.width, 1), safeHeight / Math.max(rect.height, 1));
+        if (scale < 1) {
+          graphic.style.transformOrigin = "center center";
+          const existingTransform = window.getComputedStyle(graphic).transform;
+          graphic.style.transform = existingTransform && existingTransform !== "none"
+            ? `${existingTransform} scale(${scale})`
+            : `scale(${scale})`;
+        }
+      });
+    }, {
+      selector,
+      index,
+      width: payload.width,
+      height: payload.height
+    });
+    await waitForAssets(page);
+    await page.screenshot({
+      path: outputPath,
+      type: "png",
+      clip: {
+        x: 0,
+        y: 0,
+        width: payload.width,
+        height: payload.height
+      }
+    });
+    await page.evaluate(() => {
+      document.getElementById("__scryer_capture_root__")?.remove();
+      if (window.__scryerRestore) {
+        for (const [el, style] of window.__scryerRestore.reverse()) {
+          if (style === null) el.removeAttribute("style");
+          else el.setAttribute("style", style);
+        }
+      }
+      delete window.__scryerRestore;
+    });
+    files.push(outputPath);
+  }
+  return files;
+}
+
 async function installExportRuntime(page, payload) {
   await page.addStyleTag({
     content: `
@@ -739,22 +976,27 @@ app.post("/api/export-html", async (request, response) => {
       height: payload.height,
       deviceScaleFactor: 1
     });
-    await page.setContent(buildServerCaptureDocument(payload), {
+    await page.setContent(payload.html, {
       waitUntil: "domcontentloaded",
       timeout: 60000
     });
+    await page.evaluate((width, height) => {
+      window.__SCRYER_EXPORT_WIDTH__ = width;
+      window.__SCRYER_EXPORT_HEIGHT__ = height;
+    }, payload.width, payload.height);
     await waitForAssets(page);
-    let files;
-    if (!payload.preserveLayout) {
-      await installExportRuntime(page, payload);
-      await waitForAssets(page);
-      files = await captureTargets(page, payload, tempDir);
-    } else if (payload.mode === "full") {
-      await installExportRuntime(page, payload);
-      await waitForAssets(page);
-      files = await captureTargets(page, payload, tempDir);
+    await page.addStyleTag({
+      content: buildScryerCaptureStyles(payload.width, payload.height)
+    });
+
+    const files = [];
+    if (payload.mode === "full") {
+      const outputPath = path.join(tempDir, `${payload.codexName}.png`);
+      await captureFullPage(page, outputPath, payload);
+      files.push(outputPath);
     } else {
-      files = await captureElementsPreserveLayout(page, payload.selector, tempDir, payload);
+      const captured = await captureElements(page, payload.selector, tempDir, payload);
+      files.push(...captured);
     }
     await page.close();
     await browser.close();
@@ -765,7 +1007,7 @@ app.post("/api/export-html", async (request, response) => {
     if (browser) await browser.close().catch(() => undefined);
     if (tempDir) await fsp.rm(tempDir, { recursive: true, force: true }).catch(() => undefined);
     const message = error && error.message ? String(error.message) : "Export failed.";
-    const status = /required|invalid|must be|No elements matched|No capture target|Request body/i.test(message) ? 400 : 500;
+    const status = /required|invalid|must be|No elements matched|could not find|Request body/i.test(message) ? 400 : 500;
     response.status(status).json(status === 400 ? { error: message } : { error: "Export failed", detail: message });
   }
 });

@@ -35,26 +35,70 @@ function ensureArray(value) {
   return [];
 }
 
+function detectSalaryCurrency(salary, location) {
+  const salaryText = String(salary || "").trim();
+  const locationText = String(location || "").trim().toLowerCase();
+
+  if (!salaryText) {
+    return "Unknown";
+  }
+
+  if (/\b(?:CAD|CA\$)\b/i.test(salaryText) || /CA\$/i.test(salaryText)) {
+    return "CAD";
+  }
+  if (/\b(?:USD|US\$)\b/i.test(salaryText) || /US\$/i.test(salaryText)) {
+    return "USD";
+  }
+  if (/\bEUR\b/i.test(salaryText) || /€/i.test(salaryText)) {
+    return "EUR";
+  }
+  if (/\bGBP\b/i.test(salaryText) || /£/i.test(salaryText)) {
+    return "GBP";
+  }
+  if (/\$/i.test(salaryText)) {
+    if (/canada|toronto|vancouver|montreal|ottawa|calgary|edmonton|quebec|ontario|british columbia|alberta|manitoba|saskatchewan|nova scotia|new brunswick|newfoundland|labrador|prince edward island/i.test(locationText)) {
+      return "CAD";
+    }
+    return "USD";
+  }
+
+  if (/canada|toronto|vancouver|montreal|ottawa|calgary|edmonton|quebec|ontario|british columbia|alberta|manitoba|saskatchewan|nova scotia|new brunswick|newfoundland|labrador|prince edward island/i.test(locationText)) {
+    return "CAD";
+  }
+  if (/uk|united kingdom|england|scotland|wales|northern ireland|london|manchester|birmingham|glasgow|edinburgh/i.test(locationText)) {
+    return "GBP";
+  }
+  if (/austria|belgium|bulgaria|croatia|cyprus|czech republic|czechia|denmark|estonia|finland|france|germany|greece|hungary|ireland|italy|latvia|lithuania|luxembourg|malta|netherlands|poland|portugal|romania|slovakia|slovenia|spain|sweden|european union|eu\b|berlin|paris|amsterdam|madrid|barcelona|lisbon|dublin|brussels|vienna|stockholm|helsinki|rome|milan/i.test(locationText)) {
+    return "EUR";
+  }
+
+  return "USD";
+}
+
 function normalizeJob(input = {}) {
   const title = String(input.title || "").trim();
   const organization = String(input.organization || "").trim();
   const applyUrl = String(input.apply_url || input.applyUrl || "").trim();
+  const location = String(input.location || "Remote").trim();
+  const salary = String(input.salary || "").trim();
   const datePosted = String(input.date_posted || input.datePosted || "").trim();
   const id =
     String(input.id || "").trim() ||
     [organization, title, datePosted || todayIso()].map(slugify).filter(Boolean).join("-");
 
   const tags = ensureArray(input.tags).map((tag) => String(tag).trim().toLowerCase());
+  const salaryCurrency = String(input.salary_currency || input.salaryCurrency || "").trim() || detectSalaryCurrency(salary, location);
 
   return {
     id,
     ref: String(input.ref || "").trim(),
     title,
     organization,
-    location: String(input.location || "Remote").trim(),
+    location,
     workplace_type: String(input.workplace_type || input.workplaceType || "").trim(),
     job_type: String(input.job_type || input.jobType || "Full-time").trim(),
-    salary: String(input.salary || "").trim(),
+    salary,
+    salary_currency: ["USD", "CAD", "EUR", "GBP", "Unknown"].includes(salaryCurrency) ? salaryCurrency : "Unknown",
     featured: Boolean(input.featured),
     sector: String(input.sector || "general").trim().toLowerCase(),
     function: String(input.function || input.role_function || "").trim().toLowerCase(),

@@ -149,11 +149,17 @@
             height: 100%;
             max-width: 100%;
             max-height: 100%;
-            padding: 16px 16px 24px;
+            padding: 24px;
             box-sizing: border-box;
             background: var(--preview-bg, #fff);
             position: relative;
             overflow: visible;
+        }
+
+        main {
+            height: calc(100vh - 4rem);
+            padding-bottom: 5.5rem;
+            box-sizing: border-box;
         }
 
         #preview-frame {
@@ -1304,7 +1310,7 @@ video {
         </div>
     </nav>
 
-    <main class="relative z-10 pt-20 px-4 h-full flex gap-4 max-w-[1800px] mx-auto" vid="30">
+    <main class="relative z-10 pt-20 px-4 flex gap-4 max-w-[1800px] mx-auto" vid="30">
         
         
         <aside class="w-1/4 flex flex-col gap-4 pb-6" vid="31">
@@ -1721,14 +1727,10 @@ ${buildScryerCaptureStyles(size.width, size.height, currentPreviewBackground || 
             previewStage.style.setProperty('--preview-ratio', String(stageRatio));
 
             const style = window.getComputedStyle(previewStage);
-            const padLeft = parseFloat(style.paddingLeft) || 0;
-            const padRight = parseFloat(style.paddingRight) || 0;
-            const padTop = parseFloat(style.paddingTop) || 0;
-            const padBottom = parseFloat(style.paddingBottom) || 0;
-            const padX = padLeft + padRight;
-            const padY = padTop + padBottom;
-            const availableWidth = Math.max(previewStage.clientWidth - padX, 0);
-            const availableHeight = Math.max(previewStage.clientHeight - padY, 0);
+            const padX = parseFloat(style.paddingLeft) + parseFloat(style.paddingRight);
+            const padY = parseFloat(style.paddingTop) + parseFloat(style.paddingBottom);
+            const availableWidth = previewStage.clientWidth - padX;
+            const availableHeight = previewStage.clientHeight - padY;
             const fitScale = Math.min(availableWidth / size.width, availableHeight / size.height, 1);
             const mode = zoomModes[previewZoomIndex];
             const scale = mode === 'fit' ? fitScale : Math.min(mode, fitScale);
@@ -1736,8 +1738,8 @@ ${buildScryerCaptureStyles(size.width, size.height, currentPreviewBackground || 
             const offsetTop = (availableHeight - size.height * scale) / 2;
             previewFrame.style.width = `${size.width}px`;
             previewFrame.style.height = `${size.height}px`;
-            previewFrame.style.left = `${offsetLeft + padLeft}px`;
-            previewFrame.style.top = `${offsetTop + padTop}px`;
+            previewFrame.style.left = `${offsetLeft + parseFloat(style.paddingLeft)}px`;
+            previewFrame.style.top = `${offsetTop + parseFloat(style.paddingTop)}px`;
             previewFrame.style.transform = `scale(${scale})`;
             previewScaleLabel.textContent = mode === 'fit'
                 ? `Scale: fit ${Math.round(scale * 100)}%`

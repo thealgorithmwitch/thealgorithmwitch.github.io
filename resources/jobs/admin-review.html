@@ -84,14 +84,24 @@
     }
     .card,
     .record-card,
-    .locked-card {
+    .locked-card,
+    .login-card {
       background: var(--surface-card);
       border: 1px solid var(--border-divider);
       padding: 28px;
     }
-    .locked-card {
+    .locked-card,
+    .login-card {
       background: var(--surface-alt);
       border-color: rgba(212, 193, 255, 0.24);
+    }
+    .login-wrap {
+      min-height: 48vh;
+      display: grid;
+      place-items: center;
+    }
+    .login-card {
+      width: min(100%, 520px);
     }
     .admin-note {
       color: var(--accent-lavender);
@@ -200,7 +210,8 @@
       font-size: 0.7rem;
       margin-bottom: 8px;
     }
-    textarea {
+    textarea,
+    input[type="password"] {
       width: 100%;
       border: 1px solid var(--border-divider);
       background: transparent;
@@ -209,10 +220,13 @@
       font: inherit;
       outline: none;
       transition: var(--transition);
+    }
+    textarea {
       min-height: 88px;
       resize: vertical;
     }
-    textarea:focus {
+    textarea:focus,
+    input[type="password"]:focus {
       border-color: var(--accent-chartreuse);
       box-shadow: inset 0 0 0 1px var(--accent-chartreuse);
     }
@@ -293,13 +307,32 @@
       <section id="locked-state" class="locked-card" style="display:none;">
         <div class="eyebrow">Locked</div>
         <h3 style="font-family: var(--font-serif); font-size: 2rem; margin-top: 10px;">Admin review is not configured on this device.</h3>
-        <p style="color: var(--ink-secondary); margin-top: 12px;">Add the backend URL and admin token in <code>jobs/scripts/jobs-backend-config.js</code> before using this console.</p>
+        <p style="color: var(--ink-secondary); margin-top: 12px;">Add the backend URL in <code>jobs/scripts/jobs-backend-config.js</code> before using this console.</p>
+      </section>
+
+      <section id="login-state" class="login-wrap" style="display:none;">
+        <div class="login-card">
+          <div class="eyebrow">Admin Access</div>
+          <h3 style="font-family: var(--font-serif); font-size: 2rem; margin-top: 10px;">Unlock</h3>
+          <p style="color: var(--ink-secondary); margin-top: 12px;">Enter the admin password for this backend to load the private review folders.</p>
+          <div style="margin-top: 18px;">
+            <label for="admin-password">Password</label>
+            <input id="admin-password" type="password" placeholder="Enter admin password">
+          </div>
+          <div class="actions">
+            <button id="unlock-button" type="button" class="btn-primary">Unlock</button>
+          </div>
+          <div id="login-message" class="status-message error" style="margin-top:16px;"></div>
+        </div>
       </section>
 
       <section id="console-shell" style="display:none;">
         <div id="status-message" class="status-message"></div>
 
         <section class="card">
+          <div class="actions" style="justify-content:flex-end; margin-top:0; margin-bottom:18px;">
+            <button id="logout-button" type="button" class="btn-secondary">Logout</button>
+          </div>
           <div class="folders" id="folder-tabs">
             <button class="folder-tab active" data-tab="jobs">Jobs</button>
             <button class="folder-tab" data-tab="talent">Talent</button>
@@ -370,7 +403,7 @@
   <script src="./scripts/jobs-backend-config.js"></script>
   <script>
     const JOBS_BACKEND_URL = window.JOBS_BACKEND_CONFIG?.backendUrl || "";
-    const JOBS_ADMIN_TOKEN = window.JOBS_BACKEND_CONFIG?.adminToken || "";
+    const TOKEN_STORAGE_KEY = "jobs_admin_token";
 
     const TAB_CONFIG = {
       jobs: {
@@ -421,8 +454,13 @@
     };
 
     const lockedState = document.getElementById("locked-state");
+    const loginState = document.getElementById("login-state");
     const consoleShell = document.getElementById("console-shell");
     const statusMessage = document.getElementById("status-message");
+    const loginMessage = document.getElementById("login-message");
+    const passwordInput = document.getElementById("admin-password");
+    const unlockButton = document.getElementById("unlock-button");
+    const logoutButton = document.getElementById("logout-button");
 
     function escapeHtml(value) {
       return String(value || "")
@@ -453,15 +491,60 @@
       statusMessage.classList.remove("error");
     }
 
-    function isConfigured() {
-      return Boolean(JOBS_BACKEND_URL.trim() && JOBS_ADMIN_TOKEN.trim());
+    function showLoginMessage(message) {
+      loginMessage.textContent = message;
+      loginMessage.style.display = message ? "block" : "none";
+    }
+
+    function getStoredToken() {
+      return window.localStorage.getItem(TOKEN_STORAGE_KEY) || "";
+    }
+
+    function setStoredToken(token) {
+      window.localStorage.setItem(TOKEN_STORAGE_KEY, token);
+    }
+
+    function clearStoredToken() {
+      window.localStorage.removeItem(TOKEN_STORAGE_KEY);
+    }
+
+    function isBackendConfigured() {
+      return Boolean(JOBS_BACKEND_URL.trim());
+    }
+
+    function hasToken() {
+      return Boolean(getStoredToken().trim());
+    }
+
+    function showLockedState() {
+      lockedState.style.display = "block";
+      loginState.style.display = "none";
+      consoleShell.style.display = "none";
+    }
+
+    function showLoginState(message) {
+      lockedState.style.display = "none";
+      loginState.style.display = "grid";
+      consoleShell.style.display = "none";
+      clearStatus();
+      showLoginMessage(message || "");
+      passwordInput.value = "";
+    }
+
+    function showConsoleState() {
+      lockedState.style.display = "none";
+      loginState.style.display = "none";
+      consoleShell.style.display = "block";
+      showLoginMessage("");
     }
 
     async function requestAdmin(action, extra) {
+      const token = getStoredToken();
       const payload = Object.assign(
         {
           action,
-          adminToken: JOBS_ADMIN_TOKEN
+          token,
+          adminToken: token
         },
         extra || {}
       );
@@ -471,9 +554,17 @@
         body: JSON.stringify(payload)
       });
       const data = await response.json();
+
       if (!response.ok || !data.ok) {
+        if (data && /unauthorized/i.test(String(data.error || ""))) {
+          clearStoredToken();
+          state.loadedTabs.clear();
+          state.items = {};
+          showLoginState("Incorrect password. Try again.");
+        }
         throw new Error(data && data.error ? data.error : `${action} failed.`);
       }
+
       return data;
     }
 
@@ -622,7 +713,9 @@
         renderTab(tabKey, state.items[tabKey]);
       } catch (error) {
         panel.innerHTML = `<div class="empty-state">${escapeHtml(error.message || "Unable to load this folder.")}</div>`;
-        setStatus(error.message || "Unable to load admin folder.", true);
+        if (String(error.message || "").toLowerCase() !== "unauthorized.") {
+          setStatus(error.message || "Unable to load admin folder.", true);
+        }
       }
     }
 
@@ -634,7 +727,7 @@
         panel.classList.toggle("active", panel.id === `tab-${tabKey}`);
       });
       clearStatus();
-      if (isConfigured()) {
+      if (isBackendConfigured() && hasToken()) {
         loadTab(tabKey);
       }
     }
@@ -663,7 +756,9 @@
           await loadTab("rejected", true);
         }
       } catch (error) {
-        setStatus(error.message || "Unable to update this record.", true);
+        if (String(error.message || "").toLowerCase() !== "unauthorized.") {
+          setStatus(error.message || "Unable to update this record.", true);
+        }
       }
     }
 
@@ -679,10 +774,37 @@
       handleAction(button.dataset.tab, button.dataset.action, button.dataset.id);
     });
 
-    if (!isConfigured()) {
-      lockedState.style.display = "block";
+    unlockButton.addEventListener("click", () => {
+      const token = passwordInput.value.trim();
+      if (!token) {
+        showLoginMessage("Enter a password to continue.");
+        return;
+      }
+      setStoredToken(token);
+      state.loadedTabs.clear();
+      state.items = {};
+      showConsoleState();
+      activateTab("jobs");
+    });
+
+    passwordInput.addEventListener("keydown", (event) => {
+      if (event.key === "Enter") {
+        event.preventDefault();
+        unlockButton.click();
+      }
+    });
+
+    logoutButton.addEventListener("click", () => {
+      clearStoredToken();
+      window.location.reload();
+    });
+
+    if (!isBackendConfigured()) {
+      showLockedState();
+    } else if (!hasToken()) {
+      showLoginState();
     } else {
-      consoleShell.style.display = "grid";
+      showConsoleState();
       activateTab("jobs");
     }
   </script>

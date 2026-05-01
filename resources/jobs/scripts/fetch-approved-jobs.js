@@ -1,8 +1,12 @@
 const { dedupeJobs, normalizeJob, writeJson, JOBS_FILE } = require("./job-utils");
 
+const EMBEDDED_FALLBACK_URL =
+  "https://script.google.com/macros/s/AKfycbzOziSxt4U5KDHS1uRTzhY9zuP1lxZofCbrRYBzK6PET1DjCjvxBQ3Gc7W-SRYgKcI2/exec";
+
 const APPS_SCRIPT_URL =
   process.env.JOBS_APPROVED_EXPORT_URL ||
-  "https://script.google.com/macros/s/AKfycbzOziSxt4U5KDHS1uRTzhY9zuP1lxZofCbrRYBzK6PET1DjCjvxBQ3Gc7W-SRYgKcI2/exec";
+  process.env.JOBS_BACKEND_URL ||
+  EMBEDDED_FALLBACK_URL;
 
 function ensureExportShape(payload) {
   if (!payload || typeof payload !== "object") {
@@ -28,6 +32,9 @@ function validateNormalizedJob(job) {
 }
 
 async function fetchApprovedJobs() {
+  if (!APPS_SCRIPT_URL) {
+    throw new Error("Missing Apps Script URL. Set JOBS_APPROVED_EXPORT_URL or JOBS_BACKEND_URL before running this script.");
+  }
   const response = await fetch(APPS_SCRIPT_URL, {
     method: "POST",
     headers: {

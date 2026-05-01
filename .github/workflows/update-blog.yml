@@ -1,6 +1,7 @@
 name: Update Blog From Substack
 
 on:
+  push:
   workflow_dispatch:
   schedule:
     - cron: '17 11 * * *'
@@ -24,15 +25,31 @@ jobs:
           node-version: '20'
 
       - name: Generate blog from Substack feed
-        run: node generate-blog.mjs
+        run: |
+          set -euo pipefail
+          echo "[workflow] Generating blog from Substack RSS"
+          node generate-blog.mjs
 
       - name: Finalize generated blog subpages
-        run: node finalize_blog_subpages.mjs
+        run: |
+          set -euo pipefail
+          echo "[workflow] Finalizing generated blog subpages"
+          node finalize_blog_subpages.mjs
+
+      - name: Preserve existing archive on RSS failure
+        if: failure()
+        run: |
+          echo "[workflow] RSS/build failed. Re-rendering from existing posts.json without overwriting feed data."
+          node generate-blog.mjs --from-posts-json || true
+          node finalize_blog_subpages.mjs || true
+          exit 1
 
       - name: Check for changes
         id: changes
         run: |
-          if git diff --quiet && git diff --cached --quiet; then
+          echo "[workflow] Git status after generation:"
+          git status --short
+          if [ -z "$(git status --porcelain)" ]; then
             echo "changed=false" >> "$GITHUB_OUTPUT"
           else
             echo "changed=true" >> "$GITHUB_OUTPUT"

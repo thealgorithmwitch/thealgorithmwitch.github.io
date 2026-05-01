@@ -773,7 +773,10 @@ async function captureElementsPreserveLayout(page, selector, outputDir, payload)
         "✨": { type: "text", value: "✦" },
         "💖": { type: "text", value: "♥" },
         "🎯": { type: "text", value: "◎" },
-        "🌱": { type: "text", value: "⌁" },
+        "🌱": {
+          type: "svg",
+          value: '<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12 20c0-4.6 1.2-8.1 3.58-10.52C17.35 7.7 19.85 6.5 23 6.5c0 3.16-1.2 5.66-2.98 7.42C17.6 16.3 14.1 17.5 9.5 17.5" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/><path d="M12 20c0-3.7-.92-6.55-2.77-8.52C7.38 9.53 4.82 8.5 1 8.5c0 3.17 1.03 5.73 2.98 7.58C5.95 18.03 8.8 19 12.5 19" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/><path d="M12 21V11.5" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>'
+        },
         "🔮": { type: "text", value: "◌" },
         "🧠": { type: "text", value: "◉" }
       };

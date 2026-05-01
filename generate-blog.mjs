@@ -15,6 +15,7 @@ const ARCHIVE_SOURCE_PATH = path.join(OUTPUT_DIR, 'index-blog.html');
 const ARCHIVE_OUTPUT_PATH = path.join(OUTPUT_DIR, 'index.html');
 const FALLBACK_OG = `${SITE_ORIGIN}/og.jpg?v=4`;
 const SECTION_THEMES = ['purple', 'cyan', 'amber', 'fuchsia'];
+const REQUEST_TIMEOUT_MS = 20000;
 
 const TITLE_TO_SLUG = new Map([
   ['The Ethics of Algorithmic Visibility', 'ethics-of-algorithmic-visibility'],
@@ -70,7 +71,11 @@ const CATEGORY_THEME_MAP = {
 
 function fetchText(url) {
   return new Promise((resolve, reject) => {
-    https.get(url, (response) => {
+    const request = https.get(url, {
+      headers: {
+        'User-Agent': 'thealgorithmwitch-blog-generator/1.0 (+https://thealgorithmwitch.com)',
+      },
+    }, (response) => {
       if (response.statusCode && response.statusCode >= 400) {
         reject(new Error(`Feed request failed with status ${response.statusCode}`));
         response.resume();
@@ -80,7 +85,11 @@ function fetchText(url) {
       response.setEncoding('utf8');
       response.on('data', (chunk) => { body += chunk; });
       response.on('end', () => resolve(body));
-    }).on('error', reject);
+    });
+    request.setTimeout(REQUEST_TIMEOUT_MS, () => {
+      request.destroy(new Error(`Feed request timed out after ${REQUEST_TIMEOUT_MS}ms`));
+    });
+    request.on('error', reject);
   });
 }
 
@@ -635,6 +644,7 @@ async function main() {
   let posts;
 
   if (options.fromPostsJson) {
+    console.log(`[blog] Rendering from existing posts.json at ${POSTS_JSON_PATH}`);
     const storedPosts = JSON.parse(await fs.readFile(POSTS_JSON_PATH, 'utf8'));
 
     if (!Array.isArray(storedPosts) || !storedPosts.length) {
@@ -680,10 +690,21 @@ async function main() {
       throw new Error('No valid posts remained after posts.json normalization.');
     }
   } else {
-    const feed = await fetchText(FEED_URL);
+    console.log(`[blog] Fetching Substack RSS from ${FEED_URL}`);
+    let feed;
+    try {
+      feed = await fetchText(FEED_URL);
+    } catch (error) {
+      console.error(`[blog] RSS fetch failed: ${error.message}`);
+      console.error(`[blog] Preserving existing posts.json at ${POSTS_JSON_PATH}.`);
+      throw new Error(`RSS fetch failed: ${error.message}`);
+    }
+
+    console.log(`[blog] RSS bytes received: ${feed.length}`);
     const items = [...feed.matchAll(/<item>([\s\S]*?)<\/item>/g)].map((match) => match[1]);
 
     if (!items.length) throw new Error('No posts were found in the Substack feed.');
+    console.log(`[blog] Feed items found: ${items.length}`);
 
     const rawPosts = items.map((item) => ({
       title: decodeHtml(getTagValue(item, 'title')),
@@ -694,32 +715,33 @@ async function main() {
       contentHtml: getTagValue(item, 'content:encoded'),
     }));
 
-const normalized = rawPosts.reduce((acc, post) => {
-  try {
-    if (!post.contentHtml) throw new Error('missing full HTML body');
+    const normalized = rawPosts.reduce((acc, post) => {
+      try {
+        if (!post.contentHtml) throw new Error('missing full HTML body');
 
-    const websiteSlug = TITLE_TO_SLUG.get(post.title) || slugify(post.title);
+        const websiteSlug = TITLE_TO_SLUG.get(post.title) || slugify(post.title);
 
-    acc.push({
-      title: post.title,
-      excerpt: safeExcerpt(post.description, post.contentHtml, post.title),
-      published_at: post.publishedAt,
-      cover_image: post.coverImage || '',
-      body_html: post.contentHtml,
-      original_substack_url: post.originalUrl,
-      original_substack_slug: stripQuery(post.originalUrl).split('/').pop() || '',
-      website_slug: websiteSlug,
-    });
-  } catch (error) {
-    console.warn(`Skipping malformed feed item "${post.title || 'Untitled'}": ${error.message}`);
-  }
+        acc.push({
+          title: post.title,
+          excerpt: safeExcerpt(post.description, post.contentHtml, post.title),
+          published_at: post.publishedAt,
+          cover_image: post.coverImage || '',
+          body_html: post.contentHtml,
+          original_substack_url: post.originalUrl,
+          original_substack_slug: stripQuery(post.originalUrl).split('/').pop() || '',
+          website_slug: websiteSlug,
+        });
+      } catch (error) {
+        console.warn(`Skipping malformed feed item "${post.title || 'Untitled'}": ${error.message}`);
+      }
 
-  return acc;
-}, []).sort((a, b) => new Date(b.published_at) - new Date(a.published_at));
+      return acc;
+    }, []).sort((a, b) => new Date(b.published_at) - new Date(a.published_at));
 
     if (!normalized.length) {
       throw new Error('No valid posts remained after feed normalization.');
     }
+    console.log(`[blog] Valid feed items after normalization: ${normalized.length}`);
 
     const linkMap = new Map(
       normalized.map((post) => [stripQuery(post.original_substack_url), `/blog/${post.website_slug}.html`])
@@ -771,6 +793,7 @@ const normalized = rawPosts.reduce((acc, post) => {
     }
 
     await fs.writeFile(POSTS_JSON_PATH, `${JSON.stringify(posts, null, 2)}\n`);
+    console.log(`[blog] Wrote ${posts.length} posts to ${POSTS_JSON_PATH}`);
   }
 
   const renderPosts = options.only.size
@@ -829,6 +852,7 @@ const tocLinks = post.toc.length
     });
 
     await fs.writeFile(path.join(OUTPUT_DIR, `${post.website_slug}.html`), html);
+    console.log(`[blog] Wrote /blog/${post.website_slug}.html`);
   }
 
   const shouldUpdateArchive = options.only.size === 0;
@@ -838,6 +862,7 @@ const tocLinks = post.toc.length
     const archiveWithData = injectArchiveData(archiveSource, posts);
     await fs.writeFile(ARCHIVE_SOURCE_PATH, archiveWithData);
     await fs.writeFile(ARCHIVE_OUTPUT_PATH, archiveWithData);
+    console.log(`[blog] Updated archive data in ${ARCHIVE_SOURCE_PATH} and ${ARCHIVE_OUTPUT_PATH}`);
   }
 }
 

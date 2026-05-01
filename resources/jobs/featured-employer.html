@@ -1,0 +1,492 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Become a Featured Employer | The Algorithm Witch</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,100..1000;1,9..40,100..1000&family=Instrument+Serif:ital@0;1&family=Space+Mono:ital,wght@0,400;0,700;1,400;1,700&display=swap');
+
+    :root {
+      --bg-paper: #0A1F15;
+      --ink-primary: #CFFBE3;
+      --ink-secondary: rgba(207, 251, 227, 0.7);
+      --ink-tertiary: rgba(207, 251, 227, 0.4);
+      --accent-chartreuse: #A8FF3E;
+      --accent-lavender: #D4C1FF;
+      --surface-card: #0D261A;
+      --surface-alt: #1A1429;
+      --border-divider: #163628;
+      --font-serif: 'Instrument Serif', serif;
+      --font-sans: 'DM Sans', sans-serif;
+      --font-mono: 'Space Mono', monospace;
+      --transition: 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: var(--bg-paper);
+      color: var(--ink-primary);
+      font-family: var(--font-sans);
+      padding: 0 24px 72px;
+    }
+    .shell { max-width: 1120px; margin: 0 auto; }
+    nav {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 16px;
+      padding: 24px 0;
+      border-bottom: 1px solid var(--border-divider);
+      flex-wrap: wrap;
+    }
+    .logo {
+      text-decoration: none;
+      color: var(--ink-primary);
+      display: flex;
+      align-items: baseline;
+      gap: 10px;
+    }
+    .logo h1 {
+      font-family: var(--font-serif);
+      font-size: 2rem;
+      font-weight: 400;
+    }
+    .logo span,
+    .eyebrow,
+    label,
+    .meta,
+    details summary {
+      font-family: var(--font-mono);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+    .logo span,
+    .eyebrow {
+      color: var(--accent-chartreuse);
+      font-size: 0.75rem;
+    }
+    .hero {
+      display: grid;
+      grid-template-columns: 0.92fr 1.08fr;
+      gap: 32px;
+      padding-top: 56px;
+      align-items: start;
+    }
+    .hero h2 {
+      font-family: var(--font-serif);
+      font-size: clamp(2.8rem, 5vw, 4.4rem);
+      line-height: 0.95;
+      margin: 12px 0 20px;
+    }
+    .hero p {
+      color: var(--ink-secondary);
+      font-size: 1.05rem;
+      max-width: 540px;
+    }
+    .card,
+    .note,
+    .summary-panel {
+      background: var(--surface-card);
+      border: 1px solid var(--border-divider);
+      padding: 32px;
+    }
+    .note {
+      margin-top: 24px;
+      background: var(--surface-alt);
+      border-color: rgba(212, 193, 255, 0.24);
+    }
+    .note ul {
+      margin-top: 14px;
+      padding-left: 18px;
+      color: var(--ink-secondary);
+    }
+    form {
+      display: grid;
+      gap: 18px;
+    }
+    .two-col {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 18px;
+    }
+    label {
+      display: block;
+      color: var(--ink-secondary);
+      font-size: 0.7rem;
+      margin-bottom: 8px;
+    }
+    input,
+    textarea,
+    select {
+      width: 100%;
+      border: 1px solid var(--border-divider);
+      background: transparent;
+      color: var(--ink-primary);
+      padding: 14px 16px;
+      font: inherit;
+      outline: none;
+      transition: var(--transition);
+    }
+    textarea {
+      min-height: 120px;
+      resize: vertical;
+    }
+    input:focus,
+    textarea:focus,
+    select:focus {
+      border-color: var(--accent-chartreuse);
+      box-shadow: inset 0 0 0 1px var(--accent-chartreuse);
+    }
+    .actions {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      align-items: center;
+      margin-top: 8px;
+    }
+    .btn-primary,
+    .btn-secondary {
+      border: 1px solid var(--accent-chartreuse);
+      padding: 12px 18px;
+      font-family: var(--font-mono);
+      font-size: 0.75rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      cursor: pointer;
+      transition: var(--transition);
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+    .btn-primary {
+      background: var(--accent-chartreuse);
+      color: var(--bg-paper);
+    }
+    .btn-secondary {
+      background: transparent;
+      color: var(--accent-chartreuse);
+      border-color: var(--border-divider);
+    }
+    .btn-primary:hover,
+    .btn-secondary:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 0 15px rgba(168, 255, 62, 0.25);
+    }
+    .error-list,
+    .success-message {
+      display: none;
+      margin-top: 18px;
+      padding: 18px;
+      border: 1px solid var(--border-divider);
+    }
+    .success-message { background: rgba(168, 255, 62, 0.06); }
+    .error-list {
+      background: rgba(212, 193, 255, 0.08);
+      border-color: rgba(212, 193, 255, 0.4);
+    }
+    details {
+      margin-top: 24px;
+    }
+    details summary {
+      cursor: pointer;
+      color: var(--accent-lavender);
+      font-size: 0.72rem;
+    }
+    .summary-panel {
+      margin-top: 12px;
+    }
+    .summary-panel pre {
+      margin-top: 14px;
+      padding: 18px;
+      border: 1px solid var(--border-divider);
+      background: rgba(0, 0, 0, 0.22);
+      white-space: pre-wrap;
+      word-break: break-word;
+      overflow-x: auto;
+      font-family: var(--font-mono);
+      font-size: 0.78rem;
+      line-height: 1.6;
+    }
+    .meta {
+      color: var(--ink-tertiary);
+      font-size: 0.68rem;
+      margin-top: 18px;
+    }
+    @media (max-width: 920px) {
+      .hero,
+      .two-col {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="shell">
+    <nav>
+      <a class="logo" href="./">
+        <h1>Fresh Roles</h1>
+        <span>The Algorithm Witch</span>
+      </a>
+      <a href="./" class="btn-secondary">Back to Board</a>
+    </nav>
+
+    <section class="hero">
+      <div>
+        <div class="eyebrow">Featured Employers</div>
+        <h2>Apply to become a featured employer.</h2>
+        <p>Applications are reviewed before any employer is featured. This is for organizations that want stronger visibility with aligned job seekers across climate, clean energy, advocacy, nonprofit, and sustainability work.</p>
+
+        <div class="note">
+          <div class="eyebrow" style="color: var(--accent-lavender);">What happens next</div>
+          <ul>
+            <li>Applications are reviewed before any employer is featured.</li>
+            <li>We look for alignment with the audience and the quality of the roles being shared.</li>
+            <li>Featured placement is intended for organizations that want stronger visibility with mission-aligned candidates.</li>
+          </ul>
+        </div>
+      </div>
+
+      <div>
+        <div class="card">
+          <form id="featured-employer-form" novalidate>
+            <div class="two-col">
+              <div>
+                <label for="organization_name">Organization Name</label>
+                <input id="organization_name" name="organization_name" type="text" required placeholder="Organization name">
+              </div>
+              <div>
+                <label for="website">Website</label>
+                <input id="website" name="website" type="url" required placeholder="https://organization.org">
+              </div>
+            </div>
+
+            <div class="two-col">
+              <div>
+                <label for="contact_name">Hiring Contact Name</label>
+                <input id="contact_name" name="contact_name" type="text" required placeholder="Contact name">
+              </div>
+              <div>
+                <label for="work_email">Work Email</label>
+                <input id="work_email" name="work_email" type="email" required placeholder="name@organization.org">
+              </div>
+            </div>
+
+            <div class="two-col">
+              <div>
+                <label for="organization_type">Organization Type</label>
+                <input id="organization_type" name="organization_type" type="text" placeholder="Nonprofit, startup, agency, foundation">
+              </div>
+              <div>
+                <label for="sector">Sector</label>
+                <input id="sector" name="sector" type="text" placeholder="Climate, clean energy, sustainability">
+              </div>
+            </div>
+
+            <div class="two-col">
+              <div>
+                <label for="location">Location / Remote Hiring</label>
+                <input id="location" name="location" type="text" placeholder="Chicago, IL / Remote">
+              </div>
+              <div>
+                <label for="open_roles_url">Current Open Roles URL</label>
+                <input id="open_roles_url" name="open_roles_url" type="url" placeholder="https://organization.org/careers">
+              </div>
+            </div>
+
+            <div>
+              <label for="roles_hired_for">Roles You Usually Hire For</label>
+              <textarea id="roles_hired_for" name="roles_hired_for" placeholder="Design, marketing, policy, operations, engineering, research"></textarea>
+            </div>
+
+            <div>
+              <label for="why_featured">Why should your organization be featured?</label>
+              <textarea id="why_featured" name="why_featured" required placeholder="Tell us why your organization would be a strong fit for this audience."></textarea>
+            </div>
+
+            <div class="two-col">
+              <div>
+                <label for="budget_interest">Budget / Sponsorship Interest (Optional)</label>
+                <input id="budget_interest" name="budget_interest" type="text" placeholder="Optional">
+              </div>
+              <div>
+                <label for="notes">Notes</label>
+                <input id="notes" name="notes" type="text" placeholder="Anything helpful for the review">
+              </div>
+            </div>
+
+            <div class="actions">
+              <button type="submit" class="btn-primary">Submit for Review</button>
+              <a href="./" class="btn-secondary">Back to Board</a>
+            </div>
+          </form>
+
+          <div id="error-list" class="error-list"></div>
+          <div id="success-message" class="success-message"></div>
+
+          <details id="summary-details">
+            <summary>View submission summary</summary>
+            <div class="summary-panel">
+              <div class="eyebrow">Submission Preview</div>
+              <pre id="summary-output"></pre>
+              <div class="actions">
+                <button id="copy-summary" type="button" class="btn-secondary">Copy Submission Details</button>
+              </div>
+            </div>
+          </details>
+
+          <div class="meta">Applications are reviewed before any employer is featured.</div>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <script src="./scripts/jobs-backend-config.js"></script>
+  <script>
+    const JOBS_BACKEND_URL = window.JOBS_BACKEND_CONFIG?.backendUrl || "";
+    const form = document.getElementById("featured-employer-form");
+    const errorList = document.getElementById("error-list");
+    const successMessage = document.getElementById("success-message");
+    const summaryDetails = document.getElementById("summary-details");
+    const summaryOutput = document.getElementById("summary-output");
+    const copySummary = document.getElementById("copy-summary");
+
+    function isValidUrl(value) {
+      if (!value) return true;
+      try {
+        const url = new URL(value);
+        return ["http:", "https:"].includes(url.protocol);
+      } catch (error) {
+        return false;
+      }
+    }
+
+    function isValidEmail(value) {
+      return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(value || "").trim());
+    }
+
+    function slugify(value) {
+      return String(value || "")
+        .toLowerCase()
+        .trim()
+        .replace(/[^a-z0-9]+/g, "-")
+        .replace(/^-+|-+$/g, "");
+    }
+
+    function buildSubmission() {
+      const formData = new FormData(form);
+      const organizationName = String(formData.get("organization_name") || "").trim();
+      const now = new Date().toISOString();
+      return {
+        id: [organizationName, new Date().toISOString().slice(0, 10)].map(slugify).filter(Boolean).join("-"),
+        organization_name: organizationName,
+        website: String(formData.get("website") || "").trim(),
+        contact_name: String(formData.get("contact_name") || "").trim(),
+        work_email: String(formData.get("work_email") || "").trim(),
+        organization_type: String(formData.get("organization_type") || "").trim(),
+        sector: String(formData.get("sector") || "").trim(),
+        location: String(formData.get("location") || "").trim(),
+        roles_hired_for: String(formData.get("roles_hired_for") || "").trim(),
+        open_roles_url: String(formData.get("open_roles_url") || "").trim(),
+        why_featured: String(formData.get("why_featured") || "").trim(),
+        budget_interest: String(formData.get("budget_interest") || "").trim(),
+        notes: String(formData.get("notes") || "").trim(),
+        status: "pending",
+        submitted_at: now
+      };
+    }
+
+    function validateSubmission(submission) {
+      const errors = [];
+      if (!submission.organization_name) errors.push("Organization name is required.");
+      if (!submission.website || !isValidUrl(submission.website)) errors.push("Website must be a valid URL.");
+      if (!submission.contact_name) errors.push("Hiring contact name is required.");
+      if (!submission.work_email || !isValidEmail(submission.work_email)) errors.push("Work email must be valid.");
+      if (submission.open_roles_url && !isValidUrl(submission.open_roles_url)) errors.push("Current open roles URL must be valid when provided.");
+      if (!submission.why_featured) errors.push("Tell us why your organization should be featured.");
+      return errors;
+    }
+
+    async function submitFeaturedEmployerToBackend(submission) {
+      if (!JOBS_BACKEND_URL.trim()) {
+        return { ok: false, placeholder: true };
+      }
+
+      const response = await fetch(JOBS_BACKEND_URL, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          action: "submitFeaturedEmployer",
+          payload: submission
+        })
+      });
+
+      const data = await response.json();
+      if (!response.ok || !data.ok) {
+        throw new Error(data && data.error ? data.error : "Featured employer application failed.");
+      }
+      return data;
+    }
+
+    form.addEventListener("submit", async (event) => {
+      event.preventDefault();
+      errorList.style.display = "none";
+      successMessage.style.display = "none";
+
+      const submission = buildSubmission();
+      const errors = validateSubmission(submission);
+
+      if (errors.length) {
+        errorList.innerHTML = errors.map((error) => `<div>${error}</div>`).join("");
+        errorList.style.display = "block";
+        return;
+      }
+
+      summaryOutput.textContent = JSON.stringify(submission, null, 2);
+      try {
+        const result = await submitFeaturedEmployerToBackend(submission);
+        if (result.placeholder) {
+          summaryDetails.open = true;
+          successMessage.innerHTML = `
+            <div class="eyebrow">Review Mode</div>
+            <div style="font-family: var(--font-serif); font-size: 2rem; margin: 10px 0;">This submission tool is temporarily in review mode.</div>
+            <div style="color: var(--ink-secondary);">View the submission summary below, copy the details, and send them manually.</div>
+          `;
+        } else {
+          successMessage.innerHTML = `
+            <div class="eyebrow">Submitted</div>
+            <div style="font-family: var(--font-serif); font-size: 2rem; margin: 10px 0;">Your featured employer application was sent for review.</div>
+            <div style="color: var(--ink-secondary);">Submission id: <code>${result.id || submission.id}</code>. Applications are reviewed before any employer is featured.</div>
+          `;
+        }
+        successMessage.style.display = "block";
+      } catch (error) {
+        console.error(error);
+        summaryDetails.open = true;
+        errorList.innerHTML = `<div>${error.message || "Featured employer application failed."}</div><div style="margin-top:8px;color:var(--ink-secondary);">This submission tool is in review mode. Copy these details and send them manually.</div>`;
+        errorList.style.display = "block";
+      }
+    });
+
+    copySummary.addEventListener("click", async () => {
+      try {
+        await navigator.clipboard.writeText(summaryOutput.textContent);
+        copySummary.textContent = "Copied";
+        window.setTimeout(() => {
+          copySummary.textContent = "Copy Submission Details";
+        }, 1600);
+      } catch (error) {
+        copySummary.textContent = "Copy Failed";
+        window.setTimeout(() => {
+          copySummary.textContent = "Copy Submission Details";
+        }, 1600);
+      }
+    });
+  </script>
+</body>
+</html>

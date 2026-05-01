@@ -1,0 +1,1718 @@
+
+<html lang="en" vid="0"><head vid="1">
+    <meta charset="UTF-8" vid="2">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" vid="3">
+    <title vid="4">Content Signal Agenda | Algorithm Witch</title>
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com" vid="6">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="" vid="7">
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@400;700;900&amp;family=Inter:wght@300;400;500;600&amp;family=Playfair+Display:ital,wght@0,400;0,700;1,400&amp;family=JetBrains+Mono:wght@400;700&amp;display=swap" rel="stylesheet" vid="8">
+    <script src="https://unpkg.com/@phosphor-icons/web" vid="9"></script>
+    <style vid="10">
+        :root {
+            --cream: #faf9f6;
+            --purple-deep: #2e1065;
+            --purple-accent: #8b5cf6;
+            --gold: #c9a227;
+            --gold-muted: #d4af37;
+            --black: #05020a;
+            --border: rgba(92, 45, 145, 0.15);
+        }
+
+        @page {
+            size: 8.5in 11in;
+            margin: 0;
+        }
+
+        body {
+            background-color: #f1f1f1;
+            font-family: 'Inter', sans-serif;
+            color: var(--black);
+            margin: 0;
+            padding: 0;
+        }
+
+        .page {
+            width: 8.5in;
+            height: 11in;
+            background: var(--cream);
+            margin: 20px auto;
+            position: relative;
+            box-sizing: border-box;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            padding: 0.5in;
+            box-shadow: 0 0 20px rgba(0,0,0,0.1);
+            page-break-after: always;
+        }
+
+        .font-magical { font-family: 'Cinzel Decorative', serif; }
+        .font-serif { font-family: 'Playfair Display', serif; }
+        .font-mono { font-family: 'JetBrains Mono', monospace; }
+
+        .print-btn {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: var(--purple-deep);
+            color: white;
+            padding: 10px 20px;
+            border-radius: 6px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 12px;
+            cursor: pointer;
+            z-index: 1000;
+            border: 1px solid var(--gold);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .editable {
+            border-bottom: 1px solid var(--border);
+            outline: none;
+            transition: all 0.2s;
+            min-height: 1.2em;
+        }
+
+        .editable:focus {
+            border-bottom-color: var(--purple-accent);
+            background: rgba(139, 92, 246, 0.05);
+        }
+
+        .box-editable {
+            border: 1px solid var(--border);
+            padding: 8px;
+            min-height: 60px;
+            outline: none;
+            font-size: 11px;
+            line-height: 1.6;
+        }
+
+        .box-editable:focus {
+            border-color: var(--purple-accent);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 9px;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: var(--purple-deep);
+            text-align: left;
+            padding: 8px 4px;
+            border-bottom: 2px solid var(--purple-deep);
+        }
+
+        td {
+            padding: 8px 4px;
+            border-bottom: 1px solid var(--border);
+            vertical-align: middle;
+            font-size: 11px;
+        }
+
+        .pill-badge {
+            font-size: 9px;
+            font-family: 'JetBrains Mono', monospace;
+            padding: 2px 8px;
+            border: 1px solid var(--purple-deep);
+            color: var(--purple-deep);
+            display: inline-block;
+            text-transform: uppercase;
+        }
+
+        .sigil-mark {
+            position: absolute;
+            color: var(--gold-muted);
+            opacity: 0.4;
+            pointer-events: none;
+        }
+
+        
+        .custom-check {
+            width: 12px;
+            height: 12px;
+            border: 1px solid var(--purple-deep);
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            margin-right: 6px;
+        }
+
+        @media print {
+            .no-print { display: none !important; }
+            body { background: white; }
+            .page {
+                margin: 0;
+                box-shadow: none;
+                border: none;
+                width: 8.5in;
+                height: 11in;
+            }
+        }
+    </style>
+
+  <style type="text/css">
+*, ::before, ::after {
+  --tw-border-spacing-x: 0;
+  --tw-border-spacing-y: 0;
+  --tw-translate-x: 0;
+  --tw-translate-y: 0;
+  --tw-rotate: 0;
+  --tw-skew-x: 0;
+  --tw-skew-y: 0;
+  --tw-scale-x: 1;
+  --tw-scale-y: 1;
+  --tw-pan-x:  ;
+  --tw-pan-y:  ;
+  --tw-pinch-zoom:  ;
+  --tw-scroll-snap-strictness: proximity;
+  --tw-gradient-from-position:  ;
+  --tw-gradient-via-position:  ;
+  --tw-gradient-to-position:  ;
+  --tw-ordinal:  ;
+  --tw-slashed-zero:  ;
+  --tw-numeric-figure:  ;
+  --tw-numeric-spacing:  ;
+  --tw-numeric-fraction:  ;
+  --tw-ring-inset:  ;
+  --tw-ring-offset-width: 0px;
+  --tw-ring-offset-color: #fff;
+  --tw-ring-color: rgb(59 130 246 / 0.5);
+  --tw-ring-offset-shadow: 0 0 #0000;
+  --tw-ring-shadow: 0 0 #0000;
+  --tw-shadow: 0 0 #0000;
+  --tw-shadow-colored: 0 0 #0000;
+  --tw-blur:  ;
+  --tw-brightness:  ;
+  --tw-contrast:  ;
+  --tw-grayscale:  ;
+  --tw-hue-rotate:  ;
+  --tw-invert:  ;
+  --tw-saturate:  ;
+  --tw-sepia:  ;
+  --tw-drop-shadow:  ;
+  --tw-backdrop-blur:  ;
+  --tw-backdrop-brightness:  ;
+  --tw-backdrop-contrast:  ;
+  --tw-backdrop-grayscale:  ;
+  --tw-backdrop-hue-rotate:  ;
+  --tw-backdrop-invert:  ;
+  --tw-backdrop-opacity:  ;
+  --tw-backdrop-saturate:  ;
+  --tw-backdrop-sepia:  ;
+  --tw-contain-size:  ;
+  --tw-contain-layout:  ;
+  --tw-contain-paint:  ;
+  --tw-contain-style:  ;
+}
+
+::backdrop {
+  --tw-border-spacing-x: 0;
+  --tw-border-spacing-y: 0;
+  --tw-translate-x: 0;
+  --tw-translate-y: 0;
+  --tw-rotate: 0;
+  --tw-skew-x: 0;
+  --tw-skew-y: 0;
+  --tw-scale-x: 1;
+  --tw-scale-y: 1;
+  --tw-pan-x:  ;
+  --tw-pan-y:  ;
+  --tw-pinch-zoom:  ;
+  --tw-scroll-snap-strictness: proximity;
+  --tw-gradient-from-position:  ;
+  --tw-gradient-via-position:  ;
+  --tw-gradient-to-position:  ;
+  --tw-ordinal:  ;
+  --tw-slashed-zero:  ;
+  --tw-numeric-figure:  ;
+  --tw-numeric-spacing:  ;
+  --tw-numeric-fraction:  ;
+  --tw-ring-inset:  ;
+  --tw-ring-offset-width: 0px;
+  --tw-ring-offset-color: #fff;
+  --tw-ring-color: rgb(59 130 246 / 0.5);
+  --tw-ring-offset-shadow: 0 0 #0000;
+  --tw-ring-shadow: 0 0 #0000;
+  --tw-shadow: 0 0 #0000;
+  --tw-shadow-colored: 0 0 #0000;
+  --tw-blur:  ;
+  --tw-brightness:  ;
+  --tw-contrast:  ;
+  --tw-grayscale:  ;
+  --tw-hue-rotate:  ;
+  --tw-invert:  ;
+  --tw-saturate:  ;
+  --tw-sepia:  ;
+  --tw-drop-shadow:  ;
+  --tw-backdrop-blur:  ;
+  --tw-backdrop-brightness:  ;
+  --tw-backdrop-contrast:  ;
+  --tw-backdrop-grayscale:  ;
+  --tw-backdrop-hue-rotate:  ;
+  --tw-backdrop-invert:  ;
+  --tw-backdrop-opacity:  ;
+  --tw-backdrop-saturate:  ;
+  --tw-backdrop-sepia:  ;
+  --tw-contain-size:  ;
+  --tw-contain-layout:  ;
+  --tw-contain-paint:  ;
+  --tw-contain-style:  ;
+}/*
+! tailwindcss v3.4.17 | MIT License | https://tailwindcss.com
+*//*
+1. Prevent padding and border from affecting element width. (https://github.com/mozdevs/cssremedy/issues/4)
+2. Allow adding a border to an element by just adding a border-width. (https://github.com/tailwindcss/tailwindcss/pull/116)
+*/
+
+*,
+::before,
+::after {
+  box-sizing: border-box; /* 1 */
+  border-width: 0; /* 2 */
+  border-style: solid; /* 2 */
+  border-color: #e5e7eb; /* 2 */
+}
+
+::before,
+::after {
+  --tw-content: '';
+}
+
+/*
+1. Use a consistent sensible line-height in all browsers.
+2. Prevent adjustments of font size after orientation changes in iOS.
+3. Use a more readable tab size.
+4. Use the user's configured `sans` font-family by default.
+5. Use the user's configured `sans` font-feature-settings by default.
+6. Use the user's configured `sans` font-variation-settings by default.
+7. Disable tap highlights on iOS
+*/
+
+html,
+:host {
+  line-height: 1.5; /* 1 */
+  -webkit-text-size-adjust: 100%; /* 2 */
+  -moz-tab-size: 4; /* 3 */
+  tab-size: 4; /* 3 */
+  font-family: ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji"; /* 4 */
+  font-feature-settings: normal; /* 5 */
+  font-variation-settings: normal; /* 6 */
+  -webkit-tap-highlight-color: transparent; /* 7 */
+}
+
+/*
+1. Remove the margin in all browsers.
+2. Inherit line-height from `html` so users can set them as a class directly on the `html` element.
+*/
+
+body {
+  margin: 0; /* 1 */
+  line-height: inherit; /* 2 */
+}
+
+/*
+1. Add the correct height in Firefox.
+2. Correct the inheritance of border color in Firefox. (https://bugzilla.mozilla.org/show_bug.cgi?id=190655)
+3. Ensure horizontal rules are visible by default.
+*/
+
+hr {
+  height: 0; /* 1 */
+  color: inherit; /* 2 */
+  border-top-width: 1px; /* 3 */
+}
+
+/*
+Add the correct text decoration in Chrome, Edge, and Safari.
+*/
+
+abbr:where([title]) {
+  text-decoration: underline dotted;
+}
+
+/*
+Remove the default font size and weight for headings.
+*/
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  font-size: inherit;
+  font-weight: inherit;
+}
+
+/*
+Reset links to optimize for opt-in styling instead of opt-out.
+*/
+
+a {
+  color: inherit;
+  text-decoration: inherit;
+}
+
+/*
+Add the correct font weight in Edge and Safari.
+*/
+
+b,
+strong {
+  font-weight: bolder;
+}
+
+/*
+1. Use the user's configured `mono` font-family by default.
+2. Use the user's configured `mono` font-feature-settings by default.
+3. Use the user's configured `mono` font-variation-settings by default.
+4. Correct the odd `em` font sizing in all browsers.
+*/
+
+code,
+kbd,
+samp,
+pre {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; /* 1 */
+  font-feature-settings: normal; /* 2 */
+  font-variation-settings: normal; /* 3 */
+  font-size: 1em; /* 4 */
+}
+
+/*
+Add the correct font size in all browsers.
+*/
+
+small {
+  font-size: 80%;
+}
+
+/*
+Prevent `sub` and `sup` elements from affecting the line height in all browsers.
+*/
+
+sub,
+sup {
+  font-size: 75%;
+  line-height: 0;
+  position: relative;
+  vertical-align: baseline;
+}
+
+sub {
+  bottom: -0.25em;
+}
+
+sup {
+  top: -0.5em;
+}
+
+/*
+1. Remove text indentation from table contents in Chrome and Safari. (https://bugs.chromium.org/p/chromium/issues/detail?id=999088, https://bugs.webkit.org/show_bug.cgi?id=201297)
+2. Correct table border color inheritance in all Chrome and Safari. (https://bugs.chromium.org/p/chromium/issues/detail?id=935729, https://bugs.webkit.org/show_bug.cgi?id=195016)
+3. Remove gaps between table borders by default.
+*/
+
+table {
+  text-indent: 0; /* 1 */
+  border-color: inherit; /* 2 */
+  border-collapse: collapse; /* 3 */
+}
+
+/*
+1. Change the font styles in all browsers.
+2. Remove the margin in Firefox and Safari.
+3. Remove default padding in all browsers.
+*/
+
+button,
+input,
+optgroup,
+select,
+textarea {
+  font-family: inherit; /* 1 */
+  font-feature-settings: inherit; /* 1 */
+  font-variation-settings: inherit; /* 1 */
+  font-size: 100%; /* 1 */
+  font-weight: inherit; /* 1 */
+  line-height: inherit; /* 1 */
+  letter-spacing: inherit; /* 1 */
+  color: inherit; /* 1 */
+  margin: 0; /* 2 */
+  padding: 0; /* 3 */
+}
+
+/*
+Remove the inheritance of text transform in Edge and Firefox.
+*/
+
+button,
+select {
+  text-transform: none;
+}
+
+/*
+1. Correct the inability to style clickable types in iOS and Safari.
+2. Remove default button styles.
+*/
+
+button,
+input:where([type='button']),
+input:where([type='reset']),
+input:where([type='submit']) {
+  -webkit-appearance: button; /* 1 */
+  background-color: transparent; /* 2 */
+  background-image: none; /* 2 */
+}
+
+/*
+Use the modern Firefox focus style for all focusable elements.
+*/
+
+:-moz-focusring {
+  outline: auto;
+}
+
+/*
+Remove the additional `:invalid` styles in Firefox. (https://github.com/mozilla/gecko-dev/blob/2f9eacd9d3d995c937b4251a5557d95d494c9be1/layout/style/res/forms.css#L728-L737)
+*/
+
+:-moz-ui-invalid {
+  box-shadow: none;
+}
+
+/*
+Add the correct vertical alignment in Chrome and Firefox.
+*/
+
+progress {
+  vertical-align: baseline;
+}
+
+/*
+Correct the cursor style of increment and decrement buttons in Safari.
+*/
+
+::-webkit-inner-spin-button,
+::-webkit-outer-spin-button {
+  height: auto;
+}
+
+/*
+1. Correct the odd appearance in Chrome and Safari.
+2. Correct the outline style in Safari.
+*/
+
+[type='search'] {
+  -webkit-appearance: textfield; /* 1 */
+  outline-offset: -2px; /* 2 */
+}
+
+/*
+Remove the inner padding in Chrome and Safari on macOS.
+*/
+
+::-webkit-search-decoration {
+  -webkit-appearance: none;
+}
+
+/*
+1. Correct the inability to style clickable types in iOS and Safari.
+2. Change font properties to `inherit` in Safari.
+*/
+
+::-webkit-file-upload-button {
+  -webkit-appearance: button; /* 1 */
+  font: inherit; /* 2 */
+}
+
+/*
+Add the correct display in Chrome and Safari.
+*/
+
+summary {
+  display: list-item;
+}
+
+/*
+Removes the default spacing and border for appropriate elements.
+*/
+
+blockquote,
+dl,
+dd,
+h1,
+h2,
+h3,
+h4,
+h5,
+h6,
+hr,
+figure,
+p,
+pre {
+  margin: 0;
+}
+
+fieldset {
+  margin: 0;
+  padding: 0;
+}
+
+legend {
+  padding: 0;
+}
+
+ol,
+ul,
+menu {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+/*
+Reset default styling for dialogs.
+*/
+dialog {
+  padding: 0;
+}
+
+/*
+Prevent resizing textareas horizontally by default.
+*/
+
+textarea {
+  resize: vertical;
+}
+
+/*
+1. Reset the default placeholder opacity in Firefox. (https://github.com/tailwindlabs/tailwindcss/issues/3300)
+2. Set the default placeholder color to the user's configured gray 400 color.
+*/
+
+input::placeholder,
+textarea::placeholder {
+  opacity: 1; /* 1 */
+  color: #9ca3af; /* 2 */
+}
+
+/*
+Set the default cursor for buttons.
+*/
+
+button,
+[role="button"] {
+  cursor: pointer;
+}
+
+/*
+Make sure disabled buttons don't get the pointer cursor.
+*/
+:disabled {
+  cursor: default;
+}
+
+/*
+1. Make replaced elements `display: block` by default. (https://github.com/mozdevs/cssremedy/issues/14)
+2. Add `vertical-align: middle` to align replaced elements more sensibly by default. (https://github.com/jensimmons/cssremedy/issues/14#issuecomment-634934210)
+   This can trigger a poorly considered lint error in some tools but is included by design.
+*/
+
+img,
+svg,
+video,
+canvas,
+audio,
+iframe,
+embed,
+object {
+  display: block; /* 1 */
+  vertical-align: middle; /* 2 */
+}
+
+/*
+Constrain images and videos to the parent width and preserve their intrinsic aspect ratio. (https://github.com/mozdevs/cssremedy/issues/14)
+*/
+
+img,
+video {
+  max-width: 100%;
+  height: auto;
+}
+
+/* Make elements with the HTML hidden attribute stay hidden by default */
+[hidden]:where(:not([hidden="until-found"])) {
+  display: none;
+}
+.collapse {
+  visibility: collapse;
+}
+.fixed {
+  position: fixed;
+}
+.absolute {
+  position: absolute;
+}
+.relative {
+  position: relative;
+}
+.bottom-10 {
+  bottom: 2.5rem;
+}
+.left-10 {
+  left: 2.5rem;
+}
+.right-10 {
+  right: 2.5rem;
+}
+.top-10 {
+  top: 2.5rem;
+}
+.col-span-2 {
+  grid-column: span 2 / span 2;
+}
+.mx-auto {
+  margin-left: auto;
+  margin-right: auto;
+}
+.my-2 {
+  margin-top: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+.mb-10 {
+  margin-bottom: 2.5rem;
+}
+.mb-2 {
+  margin-bottom: 0.5rem;
+}
+.mb-3 {
+  margin-bottom: 0.75rem;
+}
+.mb-6 {
+  margin-bottom: 1.5rem;
+}
+.mb-8 {
+  margin-bottom: 2rem;
+}
+.mt-2 {
+  margin-top: 0.5rem;
+}
+.mt-4 {
+  margin-top: 1rem;
+}
+.mt-auto {
+  margin-top: auto;
+}
+.flex {
+  display: flex;
+}
+.table {
+  display: table;
+}
+.grid {
+  display: grid;
+}
+.hidden {
+  display: none;
+}
+.h-10 {
+  height: 2.5rem;
+}
+.h-12 {
+  height: 3rem;
+}
+.h-16 {
+  height: 4rem;
+}
+.h-2\/3 {
+  height: 66.666667%;
+}
+.h-24 {
+  height: 6rem;
+}
+.h-32 {
+  height: 8rem;
+}
+.h-px {
+  height: 1px;
+}
+.w-1\/3 {
+  width: 33.333333%;
+}
+.w-10 {
+  width: 2.5rem;
+}
+.w-12 {
+  width: 3rem;
+}
+.w-24 {
+  width: 6rem;
+}
+.w-6 {
+  width: 1.5rem;
+}
+.w-\[10\%\] {
+  width: 10%;
+}
+.w-\[15\%\] {
+  width: 15%;
+}
+.w-\[20\%\] {
+  width: 20%;
+}
+.w-\[25\%\] {
+  width: 25%;
+}
+.w-\[30\%\] {
+  width: 30%;
+}
+.w-\[35\%\] {
+  width: 35%;
+}
+.w-\[40\%\] {
+  width: 40%;
+}
+.w-\[45\%\] {
+  width: 45%;
+}
+.w-full {
+  width: 100%;
+}
+.min-w-\[50px\] {
+  min-width: 50px;
+}
+.max-w-lg {
+  max-width: 32rem;
+}
+.max-w-md {
+  max-width: 28rem;
+}
+.max-w-sm {
+  max-width: 24rem;
+}
+.flex-grow {
+  flex-grow: 1;
+}
+.border-collapse {
+  border-collapse: collapse;
+}
+.-rotate-45 {
+  --tw-rotate: -45deg;
+  transform: translate(var(--tw-translate-x), var(--tw-translate-y)) rotate(var(--tw-rotate)) skewX(var(--tw-skew-x)) skewY(var(--tw-skew-y)) scaleX(var(--tw-scale-x)) scaleY(var(--tw-scale-y));
+}
+.rotate-45 {
+  --tw-rotate: 45deg;
+  transform: translate(var(--tw-translate-x), var(--tw-translate-y)) rotate(var(--tw-rotate)) skewX(var(--tw-skew-x)) skewY(var(--tw-skew-y)) scaleX(var(--tw-scale-x)) scaleY(var(--tw-scale-y));
+}
+.grid-cols-1 {
+  grid-template-columns: repeat(1, minmax(0, 1fr));
+}
+.grid-cols-2 {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+.grid-cols-3 {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+.grid-cols-4 {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+.flex-col {
+  flex-direction: column;
+}
+.items-start {
+  align-items: flex-start;
+}
+.items-end {
+  align-items: flex-end;
+}
+.items-center {
+  align-items: center;
+}
+.justify-center {
+  justify-content: center;
+}
+.justify-between {
+  justify-content: space-between;
+}
+.gap-2 {
+  gap: 0.5rem;
+}
+.gap-4 {
+  gap: 1rem;
+}
+.gap-6 {
+  gap: 1.5rem;
+}
+.gap-8 {
+  gap: 2rem;
+}
+.gap-x-8 {
+  column-gap: 2rem;
+}
+.gap-y-2 {
+  row-gap: 0.5rem;
+}
+.gap-y-3 {
+  row-gap: 0.75rem;
+}
+.gap-y-4 {
+  row-gap: 1rem;
+}
+.space-y-1 > :not([hidden]) ~ :not([hidden]) {
+  --tw-space-y-reverse: 0;
+  margin-top: calc(0.25rem * calc(1 - var(--tw-space-y-reverse)));
+  margin-bottom: calc(0.25rem * var(--tw-space-y-reverse));
+}
+.space-y-12 > :not([hidden]) ~ :not([hidden]) {
+  --tw-space-y-reverse: 0;
+  margin-top: calc(3rem * calc(1 - var(--tw-space-y-reverse)));
+  margin-bottom: calc(3rem * var(--tw-space-y-reverse));
+}
+.space-y-2 > :not([hidden]) ~ :not([hidden]) {
+  --tw-space-y-reverse: 0;
+  margin-top: calc(0.5rem * calc(1 - var(--tw-space-y-reverse)));
+  margin-bottom: calc(0.5rem * var(--tw-space-y-reverse));
+}
+.space-y-4 > :not([hidden]) ~ :not([hidden]) {
+  --tw-space-y-reverse: 0;
+  margin-top: calc(1rem * calc(1 - var(--tw-space-y-reverse)));
+  margin-bottom: calc(1rem * var(--tw-space-y-reverse));
+}
+.space-y-6 > :not([hidden]) ~ :not([hidden]) {
+  --tw-space-y-reverse: 0;
+  margin-top: calc(1.5rem * calc(1 - var(--tw-space-y-reverse)));
+  margin-bottom: calc(1.5rem * var(--tw-space-y-reverse));
+}
+.space-y-8 > :not([hidden]) ~ :not([hidden]) {
+  --tw-space-y-reverse: 0;
+  margin-top: calc(2rem * calc(1 - var(--tw-space-y-reverse)));
+  margin-bottom: calc(2rem * var(--tw-space-y-reverse));
+}
+.rounded-full {
+  border-radius: 9999px;
+}
+.border {
+  border-width: 1px;
+}
+.border-b {
+  border-bottom-width: 1px;
+}
+.border-t {
+  border-top-width: 1px;
+}
+.border-purple-100 {
+  --tw-border-opacity: 1;
+  border-color: rgb(243 232 255 / var(--tw-border-opacity, 1));
+}
+.bg-white\/30 {
+  background-color: rgb(255 255 255 / 0.3);
+}
+.bg-white\/40 {
+  background-color: rgb(255 255 255 / 0.4);
+}
+.bg-white\/50 {
+  background-color: rgb(255 255 255 / 0.5);
+}
+.p-1 {
+  padding: 0.25rem;
+}
+.p-3 {
+  padding: 0.75rem;
+}
+.p-4 {
+  padding: 1rem;
+}
+.py-1 {
+  padding-top: 0.25rem;
+  padding-bottom: 0.25rem;
+}
+.pb-1 {
+  padding-bottom: 0.25rem;
+}
+.pr-4 {
+  padding-right: 1rem;
+}
+.pt-12 {
+  padding-top: 3rem;
+}
+.pt-16 {
+  padding-top: 4rem;
+}
+.pt-2 {
+  padding-top: 0.5rem;
+}
+.pt-4 {
+  padding-top: 1rem;
+}
+.pt-6 {
+  padding-top: 1.5rem;
+}
+.pt-8 {
+  padding-top: 2rem;
+}
+.text-left {
+  text-align: left;
+}
+.text-center {
+  text-align: center;
+}
+.font-mono {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+}
+.font-serif {
+  font-family: ui-serif, Georgia, Cambria, "Times New Roman", Times, serif;
+}
+.text-2xl {
+  font-size: 1.5rem;
+  line-height: 2rem;
+}
+.text-3xl {
+  font-size: 1.875rem;
+  line-height: 2.25rem;
+}
+.text-6xl {
+  font-size: 3.75rem;
+  line-height: 1;
+}
+.text-\[10px\] {
+  font-size: 10px;
+}
+.text-\[8px\] {
+  font-size: 8px;
+}
+.text-\[9px\] {
+  font-size: 9px;
+}
+.text-base {
+  font-size: 1rem;
+  line-height: 1.5rem;
+}
+.text-lg {
+  font-size: 1.125rem;
+  line-height: 1.75rem;
+}
+.text-sm {
+  font-size: 0.875rem;
+  line-height: 1.25rem;
+}
+.text-xl {
+  font-size: 1.25rem;
+  line-height: 1.75rem;
+}
+.text-xs {
+  font-size: 0.75rem;
+  line-height: 1rem;
+}
+.font-bold {
+  font-weight: 700;
+}
+.uppercase {
+  text-transform: uppercase;
+}
+.italic {
+  font-style: italic;
+}
+.leading-tight {
+  line-height: 1.25;
+}
+.tracking-\[0\.3em\] {
+  letter-spacing: 0.3em;
+}
+.tracking-\[0\.4em\] {
+  letter-spacing: 0.4em;
+}
+.tracking-widest {
+  letter-spacing: 0.1em;
+}
+.text-blue-700 {
+  --tw-text-opacity: 1;
+  color: rgb(29 78 216 / var(--tw-text-opacity, 1));
+}
+.text-gray-400 {
+  --tw-text-opacity: 1;
+  color: rgb(156 163 175 / var(--tw-text-opacity, 1));
+}
+.text-gray-500 {
+  --tw-text-opacity: 1;
+  color: rgb(107 114 128 / var(--tw-text-opacity, 1));
+}
+.text-gray-600 {
+  --tw-text-opacity: 1;
+  color: rgb(75 85 99 / var(--tw-text-opacity, 1));
+}
+.text-green-700 {
+  --tw-text-opacity: 1;
+  color: rgb(21 128 61 / var(--tw-text-opacity, 1));
+}
+.text-purple-700 {
+  --tw-text-opacity: 1;
+  color: rgb(126 34 206 / var(--tw-text-opacity, 1));
+}
+.text-purple-800\/70 {
+  color: rgb(107 33 168 / 0.7);
+}
+.text-purple-900 {
+  --tw-text-opacity: 1;
+  color: rgb(88 28 135 / var(--tw-text-opacity, 1));
+}
+.text-purple-900\/60 {
+  color: rgb(88 28 135 / 0.6);
+}
+.text-purple-900\/70 {
+  color: rgb(88 28 135 / 0.7);
+}
+.text-purple-900\/80 {
+  color: rgb(88 28 135 / 0.8);
+}
+.text-purple-950 {
+  --tw-text-opacity: 1;
+  color: rgb(59 7 100 / var(--tw-text-opacity, 1));
+}
+.text-red-700 {
+  --tw-text-opacity: 1;
+  color: rgb(185 28 28 / var(--tw-text-opacity, 1));
+}
+.outline {
+  outline-style: solid;
+}
+.transition {
+  transition-property: color, background-color, border-color, text-decoration-color, fill, stroke, opacity, box-shadow, transform, filter, backdrop-filter;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  transition-duration: 150ms;
+}* {
+      -ms-overflow-style: none !important;
+      scrollbar-width: none !important;
+    }
+
+    *::-webkit-scrollbar {
+      display: none !important;
+      width: 0 !important;
+      height: 0 !important;
+    }
+  </style></head>
+<body vid="11">
+
+    <button onclick="window.print()" class="print-btn no-print" vid="12">
+        <i class="ph-bold ph-printer" vid="13"></i> PRINT / SAVE AS PDF
+    </button>
+
+    
+    <div class="page" vid="14">
+        
+        <i class="ph-thin ph-sparkle sigil-mark text-3xl top-10 left-10" vid="15"></i>
+        <i class="ph-thin ph-sparkle sigil-mark text-3xl top-10 right-10" vid="16"></i>
+        <i class="ph-thin ph-sparkle sigil-mark text-3xl bottom-10 left-10" vid="17"></i>
+        <i class="ph-thin ph-sparkle sigil-mark text-3xl bottom-10 right-10" vid="18"></i>
+
+        <div class="flex-grow flex flex-col items-center justify-center text-center space-y-12" vid="19">
+            <div class="space-y-4" vid="20">
+                <p class="font-mono text-xs tracking-[0.4em] text-purple-900/60 uppercase" vid="21">Algorithm Witch Presents</p>
+                <h1 class="font-magical text-6xl text-purple-950 leading-tight" vid="22">CONTENT SIGNAL<br vid="23">AGENDA</h1>
+                <div class="w-24 h-px bg-gold mx-auto" vid="24"></div>
+                <p class="font-serif italic text-lg text-purple-900/80 max-w-md mx-auto" vid="25">
+                    A printable system for planning content that connects, repeats, and carries.
+                </p>
+            </div>
+
+            <div class="w-full max-w-sm space-y-6 pt-12" vid="26">
+                <div class="text-left" vid="27">
+                    <label class="font-mono text-[9px] uppercase tracking-widest text-gray-500" vid="28">Name / Brand</label>
+                    <div class="editable font-serif text-xl py-1 text-purple-900" contenteditable="true" vid="29">The Alchemist</div>
+                </div>
+                <div class="text-left" vid="30">
+                    <label class="font-mono text-[9px] uppercase tracking-widest text-gray-500" vid="31">Month / Quarter</label>
+                    <div class="editable font-serif text-xl py-1 text-purple-900" contenteditable="true" vid="32">Q1 2024</div>
+                </div>
+            </div>
+
+            
+            <div class="pt-16 w-full max-w-lg" vid="33">
+                <div class="flex items-center justify-between font-mono text-[9px] tracking-widest uppercase text-purple-900/70" vid="34">
+                    <div class="flex flex-col items-center gap-2" vid="35">
+                        <div class="w-10 h-10 rounded-full border border-gold flex items-center justify-center" vid="36">
+                            <i class="ph ph-pillar text-lg" vid="37"></i>
+                        </div>
+                        <span vid="38">Pillars</span>
+                    </div>
+                    <i class="ph ph-arrow-right" vid="39"></i>
+                    <div class="flex flex-col items-center gap-2" vid="40">
+                        <div class="w-10 h-10 rounded-full border border-gold flex items-center justify-center" vid="41">
+                            <i class="ph ph-megaphone text-lg" vid="42"></i>
+                        </div>
+                        <span vid="43">Campaigns</span>
+                    </div>
+                    <i class="ph ph-arrow-right" vid="44"></i>
+                    <div class="flex flex-col items-center gap-2" vid="45">
+                        <div class="w-10 h-10 rounded-full border border-gold flex items-center justify-center" vid="46">
+                            <i class="ph ph-newspaper-clipping text-lg" vid="47"></i>
+                        </div>
+                        <span vid="48">Posts</span>
+                    </div>
+                    <i class="ph ph-arrow-right" vid="49"></i>
+                    <div class="flex flex-col items-center gap-2" vid="50">
+                        <div class="w-10 h-10 rounded-full border border-gold flex items-center justify-center" vid="51">
+                            <i class="ph ph-broadcast text-lg" vid="52"></i>
+                        </div>
+                        <span vid="53">Signals</span>
+                    </div>
+                    <i class="ph ph-arrow-right" vid="54"></i>
+                    <div class="flex flex-col items-center gap-2" vid="55">
+                        <div class="w-10 h-10 rounded-full border border-gold flex items-center justify-center" vid="56">
+                            <i class="ph ph-cursor-click text-lg" vid="57"></i>
+                        </div>
+                        <span vid="58">Action</span>
+                    </div>
+                </div>
+            </div>
+
+            <p class="font-serif italic text-xs text-gray-500 pt-8" vid="59">
+                “Use this agenda to plan content by purpose, pattern, and direction.”
+            </p>
+        </div>
+
+        <footer class="mt-auto flex justify-between items-end border-t border-purple-100 pt-4" vid="60">
+            <div class="font-mono text-[8px] text-gray-400 uppercase tracking-widest" vid="61">
+                This is not a content calendar. This is your signal system.
+            </div>
+            <div class="font-magical text-[10px] text-purple-900" vid="62">
+                PAGE 01 / 08
+            </div>
+        </footer>
+    </div>
+
+    
+    <div class="page" vid="63">
+        <header class="flex justify-between items-start mb-10" vid="64">
+            <div vid="65">
+                <h2 class="font-magical text-2xl text-purple-950 uppercase tracking-widest" vid="66">Signal Map</h2>
+                <p class="font-serif italic text-sm text-purple-800/70" vid="67">Map the ideas, offers, and audience actions your system reinforces.</p>
+            </div>
+            <div class="w-12 h-12 border border-gold/40 flex items-center justify-center rotate-45" vid="68">
+                <i class="ph-fill ph-pentagram text-gold -rotate-45" vid="69"></i>
+            </div>
+        </header>
+
+        <div class="grid grid-cols-2 gap-8 flex-grow" vid="70">
+            
+            <section class="space-y-4" vid="71">
+                <div class="flex items-center gap-2" vid="72">
+                    <span class="pill-badge" vid="73">01</span>
+                    <h3 class="font-magical text-xs tracking-widest uppercase" vid="74">Core Pillars</h3>
+                </div>
+                <div class="space-y-4 pr-4" vid="75">
+                    <div class="editable text-sm font-serif p-1" contenteditable="true" vid="76">Pillar 1: The Core Philosophy</div>
+                    <div class="editable text-sm font-serif p-1" contenteditable="true" vid="77">Pillar 2: Technical Mastery</div>
+                    <div class="editable text-sm font-serif p-1" contenteditable="true" vid="78">Pillar 3: The Creative Spirit</div>
+                    <div class="editable text-sm font-serif p-1" contenteditable="true" vid="79">Pillar 4: Real-world Magic</div>
+                    <p class="text-[9px] font-mono text-gray-500 leading-tight pt-2 italic" vid="80">
+                        “These are the repeated ideas you want people and platforms to associate with you.”
+                    </p>
+                </div>
+            </section>
+
+            
+            <section class="space-y-4" vid="81">
+                <div class="flex items-center gap-2" vid="82">
+                    <span class="pill-badge" vid="83">02</span>
+                    <h3 class="font-magical text-xs tracking-widest uppercase" vid="84">Audience Actions</h3>
+                </div>
+                <div class="grid grid-cols-2 gap-y-3 text-xs font-mono" vid="85">
+                    <div class="flex items-center" vid="86"><div class="custom-check" vid="87"></div> Follow</div>
+                    <div class="flex items-center" vid="88"><div class="custom-check" vid="89"></div> Save</div>
+                    <div class="flex items-center" vid="90"><div class="custom-check" vid="91"></div> Share</div>
+                    <div class="flex items-center" vid="92"><div class="custom-check" vid="93"></div> Comment</div>
+                    <div class="flex items-center" vid="94"><div class="custom-check" vid="95"></div> Click Link</div>
+                    <div class="flex items-center" vid="96"><div class="custom-check" vid="97"></div> Subscribe</div>
+                    <div class="flex items-center" vid="98"><div class="custom-check" vid="99"></div> Buy / Book</div>
+                    <div class="flex items-center" vid="100"><div class="custom-check" vid="101"></div> <span class="editable min-w-[50px]" contenteditable="true" vid="102">Other</span></div>
+                </div>
+                <p class="text-[9px] font-mono text-gray-500 leading-tight pt-4 italic" vid="103">
+                    “Content should point toward a behavior.”
+                </p>
+            </section>
+
+            
+            <section class="col-span-2 space-y-4" vid="104">
+                <div class="flex items-center gap-2" vid="105">
+                    <span class="pill-badge" vid="106">03</span>
+                    <h3 class="font-magical text-xs tracking-widest uppercase" vid="107">Campaigns</h3>
+                </div>
+                <table class="w-full" vid="108">
+                    <thead vid="109">
+                        <tr vid="110">
+                            <th class="w-1/3" vid="111">Campaign Name</th>
+                            <th class="w-1/3" vid="112">Goal</th>
+                            <th class="w-1/3" vid="113">Timeframe</th>
+                        </tr>
+                    </thead>
+                    <tbody vid="114">
+                        <tr vid="115"><td vid="116"><div class="editable" contenteditable="true" vid="117">Spring Launch</div></td><td vid="118"><div class="editable" contenteditable="true" vid="119">Sales</div></td><td vid="120"><div class="editable" contenteditable="true" vid="121">March 1-15</div></td></tr>
+                        <tr vid="122"><td vid="123"><div class="editable" contenteditable="true" vid="124">Newsletter Push</div></td><td vid="125"><div class="editable" contenteditable="true" vid="126">Leads</div></td><td vid="127"><div class="editable" contenteditable="true" vid="128">Every Friday</div></td></tr>
+                        <tr vid="129"><td vid="130"><div class="editable" contenteditable="true" vid="131"></div></td><td vid="132"><div class="editable" contenteditable="true" vid="133"></div></td><td vid="134"><div class="editable" contenteditable="true" vid="135"></div></td></tr>
+                        <tr vid="136"><td vid="137"><div class="editable" contenteditable="true" vid="138"></div></td><td vid="139"><div class="editable" contenteditable="true" vid="140"></div></td><td vid="141"><div class="editable" contenteditable="true" vid="142"></div></td></tr>
+                    </tbody>
+                </table>
+                <p class="text-[9px] font-mono text-gray-500 leading-tight italic" vid="143">
+                    “Campaigns give your ideas a cycle.”
+                </p>
+            </section>
+
+            
+            <section class="col-span-2 space-y-4 pt-6" vid="144">
+                <div class="flex items-center gap-2" vid="145">
+                    <span class="pill-badge" vid="146">04</span>
+                    <h3 class="font-magical text-xs tracking-widest uppercase" vid="147">Signal Types Legend</h3>
+                </div>
+                <div class="grid grid-cols-4 gap-4" vid="148">
+                    <div class="border border-gold/30 p-3 bg-white/50 text-center" vid="149">
+                        <h4 class="font-mono text-[10px] font-bold text-purple-900 uppercase" vid="150">Awareness</h4>
+                        <div class="w-6 h-px bg-gold/50 mx-auto my-2" vid="151"></div>
+                        <p class="text-[9px] text-gray-600 font-serif italic" vid="152">To Reach New Hearts</p>
+                    </div>
+                    <div class="border border-gold/30 p-3 bg-white/50 text-center" vid="153">
+                        <h4 class="font-mono text-[10px] font-bold text-purple-900 uppercase" vid="154">Authority</h4>
+                        <div class="w-6 h-px bg-gold/50 mx-auto my-2" vid="155"></div>
+                        <p class="text-[9px] text-gray-600 font-serif italic" vid="156">To Build Deep Trust</p>
+                    </div>
+                    <div class="border border-gold/30 p-3 bg-white/50 text-center" vid="157">
+                        <h4 class="font-mono text-[10px] font-bold text-purple-900 uppercase" vid="158">Community</h4>
+                        <div class="w-6 h-px bg-gold/50 mx-auto my-2" vid="159"></div>
+                        <p class="text-[9px] text-gray-600 font-serif italic" vid="160">To Foster Connection</p>
+                    </div>
+                    <div class="border border-gold/30 p-3 bg-white/50 text-center" vid="161">
+                        <h4 class="font-mono text-[10px] font-bold text-purple-900 uppercase" vid="162">Conversion</h4>
+                        <div class="w-6 h-px bg-gold/50 mx-auto my-2" vid="163"></div>
+                        <p class="text-[9px] text-gray-600 font-serif italic" vid="164">To Inspire Action</p>
+                    </div>
+                </div>
+            </section>
+        </div>
+
+        <footer class="mt-auto flex justify-between items-end pt-4 border-t border-purple-100" vid="165">
+            <div class="font-mono text-[8px] text-gray-400 uppercase tracking-widest" vid="166">ALGORITHM WITCH : CONTENT SIGNAL AGENDA</div>
+            <div class="font-magical text-[10px] text-purple-900" vid="167">PAGE 02 / 08</div>
+        </footer>
+    </div>
+
+    
+    <div class="page" vid="168">
+        <header class="mb-6" vid="169">
+            <h2 class="font-magical text-2xl text-purple-950 tracking-widest uppercase" vid="170">Monthly Content Agenda</h2>
+            <p class="font-serif italic text-sm text-purple-800/70" vid="171">Set the main pattern before planning individual posts.</p>
+        </header>
+
+        <div class="grid grid-cols-2 gap-x-8 gap-y-4 mb-8" vid="172">
+            <div class="space-y-1" vid="173">
+                <label class="font-mono text-[8px] uppercase tracking-widest text-gray-500" vid="174">Month / Period</label>
+                <div class="editable font-serif text-base" contenteditable="true" vid="175">October 2024</div>
+            </div>
+            <div class="space-y-1" vid="176">
+                <label class="font-mono text-[8px] uppercase tracking-widest text-gray-500" vid="177">Primary Theme</label>
+                <div class="editable font-serif text-base" contenteditable="true" vid="178">Harnessing the Inner Fire</div>
+            </div>
+            <div class="space-y-1" vid="179">
+                <label class="font-mono text-[8px] uppercase tracking-widest text-gray-500" vid="180">Main Campaign</label>
+                <div class="editable font-serif text-base" contenteditable="true" vid="181">Winter Solstice Prep</div>
+            </div>
+            <div class="space-y-1" vid="182">
+                <label class="font-mono text-[8px] uppercase tracking-widest text-gray-500" vid="183">Primary Offer / CTA</label>
+                <div class="editable font-serif text-base" contenteditable="true" vid="184">Join the Inner Circle</div>
+            </div>
+            <div class="space-y-1" vid="185">
+                <label class="font-mono text-[8px] uppercase tracking-widest text-gray-500" vid="186">Priority Platforms</label>
+                <div class="editable font-serif text-base" contenteditable="true" vid="187">Substack, Instagram</div>
+            </div>
+            <div class="space-y-1" vid="188">
+                <label class="font-mono text-[8px] uppercase tracking-widest text-gray-500" vid="189">Content Capacity</label>
+                <div class="editable font-serif text-base" contenteditable="true" vid="190">3x Posts Per Week</div>
+            </div>
+        </div>
+
+        <div class="space-y-8 flex-grow" vid="191">
+            
+            <section vid="192">
+                <h3 class="font-mono text-[10px] font-bold text-purple-900 uppercase border-b border-gold/30 pb-1 mb-2" vid="193">Key Content Priorities</h3>
+                <table class="text-[10px]" vid="194">
+                    <thead vid="195">
+                        <tr vid="196"><th class="w-[30%]" vid="197">Priority</th><th class="w-[45%]" vid="198">Why it matters</th><th class="w-[25%]" vid="199">Pillar/Campaign</th></tr>
+                    </thead>
+                    <tbody vid="200">
+                        <tr vid="201"><td vid="202"><div class="editable" contenteditable="true" vid="203">Launch Announcement</div></td><td vid="204"><div class="editable" contenteditable="true" vid="205">Setting the stage for the month</div></td><td vid="206"><div class="editable" contenteditable="true" vid="207">Solstice Prep</div></td></tr>
+                        <tr vid="208"><td vid="209"><div class="editable" contenteditable="true" vid="210"></div></td><td vid="211"><div class="editable" contenteditable="true" vid="212"></div></td><td vid="213"><div class="editable" contenteditable="true" vid="214"></div></td></tr>
+                        <tr vid="215"><td vid="216"><div class="editable" contenteditable="true" vid="217"></div></td><td vid="218"><div class="editable" contenteditable="true" vid="219"></div></td><td vid="220"><div class="editable" contenteditable="true" vid="221"></div></td></tr>
+                        <tr vid="222"><td vid="223"><div class="editable" contenteditable="true" vid="224"></div></td><td vid="225"><div class="editable" contenteditable="true" vid="226"></div></td><td vid="227"><div class="editable" contenteditable="true" vid="228"></div></td></tr>
+                        <tr vid="229"><td vid="230"><div class="editable" contenteditable="true" vid="231"></div></td><td vid="232"><div class="editable" contenteditable="true" vid="233"></div></td><td vid="234"><div class="editable" contenteditable="true" vid="235"></div></td></tr>
+                    </tbody>
+                </table>
+            </section>
+
+            
+            <section vid="236">
+                <h3 class="font-mono text-[10px] font-bold text-purple-900 uppercase border-b border-gold/30 pb-1 mb-2" vid="237">Moments That Matter</h3>
+                <table class="text-[10px]" vid="238">
+                    <thead vid="239">
+                        <tr vid="240"><th class="w-[20%]" vid="241">Date/Week</th><th class="w-[40%]" vid="242">Moment</th><th class="w-[40%]" vid="243">Content Angle</th></tr>
+                    </thead>
+                    <tbody vid="244">
+                        <tr vid="245"><td vid="246"><div class="editable" contenteditable="true" vid="247">Oct 1</div></td><td vid="248"><div class="editable" contenteditable="true" vid="249">New Moon</div></td><td vid="250"><div class="editable" contenteditable="true" vid="251">Intention setting ritual</div></td></tr>
+                        <tr vid="252"><td vid="253"><div class="editable" contenteditable="true" vid="254"></div></td><td vid="255"><div class="editable" contenteditable="true" vid="256"></div></td><td vid="257"><div class="editable" contenteditable="true" vid="258"></div></td></tr>
+                        <tr vid="259"><td vid="260"><div class="editable" contenteditable="true" vid="261"></div></td><td vid="262"><div class="editable" contenteditable="true" vid="263"></div></td><td vid="264"><div class="editable" contenteditable="true" vid="265"></div></td></tr>
+                        <tr vid="266"><td vid="267"><div class="editable" contenteditable="true" vid="268"></div></td><td vid="269"><div class="editable" contenteditable="true" vid="270"></div></td><td vid="271"><div class="editable" contenteditable="true" vid="272"></div></td></tr>
+                        <tr vid="273"><td vid="274"><div class="editable" contenteditable="true" vid="275"></div></td><td vid="276"><div class="editable" contenteditable="true" vid="277"></div></td><td vid="278"><div class="editable" contenteditable="true" vid="279"></div></td></tr>
+                    </tbody>
+                </table>
+                <p class="text-[9px] font-mono text-gray-500 italic mt-2" vid="280">“Use real-world timing to make your content easier to recognize.”</p>
+            </section>
+
+            
+            <section vid="281">
+                <h3 class="font-mono text-[10px] font-bold text-purple-900 uppercase border-b border-gold/30 pb-1 mb-3" vid="282">This Month’s Signal Mix</h3>
+                <div class="grid grid-cols-4 gap-4" vid="283">
+                    <div class="space-y-1" vid="284">
+                        <label class="font-mono text-[8px] text-purple-700" vid="285">Awareness</label>
+                        <div class="box-editable bg-white/40 italic text-gray-400" contenteditable="true" vid="286">What will this signal look like this month?</div>
+                    </div>
+                    <div class="space-y-1" vid="287">
+                        <label class="font-mono text-[8px] text-purple-700" vid="288">Authority</label>
+                        <div class="box-editable bg-white/40 italic text-gray-400" contenteditable="true" vid="289">What will this signal look like this month?</div>
+                    </div>
+                    <div class="space-y-1" vid="290">
+                        <label class="font-mono text-[8px] text-purple-700" vid="291">Community</label>
+                        <div class="box-editable bg-white/40 italic text-gray-400" contenteditable="true" vid="292">What will this signal look like this month?</div>
+                    </div>
+                    <div class="space-y-1" vid="293">
+                        <label class="font-mono text-[8px] text-purple-700" vid="294">Conversion</label>
+                        <div class="box-editable bg-white/40 italic text-gray-400" contenteditable="true" vid="295">What will this signal look like this month?</div>
+                    </div>
+                </div>
+            </section>
+        </div>
+
+        <footer class="mt-auto flex justify-between items-end pt-4 border-t border-purple-100" vid="296">
+            <div class="font-mono text-[8px] text-gray-400 uppercase tracking-widest" vid="297">CONSISTENCY BUILDS RECOGNITION</div>
+            <div class="font-magical text-[10px] text-purple-900" vid="298">PAGE 03 / 08</div>
+        </footer>
+    </div>
+
+    
+    <div class="page" vid="299">
+        <header class="mb-6" vid="300">
+            <h2 class="font-magical text-2xl text-purple-950 tracking-widest uppercase" vid="301">Weekly Signal Planner</h2>
+            <p class="font-serif italic text-sm text-purple-800/70" vid="302">Choose what you are repeating, testing, and sending people toward.</p>
+        </header>
+
+        <div class="grid grid-cols-3 gap-4 mb-6 text-xs" vid="303">
+            <div class="space-y-1" vid="304"><label class="font-mono text-[8px] text-gray-500 uppercase" vid="305">Week Of</label><div class="editable font-serif" contenteditable="true" vid="306">Nov 11 - 17</div></div>
+            <div class="space-y-1" vid="307"><label class="font-mono text-[8px] text-gray-500 uppercase" vid="308">Main Focus</label><div class="editable font-serif" contenteditable="true" vid="309">The Magic of Systems</div></div>
+            <div class="space-y-1" vid="310"><label class="font-mono text-[8px] text-gray-500 uppercase" vid="311">Campaign</label><div class="editable font-serif" contenteditable="true" vid="312">Productivity Grimoire</div></div>
+            <div class="space-y-1" vid="313"><label class="font-mono text-[8px] text-gray-500 uppercase" vid="314">Priority Platform</label><div class="editable font-serif" contenteditable="true" vid="315">LinkedIn</div></div>
+            <div class="space-y-1" vid="316"><label class="font-mono text-[8px] text-gray-500 uppercase" vid="317">Secondary Platform</label><div class="editable font-serif" contenteditable="true" vid="318">Instagram Stories</div></div>
+            <div class="space-y-1" vid="319"><label class="font-mono text-[8px] text-gray-500 uppercase" vid="320">Primary CTA</label><div class="editable font-serif" contenteditable="true" vid="321">Sign up for Webinar</div></div>
+        </div>
+
+        <div class="grid grid-cols-3 gap-6 mb-8" vid="322">
+            <div class="space-y-2" vid="323">
+                <div class="flex items-center gap-2" vid="324"><span class="pill-badge" vid="325">R</span> <h4 class="font-mono text-[9px] uppercase font-bold" vid="326">Repeat</h4></div>
+                <p class="text-[9px] text-gray-500 italic leading-tight" vid="327">What message, phrase, or proof point needs repetition this week?</p>
+                <div class="box-editable h-32" contenteditable="true" vid="328"></div>
+            </div>
+            <div class="space-y-2" vid="329">
+                <div class="flex items-center gap-2" vid="330"><span class="pill-badge" vid="331">T</span> <h4 class="font-mono text-[9px] uppercase font-bold" vid="332">Test</h4></div>
+                <p class="text-[9px] text-gray-500 italic leading-tight" vid="333">What format, hook, angle, or platform behavior are you testing?</p>
+                <div class="box-editable h-32" contenteditable="true" vid="334"></div>
+            </div>
+            <div class="space-y-2" vid="335">
+                <div class="flex items-center gap-2" vid="336"><span class="pill-badge" vid="337">D</span> <h4 class="font-mono text-[9px] uppercase font-bold" vid="338">Direct</h4></div>
+                <p class="text-[9px] text-gray-500 italic leading-tight" vid="339">Where should attention go after someone sees your content?</p>
+                <div class="box-editable h-32" contenteditable="true" vid="340"></div>
+            </div>
+        </div>
+
+        <section class="flex-grow" vid="341">
+            <h3 class="font-mono text-[10px] font-bold text-purple-900 uppercase border-b border-gold/30 pb-1 mb-2" vid="342">Weekly Post Table</h3>
+            <table class="text-[10px]" vid="343">
+                <thead vid="344">
+                    <tr vid="345">
+                        <th class="w-[10%]" vid="346">Day</th>
+                        <th class="w-[35%]" vid="347">Post Idea</th>
+                        <th class="w-[15%]" vid="348">Format</th>
+                        <th class="w-[15%]" vid="349">Signal</th>
+                        <th class="w-[25%]" vid="350">Status</th>
+                    </tr>
+                </thead>
+                <tbody vid="351">
+                    <tr vid="352"><td vid="353">Mon</td><td vid="354"><div class="editable" contenteditable="true" vid="355">The 3 Pillars of Digital Ritual</div></td><td vid="356">Carousel</td><td vid="357">Authority</td><td vid="358">Idea / Post</td></tr>
+                    <tr vid="359"><td vid="360">Tue</td><td vid="361"><div class="editable" contenteditable="true" vid="362"></div></td><td vid="363"></td><td vid="364"></td><td vid="365"></td></tr>
+                    <tr vid="366"><td vid="367">Wed</td><td vid="368"><div class="editable" contenteditable="true" vid="369"></div></td><td vid="370"></td><td vid="371"></td><td vid="372"></td></tr>
+                    <tr vid="373"><td vid="374">Thu</td><td vid="375"><div class="editable" contenteditable="true" vid="376"></div></td><td vid="377"></td><td vid="378"></td><td vid="379"></td></tr>
+                    <tr vid="380"><td vid="381">Fri</td><td vid="382"><div class="editable" contenteditable="true" vid="383"></div></td><td vid="384"></td><td vid="385"></td><td vid="386"></td></tr>
+                </tbody>
+            </table>
+        </section>
+
+        <footer class="mt-auto flex justify-between items-end pt-4 border-t border-purple-100" vid="387">
+            <div class="font-mono text-[8px] text-gray-400 uppercase tracking-widest" vid="388">SIGNALS → SYSTEMS → SUCCESS</div>
+            <div class="font-magical text-[10px] text-purple-900" vid="389">PAGE 04 / 08</div>
+        </footer>
+    </div>
+
+    
+    <div class="page" vid="390">
+        <header class="mb-6" vid="391">
+            <h2 class="font-magical text-2xl text-purple-950 tracking-widest uppercase" vid="392">Post Planning Page</h2>
+            <p class="font-serif italic text-sm text-purple-800/70" vid="393">Build each piece around purpose, context, and connection.</p>
+        </header>
+
+        <div class="grid grid-cols-2 gap-4 mb-6" vid="394">
+            <div class="space-y-1 col-span-2" vid="395">
+                <label class="font-mono text-[8px] text-gray-500 uppercase" vid="396">Post Title / Topic</label>
+                <div class="editable font-serif text-lg font-bold" contenteditable="true" vid="397">How to Repurpose Content without Losing the Magic</div>
+            </div>
+            <div class="space-y-1" vid="398"><label class="font-mono text-[8px] text-gray-500 uppercase" vid="399">Platform</label><div class="editable font-mono text-[10px]" contenteditable="true" vid="400">Substack</div></div>
+            <div class="space-y-1" vid="401"><label class="font-mono text-[8px] text-gray-500 uppercase" vid="402">Format</label><div class="editable font-mono text-[10px]" contenteditable="true" vid="403">Article</div></div>
+            <div class="space-y-1" vid="404"><label class="font-mono text-[8px] text-gray-500 uppercase" vid="405">Campaign</label><div class="editable font-mono text-[10px]" contenteditable="true" vid="406">Signal System Intro</div></div>
+            <div class="space-y-1" vid="407"><label class="font-mono text-[8px] text-gray-500 uppercase" vid="408">Pillar</label><div class="editable font-mono text-[10px]" contenteditable="true" vid="409">Efficiency Mastery</div></div>
+            <div class="space-y-1" vid="410"><label class="font-mono text-[8px] text-gray-500 uppercase" vid="411">Signal Type</label><div class="editable font-mono text-[10px]" contenteditable="true" vid="412">Authority / Education</div></div>
+            <div class="space-y-1" vid="413"><label class="font-mono text-[8px] text-gray-500 uppercase" vid="414">Primary CTA</label><div class="editable font-mono text-[10px]" contenteditable="true" vid="415">Get the Agenda</div></div>
+        </div>
+
+        <div class="grid grid-cols-1 gap-4 flex-grow" vid="416">
+            <div class="space-y-1" vid="417">
+                <label class="font-mono text-[9px] uppercase font-bold text-purple-900" vid="418">1. Hook / Opening</label>
+                <div class="box-editable h-12" contenteditable="true" vid="419">Start with a question or a bold claim...</div>
+            </div>
+            <div class="space-y-1" vid="420">
+                <label class="font-mono text-[9px] uppercase font-bold text-purple-900" vid="421">2. Core Point</label>
+                <div class="box-editable h-16" contenteditable="true" vid="422">The main transformation or takeaway...</div>
+            </div>
+            <div class="space-y-1" vid="423">
+                <label class="font-mono text-[9px] uppercase font-bold text-purple-900" vid="424">3. Proof / Context / Example</label>
+                <div class="box-editable h-16" contenteditable="true" vid="425">Why should they believe this? Story or data...</div>
+            </div>
+            <div class="space-y-1" vid="426">
+                <label class="font-mono text-[9px] uppercase font-bold text-purple-900" vid="427">4. CTA / Next Step</label>
+                <div class="box-editable h-12" contenteditable="true" vid="428">Exactly what to do now...</div>
+            </div>
+
+            <section class="border border-gold/20 p-4 mt-4 bg-white/30" vid="429">
+                <h4 class="font-mono text-[10px] font-bold text-purple-950 uppercase border-b border-gold/30 pb-1 mb-3" vid="430">Repurpose Plan</h4>
+                <div class="grid grid-cols-2 gap-y-2 text-[10px] font-mono" vid="431">
+                    <div class="flex items-center" vid="432"><div class="custom-check" vid="433"></div> Turn into Carousel</div>
+                    <div class="flex items-center" vid="434"><div class="custom-check" vid="435"></div> Turn into Short Video</div>
+                    <div class="flex items-center" vid="436"><div class="custom-check" vid="437"></div> Turn into LinkedIn Post</div>
+                    <div class="flex items-center" vid="438"><div class="custom-check" vid="439"></div> Turn into Email Section</div>
+                    <div class="flex items-center" vid="440"><div class="custom-check" vid="441"></div> Turn into Blog Section</div>
+                    <div class="flex items-center" vid="442"><div class="custom-check" vid="443"></div> Turn into Story</div>
+                    <div class="flex items-center" vid="444"><div class="custom-check" vid="445"></div> Save for later</div>
+                </div>
+                <p class="text-[9px] text-gray-500 italic mt-4" vid="446">“One idea should create more than one asset when the signal is clear.”</p>
+            </section>
+        </div>
+
+        <footer class="mt-auto flex justify-between items-end pt-4 border-t border-purple-100" vid="447">
+            <div class="font-mono text-[8px] text-gray-400 uppercase tracking-widest" vid="448">DEPTH OVER VOLUME</div>
+            <div class="font-magical text-[10px] text-purple-900" vid="449">PAGE 05 / 08</div>
+        </footer>
+    </div>
+
+    
+    <div class="page" vid="450">
+        <header class="mb-6" vid="451">
+            <h2 class="font-magical text-2xl text-purple-950 tracking-widest uppercase" vid="452">Post Planning Page 02</h2>
+            <p class="font-serif italic text-sm text-purple-800/70" vid="453">Build each piece around purpose, context, and connection.</p>
+        </header>
+
+        <div class="grid grid-cols-2 gap-4 mb-6" vid="454">
+            <div class="space-y-1 col-span-2" vid="455">
+                <label class="font-mono text-[8px] text-gray-500 uppercase" vid="456">Post Title / Topic</label>
+                <div class="editable font-serif text-lg font-bold" contenteditable="true" vid="457"></div>
+            </div>
+            <div class="space-y-1" vid="458"><label class="font-mono text-[8px] text-gray-500 uppercase" vid="459">Platform</label><div class="editable font-mono text-[10px]" contenteditable="true" vid="460"></div></div>
+            <div class="space-y-1" vid="461"><label class="font-mono text-[8px] text-gray-500 uppercase" vid="462">Format</label><div class="editable font-mono text-[10px]" contenteditable="true" vid="463"></div></div>
+            <div class="space-y-1" vid="464"><label class="font-mono text-[8px] text-gray-500 uppercase" vid="465">Campaign</label><div class="editable font-mono text-[10px]" contenteditable="true" vid="466"></div></div>
+            <div class="space-y-1" vid="467"><label class="font-mono text-[8px] text-gray-500 uppercase" vid="468">Pillar</label><div class="editable font-mono text-[10px]" contenteditable="true" vid="469"></div></div>
+            <div class="space-y-1" vid="470"><label class="font-mono text-[8px] text-gray-500 uppercase" vid="471">Signal Type</label><div class="editable font-mono text-[10px]" contenteditable="true" vid="472"></div></div>
+            <div class="space-y-1" vid="473"><label class="font-mono text-[8px] text-gray-500 uppercase" vid="474">Primary CTA</label><div class="editable font-mono text-[10px]" contenteditable="true" vid="475"></div></div>
+        </div>
+
+        <div class="grid grid-cols-1 gap-4 flex-grow" vid="476">
+            <div class="space-y-1" vid="477">
+                <label class="font-mono text-[9px] uppercase font-bold text-purple-900" vid="478">1. Hook / Opening</label>
+                <div class="box-editable h-12" contenteditable="true" vid="479"></div>
+            </div>
+            <div class="space-y-1" vid="480">
+                <label class="font-mono text-[9px] uppercase font-bold text-purple-900" vid="481">2. Core Point</label>
+                <div class="box-editable h-16" contenteditable="true" vid="482"></div>
+            </div>
+            <div class="space-y-1" vid="483">
+                <label class="font-mono text-[9px] uppercase font-bold text-purple-900" vid="484">3. Proof / Context / Example</label>
+                <div class="box-editable h-16" contenteditable="true" vid="485"></div>
+            </div>
+            <div class="space-y-1" vid="486">
+                <label class="font-mono text-[9px] uppercase font-bold text-purple-900" vid="487">4. CTA / Next Step</label>
+                <div class="box-editable h-12" contenteditable="true" vid="488"></div>
+            </div>
+
+            <section class="border border-gold/20 p-4 mt-4 bg-white/30" vid="489">
+                <h4 class="font-mono text-[10px] font-bold text-purple-950 uppercase border-b border-gold/30 pb-1 mb-3" vid="490">Repurpose Plan</h4>
+                <div class="grid grid-cols-2 gap-y-2 text-[10px] font-mono" vid="491">
+                    <div class="flex items-center" vid="492"><div class="custom-check" vid="493"></div> Turn into Carousel</div>
+                    <div class="flex items-center" vid="494"><div class="custom-check" vid="495"></div> Turn into Short Video</div>
+                    <div class="flex items-center" vid="496"><div class="custom-check" vid="497"></div> Turn into LinkedIn Post</div>
+                    <div class="flex items-center" vid="498"><div class="custom-check" vid="499"></div> Turn into Email Section</div>
+                    <div class="flex items-center" vid="500"><div class="custom-check" vid="501"></div> Turn into Blog Section</div>
+                    <div class="flex items-center" vid="502"><div class="custom-check" vid="503"></div> Turn into Story</div>
+                    <div class="flex items-center" vid="504"><div class="custom-check" vid="505"></div> Save for later</div>
+                </div>
+            </section>
+        </div>
+
+        <footer class="mt-auto flex justify-between items-end pt-4 border-t border-purple-100" vid="506">
+            <div class="font-mono text-[8px] text-gray-400 uppercase tracking-widest" vid="507">ALGORITHM WITCH : CONTENT SIGNAL AGENDA</div>
+            <div class="font-magical text-[10px] text-purple-900" vid="508">PAGE 06 / 08</div>
+        </footer>
+    </div>
+
+    
+    <div class="page" vid="509">
+        <header class="mb-6" vid="510">
+            <h2 class="font-magical text-2xl text-purple-950 tracking-widest uppercase" vid="511">Performance Reflection</h2>
+            <p class="font-serif italic text-sm text-purple-800/70" vid="512">Track what carried, what stalled, and what should repeat.</p>
+        </header>
+
+        <div class="grid grid-cols-2 gap-4 mb-8 text-xs" vid="513">
+            <div class="space-y-1" vid="514"><label class="font-mono text-[8px] text-gray-500 uppercase" vid="515">Review Period</label><div class="editable font-serif" contenteditable="true" vid="516">Last 30 Days</div></div>
+            <div class="space-y-1" vid="517"><label class="font-mono text-[8px] text-gray-500 uppercase" vid="518">Platform(s)</label><div class="editable font-serif" contenteditable="true" vid="519">All</div></div>
+            <div class="space-y-1" vid="520"><label class="font-mono text-[8px] text-gray-500 uppercase" vid="521">Campaign</label><div class="editable font-serif" contenteditable="true" vid="522">Signal Launch</div></div>
+            <div class="space-y-1" vid="523"><label class="font-mono text-[8px] text-gray-500 uppercase" vid="524">Top Performing Post</label><div class="editable font-serif" contenteditable="true" vid="525">The Signal Map Tutorial</div></div>
+            <div class="space-y-1 col-span-2" vid="526"><label class="font-mono text-[8px] text-gray-500 uppercase" vid="527">Lowest Performing Post</label><div class="editable font-serif" contenteditable="true" vid="528">Weekend Recap</div></div>
+        </div>
+
+        <section class="mb-8" vid="529">
+            <h3 class="font-mono text-[10px] font-bold text-purple-900 uppercase border-b border-gold/30 pb-1 mb-2" vid="530">Metrics Tracking</h3>
+            <table class="text-[9px]" vid="531">
+                <thead vid="532">
+                    <tr vid="533">
+                        <th class="w-[20%]" vid="534">Post / Topic</th>
+                        <th class="w-[10%]" vid="535">Fmt</th>
+                        <th class="w-[10%]" vid="536">Saves</th>
+                        <th class="w-[10%]" vid="537">Shares</th>
+                        <th class="w-[10%]" vid="538">Clicks</th>
+                        <th class="w-[20%]" vid="539">Strongest Signal</th>
+                    </tr>
+                </thead>
+                <tbody vid="540">
+                    <tr vid="541"><td vid="542">Tutorial: Map</td><td vid="543">Vid</td><td vid="544">45</td><td vid="545">12</td><td vid="546">89</td><td vid="547">Authority</td></tr>
+                    <tr vid="548"><td vid="549"><div class="editable" contenteditable="true" vid="550"></div></td><td vid="551"></td><td vid="552"></td><td vid="553"></td><td vid="554"></td><td vid="555"></td></tr>
+                    <tr vid="556"><td vid="557"><div class="editable" contenteditable="true" vid="558"></div></td><td vid="559"></td><td vid="560"></td><td vid="561"></td><td vid="562"></td><td vid="563"></td></tr>
+                    <tr vid="564"><td vid="565"><div class="editable" contenteditable="true" vid="566"></div></td><td vid="567"></td><td vid="568"></td><td vid="569"></td><td vid="570"></td><td vid="571"></td></tr>
+                    <tr vid="572"><td vid="573"><div class="editable" contenteditable="true" vid="574"></div></td><td vid="575"></td><td vid="576"></td><td vid="577"></td><td vid="578"></td><td vid="579"></td></tr>
+                    <tr vid="580"><td vid="581"><div class="editable" contenteditable="true" vid="582"></div></td><td vid="583"></td><td vid="584"></td><td vid="585"></td><td vid="586"></td><td vid="587"></td></tr>
+                </tbody>
+            </table>
+        </section>
+
+        <div class="grid grid-cols-2 gap-6 flex-grow" vid="588">
+            <div class="space-y-2" vid="589">
+                <label class="font-mono text-[9px] uppercase font-bold text-purple-900" vid="590">What worked?</label>
+                <div class="box-editable h-24" contenteditable="true" vid="591">Focus on the data but also the feeling...</div>
+            </div>
+            <div class="space-y-2" vid="592">
+                <label class="font-mono text-[9px] uppercase font-bold text-purple-900" vid="593">What repeated signal showed up?</label>
+                <div class="box-editable h-24" contenteditable="true" vid="594">Did they recognize your pillars?</div>
+            </div>
+            <div class="space-y-2" vid="595">
+                <label class="font-mono text-[9px] uppercase font-bold text-purple-900" vid="596">What felt disconnected?</label>
+                <div class="box-editable h-24" contenteditable="true" vid="597">What missed the mark on your strategy?</div>
+            </div>
+            <div class="space-y-2" vid="598">
+                <label class="font-mono text-[9px] uppercase font-bold text-purple-900" vid="599">What should be adjusted next?</label>
+                <div class="box-editable h-24" contenteditable="true" vid="600">One concrete change for the next cycle...</div>
+            </div>
+        </div>
+
+        <p class="text-[10px] font-serif italic text-center text-purple-900/60 mt-4" vid="601">
+            “Do not only track what got attention. Track what created direction.”
+        </p>
+
+        <footer class="mt-auto flex justify-between items-end pt-4 border-t border-purple-100" vid="602">
+            <div class="font-mono text-[8px] text-gray-400 uppercase tracking-widest" vid="603">REFLECTION DRIVES COMPOUNDING</div>
+            <div class="font-magical text-[10px] text-purple-900" vid="604">PAGE 07 / 08</div>
+        </footer>
+    </div>
+
+    
+    <div class="page" vid="605">
+        <header class="mb-6" vid="606">
+            <h2 class="font-magical text-2xl text-purple-950 tracking-widest uppercase" vid="607">Next Cycle Reset</h2>
+            <p class="font-serif italic text-sm text-purple-800/70" vid="608">Turn what you learned into the next content pattern.</p>
+        </header>
+
+        <div class="grid grid-cols-2 gap-6 mb-8 h-2/3" vid="609">
+            <div class="space-y-2 flex flex-col" vid="610">
+                <div class="flex items-center gap-2" vid="611"><i class="ph-bold ph-check-circle text-green-700" vid="612"></i> <h4 class="font-mono text-[10px] uppercase font-bold" vid="613">Keep</h4></div>
+                <p class="text-[9px] text-gray-500 italic" vid="614">What should continue?</p>
+                <div class="box-editable flex-grow" contenteditable="true" vid="615"></div>
+            </div>
+            <div class="space-y-2 flex flex-col" vid="616">
+                <div class="flex items-center gap-2" vid="617"><i class="ph-bold ph-x-circle text-red-700" vid="618"></i> <h4 class="font-mono text-[10px] uppercase font-bold" vid="619">Cut</h4></div>
+                <p class="text-[9px] text-gray-500 italic" vid="620">What should stop taking energy?</p>
+                <div class="box-editable flex-grow" contenteditable="true" vid="621"></div>
+            </div>
+            <div class="space-y-2 flex flex-col" vid="622">
+                <div class="flex items-center gap-2" vid="623"><i class="ph-bold ph-magnifying-glass text-blue-700" vid="624"></i> <h4 class="font-mono text-[10px] uppercase font-bold" vid="625">Clarify</h4></div>
+                <p class="text-[9px] text-gray-500 italic" vid="626">What needs cleaner language or structure?</p>
+                <div class="box-editable flex-grow" contenteditable="true" vid="627"></div>
+            </div>
+            <div class="space-y-2 flex flex-col" vid="628">
+                <div class="flex items-center gap-2" vid="629"><i class="ph-bold ph-plus-circle text-purple-700" vid="630"></i> <h4 class="font-mono text-[10px] uppercase font-bold" vid="631">Build</h4></div>
+                <p class="text-[9px] text-gray-500 italic" vid="632">What should become a recurring series?</p>
+                <div class="box-editable flex-grow" contenteditable="true" vid="633"></div>
+            </div>
+        </div>
+
+        <section class="mt-4" vid="634">
+            <h3 class="font-mono text-[10px] font-bold text-purple-900 uppercase border-b border-gold/30 pb-1 mb-2" vid="635">Next Cycle Commitments</h3>
+            <table class="text-[9px]" vid="636">
+                <thead vid="637">
+                    <tr vid="638">
+                        <th class="w-[30%]" vid="639">Commitment</th>
+                        <th class="w-[25%]" vid="640">Related Signal</th>
+                        <th class="w-[25%]" vid="641">First Action</th>
+                        <th class="w-[20%]" vid="642">Due Date</th>
+                    </tr>
+                </thead>
+                <tbody vid="643">
+                    <tr vid="644"><td vid="645">Launch Weekly Carousel</td><td vid="646">Authority</td><td vid="647">Draft 4 Topics</td><td vid="648">Nov 20</td></tr>
+                    <tr vid="649"><td vid="650"><div class="editable" contenteditable="true" vid="651"></div></td><td vid="652"></td><td vid="653"></td><td vid="654"></td></tr>
+                    <tr vid="655"><td vid="656"><div class="editable" contenteditable="true" vid="657"></div></td><td vid="658"></td><td vid="659"></td><td vid="660"></td></tr>
+                    <tr vid="661"><td vid="662"><div class="editable" contenteditable="true" vid="663"></div></td><td vid="664"></td><td vid="665"></td><td vid="666"></td></tr>
+                    <tr vid="667"><td vid="668"><div class="editable" contenteditable="true" vid="669"></div></td><td vid="670"></td><td vid="671"></td><td vid="672"></td></tr>
+                </tbody>
+            </table>
+        </section>
+
+        <footer class="mt-auto pt-8 flex flex-col items-center border-t border-purple-100" vid="673">
+            <p class="font-mono text-[9px] text-purple-900 font-bold tracking-[0.3em] uppercase mb-2" vid="674">
+                Consistency builds recognition. Recognition drives distribution.
+            </p>
+            <div class="flex justify-between w-full items-end" vid="675">
+                <div class="font-mono text-[8px] text-gray-400" vid="676">© 2024 ALGORITHM WITCH RESOURCES</div>
+                <div class="font-magical text-[10px] text-purple-900" vid="677">PAGE 08 / 08</div>
+            </div>
+        </footer>
+    </div>
+
+
+</body></html>

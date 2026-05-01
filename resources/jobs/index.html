@@ -409,6 +409,23 @@
       border-top: 1px solid var(--border-divider);
     }
 
+    .classifieds-grid-message {
+      grid-column: 1 / -1;
+      background: var(--surface-card);
+      padding: 24px;
+      border-right: 1px solid var(--border-divider);
+      border-bottom: 1px solid var(--border-divider);
+      color: var(--ink-secondary);
+      min-height: 160px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      font-family: var(--font-serif);
+      font-size: 1.5rem;
+      line-height: 1.25;
+    }
+
     .classified-card {
       background: var(--surface-card);
       padding: 24px;
@@ -655,6 +672,29 @@
       color: var(--ink-secondary);
     }
 
+    .archive-apply-box {
+      margin-top: 28px;
+      background: var(--surface-card);
+      border: 1px solid var(--border-divider);
+      padding: 32px;
+      display: grid;
+      grid-template-columns: 1.2fr auto;
+      gap: 20px;
+      align-items: center;
+    }
+
+    .archive-apply-box h3 {
+      font-family: var(--font-serif);
+      font-size: 2.2rem;
+      color: var(--accent-lavender);
+      margin-bottom: 12px;
+    }
+
+    .archive-apply-box p {
+      color: var(--ink-secondary);
+      max-width: 680px;
+    }
+
     .employer-section {
       background: var(--surface-alt);
       border-top: 1px solid var(--border-divider);
@@ -790,6 +830,10 @@
         flex-direction: column;
       }
 
+      .archive-apply-box {
+        grid-template-columns: 1fr;
+      }
+
       .profile-visual {
         width: 100%;
         border-right: none;
@@ -834,10 +878,10 @@
         <a href="#classifieds" class="nav-link">Classifieds</a>
         <a href="#profiles" class="nav-link">Profiles</a>
         <a href="#employers" class="nav-link">For Employers</a>
-        <a href="./submit-job.html" class="nav-link">Submit Job</a>
-        <a href="./admin-review.html" class="nav-link">Admin Review</a>
+        <a href="./submit.html" class="nav-link">Submit Job</a>
+        <a href="./admin-apply.html" class="nav-link">Admin Apply</a>
       </div>
-      <a href="./submit-job.html" class="btn-primary">Submit LinkedIn Link</a>
+      <a href="./submit.html" class="btn-primary">Submit Job</a>
     </nav>
 
     <section id="home" class="hero-section">
@@ -904,8 +948,9 @@
         </div>
       </div>
 
-      <div id="jobs-state" class="state-panel">Loading the latest board from <code>jobs.json</code>...</div>
-      <div id="jobs-grid" class="classifieds-grid" hidden></div>
+      <div id="jobs-grid" class="classifieds-grid">
+        <div class="classifieds-grid-message">Loading opportunities from the archive…</div>
+      </div>
 
       <div style="text-align: center; margin-top: 40px;">
         <button id="load-more-button" class="btn-primary" style="background: transparent; color: var(--accent-chartreuse);" type="button" hidden>
@@ -1007,43 +1052,54 @@
           </div>
         </div>
       </div>
+
+      <div class="archive-apply-box">
+        <div>
+          <div style="font-family: var(--font-mono); font-size: 0.75rem; color: var(--accent-chartreuse); text-transform: uppercase; letter-spacing: 0.05em;">Reviewed Profiles</div>
+          <h3>Apply to Be Featured</h3>
+          <p>Featured talent profiles are reviewed before they appear publicly. Share your focus areas, portfolio, and role goals so the archive can stay curated and genuinely useful.</p>
+        </div>
+        <div>
+          <a href="./talent-apply.html" class="btn-primary">Apply to Be Featured</a>
+        </div>
+      </div>
     </section>
 
     <section id="employers" class="employer-section">
       <div class="employer-content">
         <div class="employer-text">
           <h2>Hire the minds working on what matters.</h2>
-          <p>Stop sifting through generalist job boards. The public board now supports direct ATS sync plus a manual review queue for shared links, without scraping LinkedIn.</p>
+          <p>Stop sifting through generalist job boards. Public roles stay curated through reviewed submissions and approved source syncs, without scraping LinkedIn or letting listings publish instantly.</p>
 
           <ul class="benefit-list">
             <li>
               <svg viewBox="0 0 24 24"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
-              jobs.json is the single source of truth for the branded front end
+              jobs.json remains the single source of truth for the branded public front end
             </li>
             <li>
               <svg viewBox="0 0 24 24"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
-              Greenhouse and Lever sync scripts can refresh roles from approved public ATS sources
+              Greenhouse and Lever syncs can stage roles from approved ATS sources for review
             </li>
             <li>
               <svg viewBox="0 0 24 24"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
-              Manual LinkedIn link intake routes shared jobs into a pending review queue
+              Shared links and talent submissions route into a private approval flow before publication
             </li>
           </ul>
         </div>
 
         <div class="actions-stack">
           <div class="action-card">
-            <div style="font-family: var(--font-mono); font-size: 0.75rem; color: var(--accent-chartreuse); text-transform: uppercase;">Manual Intake</div>
+            <div style="font-family: var(--font-mono); font-size: 0.75rem; color: var(--accent-chartreuse); text-transform: uppercase;">Curated Submission</div>
             <h3 style="font-family: var(--font-serif); font-size: 2.4rem; margin-top: 12px;">Submit an Opportunity</h3>
-            <p>Paste a LinkedIn link, add the real apply URL, and save it into the pending review flow without any scraping.</p>
-            <a href="./submit-job.html" class="btn-primary">Open Submission Form</a>
+            <p>Submit a role with a source link or fully manual details. Every public listing is reviewed before it appears on the board.</p>
+            <a href="./submit.html" class="btn-primary">Submit a Job</a>
           </div>
 
           <div class="action-card">
-            <div style="font-family: var(--font-mono); font-size: 0.75rem; color: var(--accent-lavender); text-transform: uppercase;">Review Queue</div>
+            <div style="font-family: var(--font-mono); font-size: 0.75rem; color: var(--accent-lavender); text-transform: uppercase;">Curator Path</div>
             <h3 style="font-family: var(--font-serif); font-size: 2rem; margin-top: 12px;">Approve Before Publishing</h3>
-            <p>Review pending jobs, edit any fields you need, and hand off final write access to Apps Script, GitHub Actions, or a small backend.</p>
-            <a href="./admin-review.html" class="btn-secondary">Open Admin Review</a>
+            <p>Apply to help review roles, talent profiles, and trusted source queues. Approval access stays private and is not handled on the public board.</p>
+            <a href="./admin-apply.html" class="btn-secondary">Apply to Be an Admin</a>
           </div>
         </div>
       </div>
@@ -1073,7 +1129,6 @@
     const ui = {
       searchInput: document.getElementById("job-search"),
       quickFilters: Array.from(document.querySelectorAll("[data-quick-filter]")),
-      statePanel: document.getElementById("jobs-state"),
       jobsGrid: document.getElementById("jobs-grid"),
       loadMoreButton: document.getElementById("load-more-button"),
       statCount: document.getElementById("stat-count"),
@@ -1114,7 +1169,8 @@
     }
 
     function filterJob(job) {
-      if (String(job.status || "").toLowerCase() !== "active") return false;
+      const status = String(job.status || "").toLowerCase();
+      if (!["active", "approved"].includes(status)) return false;
 
       const haystack = [
         job.title,
@@ -1140,19 +1196,9 @@
       return true;
     }
 
-    function renderState(message, isError = false) {
-      ui.statePanel.hidden = false;
-      ui.jobsGrid.hidden = true;
+    function renderState(message) {
       ui.loadMoreButton.hidden = true;
-      ui.statePanel.innerHTML = `
-        <div>
-          <div style="font-family: var(--font-mono); font-size: 0.75rem; color: ${isError ? "var(--accent-lavender)" : "var(--accent-chartreuse)"}; text-transform: uppercase; margin-bottom: 14px;">
-            ${isError ? "Load Error" : "Board Status"}
-          </div>
-          <div style="font-family: var(--font-serif); font-size: 2rem; color: var(--ink-primary); margin-bottom: 10px;">${escapeHtml(message)}</div>
-          <div style="color: var(--ink-tertiary);">The branded layout stays intact while the data layer catches up.</div>
-        </div>
-      `;
+      ui.jobsGrid.innerHTML = `<div class="classifieds-grid-message">${escapeHtml(message)}</div>`;
     }
 
     function buildFilterOption(groupKey, value) {
@@ -1167,7 +1213,7 @@
     }
 
     function renderFilters() {
-      const activeJobs = state.jobs.filter((job) => String(job.status || "").toLowerCase() === "active");
+      const activeJobs = state.jobs.filter((job) => ["active", "approved"].includes(String(job.status || "").toLowerCase()));
       const optionMap = {
         location: [...new Set(activeJobs.map(getWorkMode))],
         jobType: [...new Set(activeJobs.map((job) => job.job_type).filter(Boolean))],
@@ -1213,7 +1259,7 @@
       ui.gridSummary.textContent = `${state.filteredJobs.length} roles in the current view`;
       ui.filterMatchCount.textContent = `${state.filteredJobs.length} opportunities match your filters`;
       ui.statCount.textContent = `${state.jobs.length} roles loaded`;
-      ui.statStatus.textContent = `${state.jobs.filter((job) => job.status === "active").length} active listings`;
+      ui.statStatus.textContent = `${state.jobs.filter((job) => ["active", "approved"].includes(String(job.status || "").toLowerCase())).length} public listings`;
       ui.statUpdated.textContent = state.jobs.length ? `Latest post ${formatDate(state.jobs[0].date_posted).replace("Posted ", "")}` : "No listings yet";
       renderActiveTags();
 
@@ -1222,12 +1268,10 @@
         return;
       }
 
-      ui.statePanel.hidden = true;
-      ui.jobsGrid.hidden = false;
       ui.jobsGrid.innerHTML = visibleJobs
         .map((job) => {
-          const featured = Array.isArray(job.tags) && job.tags.map((tag) => String(tag).toLowerCase()).includes("featured");
-          const ref = String(job.id || "manual").toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 8).padEnd(8, "X");
+          const featured = Boolean(job.featured);
+          const ref = String(job.ref || "").trim() || String(job.id || "manual").toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 8).padEnd(8, "X");
           return `
             <a class="classified-card" href="${escapeHtml(job.apply_url || job.source_url || "#")}" target="_blank" rel="noreferrer">
               ${featured ? '<div class="featured-marker"></div>' : ""}
@@ -1249,7 +1293,7 @@
                     ${escapeHtml(job.job_type)}
                   </div>
                 </div>
-                <div class="card-salary">${escapeHtml(formatDate(job.date_posted))}</div>
+                <div class="card-salary">${escapeHtml(job.salary || "")}</div>
               </div>
             </a>
           `;
@@ -1271,7 +1315,7 @@
     }
 
     async function loadJobs() {
-      renderState("Loading the latest board from jobs.json...");
+      renderState("Loading opportunities from the archive…");
 
       try {
         const response = await fetch("./jobs.json", { cache: "no-store" });
@@ -1288,7 +1332,7 @@
         ui.statCount.textContent = "Unable to load roles";
         ui.statStatus.textContent = "Check jobs.json";
         ui.statUpdated.textContent = "Static board offline";
-        renderState("The board could not load jobs.json. Check the file path or local server setup.", true);
+        renderState("The archive is having trouble loading opportunities right now.");
       }
     }
 

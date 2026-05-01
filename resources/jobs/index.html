@@ -1189,10 +1189,35 @@
     }
 
     function getWorkMode(job) {
+      if (job.workplace_type) return job.workplace_type;
       const location = String(job.location || "").toLowerCase();
       if (location.includes("remote")) return "Remote";
       if (location.includes("hybrid")) return "Hybrid";
       return "On-site";
+    }
+
+    function normalizeSectorLabel(value) {
+      const text = String(value || "").trim();
+      const lower = text.toLowerCase();
+      if (!lower) return "";
+      if (/clean energy|electrification|renewable/.test(lower)) return "Clean Energy";
+      if (/climate tech|climate software|carbon software/.test(lower)) return "Climate Tech";
+      if (/policy|advocacy|campaign/.test(lower)) return "Policy/Advocacy";
+      if (/conservation|nature|oceans|biodiversity/.test(lower)) return "Conservation";
+      if (/sustainability/.test(lower)) return "Sustainability";
+      if (/communications|storytelling|brand/.test(lower)) return "Climate Communications";
+      return text.replace(/\b\w/g, (match) => match.toUpperCase());
+    }
+
+    function getLastUpdated(job) {
+      return job.date_updated || job.date_added || job.date_posted || "";
+    }
+
+    function isNewThisWeek(job) {
+      const candidate = Date.parse(job.date_added || job.date_updated || job.date_posted);
+      if (!candidate) return false;
+      const delta = Date.now() - candidate;
+      return delta <= 7 * 24 * 60 * 60 * 1000;
     }
 
     function filterJob(job) {
@@ -1287,7 +1312,10 @@
       ui.filterMatchCount.textContent = `${state.filteredJobs.length} opportunities match your filters`;
       ui.statCount.textContent = `${state.jobs.length} roles loaded`;
       ui.statStatus.textContent = `${state.jobs.filter((job) => ["active", "approved"].includes(String(job.status || "").toLowerCase())).length} public listings`;
-      ui.statUpdated.textContent = state.jobs.length ? `Latest post ${formatDate(state.jobs[0].date_posted).replace("Posted ", "")}` : "No listings yet";
+      const latestUpdate = state.jobs
+        .map((job) => Date.parse(getLastUpdated(job)) || 0)
+        .sort((a, b) => b - a)[0];
+      ui.statUpdated.textContent = latestUpdate ? `Last updated ${new Date(latestUpdate).toLocaleDateString("en-US", { month: "short", day: "numeric" })}` : "No listings yet";
       renderActiveTags();
 
       if (!state.filteredJobs.length) {
@@ -1298,7 +1326,11 @@
       ui.jobsGrid.innerHTML = visibleJobs
         .map((job) => {
           const featured = Boolean(job.featured);
+          const newThisWeek = isNewThisWeek(job);
           const ref = String(job.ref || "").trim() || String(job.id || "manual").toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 8).padEnd(8, "X");
+          const salaryBlock = job.salary_visible === false && !job.salary ? "" : `<div class="card-salary">${escapeHtml(job.salary || "")}</div>`;
+          const sectorLabel = normalizeSectorLabel(job.sector);
+          const updatedText = getLastUpdated(job);
           return `
             <a class="classified-card" href="${escapeHtml(job.apply_url || job.source_url || "#")}" target="_blank" rel="noreferrer">
               ${featured ? '<div class="featured-marker"></div>' : ""}
@@ -1307,6 +1339,9 @@
               <div class="card-org">${escapeHtml(job.organization)}</div>
               <p class="card-description">${escapeHtml(job.description || "Open the application to review the full role details.")}</p>
               <div class="tag-row" style="justify-content: flex-start; margin-top: 0;">
+                ${newThisWeek ? '<span class="tag-pill" style="cursor: default;">New this week</span>' : ""}
+                ${sectorLabel ? `<span class="tag-pill" style="cursor: default;">${escapeHtml(sectorLabel)}</span>` : ""}
+                ${getWorkMode(job) ? `<span class="tag-pill" style="cursor: default;">${escapeHtml(getWorkMode(job))}</span>` : ""}
                 ${(job.tags || []).slice(0, 3).map((tag) => `<span class="tag-pill" style="cursor: default;">#${escapeHtml(tag)}</span>`).join("")}
               </div>
               <div class="card-footer">
@@ -1319,8 +1354,9 @@
                     <svg class="icon" viewBox="0 0 24 24"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"></rect><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"></path></svg>
                     ${escapeHtml(job.job_type)}
                   </div>
+                  ${updatedText ? `<div class="card-meta-row">Last updated ${escapeHtml(new Date(updatedText).toLocaleDateString("en-US", { month: "short", day: "numeric" }))}</div>` : ""}
                 </div>
-                <div class="card-salary">${escapeHtml(job.salary || "")}</div>
+                ${salaryBlock}
               </div>
             </a>
           `;

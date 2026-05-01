@@ -313,6 +313,16 @@
               </div>
             </div>
 
+            <div>
+              <label for="workplace_type">Workplace Type</label>
+              <select id="workplace_type" name="workplace_type" required>
+                <option value="">Select one</option>
+                <option>Remote</option>
+                <option>Hybrid</option>
+                <option>On-site</option>
+              </select>
+            </div>
+
             <div class="three-col">
               <div>
                 <label for="job_type">Job Type</label>
@@ -534,6 +544,7 @@
         title,
         organization,
         location: String(formData.get("location") || "").trim(),
+        workplace_type: String(formData.get("workplace_type") || "").trim(),
         job_type: String(formData.get("job_type") || "").trim(),
         salary: String(formData.get("salary") || "").trim(),
         sector: String(formData.get("sector") || "").trim(),
@@ -563,6 +574,7 @@
       if (!job.apply_url || !isValidUrl(job.apply_url)) errors.push("Apply URL must be a valid URL.");
       if (!job.title) errors.push("Role title is required.");
       if (!job.organization) errors.push("Organization is required.");
+      if (!job.workplace_type) errors.push("Workplace type is required.");
       if (!job.description) errors.push("Description is required.");
       if (!job.submitter_name) errors.push("Submitter name is required.");
       if (!job.submitter_email || !isValidEmail(job.submitter_email)) errors.push("Submitter email must be valid.");
@@ -577,9 +589,6 @@
 
       const response = await fetch(JOBS_BACKEND_URL, {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json"
-        },
         body: JSON.stringify({
           action: "submitJob",
           payload: job
@@ -628,7 +637,7 @@
         successMessage.style.display = "block";
       } catch (error) {
         console.error(error);
-        errorList.innerHTML = `<div>${error.message || "Job submission failed."}</div><div style="margin-top:8px;color:var(--ink-secondary);">This submission tool is in review mode. Copy these details and send them manually.</div>`;
+        errorList.innerHTML = `<div>We couldn’t reach the submission system. Your details are below so nothing gets lost.</div><div style="margin-top:8px;color:var(--ink-secondary);">This submission tool is in review mode. Copy these details and send them manually.</div>`;
         errorList.style.display = "block";
       }
     });

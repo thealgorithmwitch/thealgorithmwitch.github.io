@@ -1,0 +1,633 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Submit Job | The Algorithm Witch</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,100..1000;1,9..40,100..1000&family=Instrument+Serif:ital@0;1&family=Space+Mono:ital,wght@0,400;0,700;1,400;1,700&display=swap');
+
+    :root {
+      --bg-paper: #0A1F15;
+      --ink-primary: #CFFBE3;
+      --ink-secondary: rgba(207, 251, 227, 0.7);
+      --ink-tertiary: rgba(207, 251, 227, 0.4);
+      --accent-chartreuse: #A8FF3E;
+      --accent-lavender: #D4C1FF;
+      --surface-card: #0D261A;
+      --surface-alt: #1A1429;
+      --border-divider: #163628;
+      --font-serif: 'Instrument Serif', serif;
+      --font-sans: 'DM Sans', sans-serif;
+      --font-mono: 'Space Mono', monospace;
+      --transition: 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: var(--bg-paper);
+      color: var(--ink-primary);
+      font-family: var(--font-sans);
+      padding: 0 24px 72px;
+    }
+    .shell {
+      max-width: 1120px;
+      margin: 0 auto;
+    }
+    nav {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 16px;
+      padding: 24px 0;
+      border-bottom: 1px solid var(--border-divider);
+      flex-wrap: wrap;
+    }
+    .logo {
+      text-decoration: none;
+      color: var(--ink-primary);
+      display: flex;
+      align-items: baseline;
+      gap: 10px;
+    }
+    .logo h1 {
+      font-family: var(--font-serif);
+      font-size: 2rem;
+      font-weight: 400;
+    }
+    .logo span,
+    .eyebrow,
+    label,
+    .meta,
+    .helper-note {
+      font-family: var(--font-mono);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+    .logo span,
+    .eyebrow {
+      color: var(--accent-chartreuse);
+      font-size: 0.75rem;
+    }
+    .hero {
+      display: grid;
+      grid-template-columns: 0.92fr 1.08fr;
+      gap: 32px;
+      padding-top: 56px;
+      align-items: start;
+    }
+    .hero h2 {
+      font-family: var(--font-serif);
+      font-size: clamp(2.8rem, 5vw, 4.4rem);
+      line-height: 0.95;
+      margin: 12px 0 20px;
+    }
+    .hero p {
+      color: var(--ink-secondary);
+      font-size: 1.05rem;
+      max-width: 540px;
+    }
+    .card,
+    .note,
+    .json-panel {
+      background: var(--surface-card);
+      border: 1px solid var(--border-divider);
+      padding: 32px;
+    }
+    .note {
+      margin-top: 24px;
+      background: var(--surface-alt);
+      border-color: rgba(212, 193, 255, 0.24);
+    }
+    .note ul {
+      margin-top: 14px;
+      padding-left: 18px;
+      color: var(--ink-secondary);
+    }
+    .helper-box {
+      margin-top: 18px;
+      padding: 18px;
+      border: 1px dashed rgba(212, 193, 255, 0.3);
+      background: rgba(212, 193, 255, 0.06);
+      display: none;
+    }
+    .helper-box.visible {
+      display: block;
+    }
+    .helper-note {
+      color: var(--accent-lavender);
+      font-size: 0.68rem;
+      margin-top: 8px;
+    }
+    form {
+      display: grid;
+      gap: 18px;
+    }
+    .two-col,
+    .three-col {
+      display: grid;
+      gap: 18px;
+    }
+    .two-col {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+    .three-col {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+    label {
+      display: block;
+      color: var(--ink-secondary);
+      font-size: 0.7rem;
+      margin-bottom: 8px;
+    }
+    input,
+    textarea,
+    select {
+      width: 100%;
+      border: 1px solid var(--border-divider);
+      background: transparent;
+      color: var(--ink-primary);
+      padding: 14px 16px;
+      font: inherit;
+      outline: none;
+      transition: var(--transition);
+    }
+    textarea {
+      min-height: 120px;
+      resize: vertical;
+    }
+    input:focus,
+    textarea:focus,
+    select:focus {
+      border-color: var(--accent-chartreuse);
+      box-shadow: inset 0 0 0 1px var(--accent-chartreuse);
+    }
+    .actions {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      align-items: center;
+      margin-top: 8px;
+    }
+    .btn-primary,
+    .btn-secondary {
+      border: 1px solid var(--accent-chartreuse);
+      padding: 12px 18px;
+      font-family: var(--font-mono);
+      font-size: 0.75rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      cursor: pointer;
+      transition: var(--transition);
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+    .btn-primary {
+      background: var(--accent-chartreuse);
+      color: var(--bg-paper);
+    }
+    .btn-secondary {
+      background: transparent;
+      color: var(--accent-chartreuse);
+      border-color: var(--border-divider);
+    }
+    .btn-primary:hover,
+    .btn-secondary:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 0 15px rgba(168, 255, 62, 0.25);
+    }
+    .error-list,
+    .success-message {
+      display: none;
+      margin-top: 18px;
+      padding: 18px;
+      border: 1px solid var(--border-divider);
+    }
+    .success-message {
+      background: rgba(168, 255, 62, 0.06);
+    }
+    .error-list {
+      background: rgba(212, 193, 255, 0.08);
+      border-color: rgba(212, 193, 255, 0.4);
+    }
+    .json-panel {
+      margin-top: 24px;
+      display: none;
+    }
+    .json-panel.visible {
+      display: block;
+    }
+    .json-panel pre {
+      margin-top: 16px;
+      padding: 18px;
+      border: 1px solid var(--border-divider);
+      background: rgba(0, 0, 0, 0.22);
+      color: var(--ink-primary);
+      white-space: pre-wrap;
+      word-break: break-word;
+      overflow-x: auto;
+      font-family: var(--font-mono);
+      font-size: 0.78rem;
+      line-height: 1.6;
+    }
+    .meta {
+      color: var(--ink-tertiary);
+      font-size: 0.68rem;
+      margin-top: 18px;
+    }
+    @media (max-width: 920px) {
+      .hero,
+      .two-col,
+      .three-col {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="shell">
+    <nav>
+      <a class="logo" href="./">
+        <h1>Fresh Roles</h1>
+        <span>The Algorithm Witch</span>
+      </a>
+      <div class="actions">
+        <a href="./admin-apply.html" class="btn-secondary">Apply to Be an Admin</a>
+        <a href="./" class="btn-secondary">Back to Board</a>
+      </div>
+    </nav>
+
+    <section class="hero">
+      <div>
+        <div class="eyebrow">Curated Submission</div>
+        <h2>Submit a role for review, with or without a LinkedIn link.</h2>
+        <p>
+          Public jobs are curated before they appear on the board. You can paste a source link for context or submit the role manually with the employer application URL and role details.
+        </p>
+
+        <div class="note">
+          <div class="eyebrow" style="color: var(--accent-lavender);">What happens next</div>
+          <ul>
+            <li>This form generates a pending job object with `status: "pending"`.</li>
+            <li>LinkedIn URL hints use only the URL string. No page fetch or scraping happens.</li>
+            <li>Publishing still requires a private backend or approval workflow.</li>
+          </ul>
+        </div>
+      </div>
+
+      <div>
+        <div class="card">
+          <form id="job-form" novalidate>
+            <div>
+              <label for="source_url">Source URL</label>
+              <input id="source_url" name="source_url" type="url" placeholder="https://www.linkedin.com/posts/person-name_activity-...">
+              <div id="linkedin-helper" class="helper-box">
+                <div id="linkedin-helper-text" style="color: var(--ink-secondary);"></div>
+                <div class="helper-note">LinkedIn details are guessed from the URL and should be reviewed.</div>
+              </div>
+            </div>
+
+            <div class="two-col">
+              <div>
+                <label for="apply_url">Apply URL</label>
+                <input id="apply_url" name="apply_url" type="url" required placeholder="https://company.org/careers/...">
+              </div>
+              <div>
+                <label for="title">Role Title</label>
+                <input id="title" name="title" type="text" required placeholder="Communications Manager">
+              </div>
+            </div>
+
+            <div class="two-col">
+              <div>
+                <label for="organization">Organization</label>
+                <input id="organization" name="organization" type="text" required placeholder="Girl Plus Environment">
+              </div>
+              <div>
+                <label for="location">Location</label>
+                <input id="location" name="location" type="text" placeholder="Remote / Chicago">
+              </div>
+            </div>
+
+            <div class="three-col">
+              <div>
+                <label for="job_type">Job Type</label>
+                <select id="job_type" name="job_type">
+                  <option value="">Select one</option>
+                  <option>Full-time</option>
+                  <option>Part-time</option>
+                  <option>Contract</option>
+                  <option>Temporary</option>
+                  <option>Internship</option>
+                  <option>Fellowship</option>
+                </select>
+              </div>
+              <div>
+                <label for="salary">Salary</label>
+                <input id="salary" name="salary" type="text" placeholder="$115k – $140k">
+              </div>
+              <div>
+                <label for="sector">Sector</label>
+                <input id="sector" name="sector" type="text" placeholder="climate communications">
+              </div>
+            </div>
+
+            <div class="three-col">
+              <div>
+                <label for="role_function">Function</label>
+                <input id="role_function" name="role_function" type="text" placeholder="campaign strategy">
+              </div>
+              <div>
+                <label for="experience">Experience</label>
+                <input id="experience" name="experience" type="text" placeholder="senior">
+              </div>
+              <div>
+                <label for="shared_by">Shared By</label>
+                <input id="shared_by" name="shared_by" type="text" placeholder="Newsletter, colleague, or source name">
+              </div>
+            </div>
+
+            <div>
+              <label for="description">Description</label>
+              <textarea id="description" name="description" required placeholder="Short plain-language summary of the role."></textarea>
+            </div>
+
+            <div class="two-col">
+              <div>
+                <label for="tags">Tags</label>
+                <input id="tags" name="tags" type="text" placeholder="climate, communications, advocacy">
+              </div>
+              <div>
+                <label for="notes">Notes</label>
+                <input id="notes" name="notes" type="text" placeholder="Anything the reviewer should know">
+              </div>
+            </div>
+
+            <div class="two-col">
+              <div>
+                <label for="submitter_name">Submitter Name</label>
+                <input id="submitter_name" name="submitter_name" type="text" required placeholder="Your name">
+              </div>
+              <div>
+                <label for="submitter_email">Submitter Email</label>
+                <input id="submitter_email" name="submitter_email" type="email" required placeholder="you@example.com">
+              </div>
+            </div>
+
+            <div class="actions">
+              <button type="submit" class="btn-primary">Generate Pending Job JSON</button>
+              <a href="./" class="btn-secondary">Back to Board</a>
+            </div>
+          </form>
+
+          <div id="error-list" class="error-list"></div>
+          <div id="success-message" class="success-message"></div>
+
+          <div id="json-panel" class="json-panel">
+            <div class="eyebrow">Pending Payload</div>
+            <pre id="json-output"></pre>
+            <div class="actions">
+              <button id="copy-json" type="button" class="btn-secondary">Copy JSON</button>
+            </div>
+          </div>
+
+          <div class="meta">Static mode only generates JSON locally. It does not write to `jobs.json` from the browser.</div>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <script>
+    const form = document.getElementById("job-form");
+    const helperBox = document.getElementById("linkedin-helper");
+    const helperText = document.getElementById("linkedin-helper-text");
+    const sharedByInput = document.getElementById("shared_by");
+    const tagsInput = document.getElementById("tags");
+    const errorList = document.getElementById("error-list");
+    const successMessage = document.getElementById("success-message");
+    const jsonPanel = document.getElementById("json-panel");
+    const jsonOutput = document.getElementById("json-output");
+    const copyButton = document.getElementById("copy-json");
+
+    function isValidUrl(value) {
+      try {
+        const url = new URL(value);
+        return ["http:", "https:"].includes(url.protocol);
+      } catch (error) {
+        return false;
+      }
+    }
+
+    function isValidEmail(value) {
+      return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(value || "").trim());
+    }
+
+    function slugify(value) {
+      return String(value || "")
+        .toLowerCase()
+        .trim()
+        .replace(/[^a-z0-9]+/g, "-")
+        .replace(/^-+|-+$/g, "");
+    }
+
+    function titleCaseSlug(value) {
+      return String(value || "")
+        .split("-")
+        .filter(Boolean)
+        .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+        .join(" ");
+    }
+
+    function unique(values) {
+      return [...new Set(values.filter(Boolean))];
+    }
+
+    function parseLinkedInHints(rawUrl) {
+      if (!rawUrl || !/linkedin\.com/i.test(rawUrl)) return null;
+
+      let url;
+      try {
+        url = new URL(rawUrl);
+      } catch (error) {
+        return null;
+      }
+
+      const path = decodeURIComponent(url.pathname || "");
+      if (!(/\/posts\/|\/jobs\/|\/in\//i.test(path))) return null;
+
+      const generic = new Set(["linkedin", "posts", "post", "jobs", "job", "view", "in", "activity", "www", "feed", "update"]);
+      const tokens = unique(
+        path
+          .split(/[\/_-]+/)
+          .map((token) => token.trim().toLowerCase())
+          .filter((token) => token && token.length > 2 && !generic.has(token) && !/^\d+$/.test(token))
+      );
+
+      let suggestedSharedBy = "";
+      const postMatch = path.match(/\/posts\/([^/_]+(?:-[^/_]+)*)/i);
+      const profileMatch = path.match(/\/in\/([^/]+)/i);
+
+      if (postMatch && postMatch[1]) {
+        suggestedSharedBy = titleCaseSlug(postMatch[1].replace(/_activity.*$/i, ""));
+      } else if (profileMatch && profileMatch[1]) {
+        suggestedSharedBy = titleCaseSlug(profileMatch[1]);
+      }
+
+      return {
+        suggestedSharedBy,
+        keywords: tokens.slice(0, 6)
+      };
+    }
+
+    function updateLinkedInHelper() {
+      const rawUrl = document.getElementById("source_url").value.trim();
+      const hints = parseLinkedInHints(rawUrl);
+
+      if (!hints) {
+        helperBox.classList.remove("visible");
+        helperText.textContent = "";
+        return;
+      }
+
+      const parts = [];
+      if (hints.suggestedSharedBy) {
+        parts.push(`Suggested shared by: ${hints.suggestedSharedBy}`);
+        if (!sharedByInput.value.trim()) {
+          sharedByInput.value = hints.suggestedSharedBy;
+        }
+      }
+      if (hints.keywords.length) {
+        parts.push(`Possible keywords: ${hints.keywords.join(", ")}`);
+        if (!tagsInput.value.trim()) {
+          tagsInput.value = hints.keywords.join(", ");
+        }
+      }
+
+      helperText.textContent = parts.join(" // ") || "LinkedIn URL detected.";
+      helperBox.classList.add("visible");
+    }
+
+    function collectTags(value) {
+      return unique(
+        String(value || "")
+          .split(",")
+          .map((item) => item.trim().toLowerCase())
+      );
+    }
+
+    function buildPendingJob() {
+      const formData = new FormData(form);
+      const sourceUrl = String(formData.get("source_url") || "").trim();
+      const title = String(formData.get("title") || "").trim();
+      const organization = String(formData.get("organization") || "").trim();
+      const today = new Date().toISOString();
+
+      return {
+        id: [organization, title, new Date().toISOString().slice(0, 10)].map(slugify).filter(Boolean).join("-"),
+        ref: "",
+        title,
+        organization,
+        location: String(formData.get("location") || "").trim(),
+        job_type: String(formData.get("job_type") || "").trim(),
+        salary: String(formData.get("salary") || "").trim(),
+        sector: String(formData.get("sector") || "").trim(),
+        function: String(formData.get("role_function") || "").trim(),
+        experience: String(formData.get("experience") || "").trim(),
+        source: /linkedin\.com/i.test(sourceUrl) ? "LinkedIn reference" : (sourceUrl ? "Source reference" : "Manual submission"),
+        source_url: sourceUrl,
+        apply_url: String(formData.get("apply_url") || "").trim(),
+        shared_by: String(formData.get("shared_by") || "").trim(),
+        description: String(formData.get("description") || "").trim(),
+        tags: collectTags(formData.get("tags")),
+        featured: false,
+        status: "pending",
+        date_added: today,
+        date_updated: today,
+        approved_by: "",
+        notes: String(formData.get("notes") || "").trim(),
+        submitter_name: String(formData.get("submitter_name") || "").trim(),
+        submitter_email: String(formData.get("submitter_email") || "").trim()
+      };
+    }
+
+    function validateJob(job) {
+      const errors = [];
+
+      if (job.source_url && !isValidUrl(job.source_url)) errors.push("Source URL must be a valid URL when provided.");
+      if (!job.apply_url || !isValidUrl(job.apply_url)) errors.push("Apply URL must be a valid URL.");
+      if (!job.title) errors.push("Role title is required.");
+      if (!job.organization) errors.push("Organization is required.");
+      if (!job.description) errors.push("Description is required.");
+      if (!job.submitter_name) errors.push("Submitter name is required.");
+      if (!job.submitter_email || !isValidEmail(job.submitter_email)) errors.push("Submitter email must be valid.");
+
+      return errors;
+    }
+
+    async function submitJobToBackend(job) {
+      // Placeholder only. Keep public forms static until a private backend is connected.
+      // Future options:
+      // 1. Google Apps Script endpoint
+      // 2. Supabase Edge Function or table insert
+      // 3. Airtable automation endpoint
+      // 4. GitHub-backed submission workflow
+      //
+      // Example:
+      // return fetch("https://example.com/jobs-submit", {
+      //   method: "POST",
+      //   headers: { "Content-Type": "application/json" },
+      //   body: JSON.stringify(job)
+      // });
+      return { ok: false, placeholder: true };
+    }
+
+    form.addEventListener("submit", async (event) => {
+      event.preventDefault();
+      errorList.style.display = "none";
+      successMessage.style.display = "none";
+
+      const job = buildPendingJob();
+      const errors = validateJob(job);
+
+      if (errors.length) {
+        errorList.innerHTML = errors.map((error) => `<div>${error}</div>`).join("");
+        errorList.style.display = "block";
+        jsonPanel.classList.remove("visible");
+        return;
+      }
+
+      jsonOutput.textContent = JSON.stringify(job, null, 2);
+      jsonPanel.classList.add("visible");
+      await submitJobToBackend(job);
+
+      successMessage.innerHTML = `
+        <div class="eyebrow">Pending Review</div>
+        <div style="font-family: var(--font-serif); font-size: 2rem; margin: 10px 0;">Your job payload is ready for review.</div>
+        <div style="color: var(--ink-secondary);">Copy the JSON below or connect the placeholder backend hook when you are ready to route submissions into a private approval queue.</div>
+      `;
+      successMessage.style.display = "block";
+    });
+
+    copyButton.addEventListener("click", async () => {
+      try {
+        await navigator.clipboard.writeText(jsonOutput.textContent);
+        copyButton.textContent = "Copied";
+        window.setTimeout(() => {
+          copyButton.textContent = "Copy JSON";
+        }, 1600);
+      } catch (error) {
+        copyButton.textContent = "Copy Failed";
+        window.setTimeout(() => {
+          copyButton.textContent = "Copy JSON";
+        }, 1600);
+      }
+    });
+
+    document.getElementById("source_url").addEventListener("input", updateLinkedInHelper);
+  </script>
+</body>
+</html>

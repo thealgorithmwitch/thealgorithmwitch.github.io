@@ -1,3 +1,5 @@
+const crypto = require("crypto");
+
 const VALID_CURRENCIES = new Set(["USD", "CAD", "EUR", "GBP", "Unknown"]);
 const VALID_PERIODS = new Set(["hourly", "daily", "monthly", "yearly", "Unknown"]);
 
@@ -14,6 +16,10 @@ function slugify(value) {
     .trim()
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/^-+|-+$/g, "");
+}
+
+function stableHash(value) {
+  return crypto.createHash("sha1").update(String(value || "")).digest("hex").slice(0, 12);
 }
 
 function todayIso() {
@@ -195,31 +201,70 @@ function normalizeJob(input = {}) {
   };
 }
 
+function normalizeSector(value) {
+  const text = String(value || "").trim();
+  const lower = text.toLowerCase();
+  if (!lower) return "";
+  if (/clean energy|electrification|renewable/i.test(lower)) return "Clean Energy";
+  if (/climate tech|climate software|carbon software/i.test(lower)) return "Climate Tech";
+  if (/policy|advocacy|campaign/i.test(lower)) return "Policy/Advocacy";
+  if (/conservation|nature|oceans|biodiversity/i.test(lower)) return "Conservation";
+  if (/sustainability/i.test(lower)) return "Sustainability";
+  if (/communications|storytelling|brand/i.test(lower)) return "Climate Communications";
+  return text
+    .split(/\s+/)
+    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+    .join(" ");
+}
+
 function buildDedupeKey(job) {
   const normalized = normalizeJob(job);
-  if (normalized.source && normalized.external_id) {
-    return `${normalized.source.toLowerCase()}::${normalized.external_id.toLowerCase()}`;
+  if (normalized.external_id) {
+    return `external::${normalized.external_id.toLowerCase()}`;
   }
   if (normalized.apply_url) {
-    return `${normalized.source.toLowerCase()}::${normalized.apply_url.toLowerCase()}`;
+    return `apply::${normalized.apply_url.toLowerCase()}`;
   }
-  return [
-    normalized.organization.toLowerCase(),
-    normalized.title.toLowerCase(),
-    normalized.apply_url.toLowerCase()
-  ].join("::");
+  return `identity::${normalized.source.toLowerCase()}::${normalized.title.toLowerCase()}::${normalized.organization.toLowerCase()}`;
+}
+
+function likelyNearDuplicate(existing, candidate) {
+  const sameTitle = existing.title.toLowerCase() === candidate.title.toLowerCase();
+  const sameOrg = existing.organization.toLowerCase() === candidate.organization.toLowerCase();
+  if (!sameTitle || !sameOrg) return false;
+
+  const existingDate = Date.parse(existing.date_posted || existing.date_updated || existing.date_added) || 0;
+  const candidateDate = Date.parse(candidate.date_posted || candidate.date_updated || candidate.date_added) || 0;
+  const dayDelta = Math.abs(candidateDate - existingDate) / (1000 * 60 * 60 * 24);
+  return dayDelta <= 3;
 }
 
 function dedupeJobs(jobs) {
   const seen = new Map();
+  const identitySeen = new Map();
 
   for (const rawJob of jobs) {
     const job = normalizeJob(rawJob);
     const key = buildDedupeKey(job);
     const existing = seen.get(key);
+    const identityKey = `${job.title.toLowerCase()}::${job.organization.toLowerCase()}`;
+    const identityExistingKey = identitySeen.get(identityKey);
+    const nearDuplicate = identityExistingKey ? seen.get(identityExistingKey) : null;
 
     if (!existing) {
+      if (nearDuplicate && likelyNearDuplicate(nearDuplicate, job)) {
+        const existingTime = Date.parse(nearDuplicate.date_updated || nearDuplicate.date_posted) || 0;
+        const jobTime = Date.parse(job.date_updated || job.date_posted) || 0;
+        const merged = {
+          ...nearDuplicate,
+          ...job,
+          tags: Array.from(new Set([...(nearDuplicate.tags || []), ...(job.tags || [])])).filter(Boolean)
+        };
+        seen.set(identityExistingKey, jobTime >= existingTime ? merged : { ...job, ...nearDuplicate, tags: merged.tags });
+        continue;
+      }
       seen.set(key, job);
+      identitySeen.set(identityKey, key);
       continue;
     }
 
@@ -232,6 +277,7 @@ function dedupeJobs(jobs) {
     };
 
     seen.set(key, jobTime >= existingTime ? merged : { ...job, ...existing, tags: merged.tags });
+    identitySeen.set(identityKey, key);
   }
 
   return Array.from(seen.values()).sort((a, b) => {
@@ -263,9 +309,11 @@ module.exports = {
   ensureArray,
   isValidDate,
   normalizeJob,
+  normalizeSector,
   parseSalaryRange,
   routeSyncedJob,
   slugify,
+  stableHash,
   stripHtml,
   todayIso
 };

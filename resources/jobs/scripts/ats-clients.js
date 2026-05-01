@@ -1,4 +1,4 @@
-const { ensureArray, stripHtml, todayIso } = require("./job-normalizer");
+const { ensureArray, stableHash, stripHtml, todayIso } = require("./job-normalizer");
 
 function ensureDefault(values) {
   return Array.isArray(values) && values.length ? values[0] : "";
@@ -26,7 +26,9 @@ function greenhouseJobToSchema(source, job) {
 
   return {
     id: `${source.organization}-${job.id}`,
-    external_id: String(job.id || ""),
+    external_id: job.id
+      ? `greenhouse_${source.id}_${job.id}`
+      : `greenhouse_${stableHash(`${source.id}:${job.title || ""}:${job.absolute_url || ""}`)}`,
     title: job.title,
     organization: source.organization,
     location: deriveGreenhouseLocation(job),
@@ -67,7 +69,9 @@ function leverJobToSchema(source, job) {
 
   return {
     id: `${source.organization}-${job.id || job.text}`,
-    external_id: String(job.id || job.hostedUrl || job.applyUrl || job.text || ""),
+    external_id: job.id
+      ? `lever_${source.id}_${job.id}`
+      : `lever_${stableHash(`${source.id}:${job.text || ""}:${job.hostedUrl || job.applyUrl || ""}`)}`,
     title: job.text,
     organization: source.organization,
     location,

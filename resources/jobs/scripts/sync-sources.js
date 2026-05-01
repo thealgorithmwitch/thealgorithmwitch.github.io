@@ -70,7 +70,15 @@ async function runSyncForTypes(types = []) {
       }
     } catch (error) {
       counts[source.id] = { fetched: 0, active: 0, pending: 0, error: error.message };
-      console.error(`[jobs:sync-sources] ${source.organization} failed: ${error.message}`);
+      const attemptedUrl =
+        source.type === "greenhouse"
+          ? `https://boards-api.greenhouse.io/v1/boards/${encodeURIComponent(source.board_token || "")}/jobs?content=true`
+          : source.type === "lever"
+            ? `https://api.lever.co/v0/postings/${encodeURIComponent(source.company_slug || "")}?mode=json`
+            : String(source.api_url || source.source_url || "");
+      console.error(
+        `[jobs:sync-sources] source_id=${source.id} source_type=${source.type} url=${attemptedUrl} failure=${error.message}`
+      );
     }
   }
 

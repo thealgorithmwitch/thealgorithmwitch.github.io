@@ -1,1 +1,409 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Application | The Algorithm Witch</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,100..1000;1,9..40,100..1000&family=Instrument+Serif:ital@0;1&family=Space+Mono:ital,wght@0,400;0,700;1,400;1,700&display=swap');
+
+    :root {
+      --bg-paper: #0A1F15;
+      --ink-primary: #CFFBE3;
+      --ink-secondary: rgba(207, 251, 227, 0.7);
+      --ink-tertiary: rgba(207, 251, 227, 0.4);
+      --accent-chartreuse: #A8FF3E;
+      --accent-lavender: #D4C1FF;
+      --surface-card: #0D261A;
+      --surface-alt: #1A1429;
+      --border-divider: #163628;
+      --font-serif: 'Instrument Serif', serif;
+      --font-sans: 'DM Sans', sans-serif;
+      --font-mono: 'Space Mono', monospace;
+      --transition: 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: var(--bg-paper);
+      color: var(--ink-primary);
+      font-family: var(--font-sans);
+      padding: 0 24px 72px;
+    }
+    .shell { max-width: 1080px; margin: 0 auto; }
+    nav {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 16px;
+      padding: 24px 0;
+      border-bottom: 1px solid var(--border-divider);
+      flex-wrap: wrap;
+    }
+    .logo {
+      text-decoration: none;
+      color: var(--ink-primary);
+      display: flex;
+      align-items: baseline;
+      gap: 10px;
+    }
+    .logo h1 {
+      font-family: var(--font-serif);
+      font-size: 2rem;
+      font-weight: 400;
+    }
+    .logo span,
+    .eyebrow,
+    label,
+    .meta {
+      font-family: var(--font-mono);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+    .logo span,
+    .eyebrow {
+      color: var(--accent-chartreuse);
+      font-size: 0.75rem;
+    }
+    .hero {
+      display: grid;
+      grid-template-columns: 0.9fr 1.1fr;
+      gap: 32px;
+      padding-top: 56px;
+      align-items: start;
+    }
+    .hero h2 {
+      font-family: var(--font-serif);
+      font-size: clamp(2.8rem, 5vw, 4.4rem);
+      line-height: 0.95;
+      margin: 12px 0 20px;
+    }
+    .hero p {
+      color: var(--ink-secondary);
+      font-size: 1.05rem;
+      max-width: 520px;
+    }
+    .card,
+    .note,
+    .json-panel {
+      background: var(--surface-card);
+      border: 1px solid var(--border-divider);
+      padding: 32px;
+    }
+    .note {
+      margin-top: 24px;
+      background: var(--surface-alt);
+      border-color: rgba(212, 193, 255, 0.24);
+    }
+    .note ul {
+      margin-top: 14px;
+      padding-left: 18px;
+      color: var(--ink-secondary);
+    }
+    form {
+      display: grid;
+      gap: 18px;
+    }
+    .two-col {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 18px;
+    }
+    label {
+      display: block;
+      color: var(--ink-secondary);
+      font-size: 0.7rem;
+      margin-bottom: 8px;
+    }
+    input,
+    textarea {
+      width: 100%;
+      border: 1px solid var(--border-divider);
+      background: transparent;
+      color: var(--ink-primary);
+      padding: 14px 16px;
+      font: inherit;
+      outline: none;
+      transition: var(--transition);
+    }
+    textarea {
+      min-height: 120px;
+      resize: vertical;
+    }
+    input:focus,
+    textarea:focus {
+      border-color: var(--accent-chartreuse);
+      box-shadow: inset 0 0 0 1px var(--accent-chartreuse);
+    }
+    .actions {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      align-items: center;
+      margin-top: 8px;
+    }
+    .btn-primary,
+    .btn-secondary {
+      border: 1px solid var(--accent-chartreuse);
+      padding: 12px 18px;
+      font-family: var(--font-mono);
+      font-size: 0.75rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      cursor: pointer;
+      transition: var(--transition);
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .btn-primary {
+      background: var(--accent-chartreuse);
+      color: var(--bg-paper);
+    }
+    .btn-secondary {
+      background: transparent;
+      color: var(--accent-chartreuse);
+      border-color: var(--border-divider);
+    }
+    .btn-primary:hover,
+    .btn-secondary:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 0 15px rgba(168, 255, 62, 0.25);
+    }
+    .error-list,
+    .success-message {
+      display: none;
+      margin-top: 18px;
+      padding: 18px;
+      border: 1px solid var(--border-divider);
+    }
+    .success-message { background: rgba(168, 255, 62, 0.06); }
+    .error-list {
+      background: rgba(212, 193, 255, 0.08);
+      border-color: rgba(212, 193, 255, 0.4);
+    }
+    .json-panel {
+      margin-top: 24px;
+      display: none;
+    }
+    .json-panel.visible { display: block; }
+    .json-panel pre {
+      margin-top: 16px;
+      padding: 18px;
+      border: 1px solid var(--border-divider);
+      background: rgba(0, 0, 0, 0.22);
+      white-space: pre-wrap;
+      word-break: break-word;
+      overflow-x: auto;
+      font-family: var(--font-mono);
+      font-size: 0.78rem;
+      line-height: 1.6;
+    }
+    .meta {
+      color: var(--ink-tertiary);
+      font-size: 0.68rem;
+      margin-top: 18px;
+    }
+    @media (max-width: 900px) {
+      .hero,
+      .two-col {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="shell">
+    <nav>
+      <a class="logo" href="./">
+        <h1>Fresh Roles</h1>
+        <span>The Algorithm Witch</span>
+      </a>
+      <a href="./" class="btn-secondary">Back to Board</a>
+    </nav>
+
+    <section class="hero">
+      <div>
+        <div class="eyebrow">Curator Application</div>
+        <h2>Apply to help review and curate the archive.</h2>
+        <p>The public board stays curated because approvals stay private. If you know the space and want to help review submissions, send an application for consideration.</p>
+
+        <div class="note">
+          <div class="eyebrow" style="color: var(--accent-lavender);">Private approval only</div>
+          <ul>
+            <li>This application does not grant dashboard access directly.</li>
+            <li>Approved reviewers would be added to a private workflow later.</li>
+            <li>The browser generates a pending application object for now.</li>
+          </ul>
+        </div>
+      </div>
+
+      <div>
+        <div class="card">
+          <form id="admin-form" novalidate>
+            <div class="two-col">
+              <div>
+                <label for="name">Name</label>
+                <input id="name" name="name" type="text" required placeholder="Your name">
+              </div>
+              <div>
+                <label for="email">Email</label>
+                <input id="email" name="email" type="email" required placeholder="you@example.com">
+              </div>
+            </div>
+
+            <div>
+              <label for="profile_url">LinkedIn or Website</label>
+              <input id="profile_url" name="profile_url" type="url" placeholder="https://www.linkedin.com/in/...">
+            </div>
+
+            <div>
+              <label for="background">Relevant Background</label>
+              <textarea id="background" name="background" required placeholder="What work have you done that makes you a strong curator or reviewer here?"></textarea>
+            </div>
+
+            <div class="two-col">
+              <div>
+                <label for="sectors">Sectors You Know</label>
+                <input id="sectors" name="sectors" type="text" placeholder="clean energy, conservation, climate software">
+              </div>
+              <div>
+                <label for="availability">Availability</label>
+                <input id="availability" name="availability" type="text" placeholder="2-3 hours per week">
+              </div>
+            </div>
+
+            <div>
+              <label for="why_help">Why do you want to help?</label>
+              <textarea id="why_help" name="why_help" required placeholder="Why does this archive matter to you?"></textarea>
+            </div>
+
+            <div>
+              <label for="conflict_note">Conflict of Interest Note</label>
+              <textarea id="conflict_note" name="conflict_note" placeholder="Any employers, clients, sectors, or relationships you should not review?"></textarea>
+            </div>
+
+            <div class="actions">
+              <button type="submit" class="btn-primary">Generate Pending Application JSON</button>
+              <a href="./" class="btn-secondary">Back to Board</a>
+            </div>
+          </form>
+
+          <div id="error-list" class="error-list"></div>
+          <div id="success-message" class="success-message"></div>
+
+          <div id="json-panel" class="json-panel">
+            <div class="eyebrow">Pending Application</div>
+            <pre id="json-output"></pre>
+            <div class="actions">
+              <button id="copy-json" type="button" class="btn-secondary">Copy JSON</button>
+            </div>
+          </div>
+
+          <div class="meta">Static mode only generates a pending application payload.</div>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <script>
+    const form = document.getElementById("admin-form");
+    const errorList = document.getElementById("error-list");
+    const successMessage = document.getElementById("success-message");
+    const jsonPanel = document.getElementById("json-panel");
+    const jsonOutput = document.getElementById("json-output");
+    const copyButton = document.getElementById("copy-json");
+
+    function isValidUrl(value) {
+      if (!value) return true;
+      try {
+        const url = new URL(value);
+        return ["http:", "https:"].includes(url.protocol);
+      } catch (error) {
+        return false;
+      }
+    }
+
+    function isValidEmail(value) {
+      return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(value || "").trim());
+    }
+
+    function buildPendingApplication() {
+      const formData = new FormData(form);
+      return {
+        name: String(formData.get("name") || "").trim(),
+        email: String(formData.get("email") || "").trim(),
+        profile_url: String(formData.get("profile_url") || "").trim(),
+        background: String(formData.get("background") || "").trim(),
+        sectors: String(formData.get("sectors") || "").trim(),
+        why_help: String(formData.get("why_help") || "").trim(),
+        availability: String(formData.get("availability") || "").trim(),
+        conflict_note: String(formData.get("conflict_note") || "").trim(),
+        status: "pending",
+        submitted_at: new Date().toISOString()
+      };
+    }
+
+    function validateApplication(application) {
+      const errors = [];
+      if (!application.name) errors.push("Name is required.");
+      if (!application.email || !isValidEmail(application.email)) errors.push("Email must be valid.");
+      if (application.profile_url && !isValidUrl(application.profile_url)) errors.push("LinkedIn or website URL must be valid when provided.");
+      if (!application.background) errors.push("Relevant background is required.");
+      if (!application.why_help) errors.push("Why you want to help is required.");
+      return errors;
+    }
+
+    async function submitAdminApplicationToBackend(application) {
+      // Placeholder only. Connect this to a private backend later if reviewer
+      // applications should be stored in Apps Script, Supabase, Airtable, or GitHub.
+      return { ok: false, placeholder: true };
+    }
+
+    form.addEventListener("submit", async (event) => {
+      event.preventDefault();
+      errorList.style.display = "none";
+      successMessage.style.display = "none";
+
+      const application = buildPendingApplication();
+      const errors = validateApplication(application);
+
+      if (errors.length) {
+        errorList.innerHTML = errors.map((error) => `<div>${error}</div>`).join("");
+        errorList.style.display = "block";
+        jsonPanel.classList.remove("visible");
+        return;
+      }
+
+      jsonOutput.textContent = JSON.stringify(application, null, 2);
+      jsonPanel.classList.add("visible");
+      await submitAdminApplicationToBackend(application);
+
+      successMessage.innerHTML = `
+        <div class="eyebrow">Pending Review</div>
+        <div style="font-family: var(--font-serif); font-size: 2rem; margin: 10px 0;">Your admin application is ready.</div>
+        <div style="color: var(--ink-secondary);">Copy the JSON for now, or connect the placeholder backend hook when private reviewer intake is ready.</div>
+      `;
+      successMessage.style.display = "block";
+    });
+
+    copyButton.addEventListener("click", async () => {
+      try {
+        await navigator.clipboard.writeText(jsonOutput.textContent);
+        copyButton.textContent = "Copied";
+        window.setTimeout(() => {
+          copyButton.textContent = "Copy JSON";
+        }, 1600);
+      } catch (error) {
+        copyButton.textContent = "Copy Failed";
+        window.setTimeout(() => {
+          copyButton.textContent = "Copy JSON";
+        }, 1600);
+      }
+    });
+  </script>
+</body>
+</html>
 

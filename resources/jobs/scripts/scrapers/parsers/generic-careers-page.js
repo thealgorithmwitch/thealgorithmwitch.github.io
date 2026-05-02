@@ -15,11 +15,29 @@ function extractAnchorRecords(html, sourceUrl) {
     if (!href || !isLikelyJobUrl(href)) continue;
     const anchorText = normalizeText(match[2]);
     const context = normalizeText(getContextSnippet(html, match.index, 320));
-    const title = isLikelyJobTitle(anchorText)
-      ? anchorText
-      : context
-        .split(/(?<=[.!?])\s+/)
-        .find((line) => isLikelyJobTitle(line)) || anchorText;
+    const urlTitle = titleFromUrl(href);
+    const contextualTitle = context
+      .split(/(?<=[.!?])\s+/)
+      .map((line) => cleanJobTitle(line))
+      .find((line) => isLikelyJobTitle(line));
+    const cleanedAnchor = cleanJobTitle(anchorText);
+    const prefersUrlTitle =
+      isLikelyJobTitle(urlTitle) &&
+      (
+        !isLikelyJobTitle(cleanedAnchor) ||
+        cleanedAnchor.split(/\s+/).length < 3 ||
+        /<|>|class=|href=|\/">|^\w+$/.test(anchorText) ||
+        /<|>|class=|href=|\/">/.test(cleanedAnchor)
+      );
+    const title = cleanJobTitle(
+      prefersUrlTitle
+        ? urlTitle
+        : isLikelyJobTitle(cleanedAnchor)
+          ? cleanedAnchor
+          : isLikelyJobTitle(urlTitle)
+            ? urlTitle
+            : contextualTitle || anchorText
+    );
 
     if (!isLikelyJobTitle(title)) continue;
     records.push({
@@ -30,6 +48,36 @@ function extractAnchorRecords(html, sourceUrl) {
     });
   }
   return records;
+}
+
+function cleanJobTitle(value) {
+  return normalizeText(value)
+    .replace(/^.*?(?=(?:director|manager|specialist|coordinator|engineer|analyst|associate|intern|lead|head|officer|administrator|designer|developer|strategist|communications|policy|finance|operations|marketing|product|people|talent|research|advisor|consultant)\b)/i, "")
+    .replace(/\b(?:remote within [a-z]{2}|new york,\s*ny|washington,\s*dc|oakland,\s*ca|denver,\s*co)\b\s*\/?\s*/gi, "")
+    .replace(/\b(?:january|february|march|april|may|june|july|august|september|october|november|december)\s+\d{1,2},\s+\d{4}\b/gi, "")
+    .replace(/^[\/|\-:\s]+|[\/|\-:\s]+$/g, "")
+    .trim();
+}
+
+function titleFromUrl(url) {
+  try {
+    const parsed = new URL(url);
+    const slug = parsed.pathname
+      .split("/")
+      .filter(Boolean)
+      .pop() || "";
+    return cleanJobTitle(
+      slug
+        .replace(/\?.*$/g, "")
+        .replace(/[-_]+/g, " ")
+        .replace(/\b(remote|usa|us|ca|ny|dc|az|tx|fl)\b/gi, " ")
+        .replace(/\s+/g, " ")
+        .trim()
+        .replace(/\b\w/g, (char) => char.toUpperCase())
+    );
+  } catch (_error) {
+    return "";
+  }
 }
 
 async function scrapeGenericCareersPage(source) {

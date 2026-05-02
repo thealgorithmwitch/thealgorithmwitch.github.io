@@ -11,8 +11,8 @@ const { dedupeJobs, routeSyncedJob } = require("./job-normalizer");
 const { scrapeCustomSource } = require("./scrapers");
 const { syncJobRecordStore } = require("./public-records");
 
-function isManagedCustomJob(job, activeSourceIds) {
-  return job.sync_origin === "custom" && activeSourceIds.has(String(job.source_id || ""));
+function isManagedCustomJob(job, managedSourceIds) {
+  return job.sync_origin === "custom" && managedSourceIds.has(String(job.source_id || ""));
 }
 
 async function runCustomSync() {
@@ -25,6 +25,11 @@ async function runCustomSync() {
   const customSources = sources.filter((source) => {
     return source.type === "custom_careers_page" && source.enabled && source.parser_enabled === true;
   });
+  const managedCustomSourceIds = new Set(
+    sources
+      .filter((source) => source.type === "custom_careers_page")
+      .map((source) => source.id)
+  );
 
   if (!customSources.length) {
     console.log("[jobs:sync-custom] No parser-enabled custom career page sources.");
@@ -35,9 +40,8 @@ async function runCustomSync() {
     };
   }
 
-  const activeSourceIds = new Set(customSources.map((source) => source.id));
-  const preservedPublicJobs = existingJobs.filter((job) => !isManagedCustomJob(job, activeSourceIds));
-  const preservedPendingJobs = existingPending.filter((job) => !isManagedCustomJob(job, activeSourceIds));
+  const preservedPublicJobs = existingJobs.filter((job) => !isManagedCustomJob(job, managedCustomSourceIds));
+  const preservedPendingJobs = existingPending.filter((job) => !isManagedCustomJob(job, managedCustomSourceIds));
   const publicJobs = [];
   const pendingJobs = [];
   const counts = {};

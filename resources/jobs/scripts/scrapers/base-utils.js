@@ -30,12 +30,16 @@ function toAbsoluteUrl(baseUrl, href) {
 }
 
 function isLikelyJobUrl(url) {
-  return /career|job|jobs|position|opening|opportunit|vacanc/i.test(String(url || ""));
+  const text = String(url || "");
+  if (!text) return false;
+  if (/#/.test(text) && !/[?&](gh_jid|source)=/i.test(text)) return false;
+  return /career|job|jobs|position|opening|opportunit|vacanc|applytojob|career\.place|greenhouse|lever/i.test(text);
 }
 
 function isLikelyJobTitle(text) {
   if (!text) return false;
   if (text.length < 4 || text.length > 140) return false;
+  if (/skip to|board of directors|privacy|benefits|fellowships|internships or contact/i.test(text)) return false;
   return /(manager|director|specialist|coordinator|engineer|analyst|associate|intern|lead|head|officer|administrator|designer|developer|strategist|communications|policy|finance|operations|marketing|product|people|talent|research|advisor|consultant)/i.test(text);
 }
 

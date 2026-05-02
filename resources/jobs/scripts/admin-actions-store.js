@@ -1,5 +1,4 @@
 const fs = require("fs/promises");
-const vm = require("vm");
 const {
   ADMIN_JOB_ACTIONS_SNAPSHOT_FILE,
   ADMIN_LOCAL_ACTIONS_FILE,
@@ -56,10 +55,14 @@ async function writeLocalAdminActions(actions) {
 
 async function loadBackendConfig(configPath) {
   const raw = await fs.readFile(configPath, "utf8");
-  const context = { window: {} };
-  vm.createContext(context);
-  vm.runInContext(raw, context);
-  return context.window.JOBS_BACKEND_CONFIG || {};
+  const readString = (key) => {
+    const match = raw.match(new RegExp(`${key}\\s*:\\s*"([^"]*)"`, "i"));
+    return match ? match[1] : "";
+  };
+  return {
+    backendUrl: readString("backendUrl"),
+    adminToken: readString("adminToken")
+  };
 }
 
 module.exports = {

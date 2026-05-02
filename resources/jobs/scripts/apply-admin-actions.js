@@ -137,6 +137,7 @@ async function fetchAndSnapshotActions() {
   const adminToken = process.env.JOBS_ADMIN_TOKEN || config.adminToken;
 
   if (!backendUrl || !adminToken) {
+    console.log("Backend config missing; falling back to local action file.");
     return {
       actions: await readLocalAdminActions(),
       backendUrl: "",
@@ -145,27 +146,50 @@ async function fetchAndSnapshotActions() {
     };
   }
 
-  const response = await fetch(backendUrl, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json"
-    },
-    body: JSON.stringify({
-      action: "getLocalJobActions",
-      token: adminToken,
-      adminToken
-    })
-  });
-  const payload = await response.json();
-  if (!response.ok || !payload.ok) {
-    throw new Error(payload.error || `HTTP ${response.status}`);
+  console.log("Using backend queue.");
+
+  try {
+    const response = await fetch(backendUrl, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        action: "getLocalJobActions",
+        token: adminToken,
+        adminToken
+      })
+    });
+    const responseText = await response.text();
+    let payload = {};
+    try {
+      payload = responseText ? JSON.parse(responseText) : {};
+    } catch (_error) {
+      payload = {};
+    }
+    if (!response.ok || !payload.ok) {
+      const error = new Error(payload.error || `HTTP ${response.status}`);
+      error.httpStatus = response.status;
+      error.responsePreview = responseText.slice(0, 300);
+      throw error;
+    }
+    return {
+      actions: Array.isArray(payload.items) ? payload.items : [],
+      backendUrl,
+      adminToken,
+      source: "backend"
+    };
+  } catch (error) {
+    console.error(`[jobs:apply-admin-actions] HTTP status: ${error.httpStatus || "unknown"}`);
+    console.error(`[jobs:apply-admin-actions] Response text preview: ${error.responsePreview || error.message}`);
+    console.error("[jobs:apply-admin-actions] Fallback to local action file: yes");
+    return {
+      actions: await readLocalAdminActions(),
+      backendUrl: "",
+      adminToken: "",
+      source: "local"
+    };
   }
-  return {
-    actions: Array.isArray(payload.items) ? payload.items : [],
-    backendUrl,
-    adminToken,
-    source: "backend"
-  };
 }
 
 async function resolveActions(backendUrl, adminToken, resultsById) {
@@ -215,9 +239,9 @@ async function main() {
   ]);
   const fetched = await fetchAndSnapshotActions();
   if (fetched.source === "backend") {
-    console.log("[jobs:apply-admin-actions] using backend queue");
+    console.log("[jobs:apply-admin-actions] action source=backend queue");
   } else {
-    console.log("[jobs:apply-admin-actions] using local action file");
+    console.log("[jobs:apply-admin-actions] action source=local action file");
   }
   const actions = parseQueuedActions(fetched.actions);
 

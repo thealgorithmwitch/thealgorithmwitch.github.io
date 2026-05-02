@@ -17,9 +17,18 @@ async function fetchActions(backendUrl, adminToken) {
       adminToken
     })
   });
-  const payload = await response.json();
+  const responseText = await response.text();
+  let payload = {};
+  try {
+    payload = responseText ? JSON.parse(responseText) : {};
+  } catch (_error) {
+    payload = {};
+  }
   if (!response.ok || !payload.ok) {
-    throw new Error(payload.error || `HTTP ${response.status}`);
+    const error = new Error(payload.error || `HTTP ${response.status}`);
+    error.httpStatus = response.status;
+    error.responsePreview = responseText.slice(0, 300);
+    throw error;
   }
   return Array.isArray(payload.items) ? payload.items : [];
 }
@@ -31,10 +40,17 @@ async function main() {
   let actions = [];
 
   if (backendUrl && adminToken) {
-    console.log("[jobs:snapshot-admin-actions] using backend queue");
-    actions = await fetchActions(backendUrl, adminToken);
+    console.log("Using backend queue.");
+    try {
+      actions = await fetchActions(backendUrl, adminToken);
+    } catch (error) {
+      console.error(`[jobs:snapshot-admin-actions] HTTP status: ${error.httpStatus || "unknown"}`);
+      console.error(`[jobs:snapshot-admin-actions] Response text preview: ${error.responsePreview || error.message}`);
+      console.error("[jobs:snapshot-admin-actions] Fallback to local action file: yes");
+      actions = await readLocalAdminActions();
+    }
   } else {
-    console.log("[jobs:snapshot-admin-actions] using local action file");
+    console.log("Backend config missing; falling back to local action file.");
     actions = await readLocalAdminActions();
   }
 

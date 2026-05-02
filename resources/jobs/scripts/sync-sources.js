@@ -4,6 +4,7 @@ const {
   readJobs,
   readPendingSyncedJobs,
   readSources,
+  safeWritePublicJobs,
   writeJson
 } = require("./job-utils");
 const { dedupeJobs, routeSyncedJob } = require("./job-normalizer");
@@ -132,10 +133,11 @@ async function runSyncForTypes(types = []) {
   const mergedPublicJobs = dedupeJobs([...preservedPublicJobs, ...publicJobs]);
   const mergedPendingJobs = dedupeJobs([...preservedPendingJobs, ...pendingJobs]);
 
-  await Promise.all([
-    writeJson(JOBS_FILE, mergedPublicJobs),
-    writeJson(PENDING_SYNCED_FILE, mergedPendingJobs)
-  ]);
+  const publicWriteResult = await safeWritePublicJobs(mergedPublicJobs, {
+    logger: console,
+    label: "jobs:sync-sources"
+  });
+  await writeJson(PENDING_SYNCED_FILE, mergedPendingJobs);
 
   Object.entries(counts).forEach(([sourceId, count]) => {
     console.log(
@@ -143,11 +145,11 @@ async function runSyncForTypes(types = []) {
     );
   });
   console.log(
-    `[jobs:sync-sources] Wrote ${mergedPublicJobs.length} public jobs to ${JOBS_FILE} and ${mergedPendingJobs.length} pending jobs to ${PENDING_SYNCED_FILE}.`
+    `[jobs:sync-sources] Wrote ${publicWriteResult.jobs.length} public jobs to ${JOBS_FILE} and ${mergedPendingJobs.length} pending jobs to ${PENDING_SYNCED_FILE}.`
   );
 
   return {
-    publicJobs: mergedPublicJobs,
+    publicJobs: publicWriteResult.jobs,
     pendingJobs: mergedPendingJobs,
     counts
   };

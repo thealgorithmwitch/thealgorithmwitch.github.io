@@ -1,4 +1,10 @@
-const { dedupeJobs, normalizeJob, writeJson, JOBS_FILE } = require("./job-utils");
+const {
+  dedupeJobs,
+  normalizeJob,
+  readJobs,
+  safeWritePublicJobs,
+  JOBS_FILE
+} = require("./job-utils");
 
 const EMBEDDED_FALLBACK_URL =
   "https://script.google.com/macros/s/AKfycbzOziSxt4U5KDHS1uRTzhY9zuP1lxZofCbrRYBzK6PET1DjCjvxBQ3Gc7W-SRYgKcI2/exec";
@@ -56,14 +62,30 @@ async function fetchApprovedJobs() {
 async function main() {
   console.log(`[jobs:fetch-approved] Fetching approved jobs from ${APPS_SCRIPT_URL}`);
   const rawJobs = await fetchApprovedJobs();
+  const existingJobs = await readJobs();
+
+  if (!rawJobs.length) {
+    console.log("[jobs:fetch-approved] No approved jobs returned; preserving existing public jobs.");
+    return;
+  }
+
   const normalized = rawJobs.map((job) => {
     const next = normalizeJob(job);
     validateNormalizedJob(next);
     return next;
   });
-  const deduped = dedupeJobs(normalized);
-  await writeJson(JOBS_FILE, deduped);
-  console.log(`[jobs:fetch-approved] Wrote ${deduped.length} jobs to ${JOBS_FILE}`);
+  const deduped = dedupeJobs([...existingJobs, ...normalized]);
+  const result = await safeWritePublicJobs(deduped, {
+    logger: console,
+    label: "jobs:fetch-approved"
+  });
+
+  if (!result.changed) {
+    console.log(`[jobs:fetch-approved] No changes to ${JOBS_FILE}.`);
+    return;
+  }
+
+  console.log(`[jobs:fetch-approved] Wrote ${result.jobs.length} jobs to ${JOBS_FILE}`);
 }
 
 main().catch((error) => {

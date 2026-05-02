@@ -20,7 +20,6 @@ const {
 const { normalizeJob, stringifySafe } = require("./job-normalizer");
 const {
   loadBackendConfig,
-  readAdminActionSnapshot,
   readLocalAdminActions,
   readOrganizationRules,
   readPendingOverrides,
@@ -96,6 +95,42 @@ function applyPendingJobMutations(pendingJobs, ids, mutator) {
   return pendingJobs.map((job) => (idSet.has(String(job.id)) ? mutator(job) : job));
 }
 
+function parseQueuedActions(actions) {
+  return actions
+    .filter((item) => String(item.status || "").toLowerCase() === "queued")
+    .map((item) => ({
+      id: String(item.id || ""),
+      operation: String(item.operation || ""),
+      payload: (() => {
+        try {
+          return JSON.parse(item.payload_json || "{}");
+        } catch (_error) {
+          return {};
+        }
+      })()
+    }));
+}
+
+function isPublishedRecord(record) {
+  return Boolean(
+    record &&
+    record.record_type === "job" &&
+    String(record.status || "").toLowerCase() === "published" &&
+    record.published === true
+  );
+}
+
+function findRecordById(records, id) {
+  return records.find((record) => String(record.id) === String(id));
+}
+
+function buildActionResult(status, detail) {
+  return {
+    status,
+    detail: detail || ""
+  };
+}
+
 async function fetchAndSnapshotActions() {
   const config = await loadBackendConfig(path.join(__dirname, "jobs-backend-config.js"));
   const backendUrl = process.env.JOBS_BACKEND_URL || config.backendUrl;
@@ -133,8 +168,10 @@ async function fetchAndSnapshotActions() {
   };
 }
 
-async function resolveActions(backendUrl, adminToken, ids) {
+async function resolveActions(backendUrl, adminToken, resultsById) {
+  const ids = Object.keys(resultsById || {});
   if (!backendUrl || !adminToken || !ids.length) return;
+  const statusById = Object.fromEntries(ids.map((id) => [id, String(resultsById[id].status || "applied")]));
   await fetch(backendUrl, {
     method: "POST",
     headers: {
@@ -144,20 +181,24 @@ async function resolveActions(backendUrl, adminToken, ids) {
       action: "resolveLocalJobActions",
       token: adminToken,
       adminToken,
-      ids
+      ids,
+      status_by_id: statusById
     })
   });
 }
 
-async function resolveLocalActions(ids, actions) {
+async function resolveLocalActions(resultsById, actions) {
+  const ids = Object.keys(resultsById || {});
   if (!ids.length) return;
   const idSet = new Set(ids.map(String));
   const now = new Date().toISOString();
   const nextActions = actions.map((action) => {
-    if (!idSet.has(String(action.id || ""))) return action;
+    const actionId = String(action.id || "");
+    if (!idSet.has(actionId)) return action;
+    const result = resultsById[actionId] || {};
     return {
       ...action,
-      status: "applied",
+      status: String(result.status || "applied"),
       updated_at: now
     };
   });
@@ -178,19 +219,7 @@ async function main() {
   } else {
     console.log("[jobs:apply-admin-actions] using local action file");
   }
-  const actions = fetched.actions
-    .filter((item) => String(item.status || "").toLowerCase() === "queued")
-    .map((item) => ({
-      id: String(item.id || ""),
-      operation: String(item.operation || ""),
-      payload: (() => {
-        try {
-          return JSON.parse(item.payload_json || "{}");
-        } catch (_error) {
-          return {};
-        }
-      })()
-    }));
+  const actions = parseQueuedActions(fetched.actions);
 
   if (!actions.length) {
     console.log("[jobs:apply-admin-actions] no actions found");
@@ -206,25 +235,104 @@ async function main() {
   };
 
   const report = {
+    actionsFound: actions.length,
     recordsPublished: 0,
     recordsArchivedOrRejected: 0,
     recordsLeftPending: 0,
+    duplicatesSkipped: 0,
+    alreadyPublishedSkipped: 0,
     jobPagesRegenerated: 0
   };
 
-  const appliedIds = [];
+  const actionResults = {};
+  const seenActionIds = new Set();
+  const initiallyPublishedJobIds = new Set(
+    nextRecords
+      .filter(isPublishedRecord)
+      .map((record) => String(record.id))
+  );
+  const processedPublishJobIds = new Set();
+
+  console.log(`[jobs:apply-admin-actions] actions found=${report.actionsFound}`);
 
   for (const action of actions) {
+    if (!action.id) {
+      console.log("[jobs:apply-admin-actions] skipped action with missing id");
+      continue;
+    }
+    if (seenActionIds.has(action.id)) {
+      report.duplicatesSkipped += 1;
+      actionResults[action.id] = buildActionResult("ignored_duplicate", "duplicate action id");
+      console.log(`[jobs:apply-admin-actions] duplicate action id skipped id=${action.id}`);
+      continue;
+    }
+    seenActionIds.add(action.id);
+
     const ids = Array.isArray(action.payload.ids) ? action.payload.ids.map(String) : [];
     const selectedJobs = Array.isArray(action.payload.jobs) ? action.payload.jobs : [];
     if (action.operation === "publish_selected") {
-      const pendingSelection = nextPending.filter((job) => ids.includes(String(job.id)));
-      for (const job of pendingSelection) {
+      const uniqueIds = [];
+      const idsSeenInAction = new Set();
+      let publishedCount = 0;
+      let duplicateCount = 0;
+      let alreadyPublishedCount = 0;
+      const publishedIds = [];
+
+      for (const id of ids) {
+        if (idsSeenInAction.has(id)) {
+          duplicateCount += 1;
+          continue;
+        }
+        idsSeenInAction.add(id);
+        uniqueIds.push(id);
+      }
+
+      for (const id of uniqueIds) {
+        const existingRecord = findRecordById(nextRecords, id);
+        if (initiallyPublishedJobIds.has(id) || isPublishedRecord(existingRecord) && !processedPublishJobIds.has(id)) {
+          alreadyPublishedCount += 1;
+          continue;
+        }
+        if (processedPublishJobIds.has(id)) {
+          duplicateCount += 1;
+          continue;
+        }
+        const job = nextPending.find((pendingJob) => String(pendingJob.id) === id);
+        if (!job) {
+          if (processedPublishJobIds.has(id)) {
+            duplicateCount += 1;
+          } else if (existingRecord && (initiallyPublishedJobIds.has(id) || isPublishedRecord(existingRecord))) {
+            alreadyPublishedCount += 1;
+          } else {
+            duplicateCount += 1;
+          }
+          continue;
+        }
+
         upsertJobRecord(nextRecords, { ...job, featured: Boolean(job.featured) }, "published", { featured: Boolean(job.featured) });
         delete nextOverrides.jobs[String(job.id)];
+        processedPublishJobIds.add(String(job.id));
+        publishedIds.push(String(job.id));
         report.recordsPublished += 1;
+        publishedCount += 1;
       }
-      nextPending = removePendingByIds(nextPending, ids);
+      nextPending = removePendingByIds(nextPending, publishedIds);
+      report.duplicatesSkipped += duplicateCount;
+      report.alreadyPublishedSkipped += alreadyPublishedCount;
+
+      if (publishedCount > 0) {
+        actionResults[action.id] = buildActionResult("applied", `published=${publishedCount}`);
+      } else if (alreadyPublishedCount > 0) {
+        actionResults[action.id] = buildActionResult("already_published", `already_published=${alreadyPublishedCount}`);
+      } else if (duplicateCount > 0) {
+        actionResults[action.id] = buildActionResult("ignored_duplicate", `duplicates=${duplicateCount}`);
+      } else {
+        actionResults[action.id] = buildActionResult("ignored_duplicate", "no publishable jobs found");
+      }
+
+      console.log(
+        `[jobs:apply-admin-actions] publish_selected action=${action.id} published=${publishedCount} already_published=${alreadyPublishedCount} duplicates_skipped=${duplicateCount} remaining_pending=${nextPending.length}`
+      );
     } else if (action.operation === "archive_selected") {
       const pendingSelection = nextPending.filter((job) => ids.includes(String(job.id)));
       for (const job of pendingSelection) {
@@ -237,6 +345,10 @@ async function main() {
         report.recordsArchivedOrRejected += 1;
       }
       nextPending = removePendingByIds(nextPending, ids);
+      actionResults[action.id] = buildActionResult("applied", `archived=${pendingSelection.length}`);
+      console.log(
+        `[jobs:apply-admin-actions] archive_selected action=${action.id} archived=${pendingSelection.length} remaining_pending=${nextPending.length}`
+      );
     } else if (action.operation === "mark_needs_cleanup") {
       nextPending = applyPendingJobMutations(nextPending, ids, (job) => ({
         ...job,
@@ -250,6 +362,8 @@ async function main() {
           triage_reason: "marked needs cleanup by admin"
         };
       });
+      actionResults[action.id] = buildActionResult("applied", `marked_needs_cleanup=${ids.length}`);
+      console.log(`[jobs:apply-admin-actions] mark_needs_cleanup action=${action.id} count=${ids.length}`);
     } else if (action.operation === "mark_reviewed") {
       nextPending = applyPendingJobMutations(nextPending, ids, (job) => ({
         ...job,
@@ -261,6 +375,8 @@ async function main() {
           admin_review_state: "reviewed"
         };
       });
+      actionResults[action.id] = buildActionResult("applied", `marked_reviewed=${ids.length}`);
+      console.log(`[jobs:apply-admin-actions] mark_reviewed action=${action.id} count=${ids.length}`);
     } else if (action.operation === "feature_selected") {
       nextPending = applyPendingJobMutations(nextPending, ids, (job) => ({
         ...job,
@@ -272,12 +388,16 @@ async function main() {
           featured: true
         };
       });
+      actionResults[action.id] = buildActionResult("applied", `featured=${ids.length}`);
+      console.log(`[jobs:apply-admin-actions] feature_selected action=${action.id} count=${ids.length}`);
     } else if (action.operation === "hide_organization") {
       const organization = String(action.payload.organization || selectedJobs[0]?.organization || "").trim();
       if (organization && !nextOrgRules.hidden_organizations.includes(organization)) {
         nextOrgRules.hidden_organizations.push(organization);
       }
       nextPending = nextPending.filter((job) => String(job.organization || "").trim() !== organization);
+      actionResults[action.id] = buildActionResult("applied", `hidden_organization=${organization}`);
+      console.log(`[jobs:apply-admin-actions] hide_organization action=${action.id} organization=${organization}`);
     } else if (action.operation === "reject_all_from_organization") {
       const organization = String(action.payload.organization || selectedJobs[0]?.organization || "").trim();
       if (organization && !nextOrgRules.rejected_organizations.includes(organization)) {
@@ -294,8 +414,14 @@ async function main() {
         report.recordsArchivedOrRejected += 1;
       }
       nextPending = nextPending.filter((job) => String(job.organization || "").trim() !== organization);
+      actionResults[action.id] = buildActionResult("applied", `rejected_organization=${organization}`);
+      console.log(
+        `[jobs:apply-admin-actions] reject_all_from_organization action=${action.id} organization=${organization} rejected=${rejectedJobs.length} remaining_pending=${nextPending.length}`
+      );
+    } else {
+      actionResults[action.id] = buildActionResult("ignored_duplicate", `unsupported operation=${action.operation}`);
+      console.log(`[jobs:apply-admin-actions] unsupported action skipped id=${action.id} operation=${action.operation}`);
     }
-    appliedIds.push(action.id);
   }
 
   await writePendingOverrides(nextOverrides);
@@ -310,13 +436,13 @@ async function main() {
   report.recordsLeftPending = nextPending.length;
   report.jobPagesRegenerated = await buildPagesFromRecords(nextRecords);
 
-  await resolveActions(fetched.backendUrl, fetched.adminToken, appliedIds);
+  await resolveActions(fetched.backendUrl, fetched.adminToken, actionResults);
   if (fetched.source === "local") {
-    await resolveLocalActions(appliedIds, fetched.actions);
+    await resolveLocalActions(actionResults, fetched.actions);
   }
 
   console.log(
-    `[jobs:apply-admin-actions] records published=${report.recordsPublished} records archived/rejected=${report.recordsArchivedOrRejected} records left pending=${report.recordsLeftPending} job pages regenerated=${report.jobPagesRegenerated}`
+    `[jobs:apply-admin-actions] records published=${report.recordsPublished} records archived/rejected=${report.recordsArchivedOrRejected} already_published_skipped=${report.alreadyPublishedSkipped} duplicates_skipped=${report.duplicatesSkipped} records left pending=${report.recordsLeftPending} job pages regenerated=${report.jobPagesRegenerated}`
   );
 }
 

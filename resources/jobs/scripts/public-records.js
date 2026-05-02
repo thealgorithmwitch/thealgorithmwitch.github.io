@@ -1,6 +1,7 @@
 const path = require("path");
 const { readJson, writeJsonIfChanged } = require("./job-utils");
 const { normalizeJob, stableHash, stringifySafe, todayIso } = require("./job-normalizer");
+const { applyPublishLifecycle, resolveDisplayJobFromRecord } = require("./lifecycle-utils");
 
 const ROOT = path.resolve(__dirname, "..");
 const JOB_RECORDS_FILE = path.join(ROOT, "job-records.json");
@@ -32,30 +33,7 @@ function buildJobFingerprint(job) {
 }
 
 function toDisplayJob(record) {
-  const raw = record.raw_source_data || {};
-  const display = record.display || {};
-  const resolved = normalizeJob({
-    ...raw,
-    title: stringifySafe(display.title) || raw.title,
-    organization: stringifySafe(display.organization) || raw.organization,
-    location: stringifySafe(display.location) || raw.location,
-    workplace_type: stringifySafe(display.location_type) || raw.workplace_type,
-    salary: stringifySafe(display.pay_display) || raw.salary,
-    salary_min: display.salary_min ?? raw.salary_min,
-    salary_max: display.salary_max ?? raw.salary_max,
-    job_type: stringifySafe(display.role_type) || raw.job_type,
-    experience: stringifySafe(display.experience_level) || raw.experience,
-    sector: stringifySafe(display.sector) || raw.sector,
-    function: stringifySafe(display.function) || raw.function,
-    tags: Array.isArray(display.tags) && display.tags.length ? display.tags : raw.tags,
-    description: stringifySafe(display.description) || raw.description,
-    source: stringifySafe(display.source_name) || raw.source,
-    source_url: stringifySafe(display.source_url) || raw.source_url,
-    apply_url: stringifySafe(display.application_url) || raw.apply_url,
-    date_posted: stringifySafe(display.date_collected) || raw.date_posted,
-    featured: typeof record.featured === "boolean" ? record.featured : raw.featured,
-    status: record.published && record.public_visibility && record.status === "published" ? "published" : raw.status
-  });
+  const resolved = resolveDisplayJobFromRecord(record);
   resolved.display_order = record.display_order || 0;
   return resolved;
 }
@@ -71,7 +49,7 @@ function buildJobRecord(job, existing = {}) {
     : ["active", "approved", "published"].includes(String(normalized.status || "").toLowerCase());
   const status = stringifySafe(existing.status) || (published ? "published" : "pending");
 
-  return {
+  let nextRecord = {
     ...base,
     id: stringifySafe(existing.id) || normalized.id,
     status,
@@ -99,13 +77,26 @@ function buildJobRecord(job, existing = {}) {
       description: stringifySafe(existing.display?.description),
       source_name: stringifySafe(existing.display?.source_name),
       source_url: stringifySafe(existing.display?.source_url),
-      original_url: stringifySafe(existing.display?.original_url) || normalized.source_url,
+      original_url: stringifySafe(existing.display?.original_url) || normalized.original_url || normalized.source_url,
       date_collected: stringifySafe(existing.display?.date_collected) || normalized.date_posted || todayIso(),
       application_url: stringifySafe(existing.display?.application_url),
       published,
       featured: typeof existing.display?.featured === "boolean" ? existing.display.featured : Boolean(normalized.featured)
     }
   };
+
+  if (nextRecord.published && nextRecord.public_visibility && nextRecord.status === "published") {
+    nextRecord = applyPublishLifecycle(nextRecord);
+  } else {
+    nextRecord.first_published_at = stringifySafe(existing.first_published_at);
+    nextRecord.last_verified_at = stringifySafe(existing.last_verified_at);
+    nextRecord.expires_at = stringifySafe(existing.expires_at);
+    nextRecord.stale_reason = stringifySafe(existing.stale_reason);
+    nextRecord.verification_status = stringifySafe(existing.verification_status) || "needs_review";
+    nextRecord.verification_method = stringifySafe(existing.verification_method);
+  }
+
+  return nextRecord;
 }
 
 async function readJobRecords() {

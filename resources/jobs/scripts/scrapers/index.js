@@ -1,4 +1,5 @@
 const { scrapeGenericCareersPage } = require("./parsers/generic-careers-page");
+const { scrapeSourceWithDiscovery } = require("./discovery");
 
 async function scrapeCustomSource(source) {
   const parser = source.parser || "generic-careers-page";
@@ -9,5 +10,6 @@ async function scrapeCustomSource(source) {
 }
 
 module.exports = {
-  scrapeCustomSource
+  scrapeCustomSource,
+  scrapeSourceWithDiscovery
 };

@@ -10,34 +10,41 @@ const {
 const { dedupeJobs, routeSyncedJob } = require("./job-normalizer");
 const {
   fetchAshbyJobsForSource,
+  fetchAtsJobsByProvider,
   fetchBambooHrJobsForSource,
   fetchGreenhouseJobsForSource,
   fetchLeverJobsForSource,
   fetchRecruiteeJobsForSource
 } = require("./ats-clients");
 const { syncJobRecordStore } = require("./public-records");
+const { upsertScrapeReports } = require("./scrape-report");
+const { isDirectAtsSource, normalizeSource } = require("./source-utils");
+const { triagePendingJobs } = require("./pending-triage");
 
-const SUPPORTED_TYPES = new Set(["greenhouse", "lever", "ashby", "bamboohr", "recruitee"]);
+const SUPPORTED_TYPES = new Set(["greenhouse", "lever", "ashby", "bamboohr", "recruitee", "smartrecruiters", "workable"]);
 
 function isManagedAtsJob(job, activeSourceIds) {
   return job.sync_origin === "ats" && activeSourceIds.has(String(job.source_id || ""));
 }
 
 async function fetchJobsForSource(source) {
-  if (source.type === "greenhouse") {
+  if (source.provider === "greenhouse" || source.type === "greenhouse") {
     return fetchGreenhouseJobsForSource(source);
   }
-  if (source.type === "lever") {
+  if (source.provider === "lever" || source.type === "lever") {
     return fetchLeverJobsForSource(source);
   }
-  if (source.type === "ashby") {
+  if (source.provider === "ashby" || source.type === "ashby") {
     return fetchAshbyJobsForSource(source);
   }
-  if (source.type === "bamboohr") {
+  if (source.provider === "bamboohr" || source.type === "bamboohr") {
     return fetchBambooHrJobsForSource(source);
   }
-  if (source.type === "recruitee") {
+  if (source.provider === "recruitee" || source.type === "recruitee") {
     return fetchRecruiteeJobsForSource(source);
+  }
+  if (source.provider) {
+    return fetchAtsJobsByProvider(source.provider, source);
   }
   throw new Error(`Unsupported source type: ${source.type}`);
 }
@@ -58,7 +65,8 @@ async function runSyncForTypes(types = []) {
   ]);
 
   const enabledSources = sources.filter((source) => {
-    return source.enabled && (!requestedTypes || requestedTypes.has(source.type));
+    const normalized = normalizeSource(source);
+    return normalized.enabled && isDirectAtsSource(normalized) && (!requestedTypes || requestedTypes.has(normalized.provider || normalized.type));
   });
 
   if (!enabledSources.length) {
@@ -78,17 +86,32 @@ async function runSyncForTypes(types = []) {
   const publicJobs = [];
   const pendingJobs = [];
   const counts = {};
+  const scrapeReports = [];
 
   for (const source of enabledSources) {
-    if (!SUPPORTED_TYPES.has(source.type)) {
+    const provider = source.provider || source.type;
+    if (!SUPPORTED_TYPES.has(provider)) {
       counts[source.id] = {
         fetched: 0,
         active: 0,
         pending: 0,
         skipped: true,
-        reason: "unsupported source type pending custom integration"
+        reason: "unsupported direct ATS provider"
       };
-      console.log(`[jobs:sync-sources] ${source.id}: Skipped: unsupported source type pending custom integration.`);
+      scrapeReports.push({
+        source_id: source.id,
+        source_name: source.organization,
+        source_url: source.source_url,
+        detected_ats_provider: provider,
+        parser_used: "",
+        pages_checked: [{ url: source.source_url, depth: 0, status: "skipped" }],
+        links_discovered: [],
+        job_links_found: [],
+        jobs_parsed: 0,
+        reason_for_zero_results: "Unsupported direct ATS provider",
+        browser_fallback_recommended: false
+      });
+      console.log(`[jobs:sync-sources] ${source.id}: Skipped: unsupported direct ATS provider.`);
       continue;
     }
 
@@ -98,8 +121,22 @@ async function runSyncForTypes(types = []) {
         fetched: rawJobs.length,
         active: 0,
         pending: 0,
-        route: describeRouting(source)
+        route: describeRouting(source),
+        provider
       };
+      scrapeReports.push({
+        source_id: source.id,
+        source_name: source.organization,
+        source_url: source.source_url,
+        detected_ats_provider: provider,
+        parser_used: `ats:${provider}`,
+        pages_checked: [{ url: source.api_url || source.source_url, depth: 0, status: "200" }],
+        links_discovered: [],
+        job_links_found: rawJobs.map((job) => job.apply_url).filter(Boolean).slice(0, 100),
+        jobs_parsed: rawJobs.length,
+        reason_for_zero_results: rawJobs.length ? "" : "ATS provider returned zero jobs.",
+        browser_fallback_recommended: false
+      });
 
       for (const rawJob of rawJobs) {
         const routed = routeSyncedJob(rawJob, source);
@@ -114,19 +151,33 @@ async function runSyncForTypes(types = []) {
     } catch (error) {
       counts[source.id] = { fetched: 0, active: 0, pending: 0, error: error.message };
       const attemptedUrl =
-        source.type === "greenhouse"
+        provider === "greenhouse"
           ? `https://boards-api.greenhouse.io/v1/boards/${encodeURIComponent(source.board_token || "")}/jobs?content=true`
-          : source.type === "lever"
+          : provider === "lever"
             ? `https://api.lever.co/v0/postings/${encodeURIComponent(source.company_slug || "")}?mode=json`
-            : source.type === "ashby"
+            : provider === "ashby"
               ? String(source.api_url || "https://jobs.ashbyhq.com/api/non-user-graphql?op=apiJobBoardWithTeams")
-              : source.type === "bamboohr"
+              : provider === "bamboohr"
                 ? String(source.api_url || source.source_url || "")
-                : source.type === "recruitee"
+                : provider === "recruitee"
                   ? String(source.api_url || `https://${source.company_slug || ""}.recruitee.com/api/offers/`)
-            : String(source.api_url || source.source_url || "");
+                  : String(source.api_url || source.source_url || "");
+      scrapeReports.push({
+        source_id: source.id,
+        source_name: source.organization,
+        source_url: source.source_url,
+        detected_ats_provider: provider,
+        parser_used: `ats:${provider}`,
+        pages_checked: [{ url: attemptedUrl, depth: 0, status: "error", error: error.message }],
+        links_discovered: [],
+        job_links_found: [],
+        jobs_parsed: 0,
+        reason_for_zero_results: error.message,
+        browser_fallback_recommended: false,
+        errors: [error.message]
+      });
       console.error(
-        `[jobs:sync-sources] source_id=${source.id} source_type=${source.type} url=${attemptedUrl} failure=${error.message}`
+        `[jobs:sync-sources] source_id=${source.id} source_type=${provider} url=${attemptedUrl} failure=${error.message}`
       );
     }
   }
@@ -139,7 +190,10 @@ async function runSyncForTypes(types = []) {
     label: "jobs:sync-sources"
   });
   await syncJobRecordStore(publicWriteResult.jobs, { logger: console });
-  await writeJson(PENDING_SYNCED_FILE, mergedPendingJobs);
+  const scrapeReportPayload = await upsertScrapeReports(scrapeReports);
+  const triaged = await triagePendingJobs(mergedPendingJobs, publicWriteResult.jobs, scrapeReportPayload);
+  await writeJson(PENDING_SYNCED_FILE, triaged.adminPendingJobs);
+  await upsertScrapeReports(triaged.report.sources);
 
   Object.entries(counts).forEach(([sourceId, count]) => {
     console.log(
@@ -147,13 +201,14 @@ async function runSyncForTypes(types = []) {
     );
   });
   console.log(
-    `[jobs:sync-sources] Wrote ${publicWriteResult.jobs.length} public jobs to ${JOBS_FILE} and ${mergedPendingJobs.length} pending jobs to ${PENDING_SYNCED_FILE}.`
+    `[jobs:sync-sources] Wrote ${publicWriteResult.jobs.length} public jobs to ${JOBS_FILE}, ${triaged.adminPendingJobs.length} admin-pending jobs to ${PENDING_SYNCED_FILE}, and rejected ${triaged.summary.rejected_noise} as noise.`
   );
 
   return {
     publicJobs: publicWriteResult.jobs,
-    pendingJobs: mergedPendingJobs,
-    counts
+    pendingJobs: triaged.adminPendingJobs,
+    counts,
+    triageSummary: triaged.summary
   };
 }
 

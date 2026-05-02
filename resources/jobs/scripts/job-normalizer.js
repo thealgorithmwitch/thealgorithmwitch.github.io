@@ -510,6 +510,7 @@ function normalizeJob(input = {}) {
   const title = safeStringField(input.title);
   const organization = safeStringField(input.organization);
   const applyUrl = safeStringField(input.apply_url || input.applyUrl);
+  const originalUrl = safeStringField(input.original_url || input.originalUrl || applyUrl || input.source_url || input.sourceUrl);
   const location = safeStringField(input.location, "Remote");
   const salaryText = extractSalaryText(input);
   const salaryShape = parseSalaryRange(salaryText, location);
@@ -557,6 +558,7 @@ function normalizeJob(input = {}) {
     source: safeStringField(input.source, "Manual"),
     source_url: safeStringField(input.source_url || input.sourceUrl),
     apply_url: applyUrl,
+    original_url: originalUrl,
     date_posted: isValidDate(datePosted) ? new Date(datePosted).toISOString().slice(0, 10) : todayIso(),
     date_added: isValidDate(dateAdded) ? new Date(dateAdded).toISOString().slice(0, 10) : todayIso(),
     date_updated: isValidDate(dateUpdated) ? new Date(dateUpdated).toISOString().slice(0, 10) : todayIso(),
@@ -568,7 +570,13 @@ function normalizeJob(input = {}) {
     shared_by: safeStringField(input.shared_by || input.sharedBy),
     notes: safeStringField(input.notes),
     review_reason: safeStringField(input.review_reason || input.reviewReason),
+    triage_bucket: safeStringField(input.triage_bucket || input.triageBucket),
+    triage_reason: safeStringField(input.triage_reason || input.triageReason),
     confidence: safeStringField(input.confidence).toLowerCase(),
+    relevance_score: resolveNumericField(input.relevance_score ?? input.relevanceScore),
+    relevance_reasons: ensureArray(input.relevance_reasons || input.relevanceReasons)
+      .map((reason) => normalizeWhitespace(stringifySafe(reason)))
+      .filter(Boolean),
     trusted: typeof input.trusted === "boolean" ? input.trusted : undefined,
     auto_publish: typeof input.auto_publish === "boolean" ? input.auto_publish : undefined,
     sync_origin: safeStringField(input.sync_origin)

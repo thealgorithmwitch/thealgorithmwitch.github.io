@@ -1,12 +1,19 @@
 const fs = require("fs/promises");
 const path = require("path");
 const { dedupeJobs, normalizeJob, slugify, stringifySafe, todayIso } = require("./job-normalizer");
+const { normalizeSource } = require("./source-utils");
 
 const ROOT = path.resolve(__dirname, "..");
 const JOBS_FILE = path.join(ROOT, "jobs.json");
 const SOURCES_FILE = path.join(ROOT, "sources.json");
 const PENDING_FILE = path.join(ROOT, "pending-jobs.json");
 const PENDING_SYNCED_FILE = path.join(ROOT, "pending-synced-jobs.json");
+const SCRAPE_REPORT_FILE = path.join(ROOT, "scrape-report.json");
+const PENDING_TRIAGE_SUMMARY_FILE = path.join(ROOT, "pending-triage-summary.json");
+const ADMIN_PENDING_OVERRIDES_FILE = path.join(ROOT, "admin-pending-overrides.json");
+const ADMIN_ORG_RULES_FILE = path.join(ROOT, "admin-organization-rules.json");
+const ADMIN_JOB_ACTIONS_SNAPSHOT_FILE = path.join(ROOT, "admin-job-actions.json");
+const ADMIN_LOCAL_ACTIONS_FILE = path.join(ROOT, "admin-actions-local.json");
 
 async function readJson(filePath, fallback) {
   try {
@@ -50,6 +57,7 @@ const PUBLIC_STRING_FIELDS = new Set([
   "source",
   "source_url",
   "apply_url",
+  "original_url",
   "status",
   "approved_by",
   "raw_description",
@@ -57,6 +65,8 @@ const PUBLIC_STRING_FIELDS = new Set([
   "shared_by",
   "notes",
   "review_reason",
+  "triage_bucket",
+  "triage_reason",
   "confidence",
   "sync_origin"
 ]);
@@ -151,7 +161,7 @@ async function readJobs() {
 
 async function readSources() {
   const payload = await readJson(SOURCES_FILE, { sources: [] });
-  return Array.isArray(payload.sources) ? payload.sources : [];
+  return Array.isArray(payload.sources) ? payload.sources.map((source) => normalizeSource(source)) : [];
 }
 
 async function readPendingJobs() {
@@ -166,8 +176,14 @@ async function readPendingSyncedJobs() {
 
 module.exports = {
   JOBS_FILE,
+  ADMIN_JOB_ACTIONS_SNAPSHOT_FILE,
+  ADMIN_LOCAL_ACTIONS_FILE,
+  ADMIN_ORG_RULES_FILE,
+  ADMIN_PENDING_OVERRIDES_FILE,
   PENDING_FILE,
   PENDING_SYNCED_FILE,
+  PENDING_TRIAGE_SUMMARY_FILE,
+  SCRAPE_REPORT_FILE,
   SOURCES_FILE,
   dedupeJobs,
   normalizeJob,

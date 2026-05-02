@@ -173,6 +173,34 @@
       grid-template-columns: repeat(2, minmax(0, 1fr));
       gap: 18px;
     }
+    .metric-grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 14px;
+    }
+    .metric {
+      border: 1px solid var(--border-divider);
+      padding: 16px;
+      background: rgba(0, 0, 0, 0.16);
+      display: grid;
+      gap: 8px;
+    }
+    .metric-value {
+      font-family: var(--font-serif);
+      font-size: 2rem;
+      line-height: 1;
+    }
+    .metric-label {
+      color: var(--ink-secondary);
+      font-family: var(--font-mono);
+      font-size: 0.72rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+    .metric-subtext {
+      color: var(--ink-tertiary);
+      font-size: 0.85rem;
+    }
     .record-card h3 {
       font-family: var(--font-serif);
       font-size: 1.75rem;
@@ -287,8 +315,80 @@
       color: var(--ink-tertiary);
       text-align: center;
     }
+    .toolbar-grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 14px;
+      margin-top: 18px;
+    }
+    .toolbar-card {
+      border: 1px solid var(--border-divider);
+      padding: 14px;
+      background: rgba(0, 0, 0, 0.12);
+      display: grid;
+      gap: 8px;
+    }
+    .toolbar-card input,
+    .toolbar-card select {
+      width: 100%;
+      border: 1px solid var(--border-divider);
+      background: transparent;
+      color: var(--ink-primary);
+      padding: 10px 12px;
+      font: inherit;
+    }
+    .bulk-bar {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-top: 18px;
+    }
+    .local-job-group {
+      display: grid;
+      gap: 12px;
+      margin-bottom: 28px;
+    }
+    .group-title {
+      font-family: var(--font-serif);
+      font-size: 1.5rem;
+    }
+    .record-card.selected {
+      box-shadow: inset 0 0 0 1px var(--accent-chartreuse);
+    }
+    .badge-row {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-top: 10px;
+    }
+    .badge {
+      display: inline-flex;
+      padding: 5px 8px;
+      border: 1px solid var(--border-divider);
+      font-family: var(--font-mono);
+      font-size: 0.65rem;
+      text-transform: uppercase;
+      color: var(--ink-secondary);
+    }
+    .badge.high { color: var(--bg-paper); background: var(--accent-chartreuse); border-color: var(--accent-chartreuse); }
+    .badge.medium { color: var(--accent-chartreuse); }
+    .badge.low { color: var(--accent-lavender); border-color: rgba(212, 193, 255, 0.35); }
     @media (max-width: 980px) {
+      .metric-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+      .toolbar-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
       .grid {
+        grid-template-columns: 1fr;
+      }
+    }
+    @media (max-width: 640px) {
+      .metric-grid {
+        grid-template-columns: 1fr;
+      }
+      .toolbar-grid {
         grid-template-columns: 1fr;
       }
     }
@@ -310,6 +410,38 @@
         <h2>Review pending submissions before anything goes public.</h2>
         <p>This console is for private review only. Use it to review, edit, publish, or reject jobs, talent profiles, employer records, and admin applications from the protected Apps Script queue.</p>
         <div class="admin-note">Keep this page private. Do not link or commit a real admin token publicly.</div>
+      </section>
+
+      <section class="card">
+        <div class="tab-header">
+          <div>
+            <div class="eyebrow">Scraped Intake Snapshot</div>
+            <div class="tab-title">Local Pending Triage</div>
+          </div>
+          <div id="triage-generated-at" class="pill">Waiting on triage summary</div>
+        </div>
+        <div class="metric-grid" style="margin-top:18px;">
+          <div class="metric">
+            <div class="metric-label">Public Jobs</div>
+            <div id="metric-public-jobs" class="metric-value">0</div>
+            <div class="metric-subtext">Currently published</div>
+          </div>
+          <div class="metric">
+            <div class="metric-label">Pending Review-Ready</div>
+            <div id="metric-review-ready" class="metric-value">0</div>
+            <div class="metric-subtext">Ready for admin review</div>
+          </div>
+          <div class="metric">
+            <div class="metric-label">Pending Needs-Cleanup</div>
+            <div id="metric-needs-cleanup" class="metric-value">0</div>
+            <div class="metric-subtext">Relevant, but still messy</div>
+          </div>
+          <div class="metric">
+            <div class="metric-label">Rejected Noise</div>
+            <div id="metric-rejected-noise" class="metric-value">0</div>
+            <div class="metric-subtext">Held out of admin queue</div>
+          </div>
+        </div>
       </section>
 
       <section id="locked-state" class="locked-card" style="display:none;">
@@ -358,7 +490,83 @@
             </div>
             <div id="count-jobs" class="pill">0 items</div>
           </div>
+          <div class="toolbar-grid">
+            <div class="toolbar-card">
+              <label for="job-filter-bucket">Triage</label>
+              <select id="job-filter-bucket">
+                <option value="review_ready">review_ready</option>
+                <option value="needs_cleanup">needs_cleanup</option>
+                <option value="all">all</option>
+              </select>
+            </div>
+            <div class="toolbar-card">
+              <label for="job-filter-pay">Pay</label>
+              <select id="job-filter-pay">
+                <option value="all">all</option>
+                <option value="has_pay">has_pay</option>
+                <option value="missing_pay">missing_pay</option>
+              </select>
+            </div>
+            <div class="toolbar-card">
+              <label for="job-filter-source">Source / Provider</label>
+              <select id="job-filter-source">
+                <option value="all">all</option>
+              </select>
+            </div>
+            <div class="toolbar-card">
+              <label for="job-filter-organization">Organization</label>
+              <input id="job-filter-organization" type="text" placeholder="Filter organization">
+            </div>
+          </div>
+          <div class="toolbar-grid">
+            <div class="toolbar-card">
+              <label for="job-filter-lifecycle">Lifecycle</label>
+              <select id="job-filter-lifecycle">
+                <option value="all">all</option>
+                <option value="new_pending">new pending</option>
+                <option value="week_old">1 week old</option>
+                <option value="needs_review">needs recheck</option>
+                <option value="verified">verified</option>
+                <option value="expired_removed">expired / removed</option>
+              </select>
+            </div>
+            <div class="toolbar-card">
+              <label for="job-filter-duplicates">Duplicate Suspects</label>
+              <select id="job-filter-duplicates">
+                <option value="all">all</option>
+                <option value="only">duplicate suspects</option>
+              </select>
+            </div>
+            <div class="toolbar-card">
+              <label for="job-filter-sort">Sort</label>
+              <select id="job-filter-sort">
+                <option value="newest">newest first</option>
+                <option value="organization">organization</option>
+                <option value="score">source confidence</option>
+              </select>
+            </div>
+            <div class="toolbar-card">
+              <label for="job-filter-status">Quick Publish Eligible</label>
+              <select id="job-filter-status">
+                <option value="all">all</option>
+                <option value="eligible">eligible only</option>
+              </select>
+            </div>
+          </div>
+          <div class="bulk-bar">
+            <button id="bulk-publish" class="btn-primary" type="button">Publish Selected</button>
+            <button id="bulk-archive" class="btn-secondary" type="button">Archive Selected</button>
+            <button id="bulk-needs-cleanup" class="btn-secondary" type="button">Mark Needs Cleanup</button>
+            <button id="bulk-reviewed" class="btn-secondary" type="button">Mark Reviewed</button>
+            <button id="bulk-feature" class="btn-secondary" type="button">Feature Selected</button>
+            <button id="bulk-hide-org" class="btn-danger" type="button">Hide Organization</button>
+            <button id="bulk-reject-org" class="btn-danger" type="button">Reject All From Organization</button>
+            <button id="export-local-actions" class="btn-secondary" type="button">Export Local Actions</button>
+          </div>
           <div id="panel-jobs" class="grid"></div>
+          <div class="actions">
+            <button id="load-more-jobs" class="btn-secondary" type="button">Load More</button>
+          </div>
         </section>
 
         <section id="tab-talent" class="tab-panel">
@@ -412,6 +620,11 @@
   <script>
     const JOBS_BACKEND_URL = window.JOBS_BACKEND_CONFIG?.backendUrl || "";
     const TOKEN_STORAGE_KEY = "jobs_admin_token";
+    const TRIAGE_SUMMARY_URL = "./pending-triage-summary.json";
+    const LOCAL_PENDING_URL = "./pending-synced-jobs.json";
+    const LOCAL_JOB_REVIEW_KEY = "jobs_local_admin_review_v1";
+    const LOCAL_JOB_ACTION_QUEUE_KEY = "jobs_local_admin_action_queue_v1";
+    const LOCAL_JOB_ACTION_EXPORT_FILENAME = "admin-actions-local.json";
 
     const TAB_CONFIG = {
       jobs: {
@@ -458,7 +671,25 @@
 
     const state = {
       loadedTabs: new Set(),
-      items: {}
+      items: {},
+      localJobs: [],
+      localJobsLoaded: false,
+      localJobVisibleCount: 25,
+      localJobFilters: {
+        bucket: "review_ready",
+        pay: "all",
+        source: "all",
+        organization: "",
+        lifecycle: "all",
+        duplicates: "all",
+        sort: "newest",
+        quickPublish: "all"
+      },
+      localJobReview: {
+        hiddenOrganizations: [],
+        selectedIds: [],
+        actionsById: {}
+      }
     };
 
     const lockedState = document.getElementById("locked-state");
@@ -469,6 +700,340 @@
     const passwordInput = document.getElementById("admin-password");
     const unlockButton = document.getElementById("unlock-button");
     const logoutButton = document.getElementById("logout-button");
+    const triageGeneratedAt = document.getElementById("triage-generated-at");
+    const triageMetricEls = {
+      publicJobs: document.getElementById("metric-public-jobs"),
+      reviewReady: document.getElementById("metric-review-ready"),
+      needsCleanup: document.getElementById("metric-needs-cleanup"),
+      rejectedNoise: document.getElementById("metric-rejected-noise")
+    };
+    const localJobFilterEls = {
+      bucket: document.getElementById("job-filter-bucket"),
+      pay: document.getElementById("job-filter-pay"),
+      source: document.getElementById("job-filter-source"),
+      organization: document.getElementById("job-filter-organization"),
+      lifecycle: document.getElementById("job-filter-lifecycle"),
+      duplicates: document.getElementById("job-filter-duplicates"),
+      sort: document.getElementById("job-filter-sort"),
+      quickPublish: document.getElementById("job-filter-status")
+    };
+    const loadMoreJobsButton = document.getElementById("load-more-jobs");
+    const exportLocalActionsButton = document.getElementById("export-local-actions");
+
+    function getLocalReviewState() {
+      try {
+        const parsed = JSON.parse(window.localStorage.getItem(LOCAL_JOB_REVIEW_KEY) || "{}");
+        return {
+          hiddenOrganizations: Array.isArray(parsed.hiddenOrganizations) ? parsed.hiddenOrganizations : [],
+          selectedIds: Array.isArray(parsed.selectedIds) ? parsed.selectedIds : [],
+          actionsById: parsed.actionsById && typeof parsed.actionsById === "object" ? parsed.actionsById : {}
+        };
+      } catch (_error) {
+        return {
+          hiddenOrganizations: [],
+          selectedIds: [],
+          actionsById: {}
+        };
+      }
+    }
+
+    function setLocalReviewState() {
+      window.localStorage.setItem(LOCAL_JOB_REVIEW_KEY, JSON.stringify(state.localJobReview));
+    }
+
+    function getLocalActionQueue() {
+      try {
+        const parsed = JSON.parse(window.localStorage.getItem(LOCAL_JOB_ACTION_QUEUE_KEY) || "{}");
+        return Array.isArray(parsed.actions) ? parsed.actions : [];
+      } catch (_error) {
+        return [];
+      }
+    }
+
+    function setLocalActionQueue(actions) {
+      window.localStorage.setItem(LOCAL_JOB_ACTION_QUEUE_KEY, JSON.stringify({
+        generated_at: new Date().toISOString(),
+        actions
+      }));
+    }
+
+    function buildLocalQueuedAction(payload, status) {
+      const now = new Date().toISOString();
+      return {
+        id: `${payload.operation || "action"}-${Math.random().toString(36).slice(2, 10)}`,
+        status: status || "queued",
+        created_at: now,
+        updated_at: now,
+        actor: String(payload.actor || "Admin Review Console"),
+        operation: String(payload.operation || ""),
+        payload_json: JSON.stringify(payload)
+      };
+    }
+
+    function enqueueLocalAction(payload, status) {
+      const actions = getLocalActionQueue();
+      actions.push(buildLocalQueuedAction(payload, status));
+      setLocalActionQueue(actions);
+    }
+
+    function exportLocalActionsFile() {
+      const actions = getLocalActionQueue();
+      const payload = JSON.stringify({
+        generated_at: new Date().toISOString(),
+        actions
+      }, null, 2);
+      const blob = new Blob([payload], { type: "application/json" });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = LOCAL_JOB_ACTION_EXPORT_FILENAME;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      URL.revokeObjectURL(url);
+      setStatus(`Exported ${actions.length} local actions as ${LOCAL_JOB_ACTION_EXPORT_FILENAME}. Move it to jobs/${LOCAL_JOB_ACTION_EXPORT_FILENAME} for local apply.`, false);
+    }
+
+    async function loadTriageSummary() {
+      try {
+        const response = await fetch(TRIAGE_SUMMARY_URL, { cache: "no-store" });
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        const summary = await response.json();
+        triageMetricEls.publicJobs.textContent = String(summary.public_jobs || 0);
+        triageMetricEls.reviewReady.textContent = String(summary.pending_review_ready || 0);
+        triageMetricEls.needsCleanup.textContent = String(summary.pending_needs_cleanup || 0);
+        triageMetricEls.rejectedNoise.textContent = String(summary.rejected_noise || 0);
+        triageGeneratedAt.textContent = summary.generated_at
+          ? `Updated ${new Date(summary.generated_at).toLocaleString()}`
+          : "Triage summary loaded";
+      } catch (_error) {
+        triageGeneratedAt.textContent = "Triage summary unavailable";
+      }
+    }
+
+    function confidenceBadge(score) {
+      const numeric = Number(score || 0);
+      if (numeric >= 8) return { label: `High ${numeric}`, className: "high" };
+      if (numeric >= 6) return { label: `Medium ${numeric}`, className: "medium" };
+      return { label: `Low ${numeric}`, className: "low" };
+    }
+
+    function isQuickPublishEligible(job) {
+      return Boolean(
+        job &&
+        job.title &&
+        job.organization &&
+        job.original_url &&
+        job.location &&
+        Number(job.relevance_score || 0) >= 8 &&
+        !/[<>]|mailto:|class=|&#/i.test(String(job.title || "")) &&
+        !String(job.triage_reason || "").toLowerCase().includes("broken")
+      );
+    }
+
+    function hasPay(job) {
+      return Boolean(job.salary || job.raw_salary || job.salary_min || job.salary_max);
+    }
+
+    function jobProvider(job) {
+      return String(job.source || job.source_type || "").trim() || "Unknown";
+    }
+
+    function lifecycleLabel(job) {
+      const status = String(job.verification_status || "").toLowerCase();
+      if (status === "verified") return "Verified";
+      if (status === "needs_review") return "Needs Recheck";
+      if (status === "expired") return "Expired";
+      if (status === "removed") return "Removed";
+      if (String(job.stale_reason || "").includes("1 week old")) return "1 Week Old";
+      return "New Pending";
+    }
+
+    function getDuplicateSuspectIds(jobs) {
+      const counts = new Map();
+      jobs.forEach((job) => {
+        const key = `${String(job.organization || "").toLowerCase()}::${String(job.title || "").toLowerCase()}`;
+        counts.set(key, (counts.get(key) || 0) + 1);
+      });
+      const duplicates = new Set();
+      jobs.forEach((job) => {
+        const key = `${String(job.organization || "").toLowerCase()}::${String(job.title || "").toLowerCase()}`;
+        if ((counts.get(key) || 0) > 1) duplicates.add(String(job.id));
+      });
+      return duplicates;
+    }
+
+    function getLocalJobViewState(job) {
+      return state.localJobReview.actionsById[String(job.id)] || {};
+    }
+
+    function loadLocalPendingFilters(jobs) {
+      const options = Array.from(new Set(jobs.map(jobProvider))).sort((a, b) => a.localeCompare(b));
+      localJobFilterEls.source.innerHTML = ['<option value="all">all</option>']
+        .concat(options.map((value) => `<option value="${escapeHtml(value)}">${escapeHtml(value)}</option>`))
+        .join("");
+      localJobFilterEls.source.value = state.localJobFilters.source;
+    }
+
+    async function loadLocalPendingJobs(forceReload) {
+      if (state.localJobsLoaded && !forceReload) return;
+      const response = await fetch(LOCAL_PENDING_URL, { cache: "no-store" });
+      if (!response.ok) throw new Error(`HTTP ${response.status}`);
+      const items = await response.json();
+      state.localJobs = Array.isArray(items) ? items : [];
+      state.localJobsLoaded = true;
+      loadLocalPendingFilters(state.localJobs);
+    }
+
+    function filterLocalJobs() {
+      const duplicateSuspects = getDuplicateSuspectIds(state.localJobs);
+      const hiddenOrganizations = new Set(state.localJobReview.hiddenOrganizations);
+      return state.localJobs.filter((job) => {
+        if (hiddenOrganizations.has(String(job.organization || ""))) return false;
+        if (state.localJobFilters.bucket !== "all" && String(job.triage_bucket || "") !== state.localJobFilters.bucket) return false;
+        if (state.localJobFilters.pay === "has_pay" && !hasPay(job)) return false;
+        if (state.localJobFilters.pay === "missing_pay" && hasPay(job)) return false;
+        if (state.localJobFilters.source !== "all" && jobProvider(job) !== state.localJobFilters.source) return false;
+        if (state.localJobFilters.organization && !String(job.organization || "").toLowerCase().includes(state.localJobFilters.organization.toLowerCase())) return false;
+        if (state.localJobFilters.duplicates === "only" && !duplicateSuspects.has(String(job.id))) return false;
+        if (state.localJobFilters.quickPublish === "eligible" && !isQuickPublishEligible(job)) return false;
+        const lifecycle = lifecycleLabel(job).toLowerCase();
+        if (state.localJobFilters.lifecycle === "new_pending" && lifecycle !== "new pending") return false;
+        if (state.localJobFilters.lifecycle === "week_old" && lifecycle !== "1 week old") return false;
+        if (state.localJobFilters.lifecycle === "needs_review" && lifecycle !== "needs recheck") return false;
+        if (state.localJobFilters.lifecycle === "verified" && lifecycle !== "verified") return false;
+        if (state.localJobFilters.lifecycle === "expired_removed" && !["expired", "removed"].includes(String(job.verification_status || "").toLowerCase())) return false;
+        return true;
+      }).sort((a, b) => {
+        if (state.localJobFilters.bucket === "review_ready") {
+          const bucketDelta = String(a.triage_bucket || "").localeCompare(String(b.triage_bucket || ""));
+          if (bucketDelta !== 0) return bucketDelta;
+        }
+        if (state.localJobFilters.sort === "organization") {
+          return String(a.organization || "").localeCompare(String(b.organization || ""));
+        }
+        if (state.localJobFilters.sort === "score") {
+          return Number(b.relevance_score || 0) - Number(a.relevance_score || 0);
+        }
+        return new Date(b.date_posted || 0) - new Date(a.date_posted || 0);
+      });
+    }
+
+    function renderLocalJobCard(job, duplicateSuspects) {
+      const reviewState = getLocalJobViewState(job);
+      const confidence = confidenceBadge(job.relevance_score);
+      const checked = state.localJobReview.selectedIds.includes(String(job.id)) ? "checked" : "";
+      const duplicateBadge = duplicateSuspects.has(String(job.id)) ? '<span class="badge low">Duplicate Suspect</span>' : "";
+      const quickPublish = isQuickPublishEligible(job);
+      return `
+        <article class="record-card ${checked ? "selected" : ""}" data-local-job-id="${escapeHtml(job.id)}">
+          <div style="display:flex; justify-content:space-between; gap:12px; align-items:flex-start;">
+            <div>
+              <div class="eyebrow">${escapeHtml(job.triage_bucket || "pending")}</div>
+              <h3>${escapeHtml(job.title || "Untitled")}</h3>
+              <p>${escapeHtml(job.organization || "")}</p>
+            </div>
+            <label style="margin:0;">
+              <input type="checkbox" data-select-local-job="${escapeHtml(job.id)}" ${checked}>
+            </label>
+          </div>
+          <div class="badge-row">
+            <span class="badge ${confidence.className}">Source Confidence ${escapeHtml(confidence.label)}</span>
+            <span class="badge">${escapeHtml(lifecycleLabel(job))}</span>
+            ${quickPublish ? '<span class="badge high">Quick Publish</span>' : '<span class="badge medium">Full Edit</span>'}
+            ${hasPay(job) ? '<span class="badge medium">Has Pay</span>' : '<span class="badge low">Missing Pay</span>'}
+            ${duplicateBadge}
+          </div>
+          <div class="meta-list">
+            <div>Source: ${escapeHtml(jobProvider(job))}</div>
+            <div>Location: ${escapeHtml(job.location || "")}</div>
+            <div>Original URL: ${escapeHtml(job.original_url || "")}</div>
+            <div>Triage reason: ${escapeHtml(reviewState.action || job.triage_reason || "")}</div>
+          </div>
+          <details class="summary-block">
+            <summary style="cursor:pointer; color: var(--ink-secondary);">Full edit</summary>
+            <div class="summary-row"><label>Summary</label><strong>${escapeHtml(job.description || job.raw_description || "")}</strong></div>
+            <div class="summary-row"><label>Tags</label><strong>${escapeHtml(Array.isArray(job.tags) ? job.tags.join(", ") : "")}</strong></div>
+          </details>
+          <div class="actions">
+            ${quickPublish ? `<button class="btn-primary" type="button" data-local-quick-publish="${escapeHtml(job.id)}">Quick Publish</button>` : ""}
+            <a class="btn-secondary" href="${escapeHtml(job.original_url || job.apply_url || "#")}" target="_blank" rel="noopener noreferrer">Open Original</a>
+          </div>
+        </article>
+      `;
+    }
+
+    function renderLocalJobs() {
+      const panel = document.getElementById("panel-jobs");
+      const count = document.getElementById("count-jobs");
+      const filtered = filterLocalJobs();
+      count.textContent = `${filtered.length} items`;
+      const duplicateSuspects = getDuplicateSuspectIds(filtered);
+
+      if (!filtered.length) {
+        panel.innerHTML = `<div class="empty-state">No local pending jobs match the current triage filters.</div>`;
+        loadMoreJobsButton.hidden = true;
+        return;
+      }
+
+      const visible = filtered.slice(0, state.localJobVisibleCount);
+      const grouped = new Map();
+      visible.forEach((job) => {
+        const key = String(job.organization || "Unknown Organization");
+        const bucket = grouped.get(key) || [];
+        bucket.push(job);
+        grouped.set(key, bucket);
+      });
+
+      panel.innerHTML = Array.from(grouped.entries()).map(([organization, jobs]) => `
+        <section class="local-job-group">
+          <div class="group-title">${escapeHtml(organization)}</div>
+          <div class="grid">
+            ${jobs.map((job) => renderLocalJobCard(job, duplicateSuspects)).join("")}
+          </div>
+        </section>
+      `).join("");
+
+      loadMoreJobsButton.hidden = visible.length >= filtered.length;
+    }
+
+    function applyLocalBulkAction(action) {
+      const selectedIds = state.localJobReview.selectedIds;
+      if (!selectedIds.length) {
+        setStatus("Select at least one local pending job first.", true);
+        return;
+      }
+      const selectedJobs = state.localJobs.filter((job) => selectedIds.includes(String(job.id)));
+      queueLocalJobAction({
+        operation: action,
+        actor: "Admin Review Console",
+        ids: selectedIds,
+        organization: selectedJobs[0] ? String(selectedJobs[0].organization || "") : "",
+        jobs: selectedJobs
+      }).then((result) => {
+        selectedIds.forEach((id) => {
+          state.localJobReview.actionsById[id] = {
+            ...(state.localJobReview.actionsById[id] || {}),
+            action
+          };
+        });
+        if (action === "hide_organization" || action === "reject_all_from_organization") {
+          selectedJobs.forEach((job) => {
+            if (!state.localJobReview.hiddenOrganizations.includes(String(job.organization || ""))) {
+              state.localJobReview.hiddenOrganizations.push(String(job.organization || ""));
+            }
+          });
+        }
+        setLocalReviewState();
+        const message = result.mode === "backend"
+          ? `Queued ${action} for ${selectedIds.length} local pending jobs in Apps Script and mirrored locally.`
+          : `Queued ${action} for ${selectedIds.length} local pending jobs in local fallback. Export ${LOCAL_JOB_ACTION_EXPORT_FILENAME} and run apply-admin-actions to persist it.`;
+        setStatus(result.warning ? `${message} ${result.warning}` : message, false);
+        renderLocalJobs();
+      }).catch((error) => {
+        setStatus(error.message || `Unable to queue ${action}.`, true);
+      });
+    }
 
     function escapeHtml(value) {
       return String(value || "")
@@ -588,6 +1153,10 @@
       return Boolean(getStoredToken().trim());
     }
 
+    function canUseBackendAdmin() {
+      return isBackendConfigured() && hasToken();
+    }
+
     function showLockedState() {
       lockedState.style.display = "block";
       loginState.style.display = "none";
@@ -611,6 +1180,9 @@
     }
 
     async function requestAdmin(action, extra) {
+      if (!canUseBackendAdmin()) {
+        throw new Error("Apps Script admin backend is unavailable in this session.");
+      }
       const token = getStoredToken();
       const payload = Object.assign(
         {
@@ -638,6 +1210,21 @@
       }
 
       return data;
+    }
+
+    async function queueLocalJobAction(payload) {
+      if (canUseBackendAdmin()) {
+        try {
+          await requestAdmin("queueLocalJobAction", payload);
+          enqueueLocalAction(payload, "mirrored");
+          return { mode: "backend" };
+        } catch (error) {
+          enqueueLocalAction(payload, "queued");
+          return { mode: "local", warning: error.message || "Backend queue failed. Saved locally instead." };
+        }
+      }
+      enqueueLocalAction(payload, "queued");
+      return { mode: "local" };
     }
 
     function buildSummaryRows(tabKey, raw) {
@@ -919,6 +1506,10 @@
     }
 
     function renderTab(tabKey, items) {
+      if (tabKey === "jobs") {
+        renderLocalJobs();
+        return;
+      }
       const config = TAB_CONFIG[tabKey];
       const panel = document.getElementById(config.panelId);
       const count = document.getElementById(config.countId);
@@ -933,6 +1524,11 @@
     }
 
     async function loadTab(tabKey, forceReload) {
+      if (tabKey === "jobs") {
+        await loadLocalPendingJobs(forceReload);
+        renderLocalJobs();
+        return;
+      }
       const config = TAB_CONFIG[tabKey];
       const panel = document.getElementById(config.panelId);
 
@@ -957,6 +1553,17 @@
     }
 
     function activateTab(tabKey) {
+      if (tabKey !== "jobs" && !canUseBackendAdmin()) {
+        setStatus("Only the local pending-jobs workflow is available without an Apps Script admin token.", true);
+        document.querySelectorAll(".folder-tab").forEach((button) => {
+          button.classList.toggle("active", button.dataset.tab === "jobs");
+        });
+        document.querySelectorAll(".tab-panel").forEach((panel) => {
+          panel.classList.toggle("active", panel.id === "tab-jobs");
+        });
+        loadTab("jobs");
+        return;
+      }
       document.querySelectorAll(".folder-tab").forEach((button) => {
         button.classList.toggle("active", button.dataset.tab === tabKey);
       });
@@ -964,7 +1571,7 @@
         panel.classList.toggle("active", panel.id === `tab-${tabKey}`);
       });
       clearStatus();
-      if (isBackendConfigured() && hasToken()) {
+      if (tabKey === "jobs" || canUseBackendAdmin()) {
         loadTab(tabKey);
       }
     }
@@ -1015,6 +1622,71 @@
       handleAction(button.dataset.tab, button.dataset.action, button.dataset.id);
     });
 
+    document.addEventListener("change", (event) => {
+      const select = event.target.closest("[data-select-local-job]");
+      if (!select) return;
+      const id = String(select.dataset.selectLocalJob || "");
+      if (!id) return;
+      if (select.checked && !state.localJobReview.selectedIds.includes(id)) {
+        state.localJobReview.selectedIds.push(id);
+      }
+      if (!select.checked) {
+        state.localJobReview.selectedIds = state.localJobReview.selectedIds.filter((item) => item !== id);
+      }
+      setLocalReviewState();
+      renderLocalJobs();
+    });
+
+    Object.entries(localJobFilterEls).forEach(([key, element]) => {
+      const eventName = element.tagName === "INPUT" ? "input" : "change";
+      element.addEventListener(eventName, () => {
+        state.localJobFilters[key] = element.value;
+        state.localJobVisibleCount = 25;
+        renderLocalJobs();
+      });
+    });
+
+    loadMoreJobsButton.addEventListener("click", () => {
+      state.localJobVisibleCount += 25;
+      renderLocalJobs();
+    });
+
+    document.getElementById("bulk-publish").addEventListener("click", () => applyLocalBulkAction("publish_selected"));
+    document.getElementById("bulk-archive").addEventListener("click", () => applyLocalBulkAction("archive_selected"));
+    document.getElementById("bulk-needs-cleanup").addEventListener("click", () => applyLocalBulkAction("mark_needs_cleanup"));
+    document.getElementById("bulk-reviewed").addEventListener("click", () => applyLocalBulkAction("mark_reviewed"));
+    document.getElementById("bulk-feature").addEventListener("click", () => applyLocalBulkAction("feature_selected"));
+    document.getElementById("bulk-hide-org").addEventListener("click", () => applyLocalBulkAction("hide_organization"));
+    document.getElementById("bulk-reject-org").addEventListener("click", () => applyLocalBulkAction("reject_all_from_organization"));
+    exportLocalActionsButton.addEventListener("click", exportLocalActionsFile);
+
+    document.addEventListener("click", (event) => {
+      const button = event.target.closest("[data-local-quick-publish]");
+      if (!button) return;
+      const job = state.localJobs.find((item) => String(item.id) === String(button.dataset.localQuickPublish));
+      if (!job) return;
+      queueLocalJobAction({
+        operation: "publish_selected",
+        actor: "Admin Review Console",
+        ids: [String(job.id)],
+        organization: String(job.organization || ""),
+        jobs: [job]
+      }).then((result) => {
+        state.localJobReview.actionsById[String(job.id)] = {
+          ...(state.localJobReview.actionsById[String(job.id)] || {}),
+          action: "quick_publish"
+        };
+        setLocalReviewState();
+        const message = result.mode === "backend"
+          ? `Queued quick publish for ${job.title} in Apps Script and mirrored locally.`
+          : `Queued quick publish for ${job.title} in local fallback. Export ${LOCAL_JOB_ACTION_EXPORT_FILENAME} and run apply-admin-actions to persist it.`;
+        setStatus(result.warning ? `${message} ${result.warning}` : message, false);
+        renderLocalJobs();
+      }).catch((error) => {
+        setStatus(error.message || "Unable to queue quick publish.", true);
+      });
+    });
+
     unlockButton.addEventListener("click", () => {
       const token = passwordInput.value.trim();
       if (!token) {
@@ -1040,10 +1712,13 @@
       window.location.reload();
     });
 
-    if (!isBackendConfigured()) {
-      showLockedState();
-    } else if (!hasToken()) {
-      showLoginState();
+    state.localJobReview = getLocalReviewState();
+    loadTriageSummary();
+
+    if (!isBackendConfigured() || !hasToken()) {
+      showConsoleState();
+      activateTab("jobs");
+      setStatus("Running in local-only admin mode. Apps Script review folders remain unavailable until a backend token is configured.", false);
     } else {
       showConsoleState();
       activateTab("jobs");

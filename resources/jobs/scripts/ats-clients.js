@@ -1,4 +1,5 @@
 const { ensureArray, stableHash, stringifySafe, todayIso } = require("./job-normalizer");
+const { normalizeProvider } = require("./source-utils");
 
 function ensureDefault(values) {
   return Array.isArray(values) && values.length ? values[0] : "";
@@ -65,6 +66,14 @@ async function fetchGreenhouseJobsForSource(source) {
   return jobs.map((job) => greenhouseJobToSchema(source, job));
 }
 
+function extractGreenhouseBoardToken(value) {
+  const text = String(value || "");
+  const match =
+    text.match(/boards(?:-api)?\.greenhouse\.io\/(?:v1\/boards\/)?([^/?#"'&<>\s]+)(?:\/jobs)?/i) ||
+    text.match(/greenhouse\.io\/([^/?#"'&<>\s]+)(?:\/jobs)?/i);
+  return match ? match[1] : "";
+}
+
 function leverJobToSchema(source, job) {
   const categories = job.categories || {};
   const location = stringifySafe(categories.location) || stringifySafe(job.location) || "Location listed on application";
@@ -111,6 +120,12 @@ async function fetchLeverJobsForSource(source) {
   const jobs = Array.isArray(payload) ? payload : [];
   console.log(`[sync-lever] ${source.organization}: received ${jobs.length} jobs.`);
   return jobs.map((job) => leverJobToSchema(source, job));
+}
+
+function extractLeverCompanySlug(value) {
+  const text = String(value || "");
+  const match = text.match(/jobs\.lever\.co\/([^/?#"'&<>\s]+)/i) || text.match(/api\.lever\.co\/v0\/postings\/([^/?#"'&<>\s]+)/i);
+  return match ? match[1] : "";
 }
 
 function ashbyJobToSchema(source, job) {
@@ -188,6 +203,12 @@ async function fetchAshbyJobsForSource(source) {
   return jobs.map((job) => ashbyJobToSchema(source, job));
 }
 
+function extractAshbyOrganizationSlug(value) {
+  const text = String(value || "");
+  const match = text.match(/jobs\.ashbyhq\.com\/([^/?#"'&<>\s]+)/i);
+  return match ? match[1] : "";
+}
+
 function bambooHrJobToSchema(source, job) {
   return {
     id: `${source.organization}-${job.id || job.jobOpeningId || job.jobTitle}`,
@@ -216,12 +237,17 @@ function bambooHrJobToSchema(source, job) {
 }
 
 async function fetchBambooHrJobsForSource(source) {
-  if (!source.api_url) {
+  const companySlug =
+    source.company_slug ||
+    String(source.source_url || "").replace(/^https?:\/\//i, "").split(".")[0];
+  const url = source.api_url || (companySlug ? `https://${companySlug}.bamboohr.com/careers/list` : "");
+
+  if (!url) {
     throw new Error("Needs endpoint discovery or explicit BambooHR API URL.");
   }
 
-  console.log(`[sync-bamboohr] Fetching ${source.organization} from ${source.api_url}`);
-  const response = await fetch(source.api_url);
+  console.log(`[sync-bamboohr] Fetching ${source.organization} from ${url}`);
+  const response = await fetch(url);
 
   if (!response.ok) {
     throw new Error(`HTTP ${response.status} for ${source.organization}`);
@@ -297,15 +323,194 @@ async function fetchRecruiteeJobsForSource(source) {
   return jobs.map((job) => recruiteeJobToSchema(source, job));
 }
 
+function extractRecruiteeCompanySlug(value) {
+  const text = String(value || "");
+  const match = text.match(/^https?:\/\/([^./]+)\.recruitee\.com/i);
+  return match ? match[1] : "";
+}
+
+function smartRecruitersJobToSchema(source, job) {
+  return {
+    id: `${source.organization}-${job.id || job.ref || job.name}`,
+    external_id: job.id
+      ? `smartrecruiters_${source.id}_${job.id}`
+      : `smartrecruiters_${stableHash(`${source.id}:${job.name || ""}:${job.applyUrl || job.ref || ""}`)}`,
+    title: stringifySafe(job.name || job.title),
+    organization: source.organization,
+    location: stringifySafe(job.location?.city || job.location?.region || job.location?.country || job.location) || "Location listed on application",
+    job_type: stringifySafe(job.typeOfEmployment?.label || job.jobAd?.employmentType || job.typeOfEmployment),
+    sector: source.sector,
+    function: stringifySafe(job.department?.label || job.department),
+    workplace_type: job.location?.remote || job.remote ? "Remote" : stringifySafe(job.workplaceType),
+    salary: stringifySafe(job.compensation?.description || job.salary),
+    source: "SmartRecruiters",
+    source_url: stringifySafe(job.ref || job.applyUrl || source.source_url),
+    apply_url: stringifySafe(job.ref || job.applyUrl || source.source_url),
+    date_posted: job.releasedDate || todayIso(),
+    raw_description: stringifySafe(job.jobAd?.sections?.jobDescription?.text || job.jobAd?.sections?.qualifications?.text || ""),
+    description: stringifySafe(job.jobAd?.sections?.jobDescription?.text || job.jobAd?.sections?.qualifications?.text || ""),
+    tags: [source.sector, stringifySafe(job.department?.label || job.department), "smartrecruiters"].filter(Boolean),
+    shared_by: "ATS Sync",
+    notes: `Synced from SmartRecruiters company ${source.company_slug}.`,
+    raw_payload: job
+  };
+}
+
+async function fetchSmartRecruitersJobsForSource(source) {
+  const companySlug =
+    source.company_slug ||
+    String(source.source_url || "").match(/smartrecruiters\.com\/([^/?#"'&<>\s]+)/i)?.[1] ||
+    "";
+
+  if (!companySlug) {
+    throw new Error("Missing SmartRecruiters company slug.");
+  }
+
+  const url = source.api_url || `https://api.smartrecruiters.com/v1/companies/${encodeURIComponent(companySlug)}/postings?limit=100`;
+  console.log(`[sync-smartrecruiters] Fetching ${source.organization} from ${url}`);
+  const response = await fetch(url);
+
+  if (!response.ok) {
+    throw new Error(`HTTP ${response.status} for ${source.organization}`);
+  }
+
+  const payload = await response.json();
+  const jobs = Array.isArray(payload.content) ? payload.content : Array.isArray(payload.data) ? payload.data : [];
+  console.log(`[sync-smartrecruiters] ${source.organization}: received ${jobs.length} jobs.`);
+  return jobs.map((job) => smartRecruitersJobToSchema(source, job));
+}
+
+function workableJobToSchema(source, job) {
+  const locationParts = [
+    stringifySafe(job.location?.city),
+    stringifySafe(job.location?.region),
+    stringifySafe(job.location?.country)
+  ].filter(Boolean);
+
+  return {
+    id: `${source.organization}-${job.id || job.shortcode || job.title}`,
+    external_id: job.id
+      ? `workable_${source.id}_${job.id}`
+      : `workable_${stableHash(`${source.id}:${job.title || ""}:${job.url || ""}`)}`,
+    title: stringifySafe(job.title),
+    organization: source.organization,
+    location: locationParts.join(", ") || stringifySafe(job.location) || "Location listed on application",
+    job_type: stringifySafe(job.employment_type || job.type),
+    sector: source.sector,
+    function: stringifySafe(job.department || job.team),
+    workplace_type: job.workplace || job.remote ? "Remote" : "",
+    salary: stringifySafe(job.salary || job.compensation),
+    source: "Workable",
+    source_url: stringifySafe(job.url || source.source_url),
+    apply_url: stringifySafe(job.url || source.source_url),
+    date_posted: job.created_at || todayIso(),
+    raw_description: stringifySafe(job.description || ""),
+    description: stringifySafe(job.description || ""),
+    tags: [source.sector, stringifySafe(job.department || job.team), "workable"].filter(Boolean),
+    shared_by: "ATS Sync",
+    notes: `Synced from Workable account ${source.company_slug}.`,
+    raw_payload: job
+  };
+}
+
+async function fetchWorkableJobsForSource(source) {
+  const companySlug =
+    source.company_slug ||
+    String(source.source_url || "").match(/apply\.workable\.com\/([^/?#"'&<>\s]+)/i)?.[1] ||
+    "";
+
+  if (!companySlug) {
+    throw new Error("Missing Workable company slug.");
+  }
+
+  const url = source.api_url || `https://apply.workable.com/api/v3/accounts/${encodeURIComponent(companySlug)}/jobs`;
+  console.log(`[sync-workable] Fetching ${source.organization} from ${url}`);
+  const response = await fetch(url);
+
+  if (!response.ok) {
+    throw new Error(`HTTP ${response.status} for ${source.organization}`);
+  }
+
+  const payload = await response.json();
+  const jobs = Array.isArray(payload.results) ? payload.results : Array.isArray(payload.jobs) ? payload.jobs : [];
+  console.log(`[sync-workable] ${source.organization}: received ${jobs.length} jobs.`);
+  return jobs.map((job) => workableJobToSchema(source, job));
+}
+
+function deriveProviderSource(source, provider, context = {}) {
+  const contextText = [source.source_url, source.api_url, context.pageUrl, context.html]
+    .filter(Boolean)
+    .join("\n");
+  const normalizedProvider = normalizeProvider(provider);
+
+  if (normalizedProvider === "greenhouse") {
+    const boardToken = source.board_token || extractGreenhouseBoardToken(contextText);
+    return { ...source, provider: normalizedProvider, type: "ats", board_token: boardToken };
+  }
+  if (normalizedProvider === "lever") {
+    const companySlug = source.company_slug || extractLeverCompanySlug(contextText);
+    return { ...source, provider: normalizedProvider, type: "ats", company_slug: companySlug };
+  }
+  if (normalizedProvider === "ashby") {
+    const organizationSlug = source.organization_slug || extractAshbyOrganizationSlug(contextText);
+    return { ...source, provider: normalizedProvider, type: "ats", organization_slug: organizationSlug };
+  }
+  if (normalizedProvider === "bamboohr") {
+    const companySlug =
+      source.company_slug ||
+      String(source.source_url || context.pageUrl || "").replace(/^https?:\/\//i, "").split(".")[0];
+    return { ...source, provider: normalizedProvider, type: "ats", company_slug: companySlug };
+  }
+  if (normalizedProvider === "recruitee") {
+    const companySlug = source.company_slug || extractRecruiteeCompanySlug(contextText);
+    return { ...source, provider: normalizedProvider, type: "ats", company_slug: companySlug };
+  }
+  if (normalizedProvider === "smartrecruiters") {
+    const companySlug =
+      source.company_slug ||
+      String(contextText).match(/smartrecruiters\.com\/([^/?#"'&<>\s]+)/i)?.[1] ||
+      "";
+    return { ...source, provider: normalizedProvider, type: "ats", company_slug: companySlug };
+  }
+  if (normalizedProvider === "workable") {
+    const companySlug =
+      source.company_slug ||
+      String(contextText).match(/apply\.workable\.com\/([^/?#"'&<>\s]+)/i)?.[1] ||
+      "";
+    return { ...source, provider: normalizedProvider, type: "ats", company_slug: companySlug };
+  }
+  return { ...source, provider: normalizedProvider };
+}
+
+async function fetchAtsJobsByProvider(provider, source, context = {}) {
+  const derivedSource = deriveProviderSource(source, provider, context);
+  const normalizedProvider = normalizeProvider(provider || derivedSource.provider || source.provider || source.type);
+
+  if (normalizedProvider === "greenhouse") return fetchGreenhouseJobsForSource(derivedSource);
+  if (normalizedProvider === "lever") return fetchLeverJobsForSource(derivedSource);
+  if (normalizedProvider === "ashby") return fetchAshbyJobsForSource(derivedSource);
+  if (normalizedProvider === "bamboohr") return fetchBambooHrJobsForSource(derivedSource);
+  if (normalizedProvider === "recruitee") return fetchRecruiteeJobsForSource(derivedSource);
+  if (normalizedProvider === "smartrecruiters") return fetchSmartRecruitersJobsForSource(derivedSource);
+  if (normalizedProvider === "workable") return fetchWorkableJobsForSource(derivedSource);
+  throw new Error(`Unsupported ATS provider: ${provider}`);
+}
+
 module.exports = {
+  deriveProviderSource,
+  fetchAtsJobsByProvider,
   fetchGreenhouseJobsForSource,
   fetchLeverJobsForSource,
   fetchAshbyJobsForSource,
   fetchBambooHrJobsForSource,
+  fetchSmartRecruitersJobsForSource,
+  fetchWorkableJobsForSource,
   fetchRecruiteeJobsForSource,
   greenhouseJobToSchema,
   leverJobToSchema,
   ashbyJobToSchema,
   bambooHrJobToSchema,
+  smartRecruitersJobToSchema,
+  workableJobToSchema,
   recruiteeJobToSchema
 };

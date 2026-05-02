@@ -3,6 +3,11 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Sustainability jobs across climate, clean energy, policy, and creative roles.">
+  <meta property="og:title" content="Fresh Roles | The Algorithm Witch">
+  <meta property="og:description" content="Sustainability jobs across climate, clean energy, policy, and creative roles.">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://example.com/jobs/">
   <title>Fresh Roles | The Algorithm Witch</title>
   <style>
     @import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,100..1000;1,9..40,100..1000&family=Instrument+Serif:ital@0;1&family=Space+Mono:ital,wght@0,400;0,700;1,400;1,700&display=swap');
@@ -1101,6 +1106,8 @@
     </div>
   </div>
 
+  <script src="./scripts/jobs-backend-config.js"></script>
+  <script src="./tracking.js"></script>
   <script>
     const state = {
       jobs: [],
@@ -1117,6 +1124,13 @@
         sector: new Set(),
         source: new Set()
       }
+    };
+
+    const TRACKING_TYPES = {
+      jobClick: "job_click",
+      talentClick: "talent_click",
+      ctaClick: "cta_click",
+      filterInteraction: "filter_interaction"
     };
 
     const ui = {
@@ -1164,6 +1178,27 @@
         .replace(/'/g, "&#39;");
     }
 
+    function slugify(value) {
+      return String(value || "")
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, "-")
+        .replace(/^-+|-+$/g, "")
+        .replace(/-{2,}/g, "-");
+    }
+
+    function getJobDetailPath(job) {
+      return `./pages/${slugify(`${job.title}-${job.organization}`)}.html`;
+    }
+
+    function trackUiEvent(event) {
+      if (typeof window.trackEvent === "function") {
+        window.trackEvent({
+          ...event,
+          timestamp: new Date().toISOString()
+        });
+      }
+    }
+
     function getWorkMode(job) {
       if (job.workplace_type) return job.workplace_type;
       const location = String(job.location || "").toLowerCase();
@@ -1190,7 +1225,14 @@
     }
 
     function isPublishedRecord(record) {
-      return Boolean(record && record.published && record.public_visibility && String(record.status || "").toLowerCase() === "published");
+      const verificationStatus = String(record && record.verification_status || "").toLowerCase();
+      return Boolean(
+        record &&
+        record.published &&
+        record.public_visibility &&
+        String(record.status || "").toLowerCase() === "published" &&
+        !["expired", "removed"].includes(verificationStatus)
+      );
     }
 
     function resolveDisplayJob(record) {
@@ -1223,13 +1265,14 @@
         description: String(display.description || raw.description || "").trim(),
         source: String(display.source_name || raw.source || "").trim(),
         source_url: String(display.source_url || raw.source_url || "").trim(),
-        original_url: String(display.original_url || raw.source_url || "").trim(),
+        original_url: String(display.original_url || raw.original_url || raw.source_url || "").trim(),
         apply_url: String(display.application_url || raw.apply_url || "").trim(),
         date_posted: String(display.date_collected || raw.date_posted || "").trim(),
         featured: typeof record.featured === "boolean" ? record.featured : Boolean(raw.featured),
         salary_visible: payDisplay ? true : raw.salary_visible,
         tags,
         status: "published",
+        verification_status: String(record.verification_status || "verified").trim(),
         display_order: Number(record.display_order || 0)
       };
     }
@@ -1350,12 +1393,12 @@
         const portfolioUrl = String(profile.portfolio_url || "").trim();
         const linkedInUrl = String(profile.linkedin_url || "").trim();
         const cta = portfolioUrl
-          ? `<a class="btn-primary" href="${escapeHtml(portfolioUrl)}" target="_blank" rel="noopener noreferrer">View Portfolio</a>`
+          ? `<a class="btn-primary" href="${escapeHtml(portfolioUrl)}" target="_blank" rel="noopener noreferrer" data-talent-click="portfolio" data-profile-id="${escapeHtml(profile.id)}" data-profile-name="${escapeHtml(profile.name)}">View Portfolio</a>`
           : linkedInUrl
-            ? `<a class="btn-primary" href="${escapeHtml(linkedInUrl)}" target="_blank" rel="noopener noreferrer">View LinkedIn</a>`
-            : `<button class="btn-primary" type="button" data-profile-action="${escapeHtml(profile.id)}">View Profile</button>`;
+            ? `<a class="btn-primary" href="${escapeHtml(linkedInUrl)}" target="_blank" rel="noopener noreferrer" data-talent-click="linkedin" data-profile-id="${escapeHtml(profile.id)}" data-profile-name="${escapeHtml(profile.name)}">View LinkedIn</a>`
+            : `<button class="btn-primary" type="button" data-profile-action="${escapeHtml(profile.id)}" data-talent-click="modal" data-profile-id="${escapeHtml(profile.id)}" data-profile-name="${escapeHtml(profile.name)}">View Profile</button>`;
         return `
-          <div class="profile-card">
+          <div class="profile-card" data-profile-card="${escapeHtml(profile.id)}">
             <div class="profile-visual">
               <div class="avatar-placeholder ${index % 2 ? "alt" : ""}">${escapeHtml(initials)}</div>
               <div style="display: flex; align-items: center; gap: 6px; font-family: var(--font-mono); font-size: 0.65rem; color: var(--ink-secondary);">
@@ -1459,7 +1502,7 @@
           const sectorLabel = normalizeSectorLabel(job.sector);
           const updatedText = getLastUpdated(job);
           return `
-            <a class="classified-card" href="${escapeHtml(job.apply_url || job.source_url || "#")}" target="_blank" rel="noreferrer">
+            <a class="classified-card" href="${escapeHtml(getJobDetailPath(job))}" data-job-card="true" data-job-id="${escapeHtml(job.id)}" data-job-title="${escapeHtml(job.title)}" data-job-organization="${escapeHtml(job.organization)}" data-job-source="${escapeHtml(job.source)}">
               ${featured ? '<div class="featured-marker"></div>' : ""}
               <span class="card-ref">REF: ${escapeHtml(ref)}</span>
               <h3 class="card-title">${escapeHtml(job.title)}</h3>
@@ -1534,7 +1577,7 @@
           .map(resolveDisplayJob)
           .filter(Boolean);
 
-        state.jobs = (publishedRecordJobs.length ? publishedRecordJobs : jobs)
+        state.jobs = (Array.isArray(jobRecords) ? publishedRecordJobs : jobs)
           .sort((a, b) => {
             const orderDelta = Number(a.display_order || 0) - Number(b.display_order || 0);
             if (orderDelta !== 0) return orderDelta;
@@ -1558,6 +1601,11 @@
     ui.searchInput.addEventListener("input", (event) => {
       state.search = event.target.value.trim().toLowerCase();
       state.visibleCount = 9;
+      trackUiEvent({
+        type: TRACKING_TYPES.filterInteraction,
+        target: "search",
+        value: state.search
+      });
       renderJobs();
     });
 
@@ -1572,6 +1620,11 @@
           chip.classList.add("active");
         }
         state.visibleCount = 9;
+        trackUiEvent({
+          type: TRACKING_TYPES.filterInteraction,
+          target: "quick_filter",
+          value
+        });
         renderJobs();
       });
     });
@@ -1585,14 +1638,30 @@
 
       if (input.checked) state.filters[groupKey].add(value);
       else state.filters[groupKey].delete(value);
+      trackUiEvent({
+        type: TRACKING_TYPES.filterInteraction,
+        target: groupKey,
+        value,
+        checked: input.checked
+      });
     });
 
     document.getElementById("apply-filters").addEventListener("click", () => {
       state.visibleCount = 9;
+      trackUiEvent({
+        type: TRACKING_TYPES.filterInteraction,
+        target: "apply_filters"
+      });
       renderJobs();
     });
 
-    document.getElementById("clear-filters").addEventListener("click", resetFilters);
+    document.getElementById("clear-filters").addEventListener("click", () => {
+      trackUiEvent({
+        type: TRACKING_TYPES.filterInteraction,
+        target: "clear_filters"
+      });
+      resetFilters();
+    });
 
     ui.activeTagRow.addEventListener("click", (event) => {
       const button = event.target.closest("button");
@@ -1601,6 +1670,10 @@
       if (button.dataset.clearSearch) {
         state.search = "";
         ui.searchInput.value = "";
+        trackUiEvent({
+          type: TRACKING_TYPES.filterInteraction,
+          target: "clear_search"
+        });
       }
 
       const kind = button.dataset.removeKind;
@@ -1611,10 +1684,20 @@
         ui.quickFilters.forEach((chip) => {
           if (chip.dataset.quickFilter.toLowerCase() === value) chip.classList.remove("active");
         });
+        trackUiEvent({
+          type: TRACKING_TYPES.filterInteraction,
+          target: "remove_quick_filter",
+          value
+        });
       }
 
       if (kind && kind !== "quick" && value && state.filters[kind]) {
         state.filters[kind].delete(value);
+        trackUiEvent({
+          type: TRACKING_TYPES.filterInteraction,
+          target: `remove_${kind}`,
+          value
+        });
         renderFilters();
       }
 
@@ -1626,10 +1709,38 @@
       renderJobs();
     });
 
+    ui.jobsGrid.addEventListener("click", (event) => {
+      const card = event.target.closest("[data-job-card]");
+      if (!card) return;
+      trackUiEvent({
+        type: TRACKING_TYPES.jobClick,
+        job_id: card.dataset.jobId,
+        title: card.dataset.jobTitle,
+        organization: card.dataset.jobOrganization,
+        source: card.dataset.jobSource
+      });
+    });
+
     ui.profilesGrid.addEventListener("click", (event) => {
+      const target = event.target.closest("[data-talent-click]");
+      if (target) {
+        trackUiEvent({
+          type: TRACKING_TYPES.talentClick,
+          interaction: target.dataset.talentClick,
+          profile_id: target.dataset.profileId,
+          name: target.dataset.profileName
+        });
+      }
       const button = event.target.closest("[data-profile-action]");
       if (!button) return;
       openProfileModal(button.dataset.profileAction);
+    });
+
+    document.querySelector('a[href="./talent-apply.html"]').addEventListener("click", () => {
+      trackUiEvent({
+        type: TRACKING_TYPES.ctaClick,
+        target: "create_profile"
+      });
     });
 
     ui.closeProfileModal.addEventListener("click", closeProfileModal);

@@ -1,62 +1,159 @@
-name: Jobs Sync
+name: Jobs Admin Action Sync
 
 on:
   workflow_dispatch:
   schedule:
-    - cron: "0 14 * * *"
+    - cron: "*/15 * * * *"
+  push:
+    paths:
+      - "admin-actions-local.json"
+      - "jobs/admin-actions-local.json"
 
 permissions:
   contents: write
 
-env:
-  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+concurrency:
+  group: jobs-admin-action-sync
+  cancel-in-progress: false
 
 jobs:
-  sync:
+  sync-admin-actions:
     runs-on: ubuntu-latest
 
-    defaults:
-      run:
-        working-directory: resources/jobs
-
     env:
+      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
       JOBS_BACKEND_URL: ${{ secrets.JOBS_BACKEND_URL }}
-      GOOGLE_CUSTOM_SEARCH_API_KEY: ${{ secrets.GOOGLE_CUSTOM_SEARCH_API_KEY }}
-      GOOGLE_CUSTOM_SEARCH_ENGINE_ID: ${{ secrets.GOOGLE_CUSTOM_SEARCH_ENGINE_ID }}
-      SERPAPI_API_KEY: ${{ secrets.SERPAPI_API_KEY }}
+      JOBS_ADMIN_TOKEN: ${{ secrets.JOBS_ADMIN_TOKEN }}
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+
+      - name: Detect jobs workspace
+        id: workspace
+        shell: bash
+        run: |
+          if [ -f jobs/package.json ]; then
+            JOBS_DIR="jobs"
+            echo "dir=jobs" >> "$GITHUB_OUTPUT"
+          else
+            JOBS_DIR="."
+            echo "dir=." >> "$GITHUB_OUTPUT"
+          fi
+          echo "Using jobs workspace: $JOBS_DIR"
 
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
           node-version: "24"
           cache: npm
-          cache-dependency-path: resources/jobs/package.json
+          cache-dependency-path: ${{ steps.workspace.outputs.dir }}/package.json
 
-      - name: Install dependencies
-        run: npm install
-
-      - name: Fetch approved jobs
-        run: npm run jobs:fetch-approved
-
-      - name: Sync configured sources
-        run: npm run jobs:sync-sources
-
-      - name: Ingest wide-search leads
-        if: ${{ env.GOOGLE_CUSTOM_SEARCH_API_KEY != '' && env.GOOGLE_CUSTOM_SEARCH_ENGINE_ID != '' || env.SERPAPI_API_KEY != '' }}
-        run: npm run jobs:search-ingest
-
-      - name: Commit updated job data
+      - name: Install dependencies if needed
+        shell: bash
+        working-directory: ${{ steps.workspace.outputs.dir }}
         run: |
-          if git diff --quiet -- jobs.json pending-synced-jobs.json; then
-            echo "No job data changes to commit."
-            exit 0
+          if [ -f package-lock.json ] || [ -f npm-shrinkwrap.json ]; then
+            npm ci
+          elif node -e "const p=require('./package.json'); const hasDeps=Object.keys(p.dependencies||{}).length > 0 || Object.keys(p.devDependencies||{}).length > 0; process.exit(hasDeps ? 0 : 1)"; then
+            npm install
+          else
+            echo "No package dependencies declared. Skipping npm install."
           fi
+
+      - name: Snapshot queued admin actions
+        working-directory: ${{ steps.workspace.outputs.dir }}
+        run: npm run jobs:snapshot-admin-actions
+
+      - name: Apply queued admin actions
+        working-directory: ${{ steps.workspace.outputs.dir }}
+        run: npm run jobs:apply-admin-actions
+
+      - name: Rebuild public job pages
+        working-directory: ${{ steps.workspace.outputs.dir }}
+        run: npm run jobs:build-pages
+
+      - name: Check for publish output changes
+        id: changes
+        shell: bash
+        run: |
+          JOBS_DIR="${{ steps.workspace.outputs.dir }}"
+          cd "$GITHUB_WORKSPACE"
+          PATHS=()
+          if [ "$JOBS_DIR" = "." ]; then
+            PATHS+=(
+              "job-records.json"
+              "jobs.json"
+              "pending-synced-jobs.json"
+              "admin-actions-local.json"
+              "admin-pending-overrides.json"
+              "admin-action-overrides.json"
+              "admin-organization-rules.json"
+              "pages"
+            )
+          else
+            PATHS+=(
+              "$JOBS_DIR/job-records.json"
+              "$JOBS_DIR/jobs.json"
+              "$JOBS_DIR/pending-synced-jobs.json"
+              "$JOBS_DIR/admin-actions-local.json"
+              "$JOBS_DIR/admin-pending-overrides.json"
+              "$JOBS_DIR/admin-action-overrides.json"
+              "$JOBS_DIR/admin-organization-rules.json"
+              "$JOBS_DIR/pages"
+            )
+          fi
+          CHANGED="$(git status --porcelain -- "${PATHS[@]}" || true)"
+          if [ -n "$CHANGED" ]; then
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+            echo "Detected publish output changes:"
+            echo "$CHANGED"
+          else
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+            echo "No publish output changes detected."
+          fi
+
+      - name: Commit and push generated changes
+        if: steps.changes.outputs.changed == 'true'
+        shell: bash
+        run: |
+          JOBS_DIR="${{ steps.workspace.outputs.dir }}"
+          cd "$GITHUB_WORKSPACE"
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add jobs.json pending-synced-jobs.json
-          git commit -m "Update jobs board data"
+          if [ "$JOBS_DIR" = "." ]; then
+            git add \
+              job-records.json \
+              jobs.json \
+              pending-synced-jobs.json \
+              admin-actions-local.json \
+              admin-pending-overrides.json \
+              admin-organization-rules.json \
+              pages
+            if [ -f admin-action-overrides.json ]; then
+              git add admin-action-overrides.json
+            fi
+          else
+            git add \
+              "$JOBS_DIR/job-records.json" \
+              "$JOBS_DIR/jobs.json" \
+              "$JOBS_DIR/pending-synced-jobs.json" \
+              "$JOBS_DIR/admin-actions-local.json" \
+              "$JOBS_DIR/admin-pending-overrides.json" \
+              "$JOBS_DIR/admin-organization-rules.json" \
+              "$JOBS_DIR/pages"
+            if [ -f "$JOBS_DIR/admin-action-overrides.json" ]; then
+              git add "$JOBS_DIR/admin-action-overrides.json"
+            fi
+          fi
+          if git diff --cached --quiet; then
+            echo "No staged changes to commit."
+            exit 0
+          fi
+          git commit -m "Apply queued admin job actions"
           git push
+          echo "Commit created and pushed."
+
+      - name: Report no-op
+        if: steps.changes.outputs.changed != 'true'
+        run: echo "No commit created."

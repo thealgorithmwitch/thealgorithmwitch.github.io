@@ -980,30 +980,10 @@
 
     <section id="profiles">
       <h2 class="section-title">The Talent Archive</h2>
-      <p class="section-desc">Preview the kind of talent profile job seekers can share here. Featured profiles are reviewed before they appear publicly.</p>
+      <p class="section-desc">Published profiles appear here after review. This archive is built for thoughtful introductions, not generic self-promotion.</p>
 
-      <div class="profiles-grid">
-        <div class="profile-card">
-          <div class="profile-visual">
-            <div class="avatar-placeholder">EV</div>
-            <div style="display: flex; align-items: center; gap: 6px; font-family: var(--font-mono); font-size: 0.65rem; color: var(--ink-secondary);">
-              <div class="status-dot"></div> Open to Work
-            </div>
-          </div>
-          <div class="profile-content">
-            <div class="profile-role">Example Talent Profile</div>
-            <h3 class="profile-name">Elena Vance</h3>
-            <div class="profile-prompt">
-              <div class="prompt-q">What problem do you keep coming back to?</div>
-              <div class="prompt-a">"Making dense climate data into narratives people actually want to read, rather than just endure."</div>
-            </div>
-            <div class="profile-tags">
-              <span>#D3.js</span>
-              <span>#Policy</span>
-              <span>#DataViz</span>
-            </div>
-          </div>
-        </div>
+      <div id="profiles-grid" class="profiles-grid">
+        <div class="state-panel">Loading published profiles…</div>
       </div>
 
       <div class="archive-apply-box">
@@ -1044,6 +1024,9 @@
             <h3>Become a Featured Employer</h3>
             <p>Featured employers are reviewed before appearing on the board. This is for organizations that want stronger visibility with aligned job seekers across climate, clean energy, advocacy, nonprofit, and sustainability audiences.</p>
             <a href="./featured-employer.html" class="btn-primary">Become a Featured Employer</a>
+            <div id="employers-list" style="display:grid; gap:16px; margin-top:24px;">
+              <div style="color: var(--ink-secondary);">Published employer profiles will appear here after review and approval.</div>
+            </div>
           </div>
         </div>
 
@@ -1074,6 +1057,9 @@
   <script>
     const state = {
       jobs: [],
+      jobRecords: [],
+      profiles: [],
+      employers: [],
       filteredJobs: [],
       visibleCount: 9,
       search: "",
@@ -1097,6 +1083,8 @@
       gridSummary: document.getElementById("grid-summary"),
       filterMatchCount: document.getElementById("filter-match-count"),
       activeTagRow: document.getElementById("active-tag-row"),
+      profilesGrid: document.getElementById("profiles-grid"),
+      employersList: document.getElementById("employers-list"),
       filterContainers: {
         location: document.getElementById("filter-location"),
         jobType: document.getElementById("filter-job-type"),
@@ -1146,6 +1134,51 @@
       return job.date_updated || job.date_added || job.date_posted || "";
     }
 
+    function isPublishedRecord(record) {
+      return Boolean(record && record.published && record.public_visibility && String(record.status || "").toLowerCase() === "published");
+    }
+
+    function resolveDisplayJob(record) {
+      if (!record || typeof record !== "object") return null;
+      const raw = record.raw_source_data || record.raw || {};
+      const display = record.display || {};
+      const title = String(display.title || raw.title || "").trim();
+      const organization = String(display.organization || raw.organization || "").trim();
+      const location = String(display.location || raw.location || "").trim();
+      const workplaceType = String(display.location_type || raw.workplace_type || "").trim();
+      const salaryMin = Number.isFinite(Number(display.salary_min)) ? Number(display.salary_min) : raw.salary_min;
+      const salaryMax = Number.isFinite(Number(display.salary_max)) ? Number(display.salary_max) : raw.salary_max;
+      const payDisplay = String(display.pay_display || raw.salary || "").trim();
+      const tags = Array.isArray(display.tags) && display.tags.length ? display.tags : (Array.isArray(raw.tags) ? raw.tags : []);
+
+      return {
+        ...raw,
+        id: String(record.id || raw.id || "").trim(),
+        title,
+        organization,
+        location,
+        workplace_type: workplaceType,
+        salary: payDisplay,
+        salary_min: salaryMin ?? null,
+        salary_max: salaryMax ?? null,
+        job_type: String(display.role_type || raw.job_type || "").trim(),
+        experience: String(display.experience_level || raw.experience || "").trim(),
+        sector: String(display.sector || raw.sector || "").trim(),
+        function: String(display.function || raw.function || "").trim(),
+        description: String(display.description || raw.description || "").trim(),
+        source: String(display.source_name || raw.source || "").trim(),
+        source_url: String(display.source_url || raw.source_url || "").trim(),
+        original_url: String(display.original_url || raw.source_url || "").trim(),
+        apply_url: String(display.application_url || raw.apply_url || "").trim(),
+        date_posted: String(display.date_collected || raw.date_posted || "").trim(),
+        featured: typeof record.featured === "boolean" ? record.featured : Boolean(raw.featured),
+        salary_visible: payDisplay ? true : raw.salary_visible,
+        tags,
+        status: "published",
+        display_order: Number(record.display_order || 0)
+      };
+    }
+
     function isNewThisWeek(job) {
       const candidate = Date.parse(job.date_added || job.date_updated || job.date_posted);
       if (!candidate) return false;
@@ -1155,7 +1188,7 @@
 
     function filterJob(job) {
       const status = String(job.status || "").toLowerCase();
-      if (!["active", "approved"].includes(status)) return false;
+      if (!["active", "approved", "published"].includes(status)) return false;
 
       const haystack = [
         job.title,
@@ -1198,7 +1231,7 @@
     }
 
     function renderFilters() {
-      const activeJobs = state.jobs.filter((job) => ["active", "approved"].includes(String(job.status || "").toLowerCase()));
+      const activeJobs = state.jobs.filter((job) => ["active", "approved", "published"].includes(String(job.status || "").toLowerCase()));
       const optionMap = {
         location: [...new Set(activeJobs.map(getWorkMode))],
         jobType: [...new Set(activeJobs.map((job) => job.job_type).filter(Boolean))],
@@ -1235,6 +1268,76 @@
         pills
           .map((pill) => `<button class="tag-pill active" type="button" data-remove-filter="${escapeHtml(pill.value)}" data-remove-kind="${escapeHtml(pill.kind)}">${escapeHtml(pill.value)}</button>`)
           .join("");
+    }
+
+    function renderProfiles() {
+      const profiles = state.profiles
+        .filter(isPublishedRecord)
+        .sort((a, b) => Number(a.display_order || 0) - Number(b.display_order || 0));
+
+      if (!profiles.length) {
+        ui.profilesGrid.innerHTML = `<div class="state-panel">Published profiles will appear here after review.</div>`;
+        return;
+      }
+
+      ui.profilesGrid.innerHTML = profiles.map((profile, index) => {
+        const initials = String(profile.name || "")
+          .split(/\s+/)
+          .filter(Boolean)
+          .slice(0, 2)
+          .map((part) => part.charAt(0).toUpperCase())
+          .join("") || "TA";
+        const prompt = Array.isArray(profile.profile_prompts) && profile.profile_prompts.length
+          ? profile.profile_prompts[0]
+          : null;
+        const tags = Array.isArray(profile.tags) ? profile.tags : [];
+        const focusAreas = Array.isArray(profile.focus_areas) ? profile.focus_areas.join(", ") : String(profile.focus_areas || "");
+        return `
+          <div class="profile-card">
+            <div class="profile-visual">
+              <div class="avatar-placeholder ${index % 2 ? "alt" : ""}">${escapeHtml(initials)}</div>
+              <div style="display: flex; align-items: center; gap: 6px; font-family: var(--font-mono); font-size: 0.65rem; color: var(--ink-secondary);">
+                <div class="status-dot"></div> ${escapeHtml(profile.availability || "Open to conversations")}
+              </div>
+            </div>
+            <div class="profile-content">
+              <div class="profile-role">${escapeHtml(profile.current_role || "Talent Profile")}</div>
+              <h3 class="profile-name">${escapeHtml(profile.name)}</h3>
+              <div style="color: var(--ink-secondary); margin-bottom: 14px;">${escapeHtml(profile.location || "")}${focusAreas ? ` // ${escapeHtml(focusAreas)}` : ""}</div>
+              ${prompt ? `
+                <div class="profile-prompt">
+                  <div class="prompt-q">${escapeHtml(prompt.question || "Profile Note")}</div>
+                  <div class="prompt-a">"${escapeHtml(prompt.answer || "")}"</div>
+                </div>
+              ` : ""}
+              <div class="prompt-a" style="font-style: normal; margin-bottom: 20px;">${escapeHtml(profile.short_bio || "")}</div>
+              <div class="profile-tags">
+                ${tags.map((tag) => `<span>#${escapeHtml(tag)}</span>`).join("")}
+              </div>
+            </div>
+          </div>
+        `;
+      }).join("");
+    }
+
+    function renderEmployers() {
+      const employers = state.employers
+        .filter(isPublishedRecord)
+        .sort((a, b) => Number(a.display_order || 0) - Number(b.display_order || 0));
+
+      if (!employers.length) {
+        ui.employersList.innerHTML = `<div style="color: var(--ink-secondary);">Published employer profiles will appear here after review and approval.</div>`;
+        return;
+      }
+
+      ui.employersList.innerHTML = employers.map((employer) => `
+        <article style="border: 1px solid var(--border-divider); padding: 16px; background: rgba(0,0,0,0.18);">
+          <div style="font-family: var(--font-mono); font-size: 0.65rem; color: var(--accent-chartreuse); text-transform: uppercase; letter-spacing: 0.05em;">${escapeHtml(employer.hiring_focus || "Published employer")}</div>
+          <h4 style="font-family: var(--font-serif); font-size: 1.6rem; margin-top: 8px;">${escapeHtml(employer.organization_name || "")}</h4>
+          <p style="color: var(--ink-secondary); margin-top: 8px;">${escapeHtml(employer.description || "")}</p>
+          <div style="margin-top: 12px; color: var(--ink-tertiary); font-family: var(--font-mono); font-size: 0.72rem;">${escapeHtml(employer.submitted_roles || "")}</div>
+        </article>
+      `).join("");
     }
 
     function renderJobs() {
@@ -1311,21 +1414,50 @@
       renderState("Loading current roles…");
 
       try {
-        const response = await fetch("./jobs.json", { cache: "no-store" });
-        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        const [recordsResponse, jobsResponse, profilesResponse, employersResponse] = await Promise.all([
+          fetch("./job-records.json", { cache: "no-store" }).catch(() => null),
+          fetch("./jobs.json", { cache: "no-store" }),
+          fetch("./talent-profiles.json", { cache: "no-store" }).catch(() => null),
+          fetch("./employers.json", { cache: "no-store" }).catch(() => null)
+        ]);
+        if (!jobsResponse.ok) throw new Error(`HTTP ${jobsResponse.status}`);
 
-        const jobs = await response.json();
+        const [jobRecords, jobs, profiles, employers] = await Promise.all([
+          recordsResponse && recordsResponse.ok ? recordsResponse.json() : [],
+          jobsResponse.json(),
+          profilesResponse && profilesResponse.ok ? profilesResponse.json() : [],
+          employersResponse && employersResponse.ok ? employersResponse.json() : []
+        ]);
+
         if (!Array.isArray(jobs)) throw new Error("jobs.json must contain an array.");
 
-        state.jobs = jobs.sort((a, b) => new Date(b.date_posted) - new Date(a.date_posted));
+        state.jobRecords = Array.isArray(jobRecords) ? jobRecords : [];
+        state.profiles = Array.isArray(profiles) ? profiles : [];
+        state.employers = Array.isArray(employers) ? employers : [];
+
+        const publishedRecordJobs = state.jobRecords
+          .filter(isPublishedRecord)
+          .map(resolveDisplayJob)
+          .filter(Boolean);
+
+        state.jobs = (publishedRecordJobs.length ? publishedRecordJobs : jobs)
+          .sort((a, b) => {
+            const orderDelta = Number(a.display_order || 0) - Number(b.display_order || 0);
+            if (orderDelta !== 0) return orderDelta;
+            return new Date(b.date_posted) - new Date(a.date_posted);
+          });
         renderFilters();
         renderJobs();
+        renderProfiles();
+        renderEmployers();
       } catch (error) {
         console.error(error);
         ui.statCount.textContent = "Unable to load roles";
         ui.statStatus.textContent = "Check jobs.json";
         ui.statUpdated.textContent = "Static board offline";
         renderState("The board is having trouble loading roles right now.");
+        renderProfiles();
+        renderEmployers();
       }
     }
 

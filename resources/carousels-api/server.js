@@ -73,8 +73,37 @@ function validatePayload(payload) {
 }
 
 function buildServerCaptureDocument(payload) {
+  const sizingStyle = `
+  <style id="scryer-page-size-fix">
+    html, body {
+      margin: 0 !important;
+      padding: 0 !important;
+      width: ${payload.width}px !important;
+      height: ${payload.height}px !important;
+      overflow: hidden !important;
+    }
+
+    .poster-container,
+    .slide,
+    .page {
+      width: ${payload.width}px !important;
+      height: ${payload.height}px !important;
+      min-width: ${payload.width}px !important;
+      min-height: ${payload.height}px !important;
+      max-width: ${payload.width}px !important;
+      max-height: ${payload.height}px !important;
+      box-sizing: border-box !important;
+      overflow: hidden !important;
+    }
+  </style>
+`;
   const alreadyFullDoc = /<html[\s>]/i.test(payload.html);
-  if (alreadyFullDoc) return payload.html;
+  if (alreadyFullDoc) {
+    if (/<\/head>/i.test(payload.html)) {
+      return payload.html.replace(/<\/head>/i, `${sizingStyle}</head>`);
+    }
+    return payload.html.replace(/<body/i, `<head>${sizingStyle}</head><body`);
+  }
   return `<!doctype html>
 <html>
 <head>
@@ -108,8 +137,16 @@ function buildServerCaptureDocument(payload) {
       visibility: visible !important;
     }
     .emoji,
+    [data-emoji="true"],
+    .scryer-emoji,
+    .scryer-emoji-fallback {
+      font-family: "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", "Twemoji Mozilla", "EmojiOne Color", sans-serif !important;
+    }
+    .scryer-emoji,
+    .emoji,
     [data-emoji="true"] {
       font-family: "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", "Twemoji Mozilla", "EmojiOne Color", sans-serif !important;
+      font-variant-emoji: emoji;
     }
     .slide,
     .page {
@@ -253,8 +290,17 @@ function buildScryerCaptureStyles(width, height) {
     }
 
     .emoji,
+    [data-emoji="true"],
+    .scryer-emoji,
+    .scryer-emoji-fallback {
+      font-family: "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", "Twemoji Mozilla", "EmojiOne Color", sans-serif !important;
+    }
+
+    .scryer-emoji,
+    .emoji,
     [data-emoji="true"] {
       font-family: "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", "Twemoji Mozilla", "EmojiOne Color", sans-serif !important;
+      font-variant-emoji: emoji;
     }
 
     button, .button, [role="button"], svg, i[class^="ph-"], i[class*=" ph-"] {
@@ -514,6 +560,12 @@ async function installExportRuntime(page, payload) {
         line-height: 1;
         vertical-align: -0.08em;
         white-space: nowrap;
+      }
+      .scryer-emoji,
+      .emoji,
+      [data-emoji="true"] {
+        font-family: "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", "Twemoji Mozilla", "EmojiOne Color", sans-serif !important;
+        font-variant-emoji: emoji;
       }
       .scryer-emoji-fallback {
         font-weight: 700;
@@ -964,7 +1016,8 @@ app.post("/api/export-html", async (request, response) => {
       height: payload.height,
       deviceScaleFactor: 1
     });
-    await page.setContent(payload.html, {
+    const captureHtml = buildServerCaptureDocument(payload);
+    await page.setContent(captureHtml, {
       waitUntil: "domcontentloaded",
       timeout: 60000
     });

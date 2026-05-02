@@ -98,7 +98,7 @@ function buildServerCaptureDocument(payload) {
       caret-color: transparent !important;
     }
     body, .slide, .page {
-      font-family: "Inter", "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", sans-serif;
+      font-family: "Inter", "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", "Twemoji Mozilla", "EmojiOne Color", sans-serif;
     }
     .ph,
     [class^="ph-"],
@@ -109,7 +109,7 @@ function buildServerCaptureDocument(payload) {
     }
     .emoji,
     [data-emoji="true"] {
-      font-family: "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", sans-serif !important;
+      font-family: "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", "Twemoji Mozilla", "EmojiOne Color", sans-serif !important;
     }
     .slide,
     .page {
@@ -137,6 +137,88 @@ async function waitForAssets(page) {
   await new Promise((resolve) => setTimeout(resolve, 800));
 }
 
+function getEmojiFallbackMapScript() {
+  return `
+    window.__scryerEmojiFallbackMap = {
+      "✨": { type: "text", value: "✦" },
+      "💖": { type: "text", value: "♥" },
+      "🎯": { type: "text", value: "◎" },
+      "🧠": { type: "text", value: "◉" },
+      "🌱": {
+        type: "svg",
+        value: '<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12 20c0-4.6 1.2-8.1 3.58-10.52C17.35 7.7 19.85 6.5 23 6.5c0 3.16-1.2 5.66-2.98 7.42C17.6 16.3 14.1 17.5 9.5 17.5" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/><path d="M12 20c0-3.7-.92-6.55-2.77-8.52C7.38 9.53 4.82 8.5 1 8.5c0 3.17 1.03 5.73 2.98 7.58C5.95 18.03 8.8 19 12.5 19" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/><path d="M12 21V11.5" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>'
+      },
+      "🔮": {
+        type: "svg",
+        value: '<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="12" cy="9.5" r="5.5" stroke="currentColor" stroke-width="1.7"/><path d="M9 15.2h6l1.7 4.3H7.3L9 15.2Z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/><path d="M8 20h8" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/><path d="M9.2 7.5c.7-1.2 1.7-1.9 3-2.1" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" opacity=".65"/></svg>'
+      }
+    };
+
+    window.__scryerCreateEmojiFallbackSpan = function(entry) {
+      const span = document.createElement("span");
+      span.className = "scryer-emoji-fallback";
+      span.style.display = "inline-flex";
+      span.style.alignItems = "center";
+      span.style.justifyContent = "center";
+      span.style.width = "1em";
+      span.style.height = "1em";
+      span.style.verticalAlign = "-0.12em";
+      span.style.color = "currentColor";
+      span.style.lineHeight = "1";
+      span.style.whiteSpace = "nowrap";
+      if (entry.type === "svg") {
+        span.innerHTML = entry.value;
+        const svg = span.querySelector("svg");
+        if (svg) {
+          svg.style.width = "100%";
+          svg.style.height = "100%";
+          svg.style.display = "block";
+        }
+      } else {
+        span.textContent = entry.value;
+      }
+      return span;
+    };
+
+    window.__scryerApplyDeterministicEmojiFallbacks = function(root) {
+      const map = window.__scryerEmojiFallbackMap || {};
+      const emojiPattern = /✨|💖|🎯|🧠|🌱|🔮/g;
+      const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, {
+        acceptNode(node) {
+          if (!node.nodeValue || !node.nodeValue.trim()) return NodeFilter.FILTER_REJECT;
+          const parent = node.parentElement;
+          if (!parent || parent.closest("script, style, textarea, svg")) return NodeFilter.FILTER_REJECT;
+          return NodeFilter.FILTER_ACCEPT;
+        }
+      });
+
+      const nodes = [];
+      while (walker.nextNode()) nodes.push(walker.currentNode);
+
+      for (const node of nodes) {
+        const text = node.nodeValue;
+        emojiPattern.lastIndex = 0;
+        if (!emojiPattern.test(text)) continue;
+        emojiPattern.lastIndex = 0;
+
+        const frag = document.createDocumentFragment();
+        let cursor = 0;
+
+        for (const match of text.matchAll(emojiPattern)) {
+          const symbol = match[0];
+          const i = match.index || 0;
+          if (i > cursor) frag.appendChild(document.createTextNode(text.slice(cursor, i)));
+          frag.appendChild(window.__scryerCreateEmojiFallbackSpan(map[symbol]));
+          cursor = i + symbol.length;
+        }
+
+        if (cursor < text.length) frag.appendChild(document.createTextNode(text.slice(cursor)));
+        node.replaceWith(frag);
+      }
+    };
+  `;
+}
+
 function buildScryerCaptureStyles(width, height) {
   return `
     @import url('https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@400;700;900&family=Playfair+Display:wght@400;600;700&family=JetBrains+Mono:wght@400;700&family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@400;500;700&family=DM+Serif+Display:ital@0;1&family=Cormorant+Garamond:wght@400;500;600;700&family=Noto+Color+Emoji&display=swap');
@@ -160,7 +242,7 @@ function buildScryerCaptureStyles(width, height) {
     }
 
     body, .slide, .page {
-      font-family: "Inter", "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", sans-serif;
+      font-family: "Inter", "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", "Twemoji Mozilla", "EmojiOne Color", sans-serif;
     }
 
     .ph,
@@ -172,7 +254,7 @@ function buildScryerCaptureStyles(width, height) {
 
     .emoji,
     [data-emoji="true"] {
-      font-family: "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", sans-serif !important;
+      font-family: "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", "Twemoji Mozilla", "EmojiOne Color", sans-serif !important;
     }
 
     button, .button, [role="button"], svg, i[class^="ph-"], i[class*=" ph-"] {
@@ -203,6 +285,9 @@ async function captureFullPage(page, outputPath, payload) {
 }
 
 async function captureElements(page, selector, outputDir, payload) {
+  await page.addScriptTag({
+    content: getEmojiFallbackMapScript()
+  }).catch(() => {});
   let count;
   try {
     count = await page.$$eval(selector, (nodes) => nodes.length);
@@ -353,6 +438,7 @@ async function captureElements(page, selector, outputDir, payload) {
       if (!cloneHasOwnBackground) {
         clone.style.background = background;
       }
+      window.__scryerApplyDeterministicEmojiFallbacks?.(clone);
       clone.style.zIndex = "1";
       clone.style.flexShrink = "0";
       console.log("HTML Scryer clone forced size", {
@@ -423,7 +509,7 @@ async function installExportRuntime(page, payload) {
       }
       .scryer-emoji,
       .scryer-emoji-fallback {
-        font-family: "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", "Twemoji Mozilla", sans-serif !important;
+        font-family: "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", "Twemoji Mozilla", "EmojiOne Color", sans-serif !important;
         display: inline-block;
         line-height: 1;
         vertical-align: -0.08em;
@@ -457,59 +543,10 @@ async function installExportRuntime(page, payload) {
       }
     `
   });
+  await page.addScriptTag({
+    content: getEmojiFallbackMapScript()
+  }).catch(() => {});
   await page.evaluate(() => {
-    window.__scryerEmojiFallbackMap = {
-      "🏆": "★", "🔍": "⌕", "🔎": "⌕", "🔮": "◉", "✨": "✦", "🌱": "⌁",
-      "🌿": "❧", "🍃": "❧", "🎯": "◎", "💌": "✉", "🧠": "◌", "💭": "☁",
-      "💡": "✦", "⚡": "ϟ", "🤖": "▣", "👑": "♛", "⚙️": "⚙", "⚙": "⚙",
-      "📈": "↗", "📊": "▥", "🧲": "∩", "🪄": "✦"
-    };
-    window.__scryerWrapEmojiTextNodes = function(root) {
-      const emojiRegex = /(\p{Extended_Pictographic}(?:\uFE0F|\uFE0E)?(?:\u200D\p{Extended_Pictographic}(?:\uFE0F|\uFE0E)?)*)/gu;
-      const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, {
-        acceptNode(node) {
-          if (!node.nodeValue || !emojiRegex.test(node.nodeValue)) return NodeFilter.FILTER_REJECT;
-          emojiRegex.lastIndex = 0;
-          const parent = node.parentElement;
-          if (!parent || parent.closest("script, style, textarea")) return NodeFilter.FILTER_REJECT;
-          if (parent.classList.contains("scryer-emoji")) return NodeFilter.FILTER_REJECT;
-          return NodeFilter.FILTER_ACCEPT;
-        }
-      });
-      const nodes = [];
-      while (walker.nextNode()) nodes.push(walker.currentNode);
-      for (const node of nodes) {
-        const frag = document.createDocumentFragment();
-        const text = node.nodeValue;
-        let last = 0;
-        emojiRegex.lastIndex = 0;
-        for (const match of text.matchAll(emojiRegex)) {
-          if (match.index > last) frag.appendChild(document.createTextNode(text.slice(last, match.index)));
-          const span = document.createElement("span");
-          span.className = "scryer-emoji";
-          span.textContent = match[0];
-          frag.appendChild(span);
-          last = match.index + match[0].length;
-        }
-        if (last < text.length) frag.appendChild(document.createTextNode(text.slice(last)));
-        node.replaceWith(frag);
-      }
-    };
-    window.__scryerApplyEmojiFallbacks = function(root) {
-      const map = window.__scryerEmojiFallbackMap || {};
-      const spans = Array.from(root.querySelectorAll(".scryer-emoji"));
-      for (const span of spans) {
-        const value = span.textContent.trim();
-        if (!value) continue;
-        const rect = span.getBoundingClientRect();
-        const fallback = map[value] || map[value.replace(/\uFE0F/g, "")];
-        const looksMissing = rect.width <= 4 || span.textContent.includes("□");
-        if (fallback && looksMissing) {
-          span.className = "scryer-emoji-fallback";
-          span.textContent = fallback;
-        }
-      }
-    };
     window.__scryerResolveBackground = function(element) {
       const isVisibleBg = (style) => {
         if (!style) return false;
@@ -625,12 +662,11 @@ async function installExportRuntime(page, payload) {
         el.style.display = "none";
       });
       if (exportPadding > 0) {
+        window.__scryerApplyDeterministicEmojiFallbacks?.(clone);
         stage.appendChild(clone);
         viewport.appendChild(stage);
         document.body.appendChild(viewport);
         document.body.classList.add("__scryer_capturing__");
-        window.__scryerWrapEmojiTextNodes(clone);
-        window.__scryerApplyEmojiFallbacks(clone);
         return { background: bg };
       }
       const inner = document.createElement("div");
@@ -646,7 +682,7 @@ async function installExportRuntime(page, payload) {
       viewport.appendChild(stage);
       document.body.appendChild(viewport);
       document.body.classList.add("__scryer_capturing__");
-      window.__scryerWrapEmojiTextNodes(clone);
+      window.__scryerApplyDeterministicEmojiFallbacks?.(clone);
       const safePadding = Number.isFinite(options.safePadding)
         ? options.safePadding
         : Math.min(Math.round(Math.min(width, height) * 0.09), height >= 1800 ? 120 : height > width ? 96 : 72);
@@ -675,7 +711,6 @@ async function installExportRuntime(page, payload) {
           inner.style.transform = `translate(${tx + adjustX}px, ${ty + adjustY}px) scale(${scale})`;
         }
       }
-      window.__scryerApplyEmojiFallbacks(clone);
       return { background: bg };
     };
     window.__scryerCleanupCapture = function() {
@@ -721,6 +756,9 @@ async function captureOne(page, outputPath, payload, selector, index) {
 }
 
 async function captureElementsPreserveLayout(page, selector, outputDir, payload) {
+  await page.addScriptTag({
+    content: getEmojiFallbackMapScript()
+  }).catch(() => {});
   await page.addStyleTag({
     url: "https://unpkg.com/@phosphor-icons/web/src/bold/style.css"
   }).catch(() => {});
@@ -789,99 +827,6 @@ async function captureElementsPreserveLayout(page, selector, outputDir, payload)
 
       el.scrollIntoView({ block: "start", inline: "start" });
       const background = resolveBackground(el);
-      const emojiFallbackMap = {
-        "🎨": {
-          type: "svg",
-          value: '<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12 3C7.03 3 3 6.58 3 11c0 2.34 1.17 4.44 3.03 5.9.55.43.85 1.1.74 1.79L6.5 21l2.82-.94c.53-.18 1.11-.12 1.61.12.35.17.71.31 1.07.42 4.45 1.33 9-1.7 9-6.1C21 7.7 17.03 3 12 3Z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/><circle cx="8.5" cy="11" r="1.1" fill="currentColor"/><circle cx="11.5" cy="8.5" r="1.1" fill="currentColor"/><circle cx="15" cy="10" r="1.1" fill="currentColor"/><circle cx="14" cy="14" r="1.1" fill="currentColor"/></svg>'
-        },
-        "📖": {
-          type: "svg",
-          value: '<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M4.5 5.5A2.5 2.5 0 0 1 7 3h11v16H7a2.5 2.5 0 0 0-2.5 2.5V5.5Z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/><path d="M18 3v16M7 6.5h7" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>'
-        },
-        "🗣️": {
-          type: "svg",
-          value: '<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M4 10a6 6 0 0 1 10.24-4.24A6 6 0 0 1 20 10c0 1.61-.63 3.08-1.66 4.16L19 18l-3.28-.66A5.97 5.97 0 0 1 14 18h-4a6 6 0 0 1-6-6Z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/><path d="M9.5 10.5c.8-.2 1.7-.82 2.42-1.83.3-.42.97-.18.94.34v3.98c.03.52-.64.76-.94.34-.72-1.01-1.62-1.63-2.42-1.83" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/><path d="M15.8 9.2c.55.5.9 1.23.9 2.05 0 .82-.35 1.55-.9 2.05" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>'
-        },
-        "🔍": {
-          type: "svg",
-          value: '<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="11" cy="11" r="5.5" stroke="currentColor" stroke-width="1.9"/><path d="M15.2 15.2 20 20" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/></svg>'
-        },
-        "🏆": {
-          type: "svg",
-          value: '<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M8 4h8v2a4 4 0 0 1-8 0V4Z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/><path d="M6 5H4.5A1.5 1.5 0 0 0 3 6.5C3 8.99 5.01 11 7.5 11H8m8-6h1.5A1.5 1.5 0 0 1 19 6.5C19 8.99 16.99 11 14.5 11H14" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/><path d="M12 10v4m-3 6h6m-5-3h4" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>'
-        },
-        "✨": { type: "text", value: "✦" },
-        "💖": { type: "text", value: "♥" },
-        "🎯": { type: "text", value: "◎" },
-        "🌱": {
-          type: "svg",
-          value: '<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12 20c0-4.6 1.2-8.1 3.58-10.52C17.35 7.7 19.85 6.5 23 6.5c0 3.16-1.2 5.66-2.98 7.42C17.6 16.3 14.1 17.5 9.5 17.5" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/><path d="M12 20c0-3.7-.92-6.55-2.77-8.52C7.38 9.53 4.82 8.5 1 8.5c0 3.17 1.03 5.73 2.98 7.58C5.95 18.03 8.8 19 12.5 19" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/><path d="M12 21V11.5" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>'
-        },
-        "🔮": { type: "text", value: "◌" },
-        "🧠": { type: "text", value: "◉" }
-      };
-      const createFallbackSpan = (entry) => {
-        const span = document.createElement("span");
-        span.style.display = "inline-flex";
-        span.style.alignItems = "center";
-        span.style.justifyContent = "center";
-        span.style.width = "1em";
-        span.style.height = "1em";
-        span.style.verticalAlign = "-0.12em";
-        span.style.color = "currentColor";
-        span.style.lineHeight = "1";
-        span.style.whiteSpace = "nowrap";
-        if (entry.type === "svg") {
-          span.innerHTML = entry.value;
-          const svg = span.querySelector("svg");
-          if (svg) {
-            svg.style.width = "100%";
-            svg.style.height = "100%";
-            svg.style.display = "block";
-          }
-        } else {
-          span.textContent = entry.value;
-        }
-        return span;
-      };
-      const applyEmojiFallbacks = (root) => {
-        const emojiPattern = /🎨|📖|🗣️|🔍|🏆|✨|💖|🎯|🌱|🔮|🧠/g;
-        const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, {
-          acceptNode(node) {
-            if (!node.nodeValue || !node.nodeValue.trim()) return NodeFilter.FILTER_REJECT;
-            const parent = node.parentElement;
-            if (!parent || parent.closest("script, style, textarea, svg")) return NodeFilter.FILTER_REJECT;
-            return NodeFilter.FILTER_ACCEPT;
-          }
-        });
-        const nodes = [];
-        while (walker.nextNode()) nodes.push(walker.currentNode);
-        let replacedCount = 0;
-        for (const node of nodes) {
-          const text = node.nodeValue;
-          if (!text) continue;
-          emojiPattern.lastIndex = 0;
-          if (!emojiPattern.test(text)) continue;
-          emojiPattern.lastIndex = 0;
-          const frag = document.createDocumentFragment();
-          let cursor = 0;
-          for (const match of text.matchAll(emojiPattern)) {
-            const symbol = match[0];
-            const index = match.index ?? 0;
-            if (index > cursor) {
-              frag.appendChild(document.createTextNode(text.slice(cursor, index)));
-            }
-            frag.appendChild(createFallbackSpan(emojiFallbackMap[symbol]));
-            replacedCount += 1;
-            cursor = index + symbol.length;
-          }
-          if (cursor < text.length) {
-            frag.appendChild(document.createTextNode(text.slice(cursor)));
-          }
-          node.replaceWith(frag);
-        }
-        console.log("Scryer preserve emoji fallbacks replaced:", replacedCount);
-      };
       const root = document.createElement("div");
       root.id = "__scryer_preserve_capture_root__";
       root.style.position = "fixed";
@@ -919,7 +864,7 @@ async function captureElementsPreserveLayout(page, selector, outputDir, payload)
         (cloneStyle.backgroundColor && cloneStyle.backgroundColor !== "rgba(0, 0, 0, 0)" && cloneStyle.backgroundColor !== "transparent");
       if (!hasOwnBg) clone.style.background = background;
 
-      applyEmojiFallbacks(clone);
+      window.__scryerApplyDeterministicEmojiFallbacks?.(clone);
       root.appendChild(clone);
       document.body.appendChild(root);
       return true;

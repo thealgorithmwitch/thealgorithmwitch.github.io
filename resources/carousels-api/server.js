@@ -315,6 +315,13 @@ async function captureElements(page, selector, outputDir, payload) {
       }
 
       const clone = original.cloneNode(true);
+      clone.style.width = `${width}px`;
+      clone.style.height = `${height}px`;
+      clone.style.minWidth = `${width}px`;
+      clone.style.minHeight = `${height}px`;
+      clone.style.maxWidth = `${width}px`;
+      clone.style.maxHeight = `${height}px`;
+      clone.style.flex = "0 0 auto";
       clone.style.margin = "0";
       clone.style.position = "relative";
       clone.style.left = "auto";
@@ -326,6 +333,12 @@ async function captureElements(page, selector, outputDir, payload) {
       clone.style.background = background;
       clone.style.zIndex = "1";
       clone.style.flexShrink = "0";
+      console.log("HTML Scryer clone forced size", {
+        width,
+        height,
+        originalWidth: getComputedStyle(original).width,
+        cloneWidth: clone.style.width
+      });
       root.appendChild(clone);
       document.body.appendChild(root);
       const safeWidth = width - safePadding * 2;
@@ -533,6 +546,7 @@ async function installExportRuntime(page, payload) {
     window.__scryerPrepareClone = function(original, width, height, options) {
       document.getElementById("__scryer_capture_viewport__")?.remove();
       const bg = window.__scryerResolveBackground(original);
+      const slideIndex = Number.isInteger(options.index) ? options.index : 0;
       const exportPadding = Number.isFinite(options.exportPadding) ? Math.max(0, options.exportPadding) : 0;
       const canvasWidth = width + exportPadding * 2;
       const canvasHeight = height + exportPadding * 2;
@@ -575,11 +589,15 @@ async function installExportRuntime(page, payload) {
         (cloneStyle.backgroundColor && cloneStyle.backgroundColor !== "rgba(0, 0, 0, 0)" && cloneStyle.backgroundColor !== "transparent");
       if (!hasOwnBg) clone.style.background = bg;
       clone.querySelectorAll("#slides-container, [id='slides-container']").forEach((track) => {
+        const slides = track.querySelectorAll(".slide");
+        if (slides.length > 1) {
+          slides.forEach((s, i) => {
+            if (i !== slideIndex) s.style.display = "none";
+          });
+        }
         track.style.transform = "none";
         track.style.transition = "none";
-        track.style.width = `${width}px`;
         track.style.height = `${height}px`;
-        track.style.display = "block";
       });
       clone.querySelectorAll(".nav-controls, .slide-counter").forEach((el) => {
         el.style.display = "none";
@@ -658,7 +676,7 @@ async function captureOne(page, outputPath, payload, selector, index) {
     const nodes = selector === "body" ? [document.body] : Array.from(document.querySelectorAll(selector));
     const original = nodes[index];
     if (!original) throw new Error(`No capture target found for ${selector} at index ${index}.`);
-    window.__scryerPrepareClone(original, width, height, { autoCenter, safePadding, emojiFallback, exportPadding });
+    window.__scryerPrepareClone(original, width, height, { autoCenter, safePadding, emojiFallback, exportPadding, index });
   }, {
     selector,
     index,

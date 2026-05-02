@@ -19,38 +19,44 @@ jobs:
       run:
         working-directory: resources/jobs
 
+    env:
+      JOBS_BACKEND_URL: ${{ secrets.JOBS_BACKEND_URL }}
+      GOOGLE_CUSTOM_SEARCH_API_KEY: ${{ secrets.GOOGLE_CUSTOM_SEARCH_API_KEY }}
+      GOOGLE_CUSTOM_SEARCH_ENGINE_ID: ${{ secrets.GOOGLE_CUSTOM_SEARCH_ENGINE_ID }}
+      SERPAPI_API_KEY: ${{ secrets.SERPAPI_API_KEY }}
+
     steps:
-      - name: Check out repository
+      - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Set up Node
+      - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 24
+          node-version: "24"
+          cache: npm
+          cache-dependency-path: resources/jobs/package.json
 
       - name: Install dependencies
         run: npm install
 
-      - name: Sync sources
+      - name: Sync configured sources
         run: npm run jobs:sync-sources
 
       - name: Fetch approved jobs
         run: npm run jobs:fetch-approved
-        env:
-          JOBS_BACKEND_URL: ${{ secrets.JOBS_BACKEND_URL }}
 
-      - name: Run search ingest
+      - name: Ingest wide-search leads
+        if: ${{ env.GOOGLE_CUSTOM_SEARCH_API_KEY != '' && env.GOOGLE_CUSTOM_SEARCH_ENGINE_ID != '' || env.SERPAPI_API_KEY != '' }}
         run: npm run jobs:search-ingest
-        env:
-          GOOGLE_CUSTOM_SEARCH_API_KEY: ${{ secrets.GOOGLE_CUSTOM_SEARCH_API_KEY }}
-          GOOGLE_CUSTOM_SEARCH_ENGINE_ID: ${{ secrets.GOOGLE_CUSTOM_SEARCH_ENGINE_ID }}
-          SERPAPI_API_KEY: ${{ secrets.SERPAPI_API_KEY }}
-          JOBS_BACKEND_URL: ${{ secrets.JOBS_BACKEND_URL }}
 
-      - name: Commit job data updates
+      - name: Commit updated job data
         run: |
+          if git diff --quiet -- jobs.json pending-synced-jobs.json; then
+            echo "No job data changes to commit."
+            exit 0
+          fi
           git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add jobs.json pending-synced-jobs.json
-          git diff --cached --quiet || git commit -m "Update jobs board data"
+          git commit -m "Update jobs board data"
           git push

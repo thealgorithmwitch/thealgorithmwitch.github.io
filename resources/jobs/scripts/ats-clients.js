@@ -1,4 +1,4 @@
-const { ensureArray, stableHash, stripHtml, todayIso } = require("./job-normalizer");
+const { ensureArray, stableHash, todayIso } = require("./job-normalizer");
 
 function ensureDefault(values) {
   return Array.isArray(values) && values.length ? values[0] : "";
@@ -41,7 +41,8 @@ function greenhouseJobToSchema(source, job) {
     source_url: job.absolute_url || "",
     apply_url: job.absolute_url || "",
     date_posted: job.updated_at || job.first_published || todayIso(),
-    description: stripHtml(job.content || job.internal_job_id || ""),
+    raw_description: job.content || "",
+    description: job.content || job.internal_job_id || "",
     tags: [source.sector, "greenhouse", ...ensureArray(source.function_defaults)].filter(Boolean),
     shared_by: "ATS Sync",
     notes: `Synced from Greenhouse board token ${source.board_token}.`
@@ -85,7 +86,8 @@ function leverJobToSchema(source, job) {
     source_url: job.hostedUrl || "",
     apply_url: job.hostedUrl || job.applyUrl || "",
     date_posted: job.createdAt ? new Date(job.createdAt).toISOString() : todayIso(),
-    description: String(job.descriptionPlain || stripHtml(job.description || "")).replace(/\s+/g, " ").trim(),
+    raw_description: job.description || job.descriptionPlain || "",
+    description: job.descriptionPlain || job.description || "",
     tags: [source.sector, categories.team, categories.department, "lever"].filter(Boolean),
     shared_by: "ATS Sync",
     notes: `Synced from Lever company slug ${source.company_slug}.`
@@ -133,7 +135,8 @@ function ashbyJobToSchema(source, job) {
     source_url: job.applyUrl || source.source_url || "",
     apply_url: job.applyUrl || source.source_url || "",
     date_posted: job.publishedDate || todayIso(),
-    description: stripHtml(job.description || job.descriptionHtml || ""),
+    raw_description: job.descriptionHtml || job.description || "",
+    description: job.description || job.descriptionHtml || "",
     tags: [source.sector, job.team?.name, job.department?.name, "ashby"].filter(Boolean),
     shared_by: "ATS Sync",
     notes: `Synced from Ashby organization slug ${source.organization_slug}.`
@@ -197,7 +200,8 @@ function bambooHrJobToSchema(source, job) {
     source_url: job.jobLink || source.source_url || "",
     apply_url: job.jobLink || source.source_url || "",
     date_posted: job.postedDate || todayIso(),
-    description: stripHtml(job.description || ""),
+    raw_description: job.description || "",
+    description: job.description || "",
     tags: [source.sector, job.department, "bamboohr"].filter(Boolean),
     shared_by: "ATS Sync",
     notes: `Synced from BambooHR company slug ${source.company_slug || ""}.`
@@ -240,7 +244,8 @@ function recruiteeJobToSchema(source, job) {
     source_url: job.careers_url || job.url || source.source_url || "",
     apply_url: job.careers_url || job.url || source.source_url || "",
     date_posted: job.created_at || todayIso(),
-    description: stripHtml(job.description || job.description_html || ""),
+    raw_description: job.description_html || job.description || "",
+    description: job.description || job.description_html || "",
     tags: [source.sector, job.department, job.team, "recruitee"].filter(Boolean),
     shared_by: "ATS Sync",
     notes: `Synced from Recruitee company slug ${source.company_slug}.`

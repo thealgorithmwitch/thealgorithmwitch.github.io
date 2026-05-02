@@ -1,7 +1,7 @@
 const fs = require("fs/promises");
 const path = require("path");
 const { JOBS_FILE, PENDING_SYNCED_FILE, writeJson } = require("./job-utils");
-const { dedupeJobs, normalizeJob, stableHash, stripHtml, todayIso } = require("./job-normalizer");
+const { dedupeJobs, normalizeJob, stableHash, todayIso } = require("./job-normalizer");
 
 const ROOT = path.resolve(__dirname, "..");
 const SEARCH_SOURCES_FILE = path.join(ROOT, "search-sources.json");
@@ -119,7 +119,8 @@ function normalizeProviderLead(queryConfig, provider, lead) {
       workplace_type: queryConfig.workplace_type || "",
       job_type: lead.detected_extensions?.schedule_type || "",
       salary: "",
-      description: stripHtml(lead.snippet || lead.description || ""),
+      raw_description: lead.snippet || lead.description || "",
+      description: lead.snippet || lead.description || "",
       source_url: lead.link || "",
       apply_url: lead.link || "",
       external_id: lead.cacheId ? `google_custom_search_${queryConfig.id}_${lead.cacheId}` : "",
@@ -135,7 +136,8 @@ function normalizeProviderLead(queryConfig, provider, lead) {
       workplace_type: queryConfig.workplace_type || "",
       job_type: lead.detected_extensions?.schedule_type || lead.schedule_type || "",
       salary: lead.detected_extensions?.salary || lead.salary || "",
-      description: stripHtml(lead.description || lead.snippet || ""),
+      raw_description: lead.description || lead.snippet || "",
+      description: lead.description || lead.snippet || "",
       source_url: lead.apply_link || lead.job_link || lead.related_links?.[0]?.link || "",
       apply_url: lead.apply_link || lead.job_link || lead.related_links?.[0]?.link || "",
       external_id: lead.job_id ? `serpapi_google_jobs_${queryConfig.id}_${lead.job_id}` : "",
@@ -151,7 +153,8 @@ function normalizeProviderLead(queryConfig, provider, lead) {
       workplace_type: lead.workplaceType || queryConfig.workplace_type || "",
       job_type: lead.employmentType || "",
       salary: lead.salary || lead.compensation || "",
-      description: stripHtml(lead.description || lead.content || ""),
+      raw_description: lead.description || lead.content || "",
+      description: lead.description || lead.content || "",
       source_url: lead.url || lead.absolute_url || "",
       apply_url: lead.applyUrl || lead.url || lead.absolute_url || "",
       external_id: lead.id ? `apify_greenhouse_jobs_${queryConfig.id}_${lead.id}` : "",
@@ -167,7 +170,8 @@ function normalizeProviderLead(queryConfig, provider, lead) {
       workplace_type: lead.workplaceType || lead.categories?.workplace || queryConfig.workplace_type || "",
       job_type: lead.commitment || lead.categories?.commitment || "",
       salary: lead.salary || "",
-      description: stripHtml(lead.description || lead.descriptionPlain || ""),
+      raw_description: lead.description || lead.descriptionPlain || "",
+      description: lead.description || lead.descriptionPlain || "",
       source_url: lead.hostedUrl || lead.url || "",
       apply_url: lead.applyUrl || lead.hostedUrl || lead.url || "",
       external_id: lead.id ? `apify_lever_jobs_${queryConfig.id}_${lead.id}` : "",
@@ -183,7 +187,8 @@ function normalizeProviderLead(queryConfig, provider, lead) {
       workplace_type: lead.workplace_type || queryConfig.workplace_type || "",
       job_type: lead.job_type || lead.commitment || "",
       salary: lead.salary || lead.compensation || "",
-      description: stripHtml(lead.description || lead.summary || ""),
+      raw_description: lead.description || lead.summary || "",
+      description: lead.description || lead.summary || "",
       source_url: lead.source_url || lead.url || "",
       apply_url: lead.apply_url || lead.applyUrl || lead.url || "",
       external_id: lead.id ? `generic_job_data_api_${queryConfig.id}_${lead.id}` : "",
@@ -252,6 +257,28 @@ function normalizeLead(queryConfig, lead) {
     notes: `Lead collected from ${queryConfig.provider} query "${queryConfig.query}".`,
     sync_origin: "wide-search"
   });
+}
+
+async function submitPendingLead(job) {
+  const backendUrl = String(process.env.JOBS_BACKEND_URL || "").trim();
+  if (!backendUrl) return { skipped: true };
+
+  const response = await fetch(backendUrl, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify({
+      action: "submitJob",
+      payload: job
+    })
+  });
+
+  const payload = await response.json().catch(() => ({}));
+  if (!response.ok || !payload.ok) {
+    throw new Error(payload.error || `Backend submit failed with HTTP ${response.status}.`);
+  }
+  return payload;
 }
 
 function buildLeadKey(job) {
@@ -327,11 +354,18 @@ async function main() {
   }
 
   const newPendingLeads = [];
+  let submittedCount = 0;
 
   for (const queryConfig of queries) {
     try {
       const leads = await fetchQueryResults(queryConfig);
       newPendingLeads.push(...leads);
+      if (process.env.JOBS_BACKEND_URL) {
+        for (const lead of leads) {
+          await submitPendingLead(lead);
+          submittedCount += 1;
+        }
+      }
       console.log(`[jobs:search-ingest] ${queryConfig.id}: collected ${leads.length} pending leads.`);
     } catch (error) {
       console.error(`[jobs:search-ingest] ${queryConfig.id} failed: ${error.message}`);
@@ -342,6 +376,9 @@ async function main() {
 
   await writeJson(PENDING_SYNCED_FILE, mergedPending);
   console.log(`[jobs:search-ingest] Wrote ${mergedPending.length} pending leads to ${PENDING_SYNCED_FILE}.`);
+  if (process.env.JOBS_BACKEND_URL) {
+    console.log(`[jobs:search-ingest] Submitted ${submittedCount} pending leads to submitJob via JOBS_BACKEND_URL.`);
+  }
 }
 
 if (require.main === module) {

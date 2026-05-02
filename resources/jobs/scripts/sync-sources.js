@@ -40,6 +40,13 @@ async function fetchJobsForSource(source) {
   throw new Error(`Unsupported source type: ${source.type}`);
 }
 
+function describeRouting(source) {
+  if (source.trusted === true && source.auto_publish === true) {
+    return "public";
+  }
+  return "pending";
+}
+
 async function runSyncForTypes(types = []) {
   const requestedTypes = types.length ? new Set(types) : null;
   const [existingJobs, existingPending, sources] = await Promise.all([
@@ -72,14 +79,25 @@ async function runSyncForTypes(types = []) {
 
   for (const source of enabledSources) {
     if (!SUPPORTED_TYPES.has(source.type)) {
-      counts[source.id] = { fetched: 0, active: 0, pending: 0, skipped: true };
+      counts[source.id] = {
+        fetched: 0,
+        active: 0,
+        pending: 0,
+        skipped: true,
+        reason: "unsupported source type pending custom integration"
+      };
       console.log(`[jobs:sync-sources] ${source.id}: Skipped: unsupported source type pending custom integration.`);
       continue;
     }
 
     try {
       const rawJobs = await fetchJobsForSource(source);
-      counts[source.id] = { fetched: rawJobs.length, active: 0, pending: 0 };
+      counts[source.id] = {
+        fetched: rawJobs.length,
+        active: 0,
+        pending: 0,
+        route: describeRouting(source)
+      };
 
       for (const rawJob of rawJobs) {
         const routed = routeSyncedJob(rawJob, source);
@@ -121,7 +139,7 @@ async function runSyncForTypes(types = []) {
 
   Object.entries(counts).forEach(([sourceId, count]) => {
     console.log(
-      `[jobs:sync-sources] ${sourceId}: fetched=${count.fetched} active=${count.active} pending=${count.pending}${count.error ? ` error=${count.error}` : ""}`
+      `[jobs:sync-sources] ${sourceId}: fetched=${count.fetched} active=${count.active} pending=${count.pending}${count.route ? ` route=${count.route}` : ""}${count.reason ? ` reason=${count.reason}` : ""}${count.error ? ` error=${count.error}` : ""}`
     );
   });
   console.log(

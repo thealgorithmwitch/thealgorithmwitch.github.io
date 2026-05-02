@@ -27,6 +27,50 @@ function buildJobSlug(job) {
   return slugify(`${job.title}-${job.organization}`);
 }
 
+function buildIdSuffix(job) {
+  const normalizedId = slugify(job.id || "");
+  if (!normalizedId) return "job";
+  return normalizedId.slice(-8) || normalizedId;
+}
+
+function buildUniqueJobSlug(job, usedSlugs, collisions) {
+  const baseSlug = buildJobSlug(job) || buildIdSuffix(job);
+  let nextSlug = baseSlug;
+
+  if (!usedSlugs.has(nextSlug)) {
+    usedSlugs.set(nextSlug, String(job.id || ""));
+    return nextSlug;
+  }
+
+  const existingJobId = usedSlugs.get(nextSlug);
+  if (existingJobId === String(job.id || "")) {
+    return nextSlug;
+  }
+
+  collisions.push({
+    base_slug: baseSlug,
+    id: String(job.id || ""),
+    title: job.title,
+    organization: job.organization
+  });
+
+  const suffix = buildIdSuffix(job);
+  nextSlug = `${baseSlug}-${suffix}`;
+
+  if (!usedSlugs.has(nextSlug)) {
+    usedSlugs.set(nextSlug, String(job.id || ""));
+    return nextSlug;
+  }
+
+  let attempt = 2;
+  while (usedSlugs.has(`${nextSlug}-${attempt}`) && usedSlugs.get(`${nextSlug}-${attempt}`) !== String(job.id || "")) {
+    attempt += 1;
+  }
+  nextSlug = `${nextSlug}-${attempt}`;
+  usedSlugs.set(nextSlug, String(job.id || ""));
+  return nextSlug;
+}
+
 function truncate(value, max = 160) {
   const text = String(value || "").replace(/\s+/g, " ").trim();
   if (text.length <= max) return text;
@@ -211,15 +255,28 @@ async function buildPagesFromRecords(records) {
       .map((fileName) => fs.unlink(path.join(PAGES_DIR, fileName)))
   );
 
+  const usedSlugs = new Map();
+  const collisions = [];
+  let samplePagePath = "";
+
   for (const job of jobs) {
-    const slug = buildJobSlug(job);
+    const slug = buildUniqueJobSlug(job, usedSlugs, collisions);
     const html = buildPage(job, slug);
-    await fs.writeFile(path.join(PAGES_DIR, `${slug}.html`), html, "utf8");
+    const pagePath = path.join(PAGES_DIR, `${slug}.html`);
+    await fs.writeFile(pagePath, html, "utf8");
+    if (!samplePagePath) samplePagePath = pagePath;
   }
 
+  const htmlFiles = (await fs.readdir(PAGES_DIR).catch(() => [])).filter((fileName) => fileName.endsWith(".html"));
+
   console.log(`[jobs:build-pages] Generated ${jobs.length} job pages in ${PAGES_DIR}.`);
-  if (jobs[0]) {
-    console.log(`[jobs:build-pages] Sample page: ${path.join(PAGES_DIR, `${buildJobSlug(jobs[0])}.html`)}`);
+  console.log(`[jobs:build-pages] HTML file count: ${htmlFiles.length}.`);
+  console.log(`[jobs:build-pages] Resolved ${collisions.length} slug collisions.`);
+  if (collisions.length) {
+    console.log(`[jobs:build-pages] Collision samples: ${collisions.slice(0, 5).map((entry) => `${entry.base_slug} -> ${entry.id}`).join("; ")}`);
+  }
+  if (samplePagePath) {
+    console.log(`[jobs:build-pages] Sample page: ${samplePagePath}`);
   }
   return jobs.length;
 }

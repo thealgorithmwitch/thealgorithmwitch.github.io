@@ -72,6 +72,23 @@ assert.strictEqual(normalizedLeverJob.salary_max, 95000);
 assert.strictEqual(normalizedLeverJob.salary_currency, "USD");
 assert.strictEqual(normalizedLeverJob.salary_period, "year");
 
+const normalizedArevonJob = normalizeJob({
+  title: "Senior Analyst, Risk & Insurance | Arevon",
+  organization: "Arevon Energy",
+  description: "Senior Analyst, Risk & Insurance | Arevon https://arevonenergy.com/careers/senior-analyst-risk-insurance/"
+});
+assert.strictEqual(normalizedArevonJob.title, "Senior Analyst, Risk & Insurance");
+
+const normalizedNavDescription = normalizeDescription(
+  'href="https://www.dylan-green.com/jobs/senior-associate-portfolio-management/" rel="prev"> Previous: Previous post: Senior Associate, Portfolio Management Next: Next post: Associate, Acquisitions'
+);
+assert.strictEqual(normalizedNavDescription.description, "");
+
+const normalizedNoWrapDescription = normalizeDescription(
+  'e" nowrap="nowrap" headers="hdrDate"> Apr 29, 2026 Project Development Analyst https://jobs.edp.com/job/Multiple-cities-Project-Development-Analyst/1388775833/'
+);
+assert.strictEqual(normalizedNoWrapDescription.description, "");
+
 assert.strictEqual(stringifySafe({ value: "$60,000 - $70,000" }), "$60,000 - $70,000");
 assert.strictEqual(stringifySafe({ unexpected: "ignored" }), "");
 

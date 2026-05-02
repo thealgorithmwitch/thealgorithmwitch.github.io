@@ -72,13 +72,21 @@ const SALES_TERMS = [
 const BAD_TITLE_PATTERNS = [
   /^careers?$/i,
   /^jobs?$/i,
+  /\bjobs?$/i,
   /^openings?$/i,
   /^opportunities$/i,
   /^join us$/i,
   /^contact us$/i,
+  /^home$/i,
+  /^link$/i,
   /^mailto:/i,
   /@/,
-  /^expression of interest$/i
+  /^expression of interest$/i,
+  /^click here to submit your application$/i,
+  /^get a green job$/i,
+  /^explore episodes$/i,
+  /^fellowships? at\b/i,
+  /^internships? at\b/i
 ];
 
 const SUSPICIOUS_TITLE_PATTERNS = [
@@ -87,8 +95,59 @@ const SUSPICIOUS_TITLE_PATTERNS = [
   /\bclass=/i,
   /^\W+/,
   /https?:\/\//i,
+  /\b(?:next|previous)\s*:\s*(?:next|previous)\s+post\b/i,
+  /\b(?:privacy|cookie(?:s)?|terms of (?:use|service)|applicant privacy|applicant login|join talent community|employment scams|sample employment test|search jobs|search results|job openings|careers website)\b/i,
   /\b(remote|hybrid|on-site)\b.*\b(remote|hybrid|on-site)\b/i
 ];
+
+const NON_ROLE_URL_PATTERNS = [
+  /linkedin\.com\/(?:sharearticle|company)/i,
+  /facebook\.com\/sharer/i,
+  /x\.com\/intent/i,
+  /instagram\.com/i,
+  /eeoc\.gov/i,
+  /comeet\.com\/en\/articles/i,
+  /careerhome\.action/i,
+  /userhome/i,
+  /\/(?:privacy|privacy-policy|cookie|cookies|legal|security|contact|demo|newsletter|blog|events|guidance|glossary|pricing|api|developers|integrations|support|candidate-privacy|employment-scams|sample-employment-test)(?:\/|$)/i,
+  /\/(?:category|job-category|job-location|companies)(?:\/|$)/i,
+  /\/(?:go|content)(?:\/|$)/i,
+  /\/(?:issue|degrees)(?:\/|$)/i,
+  /\/environmental-careers(?:\/|$)/i,
+  /\/take-action-current-opportunities(?:\/|$)/i,
+  /\/(?:fellowship-openings|internship-openings)(?:\/|$)/i,
+  /\/search(?:\/|$|\?)/i,
+  /\/search-results(?:\/|$)/i,
+  /\/talentcommunity\//i,
+  /\/sign[_-]in(?:\/|$)/i
+];
+
+function isNonRoleUrl(url) {
+  const normalized = normalizeUrl(url);
+  if (!normalized) return false;
+
+  let parsed;
+  try {
+    parsed = new URL(normalized);
+  } catch (_error) {
+    return true;
+  }
+
+  const host = parsed.hostname.toLowerCase();
+  const path = decodeURIComponent(parsed.pathname || "").toLowerCase();
+  const query = parsed.search.toLowerCase();
+  const full = `${host}${path}${query}`;
+
+  if (NON_ROLE_URL_PATTERNS.some((pattern) => pattern.test(full))) return true;
+  if (/[?&]f(?:%5b|\[)0(?:%5d|\])=/i.test(query)) return true;
+  if ((/\/careers\/?$/i.test(path) || /\/jobs\/?$/i.test(path) || path === "/") && !query) return true;
+  if (/jobs\.lever\.co$/i.test(host) && query && !/\/[0-9a-f-]{12,}(?:\/apply)?\/?$/i.test(path)) return true;
+  if (host === "boards.greenhouse.io" && !/\/jobs\/\d+/i.test(path) && !/[?&]gh_jid=/i.test(query)) return true;
+  if (/job-offers/i.test(path) && /(?:^|[?&])(q|fa|cn|ex)=/i.test(query)) return true;
+  if (/\/go\//i.test(path) || /\/content\//i.test(path)) return true;
+
+  return false;
+}
 
 function hasAny(text, terms) {
   const haystack = String(text || "").toLowerCase();
@@ -189,6 +248,7 @@ function classifyPendingJob(job, context = {}) {
   const organization = String(job.organization || "").trim();
   const originalUrl = normalizeUrl(job.original_url || job.apply_url || job.source_url);
   const scoreMeta = scorePendingJob(job);
+  const nonRoleUrl = isNonRoleUrl(originalUrl);
   const titleLooksBad = BAD_TITLE_PATTERNS.some((pattern) => pattern.test(title)) || title.length < 4 || title.length > 160;
   const suspiciousTitle =
     SUSPICIOUS_TITLE_PATTERNS.some((pattern) => pattern.test(title)) ||
@@ -205,6 +265,7 @@ function classifyPendingJob(job, context = {}) {
     originalUrl &&
     roleRelevant &&
     !titleLooksBad &&
+    !nonRoleUrl &&
     !(internship && !scoreMeta.payCaptured) &&
     !duplicateUrl &&
     !suspiciousTitle &&
@@ -236,6 +297,13 @@ function classifyPendingJob(job, context = {}) {
       bucket: "rejected_noise",
       job: { ...nextJob, triage_bucket: "rejected_noise", triage_reason: "duplicate role url" },
       reason: "duplicate role url"
+    };
+  }
+  if (nonRoleUrl) {
+    return {
+      bucket: "rejected_noise",
+      job: { ...nextJob, triage_bucket: "rejected_noise", triage_reason: "non-role listing or policy url" },
+      reason: "non-role listing or policy url"
     };
   }
   if (titleLooksBad) {

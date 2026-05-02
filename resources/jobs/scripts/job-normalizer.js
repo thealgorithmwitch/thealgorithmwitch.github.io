@@ -38,6 +38,33 @@ const PRIORITY_OBJECT_KEYS = [
   "html",
   "url"
 ];
+const ORGANIZATION_NOISE_TOKENS = new Set([
+  "inc",
+  "llc",
+  "ltd",
+  "corp",
+  "co",
+  "company",
+  "group",
+  "holdings",
+  "partners",
+  "capital",
+  "energy",
+  "renewables",
+  "solar"
+]);
+const TITLE_NOISE_PATTERNS = [
+  /\b(?:next|previous)\s*:\s*(?:next|previous)\s+post\s*:/gi,
+  /\bpost navigation\b/gi,
+  /\b(?:privacy|cookie(?:s)?|terms of (?:use|service)|applicant privacy|applicant login|employment scams|sample employment test|equal opportunity employer|join talent community|search jobs|search results|job openings|we(?:'|’)re hiring|careers website|explore companies)\b/gi
+];
+const DESCRIPTION_NOISE_PATTERNS = [
+  /\b(?:next|previous)\s*:\s*(?:next|previous)\s+post\s*:[^.]{0,200}/gi,
+  /\bpost navigation\b[^.]{0,200}/gi,
+  /\b(?:href|class|aria-label|target|data-[\w-]+|rel|style|headers)\s*=\s*(?:"[^"]*"|'[^']*'|[^\s>]+)/gi,
+  /\bno\s*wrap\b|\bnowrap\b/gi,
+  /https?:\/\/\S+/gi
+];
 
 function slugify(value) {
   return String(value || "")
@@ -64,6 +91,53 @@ function normalizeWhitespace(value) {
     .replace(/\u00a0/g, " ")
     .replace(/\s+/g, " ")
     .trim();
+}
+
+function normalizeCompanyCore(value) {
+  return normalizeWhitespace(stripHtml(value))
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, " ")
+    .split(/\s+/)
+    .filter((token) => token && !ORGANIZATION_NOISE_TOKENS.has(token))
+    .join(" ");
+}
+
+function removeTitleOrganizationSuffix(title, organization) {
+  const separators = [" | ", " - ", " — ", " – ", " @ "];
+  const orgCore = normalizeCompanyCore(organization);
+  if (!orgCore) return title;
+
+  for (const separator of separators) {
+    if (!title.includes(separator)) continue;
+    const parts = title.split(separator).map((part) => normalizeWhitespace(part)).filter(Boolean);
+    if (parts.length < 2) continue;
+    const suffix = parts[parts.length - 1];
+    const suffixCore = normalizeCompanyCore(suffix);
+    if (!suffixCore) continue;
+    if (suffixCore === orgCore || orgCore.includes(suffixCore) || suffixCore.includes(orgCore)) {
+      return parts.slice(0, -1).join(separator).trim();
+    }
+  }
+
+  return title;
+}
+
+function normalizeTitle(value, organization = "") {
+  let text = normalizeWhitespace(stripHtml(decodeHtmlEntities(value)));
+  if (!text) return "";
+
+  text = text
+    .replace(/\b(?:href|class|aria-label|target|data-[\w-]+|rel|style|headers)\s*=\s*(?:"[^"]*"|'[^']*'|[^\s>]+)/gi, " ")
+    .replace(/https?:\/\/\S+/gi, " ")
+    .replace(/\b(?:next|previous)\s*:\s*(?:next|previous)\s+post\s*:/gi, " ")
+    .replace(/\bpost navigation\b/gi, " ")
+    .replace(/\bno\s*wrap\b|\bnowrap\b/gi, " ")
+    .replace(/\s+(?:remote|hybrid|on-?site)\s+[—-]\s+(?:full[- ]?time|part[- ]?time|contract|temporary|internship)\b.*$/i, "")
+    .replace(/\s+[—-]\s+(?:full[- ]?time|part[- ]?time|contract|temporary|internship)\b.*$/i, "")
+    .replace(/^[\/|>:\-.\s]+|[\/|>:\-.\s]+$/g, " ");
+
+  text = removeTitleOrganizationSuffix(normalizeWhitespace(text), organization);
+  return normalizeWhitespace(text);
 }
 
 function stringifySafe(value) {
@@ -413,6 +487,16 @@ function removeBoilerplateSentences(sentences) {
     /without regard to/i,
     /apply now/i,
     /click here to apply/i,
+    /next post/i,
+    /previous post/i,
+    /search jobs/i,
+    /search results/i,
+    /job openings/i,
+    /applicant privacy/i,
+    /applicant login/i,
+    /join talent community/i,
+    /employment scams/i,
+    /sample employment test/i,
     /our destinies are tied/i,
     /network of \d+ local chapters/i
   ];
@@ -424,6 +508,12 @@ function normalizeDescription(description) {
   const rawDescription = normalizeWhitespace(stringifySafe(description) || cleanFlattenedText(description));
   const cleaned = normalizeWhitespace(
     stripHtml(rawDescription)
+      .replace(/&(amp|nbsp|quot|apos|#39|lt|gt);/gi, " ")
+      .replace(/\b(?:href|class|aria-label|target|data-[\w-]+|rel|style|headers)\s*=\s*(?:"[^"]*"|'[^']*'|[^\s>]+)/gi, " ")
+      .replace(/https?:\/\/\S+/gi, " ")
+      .replace(/\bno\s*wrap\b|\bnowrap\b/gi, " ")
+      .replace(/\b(?:next|previous)\s*:\s*(?:next|previous)\s+post\s*:[^.]{0,200}/gi, " ")
+      .replace(/\bpost navigation\b[^.]{0,200}/gi, " ")
       .replace(
         /\b(?:job title|department|location|reports to|supervises)\s*:\s*[\s\S]*?(?=(?:job title|department|location|reports to|supervises|duration|context|scope|role overview|about us|what you(?:'|’)ll do)\s*:|$)/gi,
         " "
@@ -460,9 +550,16 @@ function normalizeDescription(description) {
     if (selected.length === 5) break;
   }
 
+  const dominatedByNoise =
+    selected.length === 0 &&
+    DESCRIPTION_NOISE_PATTERNS.some((pattern) => pattern.test(rawDescription)) &&
+    !/[a-z]{3,}\s+(?:is|are|will|can|should|must|plans|coordinates|executes|supports|manages|builds|seeks|works|develops|leads|drives|partners)/i.test(
+      cleaned
+    );
+
   return {
     raw_description: rawDescription,
-    description: selected.join(" ").trim() || cleaned
+    description: dominatedByNoise ? "" : selected.join(" ").trim() || cleaned
   };
 }
 
@@ -507,8 +604,8 @@ function resolveNumericField(value) {
 }
 
 function normalizeJob(input = {}) {
-  const title = safeStringField(input.title);
   const organization = safeStringField(input.organization);
+  const title = normalizeTitle(input.title, organization);
   const applyUrl = safeStringField(input.apply_url || input.applyUrl);
   const originalUrl = safeStringField(input.original_url || input.originalUrl || applyUrl || input.source_url || input.sourceUrl);
   const location = safeStringField(input.location, "Remote");

@@ -487,6 +487,70 @@
       }
     }
 
+    function normalizeHydrationValue(value) {
+      if (value === null || value === undefined) return "";
+      if (Array.isArray(value)) {
+        return value.every((item) => typeof item === "string")
+          ? value.join(", ")
+          : JSON.stringify(value, null, 2);
+      }
+      if (typeof value === "object") {
+        return JSON.stringify(value, null, 2);
+      }
+      return String(value);
+    }
+
+    function getRecordSources(record) {
+      const rawJson = parseRawJson(record.raw_json);
+      const submission = rawJson.submission || rawJson.payload || record.payload || {};
+      const raw = rawJson.raw || rawJson.raw_source_data || rawJson.raw_payload || {};
+      const display = rawJson.display || record.display || {};
+      return {
+        rawJson,
+        display,
+        submission,
+        payload: rawJson.payload || record.payload || {},
+        raw,
+        topLevel: record || {}
+      };
+    }
+
+    function getHydratedFieldValue(record, fieldKey) {
+      const sources = getRecordSources(record);
+      const priority = [
+        sources.display,
+        sources.submission,
+        sources.payload,
+        sources.raw,
+        sources.topLevel
+      ];
+
+      for (const source of priority) {
+        if (!source || typeof source !== "object") continue;
+        if (Object.prototype.hasOwnProperty.call(source, fieldKey) && source[fieldKey] !== "" && source[fieldKey] !== null && source[fieldKey] !== undefined) {
+          return source[fieldKey];
+        }
+      }
+      return "";
+    }
+
+    function logHydrationFailure(record, tabKey, missingKeys) {
+      if (!missingKeys.length) return;
+      const sources = getRecordSources(record);
+      console.warn("[admin-hydration]", {
+        selectedRecordId: record.id,
+        recordType: tabKey,
+        missingFieldKeys: missingKeys,
+        payloadKeysFound: Array.from(new Set([
+          ...Object.keys(sources.display || {}),
+          ...Object.keys(sources.submission || {}),
+          ...Object.keys(sources.payload || {}),
+          ...Object.keys(sources.raw || {}),
+          ...Object.keys(sources.topLevel || {})
+        ]))
+      });
+    }
+
     function setStatus(message, isError) {
       statusMessage.textContent = message;
       statusMessage.classList.toggle("error", Boolean(isError));
@@ -627,64 +691,67 @@
         .join("");
     }
 
-    function buildEditableFields(tabKey, raw, recordId) {
+    function buildEditableFields(tabKey, record, recordId) {
+      const raw = Object.assign({}, record, getRecordSources(record).rawJson);
       const fieldMap = {
         jobs: [
-          ["title", "Title", raw.title || ""],
-          ["organization", "Organization", raw.organization || ""],
-          ["location", "Location", raw.location || ""],
-          ["location_type", "Location Type", raw.location_type || raw.workplace_type || ""],
-          ["pay_display", "Pay Display", raw.pay_display || raw.salary || ""],
-          ["salary_min", "Salary Min", raw.salary_min ?? ""],
-          ["salary_max", "Salary Max", raw.salary_max ?? ""],
-          ["role_type", "Role Type", raw.role_type || raw.job_type || ""],
-          ["experience_level", "Experience Level", raw.experience_level || raw.experience || ""],
-          ["sector", "Sector", raw.sector || ""],
-          ["function", "Function", raw.function || ""],
-          ["tags", "Tags", Array.isArray(raw.tags) ? raw.tags.join(", ") : (raw.tags || "")],
-          ["description", "Description", raw.description || "", "textarea"],
-          ["source_name", "Source Name", raw.source_name || raw.source || ""],
-          ["source_url", "Source URL", raw.source_url || "", "url"],
-          ["original_url", "Original URL", raw.original_url || raw.source_url || "", "url"],
-          ["date_collected", "Date Collected", raw.date_collected || raw.date_posted || ""],
-          ["application_url", "Application URL", raw.application_url || raw.apply_url || "", "url"],
-          ["admin_notes", "Admin Notes", raw.admin_notes || "", "textarea"]
+          ["title", "Title"],
+          ["organization", "Organization"],
+          ["location", "Location"],
+          ["location_type", "Location Type"],
+          ["pay_display", "Pay Display"],
+          ["salary_min", "Salary Min", null, "number"],
+          ["salary_max", "Salary Max", null, "number"],
+          ["role_type", "Role Type"],
+          ["experience_level", "Experience Level"],
+          ["sector", "Sector"],
+          ["function", "Function"],
+          ["tags", "Tags"],
+          ["description", "Description", null, "textarea"],
+          ["source_name", "Source Name"],
+          ["source_url", "Source URL", null, "url"],
+          ["original_url", "Original URL", null, "url"],
+          ["application_url", "Application URL", null, "url"],
+          ["admin_notes", "Admin Notes", null, "textarea"]
         ],
         talent: [
-          ["name", "Name", raw.name || ""],
-          ["email", "Email", raw.email || "", "email"],
-          ["current_role", "Current Role", raw.current_role || ""],
-          ["location", "Location", raw.location || ""],
-          ["focus_areas", "Focus Areas", Array.isArray(raw.focus_areas) ? raw.focus_areas.join(", ") : (raw.focus_areas || "")],
-          ["short_bio", "Short Bio", raw.short_bio || "", "textarea"],
-          ["portfolio_url", "Portfolio URL", raw.portfolio_url || "", "url"],
-          ["linkedin_url", "LinkedIn URL", raw.linkedin_url || "", "url"],
-          ["resume_file", "Resume File", raw.resume_file || ""],
-          ["cover_letter_file", "Cover Letter File", raw.cover_letter_file || ""],
-          ["profile_photo", "Profile Photo", raw.profile_photo || ""],
-          ["availability", "Availability", raw.availability || ""],
-          ["open_to", "Open To", raw.open_to || raw.desired_role || ""],
-          ["preferred_work_type", "Preferred Work Type", raw.preferred_work_type || ""],
-          ["preferred_location_type", "Preferred Location Type", raw.preferred_location_type || raw.remote_preference || ""],
-          ["featured_project", "Featured Project", raw.featured_project || ""],
-          ["profile_prompts", "Profile Prompts", Array.isArray(raw.profile_prompts) ? JSON.stringify(raw.profile_prompts, null, 2) : (raw.profile_prompts || ""), "textarea"],
-          ["tags", "Tags", Array.isArray(raw.tags || raw.tags_skills) ? (raw.tags || raw.tags_skills).join(", ") : (raw.tags || raw.tags_skills || "")],
-          ["admin_notes", "Admin Notes", raw.admin_notes || "", "textarea"]
+          ["name", "Name"],
+          ["email", "Email", null, "email"],
+          ["current_role", "Current Role"],
+          ["location", "Location"],
+          ["focus_areas", "Focus Areas"],
+          ["short_bio", "Short Bio", null, "textarea"],
+          ["portfolio_url", "Portfolio URL", null, "url"],
+          ["linkedin_url", "LinkedIn URL", null, "url"],
+          ["resume_file", "Resume File"],
+          ["cover_letter_file", "Cover Letter File"],
+          ["availability", "Availability"],
+          ["open_to", "Open To"],
+          ["preferred_work_type", "Preferred Work Type"],
+          ["preferred_location_type", "Preferred Location Type"],
+          ["featured_project", "Featured Project"],
+          ["profile_prompts", "Profile Prompts", null, "textarea"],
+          ["tags", "Tags"],
+          ["admin_notes", "Admin Notes", null, "textarea"]
         ],
         "featured-employers": [
-          ["organization_name", "Organization Name", raw.organization_name || ""],
-          ["contact_name", "Contact Name", raw.contact_name || ""],
-          ["contact_email", "Contact Email", raw.contact_email || raw.work_email || "", "email"],
-          ["website", "Website", raw.website || "", "url"],
-          ["description", "Description", raw.description || raw.why_featured || "", "textarea"],
-          ["hiring_focus", "Hiring Focus", raw.hiring_focus || raw.roles_hired_for || ""],
-          ["submitted_roles", "Submitted Roles", raw.submitted_roles || raw.open_roles_url || ""],
-          ["feature_request", "Feature Request", raw.feature_request || raw.why_featured || "", "textarea"],
-          ["admin_notes", "Admin Notes", raw.admin_notes || "", "textarea"]
+          ["organization_name", "Organization Name"],
+          ["contact_name", "Contact Name"],
+          ["contact_email", "Contact Email", null, "email"],
+          ["website", "Website", null, "url"],
+          ["description", "Description", null, "textarea"],
+          ["hiring_focus", "Hiring Focus"],
+          ["submitted_roles", "Submitted Roles"],
+          ["feature_request", "Feature Request", null, "textarea"],
+          ["approved_employer", "Approved Employer"],
+          ["admin_notes", "Admin Notes", null, "textarea"]
         ]
       };
-
-      return (fieldMap[tabKey] || []).map(([key, labelText, value, type]) => {
+      const missingKeys = [];
+      const markup = (fieldMap[tabKey] || []).map(([key, labelText, _value, type]) => {
+        const hydrated = getHydratedFieldValue(record, key);
+        if (hydrated === "") missingKeys.push(key);
+        const value = normalizeHydrationValue(hydrated);
         const inputType = type || (key.includes("email") ? "email" : key.includes("url") ? "url" : key.includes("salary") ? "number" : "text");
         if (inputType === "textarea") {
           return `
@@ -701,40 +768,75 @@
           </div>
         `;
       }).join("");
+      logHydrationFailure(record, tabKey, missingKeys);
+      return markup;
     }
 
     function collectEditedRecordFromCard(card, tabKey, baseRecord) {
-      const raw = parseRawJson(baseRecord.raw_json);
-      const edited = Object.assign({}, raw);
+      const raw = getRecordSources(baseRecord).rawJson;
+      const edited = {
+        status: "published",
+        public_visibility: true,
+        featured: false,
+        display_order: 0,
+        admin_notes: "",
+        source_type: getHydratedFieldValue(baseRecord, "source_type") || (tabKey === "jobs" ? "manual" : tabKey === "talent" ? "talent_submitted" : "employer_submitted")
+      };
+      const display = {};
       card.querySelectorAll("[data-edit-field]").forEach((field) => {
         const key = field.dataset.editField;
         const value = field.value;
         if (key === "tags" || key === "focus_areas") {
-          edited[key] = String(value || "").split(",").map((item) => item.trim()).filter(Boolean);
+          const nextValue = String(value || "").split(",").map((item) => item.trim()).filter(Boolean);
+          if (tabKey === "jobs") display[key] = nextValue;
+          else edited[key] = nextValue;
           return;
         }
         if (key === "profile_prompts") {
+          let nextValue;
           try {
-            edited[key] = value.trim() ? JSON.parse(value) : [];
+            nextValue = value.trim() ? JSON.parse(value) : [];
           } catch (_error) {
-            edited[key] = value.trim() ? [{ question: "Profile Prompt", answer: value.trim() }] : [];
+            nextValue = value.trim() ? [{ question: "Profile Prompt", answer: value.trim() }] : [];
           }
+          edited[key] = nextValue;
           return;
         }
         if (key === "salary_min" || key === "salary_max") {
-          edited[key] = value === "" ? null : Number(value);
+          display[key] = value === "" ? null : Number(value);
+          return;
+        }
+        if (key === "public_visibility") {
+          edited.public_visibility = /^(true|1|yes|published)$/i.test(String(value));
+          return;
+        }
+        if (key === "featured") {
+          edited.featured = /^(true|1|yes|featured)$/i.test(String(value));
+          return;
+        }
+        if (key === "display_order") {
+          edited.display_order = Number(value || 0);
+          return;
+        }
+        if (tabKey === "jobs" && !["status", "admin_notes"].includes(key)) {
+          display[key] = value;
           return;
         }
         edited[key] = value;
       });
 
-      edited.status = "published";
-      edited.public_visibility = true;
-      edited.featured = card.querySelector('[data-flag="featured"]')?.checked || false;
-      edited.published = card.querySelector('[data-flag="published"]')?.checked || false;
-      edited.admin_notes = edited.admin_notes || "";
-      edited.display_order = Number(card.querySelector('[data-flag="display_order"]')?.value || 0);
-      edited.source_type = edited.source_type || (tabKey === "jobs" ? "manual" : tabKey === "talent" ? "talent_submitted" : "employer_submitted");
+      edited.status = card.querySelector('[data-flag="status"]')?.value || edited.status;
+      edited.public_visibility = card.querySelector('[data-flag="public_visibility"]')?.checked ?? edited.public_visibility;
+      edited.featured = card.querySelector('[data-flag="featured"]')?.checked || edited.featured;
+      edited.published = card.querySelector('[data-flag="published"]')?.checked ?? true;
+      edited.display_order = Number(card.querySelector('[data-flag="display_order"]')?.value || edited.display_order || 0);
+
+      if (tabKey === "jobs") {
+        edited.display = Object.assign({}, raw.display || {}, display, {
+          featured: edited.featured,
+          published: edited.published
+        });
+      }
       return edited;
     }
 
@@ -791,18 +893,21 @@
           <div class="meta-list">
             ${metaLines.map((line) => `<div>${escapeHtml(line)}</div>`).join("")}
           </div>
-          <div class="summary-block">
-            ${buildSummaryRows(tabKey, Object.assign({}, record, raw))}
-          </div>
+          <details class="summary-block" style="background: rgba(0,0,0,0.12);">
+            <summary style="cursor:pointer; color: var(--ink-secondary);">View raw submission</summary>
+            <pre style="white-space: pre-wrap; margin-top: 12px; color: var(--ink-tertiary);">${escapeHtml(JSON.stringify(raw, null, 2))}</pre>
+          </details>
           ${tabKey === "rejected" ? "" : `
             <div class="summary-block">
-              ${buildEditableFields(tabKey, Object.assign({}, record, raw), escapeHtml(record.id))}
+              ${buildEditableFields(tabKey, record, escapeHtml(record.id))}
               <div class="summary-row">
                 <label>Publish Settings</label>
                 <div style="display:flex; gap:16px; flex-wrap:wrap; align-items:center;">
-                  <label style="margin:0;"><input type="checkbox" data-flag="published" ${raw.published !== false ? "checked" : ""}> published</label>
-                  <label style="margin:0;"><input type="checkbox" data-flag="featured" ${raw.featured === true ? "checked" : ""}> featured</label>
-                  <input type="number" data-flag="display_order" value="${escapeHtml(raw.display_order || "0")}" placeholder="Display order" style="max-width:140px;">
+                  <label style="margin:0;"><input type="checkbox" data-flag="published" ${String(getHydratedFieldValue(record, "published") || "true") !== "false" ? "checked" : ""}> published</label>
+                  <label style="margin:0;"><input type="checkbox" data-flag="public_visibility" ${String(getHydratedFieldValue(record, "public_visibility") || "true") !== "false" ? "checked" : ""}> public</label>
+                  <label style="margin:0;"><input type="checkbox" data-flag="featured" ${String(getHydratedFieldValue(record, "featured")).toLowerCase() === "true" ? "checked" : ""}> featured</label>
+                  <input type="text" data-flag="status" value="${escapeHtml(normalizeHydrationValue(getHydratedFieldValue(record, "status") || "published"))}" placeholder="Status" style="max-width:140px;">
+                  <input type="number" data-flag="display_order" value="${escapeHtml(normalizeHydrationValue(getHydratedFieldValue(record, "display_order") || "0"))}" placeholder="Display order" style="max-width:140px;">
                 </div>
               </div>
             </div>

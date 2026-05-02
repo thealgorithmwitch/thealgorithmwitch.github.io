@@ -715,6 +715,37 @@
       max-width: 560px;
     }
 
+    .profile-actions {
+      margin-top: 18px;
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    .profile-modal {
+      position: fixed;
+      inset: 0;
+      background: rgba(10, 31, 21, 0.82);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+      z-index: 300;
+    }
+
+    .profile-modal.visible {
+      display: flex;
+    }
+
+    .profile-modal-card {
+      max-width: 680px;
+      width: 100%;
+      background: var(--surface-card);
+      border: 1px solid var(--border-divider);
+      padding: 32px;
+    }
+
     .employer-section {
       background: var(--surface-alt);
       border-top: 1px solid var(--border-divider);
@@ -1054,6 +1085,22 @@
     <div style="margin-top: 12px; opacity: 0.5;">CLIMATE, CLEAN ENERGY, SUSTAINABILITY, ADVOCACY, AND NONPROFIT WORK</div>
   </footer>
 
+  <div id="profile-modal" class="profile-modal" aria-hidden="true">
+    <div class="profile-modal-card">
+      <div style="display:flex; justify-content:space-between; gap:16px; align-items:flex-start;">
+        <div>
+          <div id="profile-modal-role" class="profile-role" style="margin-bottom:10px;"></div>
+          <h3 id="profile-modal-name" class="profile-name" style="margin-bottom:10px;"></h3>
+          <div id="profile-modal-location" style="color: var(--ink-secondary);"></div>
+        </div>
+        <button id="close-profile-modal" class="btn-secondary" type="button">Close</button>
+      </div>
+      <div id="profile-modal-bio" class="prompt-a" style="font-style:normal; margin-top:20px;"></div>
+      <div id="profile-modal-prompt" class="profile-prompt" style="margin-top:20px; display:none;"></div>
+      <div id="profile-modal-tags" class="profile-tags" style="margin-top:20px;"></div>
+    </div>
+  </div>
+
   <script>
     const state = {
       jobs: [],
@@ -1085,6 +1132,14 @@
       activeTagRow: document.getElementById("active-tag-row"),
       profilesGrid: document.getElementById("profiles-grid"),
       employersList: document.getElementById("employers-list"),
+      profileModal: document.getElementById("profile-modal"),
+      profileModalName: document.getElementById("profile-modal-name"),
+      profileModalRole: document.getElementById("profile-modal-role"),
+      profileModalLocation: document.getElementById("profile-modal-location"),
+      profileModalBio: document.getElementById("profile-modal-bio"),
+      profileModalPrompt: document.getElementById("profile-modal-prompt"),
+      profileModalTags: document.getElementById("profile-modal-tags"),
+      closeProfileModal: document.getElementById("close-profile-modal"),
       filterContainers: {
         location: document.getElementById("filter-location"),
         jobType: document.getElementById("filter-job-type"),
@@ -1292,6 +1347,13 @@
           : null;
         const tags = Array.isArray(profile.tags) ? profile.tags : [];
         const focusAreas = Array.isArray(profile.focus_areas) ? profile.focus_areas.join(", ") : String(profile.focus_areas || "");
+        const portfolioUrl = String(profile.portfolio_url || "").trim();
+        const linkedInUrl = String(profile.linkedin_url || "").trim();
+        const cta = portfolioUrl
+          ? `<a class="btn-primary" href="${escapeHtml(portfolioUrl)}" target="_blank" rel="noopener noreferrer">View Portfolio</a>`
+          : linkedInUrl
+            ? `<a class="btn-primary" href="${escapeHtml(linkedInUrl)}" target="_blank" rel="noopener noreferrer">View LinkedIn</a>`
+            : `<button class="btn-primary" type="button" data-profile-action="${escapeHtml(profile.id)}">View Profile</button>`;
         return `
           <div class="profile-card">
             <div class="profile-visual">
@@ -1311,6 +1373,9 @@
                 </div>
               ` : ""}
               <div class="prompt-a" style="font-style: normal; margin-bottom: 20px;">${escapeHtml(profile.short_bio || "")}</div>
+              <div class="profile-actions">
+                ${cta}
+              </div>
               <div class="profile-tags">
                 ${tags.map((tag) => `<span>#${escapeHtml(tag)}</span>`).join("")}
               </div>
@@ -1338,6 +1403,35 @@
           <div style="margin-top: 12px; color: var(--ink-tertiary); font-family: var(--font-mono); font-size: 0.72rem;">${escapeHtml(employer.submitted_roles || "")}</div>
         </article>
       `).join("");
+    }
+
+    function openProfileModal(profileId) {
+      const profile = state.profiles.find((item) => item.id === profileId && isPublishedRecord(item));
+      if (!profile) return;
+      ui.profileModalName.textContent = profile.name || "";
+      ui.profileModalRole.textContent = profile.current_role || "Talent Profile";
+      ui.profileModalLocation.textContent = profile.location || "";
+      ui.profileModalBio.textContent = profile.short_bio || "";
+      const prompt = Array.isArray(profile.profile_prompts) && profile.profile_prompts.length ? profile.profile_prompts[0] : null;
+      if (prompt) {
+        ui.profileModalPrompt.style.display = "block";
+        ui.profileModalPrompt.innerHTML = `
+          <div class="prompt-q">${escapeHtml(prompt.question || "Profile Note")}</div>
+          <div class="prompt-a">"${escapeHtml(prompt.answer || "")}"</div>
+        `;
+      } else {
+        ui.profileModalPrompt.style.display = "none";
+        ui.profileModalPrompt.innerHTML = "";
+      }
+      const tags = Array.isArray(profile.tags) ? profile.tags : [];
+      ui.profileModalTags.innerHTML = tags.map((tag) => `<span>#${escapeHtml(tag)}</span>`).join("");
+      ui.profileModal.classList.add("visible");
+      ui.profileModal.setAttribute("aria-hidden", "false");
+    }
+
+    function closeProfileModal() {
+      ui.profileModal.classList.remove("visible");
+      ui.profileModal.setAttribute("aria-hidden", "true");
     }
 
     function renderJobs() {
@@ -1530,6 +1624,17 @@
     ui.loadMoreButton.addEventListener("click", () => {
       state.visibleCount += 9;
       renderJobs();
+    });
+
+    ui.profilesGrid.addEventListener("click", (event) => {
+      const button = event.target.closest("[data-profile-action]");
+      if (!button) return;
+      openProfileModal(button.dataset.profileAction);
+    });
+
+    ui.closeProfileModal.addEventListener("click", closeProfileModal);
+    ui.profileModal.addEventListener("click", (event) => {
+      if (event.target === ui.profileModal) closeProfileModal();
     });
 
     const sections = document.querySelectorAll("section");

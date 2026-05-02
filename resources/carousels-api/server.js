@@ -248,16 +248,34 @@ async function captureElements(page, selector, outputDir, payload) {
       };
       save(document.documentElement);
       save(document.body);
-      const computed = window.getComputedStyle(original);
-      const bodyComputed = window.getComputedStyle(document.body);
-      const background =
-        computed.backgroundColor && computed.backgroundColor !== "rgba(0, 0, 0, 0)"
-          ? computed.backgroundColor
-          : bodyComputed.backgroundColor || "transparent";
-      const backgroundImage =
-        computed.backgroundImage && computed.backgroundImage !== "none"
-          ? computed.backgroundImage
-          : bodyComputed.backgroundImage || "none";
+      const hasVisibleBackground = (style) => {
+        if (!style) return false;
+        const color = style.backgroundColor;
+        const image = style.backgroundImage;
+        return (image && image !== "none") ||
+          (color && color !== "rgba(0, 0, 0, 0)" && color !== "transparent");
+      };
+      const resolveBackground = (el) => {
+        let node = el;
+        while (node && node.nodeType === 1) {
+          const style = window.getComputedStyle(node);
+          if (hasVisibleBackground(style)) return style.background;
+          node = node.parentElement;
+        }
+
+        const carouselRoot = document.querySelector("#carousel-root");
+        if (carouselRoot) {
+          const style = window.getComputedStyle(carouselRoot);
+          if (hasVisibleBackground(style)) return style.background;
+        }
+
+        const bodyStyle = window.getComputedStyle(document.body);
+        if (hasVisibleBackground(bodyStyle)) return bodyStyle.background;
+
+        return "#ffffff";
+      };
+      const background = resolveBackground(original);
+      const backgroundImage = window.getComputedStyle(original).backgroundImage || "none";
       const colorMatch = background.match(/rgba?\(([^)]+)\)/);
       let isPlainDark = false;
       if (colorMatch) {
@@ -330,7 +348,11 @@ async function captureElements(page, selector, outputDir, payload) {
       clone.style.bottom = "auto";
       clone.style.transform = "none";
       clone.style.boxSizing = "border-box";
-      clone.style.background = background;
+      const cloneComputed = window.getComputedStyle(original);
+      const cloneHasOwnBackground = hasVisibleBackground(cloneComputed);
+      if (!cloneHasOwnBackground) {
+        clone.style.background = background;
+      }
       clone.style.zIndex = "1";
       clone.style.flexShrink = "0";
       console.log("HTML Scryer clone forced size", {

@@ -1,10 +1,7 @@
 name: Update Blog From Substack
 
 on:
-  push:
   workflow_dispatch:
-  schedule:
-    - cron: '17 11 * * *'
 
 permissions:
   contents: write
@@ -35,14 +32,6 @@ jobs:
           set -euo pipefail
           echo "[workflow] Finalizing generated blog subpages"
           node finalize_blog_subpages.mjs
-
-      - name: Preserve existing archive on RSS failure
-        if: failure()
-        run: |
-          echo "[workflow] RSS/build failed. Re-rendering from existing posts.json without overwriting feed data."
-          node generate-blog.mjs --from-posts-json || true
-          node finalize_blog_subpages.mjs || true
-          exit 1
 
       - name: Check for changes
         id: changes

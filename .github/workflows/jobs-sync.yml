@@ -59,6 +59,10 @@ jobs:
           else
             echo "No package dependencies declared. Skipping npm install."
           fi
+      - name: Debug backend env
+        run: |
+          if [ -n "$JOBS_BACKEND_URL" ]; then echo "URL OK"; else echo "URL MISSING"; fi
+          if [ -n "$JOBS_ADMIN_TOKEN" ]; then echo "TOKEN OK"; else echo "TOKEN MISSING"; fi
 
       - name: Snapshot queued admin actions
         run: npm --prefix resources/jobs run jobs:snapshot-admin-actions

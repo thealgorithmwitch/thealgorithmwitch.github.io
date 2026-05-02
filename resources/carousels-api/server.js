@@ -80,6 +80,10 @@ function buildServerCaptureDocument(payload) {
       padding: 0 !important;
       width: ${payload.width}px !important;
       height: ${payload.height}px !important;
+      min-width: ${payload.width}px !important;
+      min-height: ${payload.height}px !important;
+      max-width: ${payload.width}px !important;
+      max-height: ${payload.height}px !important;
       overflow: hidden !important;
     }
 
@@ -318,6 +322,10 @@ function buildScryerCaptureStyles(width, height) {
 }
 
 async function captureFullPage(page, outputPath, payload) {
+  console.log("HTML Scryer export dimensions", {
+    width: payload.width,
+    height: payload.height
+  });
   await page.screenshot({
     path: outputPath,
     type: "png",

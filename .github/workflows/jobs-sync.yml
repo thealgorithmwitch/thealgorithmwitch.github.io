@@ -62,16 +62,13 @@ jobs:
           fi
 
       - name: Snapshot queued admin actions
-        working-directory: ${{ steps.workspace.outputs.dir }}
-        run: npm run jobs:snapshot-admin-actions
+        run: npm --prefix jobs run jobs:snapshot-admin-actions
 
       - name: Apply queued admin actions
-        working-directory: ${{ steps.workspace.outputs.dir }}
-        run: npm run jobs:apply-admin-actions
+        run: npm --prefix jobs run jobs:apply-admin-actions
 
       - name: Rebuild public job pages
-        working-directory: ${{ steps.workspace.outputs.dir }}
-        run: npm run jobs:build-pages
+        run: npm --prefix jobs run jobs:build-pages
 
       - name: Check for publish output changes
         id: changes

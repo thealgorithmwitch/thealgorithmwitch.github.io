@@ -153,7 +153,7 @@
             box-sizing: border-box;
             background: var(--preview-bg, #fff);
             position: relative;
-            overflow: visible;
+            overflow: hidden;
         }
 
         main {
@@ -1557,8 +1557,7 @@ video {
         const manifestSize = document.getElementById('manifest-size');
         const previewZoomButton = document.getElementById('preview-zoom-btn');
         const previewOpenButton = document.getElementById('preview-open-btn');
-        const zoomModes = ['fit', 0.5, 0.75, 1];
-        let previewZoomIndex = 0;
+        let previewZoomMode = 'fit';
         let currentPreviewBlobUrl = null;
         let currentPreviewBackground = 'transparent';
 
@@ -1742,18 +1741,27 @@ ${buildScryerCaptureStyles(size.width, size.height, currentPreviewBackground || 
             const availableWidth = previewStage.clientWidth - padX;
             const availableHeight = previewStage.clientHeight - padY;
             const fitScale = Math.min(availableWidth / size.width, availableHeight / size.height, 1);
-            const mode = zoomModes[previewZoomIndex];
-            const scale = mode === 'fit' ? fitScale : Math.min(mode, fitScale);
-            const offsetLeft = (availableWidth - size.width * scale) / 2;
-            const offsetTop = (availableHeight - size.height * scale) / 2;
+            const scale = previewZoomMode === 'fit' ? fitScale : 1;
+            const stagePadLeft = parseFloat(style.paddingLeft);
+            const stagePadTop = parseFloat(style.paddingTop);
             previewFrame.style.width = `${size.width}px`;
             previewFrame.style.height = `${size.height}px`;
-            previewFrame.style.left = `${offsetLeft + parseFloat(style.paddingLeft)}px`;
-            previewFrame.style.top = `${offsetTop + parseFloat(style.paddingTop)}px`;
             previewFrame.style.transform = `scale(${scale})`;
-            previewScaleLabel.textContent = mode === 'fit'
-                ? `Scale: fit ${Math.round(scale * 100)}%`
-                : `Scale: ${Math.round(scale * 100)}%`;
+            if (previewZoomMode === 'fit') {
+                const offsetLeft = Math.max((availableWidth - size.width * scale) / 2, 0);
+                const offsetTop = Math.max((availableHeight - size.height * scale) / 2, 0);
+                previewStage.style.overflow = 'hidden';
+                previewFrame.style.left = `${offsetLeft + stagePadLeft}px`;
+                previewFrame.style.top = `${offsetTop + stagePadTop}px`;
+                previewScaleLabel.textContent = `Scale: ${Math.round(scale * 100)}%`;
+                previewZoomButton.innerHTML = '<i class="ph ph-magnifying-glass-plus text-white"></i>';
+            } else {
+                previewStage.style.overflow = 'auto';
+                previewFrame.style.left = `${stagePadLeft}px`;
+                previewFrame.style.top = `${stagePadTop}px`;
+                previewScaleLabel.textContent = 'Scale: 100%';
+                previewZoomButton.innerHTML = '<i class="ph ph-corners-in text-white"></i>';
+            }
         }
 
         function renderPreview() {
@@ -1837,7 +1845,7 @@ ${buildScryerCaptureStyles(size.width, size.height, currentPreviewBackground || 
 
         previewButton.addEventListener('click', renderPreview);
         previewZoomButton.addEventListener('click', () => {
-            previewZoomIndex = (previewZoomIndex + 1) % zoomModes.length;
+            previewZoomMode = previewZoomMode === 'fit' ? 'actual' : 'fit';
             updatePreviewScale();
         });
         previewOpenButton.addEventListener('click', () => {
@@ -1851,7 +1859,7 @@ ${buildScryerCaptureStyles(size.width, size.height, currentPreviewBackground || 
         exportButton.addEventListener('click', runExport);
         outputSize.addEventListener('change', () => {
             syncModeInputs();
-            previewZoomIndex = 0;
+            previewZoomMode = 'fit';
             renderPreview();
         });
         customWidth.addEventListener('input', renderPreview);

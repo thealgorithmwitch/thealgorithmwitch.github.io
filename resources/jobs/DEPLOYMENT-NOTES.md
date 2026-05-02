@@ -4,6 +4,10 @@
 
 Live admin persistence still depends on the Apps Script backend. After changing `jobs/backend/apps-script/Code.gs`, redeploy the Apps Script web app before using the live admin queue.
 
+GitHub repo secrets must include:
+- `JOBS_BACKEND_URL`
+- `JOBS_ADMIN_TOKEN`
+
 ## Local Testing
 
 For local workflow testing without an Apps Script admin token:

@@ -9,6 +9,7 @@ const {
 } = require("./job-utils");
 const { dedupeJobs, routeSyncedJob } = require("./job-normalizer");
 const { scrapeCustomSource } = require("./scrapers");
+const { syncJobRecordStore } = require("./public-records");
 
 function isManagedCustomJob(job, activeSourceIds) {
   return job.sync_origin === "custom" && activeSourceIds.has(String(job.source_id || ""));
@@ -71,6 +72,7 @@ async function runCustomSync() {
     logger: console,
     label: "jobs:sync-custom"
   });
+  await syncJobRecordStore(publicWriteResult.jobs, { logger: console });
   await writeJson(PENDING_SYNCED_FILE, mergedPendingJobs);
 
   Object.entries(counts).forEach(([sourceId, count]) => {

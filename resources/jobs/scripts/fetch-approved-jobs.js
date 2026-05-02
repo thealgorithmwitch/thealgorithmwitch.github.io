@@ -5,6 +5,7 @@ const {
   safeWritePublicJobs,
   JOBS_FILE
 } = require("./job-utils");
+const { syncJobRecordStore } = require("./public-records");
 
 const EMBEDDED_FALLBACK_URL =
   "https://script.google.com/macros/s/AKfycbzOziSxt4U5KDHS1uRTzhY9zuP1lxZofCbrRYBzK6PET1DjCjvxBQ3Gc7W-SRYgKcI2/exec";
@@ -79,6 +80,7 @@ async function main() {
     logger: console,
     label: "jobs:fetch-approved"
   });
+  await syncJobRecordStore(result.jobs, { logger: console });
 
   if (!result.changed) {
     console.log(`[jobs:fetch-approved] No changes to ${JOBS_FILE}.`);

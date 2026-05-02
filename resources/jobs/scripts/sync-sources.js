@@ -15,6 +15,7 @@ const {
   fetchLeverJobsForSource,
   fetchRecruiteeJobsForSource
 } = require("./ats-clients");
+const { syncJobRecordStore } = require("./public-records");
 
 const SUPPORTED_TYPES = new Set(["greenhouse", "lever", "ashby", "bamboohr", "recruitee"]);
 
@@ -137,6 +138,7 @@ async function runSyncForTypes(types = []) {
     logger: console,
     label: "jobs:sync-sources"
   });
+  await syncJobRecordStore(publicWriteResult.jobs, { logger: console });
   await writeJson(PENDING_SYNCED_FILE, mergedPendingJobs);
 
   Object.entries(counts).forEach(([sourceId, count]) => {

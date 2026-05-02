@@ -171,6 +171,7 @@ module.exports = {
   SOURCES_FILE,
   dedupeJobs,
   normalizeJob,
+  readJson,
   readJobs,
   readPendingJobs,
   readPendingSyncedJobs,

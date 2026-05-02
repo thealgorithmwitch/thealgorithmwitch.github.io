@@ -1,62 +1,41 @@
-name: Jobs Sync
+• Added a real local fallback path for admin triage and kept the existing Apps
+  Script path intact. The main changes are in jobs/admin-review.html, jobs/
+  scripts/admin-actions-store.js, jobs/scripts/snapshot-admin-actions.js, jobs/
+  scripts/apply-admin-actions.js, jobs/scripts/job-utils.js, and jobs/
+  DEPLOYMENT-NOTES.md.
 
-on:
-  workflow_dispatch:
-  schedule:
-    - cron: "0 14 * * *"
+  admin-review.html now works in local-only mode for scraped pending jobs when
+  no admin token is configured. It still queues to Apps Script when backend +
+  token are available, but it also mirrors actions into browser-local storage
+  and can export them as admin-actions-local.json. The Node scripts now prefer
+  the backend queue when configured, otherwise they read jobs/admin-actions-
+  local.json, and they print which source they used: backend queue, local action
+  file, or no actions found.
 
-permissions:
-  contents: write
+  I tested the fallback with one sample local action that published the pending
+  ACORE role. The persisted result is:
 
-env:
-  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+  - job-records.json: 5 -> 6
+  - pending-synced-jobs.json: 961 -> 960
+  - generated job pages: 5 -> 6
+  - sample generated page: jobs/pages/executive-assistant-to-the-president-ceo-
+    american-council-on-renewable-energy.html
 
-jobs:
-  sync:
-    runs-on: ubuntu-latest
+  The local action file was applied and marked persisted:
 
-    defaults:
-      run:
-        working-directory: resources/jobs
+  - records published: 1
+  - records archived/rejected: 0
+  - records left pending: 960
+  - job pages regenerated: 6
+  - local action status in jobs/admin-actions-local.json: applied
 
-    env:
-      JOBS_BACKEND_URL: ${{ secrets.JOBS_BACKEND_URL }}
-      GOOGLE_CUSTOM_SEARCH_API_KEY: ${{ secrets.GOOGLE_CUSTOM_SEARCH_API_KEY }}
-      GOOGLE_CUSTOM_SEARCH_ENGINE_ID: ${{ secrets.GOOGLE_CUSTOM_SEARCH_ENGINE_ID }}
-      SERPAPI_API_KEY: ${{ secrets.SERPAPI_API_KEY }}
+  Console behavior now looks like this:
 
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
+  - jobs:snapshot-admin-actions: using backend queue or using local action file,
+    then no actions found or snapshot count
+  - jobs:apply-admin-actions: using backend queue or using local action file,
+    then either no actions found or the publish/archive/page regeneration totals
 
-      - name: Set up Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: "24"
-          cache: npm
-          cache-dependency-path: resources/jobs/package.json
+  I also re-ran syntax checks on the updated scripts and inline admin JS; both
+  passed.
 
-      - name: Install dependencies
-        run: npm install
-
-      - name: Fetch approved jobs
-        run: npm run jobs:fetch-approved
-
-      - name: Sync configured sources
-        run: npm run jobs:sync-sources
-
-      - name: Ingest wide-search leads
-        if: ${{ env.GOOGLE_CUSTOM_SEARCH_API_KEY != '' && env.GOOGLE_CUSTOM_SEARCH_ENGINE_ID != '' || env.SERPAPI_API_KEY != '' }}
-        run: npm run jobs:search-ingest
-
-      - name: Commit updated job data
-        run: |
-          if git diff --quiet -- jobs.json pending-synced-jobs.json; then
-            echo "No job data changes to commit."
-            exit 0
-          fi
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add jobs.json pending-synced-jobs.json
-          git commit -m "Update jobs board data"
-          git push

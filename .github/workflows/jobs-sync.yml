@@ -8,37 +8,37 @@ on:
 permissions:
   contents: write
 
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
 jobs:
   sync:
     runs-on: ubuntu-latest
-    env:
-      JOBS_BACKEND_URL: ${{ secrets.JOBS_BACKEND_URL }}
-      GOOGLE_CUSTOM_SEARCH_API_KEY: ${{ secrets.GOOGLE_CUSTOM_SEARCH_API_KEY }}
-      GOOGLE_CUSTOM_SEARCH_ENGINE_ID: ${{ secrets.GOOGLE_CUSTOM_SEARCH_ENGINE_ID }}
-      SERPAPI_API_KEY: ${{ secrets.SERPAPI_API_KEY }}
+
+    defaults:
+      run:
+        working-directory: resources/jobs
 
     steps:
-      - name: Checkout repository
+      - name: Check out repository
         uses: actions/checkout@v4
 
-      - name: Set up Node.js
+      - name: Set up Node
         uses: actions/setup-node@v4
         with:
-          node-version: "20"
-          cache: npm
-          cache-dependency-path: package.json
+          node-version: 24
 
       - name: Install dependencies
         run: npm install
-      
+
       - name: Sync sources
         run: npm run jobs:sync-sources
-      
+
       - name: Fetch approved jobs
         run: npm run jobs:fetch-approved
         env:
           JOBS_BACKEND_URL: ${{ secrets.JOBS_BACKEND_URL }}
-      
+
       - name: Run search ingest
         run: npm run jobs:search-ingest
         env:
@@ -47,14 +47,10 @@ jobs:
           SERPAPI_API_KEY: ${{ secrets.SERPAPI_API_KEY }}
           JOBS_BACKEND_URL: ${{ secrets.JOBS_BACKEND_URL }}
 
-      - name: Commit updated job data
+      - name: Commit job data updates
         run: |
-          if git diff --quiet -- jobs.json pending-synced-jobs.json; then
-            echo "No job data changes to commit."
-            exit 0
-          fi
           git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
           git add jobs.json pending-synced-jobs.json
-          git commit -m "Update jobs board data"
+          git diff --cached --quiet || git commit -m "Update jobs board data"
           git push

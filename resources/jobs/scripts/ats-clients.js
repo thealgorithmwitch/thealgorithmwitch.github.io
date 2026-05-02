@@ -1,4 +1,4 @@
-const { ensureArray, stableHash, todayIso } = require("./job-normalizer");
+const { ensureArray, stableHash, stringifySafe, todayIso } = require("./job-normalizer");
 
 function ensureDefault(values) {
   return Array.isArray(values) && values.length ? values[0] : "";
@@ -33,7 +33,7 @@ function greenhouseJobToSchema(source, job) {
     organization: source.organization,
     location: deriveGreenhouseLocation(job),
     job_type: employmentType?.value || "Full-time",
-    salary: salaryMetadata?.value || "",
+    salary: salaryMetadata?.value || job.compensation || job.salary || "",
     sector: source.sector,
     function: teamMetadata?.value || ensureDefault(source.function_defaults),
     experience: levelMetadata?.value || "",
@@ -45,7 +45,8 @@ function greenhouseJobToSchema(source, job) {
     description: job.content || job.internal_job_id || "",
     tags: [source.sector, "greenhouse", ...ensureArray(source.function_defaults)].filter(Boolean),
     shared_by: "ATS Sync",
-    notes: `Synced from Greenhouse board token ${source.board_token}.`
+    notes: `Synced from Greenhouse board token ${source.board_token}.`,
+    raw_payload: job
   };
 }
 
@@ -66,31 +67,34 @@ async function fetchGreenhouseJobsForSource(source) {
 
 function leverJobToSchema(source, job) {
   const categories = job.categories || {};
-  const location = categories.location || categories.commitment || "Location listed on application";
+  const location = stringifySafe(categories.location) || stringifySafe(job.location) || "Location listed on application";
+  const salaryCandidate = job.salary || job.salaryDescriptionPlain || job.salaryDescription || job.salaryRange || job.compensation || "";
+  const descriptionCandidate = job.descriptionPlain || job.descriptionBodyPlain || job.description || job.descriptionBody || "";
 
   return {
     id: `${source.organization}-${job.id || job.text}`,
     external_id: job.id
       ? `lever_${source.id}_${job.id}`
       : `lever_${stableHash(`${source.id}:${job.text || ""}:${job.hostedUrl || job.applyUrl || ""}`)}`,
-    title: job.text,
+    title: stringifySafe(job.text) || stringifySafe(job.title),
     organization: source.organization,
     location,
-    job_type: categories.commitment || "Full-time",
+    job_type: stringifySafe(categories.commitment) || "Full-time",
     sector: source.sector,
-    function: categories.team || categories.department || ensureDefault(source.function_defaults),
-    workplace_type: categories.workplace || "",
-    experience: categories.level || "",
-    salary: String(job.salary || "").trim(),
+    function: stringifySafe(categories.team) || stringifySafe(categories.department) || ensureDefault(source.function_defaults),
+    workplace_type: stringifySafe(categories.workplace),
+    experience: stringifySafe(categories.level),
+    salary: salaryCandidate,
     source: "Lever",
-    source_url: job.hostedUrl || "",
-    apply_url: job.hostedUrl || job.applyUrl || "",
+    source_url: stringifySafe(job.hostedUrl || job.applyUrl || job.apply_url),
+    apply_url: stringifySafe(job.hostedUrl || job.applyUrl || job.apply_url),
     date_posted: job.createdAt ? new Date(job.createdAt).toISOString() : todayIso(),
-    raw_description: job.description || job.descriptionPlain || "",
-    description: job.descriptionPlain || job.description || "",
+    raw_description: job.description || job.descriptionBody || job.descriptionPlain || "",
+    description: descriptionCandidate,
     tags: [source.sector, categories.team, categories.department, "lever"].filter(Boolean),
     shared_by: "ATS Sync",
-    notes: `Synced from Lever company slug ${source.company_slug}.`
+    notes: `Synced from Lever company slug ${source.company_slug}.`,
+    raw_payload: job
   };
 }
 
@@ -110,11 +114,12 @@ async function fetchLeverJobsForSource(source) {
 }
 
 function ashbyJobToSchema(source, job) {
-  const location = job.locationName || job.location || job.primaryLocation || "Location listed on application";
+  const location = stringifySafe(job.locationName) || stringifySafe(job.location) || stringifySafe(job.primaryLocation) || "Location listed on application";
   const compensation =
     job.compensation?.summary ||
     job.salaryTierSummary ||
     job.salary ||
+    job.compensation ||
     "";
 
   return {
@@ -122,24 +127,25 @@ function ashbyJobToSchema(source, job) {
     external_id: job.id || job.jobPostingId
       ? `ashby_${source.id}_${job.id || job.jobPostingId}`
       : `ashby_${stableHash(`${source.id}:${job.title || ""}:${job.applyUrl || ""}`)}`,
-    title: job.title,
+    title: stringifySafe(job.title),
     organization: source.organization,
     location,
-    job_type: job.employmentType || job.commitment || "Full-time",
+    job_type: stringifySafe(job.employmentType) || stringifySafe(job.commitment) || "Full-time",
     sector: source.sector,
-    function: job.team?.name || job.department?.name || ensureDefault(source.function_defaults),
-    workplace_type: job.workplaceType || "",
-    experience: job.seniority || "",
-    salary: String(compensation || "").trim(),
+    function: stringifySafe(job.team?.name) || stringifySafe(job.department?.name) || ensureDefault(source.function_defaults),
+    workplace_type: stringifySafe(job.workplaceType),
+    experience: stringifySafe(job.seniority),
+    salary: compensation,
     source: "Ashby",
-    source_url: job.applyUrl || source.source_url || "",
-    apply_url: job.applyUrl || source.source_url || "",
+    source_url: stringifySafe(job.applyUrl || source.source_url),
+    apply_url: stringifySafe(job.applyUrl || source.source_url),
     date_posted: job.publishedDate || todayIso(),
     raw_description: job.descriptionHtml || job.description || "",
     description: job.description || job.descriptionHtml || "",
     tags: [source.sector, job.team?.name, job.department?.name, "ashby"].filter(Boolean),
     shared_by: "ATS Sync",
-    notes: `Synced from Ashby organization slug ${source.organization_slug}.`
+    notes: `Synced from Ashby organization slug ${source.organization_slug}.`,
+    raw_payload: job
   };
 }
 
@@ -188,23 +194,24 @@ function bambooHrJobToSchema(source, job) {
     external_id: job.id || job.jobOpeningId
       ? `bamboohr_${source.id}_${job.id || job.jobOpeningId}`
       : `bamboohr_${stableHash(`${source.id}:${job.jobTitle || job.title || ""}:${job.jobLink || source.source_url || ""}`)}`,
-    title: job.jobTitle || job.title,
+    title: stringifySafe(job.jobTitle) || stringifySafe(job.title),
     organization: source.organization,
-    location: job.location || "Location listed on application",
-    job_type: job.employmentType || "Full-time",
+    location: stringifySafe(job.location) || "Location listed on application",
+    job_type: stringifySafe(job.employmentType) || "Full-time",
     sector: source.sector,
-    function: job.department || ensureDefault(source.function_defaults),
-    workplace_type: job.workplaceType || "",
-    salary: String(job.salary || "").trim(),
+    function: stringifySafe(job.department) || ensureDefault(source.function_defaults),
+    workplace_type: stringifySafe(job.workplaceType),
+    salary: job.salary || job.compensation || job.pay || "",
     source: "BambooHR",
-    source_url: job.jobLink || source.source_url || "",
-    apply_url: job.jobLink || source.source_url || "",
+    source_url: stringifySafe(job.jobLink || source.source_url),
+    apply_url: stringifySafe(job.jobLink || source.source_url),
     date_posted: job.postedDate || todayIso(),
     raw_description: job.description || "",
     description: job.description || "",
     tags: [source.sector, job.department, "bamboohr"].filter(Boolean),
     shared_by: "ATS Sync",
-    notes: `Synced from BambooHR company slug ${source.company_slug || ""}.`
+    notes: `Synced from BambooHR company slug ${source.company_slug || ""}.`,
+    raw_payload: job
   };
 }
 
@@ -227,28 +234,43 @@ async function fetchBambooHrJobsForSource(source) {
 }
 
 function recruiteeJobToSchema(source, job) {
+  const descriptionCandidate =
+    stringifySafe(job.translations?.en?.description) ||
+    stringifySafe(job.description) ||
+    stringifySafe(job.description_html) ||
+    "";
+  const salaryCandidate =
+    job.salary ||
+    job.compensation ||
+    job.pay ||
+    job.translations?.en?.salary ||
+    job.translations?.en?.compensation ||
+    job.raw_compensation ||
+    "";
+
   return {
     id: `${source.organization}-${job.id || job.slug || job.title}`,
     external_id: job.id
       ? `recruitee_${source.id}_${job.id}`
       : `recruitee_${stableHash(`${source.id}:${job.title || ""}:${job.careers_url || job.url || ""}`)}`,
-    title: job.title,
+    title: stringifySafe(job.title),
     organization: source.organization,
-    location: job.location || "Location listed on application",
-    job_type: job.employment_type || "Full-time",
+    location: stringifySafe(job.location) || "Location listed on application",
+    job_type: stringifySafe(job.employment_type) || "Full-time",
     sector: source.sector,
-    function: job.department || job.team || ensureDefault(source.function_defaults),
-    workplace_type: job.remote ? "Remote" : "",
-    salary: String(job.salary || "").trim(),
+    function: stringifySafe(job.department) || stringifySafe(job.team) || ensureDefault(source.function_defaults),
+    workplace_type: job.remote ? "Remote" : stringifySafe(job.workplace_type),
+    salary: salaryCandidate,
     source: "Recruitee",
-    source_url: job.careers_url || job.url || source.source_url || "",
-    apply_url: job.careers_url || job.url || source.source_url || "",
+    source_url: stringifySafe(job.careers_url || job.url || source.source_url),
+    apply_url: stringifySafe(job.careers_url || job.url || source.source_url),
     date_posted: job.created_at || todayIso(),
-    raw_description: job.description_html || job.description || "",
-    description: job.description || job.description_html || "",
+    raw_description: job.description_html || descriptionCandidate || "",
+    description: descriptionCandidate || job.description_html || "",
     tags: [source.sector, job.department, job.team, "recruitee"].filter(Boolean),
     shared_by: "ATS Sync",
-    notes: `Synced from Recruitee company slug ${source.company_slug}.`
+    notes: `Synced from Recruitee company slug ${source.company_slug}.`,
+    raw_payload: job
   };
 }
 

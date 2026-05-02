@@ -1,6 +1,6 @@
 const fs = require("fs/promises");
 const path = require("path");
-const { dedupeJobs, normalizeJob, slugify, todayIso } = require("./job-normalizer");
+const { dedupeJobs, normalizeJob, slugify, stringifySafe, todayIso } = require("./job-normalizer");
 
 const ROOT = path.resolve(__dirname, "..");
 const JOBS_FILE = path.join(ROOT, "jobs.json");
@@ -21,7 +21,7 @@ async function readJson(filePath, fallback) {
 }
 
 async function writeJson(filePath, data) {
-  const next = JSON.stringify(data, null, 2) + "\n";
+  const next = JSON.stringify(sanitizeForWrite(filePath, data), null, 2) + "\n";
   await fs.writeFile(filePath, next, "utf8");
 }
 
@@ -29,8 +29,78 @@ function serializeJson(data) {
   return JSON.stringify(data, null, 2) + "\n";
 }
 
+const PUBLIC_STRING_FIELDS = new Set([
+  "id",
+  "ref",
+  "external_id",
+  "source_id",
+  "source_type",
+  "title",
+  "organization",
+  "location",
+  "workplace_type",
+  "job_type",
+  "salary",
+  "raw_salary",
+  "salary_currency",
+  "salary_period",
+  "sector",
+  "function",
+  "experience",
+  "source",
+  "source_url",
+  "apply_url",
+  "status",
+  "approved_by",
+  "raw_description",
+  "description",
+  "shared_by",
+  "notes",
+  "review_reason",
+  "confidence",
+  "sync_origin"
+]);
+
+function sanitizePublicJob(job) {
+  if (!job || typeof job !== "object") return job;
+  const normalized = normalizeJob(job);
+  return normalized;
+}
+
+function sanitizeRecursive(value) {
+  if (value === null || value === undefined) return value;
+  if (typeof value === "string") {
+    return value.includes("[object Object]") ? "" : value;
+  }
+  if (Array.isArray(value)) {
+    return value.map((item) => sanitizeRecursive(item));
+  }
+  if (typeof value === "object") {
+    const out = {};
+    for (const [key, next] of Object.entries(value)) {
+      if (PUBLIC_STRING_FIELDS.has(key)) {
+        out[key] = stringifySafe(next);
+        continue;
+      }
+      out[key] = sanitizeRecursive(next);
+    }
+    return out;
+  }
+  return value;
+}
+
+function sanitizeForWrite(filePath, data) {
+  const basename = path.basename(filePath);
+  if (basename === "jobs.json" || basename === "pending-synced-jobs.json") {
+    if (Array.isArray(data)) {
+      return data.map((job) => sanitizeRecursive(sanitizePublicJob(job)));
+    }
+  }
+  return sanitizeRecursive(data);
+}
+
 async function writeJsonIfChanged(filePath, data) {
-  const next = serializeJson(data);
+  const next = serializeJson(sanitizeForWrite(filePath, data));
   let current = null;
   try {
     current = await fs.readFile(filePath, "utf8");

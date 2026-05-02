@@ -1,23 +1,23 @@
 const assert = require("assert");
-const { normalizeDescription, parseSalaryRange } = require("./job-normalizer");
+const { extractSalaryText, normalizeDescription, normalizeJob, parseSalaryRange, stringifySafe } = require("./job-normalizer");
 
 const salaryCases = [
-  { input: "$80,000 - $100,000", min: 80000, max: 100000, currency: "USD", period: "Unknown", visible: true },
-  { input: "$80k-$100k", min: 80000, max: 100000, currency: "USD", period: "Unknown", visible: true },
-  { input: "USD 80k – 100k", min: 80000, max: 100000, currency: "USD", period: "Unknown", visible: true },
-  { input: "CA$90k–CA$120k", min: 90000, max: 120000, currency: "CAD", period: "Unknown", visible: true },
-  { input: "CAD $90,000 to $120,000", min: 90000, max: 120000, currency: "CAD", period: "Unknown", visible: true },
-  { input: "€70k - €90k", min: 70000, max: 90000, currency: "EUR", period: "Unknown", visible: true },
-  { input: "EUR 70,000–90,000", min: 70000, max: 90000, currency: "EUR", period: "Unknown", visible: true },
-  { input: "£60k–£85k", min: 60000, max: 85000, currency: "GBP", period: "Unknown", visible: true },
-  { input: "$35/hr", min: 35, max: 35, currency: "USD", period: "hourly", visible: true },
-  { input: "$800/day", min: 800, max: 800, currency: "USD", period: "daily", visible: true },
-  { input: "$5k/mo", min: 5000, max: 5000, currency: "USD", period: "monthly", visible: true },
-  { input: "$5,000/month", min: 5000, max: 5000, currency: "USD", period: "monthly", visible: true },
+  { input: "$80,000 - $100,000", min: 80000, max: 100000, currency: "USD", period: "year", visible: true },
+  { input: "$80k-$100k", min: 80000, max: 100000, currency: "USD", period: "year", visible: true },
+  { input: "USD 80k – 100k", min: 80000, max: 100000, currency: "USD", period: "year", visible: true },
+  { input: "CA$90k–CA$120k", min: 90000, max: 120000, currency: "CAD", period: "year", visible: true },
+  { input: "CAD $90,000 to $120,000", min: 90000, max: 120000, currency: "CAD", period: "year", visible: true },
+  { input: "€70k - €90k", min: 70000, max: 90000, currency: "EUR", period: "year", visible: true },
+  { input: "EUR 70,000–90,000", min: 70000, max: 90000, currency: "EUR", period: "year", visible: true },
+  { input: "£60k–£85k", min: 60000, max: 85000, currency: "GBP", period: "year", visible: true },
+  { input: "$35/hr", min: 35, max: 35, currency: "USD", period: "hour", visible: true },
+  { input: "$800/day", min: 800, max: 800, currency: "USD", period: "day", visible: true },
+  { input: "$5k/mo", min: 5000, max: 5000, currency: "USD", period: "month", visible: true },
+  { input: "$5,000/month", min: 5000, max: 5000, currency: "USD", period: "month", visible: true },
   { input: "Salary not listed", min: null, max: null, currency: "Unknown", period: "Unknown", visible: false },
   { input: "Competitive", min: null, max: null, currency: "Unknown", period: "Unknown", visible: true, salary: "Competitive" },
-  { input: "Up to $120k", min: null, max: 120000, currency: "USD", period: "Unknown", visible: true },
-  { input: "Starting at $75k", min: 75000, max: null, currency: "USD", period: "Unknown", visible: true }
+  { input: "Up to $120k", min: null, max: 120000, currency: "USD", period: "year", visible: true },
+  { input: "Starting at $75k", min: 75000, max: null, currency: "USD", period: "year", visible: true }
 ];
 
 for (const testCase of salaryCases) {
@@ -45,11 +45,34 @@ const descriptionInput = `
 `;
 
 const normalizedDescription = normalizeDescription(descriptionInput);
-assert.strictEqual(normalizedDescription.raw_description, descriptionInput);
+assert.ok(normalizedDescription.raw_description.includes("Acme Climate builds planning software for decarbonization teams."));
+assert.ok(normalizedDescription.raw_description.includes("equal opportunity employer"));
 assert.ok(!/<[^>]+>/.test(normalizedDescription.description), "description should not contain HTML");
 assert.ok(!/equal opportunity employer/i.test(normalizedDescription.description), "boilerplate should be removed");
 assert.ok(/Acme Climate builds planning software for decarbonization teams\./.test(normalizedDescription.description));
 assert.ok(/You will own customer-facing product strategy and partner closely with design and engineering\./.test(normalizedDescription.description));
 assert.ok(/The role also supports go-to-market teams with launch messaging and rollout planning\./.test(normalizedDescription.description));
+assert.ok(normalizedDescription.description.split(/[.!?]+\s+/).filter(Boolean).length >= 3);
+
+const leverLikeJob = {
+  title: "Deputy Press Secretary",
+  organization: "Sierra Club",
+  location: "Washington, DC",
+  description: "The salary range for this position is $75,000 - $95,000. This role leads media strategy across national campaigns. The team partners with policy, organizing, and creative staff. Candidates should be strong writers who can coordinate rapid response and long-term storytelling.",
+  raw_payload: {
+    descriptionPlain: "The salary range for this position is $75,000 - $95,000. This role leads media strategy across national campaigns. The team partners with policy, organizing, and creative staff. Candidates should be strong writers who can coordinate rapid response and long-term storytelling."
+  }
+};
+
+assert.strictEqual(extractSalaryText(leverLikeJob), "salary range for this position is $75,000 - $95,000");
+const normalizedLeverJob = normalizeJob(leverLikeJob);
+assert.strictEqual(normalizedLeverJob.salary_visible, true);
+assert.strictEqual(normalizedLeverJob.salary_min, 75000);
+assert.strictEqual(normalizedLeverJob.salary_max, 95000);
+assert.strictEqual(normalizedLeverJob.salary_currency, "USD");
+assert.strictEqual(normalizedLeverJob.salary_period, "year");
+
+assert.strictEqual(stringifySafe({ value: "$60,000 - $70,000" }), "$60,000 - $70,000");
+assert.strictEqual(stringifySafe({ unexpected: "ignored" }), "");
 
 console.log("test-normalizer: all checks passed");

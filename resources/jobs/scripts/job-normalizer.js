@@ -1,7 +1,7 @@
 const crypto = require("crypto");
 
 const VALID_CURRENCIES = new Set(["USD", "CAD", "EUR", "GBP", "Unknown"]);
-const VALID_PERIODS = new Set(["hourly", "daily", "monthly", "yearly", "Unknown"]);
+const VALID_PERIODS = new Set(["hour", "day", "month", "year", "Unknown"]);
 const COMMON_ENTITY_MAP = {
   nbsp: " ",
   amp: "&",
@@ -21,6 +21,23 @@ const UK_PATTERN =
   /uk|united kingdom|england|scotland|wales|northern ireland|london|manchester|birmingham|glasgow|edinburgh/i;
 const EU_PATTERN =
   /austria|belgium|bulgaria|croatia|cyprus|czech republic|czechia|denmark|estonia|finland|france|germany|greece|hungary|ireland|italy|latvia|lithuania|luxembourg|malta|netherlands|poland|portugal|romania|slovakia|slovenia|spain|sweden|european union|\beu\b|berlin|paris|amsterdam|madrid|barcelona|lisbon|dublin|brussels|vienna|stockholm|helsinki|rome|milan/i;
+
+const PRIORITY_OBJECT_KEYS = [
+  "name",
+  "title",
+  "value",
+  "label",
+  "text",
+  "summary",
+  "location",
+  "department",
+  "team",
+  "description",
+  "descriptionPlain",
+  "content",
+  "html",
+  "url"
+];
 
 function slugify(value) {
   return String(value || "")
@@ -42,6 +59,40 @@ function isValidDate(value) {
   return !Number.isNaN(Date.parse(value));
 }
 
+function normalizeWhitespace(value) {
+  return String(value || "")
+    .replace(/\u00a0/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function stringifySafe(value) {
+  if (value === null || value === undefined) return "";
+  if (typeof value === "string") {
+    return value.includes("[object Object]") ? "" : value;
+  }
+  if (typeof value === "number") {
+    return Number.isFinite(value) ? String(value) : "";
+  }
+  if (typeof value === "boolean") {
+    return value ? "true" : "false";
+  }
+  if (Array.isArray(value)) {
+    return value
+      .map((item) => stringifySafe(item))
+      .filter(Boolean)
+      .join(", ");
+  }
+  if (typeof value === "object") {
+    for (const key of PRIORITY_OBJECT_KEYS) {
+      const next = stringifySafe(value[key]);
+      if (next) return next;
+    }
+    return "";
+  }
+  return "";
+}
+
 function ensureArray(value) {
   if (Array.isArray(value)) {
     return value.filter(Boolean);
@@ -53,24 +104,6 @@ function ensureArray(value) {
       .filter(Boolean);
   }
   return [];
-}
-
-function coerceText(value) {
-  if (value === null || value === undefined) return "";
-  if (typeof value === "string") return value;
-  if (typeof value === "number" || typeof value === "boolean") return String(value);
-  if (Array.isArray(value)) return value.map((item) => coerceText(item)).filter(Boolean).join(", ");
-  if (typeof value === "object") {
-    for (const key of ["summary", "display", "text", "label", "name", "salary", "compensation", "description", "html"]) {
-      if (typeof value[key] === "string" && value[key].trim()) return value[key];
-    }
-    try {
-      return JSON.stringify(value);
-    } catch (_error) {
-      return String(value);
-    }
-  }
-  return String(value);
 }
 
 function decodeHtmlEntities(value) {
@@ -90,35 +123,55 @@ function decodeHtmlEntities(value) {
 }
 
 function stripHtml(value) {
-  return decodeHtmlEntities(String(value || ""))
-    .replace(/<style[\s\S]*?<\/style>/gi, " ")
-    .replace(/<script[\s\S]*?<\/script>/gi, " ")
-    .replace(/<br\s*\/?>/gi, ". ")
-    .replace(/<\/p>|<\/div>|<\/li>|<\/section>|<\/article>|<\/h[1-6]>/gi, ". ")
-    .replace(/<[^>]*>/g, " ")
-    .replace(/\s+/g, " ")
-    .replace(/\s+([.,!?;:])/g, "$1")
-    .trim();
+  return normalizeWhitespace(
+    decodeHtmlEntities(String(value || ""))
+      .replace(/<style[\s\S]*?<\/style>/gi, " ")
+      .replace(/<script[\s\S]*?<\/script>/gi, " ")
+      .replace(/<br\s*\/?>/gi, ". ")
+      .replace(/<\/p>|<\/div>|<\/li>|<\/section>|<\/article>|<\/h[1-6]>|<\/tr>/gi, ". ")
+      .replace(/<li[^>]*>/gi, " ")
+      .replace(/<[^>]*>/g, " ")
+      .replace(/\s+([.,!?;:])/g, "$1")
+  );
+}
+
+function flattenTextValues(value, seen = new Set()) {
+  if (value === null || value === undefined) return [];
+  if (typeof value === "string") return [value];
+  if (typeof value === "number") return Number.isFinite(value) ? [String(value)] : [];
+  if (typeof value === "boolean") return [];
+  if (Array.isArray(value)) {
+    return value.flatMap((item) => flattenTextValues(item, seen));
+  }
+  if (typeof value === "object") {
+    if (seen.has(value)) return [];
+    seen.add(value);
+    const prioritized = PRIORITY_OBJECT_KEYS.flatMap((key) => flattenTextValues(value[key], seen));
+    const rest = Object.entries(value)
+      .filter(([key]) => !PRIORITY_OBJECT_KEYS.includes(key))
+      .flatMap(([, next]) => flattenTextValues(next, seen));
+    return [...prioritized, ...rest];
+  }
+  return [];
+}
+
+function cleanFlattenedText(value) {
+  return normalizeWhitespace(stripHtml(flattenTextValues(value).join(" ")));
 }
 
 function detectSalaryCurrency(salary, location) {
-  const salaryText = coerceText(salary).trim();
-  const locationText = String(location || "").trim().toLowerCase();
+  const salaryText = normalizeWhitespace(stringifySafe(salary) || cleanFlattenedText(salary));
+  const locationText = normalizeWhitespace(stringifySafe(location)).toLowerCase();
 
-  if (!salaryText) {
-    return "Unknown";
-  }
-
+  if (!salaryText) return "Unknown";
   if (/\b(?:CAD|CA\$)\b/i.test(salaryText) || /CA\$/i.test(salaryText)) return "CAD";
   if (/\b(?:USD|US\$)\b/i.test(salaryText) || /US\$/i.test(salaryText)) return "USD";
   if (/\bEUR\b/i.test(salaryText) || /€/i.test(salaryText)) return "EUR";
   if (/\bGBP\b/i.test(salaryText) || /£/i.test(salaryText)) return "GBP";
-
   if (/\$/i.test(salaryText)) {
     if (CANADA_PATTERN.test(locationText)) return "CAD";
     return "USD";
   }
-
   if (CANADA_PATTERN.test(locationText)) return "CAD";
   if (UK_PATTERN.test(locationText)) return "GBP";
   if (EU_PATTERN.test(locationText)) return "EUR";
@@ -126,12 +179,12 @@ function detectSalaryCurrency(salary, location) {
 }
 
 function detectSalaryPeriod(salary) {
-  const text = coerceText(salary).toLowerCase();
-  if (!text.trim()) return "Unknown";
-  if (/(per hour|\/\s*hour|\/\s*hr|\bhr\b|\bhourly\b)/i.test(text)) return "hourly";
-  if (/(per day|\/\s*day|\bdaily\b)/i.test(text)) return "daily";
-  if (/(per month|\/\s*month|\/\s*mo\b|\bmonthly\b|\bmo\b)/i.test(text)) return "monthly";
-  if (/(per year|\/\s*year|\/\s*yr|\bannual\b|\byearly\b|\ba year\b|annually|per annum)/i.test(text)) return "yearly";
+  const text = normalizeWhitespace(stringifySafe(salary) || cleanFlattenedText(salary)).toLowerCase();
+  if (!text) return "Unknown";
+  if (/(per hour|\/\s*hour|\/\s*hr|\bhr\b|\bhourly\b)/i.test(text)) return "hour";
+  if (/(per day|\/\s*day|\bdaily\b)/i.test(text)) return "day";
+  if (/(per month|\/\s*month|\/\s*mo\b|\bmonthly\b|\bmo\b)/i.test(text)) return "month";
+  if (/(per year|\/\s*year|\/\s*yr|\bannual\b|\byearly\b|\ba year\b|annually|per annum)/i.test(text)) return "year";
   return "Unknown";
 }
 
@@ -144,8 +197,128 @@ function normalizeSalaryValue(rawNumber, multiplierToken) {
   return Math.round(base);
 }
 
+function normalizeSalaryPeriodToken(value) {
+  const text = normalizeWhitespace(stringifySafe(value)).toLowerCase();
+  if (!text) return "";
+  if (/(hour|hourly|hr)/i.test(text)) return "per hour";
+  if (/(day|daily)/i.test(text)) return "per day";
+  if (/(month|monthly|mo)/i.test(text)) return "per month";
+  if (/(year|yearly|annual|annually|yr)/i.test(text)) return "per year";
+  return "";
+}
+
+function salaryCandidateToText(value) {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return "";
+
+  const direct = [
+    value.summary,
+    value.description,
+    value.text,
+    value.value,
+    value.amount,
+    value.range,
+    value.salary
+  ]
+    .map((item) => normalizeWhitespace(stringifySafe(item)))
+    .find(Boolean);
+  if (direct) return direct;
+
+  const min = value.minAmount ?? value.minimum ?? value.min ?? value.from;
+  const max = value.maxAmount ?? value.maximum ?? value.max ?? value.to;
+  const currency = normalizeWhitespace(stringifySafe(value.currency || value.currencyCode));
+  const period = normalizeSalaryPeriodToken(value.period || value.interval || value.unit);
+  const minValue = Number.isFinite(Number(min)) ? Number(min) : null;
+  const maxValue = Number.isFinite(Number(max)) ? Number(max) : null;
+
+  if (minValue === null && maxValue === null) return "";
+
+  const format = (amount) => {
+    if (!Number.isFinite(amount)) return "";
+    const rounded = Math.round(amount * 100) / 100;
+    return Number.isInteger(rounded) ? String(rounded) : rounded.toFixed(2);
+  };
+
+  if (minValue !== null && maxValue !== null) {
+    return normalizeWhitespace(`${currency} ${format(minValue)} - ${format(maxValue)} ${period}`.trim());
+  }
+  if (minValue !== null) {
+    return normalizeWhitespace(`${currency} starting at ${format(minValue)} ${period}`.trim());
+  }
+  return normalizeWhitespace(`${currency} up to ${format(maxValue)} ${period}`.trim());
+}
+
+function findBestSalaryMatch(text) {
+  const cleaned = normalizeWhitespace(stripHtml(text));
+  if (!cleaned) return "";
+
+  const matchers = [
+    /(?:annual salary range is|salary range(?: for this position)? is|salary for this position is|compensation range:?|pay range:?|salary:?|compensation:?|pay:?|wage:?|rate:?)[^.]{0,160}(?:USD|CAD|EUR|GBP|US\$|CA\$|[$€£])\s*\d[\d,]*(?:\.\d+)?\s*[kKmM]?(?:\s*(?:-|–|—|to)\s*(?:USD|CAD|EUR|GBP|US\$|CA\$|[$€£])?\s*\d[\d,]*(?:\.\d+)?\s*[kKmM]?)?(?:\s*(?:hourly|daily|monthly|annual|annually|per hour|per day|per month|per year|\/hr|\/hour|\/day|\/month|\/mo|\/year|\/yr))?/i,
+    /(?:starting at|up to)\s*(?:USD|CAD|EUR|GBP|US\$|CA\$|[$€£])\s*\d[\d,]*(?:\.\d+)?\s*[kKmM]?(?:\s*(?:hourly|daily|monthly|annual|annually|per hour|per day|per month|per year|\/hr|\/hour|\/day|\/month|\/mo|\/year|\/yr))?/i,
+    /(?:USD|CAD|EUR|GBP|US\$|CA\$|[$€£])\s*\d[\d,]*(?:\.\d+)?\s*[kKmM]?\s*(?:-|–|—|to)\s*(?:USD|CAD|EUR|GBP|US\$|CA\$|[$€£])?\s*\d[\d,]*(?:\.\d+)?\s*[kKmM]?(?:\s*(?:hourly|daily|monthly|annual|annually|per hour|per day|per month|per year|\/hr|\/hour|\/day|\/month|\/mo|\/year|\/yr))?/i,
+    /(?:USD|CAD|EUR|GBP|US\$|CA\$|[$€£])\s*\d[\d,]*(?:\.\d+)?\s*[kKmM]?(?:\s*(?:hourly|daily|monthly|annual|annually|per hour|per day|per month|per year|\/hr|\/hour|\/day|\/month|\/mo|\/year|\/yr))/i,
+    /\b(?:competitive salary|competitive compensation|salary not listed|compensation not listed|pay not listed|salary unavailable|compensation unavailable|not disclosed|undisclosed)\b/i
+  ];
+
+  for (const matcher of matchers) {
+    const match = cleaned.match(matcher);
+    if (match && match[0]) {
+      return normalizeWhitespace(match[0].replace(/\s+([.,!?;:])/g, "$1"));
+    }
+  }
+  return "";
+}
+
+function extractSalaryText(job = {}) {
+  const explicitCandidates = [
+    job.salary,
+    job.compensation,
+    job.pay,
+    job.pay_range,
+    job.wage,
+    job.rate,
+    job.salaryRange,
+    job.salaryDescription,
+    job.salaryDescriptionPlain,
+    job.raw_payload?.salary,
+    job.raw_payload?.compensation,
+    job.raw_payload?.pay,
+    job.raw_payload?.pay_range,
+    job.raw_payload?.wage,
+    job.raw_payload?.rate,
+    job.raw_payload?.salaryRange,
+    job.raw_payload?.salaryDescription,
+    job.raw_payload?.salaryDescriptionPlain
+  ];
+
+  for (const candidate of explicitCandidates) {
+    const text = normalizeWhitespace(salaryCandidateToText(candidate) || stringifySafe(candidate) || cleanFlattenedText(candidate));
+    if (!text) continue;
+    return findBestSalaryMatch(text) || text;
+  }
+
+  const secondaryCandidates = [
+    job.metadata,
+    job.description,
+    job.raw_description,
+    job.descriptionPlain,
+    job.content,
+    job.lists,
+    job.requirements,
+    job.responsibilities,
+    job.raw_payload,
+    job
+  ];
+
+  for (const candidate of secondaryCandidates) {
+    const matched = findBestSalaryMatch(candidate);
+    if (matched) return matched;
+  }
+
+  return "";
+}
+
 function parseSalaryRange(salary, location) {
-  const rawSalary = coerceText(salary);
+  const rawSalary = normalizeWhitespace(stringifySafe(salary) || cleanFlattenedText(salary));
   const salaryText = rawSalary.trim();
   const salaryCurrency = salaryText ? detectSalaryCurrency(salaryText, location) : "Unknown";
   const salaryPeriod = salaryText ? detectSalaryPeriod(salaryText) : "Unknown";
@@ -159,9 +332,7 @@ function parseSalaryRange(salary, location) {
     salary_visible: false
   };
 
-  if (!salaryText) {
-    return empty;
-  }
+  if (!salaryText) return empty;
 
   if (/\b(?:salary not listed|compensation not listed|pay not listed|salary unavailable|compensation unavailable|not disclosed|undisclosed)\b/i.test(salaryText)) {
     return empty;
@@ -191,7 +362,6 @@ function parseSalaryRange(salary, location) {
 
   let salaryMin = null;
   let salaryMax = null;
-
   if (amounts.length > 1) {
     salaryMin = Math.min(amounts[0], amounts[1]);
     salaryMax = Math.max(amounts[0], amounts[1]);
@@ -210,30 +380,21 @@ function parseSalaryRange(salary, location) {
     salary_min: salaryMin,
     salary_max: salaryMax,
     salary_currency: salaryCurrency,
-    salary_period: salaryPeriod,
+    salary_period:
+      salaryPeriod !== "Unknown"
+        ? salaryPeriod
+        : amounts.some((amount) => amount >= 1000 || /[kKmM]/.test(text))
+          ? "year"
+          : "Unknown",
     salary_visible: true
   };
 }
 
 function splitIntoSentences(value) {
-  return String(value || "")
-    .match(/[^.!?]+[.!?]+|[^.!?]+$/g) || [];
+  return normalizeWhitespace(value).match(/[^.!?]+[.!?]+|[^.!?]+$/g) || [];
 }
 
-function normalizeDescription(description) {
-  const rawDescription = coerceText(description);
-  const cleaned = stripHtml(rawDescription)
-    .replace(/\b(?:about us|about the company|about the role|job summary|role overview|what you’ll do|what you will do|responsibilities|requirements|qualifications|preferred qualifications|benefits)\s*:?/gi, "")
-    .replace(/\s+/g, " ")
-    .trim();
-
-  if (!cleaned) {
-    return {
-      raw_description: rawDescription,
-      description: ""
-    };
-  }
-
+function removeBoilerplateSentences(sentences) {
   const boilerplatePatterns = [
     /equal opportunity/i,
     /all qualified applicants/i,
@@ -247,99 +408,175 @@ function normalizeDescription(description) {
     /candidate data/i,
     /employment is contingent/i,
     /veteran status/i,
-    /gender identity/i
+    /gender identity/i,
+    /race, color, religion/i,
+    /without regard to/i,
+    /apply now/i,
+    /click here to apply/i,
+    /our destinies are tied/i,
+    /network of \d+ local chapters/i
   ];
 
-  const sentences = splitIntoSentences(cleaned)
-    .map((sentence) => sentence.replace(/\s+/g, " ").trim())
-    .filter((sentence) => sentence.length > 25)
-    .filter((sentence) => !boilerplatePatterns.some((pattern) => pattern.test(sentence)));
+  return sentences.filter((sentence) => !boilerplatePatterns.some((pattern) => pattern.test(sentence)));
+}
 
-  const summarySentences = [];
-  for (const sentence of sentences) {
-    if (summarySentences.includes(sentence)) continue;
-    summarySentences.push(sentence);
-    if (summarySentences.length === 5) break;
+function normalizeDescription(description) {
+  const rawDescription = normalizeWhitespace(stringifySafe(description) || cleanFlattenedText(description));
+  const cleaned = normalizeWhitespace(
+    stripHtml(rawDescription)
+      .replace(
+        /\b(?:job title|department|location|reports to|supervises)\s*:\s*[\s\S]*?(?=(?:job title|department|location|reports to|supervises|duration|context|scope|role overview|about us|what you(?:'|’)ll do)\s*:|$)/gi,
+        " "
+      )
+      .replace(/\b(?:about us|about the company|about the role|job summary|role overview|what you’ll do|what you will do|responsibilities|requirements|qualifications|preferred qualifications|benefits|details|context|scope|what you bring)\s*:?/gi, " ")
+      .replace(/\b(?:job title|department|reports to|supervises|duration|location)\s*:/gi, " ")
+      .replace(/\.\s*\./g, ". ")
+  );
+
+  if (!cleaned) {
+    return {
+      raw_description: rawDescription,
+      description: ""
+    };
   }
 
-  const selected = summarySentences.length > 3 ? summarySentences.slice(0, 4) : summarySentences;
+  let sentences = splitIntoSentences(cleaned)
+    .map((sentence) => normalizeWhitespace(sentence))
+    .filter((sentence) => sentence.length >= 35);
+
+  sentences = removeBoilerplateSentences(sentences)
+    .filter((sentence) => !/^(job title|department|reports to|location|duration)\b/i.test(sentence))
+    .filter((sentence) => !/^[A-Z][a-z]+(?:\s+[A-Z][a-z]+){0,2}$/.test(sentence))
+    .filter((sentence) => /[a-z]{3,}\s+(?:is|are|will|can|should|must|plans|coordinates|executes|supports|manages|builds|seeks|works|develops|leads|drives|partners)/i.test(sentence));
+
+  const prioritySentences = sentences.filter((sentence) => {
+    return /(role|position|responsible|support|manage|lead|coordinate|develop|partner|build|work with|candidate|team|mission|focus|scope)/i.test(sentence);
+  });
+
+  const selected = [];
+  for (const sentence of [...prioritySentences, ...sentences]) {
+    if (selected.includes(sentence)) continue;
+    selected.push(sentence);
+    if (selected.length === 5) break;
+  }
+
   return {
     raw_description: rawDescription,
     description: selected.join(" ").trim() || cleaned
   };
 }
 
+function extractDescriptionText(job = {}) {
+  const directCandidates = [
+    job.description,
+    job.raw_description,
+    job.descriptionPlain,
+    job.content,
+    job.summary
+  ];
+
+  for (const candidate of directCandidates) {
+    const text = normalizeWhitespace(stringifySafe(candidate) || cleanFlattenedText(candidate));
+    if (text.length >= 80) return text;
+  }
+
+  const built = cleanFlattenedText({
+    description: job.description,
+    raw_description: job.raw_description,
+    descriptionPlain: job.descriptionPlain,
+    content: job.content,
+    requirements: job.requirements,
+    responsibilities: job.responsibilities,
+    lists: job.lists,
+    team: job.team,
+    department: job.department,
+    raw_payload: job.raw_payload
+  });
+  return built;
+}
+
+function safeStringField(value, fallback = "") {
+  const text = normalizeWhitespace(stringifySafe(value));
+  return text || fallback;
+}
+
+function resolveNumericField(value) {
+  if (value === null || value === undefined || value === "") return null;
+  const numeric = Number(value);
+  return Number.isFinite(numeric) ? numeric : null;
+}
+
 function normalizeJob(input = {}) {
-  const title = String(input.title || "").trim();
-  const organization = String(input.organization || "").trim();
-  const applyUrl = String(input.apply_url || input.applyUrl || "").trim();
-  const location = String(input.location || "Remote").trim();
-  const salaryInput = input.raw_salary !== undefined && input.raw_salary !== null ? input.raw_salary : input.salary;
-  const salaryShape = parseSalaryRange(salaryInput, location);
-  const salary = coerceText(input.salary || salaryShape.salary || "").trim();
-  const datePosted = String(input.date_posted || input.datePosted || "").trim();
-  const dateAdded = String(input.date_added || input.dateAdded || datePosted || todayIso()).trim();
-  const dateUpdated = String(input.date_updated || input.dateUpdated || datePosted || todayIso()).trim();
-  const explicitCurrency = String(input.salary_currency || input.salaryCurrency || "").trim();
-  const explicitPeriod = String(input.salary_period || input.salaryPeriod || "").trim().toLowerCase();
-  const descriptionShape = normalizeDescription(
-    input.raw_description !== undefined && input.raw_description !== null ? input.raw_description : input.description
-  );
-  const resolvedSalaryVisible =
-    typeof input.salary_visible === "boolean" ? input.salary_visible : salaryShape.salary_visible;
+  const title = safeStringField(input.title);
+  const organization = safeStringField(input.organization);
+  const applyUrl = safeStringField(input.apply_url || input.applyUrl);
+  const location = safeStringField(input.location, "Remote");
+  const salaryText = extractSalaryText(input);
+  const salaryShape = parseSalaryRange(salaryText, location);
+  const explicitCurrency = safeStringField(input.salary_currency || input.salaryCurrency);
+  const explicitPeriod = safeStringField(input.salary_period || input.salaryPeriod);
+  const descriptionCandidate = extractDescriptionText(input);
+  const descriptionShape = normalizeDescription(descriptionCandidate);
+  const resolvedSalaryVisible = salaryText
+    ? (typeof input.salary_visible === "boolean" ? input.salary_visible : salaryShape.salary_visible)
+    : false;
+  const datePosted = safeStringField(input.date_posted || input.datePosted);
+  const dateAdded = safeStringField(input.date_added || input.dateAdded || datePosted || todayIso());
+  const dateUpdated = safeStringField(input.date_updated || input.dateUpdated || datePosted || todayIso());
   const id =
-    String(input.id || "").trim() ||
+    safeStringField(input.id) ||
     [organization, title, datePosted || todayIso()].map(slugify).filter(Boolean).join("-");
 
-  const tags = ensureArray(input.tags).map((tag) => String(tag).trim().toLowerCase());
+  const tags = ensureArray(input.tags)
+    .map((tag) => normalizeWhitespace(stringifySafe(tag)))
+    .filter(Boolean)
+    .map((tag) => tag.toLowerCase());
 
   return {
     id,
-    ref: String(input.ref || "").trim(),
-    external_id: String(input.external_id || input.externalId || "").trim(),
-    source_id: String(input.source_id || input.sourceId || "").trim(),
-    source_type: String(input.source_type || input.sourceType || "").trim(),
+    ref: safeStringField(input.ref),
+    external_id: safeStringField(input.external_id || input.externalId),
+    source_id: safeStringField(input.source_id || input.sourceId),
+    source_type: safeStringField(input.source_type || input.sourceType),
     title,
     organization,
     location,
-    workplace_type: String(input.workplace_type || input.workplaceType || "").trim(),
-    job_type: String(input.job_type || input.jobType || "Full-time").trim(),
-    salary: resolvedSalaryVisible ? salary || salaryShape.salary : "",
-    raw_salary: input.raw_salary !== undefined && input.raw_salary !== null ? coerceText(input.raw_salary) : salaryShape.raw_salary,
-    salary_min: Number.isFinite(Number(input.salary_min)) ? Number(input.salary_min) : salaryShape.salary_min,
-    salary_max: Number.isFinite(Number(input.salary_max)) ? Number(input.salary_max) : salaryShape.salary_max,
+    workplace_type: safeStringField(input.workplace_type || input.workplaceType),
+    job_type: safeStringField(input.job_type || input.jobType, "Full-time"),
+    salary: resolvedSalaryVisible ? salaryShape.salary : "",
+    raw_salary: salaryShape.raw_salary,
+    salary_min: resolveNumericField(input.salary_min) ?? salaryShape.salary_min,
+    salary_max: resolveNumericField(input.salary_max) ?? salaryShape.salary_max,
     salary_currency: VALID_CURRENCIES.has(explicitCurrency) ? explicitCurrency : salaryShape.salary_currency,
     salary_period: VALID_PERIODS.has(explicitPeriod) ? explicitPeriod : salaryShape.salary_period,
     salary_visible: resolvedSalaryVisible,
     featured: Boolean(input.featured),
-    sector: String(input.sector || "general").trim(),
-    function: String(input.function || input.role_function || "").trim(),
-    experience: String(input.experience || "").trim(),
-    source: String(input.source || "Manual").trim(),
-    source_url: String(input.source_url || input.sourceUrl || "").trim(),
+    sector: normalizeSector(input.sector || "general"),
+    function: safeStringField(input.function || input.role_function),
+    experience: safeStringField(input.experience),
+    source: safeStringField(input.source, "Manual"),
+    source_url: safeStringField(input.source_url || input.sourceUrl),
     apply_url: applyUrl,
     date_posted: isValidDate(datePosted) ? new Date(datePosted).toISOString().slice(0, 10) : todayIso(),
     date_added: isValidDate(dateAdded) ? new Date(dateAdded).toISOString().slice(0, 10) : todayIso(),
     date_updated: isValidDate(dateUpdated) ? new Date(dateUpdated).toISOString().slice(0, 10) : todayIso(),
-    status: String(input.status || "active").trim().toLowerCase(),
-    approved_by: String(input.approved_by || input.approvedBy || "").trim(),
-    raw_description: input.raw_description !== undefined && input.raw_description !== null
-      ? coerceText(input.raw_description)
-      : descriptionShape.raw_description,
+    status: safeStringField(input.status, "active").toLowerCase(),
+    approved_by: safeStringField(input.approved_by || input.approvedBy),
+    raw_description: descriptionShape.raw_description,
     description: descriptionShape.description,
     tags,
-    shared_by: String(input.shared_by || input.sharedBy || "").trim(),
-    notes: String(input.notes || "").trim(),
-    review_reason: String(input.review_reason || input.reviewReason || "").trim(),
-    confidence: String(input.confidence || "").trim().toLowerCase(),
+    shared_by: safeStringField(input.shared_by || input.sharedBy),
+    notes: safeStringField(input.notes),
+    review_reason: safeStringField(input.review_reason || input.reviewReason),
+    confidence: safeStringField(input.confidence).toLowerCase(),
     trusted: typeof input.trusted === "boolean" ? input.trusted : undefined,
     auto_publish: typeof input.auto_publish === "boolean" ? input.auto_publish : undefined,
-    sync_origin: String(input.sync_origin || "").trim()
+    sync_origin: safeStringField(input.sync_origin)
   };
 }
 
 function normalizeSector(value) {
-  const text = String(value || "").trim();
+  const text = normalizeWhitespace(stringifySafe(value));
   const lower = text.toLowerCase();
   if (!lower) return "";
   if (/clean energy|electrification|renewable/i.test(lower)) return "Clean Energy";
@@ -417,9 +654,7 @@ function dedupeJobs(jobs) {
     identitySeen.set(identityKey, key);
   }
 
-  return Array.from(seen.values()).sort((a, b) => {
-    return Date.parse(b.date_posted) - Date.parse(a.date_posted);
-  });
+  return Array.from(seen.values()).sort((a, b) => Date.parse(b.date_posted) - Date.parse(a.date_posted));
 }
 
 function routeSyncedJob(job, source) {
@@ -429,7 +664,7 @@ function routeSyncedJob(job, source) {
     source_type: source.type,
     trusted: Boolean(source.trusted),
     auto_publish: Boolean(source.auto_publish),
-    sync_origin: "ats"
+    sync_origin: job.sync_origin || "ats"
   });
 
   if (source.trusted === true && source.auto_publish === true) {
@@ -440,11 +675,15 @@ function routeSyncedJob(job, source) {
 }
 
 module.exports = {
-  dedupeJobs,
+  cleanFlattenedText,
   decodeHtmlEntities,
+  dedupeJobs,
   detectSalaryCurrency,
   detectSalaryPeriod,
   ensureArray,
+  extractDescriptionText,
+  extractSalaryText,
+  flattenTextValues,
   isValidDate,
   normalizeDescription,
   normalizeJob,
@@ -453,6 +692,7 @@ module.exports = {
   routeSyncedJob,
   slugify,
   stableHash,
+  stringifySafe,
   stripHtml,
   todayIso
 };

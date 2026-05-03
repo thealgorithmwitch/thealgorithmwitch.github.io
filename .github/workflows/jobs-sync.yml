@@ -6,9 +6,8 @@ on:
     - cron: "*/15 * * * *"
   push:
     paths:
-      - "admin-actions-local.json"
-      - "jobs/admin-actions-local.json"
-
+      - "resources/jobs/admin-actions-local.json"
+      
 permissions:
   contents: write
 
@@ -29,17 +28,12 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Detect jobs workspace
+      - name: Set jobs workspace
         id: workspace
         shell: bash
         run: |
-          if [ -f jobs/package.json ]; then
-            JOBS_DIR="jobs"
-            echo "dir=jobs" >> "$GITHUB_OUTPUT"
-          else
-            JOBS_DIR="."
-            echo "dir=." >> "$GITHUB_OUTPUT"
-          fi
+          JOBS_DIR="resources/jobs"
+          echo "dir=$JOBS_DIR" >> "$GITHUB_OUTPUT"
           echo "Using jobs workspace: $JOBS_DIR"
 
       - name: Set up Node.js

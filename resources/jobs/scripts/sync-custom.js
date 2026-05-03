@@ -104,7 +104,19 @@ async function runCustomSync() {
   });
   await syncJobRecordStore(publicWriteResult.jobs, { logger: console });
   const scrapeReportPayload = await upsertScrapeReports(scrapeReports);
-  const triaged = await triagePendingJobs(mergedPendingJobs, publicWriteResult.jobs, scrapeReportPayload);
+  const existingPendingIds = new Set(
+  (existingPending || []).map((job) => String(job.id || ""))
+);
+
+const triaged = await triagePendingJobs(
+  mergedPendingJobs,
+  publicWriteResult.jobs,
+  scrapeReportPayload,
+  {
+    preserveExistingPending: true,
+    existingPendingIds
+  }
+);
   await writeJson(PENDING_SYNCED_FILE, triaged.adminPendingJobs);
   await upsertScrapeReports(triaged.report.sources);
 

@@ -1,5 +1,5 @@
 const assert = require("assert");
-const { extractSalaryText, normalizeDescription, normalizeJob, parseSalaryRange, stringifySafe } = require("./job-normalizer");
+const { extractSalaryText, hasRoleSignal, isClearlyNotJobTitle, normalizeDescription, normalizeJob, parseSalaryRange, stringifySafe } = require("./job-normalizer");
 
 const salaryCases = [
   { input: "$80,000 - $100,000", min: 80000, max: 100000, currency: "USD", period: "year", visible: true },
@@ -79,6 +79,61 @@ const normalizedArevonJob = normalizeJob({
 });
 assert.strictEqual(normalizedArevonJob.title, "Senior Analyst, Risk & Insurance");
 
+const normalizedChevronJob = normalizeJob({
+  title: "> What counts are the people at RWE >",
+  organization: "RWE",
+  description: "> Want a planet-saving career? > Learn more"
+});
+assert.strictEqual(normalizedChevronJob.title, "What counts are the people at RWE");
+assert.ok(!/>/.test(normalizedChevronJob.description), "description should strip visible chevrons");
+
+const jasmineJob = normalizeJob({ title: "Jasmine", organization: "Sunrun", location: "Remote" });
+assert.strictEqual(jasmineJob._reject_reason, "invalid_job_title_pattern");
+assert.strictEqual(jasmineJob._quality.validTitle, false);
+assert.strictEqual(jasmineJob._quality.reason, "invalid_job_title_pattern");
+assert.strictEqual(isClearlyNotJobTitle("Jasmine", jasmineJob), true);
+
+const impactJob = normalizeJob({ title: "Our Impact", organization: "Environmental Defense Fund" });
+assert.strictEqual(impactJob._reject_reason, "invalid_job_title_pattern");
+
+const previousJob = normalizeJob({ title: "Previous", organization: "Sunrun" });
+assert.strictEqual(previousJob._reject_reason, "invalid_job_title_pattern");
+assert.ok(previousJob._quality.rule.startsWith("source_title_rule:"));
+
+const nextJob = normalizeJob({ title: "Next", organization: "Sunrun" });
+assert.strictEqual(nextJob._reject_reason, "invalid_job_title_pattern");
+assert.ok(nextJob._quality.rule.startsWith("source_title_rule:"));
+
+const powerOfVoicesJob = normalizeJob({ title: "The Power of All Voices", organization: "RWE" });
+assert.strictEqual(powerOfVoicesJob._reject_reason, "invalid_job_title_pattern");
+assert.ok(powerOfVoicesJob._quality.rule.startsWith("source_title_rule:"));
+
+const portugalLocaleJob = normalizeJob({ title: "Português (Portugal)", organization: "EDP" });
+assert.strictEqual(portugalLocaleJob._reject_reason, "invalid_job_title_pattern");
+assert.ok(portugalLocaleJob._quality.rule.startsWith("source_title_rule:"));
+
+const planetSavingCareerJob = normalizeJob({
+  title: "Want a planet-saving career?",
+  organization: "Environmental Defense Fund"
+});
+assert.strictEqual(planetSavingCareerJob._reject_reason, "invalid_job_title_pattern");
+assert.strictEqual(planetSavingCareerJob._quality.reason, "invalid_job_title_pattern");
+
+const goodAnalystJob = normalizeJob({
+  title: "Senior Analyst, Risk & Insurance",
+  organization: "Arevon Energy"
+});
+assert.strictEqual(goodAnalystJob._reject_reason, "");
+assert.strictEqual(goodAnalystJob._quality.validTitle, true);
+assert.strictEqual(hasRoleSignal(goodAnalystJob.title), true);
+
+const goodProductManagerJob = normalizeJob({
+  title: "Product Manager",
+  organization: "ChargerHelp!"
+});
+assert.strictEqual(goodProductManagerJob._reject_reason, "");
+assert.strictEqual(goodProductManagerJob._quality.validTitle, true);
+
 const normalizedNavDescription = normalizeDescription(
   'href="https://www.dylan-green.com/jobs/senior-associate-portfolio-management/" rel="prev"> Previous: Previous post: Senior Associate, Portfolio Management Next: Next post: Associate, Acquisitions'
 );
@@ -88,6 +143,11 @@ const normalizedNoWrapDescription = normalizeDescription(
   'e" nowrap="nowrap" headers="hdrDate"> Apr 29, 2026 Project Development Analyst https://jobs.edp.com/job/Multiple-cities-Project-Development-Analyst/1388775833/'
 );
 assert.strictEqual(normalizedNoWrapDescription.description, "");
+
+const normalizedChevronDescription = normalizeDescription(
+  "> Manufacturing Operations Buyer/Planner > Manufacturing Operations Buyer/Planner Buyer/Planner San Jose, CA > Manufacturing Operations Buyer/Planner"
+);
+assert.ok(!/>/.test(normalizedChevronDescription.description), "visible chevrons should be removed from normalized descriptions");
 
 assert.strictEqual(stringifySafe({ value: "$60,000 - $70,000" }), "$60,000 - $70,000");
 assert.strictEqual(stringifySafe({ unexpected: "ignored" }), "");

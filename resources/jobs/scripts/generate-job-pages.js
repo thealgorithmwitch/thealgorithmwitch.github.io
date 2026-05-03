@@ -23,8 +23,15 @@ function slugify(value) {
     .replace(/-{2,}/g, "-");
 }
 
+function cleanVisibleText(value) {
+  return String(value || "")
+    .replace(/\s*[>›»]+\s*/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
 function buildJobSlug(job) {
-  return slugify(`${job.title}-${job.organization}`);
+  return slugify(`${cleanVisibleText(job.title)}-${cleanVisibleText(job.organization)}`);
 }
 
 function buildIdSuffix(job) {
@@ -72,7 +79,7 @@ function buildUniqueJobSlug(job, usedSlugs, collisions) {
 }
 
 function truncate(value, max = 160) {
-  const text = String(value || "").replace(/\s+/g, " ").trim();
+  const text = cleanVisibleText(value);
   if (text.length <= max) return text;
   return `${text.slice(0, max - 1).trim()}…`;
 }
@@ -103,8 +110,8 @@ function buildJsonLd(job) {
   const payload = {
     "@context": "https://schema.org",
     "@type": "JobPosting",
-    title: job.title,
-    description: job.description || job.raw_description || "",
+    title: cleanVisibleText(job.title),
+    description: cleanVisibleText(job.description || job.raw_description || ""),
     directApply: true,
     hiringOrganization: job.organization
       ? {
@@ -135,11 +142,11 @@ function buildJsonLd(job) {
 }
 
 function buildPage(job, slug) {
-  const title = `${job.title} at ${job.organization}`;
-  const description = truncate(job.description || job.raw_description || `${job.title} at ${job.organization} in climate, clean energy, sustainability, policy, and creative work.`);
+  const title = `${cleanVisibleText(job.title)} at ${cleanVisibleText(job.organization)}`;
+  const description = truncate(job.description || job.raw_description || `${cleanVisibleText(job.title)} at ${cleanVisibleText(job.organization)} in climate, clean energy, sustainability, policy, and creative work.`);
   const originalUrl = job.original_url || job.apply_url || job.source_url || "#";
-  const tags = Array.isArray(job.tags) ? job.tags.filter(Boolean) : [];
-  const summary = job.description || job.raw_description || "";
+  const tags = Array.isArray(job.tags) ? job.tags.map((tag) => cleanVisibleText(tag)).filter(Boolean) : [];
+  const summary = cleanVisibleText(job.description || job.raw_description || "");
   const detailUrl = `https://example.com/jobs/pages/${slug}.html`;
 
   return `<!DOCTYPE html>

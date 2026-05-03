@@ -70,6 +70,14 @@ const SALES_TERMS = [
 ];
 
 const BAD_TITLE_PATTERNS = [
+  /^previous$/i,
+  /^next$/i,
+  /^previous\b/i,
+  /^next\b/i,
+  /^sunrun$/i,
+  /^portugal$/i,
+  /^portugu[eê]s\s*\(portugal\)$/i,
+  /^the power of all voices$/i,
   /^careers?$/i,
   /^jobs?$/i,
   /\bjobs?$/i,
@@ -86,7 +94,17 @@ const BAD_TITLE_PATTERNS = [
   /^get a green job$/i,
   /^explore episodes$/i,
   /^fellowships? at\b/i,
-  /^internships? at\b/i
+  /^internships? at\b/i,
+  /^want a .* career\??$/i,
+  /^faq\b/i,
+  /^our impact$/i,
+  /^job explorer$/i,
+  /^about it(?:\s+at\b.*)?$/i,
+  /^graduate programmes?$/i,
+  /^jasmine$/i,
+  /^life at\b/i,
+  /^ron and back office,\s*risk$/i,
+  /^the power of .+/i
 ];
 
 const SUSPICIOUS_TITLE_PATTERNS = [
@@ -97,7 +115,11 @@ const SUSPICIOUS_TITLE_PATTERNS = [
   /https?:\/\//i,
   /\b(?:next|previous)\s*:\s*(?:next|previous)\s+post\b/i,
   /\b(?:privacy|cookie(?:s)?|terms of (?:use|service)|applicant privacy|applicant login|join talent community|employment scams|sample employment test|search jobs|search results|job openings|careers website)\b/i,
-  /\b(remote|hybrid|on-site)\b.*\b(remote|hybrid|on-site)\b/i
+  /\b(remote|hybrid|on-site)\b.*\b(remote|hybrid|on-site)\b/i,
+  /\blife at\b/i,
+  /\bgraduate programmes?\b/i,
+  /\bjob explorer\b/i,
+  /\bour impact\b/i
 ];
 
 const NON_ROLE_URL_PATTERNS = [
@@ -121,6 +143,36 @@ const NON_ROLE_URL_PATTERNS = [
   /\/talentcommunity\//i,
   /\/sign[_-]in(?:\/|$)/i
 ];
+
+const COMMON_SINGLE_WORD_ROLE_TITLES = new Set([
+  "analyst",
+  "associate",
+  "coordinator",
+  "designer",
+  "developer",
+  "director",
+  "engineer",
+  "intern",
+  "manager",
+  "officer",
+  "recruiter",
+  "researcher",
+  "specialist",
+  "strategist",
+  "writer"
+]);
+
+const LOCATION_ONLY_TITLES = new Set([
+  "portugal",
+  "canada",
+  "spain",
+  "france",
+  "germany",
+  "italy",
+  "london",
+  "berlin",
+  "remote"
+]);
 
 function isNonRoleUrl(url) {
   const normalized = normalizeUrl(url);
@@ -167,6 +219,26 @@ function normalizeUrl(value) {
   } catch (_error) {
     return "";
   }
+}
+
+function isSingleFirstNameOnlyTitle(title) {
+  const normalized = String(title || "").trim();
+  if (!/^[A-Z][a-z]{2,20}$/.test(normalized)) return false;
+  return !COMMON_SINGLE_WORD_ROLE_TITLES.has(normalized.toLowerCase());
+}
+
+function isOrganizationOnlyTitle(title, organization) {
+  const normalizedTitle = String(title || "").trim().toLowerCase();
+  const normalizedOrg = String(organization || "").trim().toLowerCase();
+  return Boolean(normalizedTitle && normalizedOrg && normalizedTitle === normalizedOrg);
+}
+
+function isLocationOnlyTitle(title, location) {
+  const normalizedTitle = String(title || "").trim().toLowerCase();
+  const normalizedLocation = String(location || "").trim().toLowerCase();
+  if (!normalizedTitle) return false;
+  if (LOCATION_ONLY_TITLES.has(normalizedTitle)) return true;
+  return Boolean(normalizedLocation && normalizedTitle === normalizedLocation);
 }
 
 function isTrustedSustainabilityContext(job) {
@@ -249,7 +321,13 @@ function classifyPendingJob(job, context = {}) {
   const originalUrl = normalizeUrl(job.original_url || job.apply_url || job.source_url);
   const scoreMeta = scorePendingJob(job);
   const nonRoleUrl = isNonRoleUrl(originalUrl);
-  const titleLooksBad = BAD_TITLE_PATTERNS.some((pattern) => pattern.test(title)) || title.length < 4 || title.length > 160;
+  const titleLooksBad =
+    BAD_TITLE_PATTERNS.some((pattern) => pattern.test(title)) ||
+    isSingleFirstNameOnlyTitle(title) ||
+    isOrganizationOnlyTitle(title, organization) ||
+    isLocationOnlyTitle(title, job.location) ||
+    title.length < 4 ||
+    title.length > 160;
   const suspiciousTitle =
     SUSPICIOUS_TITLE_PATTERNS.some((pattern) => pattern.test(title)) ||
     title.split(/\s+/).filter(Boolean).length > 12;
@@ -277,6 +355,15 @@ function classifyPendingJob(job, context = {}) {
     relevance_score: scoreMeta.score,
     relevance_reasons: scoreMeta.reasons
   };
+
+  if (nextJob._reject_reason) {
+    const forcedReason = nextJob._quality?.rule || nextJob._quality?.reason || nextJob._reject_reason;
+    return {
+      bucket: "rejected_noise",
+      job: { ...nextJob, triage_bucket: "rejected_noise", triage_reason: forcedReason },
+      reason: forcedReason
+    };
+  }
 
   if (!title || !organization) {
     return {

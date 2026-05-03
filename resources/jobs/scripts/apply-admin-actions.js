@@ -10,7 +10,9 @@ const {
 const {
   buildJobRecord,
   readJobRecords,
-  JOB_RECORDS_FILE
+  JOB_RECORDS_FILE,
+  TALENT_PROFILES_FILE,
+  EMPLOYERS_FILE
 } = require("./public-records");
 const {
   applyPublishLifecycle,
@@ -120,8 +122,79 @@ function isPublishedRecord(record) {
   );
 }
 
+function isPublishedStructuredRecord(record) {
+  return Boolean(
+    record &&
+    String(record.status || "").toLowerCase() === "published" &&
+    record.published === true &&
+    record.public_visibility === true
+  );
+}
+
 function findRecordById(records, id) {
   return records.find((record) => String(record.id) === String(id));
+}
+
+function updateJobDisplayFromEditedRecord(record, editedRecord = {}) {
+  const next = { ...record };
+  const display = {
+    ...(record.display || {}),
+    ...((editedRecord.display && typeof editedRecord.display === "object") ? editedRecord.display : {})
+  };
+
+  next.display = display;
+  if (typeof editedRecord.featured === "boolean") {
+    next.featured = editedRecord.featured;
+    next.display.featured = editedRecord.featured;
+  }
+  if (typeof editedRecord.public_visibility === "boolean") {
+    next.public_visibility = editedRecord.public_visibility;
+  }
+  if (typeof editedRecord.published === "boolean") {
+    next.published = editedRecord.published;
+    next.display.published = editedRecord.published;
+  }
+  if (editedRecord.status) next.status = String(editedRecord.status);
+  if (editedRecord.admin_notes !== undefined) next.admin_notes = stringifySafe(editedRecord.admin_notes);
+  if (editedRecord.display_order !== undefined) {
+    const displayOrder = Number(editedRecord.display_order || 0);
+    next.display_order = Number.isFinite(displayOrder) ? displayOrder : 0;
+  }
+  next.updated_at = new Date().toISOString();
+
+  if (String(next.status || "").toLowerCase() === "published" && next.published && next.public_visibility) {
+    return applyPublishLifecycle(next);
+  }
+
+  return {
+    ...next,
+    verification_status: String(next.verification_status || "needs_review"),
+    verification_method: String(next.verification_method || "manual")
+  };
+}
+
+function updateStructuredRecord(record, editedRecord = {}) {
+  const next = {
+    ...record,
+    ...editedRecord,
+    updated_at: new Date().toISOString()
+  };
+  if (editedRecord.display_order !== undefined) {
+    const displayOrder = Number(editedRecord.display_order || 0);
+    next.display_order = Number.isFinite(displayOrder) ? displayOrder : 0;
+  }
+  if (typeof editedRecord.featured === "boolean") next.featured = editedRecord.featured;
+  if (typeof editedRecord.public_visibility === "boolean") next.public_visibility = editedRecord.public_visibility;
+  if (typeof editedRecord.published === "boolean") next.published = editedRecord.published;
+  if (editedRecord.admin_notes !== undefined) next.admin_notes = stringifySafe(editedRecord.admin_notes);
+  return next;
+}
+
+function updateRecordListById(records, id, updater) {
+  const index = records.findIndex((record) => String(record.id) === String(id));
+  if (index < 0) return false;
+  records[index] = updater(records[index]);
+  return true;
 }
 
 function buildActionResult(status, detail) {
@@ -230,12 +303,14 @@ async function resolveLocalActions(resultsById, actions) {
 }
 
 async function main() {
-  const [pendingJobs, jobRecords, existingPublicJobs, orgRules, overrides] = await Promise.all([
+  const [pendingJobs, jobRecords, existingPublicJobs, orgRules, overrides, talentProfiles, employers] = await Promise.all([
     readPendingSyncedJobs(),
     readJobRecords(),
     readJobs(),
     readOrganizationRules(),
-    readPendingOverrides()
+    readPendingOverrides(),
+    readJson(TALENT_PROFILES_FILE, []),
+    readJson(EMPLOYERS_FILE, [])
   ]);
   const fetched = await fetchAndSnapshotActions();
   if (fetched.source === "backend") {
@@ -252,6 +327,8 @@ async function main() {
 
   let nextPending = [...pendingJobs];
   const nextRecords = [...jobRecords];
+  const nextTalentProfiles = Array.isArray(talentProfiles) ? [...talentProfiles] : [];
+  const nextEmployers = Array.isArray(employers) ? [...employers] : [];
   const nextOverrides = { ...(overrides || { jobs: {} }), jobs: { ...((overrides && overrides.jobs) || {}) } };
   const nextOrgRules = {
     hidden_organizations: [...orgRules.hidden_organizations],
@@ -301,6 +378,11 @@ async function main() {
       let duplicateCount = 0;
       let alreadyPublishedCount = 0;
       const publishedIds = [];
+      const editedJobsById = new Map(
+        (Array.isArray(action.payload.edited_jobs) ? action.payload.edited_jobs : [])
+          .filter((item) => item && item.id)
+          .map((item) => [String(item.id), item.editedRecord || {}])
+      );
 
       for (const id of ids) {
         if (idsSeenInAction.has(id)) {
@@ -333,7 +415,18 @@ async function main() {
           continue;
         }
 
-        upsertJobRecord(nextRecords, { ...job, featured: Boolean(job.featured) }, "published", { featured: Boolean(job.featured) });
+        const editedRecord = editedJobsById.get(String(job.id)) || {};
+        upsertJobRecord(
+          nextRecords,
+          { ...job, featured: Boolean(job.featured) },
+          "published",
+          {
+            featured: typeof editedRecord.featured === "boolean" ? editedRecord.featured : Boolean(job.featured)
+          }
+        );
+        if (Object.keys(editedRecord).length) {
+          updateRecordListById(nextRecords, String(job.id), (record) => updateJobDisplayFromEditedRecord(record, editedRecord));
+        }
         delete nextOverrides.jobs[String(job.id)];
         processedPublishJobIds.add(String(job.id));
         publishedIds.push(String(job.id));
@@ -442,6 +535,108 @@ async function main() {
       console.log(
         `[jobs:apply-admin-actions] reject_all_from_organization action=${action.id} organization=${organization} rejected=${rejectedJobs.length} remaining_pending=${nextPending.length}`
       );
+    } else if (action.operation === "update_active_job") {
+      const id = String(action.payload.id || action.payload.recordId || ids[0] || "");
+      const applied = updateRecordListById(nextRecords, id, (record) => updateJobDisplayFromEditedRecord(record, action.payload.editedRecord || {}));
+      actionResults[action.id] = buildActionResult(applied ? "applied" : "ignored_duplicate", applied ? `updated_active_job=${id}` : `job_not_found=${id}`);
+      console.log(`[jobs:apply-admin-actions] update_active_job action=${action.id} id=${id} applied=${applied}`);
+    } else if (action.operation === "archive_active_job") {
+      const targetIds = ids.length ? ids : [String(action.payload.id || action.payload.recordId || "")].filter(Boolean);
+      let count = 0;
+      targetIds.forEach((id) => {
+        if (updateRecordListById(nextRecords, id, (record) => ({
+          ...record,
+          status: "archived",
+          published: false,
+          public_visibility: false,
+          stale_reason: "archived by admin",
+          verification_status: "removed",
+          verification_method: "manual",
+          updated_at: new Date().toISOString()
+        }))) count += 1;
+      });
+      report.recordsArchivedOrRejected += count;
+      actionResults[action.id] = buildActionResult("applied", `archived_active_jobs=${count}`);
+      console.log(`[jobs:apply-admin-actions] archive_active_job action=${action.id} count=${count}`);
+    } else if (action.operation === "unpublish_active_job") {
+      const targetIds = ids.length ? ids : [String(action.payload.id || action.payload.recordId || "")].filter(Boolean);
+      let count = 0;
+      targetIds.forEach((id) => {
+        if (updateRecordListById(nextRecords, id, (record) => ({
+          ...record,
+          status: "pending",
+          published: false,
+          public_visibility: false,
+          verification_status: "needs_review",
+          verification_method: "manual",
+          updated_at: new Date().toISOString()
+        }))) count += 1;
+      });
+      actionResults[action.id] = buildActionResult("applied", `unpublished_active_jobs=${count}`);
+      console.log(`[jobs:apply-admin-actions] unpublish_active_job action=${action.id} count=${count}`);
+    } else if (action.operation === "feature_active_job") {
+      const targetIds = ids.length ? ids : [String(action.payload.id || action.payload.recordId || "")].filter(Boolean);
+      const featured = typeof action.payload.featured === "boolean" ? action.payload.featured : true;
+      let count = 0;
+      targetIds.forEach((id) => {
+        if (updateRecordListById(nextRecords, id, (record) => updateJobDisplayFromEditedRecord(record, { featured }))) count += 1;
+      });
+      actionResults[action.id] = buildActionResult("applied", `feature_active_jobs=${count}`);
+      console.log(`[jobs:apply-admin-actions] feature_active_job action=${action.id} count=${count} featured=${featured}`);
+    } else if (action.operation === "update_active_talent") {
+      const id = String(action.payload.id || action.payload.recordId || ids[0] || "");
+      const applied = updateRecordListById(nextTalentProfiles, id, (record) => updateStructuredRecord(record, action.payload.editedRecord || {}));
+      actionResults[action.id] = buildActionResult(applied ? "applied" : "ignored_duplicate", applied ? `updated_active_talent=${id}` : `talent_not_found=${id}`);
+      console.log(`[jobs:apply-admin-actions] update_active_talent action=${action.id} id=${id} applied=${applied}`);
+    } else if (action.operation === "archive_active_talent") {
+      const targetIds = ids.length ? ids : [String(action.payload.id || action.payload.recordId || "")].filter(Boolean);
+      let count = 0;
+      targetIds.forEach((id) => {
+        if (updateRecordListById(nextTalentProfiles, id, (record) => updateStructuredRecord(record, { status: "archived", published: false, public_visibility: false }))) count += 1;
+      });
+      actionResults[action.id] = buildActionResult("applied", `archived_active_talent=${count}`);
+    } else if (action.operation === "unpublish_active_talent") {
+      const targetIds = ids.length ? ids : [String(action.payload.id || action.payload.recordId || "")].filter(Boolean);
+      let count = 0;
+      targetIds.forEach((id) => {
+        if (updateRecordListById(nextTalentProfiles, id, (record) => updateStructuredRecord(record, { status: "pending", published: false, public_visibility: false }))) count += 1;
+      });
+      actionResults[action.id] = buildActionResult("applied", `unpublished_active_talent=${count}`);
+    } else if (action.operation === "feature_active_talent") {
+      const targetIds = ids.length ? ids : [String(action.payload.id || action.payload.recordId || "")].filter(Boolean);
+      const featured = typeof action.payload.featured === "boolean" ? action.payload.featured : true;
+      let count = 0;
+      targetIds.forEach((id) => {
+        if (updateRecordListById(nextTalentProfiles, id, (record) => updateStructuredRecord(record, { featured }))) count += 1;
+      });
+      actionResults[action.id] = buildActionResult("applied", `feature_active_talent=${count}`);
+    } else if (action.operation === "update_active_employer") {
+      const id = String(action.payload.id || action.payload.recordId || ids[0] || "");
+      const applied = updateRecordListById(nextEmployers, id, (record) => updateStructuredRecord(record, action.payload.editedRecord || {}));
+      actionResults[action.id] = buildActionResult(applied ? "applied" : "ignored_duplicate", applied ? `updated_active_employer=${id}` : `employer_not_found=${id}`);
+      console.log(`[jobs:apply-admin-actions] update_active_employer action=${action.id} id=${id} applied=${applied}`);
+    } else if (action.operation === "archive_active_employer") {
+      const targetIds = ids.length ? ids : [String(action.payload.id || action.payload.recordId || "")].filter(Boolean);
+      let count = 0;
+      targetIds.forEach((id) => {
+        if (updateRecordListById(nextEmployers, id, (record) => updateStructuredRecord(record, { status: "archived", published: false, public_visibility: false }))) count += 1;
+      });
+      actionResults[action.id] = buildActionResult("applied", `archived_active_employer=${count}`);
+    } else if (action.operation === "unpublish_active_employer") {
+      const targetIds = ids.length ? ids : [String(action.payload.id || action.payload.recordId || "")].filter(Boolean);
+      let count = 0;
+      targetIds.forEach((id) => {
+        if (updateRecordListById(nextEmployers, id, (record) => updateStructuredRecord(record, { status: "pending", published: false, public_visibility: false }))) count += 1;
+      });
+      actionResults[action.id] = buildActionResult("applied", `unpublished_active_employer=${count}`);
+    } else if (action.operation === "feature_active_employer") {
+      const targetIds = ids.length ? ids : [String(action.payload.id || action.payload.recordId || "")].filter(Boolean);
+      const featured = typeof action.payload.featured === "boolean" ? action.payload.featured : true;
+      let count = 0;
+      targetIds.forEach((id) => {
+        if (updateRecordListById(nextEmployers, id, (record) => updateStructuredRecord(record, { featured }))) count += 1;
+      });
+      actionResults[action.id] = buildActionResult("applied", `feature_active_employer=${count}`);
     } else {
       actionResults[action.id] = buildActionResult("ignored_duplicate", `unsupported operation=${action.operation}`);
       console.log(`[jobs:apply-admin-actions] unsupported action skipped id=${action.id} operation=${action.operation}`);
@@ -452,6 +647,8 @@ async function main() {
   await writeOrganizationRules(nextOrgRules);
   await writeJson(PENDING_SYNCED_FILE, nextPending);
   await writeJson(JOB_RECORDS_FILE, nextRecords);
+  await writeJson(TALENT_PROFILES_FILE, nextTalentProfiles);
+  await writeJson(EMPLOYERS_FILE, nextEmployers);
 
   const publicJobs = nextRecords
     .filter((record) => record.record_type === "job" && shouldShowPublicRecord(record))

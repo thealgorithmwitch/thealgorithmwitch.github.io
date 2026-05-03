@@ -1,4 +1,5 @@
 const crypto = require("crypto");
+const { evaluateSourceTitleRules } = require("./source-rules");
 
 const VALID_CURRENCIES = new Set(["USD", "CAD", "EUR", "GBP", "Unknown"]);
 const VALID_PERIODS = new Set(["hour", "day", "month", "year", "Unknown"]);
@@ -53,17 +54,61 @@ const ORGANIZATION_NOISE_TOKENS = new Set([
   "renewables",
   "solar"
 ]);
+const COMMON_SINGLE_WORD_ROLE_TITLES = new Set([
+  "analyst",
+  "associate",
+  "coordinator",
+  "designer",
+  "developer",
+  "director",
+  "engineer",
+  "intern",
+  "manager",
+  "officer",
+  "planner",
+  "producer",
+  "recruiter",
+  "researcher",
+  "specialist",
+  "strategist",
+  "writer"
+]);
+const LOCATION_ONLY_TITLES = new Set([
+  "portugal",
+  "canada",
+  "spain",
+  "france",
+  "germany",
+  "italy",
+  "london",
+  "berlin",
+  "remote",
+  "usa",
+  "united states"
+]);
+const BAD_SEMANTIC_TITLE_PATTERNS = [
+  /^(previous|next|home|search|faq)\b/i,
+  /\b(?:our impact|life at|about(?:\s+it)?|job explorer)\b/i,
+  /\b(?:the power of all voices|eeo policy statement|know your rights)\b/i,
+  /\b(?:privacy|cookie(?:s)?|policy statement|search jobs|careers?)\b/i,
+  /^want a .* career\??$/i
+];
+const ROLE_SIGNAL_PATTERN =
+  /\b(?:accountant|administrator|advisor|advocate|analyst|architect|assistant|associate|attorney|buyer|campaigner|consultant|content strategist|coordinator|counsel|designer|developer|director|economist|editor|engineer|executive|fellow|intern|lead|manager|officer|operator|planner|president|press secretary|producer|product manager|program(?:me)?r?|project manager|recruiter|representative|research(?:er| assistant| associate)?|scientist|secretary|specialist|strategist|supervisor|technician|writer)\b/i;
 const TITLE_NOISE_PATTERNS = [
+  /^previous$/i,
+  /^next$/i,
   /\b(?:next|previous)\s*:\s*(?:next|previous)\s+post\s*:/gi,
   /\bpost navigation\b/gi,
-  /\b(?:privacy|cookie(?:s)?|terms of (?:use|service)|applicant privacy|applicant login|employment scams|sample employment test|equal opportunity employer|join talent community|search jobs|search results|job openings|we(?:'|’)re hiring|careers website|explore companies)\b/gi
+  /\b(?:privacy|cookie(?:s)?|terms of (?:use|service)|applicant privacy|applicant login|employment scams|sample employment test|equal opportunity employer|join talent community|search jobs|search results|job openings|we(?:'|’)re hiring|careers website|explore companies|life at|job explorer|our impact|graduate programmes?|the power of all voices)\b/gi
 ];
 const DESCRIPTION_NOISE_PATTERNS = [
   /\b(?:next|previous)\s*:\s*(?:next|previous)\s+post\s*:[^.]{0,200}/gi,
   /\bpost navigation\b[^.]{0,200}/gi,
   /\b(?:href|class|aria-label|target|data-[\w-]+|rel|style|headers)\s*=\s*(?:"[^"]*"|'[^']*'|[^\s>]+)/gi,
   /\bno\s*wrap\b|\bnowrap\b/gi,
-  /https?:\/\/\S+/gi
+  /https?:\/\/\S+/gi,
+  /\s*[>›»]+\s*/g
 ];
 
 function slugify(value) {
@@ -122,11 +167,55 @@ function removeTitleOrganizationSuffix(title, organization) {
   return title;
 }
 
+function isSingleFirstNameOnlyTitle(title) {
+  const normalized = String(title || "").trim();
+  if (!/^[A-Z][a-z]{2,20}$/.test(normalized)) return false;
+  return !COMMON_SINGLE_WORD_ROLE_TITLES.has(normalized.toLowerCase());
+}
+
+function isOrganizationOnlyTitle(title, organization) {
+  const normalizedTitle = String(title || "").trim();
+  const normalizedOrg = String(organization || "").trim();
+  if (!normalizedTitle || !normalizedOrg) return false;
+  const titleCore = normalizeCompanyCore(normalizedTitle);
+  const orgCore = normalizeCompanyCore(normalizedOrg);
+  return Boolean(titleCore && orgCore && titleCore === orgCore);
+}
+
+function isLocationOnlyTitle(title, location) {
+  const normalizedTitle = normalizeWhitespace(String(title || "")).toLowerCase();
+  const normalizedLocation = normalizeWhitespace(String(location || "")).toLowerCase();
+  if (!normalizedTitle) return false;
+  if (LOCATION_ONLY_TITLES.has(normalizedTitle)) return true;
+  return Boolean(normalizedLocation && normalizedTitle === normalizedLocation);
+}
+
+function hasRoleSignal(title) {
+  return ROLE_SIGNAL_PATTERN.test(String(title || ""));
+}
+
+function isClearlyNotJobTitle(title = "", job = {}) {
+  const normalizedTitle = normalizeWhitespace(String(title || ""));
+  const lowered = normalizedTitle.toLowerCase();
+  if (!lowered) return true;
+  if (isSingleFirstNameOnlyTitle(normalizedTitle)) return true;
+  if (isOrganizationOnlyTitle(normalizedTitle, job.organization)) return true;
+  if (isLocationOnlyTitle(normalizedTitle, job.location)) return true;
+  if (BAD_SEMANTIC_TITLE_PATTERNS.some((pattern) => pattern.test(normalizedTitle))) return true;
+
+  const words = lowered.split(/\s+/).filter(Boolean);
+  if (words.length === 1 && !hasRoleSignal(normalizedTitle)) return true;
+  if (!hasRoleSignal(normalizedTitle)) return true;
+
+  return false;
+}
+
 function normalizeTitle(value, organization = "") {
   let text = normalizeWhitespace(stripHtml(decodeHtmlEntities(value)));
   if (!text) return "";
 
   text = text
+    .replace(/[>›»]+/g, " ")
     .replace(/\b(?:href|class|aria-label|target|data-[\w-]+|rel|style|headers)\s*=\s*(?:"[^"]*"|'[^']*'|[^\s>]+)/gi, " ")
     .replace(/https?:\/\/\S+/gi, " ")
     .replace(/\b(?:next|previous)\s*:\s*(?:next|previous)\s+post\s*:/gi, " ")
@@ -508,6 +597,7 @@ function normalizeDescription(description) {
   const rawDescription = normalizeWhitespace(stringifySafe(description) || cleanFlattenedText(description));
   const cleaned = normalizeWhitespace(
     stripHtml(rawDescription)
+      .replace(/[>›»]+/g, " ")
       .replace(/&(amp|nbsp|quot|apos|#39|lt|gt);/gi, " ")
       .replace(/\b(?:href|class|aria-label|target|data-[\w-]+|rel|style|headers)\s*=\s*(?:"[^"]*"|'[^']*'|[^\s>]+)/gi, " ")
       .replace(/https?:\/\/\S+/gi, " ")
@@ -629,6 +719,15 @@ function normalizeJob(input = {}) {
     .map((tag) => normalizeWhitespace(stringifySafe(tag)))
     .filter(Boolean)
     .map((tag) => tag.toLowerCase());
+  const sourceRuleMatch = evaluateSourceTitleRules({
+    ...input,
+    title,
+    organization,
+    location
+  });
+  const invalidTitle = title ? isClearlyNotJobTitle(title, { ...input, organization, location }) : true;
+  const rejectRule = sourceRuleMatch?.reason || (invalidTitle ? "semantic_title_rule:invalid_job_title_pattern" : "");
+  const rejectReason = rejectRule ? "invalid_job_title_pattern" : "";
 
   return {
     id,
@@ -669,6 +768,16 @@ function normalizeJob(input = {}) {
     review_reason: safeStringField(input.review_reason || input.reviewReason),
     triage_bucket: safeStringField(input.triage_bucket || input.triageBucket),
     triage_reason: safeStringField(input.triage_reason || input.triageReason),
+    _reject_reason: rejectReason,
+    _quality: rejectReason
+      ? {
+          validTitle: false,
+          reason: "invalid_job_title_pattern",
+          rule: rejectRule
+        }
+      : {
+          validTitle: Boolean(title)
+        },
     confidence: safeStringField(input.confidence).toLowerCase(),
     relevance_score: resolveNumericField(input.relevance_score ?? input.relevanceScore),
     relevance_reasons: ensureArray(input.relevance_reasons || input.relevanceReasons)
@@ -790,6 +899,11 @@ module.exports = {
   extractSalaryText,
   flattenTextValues,
   isValidDate,
+  hasRoleSignal,
+  isClearlyNotJobTitle,
+  isLocationOnlyTitle,
+  isOrganizationOnlyTitle,
+  isSingleFirstNameOnlyTitle,
   normalizeDescription,
   normalizeJob,
   normalizeSector,

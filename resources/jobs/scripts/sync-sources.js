@@ -221,6 +221,10 @@ async function runSyncForTypes(types = []) {
   };
 }
 
+function isManagedAtsJob(job, activeSourceIds) {
+  return job.sync_origin === "ats" && activeSourceIds.has(String(job.source_id || ""));
+}
+
 async function main() {
   await runSyncForTypes();
 }

@@ -1,5 +1,8 @@
 const crypto = require("crypto");
-const { evaluateSourceTitleRules } = require("./source-rules");
+const {
+  evaluateSourceTitleRules,
+  resolveElementalImpactAttribution
+} = require("./source-rules");
 
 const VALID_CURRENCIES = new Set(["USD", "CAD", "EUR", "GBP", "Unknown"]);
 const VALID_PERIODS = new Set(["hour", "day", "month", "year", "Unknown"]);
@@ -694,7 +697,8 @@ function resolveNumericField(value) {
 }
 
 function normalizeJob(input = {}) {
-  const organization = safeStringField(input.organization);
+  const sourceAttribution = resolveElementalImpactAttribution(input) || null;
+  const organization = safeStringField(sourceAttribution?.organization || input.organization);
   const title = normalizeTitle(input.title, organization);
   const applyUrl = safeStringField(input.apply_url || input.applyUrl);
   const originalUrl = safeStringField(input.original_url || input.originalUrl || applyUrl || input.source_url || input.sourceUrl);
@@ -728,6 +732,11 @@ function normalizeJob(input = {}) {
   const invalidTitle = title ? isClearlyNotJobTitle(title, { ...input, organization, location }) : true;
   const rejectRule = sourceRuleMatch?.reason || (invalidTitle ? "semantic_title_rule:invalid_job_title_pattern" : "");
   const rejectReason = rejectRule ? "invalid_job_title_pattern" : "";
+  const inheritedTriageBucket = safeStringField(input.triage_bucket || input.triageBucket);
+  const inheritedTriageReason = safeStringField(input.triage_reason || input.triageReason);
+  const parseWarning = safeStringField(sourceAttribution?.parseWarning || input.parse_warning || input.parseWarning);
+  const triageBucket = safeStringField(sourceAttribution?.triageBucket || inheritedTriageBucket);
+  const triageReason = safeStringField(sourceAttribution?.triageReason || inheritedTriageReason);
 
   return {
     id,
@@ -751,8 +760,8 @@ function normalizeJob(input = {}) {
     sector: normalizeSector(input.sector || "general"),
     function: safeStringField(input.function || input.role_function),
     experience: safeStringField(input.experience),
-    source: safeStringField(input.source, "Manual"),
-    source_url: safeStringField(input.source_url || input.sourceUrl),
+    source: safeStringField(sourceAttribution?.sourceName || input.source, "Manual"),
+    source_url: safeStringField(sourceAttribution?.sourceUrl || input.source_url || input.sourceUrl),
     apply_url: applyUrl,
     original_url: originalUrl,
     date_posted: isValidDate(datePosted) ? new Date(datePosted).toISOString().slice(0, 10) : todayIso(),
@@ -766,8 +775,9 @@ function normalizeJob(input = {}) {
     shared_by: safeStringField(input.shared_by || input.sharedBy),
     notes: safeStringField(input.notes),
     review_reason: safeStringField(input.review_reason || input.reviewReason),
-    triage_bucket: safeStringField(input.triage_bucket || input.triageBucket),
-    triage_reason: safeStringField(input.triage_reason || input.triageReason),
+    triage_bucket: triageBucket,
+    triage_reason: triageReason,
+    parse_warning: parseWarning,
     _reject_reason: rejectReason,
     _quality: rejectReason
       ? {

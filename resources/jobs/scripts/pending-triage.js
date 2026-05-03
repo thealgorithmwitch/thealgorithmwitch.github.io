@@ -422,6 +422,19 @@ function classifyPendingJob(job, context = {}) {
     };
   }
 
+  if (String(nextJob.parse_warning || "").toLowerCase().includes("source board organization uncertain")) {
+    if (context.seenUrls) context.seenUrls.add(originalUrl);
+    return {
+      bucket: "needs_cleanup",
+      job: {
+        ...nextJob,
+        triage_bucket: "needs_cleanup",
+        triage_reason: "source board organization uncertain"
+      },
+      reason: "source board organization uncertain"
+    };
+  }
+
   if (reviewReady && scoreMeta.score >= 8) {
     if (context.seenUrls) context.seenUrls.add(originalUrl);
     return {

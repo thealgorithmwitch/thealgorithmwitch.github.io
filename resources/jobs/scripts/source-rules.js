@@ -2,8 +2,202 @@ function normalizeText(value) {
   return String(value || "").trim().toLowerCase().replace(/\s+/g, " ");
 }
 
+function cleanText(value) {
+  return String(value || "").replace(/\s+/g, " ").trim();
+}
+
 function matchRule(title, patterns) {
   return patterns.find((pattern) => pattern.test(title)) || null;
+}
+
+function safeUrl(input) {
+  try {
+    return new URL(String(input || "").trim());
+  } catch (_error) {
+    return null;
+  }
+}
+
+function titleCaseSlug(value) {
+  return cleanText(value)
+    .split(/[-_.\s]+/)
+    .filter(Boolean)
+    .map((part) => {
+      if (/^[A-Z0-9]{2,}$/.test(part)) return part;
+      return part.charAt(0).toUpperCase() + part.slice(1).toLowerCase();
+    })
+    .join(" ");
+}
+
+function looksLikeOrganization(value) {
+  const text = cleanText(value);
+  if (!text) return false;
+  if (normalizeText(text) === "elemental impact") return false;
+  if (/^https?:\/\//i.test(text)) return false;
+  if (/\b(?:job|jobs|career|careers|apply|application|details?|opportunity|opening|position|role|remote|hybrid|full[- ]?time|part[- ]?time|engineer|manager|director|analyst|coordinator|developer|designer|specialist|officer|associate|lead)\b/i.test(text)) {
+    return false;
+  }
+  return /^[A-Za-z0-9&+.'()\/ -]{2,80}$/.test(text);
+}
+
+function flattenObjects(value, results = [], seen = new Set()) {
+  if (!value || typeof value !== "object") return results;
+  if (seen.has(value)) return results;
+  seen.add(value);
+  if (Array.isArray(value)) {
+    value.forEach((item) => flattenObjects(item, results, seen));
+    return results;
+  }
+  results.push(value);
+  Object.values(value).forEach((next) => flattenObjects(next, results, seen));
+  return results;
+}
+
+function extractOrganizationFromTitle(title) {
+  const text = cleanText(title);
+  for (const separator of [" — ", " – ", " - ", " | ", " @ "]) {
+    if (!text.includes(separator)) continue;
+    const parts = text.split(separator).map((part) => cleanText(part)).filter(Boolean);
+    if (parts.length < 2) continue;
+    const suffix = parts[parts.length - 1];
+    if (looksLikeOrganization(suffix)) {
+      return { organization: suffix, confidence: "high", reason: "title_suffix" };
+    }
+  }
+  return null;
+}
+
+function extractOrganizationFromEmbeddedFields(job) {
+  const payloads = [
+    job.raw_payload,
+    job.raw_source_data,
+    job.metadata
+  ];
+  const objects = payloads.flatMap((payload) => flattenObjects(payload));
+  const preferredKeys = [
+    "company",
+    "company_name",
+    "companyName",
+    "organization_name",
+    "organizationName",
+    "org_name",
+    "orgName",
+    "employer",
+    "employer_name",
+    "hiring_organization",
+    "hiringOrganization",
+    "team_name",
+    "brand"
+  ];
+
+  for (const object of objects) {
+    for (const key of preferredKeys) {
+      const candidate = cleanText(object && object[key]);
+      if (looksLikeOrganization(candidate)) {
+        return { organization: candidate, confidence: "high", reason: `embedded_field:${key}` };
+      }
+    }
+  }
+
+  return null;
+}
+
+function extractOrganizationFromDescriptionMetadata(job) {
+  let text = cleanText(job.raw_description || job.description || "");
+  if (!text) return null;
+
+  const patterns = [
+    /(?:https?:\/\/\S+\s+)?\b\d{4,12}\b\s+([A-Z][A-Za-z0-9&+.'()/-]*(?:\s+[A-Z][A-Za-z0-9&+.'()/-]*){0,4})\s+(?:series_[a-z_]+|series [a-z_]+|seed|pre[_ -]?seed|ipo|public|private|nonprofit|other)\b/i,
+    /(?:https?:\/\/\S+\s+)?\b\d{4,12}\b\s+([A-Z][A-Za-z0-9&+.'()/-]*(?:\s+[A-Z][A-Za-z0-9&+.'()/-]*){0,4})\s+https?:\/\//i
+  ];
+
+  for (const pattern of patterns) {
+    const match = text.match(pattern);
+    if (!match) continue;
+    const candidate = cleanText(match[1]);
+    if (!looksLikeOrganization(candidate)) continue;
+    return { organization: candidate, confidence: "high", reason: "description_metadata" };
+  }
+
+  return null;
+}
+
+function extractOrganizationFromOriginalUrl(urlValue) {
+  const parsed = safeUrl(urlValue);
+  if (!parsed) return null;
+
+  const hostname = parsed.hostname.toLowerCase();
+  const pathParts = parsed.pathname.split("/").filter(Boolean);
+
+  if (/^[a-z0-9-]+\.teamtailor\.com$/i.test(hostname)) {
+    return { organization: titleCaseSlug(hostname.split(".")[0]), confidence: "high", reason: "teamtailor_subdomain" };
+  }
+
+  if (hostname === "boards.greenhouse.io" && pathParts[0]) {
+    return { organization: titleCaseSlug(pathParts[0]), confidence: "medium", reason: "greenhouse_slug" };
+  }
+
+  if (hostname === "apply.workable.com" && pathParts[0]) {
+    return { organization: titleCaseSlug(pathParts[0]), confidence: "medium", reason: "workable_slug" };
+  }
+
+  if (!/(greenhouse|workable|paylocity|ultipro|smartrecruiters|ashbyhq|bamboohr|recruitee|teamtailor)\./i.test(hostname)) {
+    const root = hostname.replace(/^www\./i, "").split(".");
+    if (root.length >= 2) {
+      return { organization: titleCaseSlug(root[root.length - 2]), confidence: "high", reason: "company_domain" };
+    }
+  }
+
+  return null;
+}
+
+function isElementalImpactSource(job = {}) {
+  const sourceId = normalizeText(job.source_id || job.sourceId);
+  const source = normalizeText(job.source);
+  const sourceUrl = normalizeText(job.source_url || job.sourceUrl);
+  const notes = normalizeText(job.notes);
+  return (
+    sourceId === "elemental-impact" ||
+    source === "elemental impact" ||
+    sourceUrl.includes("elementalimpact.com/jobs") ||
+    notes.includes("elementalimpact.com/jobs")
+  );
+}
+
+function resolveElementalImpactAttribution(job = {}) {
+  if (!isElementalImpactSource(job)) return null;
+
+  const candidates = [
+    extractOrganizationFromTitle(job.title),
+    extractOrganizationFromEmbeddedFields(job),
+    extractOrganizationFromDescriptionMetadata(job),
+    extractOrganizationFromOriginalUrl(job.original_url || job.originalUrl || job.apply_url || job.applyUrl)
+  ].filter(Boolean);
+
+  const chosen = candidates.find((candidate) => candidate.confidence === "high") || candidates[0] || null;
+  const organization = cleanText(chosen && chosen.organization);
+
+  if (!organization || !looksLikeOrganization(organization)) {
+    return {
+      sourceName: "Elemental Impact",
+      sourceUrl: cleanText(job.source_url || job.sourceUrl || "https://jobs.elementalimpact.com/jobs"),
+      organization: "Unknown organization",
+      organizationConfidence: "low",
+      parseWarning: "source board organization uncertain",
+      triageBucket: "needs_cleanup",
+      triageReason: "source board organization uncertain"
+    };
+  }
+
+  return {
+    sourceName: "Elemental Impact",
+    sourceUrl: cleanText(job.source_url || job.sourceUrl || "https://jobs.elementalimpact.com/jobs"),
+    organization,
+    organizationConfidence: chosen.confidence,
+    parseWarning: "",
+    triageBucket: "",
+    triageReason: ""
+  };
 }
 
 function evaluateSourceTitleRules(job = {}) {
@@ -61,5 +255,7 @@ function evaluateSourceTitleRules(job = {}) {
 }
 
 module.exports = {
-  evaluateSourceTitleRules
+  evaluateSourceTitleRules,
+  isElementalImpactSource,
+  resolveElementalImpactAttribution
 };

@@ -21,11 +21,22 @@ jobs:
         with:
           node-version: '20'
 
-      - name: Generate blog from Substack feed
+      - name: Generate blog from Substack feed (with fallback)
         run: |
           set -euo pipefail
           echo "[workflow] Generating blog from Substack RSS"
-          node generate-blog.mjs
+      
+          if node generate-blog.mjs; then
+            echo "[workflow] Feed generation succeeded"
+      
+          elif [ -f posts.json ]; then
+            echo "[workflow] Feed failed (likely 403). Falling back to root posts.json"
+            node generate-blog.mjs --from-posts-json
+      
+          else
+            echo "[workflow] Feed failed and no posts.json exists. Run locally once and commit it."
+            exit 1
+          fi
 
       - name: Finalize generated blog subpages
         run: |

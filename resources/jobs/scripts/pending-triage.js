@@ -515,21 +515,21 @@ async function triagePendingJobs(pendingJobs, publicJobs, scrapeReport, options 
       result = classifyPendingJob(job, { seenUrls });
 
       // 🔒 PROTECT EXISTING PENDING JOBS
-      if (
-        preserveExisting &&
-        existingIds.has(job.id) &&
-        result.bucket === "rejected_noise"
-      ) {
-        result = {
-          bucket: "needs_cleanup",
-          job: {
-            ...job,
-            triage_bucket: "needs_cleanup",
-            triage_reason: "preserved_existing_pending"
-          },
-          reason: "preserved_existing_pending"
-        };
-      }
+    if (
+      preserveExisting &&
+      existingIds.has(String(job.id || "")) &&
+      result.bucket === "rejected_noise"
+    ) {
+      result = {
+        bucket: "needs_cleanup",
+        job: {
+          ...job,
+          triage_bucket: "needs_cleanup",
+          triage_reason: "preserved_existing_pending"
+        },
+        reason: "preserved_existing_pending"
+      };
+    }
       if (override.triage_bucket === "needs_cleanup") {
         result.bucket = "needs_cleanup";
         result.job = {

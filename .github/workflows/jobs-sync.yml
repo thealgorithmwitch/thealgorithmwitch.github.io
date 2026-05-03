@@ -6,7 +6,8 @@ on:
     - cron: "*/15 * * * *"
   push:
     paths:
-      - "resources/jobs/admin-actions-local.json"
+      - "admin-actions-local.json"
+      - "jobs/admin-actions-local.json"
 
 permissions:
   contents: write
@@ -28,12 +29,25 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      - name: Detect jobs workspace
+        id: workspace
+        shell: bash
+        run: |
+          if [ -f jobs/package.json ]; then
+            JOBS_DIR="jobs"
+            echo "dir=jobs" >> "$GITHUB_OUTPUT"
+          else
+            JOBS_DIR="."
+            echo "dir=." >> "$GITHUB_OUTPUT"
+          fi
+          echo "Using jobs workspace: $JOBS_DIR"
+
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
           node-version: "24"
           cache: npm
-          cache-dependency-path: resources/jobs/package.json
+          cache-dependency-path: ${{ steps.workspace.outputs.dir }}/package.json
 
       - name: Install dependencies if needed
         shell: bash
@@ -46,17 +60,12 @@ jobs:
             echo "No package dependencies declared. Skipping npm install."
           fi
 
-      - name: Debug backend env
-        run: |
-          if [ -n "$JOBS_BACKEND_URL" ]; then echo "URL OK"; else echo "URL MISSING"; fi
-          if [ -n "$JOBS_ADMIN_TOKEN" ]; then echo "TOKEN OK"; else echo "TOKEN MISSING"; fi
-
       - name: Snapshot queued admin actions
         run: npm --prefix resources/jobs run jobs:snapshot-admin-actions
-
+      
       - name: Apply queued admin actions
         run: npm --prefix resources/jobs run jobs:apply-admin-actions
-
+      
       - name: Rebuild public job pages
         run: npm --prefix resources/jobs run jobs:build-pages
 
@@ -64,16 +73,33 @@ jobs:
         id: changes
         shell: bash
         run: |
-          CHANGED="$(git status --porcelain -- \
-            resources/jobs/job-records.json \
-            resources/jobs/jobs.json \
-            resources/jobs/pending-synced-jobs.json \
-            resources/jobs/admin-actions-local.json \
-            resources/jobs/admin-pending-overrides.json \
-            resources/jobs/admin-action-overrides.json \
-            resources/jobs/admin-organization-rules.json \
-            resources/jobs/pages || true)"
-
+          JOBS_DIR="${{ steps.workspace.outputs.dir }}"
+          cd "$GITHUB_WORKSPACE"
+          PATHS=()
+          if [ "$JOBS_DIR" = "." ]; then
+            PATHS+=(
+              "job-records.json"
+              "jobs.json"
+              "pending-synced-jobs.json"
+              "admin-actions-local.json"
+              "admin-pending-overrides.json"
+              "admin-action-overrides.json"
+              "admin-organization-rules.json"
+              "pages"
+            )
+          else
+            PATHS+=(
+              "$JOBS_DIR/job-records.json"
+              "$JOBS_DIR/jobs.json"
+              "$JOBS_DIR/pending-synced-jobs.json"
+              "$JOBS_DIR/admin-actions-local.json"
+              "$JOBS_DIR/admin-pending-overrides.json"
+              "$JOBS_DIR/admin-action-overrides.json"
+              "$JOBS_DIR/admin-organization-rules.json"
+              "$JOBS_DIR/pages"
+            )
+          fi
+          CHANGED="$(git status --porcelain -- "${PATHS[@]}" || true)"
           if [ -n "$CHANGED" ]; then
             echo "changed=true" >> "$GITHUB_OUTPUT"
             echo "Detected publish output changes:"
@@ -87,27 +113,39 @@ jobs:
         if: steps.changes.outputs.changed == 'true'
         shell: bash
         run: |
+          JOBS_DIR="${{ steps.workspace.outputs.dir }}"
+          cd "$GITHUB_WORKSPACE"
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-
-          git add \
-            resources/jobs/job-records.json \
-            resources/jobs/jobs.json \
-            resources/jobs/pending-synced-jobs.json \
-            resources/jobs/admin-actions-local.json \
-            resources/jobs/admin-pending-overrides.json \
-            resources/jobs/admin-organization-rules.json \
-            resources/jobs/pages
-
-          if [ -f resources/jobs/admin-action-overrides.json ]; then
-            git add resources/jobs/admin-action-overrides.json
+          if [ "$JOBS_DIR" = "." ]; then
+            git add \
+              job-records.json \
+              jobs.json \
+              pending-synced-jobs.json \
+              admin-actions-local.json \
+              admin-pending-overrides.json \
+              admin-organization-rules.json \
+              pages
+            if [ -f admin-action-overrides.json ]; then
+              git add admin-action-overrides.json
+            fi
+          else
+            git add \
+              "$JOBS_DIR/job-records.json" \
+              "$JOBS_DIR/jobs.json" \
+              "$JOBS_DIR/pending-synced-jobs.json" \
+              "$JOBS_DIR/admin-actions-local.json" \
+              "$JOBS_DIR/admin-pending-overrides.json" \
+              "$JOBS_DIR/admin-organization-rules.json" \
+              "$JOBS_DIR/pages"
+            if [ -f "$JOBS_DIR/admin-action-overrides.json" ]; then
+              git add "$JOBS_DIR/admin-action-overrides.json"
+            fi
           fi
-
           if git diff --cached --quiet; then
             echo "No staged changes to commit."
             exit 0
           fi
-
           git commit -m "Apply queued admin job actions"
           git push
           echo "Commit created and pushed."

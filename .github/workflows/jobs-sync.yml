@@ -52,22 +52,23 @@ jobs:
       - name: Install dependencies if needed
         shell: bash
         run: |
-          if [ -f resources/jobs/package-lock.json ] || [ -f resources/jobs/npm-shrinkwrap.json ]; then
-            npm --prefix resources/jobs ci
-          elif node -e "const p=require('./resources/jobs/package.json'); const hasDeps=Object.keys(p.dependencies||{}).length > 0 || Object.keys(p.devDependencies||{}).length > 0; process.exit(hasDeps ? 0 : 1)"; then
-            npm --prefix resources/jobs install
+          JOBS_DIR="${{ steps.workspace.outputs.dir }}"
+          if [ -f "$JOBS_DIR/package-lock.json" ] || [ -f "$JOBS_DIR/npm-shrinkwrap.json" ]; then
+            npm --prefix "$JOBS_DIR" ci
+          elif node -e "const p=require('./${{ steps.workspace.outputs.dir }}/package.json'); const hasDeps=Object.keys(p.dependencies||{}).length > 0 || Object.keys(p.devDependencies||{}).length > 0; process.exit(hasDeps ? 0 : 1)"; then
+            npm --prefix "$JOBS_DIR" install
           else
             echo "No package dependencies declared. Skipping npm install."
           fi
 
       - name: Snapshot queued admin actions
-        run: npm --prefix resources/jobs run jobs:snapshot-admin-actions
+        run: npm --prefix ${{ steps.workspace.outputs.dir }} run jobs:snapshot-admin-actions
       
       - name: Apply queued admin actions
-        run: npm --prefix resources/jobs run jobs:apply-admin-actions
+        run: npm --prefix ${{ steps.workspace.outputs.dir }} run jobs:apply-admin-actions
       
       - name: Rebuild public job pages
-        run: npm --prefix resources/jobs run jobs:build-pages
+        run: npm --prefix ${{ steps.workspace.outputs.dir }} run jobs:build-pages
 
       - name: Check for publish output changes
         id: changes

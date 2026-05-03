@@ -8,11 +8,16 @@ const SITE_ORIGIN = 'https://thealgorithmwitch.com';
 const BLOG_URL = `${SITE_ORIGIN}/blog/`;
 const SUBSTACK_URL = 'https://thealgorithmwitch.substack.com/';
 const SCRIPT_DIR = path.dirname(fileURLToPath(import.meta.url));
-const OUTPUT_DIR = SCRIPT_DIR;
-const TEMPLATE_PATH = path.join(OUTPUT_DIR, 'template-post.html');
-const POSTS_JSON_PATH = path.join(OUTPUT_DIR, 'posts.json');
-const ARCHIVE_SOURCE_PATH = path.join(OUTPUT_DIR, 'index-blog.html');
-const ARCHIVE_OUTPUT_PATH = path.join(OUTPUT_DIR, 'index.html');
+const ROOT_DIR = SCRIPT_DIR;
+const BLOG_DIR = await fs.stat(path.join(ROOT_DIR, 'blog'))
+  .then(() => path.join(ROOT_DIR, 'blog'))
+  .catch(() => ROOT_DIR);
+
+const TEMPLATE_PATH = path.join(BLOG_DIR, 'template-post.html');
+const POSTS_JSON_PATH = path.join(BLOG_DIR, 'posts.json');
+const ARCHIVE_SOURCE_PATH = path.join(BLOG_DIR, 'index-blog.html');
+const ARCHIVE_OUTPUT_PATH = path.join(ROOT_DIR, 'index.html');
+const OUTPUT_DIR = BLOG_DIR;
 const FALLBACK_OG = `${SITE_ORIGIN}/og.jpg?v=4`;
 const SECTION_THEMES = ['purple', 'cyan', 'amber', 'fuchsia'];
 const REQUEST_TIMEOUT_MS = 20000;

@@ -204,6 +204,10 @@ function buildActionResult(status, detail) {
   };
 }
 
+function countPublishedJobs(records) {
+  return records.filter(isPublishedRecord).length;
+}
+
 async function fetchAndSnapshotActions() {
   const config = await loadBackendConfig(path.join(__dirname, "jobs-backend-config.js"));
   const backendUrl = process.env.JOBS_BACKEND_URL || config.backendUrl;
@@ -269,7 +273,8 @@ async function resolveActions(backendUrl, adminToken, resultsById) {
   const ids = Object.keys(resultsById || {});
   if (!backendUrl || !adminToken || !ids.length) return;
   const statusById = Object.fromEntries(ids.map((id) => [id, String(resultsById[id].status || "applied")]));
-  await fetch(backendUrl, {
+  console.log(`[jobs:apply-admin-actions] resolve backend ids=${ids.join(",")} statuses=${JSON.stringify(statusById)}`);
+  const response = await fetch(backendUrl, {
     method: "POST",
     headers: {
       "Content-Type": "application/json"
@@ -282,6 +287,11 @@ async function resolveActions(backendUrl, adminToken, resultsById) {
       status_by_id: statusById
     })
   });
+  const payload = await response.json().catch(() => ({}));
+  console.log(`[jobs:apply-admin-actions] resolve backend status=${response.status} ok=${Boolean(payload.ok)} resolved=${payload.resolved ?? "unknown"}`);
+  if (!response.ok || !payload.ok) {
+    throw new Error(payload.error || `resolveLocalJobActions failed: HTTP ${response.status}`);
+  }
 }
 
 async function resolveLocalActions(resultsById, actions) {
@@ -300,6 +310,7 @@ async function resolveLocalActions(resultsById, actions) {
     };
   });
   await writeLocalAdminActions(nextActions);
+  console.log(`[jobs:apply-admin-actions] resolve local ids=${ids.join(",")} statuses=${JSON.stringify(Object.fromEntries(ids.map((id) => [id, resultsById[id]?.status || "applied"])))}`);
 }
 
 async function main() {
@@ -372,6 +383,9 @@ async function main() {
     const ids = Array.isArray(action.payload.ids) ? action.payload.ids.map(String) : [];
     const selectedJobs = Array.isArray(action.payload.jobs) ? action.payload.jobs : [];
     if (action.operation === "publish_selected") {
+      const pendingBefore = nextPending.length;
+      const activeBefore = countPublishedJobs(nextRecords);
+      console.log(`[jobs:apply-admin-actions] operation=publish_selected action_id=${action.id} job_ids=${ids.join(",")} pending_before=${pendingBefore} active_before=${activeBefore}`);
       const uniqueIds = [];
       const idsSeenInAction = new Set();
       let publishedCount = 0;
@@ -395,20 +409,23 @@ async function main() {
 
       for (const id of uniqueIds) {
         const existingRecord = findRecordById(nextRecords, id);
-        if (initiallyPublishedJobIds.has(id) || isPublishedRecord(existingRecord) && !processedPublishJobIds.has(id)) {
+        if ((initiallyPublishedJobIds.has(id) || isPublishedRecord(existingRecord)) && !processedPublishJobIds.has(id)) {
           alreadyPublishedCount += 1;
+          processedPublishJobIds.add(String(id));
+          publishedIds.push(String(id));
           continue;
         }
         if (processedPublishJobIds.has(id)) {
           duplicateCount += 1;
+          publishedIds.push(String(id));
           continue;
         }
         const job = nextPending.find((pendingJob) => String(pendingJob.id) === id);
         if (!job) {
-          if (processedPublishJobIds.has(id)) {
-            duplicateCount += 1;
-          } else if (existingRecord && (initiallyPublishedJobIds.has(id) || isPublishedRecord(existingRecord))) {
+          if (existingRecord && (initiallyPublishedJobIds.has(id) || isPublishedRecord(existingRecord))) {
             alreadyPublishedCount += 1;
+            processedPublishJobIds.add(String(id));
+            publishedIds.push(String(id));
           } else {
             duplicateCount += 1;
           }
@@ -436,6 +453,8 @@ async function main() {
       nextPending = removePendingByIds(nextPending, publishedIds);
       report.duplicatesSkipped += duplicateCount;
       report.alreadyPublishedSkipped += alreadyPublishedCount;
+      const pendingAfter = nextPending.length;
+      const activeAfter = countPublishedJobs(nextRecords);
 
       if (publishedCount > 0) {
         actionResults[action.id] = buildActionResult("applied", `published=${publishedCount}`);
@@ -448,7 +467,7 @@ async function main() {
       }
 
       console.log(
-        `[jobs:apply-admin-actions] publish_selected action=${action.id} published=${publishedCount} already_published=${alreadyPublishedCount} duplicates_skipped=${duplicateCount} remaining_pending=${nextPending.length}`
+        `[jobs:apply-admin-actions] operation=publish_selected action_id=${action.id} job_ids=${uniqueIds.join(",")} pending_after=${pendingAfter} active_after=${activeAfter} published=${publishedCount} already_published=${alreadyPublishedCount} duplicates_skipped=${duplicateCount} removed_from_pending=${publishedIds.length}`
       );
     } else if (action.operation === "archive_selected") {
       const pendingSelection = nextPending.filter((job) => ids.includes(String(job.id)));
@@ -657,7 +676,11 @@ async function main() {
   report.recordsLeftPending = nextPending.length;
   report.jobPagesRegenerated = await buildPagesFromRecords(nextRecords);
 
-  await resolveActions(fetched.backendUrl, fetched.adminToken, actionResults);
+  try {
+    await resolveActions(fetched.backendUrl, fetched.adminToken, actionResults);
+  } catch (error) {
+    console.error(`[jobs:apply-admin-actions] backend resolve failed: ${error.message}`);
+  }
   if (fetched.source === "local") {
     await resolveLocalActions(actionResults, fetched.actions);
   }

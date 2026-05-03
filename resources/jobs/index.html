@@ -86,6 +86,7 @@
       position: sticky;
       top: 0;
       z-index: 100;
+      overflow: visible;
     }
 
     .logo {
@@ -113,6 +114,48 @@
       gap: 32px;
       flex-wrap: wrap;
       justify-content: center;
+    }
+
+    .nav-panel {
+      display: flex;
+      align-items: center;
+      gap: 24px;
+      margin-left: auto;
+    }
+
+    .mobile-nav-handle {
+      display: none;
+      position: absolute;
+      top: 50%;
+      right: -22px;
+      width: 44px;
+      height: 44px;
+      min-width: 44px;
+      min-height: 44px;
+      border-radius: 999px;
+      border: 1px solid var(--border-divider);
+      background: var(--surface-card);
+      color: var(--accent-chartreuse);
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      box-shadow: 0 10px 24px rgba(0, 0, 0, 0.28);
+      z-index: 110;
+    }
+
+    .mobile-nav-handle svg {
+      width: 18px;
+      height: 18px;
+      stroke: currentColor;
+      fill: none;
+      stroke-width: 2;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      transition: transform var(--transition);
+    }
+
+    nav.nav-collapsed .mobile-nav-handle svg {
+      transform: rotate(180deg);
     }
 
     .nav-link {
@@ -744,11 +787,62 @@
     }
 
     .profile-modal-card {
-      max-width: 680px;
+      max-width: 760px;
       width: 100%;
       background: var(--surface-card);
       border: 1px solid var(--border-divider);
       padding: 32px;
+      max-height: min(88vh, 900px);
+      overflow-y: auto;
+    }
+
+    .profile-modal-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 14px;
+      margin-top: 20px;
+    }
+
+    .profile-modal-stat,
+    .profile-modal-section {
+      border: 1px solid var(--border-divider);
+      background: rgba(255, 255, 255, 0.02);
+      padding: 16px 18px;
+    }
+
+    .profile-modal-label {
+      font-family: var(--font-mono);
+      font-size: 0.7rem;
+      color: var(--accent-chartreuse);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: 8px;
+    }
+
+    .profile-modal-text {
+      color: var(--ink-secondary);
+      line-height: 1.6;
+    }
+
+    .profile-modal-stack {
+      display: grid;
+      gap: 16px;
+      margin-top: 20px;
+    }
+
+    .profile-modal-project {
+      border-left: 2px solid var(--accent-lavender);
+    }
+
+    .profile-modal-prompts {
+      display: grid;
+      gap: 14px;
+    }
+
+    .profile-modal-prompt-item {
+      background: rgba(0, 0, 0, 0.18);
+      border: 1px solid var(--border-divider);
+      padding: 14px 16px;
     }
 
     .employer-section {
@@ -867,8 +961,28 @@
         flex-direction: column;
       }
 
+      .nav-panel {
+        width: 100%;
+        display: grid;
+        gap: 18px;
+        padding-top: 12px;
+      }
+
       .nav-links {
         gap: 16px;
+        justify-content: flex-start;
+      }
+
+      .mobile-nav-handle {
+        display: inline-flex;
+      }
+
+      nav.nav-collapsed {
+        align-items: flex-start;
+      }
+
+      nav.nav-collapsed .nav-panel {
+        display: none;
       }
 
       .search-input {
@@ -894,6 +1008,11 @@
         width: 100%;
         border-right: none;
         border-bottom: 1px solid var(--border-divider);
+      }
+
+      .profile-modal-card,
+      .profile-modal-grid {
+        grid-template-columns: 1fr;
       }
 
       .employer-section {
@@ -924,19 +1043,26 @@
   </svg>
 
   <div class="app-container">
-    <nav>
+    <nav id="site-nav">
       <a href="#home" class="logo">
         <h1>Fresh Roles</h1>
         <span>The Algorithm Witch</span>
       </a>
-      <div class="nav-links">
-        <a href="#home" class="nav-link active">Search</a>
-        <a href="#classifieds" class="nav-link">Classifieds</a>
-        <a href="#profiles" class="nav-link">Profiles</a>
-        <a href="#employers" class="nav-link">For Employers</a>
-        <a href="./submit.html" class="nav-link">Submit Job</a>
+      <button id="mobile-nav-handle" class="mobile-nav-handle" type="button" aria-label="Close menu" aria-expanded="true">
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M15 18l-6-6 6-6"></path>
+        </svg>
+      </button>
+      <div id="nav-panel" class="nav-panel">
+        <div class="nav-links">
+          <a href="#home" class="nav-link active">Search</a>
+          <a href="#classifieds" class="nav-link">Classifieds</a>
+          <a href="#profiles" class="nav-link">Profiles</a>
+          <a href="#employers" class="nav-link">For Employers</a>
+          <a href="./submit.html" class="nav-link">Submit Job</a>
+        </div>
+        <a href="./submit.html" class="btn-primary">Submit Job</a>
       </div>
-      <a href="./submit.html" class="btn-primary">Submit Job</a>
     </nav>
 
     <section id="home" class="hero-section">
@@ -1100,13 +1226,13 @@
         </div>
         <button id="close-profile-modal" class="btn-secondary" type="button">Close</button>
       </div>
-      <div id="profile-modal-meta" style="display:grid; gap:12px; margin-top:20px;"></div>
-      <div id="profile-modal-bio" class="prompt-a" style="font-style:normal; margin-top:20px;"></div>
-      <div id="profile-modal-links" style="display:grid; gap:10px; margin-top:20px;"></div>
-      <div id="profile-modal-project" style="display:none; margin-top:20px;"></div>
-      <div id="profile-modal-prompt" class="profile-prompt" style="margin-top:20px; display:none;"></div>
-      <div id="profile-modal-tags" class="profile-tags" style="margin-top:20px;"></div>
-      <div id="profile-modal-contact" style="margin-top:20px; color: var(--ink-secondary);"></div>
+      <div id="profile-modal-meta" class="profile-modal-grid"></div>
+      <div id="profile-modal-bio" class="profile-modal-section" style="margin-top:20px;"></div>
+      <div id="profile-modal-links"></div>
+      <div id="profile-modal-project" class="profile-modal-section profile-modal-project" style="display:none; margin-top:20px;"></div>
+      <div id="profile-modal-prompt" class="profile-modal-section" style="margin-top:20px; display:none;"></div>
+      <div id="profile-modal-tags" class="profile-modal-section" style="margin-top:20px;"></div>
+      <div id="profile-modal-contact" class="profile-modal-section" style="display:none; margin-top:20px;"></div>
       <div id="profile-modal-actions" class="profile-actions" style="margin-top:20px;"></div>
     </div>
   </div>
@@ -1155,6 +1281,9 @@
       profilesGrid: document.getElementById("profiles-grid"),
       employersList: document.getElementById("employers-list"),
       profileModal: document.getElementById("profile-modal"),
+      siteNav: document.getElementById("site-nav"),
+      navPanel: document.getElementById("nav-panel"),
+      mobileNavHandle: document.getElementById("mobile-nav-handle"),
       profileModalName: document.getElementById("profile-modal-name"),
       profileModalRole: document.getElementById("profile-modal-role"),
       profileModalLocation: document.getElementById("profile-modal-location"),
@@ -1464,6 +1593,7 @@
               <div class="prompt-a" style="font-style: normal; margin-bottom: 20px;">${escapeHtml(cleanVisibleText(profile.short_bio || ""))}</div>
               <div class="profile-actions">
                 ${cta}
+                <button class="btn-secondary" type="button" data-profile-action="${escapeHtml(profile.id)}" data-talent-click="modal" data-profile-id="${escapeHtml(profile.id)}" data-profile-name="${escapeHtml(profile.name)}">View Profile</button>
               </div>
               <div class="profile-tags">
                 ${tags.map((tag) => `<span>#${escapeHtml(tag)}</span>`).join("")}
@@ -1509,23 +1639,30 @@
       ui.profileModalName.textContent = cleanVisibleText(profile.name || "");
       ui.profileModalRole.textContent = cleanVisibleText(profile.current_role || "Talent Profile");
       ui.profileModalLocation.textContent = cleanVisibleText(profile.location || "");
-      ui.profileModalBio.textContent = cleanVisibleText(profile.short_bio || "");
+      ui.profileModalBio.innerHTML = `
+        <div class="profile-modal-label">Short Bio</div>
+        <div class="profile-modal-text">${escapeHtml(cleanVisibleText(profile.short_bio || ""))}</div>
+      `;
       ui.profileModalMeta.innerHTML = [
-        profile.location ? `<div><div style="font-family: var(--font-mono); font-size: 0.7rem; color: var(--accent-chartreuse); text-transform: uppercase;">Location</div><div style="color: var(--ink-secondary);">${escapeHtml(cleanVisibleText(profile.location || ""))}</div></div>` : "",
-        focusAreas.length ? `<div><div style="font-family: var(--font-mono); font-size: 0.7rem; color: var(--accent-chartreuse); text-transform: uppercase;">Focus Areas</div><div style="color: var(--ink-secondary);">${escapeHtml(focusAreas.join(", "))}</div></div>` : ""
+        profile.current_role ? `<div class="profile-modal-stat"><div class="profile-modal-label">Current Role</div><div class="profile-modal-text">${escapeHtml(cleanVisibleText(profile.current_role || ""))}</div></div>` : "",
+        profile.location ? `<div class="profile-modal-stat"><div class="profile-modal-label">Location</div><div class="profile-modal-text">${escapeHtml(cleanVisibleText(profile.location || ""))}</div></div>` : "",
+        focusAreas.length ? `<div class="profile-modal-stat"><div class="profile-modal-label">Focus Areas</div><div class="profile-modal-text">${escapeHtml(focusAreas.join(", "))}</div></div>` : "",
+        profile.open_to ? `<div class="profile-modal-stat"><div class="profile-modal-label">Open To</div><div class="profile-modal-text">${escapeHtml(cleanVisibleText(profile.open_to || ""))}</div></div>` : ""
       ].filter(Boolean).join("");
-      ui.profileModalLinks.innerHTML = [
-        portfolioUrl ? `<div><div style="font-family: var(--font-mono); font-size: 0.7rem; color: var(--accent-chartreuse); text-transform: uppercase;">Portfolio</div><a href="${escapeHtml(portfolioUrl)}" target="_blank" rel="noopener noreferrer" style="color: var(--ink-secondary); word-break: break-word;">${escapeHtml(portfolioUrl)}</a></div>` : "",
-        linkedInUrl ? `<div><div style="font-family: var(--font-mono); font-size: 0.7rem; color: var(--accent-chartreuse); text-transform: uppercase;">LinkedIn</div><a href="${escapeHtml(linkedInUrl)}" target="_blank" rel="noopener noreferrer" style="color: var(--ink-secondary); word-break: break-word;">${escapeHtml(linkedInUrl)}</a></div>` : ""
-      ].filter(Boolean).join("");
+      ui.profileModalLinks.innerHTML = "";
       if (prompts.length) {
         ui.profileModalPrompt.style.display = "block";
-        ui.profileModalPrompt.innerHTML = prompts.map((prompt) => `
-          <div style="margin-bottom: 16px;">
+        ui.profileModalPrompt.innerHTML = `
+          <div class="profile-modal-label">Profile Prompts</div>
+          <div class="profile-modal-prompts">
+            ${prompts.map((prompt) => `
+          <div class="profile-modal-prompt-item">
             <div class="prompt-q">${escapeHtml(cleanVisibleText(prompt.question || "Profile Note"))}</div>
             <div class="prompt-a">"${escapeHtml(cleanVisibleText(prompt.answer || ""))}"</div>
           </div>
-        `).join("");
+        `).join("")}
+          </div>
+        `;
       } else {
         ui.profileModalPrompt.style.display = "none";
         ui.profileModalPrompt.innerHTML = "";
@@ -1533,24 +1670,33 @@
       if (cleanVisibleText(profile.featured_project || "")) {
         ui.profileModalProject.style.display = "block";
         ui.profileModalProject.innerHTML = `
-          <div style="font-family: var(--font-mono); font-size: 0.7rem; color: var(--accent-chartreuse); text-transform: uppercase; margin-bottom: 6px;">Featured Project</div>
-          <div style="color: var(--ink-secondary);">${escapeHtml(cleanVisibleText(profile.featured_project || ""))}</div>
+          <div class="profile-modal-label">Featured Project</div>
+          <div class="profile-modal-text">${escapeHtml(cleanVisibleText(profile.featured_project || ""))}</div>
         `;
       } else {
         ui.profileModalProject.style.display = "none";
         ui.profileModalProject.innerHTML = "";
       }
       const tags = Array.isArray(profile.tags) ? profile.tags : [];
-      ui.profileModalTags.innerHTML = tags.map((tag) => `<span>#${escapeHtml(tag)}</span>`).join("");
+      ui.profileModalTags.innerHTML = `
+        <div class="profile-modal-label">Tags</div>
+        <div class="profile-tags">
+          ${tags.map((tag) => `<span>#${escapeHtml(tag)}</span>`).join("")}
+        </div>
+      `;
       ui.profileModalActions.innerHTML = buildProfileModalCtas(profile, {
         portfolioUrl,
         linkedInUrl,
         resumeFile,
         coverLetterFile
       });
-      ui.profileModalContact.innerHTML = profile.public_contact === true && profile.email
-        ? `Contact: <a href="mailto:${escapeHtml(profile.email)}" style="color: var(--accent-chartreuse);">${escapeHtml(profile.email)}</a>`
-        : "";
+      if (profile.public_contact === true && profile.email) {
+        ui.profileModalContact.style.display = "block";
+        ui.profileModalContact.innerHTML = `<div class="profile-modal-label">Contact</div><div class="profile-modal-text">Email: <a href="mailto:${escapeHtml(profile.email)}" style="color: var(--accent-chartreuse);">${escapeHtml(profile.email)}</a></div>`;
+      } else {
+        ui.profileModalContact.style.display = "none";
+        ui.profileModalContact.innerHTML = "";
+      }
       ui.profileModal.classList.add("visible");
       ui.profileModal.setAttribute("aria-hidden", "false");
     }
@@ -1563,6 +1709,7 @@
       ui.profileModalProject.innerHTML = "";
       ui.profileModalActions.innerHTML = "";
       ui.profileModalContact.innerHTML = "";
+      ui.profileModalContact.style.display = "none";
     }
 
     function iconSvg(name) {
@@ -1584,7 +1731,7 @@
       if (linkedInUrl) {
         return `<a class="btn-primary" href="${escapeHtml(linkedInUrl)}" target="_blank" rel="noopener noreferrer" data-talent-click="linkedin" data-profile-id="${escapeHtml(profile.id)}" data-profile-name="${escapeHtml(profile.name)}">${iconSvg("linkedin")} View LinkedIn</a>`;
       }
-      return `<button class="btn-primary" type="button" data-profile-action="${escapeHtml(profile.id)}" data-talent-click="modal" data-profile-id="${escapeHtml(profile.id)}" data-profile-name="${escapeHtml(profile.name)}">View Profile</button>`;
+      return "";
     }
 
     function buildProfileModalCtas(profile, urls) {
@@ -1894,6 +2041,26 @@
       if (event.target === ui.profileModal) closeProfileModal();
     });
 
+    const mobileNavMediaQuery = window.matchMedia("(max-width: 800px)");
+
+    function setMobileNavCollapsed(collapsed) {
+      const shouldCollapse = mobileNavMediaQuery.matches && collapsed;
+      ui.siteNav.classList.toggle("nav-collapsed", shouldCollapse);
+      ui.mobileNavHandle.setAttribute("aria-expanded", shouldCollapse ? "false" : "true");
+      ui.mobileNavHandle.setAttribute("aria-label", shouldCollapse ? "Open menu" : "Close menu");
+    }
+
+    ui.mobileNavHandle.addEventListener("click", () => {
+      if (!mobileNavMediaQuery.matches) return;
+      setMobileNavCollapsed(!ui.siteNav.classList.contains("nav-collapsed"));
+    });
+
+    mobileNavMediaQuery.addEventListener("change", (event) => {
+      if (!event.matches) {
+        setMobileNavCollapsed(false);
+      }
+    });
+
     const sections = document.querySelectorAll("section");
     const navLinks = document.querySelectorAll(".nav-link");
 
@@ -1908,6 +2075,14 @@
         const href = link.getAttribute("href") || "";
         if (!href.startsWith("#")) return;
         link.classList.toggle("active", href.includes(current));
+      });
+    });
+
+    navLinks.forEach((link) => {
+      link.addEventListener("click", () => {
+        if (mobileNavMediaQuery.matches) {
+          setMobileNavCollapsed(true);
+        }
       });
     });
 

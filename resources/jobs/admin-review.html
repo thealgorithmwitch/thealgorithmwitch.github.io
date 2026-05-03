@@ -422,24 +422,24 @@
         </div>
         <div class="metric-grid" style="margin-top:18px;">
           <div class="metric">
-            <div class="metric-label">Public Jobs</div>
+            <div class="metric-label">Active JSON Jobs</div>
             <div id="metric-public-jobs" class="metric-value">0</div>
-            <div class="metric-subtext">Currently published</div>
+            <div class="metric-subtext">From job-records.json</div>
           </div>
           <div class="metric">
-            <div class="metric-label">Pending Review-Ready</div>
+            <div class="metric-label">Pending Review Jobs</div>
             <div id="metric-review-ready" class="metric-value">0</div>
-            <div class="metric-subtext">Ready for admin review</div>
+            <div class="metric-subtext">Current pending-synced-jobs.json</div>
           </div>
           <div class="metric">
-            <div class="metric-label">Pending Needs-Cleanup</div>
+            <div class="metric-label">Backend Queued Actions</div>
             <div id="metric-needs-cleanup" class="metric-value">0</div>
-            <div class="metric-subtext">Relevant, but still messy</div>
+            <div class="metric-subtext">Queued in Apps Script when available</div>
           </div>
           <div class="metric">
-            <div class="metric-label">Rejected Noise</div>
+            <div class="metric-label">Backend Approved Archive</div>
             <div id="metric-rejected-noise" class="metric-value">0</div>
-            <div class="metric-subtext">Held out of admin queue</div>
+            <div class="metric-subtext">Sheet archive only, not Active</div>
           </div>
         </div>
       </section>
@@ -575,7 +575,7 @@
         <section id="tab-jobs-active" class="tab-panel">
           <div class="tab-header">
             <div>
-              <div class="eyebrow">Jobs</div>
+              <div class="eyebrow">Jobs / JSON Truth</div>
               <div class="tab-title">Active Jobs</div>
             </div>
             <div id="count-jobs-active" class="pill">0 items</div>
@@ -678,7 +678,7 @@
       "jobs-active": {
         panelId: "panel-jobs-active",
         countId: "count-jobs-active",
-        fetchAction: "getApprovedJobs",
+        fetchAction: "",
         approveAction: "",
         rejectAction: "",
         title: "active job"
@@ -846,6 +846,97 @@
       setLocalActionQueue(actions);
     }
 
+    function dedupeIds(ids) {
+      return Array.from(new Set((Array.isArray(ids) ? ids : []).map((id) => String(id)).filter(Boolean)));
+    }
+
+    function buildPublishQueuePayload(jobs) {
+      const selectedJobs = Array.isArray(jobs) ? jobs.filter(Boolean) : [];
+      return {
+        operation: "publish_selected",
+        actor: "Admin Review Console",
+        ids: dedupeIds(selectedJobs.map((job) => job.id)),
+        organization: selectedJobs[0] ? String(selectedJobs[0].organization || "") : "",
+        jobs: selectedJobs,
+        edited_jobs: selectedJobs
+          .map((job) => ({
+            id: String(job.id),
+            editedRecord: state.localJobReview.actionsById[String(job.id)]?.editedRecord || null
+          }))
+          .filter((item) => item.editedRecord)
+      };
+    }
+
+    function buildOptimisticActiveJobRecord(job, editedRecord) {
+      const display = editedRecord && editedRecord.display && typeof editedRecord.display === "object" ? editedRecord.display : {};
+      const now = new Date().toISOString();
+      return {
+        id: String(job.id || ""),
+        record_type: "job",
+        status: String(editedRecord?.status || "published"),
+        public_visibility: typeof editedRecord?.public_visibility === "boolean" ? editedRecord.public_visibility : true,
+        featured: typeof editedRecord?.featured === "boolean" ? editedRecord.featured : Boolean(job.featured),
+        created_at: job.created_at || now,
+        updated_at: now,
+        source_type: String(job.source_type || "scraped"),
+        admin_notes: String(editedRecord?.admin_notes || ""),
+        display_order: Number(editedRecord?.display_order || 0),
+        published: typeof editedRecord?.published === "boolean" ? editedRecord.published : true,
+        raw_source_data: {
+          ...job,
+          status: String(editedRecord?.status || "published"),
+          featured: typeof editedRecord?.featured === "boolean" ? editedRecord.featured : Boolean(job.featured)
+        },
+        display: {
+          title: String(display.title || job.title || ""),
+          organization: String(display.organization || job.organization || ""),
+          location: String(display.location || job.location || ""),
+          location_type: String(display.location_type || job.workplace_type || ""),
+          pay_display: String(display.pay_display || job.salary || ""),
+          salary_min: display.salary_min ?? job.salary_min ?? null,
+          salary_max: display.salary_max ?? job.salary_max ?? null,
+          role_type: String(display.role_type || job.job_type || ""),
+          experience_level: String(display.experience_level || job.experience || ""),
+          sector: String(display.sector || job.sector || ""),
+          function: String(display.function || job.function || ""),
+          tags: Array.isArray(display.tags) ? display.tags : (Array.isArray(job.tags) ? job.tags : []),
+          description: String(display.description || job.description || job.raw_description || ""),
+          source_name: String(display.source_name || job.source || ""),
+          source_url: String(display.source_url || job.source_url || ""),
+          original_url: String(display.original_url || job.original_url || job.apply_url || ""),
+          date_collected: String(display.date_collected || job.date_posted || ""),
+          application_url: String(display.application_url || job.apply_url || ""),
+          published: typeof editedRecord?.published === "boolean" ? editedRecord.published : true,
+          featured: typeof editedRecord?.featured === "boolean" ? editedRecord.featured : Boolean(job.featured)
+        }
+      };
+    }
+
+    function applyOptimisticPublishSuccess(jobs, actionLabel) {
+      const ids = dedupeIds((jobs || []).map((job) => job.id));
+      ids.forEach((id) => {
+        state.localJobReview.actionsById[id] = {
+          ...(state.localJobReview.actionsById[id] || {}),
+          action: actionLabel
+        };
+      });
+
+      jobs.forEach((job) => {
+        const editedRecord = state.localJobReview.actionsById[String(job.id)]?.editedRecord || null;
+        const nextRecord = buildOptimisticActiveJobRecord(job, editedRecord);
+        const index = state.activeJobRecords.findIndex((record) => String(record.id) === String(job.id));
+        if (index >= 0) state.activeJobRecords[index] = nextRecord;
+        else state.activeJobRecords.unshift(nextRecord);
+      });
+
+      state.activeJobRecordsLoaded = true;
+      state.localJobs = state.localJobs.filter((job) => !ids.includes(String(job.id)));
+      state.localJobReview.selectedIds = state.localJobReview.selectedIds.filter((id) => !ids.includes(String(id)));
+      setLocalReviewState();
+      renderLocalJobs();
+      renderTab("jobs-active");
+    }
+
     function exportLocalActionsFile() {
       const actions = getLocalActionQueue();
       const payload = JSON.stringify({
@@ -866,18 +957,53 @@
 
     async function loadTriageSummary() {
       try {
-        const response = await fetch(TRIAGE_SUMMARY_URL, { cache: "no-store" });
-        if (!response.ok) throw new Error(`HTTP ${response.status}`);
-        const summary = await response.json();
-        triageMetricEls.publicJobs.textContent = String(summary.public_jobs || 0);
-        triageMetricEls.reviewReady.textContent = String(summary.pending_review_ready || 0);
-        triageMetricEls.needsCleanup.textContent = String(summary.pending_needs_cleanup || 0);
-        triageMetricEls.rejectedNoise.textContent = String(summary.rejected_noise || 0);
+        const [pendingResponse, recordsResponse, summaryResponse] = await Promise.all([
+          fetch(LOCAL_PENDING_URL, { cache: "no-store" }),
+          fetch(LOCAL_JOB_RECORDS_URL, { cache: "no-store" }),
+          fetch(TRIAGE_SUMMARY_URL, { cache: "no-store" })
+        ]);
+        if (!pendingResponse.ok || !recordsResponse.ok) throw new Error("Local JSON counts unavailable");
+
+        const pendingItems = await pendingResponse.json();
+        const recordItems = await recordsResponse.json();
+        const summary = summaryResponse.ok ? await summaryResponse.json() : {};
+
+        const activeJsonJobs = (Array.isArray(recordItems) ? recordItems : []).filter((record) => (
+          record &&
+          record.record_type === "job" &&
+          String(record.status || "").toLowerCase() === "published" &&
+          record.published === true &&
+          record.public_visibility === true
+        ));
+        const publishedIds = new Set(activeJsonJobs.map((record) => String(record.id || "")));
+        const overlapCount = (Array.isArray(pendingItems) ? pendingItems : []).filter((job) => publishedIds.has(String(job.id || ""))).length;
+
+        triageMetricEls.publicJobs.textContent = String(activeJsonJobs.length);
+        triageMetricEls.reviewReady.textContent = String(Array.isArray(pendingItems) ? pendingItems.length : 0);
+
+        let backendQueuedCount = 0;
+        let backendApprovedArchiveCount = "—";
+        if (canUseBackendAdmin()) {
+          try {
+            const [queueResult, approvedResult] = await Promise.all([
+              requestAdmin("getLocalJobActions"),
+              requestAdmin("getApprovedJobs")
+            ]);
+            backendQueuedCount = (Array.isArray(queueResult.items) ? queueResult.items : []).filter((item) => String(item.status || "").toLowerCase() === "queued").length;
+            backendApprovedArchiveCount = String(Array.isArray(approvedResult.items) ? approvedResult.items.length : 0);
+          } catch (_error) {
+            backendQueuedCount = 0;
+            backendApprovedArchiveCount = "—";
+          }
+        }
+
+        triageMetricEls.needsCleanup.textContent = String(backendQueuedCount);
+        triageMetricEls.rejectedNoise.textContent = String(backendApprovedArchiveCount);
         triageGeneratedAt.textContent = summary.generated_at
-          ? `Updated ${new Date(summary.generated_at).toLocaleString()}`
-          : "Triage summary loaded";
+          ? `JSON snapshot ${new Date(summary.generated_at).toLocaleString()} • overlap ${overlapCount}`
+          : `JSON snapshot loaded • overlap ${overlapCount}`;
       } catch (_error) {
-        triageGeneratedAt.textContent = "Triage summary unavailable";
+        triageGeneratedAt.textContent = "Local JSON count snapshot unavailable";
       }
     }
 
@@ -1276,7 +1402,7 @@
       const panel = document.getElementById("panel-jobs");
       const count = document.getElementById("count-jobs");
       const filtered = filterLocalJobs();
-      count.textContent = `${filtered.length} items`;
+      count.textContent = `${filtered.length} pending`;
       const duplicateSuspects = getDuplicateSuspectIds(filtered);
 
       if (!filtered.length) {
@@ -1313,26 +1439,31 @@
         return;
       }
       const selectedJobs = state.localJobs.filter((job) => selectedIds.includes(String(job.id)));
-      const editedJobs = selectedJobs
-        .map((job) => ({
-          id: String(job.id),
-          editedRecord: state.localJobReview.actionsById[String(job.id)]?.editedRecord || null
-        }))
-        .filter((item) => item.editedRecord);
-      queueLocalJobAction({
-        operation: action,
-        actor: "Admin Review Console",
-        ids: selectedIds,
-        organization: selectedJobs[0] ? String(selectedJobs[0].organization || "") : "",
-        jobs: selectedJobs,
-        edited_jobs: editedJobs
-      }).then((result) => {
+      const payload = action === "publish_selected"
+        ? buildPublishQueuePayload(selectedJobs)
+        : {
+            operation: action,
+            actor: "Admin Review Console",
+            ids: selectedIds,
+            organization: selectedJobs[0] ? String(selectedJobs[0].organization || "") : "",
+            jobs: selectedJobs,
+            edited_jobs: selectedJobs
+              .map((job) => ({
+                id: String(job.id),
+                editedRecord: state.localJobReview.actionsById[String(job.id)]?.editedRecord || null
+              }))
+              .filter((item) => item.editedRecord)
+          };
+      queueLocalJobAction(payload).then((result) => {
         selectedIds.forEach((id) => {
           state.localJobReview.actionsById[id] = {
             ...(state.localJobReview.actionsById[id] || {}),
             action
           };
         });
+        if (action === "publish_selected") {
+          applyOptimisticPublishSuccess(selectedJobs, "publish_selected");
+        }
         if (action === "hide_organization" || action === "reject_all_from_organization") {
           selectedJobs.forEach((job) => {
             if (!state.localJobReview.hiddenOrganizations.includes(String(job.organization || ""))) {
@@ -1345,7 +1476,9 @@
           ? `Queued ${action} for ${selectedIds.length} local pending jobs in Apps Script and mirrored locally.`
           : `Queued ${action} for ${selectedIds.length} local pending jobs in local fallback. Export ${LOCAL_JOB_ACTION_EXPORT_FILENAME} and run apply-admin-actions to persist it.`;
         setStatus(result.warning ? `${message} ${result.warning}` : message, false);
-        renderLocalJobs();
+        if (action !== "publish_selected") {
+          renderLocalJobs();
+        }
       }).catch((error) => {
         setStatus(error.message || `Unable to queue ${action}.`, true);
       });
@@ -1531,14 +1664,28 @@
     async function queueLocalJobAction(payload) {
       if (canUseBackendAdmin()) {
         try {
-          await requestAdmin("queueLocalJobAction", payload);
+          const queued = await requestAdmin("queueLocalJobAction", payload);
+          console.log("[admin-review] queueLocalJobAction backend success", {
+            operation: payload.operation,
+            actionId: queued && queued.id ? queued.id : "",
+            jobIds: payload.ids || []
+          });
           enqueueLocalAction(payload, "mirrored");
           return { mode: "backend" };
         } catch (error) {
+          console.error("[admin-review] queueLocalJobAction backend failure", {
+            operation: payload.operation,
+            jobIds: payload.ids || [],
+            error: error.message || String(error)
+          });
           enqueueLocalAction(payload, "queued");
           return { mode: "local", warning: error.message || "Backend queue failed. Saved locally instead." };
         }
       }
+      console.log("[admin-review] queueLocalJobAction local fallback", {
+        operation: payload.operation,
+        jobIds: payload.ids || []
+      });
       enqueueLocalAction(payload, "queued");
       return { mode: "local" };
     }
@@ -1978,7 +2125,7 @@
         const itemsToRender = state.activeJobRecords
           .map(resolveLocalJobRecord)
           .filter((record) => record.status === "published" || record.public_visibility || record.published);
-        count.textContent = `${itemsToRender.length} items`;
+        count.textContent = `${itemsToRender.length} JSON active`;
         panel.innerHTML = itemsToRender.length
           ? itemsToRender.map((item) => buildActiveLocalCard(tabKey, item)).join("")
           : `<div class="empty-state">No active jobs found in local job-records.json.</div>`;
@@ -2293,19 +2440,12 @@
           editedRecord
         };
         setLocalReviewState();
-        queueLocalJobAction({
-          operation: "publish_selected",
-          actor: "Admin Review Console",
-          ids: [id],
-          organization: String(job.organization || ""),
-          jobs: [job],
-          edited_jobs: [{ id, editedRecord }]
-        }).then((result) => {
+        queueLocalJobAction(buildPublishQueuePayload([job])).then((result) => {
+          applyOptimisticPublishSuccess([job], "publish_edited");
           const message = result.mode === "backend"
             ? `Queued edited publish for ${job.title} in Apps Script and mirrored locally.`
             : `Queued edited publish for ${job.title} in local fallback. Export ${LOCAL_JOB_ACTION_EXPORT_FILENAME} and run apply-admin-actions to persist it.`;
           setStatus(result.warning ? `${message} ${result.warning}` : message, false);
-          renderLocalJobs();
         }).catch((error) => {
           setStatus(error.message || "Unable to queue edited publish.", true);
         });
@@ -2316,25 +2456,12 @@
       if (!button) return;
       const job = state.localJobs.find((item) => String(item.id) === String(button.dataset.localQuickPublish));
       if (!job) return;
-      const editedRecord = state.localJobReview.actionsById[String(job.id)]?.editedRecord || null;
-      queueLocalJobAction({
-        operation: "publish_selected",
-        actor: "Admin Review Console",
-        ids: [String(job.id)],
-        organization: String(job.organization || ""),
-        jobs: [job],
-        edited_jobs: editedRecord ? [{ id: String(job.id), editedRecord }] : []
-      }).then((result) => {
-        state.localJobReview.actionsById[String(job.id)] = {
-          ...(state.localJobReview.actionsById[String(job.id)] || {}),
-          action: "quick_publish"
-        };
-        setLocalReviewState();
+      queueLocalJobAction(buildPublishQueuePayload([job])).then((result) => {
+        applyOptimisticPublishSuccess([job], "quick_publish");
         const message = result.mode === "backend"
           ? `Queued quick publish for ${job.title} in Apps Script and mirrored locally.`
           : `Queued quick publish for ${job.title} in local fallback. Export ${LOCAL_JOB_ACTION_EXPORT_FILENAME} and run apply-admin-actions to persist it.`;
         setStatus(result.warning ? `${message} ${result.warning}` : message, false);
-        renderLocalJobs();
       }).catch((error) => {
         setStatus(error.message || "Unable to queue quick publish.", true);
       });
@@ -2350,6 +2477,7 @@
       state.loadedTabs.clear();
       state.items = {};
       showConsoleState();
+      loadTriageSummary();
       activateTab("jobs");
     });
 

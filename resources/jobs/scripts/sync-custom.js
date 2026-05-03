@@ -27,7 +27,7 @@ async function runCustomSync() {
 
   const customSources = sources.filter((source) => shouldUseDiscoverySync(source));
   const managedCustomSourceIds = new Set(
-    sources
+    sourcesf
       .filter((source) => shouldUseDiscoverySync(source))
       .map((source) => source.id)
   );
@@ -41,8 +41,11 @@ async function runCustomSync() {
     };
   }
 
-  const preservedPublicJobs = existingJobs.filter((job) => !isManagedCustomJob(job, managedCustomSourceIds));
-  const preservedPendingJobs = existingPending.filter((job) => !isManagedCustomJob(job, managedCustomSourceIds));
+  const preservedPublicJobs = existingJobs.filter((job) => !isManagedAtsJob(job, activeSourceIds));
+  
+  // Preserve all existing pending unless already published/excluded elsewhere.
+  // Do not wipe managed ATS pending just because a source returned fewer jobs.
+  const preservedPendingJobs = existingPending;
   const publicJobs = [];
   const pendingJobs = [];
   const counts = {};
@@ -92,7 +95,7 @@ async function runCustomSync() {
     }
   }
 
-  const mergedPublicJobs = dedupeJobs([...preservedPublicJobs, ...publicJobs]);
+  const mergedPublicJobs = preservedPublicJobs;
   const mergedPendingJobs = dedupeJobs([...preservedPendingJobs, ...pendingJobs]);
 
   const publicWriteResult = await safeWritePublicJobs(mergedPublicJobs, {

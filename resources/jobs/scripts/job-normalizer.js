@@ -1,7 +1,7 @@
 const crypto = require("crypto");
 const {
   evaluateSourceTitleRules,
-  resolveElementalImpactAttribution
+  resolveBoardSourceAttribution
 } = require("./source-rules");
 
 const VALID_CURRENCIES = new Set(["USD", "CAD", "EUR", "GBP", "Unknown"]);
@@ -697,7 +697,7 @@ function resolveNumericField(value) {
 }
 
 function normalizeJob(input = {}) {
-  const sourceAttribution = resolveElementalImpactAttribution(input) || null;
+  const sourceAttribution = resolveBoardSourceAttribution(input) || null;
   const organization = safeStringField(sourceAttribution?.organization || input.organization);
   const title = normalizeTitle(input.title, organization);
   const applyUrl = safeStringField(input.apply_url || input.applyUrl);

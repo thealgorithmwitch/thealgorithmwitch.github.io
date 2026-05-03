@@ -151,21 +151,55 @@ function extractOrganizationFromOriginalUrl(urlValue) {
   return null;
 }
 
-function isElementalImpactSource(job = {}) {
+const BOARD_SOURCE_CONFIGS = [
+  {
+    id: "elemental-impact",
+    name: "Elemental Impact",
+    urls: ["https://jobs.elementalimpact.com/jobs", "https://elementalimpact.com/jobs/"],
+    matchers: ["elementalimpact.com/jobs", "jobs.elementalimpact.com/jobs"]
+  },
+  {
+    id: "goodcitizen",
+    name: "GoodCitizen",
+    urls: ["https://www.goodcitizen.com/executive-search/"],
+    matchers: ["goodcitizen.com/executive-search"]
+  },
+  {
+    id: "idealist",
+    name: "Idealist",
+    urls: ["https://www.idealist.org/"],
+    matchers: ["idealist.org"]
+  },
+  {
+    id: "climatechangejobs",
+    name: "ClimateChangeJobs",
+    urls: ["https://climatechangejobs.com/jobs"],
+    matchers: ["climatechangejobs.com/jobs"]
+  }
+];
+
+function findBoardSourceConfig(job = {}) {
   const sourceId = normalizeText(job.source_id || job.sourceId);
   const source = normalizeText(job.source);
   const sourceUrl = normalizeText(job.source_url || job.sourceUrl);
   const notes = normalizeText(job.notes);
-  return (
-    sourceId === "elemental-impact" ||
-    source === "elemental impact" ||
-    sourceUrl.includes("elementalimpact.com/jobs") ||
-    notes.includes("elementalimpact.com/jobs")
-  );
+
+  return BOARD_SOURCE_CONFIGS.find((config) => {
+    const idMatch = sourceId === normalizeText(config.id);
+    const sourceMatch = source === normalizeText(config.name);
+    const urlMatch = config.matchers.some((match) => sourceUrl.includes(normalizeText(match)));
+    const notesMatch = config.matchers.some((match) => notes.includes(normalizeText(match)));
+    return idMatch || sourceMatch || urlMatch || notesMatch;
+  }) || null;
 }
 
-function resolveElementalImpactAttribution(job = {}) {
-  if (!isElementalImpactSource(job)) return null;
+function isElementalImpactSource(job = {}) {
+  return Boolean(findBoardSourceConfig(job)?.id === "elemental-impact");
+}
+
+function resolveBoardSourceAttribution(job = {}) {
+  const boardConfig = findBoardSourceConfig(job);
+  if (!boardConfig) return null;
 
   const candidates = [
     extractOrganizationFromTitle(job.title),
@@ -179,8 +213,8 @@ function resolveElementalImpactAttribution(job = {}) {
 
   if (!organization || !looksLikeOrganization(organization)) {
     return {
-      sourceName: "Elemental Impact",
-      sourceUrl: cleanText(job.source_url || job.sourceUrl || "https://jobs.elementalimpact.com/jobs"),
+      sourceName: boardConfig.name,
+      sourceUrl: cleanText(job.source_url || job.sourceUrl || boardConfig.urls[0] || ""),
       organization: "Unknown organization",
       organizationConfidence: "low",
       parseWarning: "source board organization uncertain",
@@ -190,14 +224,19 @@ function resolveElementalImpactAttribution(job = {}) {
   }
 
   return {
-    sourceName: "Elemental Impact",
-    sourceUrl: cleanText(job.source_url || job.sourceUrl || "https://jobs.elementalimpact.com/jobs"),
+    sourceName: boardConfig.name,
+    sourceUrl: cleanText(job.source_url || job.sourceUrl || boardConfig.urls[0] || ""),
     organization,
     organizationConfidence: chosen.confidence,
     parseWarning: "",
     triageBucket: "",
     triageReason: ""
   };
+}
+
+function resolveElementalImpactAttribution(job = {}) {
+  const attribution = resolveBoardSourceAttribution(job);
+  return attribution && attribution.sourceName === "Elemental Impact" ? attribution : null;
 }
 
 function evaluateSourceTitleRules(job = {}) {
@@ -255,7 +294,9 @@ function evaluateSourceTitleRules(job = {}) {
 }
 
 module.exports = {
+  BOARD_SOURCE_CONFIGS,
   evaluateSourceTitleRules,
   isElementalImpactSource,
+  resolveBoardSourceAttribution,
   resolveElementalImpactAttribution
 };

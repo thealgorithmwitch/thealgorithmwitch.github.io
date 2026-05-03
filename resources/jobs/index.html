@@ -1103,6 +1103,8 @@
       <div id="profile-modal-bio" class="prompt-a" style="font-style:normal; margin-top:20px;"></div>
       <div id="profile-modal-prompt" class="profile-prompt" style="margin-top:20px; display:none;"></div>
       <div id="profile-modal-tags" class="profile-tags" style="margin-top:20px;"></div>
+      <div id="profile-modal-contact" style="margin-top:20px; color: var(--ink-secondary);"></div>
+      <div id="profile-modal-actions" class="profile-actions" style="margin-top:20px;"></div>
     </div>
   </div>
 
@@ -1112,10 +1114,13 @@
     const state = {
       jobs: [],
       jobRecords: [],
+      jobPagePaths: new Map(),
       profiles: [],
       employers: [],
       filteredJobs: [],
       visibleCount: 9,
+      renderedJobsKey: "",
+      renderedJobCount: 0,
       search: "",
       quickFilters: new Set(),
       filters: {
@@ -1153,6 +1158,8 @@
       profileModalBio: document.getElementById("profile-modal-bio"),
       profileModalPrompt: document.getElementById("profile-modal-prompt"),
       profileModalTags: document.getElementById("profile-modal-tags"),
+      profileModalContact: document.getElementById("profile-modal-contact"),
+      profileModalActions: document.getElementById("profile-modal-actions"),
       closeProfileModal: document.getElementById("close-profile-modal"),
       filterContainers: {
         location: document.getElementById("filter-location"),
@@ -1178,6 +1185,13 @@
         .replace(/'/g, "&#39;");
     }
 
+    function cleanVisibleText(value) {
+      return String(value || "")
+        .replace(/\s*[>›»]+\s*/g, " ")
+        .replace(/\s+/g, " ")
+        .trim();
+    }
+
     function slugify(value) {
       return String(value || "")
         .toLowerCase()
@@ -1186,8 +1200,38 @@
         .replace(/-{2,}/g, "-");
     }
 
+    function buildIdSuffix(job) {
+      const normalizedId = slugify(job && job.id || "");
+      return normalizedId ? normalizedId.slice(-8) || normalizedId : "job";
+    }
+
+    function buildBaseJobSlug(job) {
+      return slugify(`${cleanVisibleText(job.title)}-${cleanVisibleText(job.organization)}`);
+    }
+
+    function buildJobPathMap(jobs) {
+      const used = new Map();
+      const map = new Map();
+      jobs.forEach((job) => {
+        const baseSlug = buildBaseJobSlug(job) || buildIdSuffix(job);
+        let slug = baseSlug;
+        const id = String(job.id || "");
+        if (used.has(slug) && used.get(slug) !== id) {
+          slug = `${baseSlug}-${buildIdSuffix(job)}`;
+          let attempt = 2;
+          while (used.has(slug) && used.get(slug) !== id) {
+            slug = `${baseSlug}-${buildIdSuffix(job)}-${attempt}`;
+            attempt += 1;
+          }
+        }
+        used.set(slug, id);
+        map.set(id, `./pages/${slug}.html`);
+      });
+      return map;
+    }
+
     function getJobDetailPath(job) {
-      return `./pages/${slugify(`${job.title}-${job.organization}`)}.html`;
+      return state.jobPagePaths.get(String(job.id || "")) || `./pages/${buildBaseJobSlug(job)}.html`;
     }
 
     function trackUiEvent(event) {
@@ -1239,13 +1283,13 @@
       if (!record || typeof record !== "object") return null;
       const raw = record.raw_source_data || record.raw || {};
       const display = record.display || {};
-      const title = String(display.title || raw.title || "").trim();
-      const organization = String(display.organization || raw.organization || "").trim();
-      const location = String(display.location || raw.location || "").trim();
-      const workplaceType = String(display.location_type || raw.workplace_type || "").trim();
+      const title = cleanVisibleText(display.title || raw.title || "");
+      const organization = cleanVisibleText(display.organization || raw.organization || "");
+      const location = cleanVisibleText(display.location || raw.location || "");
+      const workplaceType = cleanVisibleText(display.location_type || raw.workplace_type || "");
       const salaryMin = Number.isFinite(Number(display.salary_min)) ? Number(display.salary_min) : raw.salary_min;
       const salaryMax = Number.isFinite(Number(display.salary_max)) ? Number(display.salary_max) : raw.salary_max;
-      const payDisplay = String(display.pay_display || raw.salary || "").trim();
+      const payDisplay = cleanVisibleText(display.pay_display || raw.salary || "");
       const tags = Array.isArray(display.tags) && display.tags.length ? display.tags : (Array.isArray(raw.tags) ? raw.tags : []);
 
       return {
@@ -1258,19 +1302,19 @@
         salary: payDisplay,
         salary_min: salaryMin ?? null,
         salary_max: salaryMax ?? null,
-        job_type: String(display.role_type || raw.job_type || "").trim(),
-        experience: String(display.experience_level || raw.experience || "").trim(),
-        sector: String(display.sector || raw.sector || "").trim(),
-        function: String(display.function || raw.function || "").trim(),
-        description: String(display.description || raw.description || "").trim(),
-        source: String(display.source_name || raw.source || "").trim(),
+        job_type: cleanVisibleText(display.role_type || raw.job_type || ""),
+        experience: cleanVisibleText(display.experience_level || raw.experience || ""),
+        sector: cleanVisibleText(display.sector || raw.sector || ""),
+        function: cleanVisibleText(display.function || raw.function || ""),
+        description: cleanVisibleText(display.description || raw.description || ""),
+        source: cleanVisibleText(display.source_name || raw.source || ""),
         source_url: String(display.source_url || raw.source_url || "").trim(),
         original_url: String(display.original_url || raw.original_url || raw.source_url || "").trim(),
         apply_url: String(display.application_url || raw.apply_url || "").trim(),
         date_posted: String(display.date_collected || raw.date_posted || "").trim(),
         featured: typeof record.featured === "boolean" ? record.featured : Boolean(raw.featured),
         salary_visible: payDisplay ? true : raw.salary_visible,
-        tags,
+        tags: tags.map((tag) => cleanVisibleText(tag)).filter(Boolean),
         status: "published",
         verification_status: String(record.verification_status || "verified").trim(),
         display_order: Number(record.display_order || 0)
@@ -1313,6 +1357,8 @@
     }
 
     function renderState(message) {
+      state.renderedJobsKey = "";
+      state.renderedJobCount = 0;
       ui.loadMoreButton.hidden = true;
       ui.jobsGrid.innerHTML = `<div class="classifieds-grid-message">${escapeHtml(message)}</div>`;
     }
@@ -1393,7 +1439,7 @@
         const portfolioUrl = String(profile.portfolio_url || "").trim();
         const linkedInUrl = String(profile.linkedin_url || "").trim();
         const cta = portfolioUrl
-          ? `<a class="btn-primary" href="${escapeHtml(portfolioUrl)}" target="_blank" rel="noopener noreferrer" data-talent-click="portfolio" data-profile-id="${escapeHtml(profile.id)}" data-profile-name="${escapeHtml(profile.name)}">View Portfolio</a>`
+          ? `<a class="btn-primary" href="${escapeHtml(portfolioUrl)}" target="_blank" rel="noopener noreferrer" data-talent-click="portfolio" data-profile-id="${escapeHtml(profile.id)}" data-profile-name="${escapeHtml(profile.name)}">View Website</a>`
           : linkedInUrl
             ? `<a class="btn-primary" href="${escapeHtml(linkedInUrl)}" target="_blank" rel="noopener noreferrer" data-talent-click="linkedin" data-profile-id="${escapeHtml(profile.id)}" data-profile-name="${escapeHtml(profile.name)}">View LinkedIn</a>`
             : `<button class="btn-primary" type="button" data-profile-action="${escapeHtml(profile.id)}" data-talent-click="modal" data-profile-id="${escapeHtml(profile.id)}" data-profile-name="${escapeHtml(profile.name)}">View Profile</button>`;
@@ -1408,14 +1454,14 @@
             <div class="profile-content">
               <div class="profile-role">${escapeHtml(profile.current_role || "Talent Profile")}</div>
               <h3 class="profile-name">${escapeHtml(profile.name)}</h3>
-              <div style="color: var(--ink-secondary); margin-bottom: 14px;">${escapeHtml(profile.location || "")}${focusAreas ? ` // ${escapeHtml(focusAreas)}` : ""}</div>
+              <div style="color: var(--ink-secondary); margin-bottom: 14px;">${escapeHtml(cleanVisibleText(profile.location || ""))}${focusAreas ? ` // ${escapeHtml(cleanVisibleText(focusAreas))}` : ""}</div>
               ${prompt ? `
                 <div class="profile-prompt">
-                  <div class="prompt-q">${escapeHtml(prompt.question || "Profile Note")}</div>
-                  <div class="prompt-a">"${escapeHtml(prompt.answer || "")}"</div>
+                  <div class="prompt-q">${escapeHtml(cleanVisibleText(prompt.question || "Profile Note"))}</div>
+                  <div class="prompt-a">"${escapeHtml(cleanVisibleText(prompt.answer || ""))}"</div>
                 </div>
               ` : ""}
-              <div class="prompt-a" style="font-style: normal; margin-bottom: 20px;">${escapeHtml(profile.short_bio || "")}</div>
+              <div class="prompt-a" style="font-style: normal; margin-bottom: 20px;">${escapeHtml(cleanVisibleText(profile.short_bio || ""))}</div>
               <div class="profile-actions">
                 ${cta}
               </div>
@@ -1440,10 +1486,10 @@
 
       ui.employersList.innerHTML = employers.map((employer) => `
         <article style="border: 1px solid var(--border-divider); padding: 16px; background: rgba(0,0,0,0.18);">
-          <div style="font-family: var(--font-mono); font-size: 0.65rem; color: var(--accent-chartreuse); text-transform: uppercase; letter-spacing: 0.05em;">${escapeHtml(employer.hiring_focus || "Published employer")}</div>
-          <h4 style="font-family: var(--font-serif); font-size: 1.6rem; margin-top: 8px;">${escapeHtml(employer.organization_name || "")}</h4>
-          <p style="color: var(--ink-secondary); margin-top: 8px;">${escapeHtml(employer.description || "")}</p>
-          <div style="margin-top: 12px; color: var(--ink-tertiary); font-family: var(--font-mono); font-size: 0.72rem;">${escapeHtml(employer.submitted_roles || "")}</div>
+          <div style="font-family: var(--font-mono); font-size: 0.65rem; color: var(--accent-chartreuse); text-transform: uppercase; letter-spacing: 0.05em;">${escapeHtml(cleanVisibleText(employer.hiring_focus || "Published employer"))}</div>
+          <h4 style="font-family: var(--font-serif); font-size: 1.6rem; margin-top: 8px;">${escapeHtml(cleanVisibleText(employer.organization_name || ""))}</h4>
+          <p style="color: var(--ink-secondary); margin-top: 8px;">${escapeHtml(cleanVisibleText(employer.description || ""))}</p>
+          <div style="margin-top: 12px; color: var(--ink-tertiary); font-family: var(--font-mono); font-size: 0.72rem;">${escapeHtml(cleanVisibleText(employer.submitted_roles || ""))}</div>
         </article>
       `).join("");
     }
@@ -1451,16 +1497,16 @@
     function openProfileModal(profileId) {
       const profile = state.profiles.find((item) => item.id === profileId && isPublishedRecord(item));
       if (!profile) return;
-      ui.profileModalName.textContent = profile.name || "";
-      ui.profileModalRole.textContent = profile.current_role || "Talent Profile";
-      ui.profileModalLocation.textContent = profile.location || "";
-      ui.profileModalBio.textContent = profile.short_bio || "";
+      ui.profileModalName.textContent = cleanVisibleText(profile.name || "");
+      ui.profileModalRole.textContent = cleanVisibleText(profile.current_role || "Talent Profile");
+      ui.profileModalLocation.textContent = cleanVisibleText(profile.location || "");
+      ui.profileModalBio.textContent = cleanVisibleText(profile.short_bio || "");
       const prompt = Array.isArray(profile.profile_prompts) && profile.profile_prompts.length ? profile.profile_prompts[0] : null;
       if (prompt) {
         ui.profileModalPrompt.style.display = "block";
         ui.profileModalPrompt.innerHTML = `
-          <div class="prompt-q">${escapeHtml(prompt.question || "Profile Note")}</div>
-          <div class="prompt-a">"${escapeHtml(prompt.answer || "")}"</div>
+          <div class="prompt-q">${escapeHtml(cleanVisibleText(prompt.question || "Profile Note"))}</div>
+          <div class="prompt-a">"${escapeHtml(cleanVisibleText(prompt.answer || ""))}"</div>
         `;
       } else {
         ui.profileModalPrompt.style.display = "none";
@@ -1468,6 +1514,16 @@
       }
       const tags = Array.isArray(profile.tags) ? profile.tags : [];
       ui.profileModalTags.innerHTML = tags.map((tag) => `<span>#${escapeHtml(tag)}</span>`).join("");
+      const portfolioUrl = String(profile.portfolio_url || "").trim();
+      const linkedInUrl = String(profile.linkedin_url || "").trim();
+      ui.profileModalActions.innerHTML = portfolioUrl
+        ? `<a class="btn-primary" href="${escapeHtml(portfolioUrl)}" target="_blank" rel="noopener noreferrer" data-talent-click="portfolio" data-profile-id="${escapeHtml(profile.id)}" data-profile-name="${escapeHtml(profile.name)}">View Website</a>`
+        : linkedInUrl
+          ? `<a class="btn-primary" href="${escapeHtml(linkedInUrl)}" target="_blank" rel="noopener noreferrer" data-talent-click="linkedin" data-profile-id="${escapeHtml(profile.id)}" data-profile-name="${escapeHtml(profile.name)}">View LinkedIn</a>`
+          : "";
+      ui.profileModalContact.innerHTML = profile.public_contact === true && profile.email
+        ? `Contact: <a href="mailto:${escapeHtml(profile.email)}" style="color: var(--accent-chartreuse);">${escapeHtml(profile.email)}</a>`
+        : "";
       ui.profileModal.classList.add("visible");
       ui.profileModal.setAttribute("aria-hidden", "false");
     }
@@ -1475,11 +1531,14 @@
     function closeProfileModal() {
       ui.profileModal.classList.remove("visible");
       ui.profileModal.setAttribute("aria-hidden", "true");
+      ui.profileModalActions.innerHTML = "";
+      ui.profileModalContact.innerHTML = "";
     }
 
     function renderJobs() {
       state.filteredJobs = state.jobs.filter(filterJob);
       const visibleJobs = state.filteredJobs.slice(0, state.visibleCount);
+      const renderedJobsKey = state.filteredJobs.map((job) => String(job.id || "")).join("|");
 
       ui.gridSummary.textContent = `${state.filteredJobs.length} roles in the current view`;
       ui.filterMatchCount.textContent = `${state.filteredJobs.length} roles match your filters`;
@@ -1489,49 +1548,66 @@
       renderActiveTags();
 
       if (!state.filteredJobs.length) {
+        state.renderedJobsKey = "";
+        state.renderedJobCount = 0;
         renderState("No roles match the current filters.");
         return;
       }
 
-      ui.jobsGrid.innerHTML = visibleJobs
-        .map((job) => {
-          const featured = Boolean(job.featured);
-          const newThisWeek = isNewThisWeek(job);
-          const ref = String(job.ref || "").trim() || String(job.id || "manual").toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 8).padEnd(8, "X");
-          const salaryBlock = job.salary_visible === false && !job.salary ? "" : `<div class="card-salary">${escapeHtml(job.salary || "")}</div>`;
-          const sectorLabel = normalizeSectorLabel(job.sector);
-          const updatedText = getLastUpdated(job);
-          return `
-            <a class="classified-card" href="${escapeHtml(getJobDetailPath(job))}" data-job-card="true" data-job-id="${escapeHtml(job.id)}" data-job-title="${escapeHtml(job.title)}" data-job-organization="${escapeHtml(job.organization)}" data-job-source="${escapeHtml(job.source)}">
-              ${featured ? '<div class="featured-marker"></div>' : ""}
-              <span class="card-ref">REF: ${escapeHtml(ref)}</span>
-              <h3 class="card-title">${escapeHtml(job.title)}</h3>
-              <div class="card-org">${escapeHtml(job.organization)}</div>
-              <p class="card-description">${escapeHtml(job.description || "Open the application to review the full role details.")}</p>
-              <div class="tag-row" style="justify-content: flex-start; margin-top: 0;">
-                ${newThisWeek ? '<span class="tag-pill" style="cursor: default;">New this week</span>' : ""}
-                ${sectorLabel ? `<span class="tag-pill" style="cursor: default;">${escapeHtml(sectorLabel)}</span>` : ""}
-                ${getWorkMode(job) ? `<span class="tag-pill" style="cursor: default;">${escapeHtml(getWorkMode(job))}</span>` : ""}
-                ${(job.tags || []).slice(0, 3).map((tag) => `<span class="tag-pill" style="cursor: default;">#${escapeHtml(tag)}</span>`).join("")}
-              </div>
-              <div class="card-footer">
-                <div class="card-meta">
-                  <div class="card-meta-row">
-                    <svg class="icon" viewBox="0 0 24 24"><path d="M21 10c0 7-9 13-9 13S3 17 3 10a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>
-                    ${escapeHtml(job.location)}
-                  </div>
-                  <div class="card-meta-row">
-                    <svg class="icon" viewBox="0 0 24 24"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"></rect><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"></path></svg>
-                    ${escapeHtml(job.job_type)}
-                  </div>
-                  ${updatedText ? `<div class="card-meta-row">Last updated ${escapeHtml(new Date(updatedText).toLocaleDateString("en-US", { month: "short", day: "numeric" }))}</div>` : ""}
+      const buildJobCardMarkup = (job) => {
+        const featured = Boolean(job.featured);
+        const newThisWeek = isNewThisWeek(job);
+        const ref = String(job.ref || "").trim() || String(job.id || "manual").toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 8).padEnd(8, "X");
+        const salaryBlock = job.salary_visible === false && !job.salary ? "" : `<div class="card-salary">${escapeHtml(cleanVisibleText(job.salary || ""))}</div>`;
+        const sectorLabel = normalizeSectorLabel(job.sector);
+        const updatedText = getLastUpdated(job);
+        return `
+          <a class="classified-card" href="${escapeHtml(getJobDetailPath(job))}" data-job-card="true" data-job-id="${escapeHtml(job.id)}" data-job-title="${escapeHtml(cleanVisibleText(job.title))}" data-job-organization="${escapeHtml(cleanVisibleText(job.organization))}" data-job-source="${escapeHtml(cleanVisibleText(job.source))}">
+            ${featured ? '<div class="featured-marker"></div>' : ""}
+            <span class="card-ref">REF: ${escapeHtml(ref)}</span>
+            <h3 class="card-title">${escapeHtml(cleanVisibleText(job.title))}</h3>
+            <div class="card-org">${escapeHtml(cleanVisibleText(job.organization))}</div>
+            <p class="card-description">${escapeHtml(cleanVisibleText(job.description || "Open the application to review the full role details."))}</p>
+            <div class="tag-row" style="justify-content: flex-start; margin-top: 0;">
+              ${newThisWeek ? '<span class="tag-pill" style="cursor: default;">New this week</span>' : ""}
+              ${sectorLabel ? `<span class="tag-pill" style="cursor: default;">${escapeHtml(cleanVisibleText(sectorLabel))}</span>` : ""}
+              ${getWorkMode(job) ? `<span class="tag-pill" style="cursor: default;">${escapeHtml(cleanVisibleText(getWorkMode(job)))}</span>` : ""}
+              ${(job.tags || []).slice(0, 3).map((tag) => `<span class="tag-pill" style="cursor: default;">#${escapeHtml(cleanVisibleText(tag))}</span>`).join("")}
+            </div>
+            <div class="card-footer">
+              <div class="card-meta">
+                <div class="card-meta-row">
+                  <svg class="icon" viewBox="0 0 24 24"><path d="M21 10c0 7-9 13-9 13S3 17 3 10a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>
+                  ${escapeHtml(cleanVisibleText(job.location))}
                 </div>
-                ${salaryBlock}
+                <div class="card-meta-row">
+                  <svg class="icon" viewBox="0 0 24 24"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"></rect><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"></path></svg>
+                  ${escapeHtml(cleanVisibleText(job.job_type))}
+                </div>
+                ${updatedText ? `<div class="card-meta-row">Last updated ${escapeHtml(new Date(updatedText).toLocaleDateString("en-US", { month: "short", day: "numeric" }))}</div>` : ""}
               </div>
-            </a>
-          `;
-        })
-        .join("");
+              ${salaryBlock}
+            </div>
+          </a>
+        `;
+      };
+
+      const shouldRerenderAll =
+        state.renderedJobsKey !== renderedJobsKey ||
+        state.renderedJobCount === 0 ||
+        visibleJobs.length < state.renderedJobCount;
+
+      if (shouldRerenderAll) {
+        ui.jobsGrid.innerHTML = visibleJobs.map(buildJobCardMarkup).join("");
+      } else if (visibleJobs.length > state.renderedJobCount) {
+        ui.jobsGrid.insertAdjacentHTML(
+          "beforeend",
+          visibleJobs.slice(state.renderedJobCount).map(buildJobCardMarkup).join("")
+        );
+      }
+
+      state.renderedJobsKey = renderedJobsKey;
+      state.renderedJobCount = visibleJobs.length;
 
       ui.loadMoreButton.hidden = visibleJobs.length >= state.filteredJobs.length;
     }
@@ -1583,6 +1659,7 @@
             if (orderDelta !== 0) return orderDelta;
             return new Date(b.date_posted) - new Date(a.date_posted);
           });
+        state.jobPagePaths = buildJobPathMap(state.jobs);
         renderFilters();
         renderJobs();
         renderProfiles();

@@ -475,8 +475,11 @@
           </div>
           <div class="folders" id="folder-tabs">
             <button class="folder-tab active" data-tab="jobs">Jobs</button>
+            <button class="folder-tab" data-tab="jobs-active">Active Jobs</button>
             <button class="folder-tab" data-tab="talent">Talent</button>
+            <button class="folder-tab" data-tab="talent-active">Active Talent</button>
             <button class="folder-tab" data-tab="featured-employers">Employers</button>
+            <button class="folder-tab" data-tab="featured-employers-active">Active Employers</button>
             <button class="folder-tab" data-tab="admin-applications">Admin Applications</button>
             <button class="folder-tab" data-tab="rejected">Rejected</button>
           </div>
@@ -569,6 +572,17 @@
           </div>
         </section>
 
+        <section id="tab-jobs-active" class="tab-panel">
+          <div class="tab-header">
+            <div>
+              <div class="eyebrow">Jobs</div>
+              <div class="tab-title">Active Jobs</div>
+            </div>
+            <div id="count-jobs-active" class="pill">0 items</div>
+          </div>
+          <div id="panel-jobs-active" class="grid"></div>
+        </section>
+
         <section id="tab-talent" class="tab-panel">
           <div class="tab-header">
             <div>
@@ -580,6 +594,17 @@
           <div id="panel-talent" class="grid"></div>
         </section>
 
+        <section id="tab-talent-active" class="tab-panel">
+          <div class="tab-header">
+            <div>
+              <div class="eyebrow">Talent</div>
+              <div class="tab-title">Active Talent</div>
+            </div>
+            <div id="count-talent-active" class="pill">0 items</div>
+          </div>
+          <div id="panel-talent-active" class="grid"></div>
+        </section>
+
         <section id="tab-featured-employers" class="tab-panel">
           <div class="tab-header">
             <div>
@@ -589,6 +614,17 @@
             <div id="count-featured-employers" class="pill">0 items</div>
           </div>
           <div id="panel-featured-employers" class="grid"></div>
+        </section>
+
+        <section id="tab-featured-employers-active" class="tab-panel">
+          <div class="tab-header">
+            <div>
+              <div class="eyebrow">Employers</div>
+              <div class="tab-title">Active Employers</div>
+            </div>
+            <div id="count-featured-employers-active" class="pill">0 items</div>
+          </div>
+          <div id="panel-featured-employers-active" class="grid"></div>
         </section>
 
         <section id="tab-admin-applications" class="tab-panel">
@@ -622,6 +658,10 @@
     const TOKEN_STORAGE_KEY = "jobs_admin_token";
     const TRIAGE_SUMMARY_URL = "./pending-triage-summary.json";
     const LOCAL_PENDING_URL = "./pending-synced-jobs.json";
+    const LOCAL_JOB_RECORDS_URL = "./job-records.json";
+    const LOCAL_PUBLIC_JOBS_URL = "./jobs.json";
+    const LOCAL_TALENT_URL = "./talent-profiles.json";
+    const LOCAL_EMPLOYERS_URL = "./employers.json";
     const LOCAL_JOB_REVIEW_KEY = "jobs_local_admin_review_v1";
     const LOCAL_JOB_ACTION_QUEUE_KEY = "jobs_local_admin_action_queue_v1";
     const LOCAL_JOB_ACTION_EXPORT_FILENAME = "admin-actions-local.json";
@@ -635,6 +675,14 @@
         rejectAction: "rejectJob",
         title: "job"
       },
+      "jobs-active": {
+        panelId: "panel-jobs-active",
+        countId: "count-jobs-active",
+        fetchAction: "getApprovedJobs",
+        approveAction: "",
+        rejectAction: "",
+        title: "active job"
+      },
       talent: {
         panelId: "panel-talent",
         countId: "count-talent",
@@ -643,6 +691,14 @@
         rejectAction: "rejectTalent",
         title: "talent"
       },
+      "talent-active": {
+        panelId: "panel-talent-active",
+        countId: "count-talent-active",
+        fetchAction: "getApprovedTalent",
+        approveAction: "",
+        rejectAction: "",
+        title: "active talent"
+      },
       "featured-employers": {
         panelId: "panel-featured-employers",
         countId: "count-featured-employers",
@@ -650,6 +706,14 @@
         approveAction: "approveFeaturedEmployer",
         rejectAction: "rejectFeaturedEmployer",
         title: "employer"
+      },
+      "featured-employers-active": {
+        panelId: "panel-featured-employers-active",
+        countId: "count-featured-employers-active",
+        fetchAction: "getApprovedFeaturedEmployers",
+        approveAction: "",
+        rejectAction: "",
+        title: "active employer"
       },
       "admin-applications": {
         panelId: "panel-admin-applications",
@@ -674,6 +738,12 @@
       items: {},
       localJobs: [],
       localJobsLoaded: false,
+      activeJobRecords: [],
+      activeJobRecordsLoaded: false,
+      activeTalentProfiles: [],
+      activeTalentProfilesLoaded: false,
+      activeEmployers: [],
+      activeEmployersLoaded: false,
       localJobVisibleCount: 25,
       localJobFilters: {
         bucket: "review_ready",
@@ -885,6 +955,170 @@
       loadLocalPendingFilters(state.localJobs);
     }
 
+    async function loadLocalActiveJobRecords(forceReload) {
+      if (state.activeJobRecordsLoaded && !forceReload) return;
+      const response = await fetch(LOCAL_JOB_RECORDS_URL, { cache: "no-store" });
+      if (!response.ok) throw new Error(`HTTP ${response.status}`);
+      const items = await response.json();
+      state.activeJobRecords = Array.isArray(items) ? items : [];
+      state.activeJobRecordsLoaded = true;
+    }
+
+    async function loadLocalActiveTalent(forceReload) {
+      if (state.activeTalentProfilesLoaded && !forceReload) return;
+      const response = await fetch(LOCAL_TALENT_URL, { cache: "no-store" });
+      if (!response.ok) throw new Error(`HTTP ${response.status}`);
+      const items = await response.json();
+      state.activeTalentProfiles = Array.isArray(items) ? items : [];
+      state.activeTalentProfilesLoaded = true;
+    }
+
+    async function loadLocalActiveEmployers(forceReload) {
+      if (state.activeEmployersLoaded && !forceReload) return;
+      const response = await fetch(LOCAL_EMPLOYERS_URL, { cache: "no-store" });
+      if (!response.ok) throw new Error(`HTTP ${response.status}`);
+      const items = await response.json();
+      state.activeEmployers = Array.isArray(items) ? items : [];
+      state.activeEmployersLoaded = true;
+    }
+
+    function parseBoolean(value, fallback) {
+      if (value === undefined || value === null || value === "") return Boolean(fallback);
+      if (typeof value === "boolean") return value;
+      return /^(true|1|yes|published|featured|public)$/i.test(String(value));
+    }
+
+    function parseCsv(value) {
+      return String(value || "")
+        .split(",")
+        .map((item) => item.trim())
+        .filter(Boolean);
+    }
+
+    function resolveLocalJobRecord(record) {
+      const raw = record.raw_source_data || record.raw || {};
+      const display = record.display || {};
+      const title = String(display.title || raw.title || "").trim();
+      const organization = String(display.organization || raw.organization || "").trim();
+      return {
+        ...raw,
+        id: String(record.id || raw.id || "").trim(),
+        display: {
+          title,
+          organization,
+          location: String(display.location || raw.location || "").trim(),
+          location_type: String(display.location_type || raw.workplace_type || "").trim(),
+          pay_display: String(display.pay_display || raw.salary || "").trim(),
+          salary_min: Number.isFinite(Number(display.salary_min)) ? Number(display.salary_min) : (raw.salary_min ?? null),
+          salary_max: Number.isFinite(Number(display.salary_max)) ? Number(display.salary_max) : (raw.salary_max ?? null),
+          role_type: String(display.role_type || raw.job_type || "").trim(),
+          experience_level: String(display.experience_level || raw.experience || "").trim(),
+          sector: String(display.sector || raw.sector || "").trim(),
+          function: String(display.function || raw.function || "").trim(),
+          tags: Array.isArray(display.tags) && display.tags.length ? display.tags : (Array.isArray(raw.tags) ? raw.tags : []),
+          description: String(display.description || raw.description || "").trim(),
+          source_name: String(display.source_name || raw.source || "").trim(),
+          source_url: String(display.source_url || raw.source_url || "").trim(),
+          original_url: String(display.original_url || raw.original_url || raw.source_url || "").trim(),
+          application_url: String(display.application_url || raw.apply_url || "").trim(),
+          featured: typeof record.featured === "boolean" ? record.featured : Boolean(raw.featured),
+          published: typeof record.published === "boolean" ? record.published : true
+        },
+        status: String(record.status || raw.status || "published"),
+        published: typeof record.published === "boolean" ? record.published : true,
+        public_visibility: typeof record.public_visibility === "boolean" ? record.public_visibility : true,
+        featured: typeof record.featured === "boolean" ? record.featured : Boolean(raw.featured),
+        admin_notes: String(record.admin_notes || ""),
+        display_order: Number(record.display_order || 0)
+      };
+    }
+
+    function getPendingDisplayDraft(job) {
+      const saved = state.localJobReview.actionsById[String(job.id)]?.editedRecord || {};
+      const savedDisplay = saved.display && typeof saved.display === "object" ? saved.display : {};
+      return {
+        title: String(savedDisplay.title || job.title || "").trim(),
+        organization: String(savedDisplay.organization || job.organization || "").trim(),
+        location: String(savedDisplay.location || job.location || "").trim(),
+        location_type: String(savedDisplay.location_type || job.workplace_type || "").trim(),
+        pay_display: String(savedDisplay.pay_display || job.salary || "").trim(),
+        salary_min: savedDisplay.salary_min ?? job.salary_min ?? "",
+        salary_max: savedDisplay.salary_max ?? job.salary_max ?? "",
+        role_type: String(savedDisplay.role_type || job.job_type || "").trim(),
+        experience_level: String(savedDisplay.experience_level || job.experience || "").trim(),
+        sector: String(savedDisplay.sector || job.sector || "").trim(),
+        function: String(savedDisplay.function || job.function || "").trim(),
+        tags: Array.isArray(savedDisplay.tags) ? savedDisplay.tags : (Array.isArray(job.tags) ? job.tags : []),
+        description: String(savedDisplay.description || job.description || job.raw_description || "").trim(),
+        source_name: String(savedDisplay.source_name || job.source || "").trim(),
+        source_url: String(savedDisplay.source_url || job.source_url || "").trim(),
+        original_url: String(savedDisplay.original_url || job.original_url || job.apply_url || "").trim(),
+        application_url: String(savedDisplay.application_url || job.apply_url || "").trim(),
+        featured: typeof saved.featured === "boolean" ? saved.featured : Boolean(job.featured),
+        public_visibility: typeof saved.public_visibility === "boolean" ? saved.public_visibility : true,
+        status: String(saved.status || "published"),
+        admin_notes: String(saved.admin_notes || ""),
+        display_order: Number(saved.display_order || 0)
+      };
+    }
+
+    const ACTIVE_FIELD_MAP = {
+      "jobs-active": [
+        ["title", "Title"],
+        ["organization", "Organization"],
+        ["location", "Location"],
+        ["location_type", "Location Type"],
+        ["pay_display", "Pay Display"],
+        ["salary_min", "Salary Min", "number"],
+        ["salary_max", "Salary Max", "number"],
+        ["role_type", "Role Type"],
+        ["experience_level", "Experience Level"],
+        ["sector", "Sector"],
+        ["function", "Function"],
+        ["tags", "Tags"],
+        ["description", "Description", "textarea"],
+        ["source_name", "Source Name"],
+        ["source_url", "Source URL", "url"],
+        ["original_url", "Original URL", "url"],
+        ["application_url", "Application URL", "url"],
+        ["admin_notes", "Admin Notes", "textarea"]
+      ],
+      "talent-active": [
+        ["name", "Name"],
+        ["email", "Email", "email"],
+        ["current_role", "Current Role"],
+        ["location", "Location"],
+        ["focus_areas", "Focus Areas"],
+        ["short_bio", "Short Bio", "textarea"],
+        ["portfolio_url", "Portfolio URL", "url"],
+        ["linkedin_url", "LinkedIn URL", "url"],
+        ["resume_file", "Resume File"],
+        ["cover_letter_file", "Cover Letter File"],
+        ["profile_photo", "Profile Photo"],
+        ["availability", "Availability"],
+        ["open_to", "Open To"],
+        ["preferred_work_type", "Preferred Work Type"],
+        ["preferred_location_type", "Preferred Location Type"],
+        ["featured_project", "Featured Project"],
+        ["profile_prompts", "Profile Prompts", "textarea"],
+        ["tags", "Tags"],
+        ["public_contact", "Public Contact"],
+        ["admin_notes", "Admin Notes", "textarea"]
+      ],
+      "featured-employers-active": [
+        ["organization_name", "Organization Name"],
+        ["contact_name", "Contact Name"],
+        ["contact_email", "Contact Email", "email"],
+        ["website", "Website", "url"],
+        ["description", "Description", "textarea"],
+        ["hiring_focus", "Hiring Focus"],
+        ["submitted_roles", "Submitted Roles"],
+        ["feature_request", "Feature Request", "textarea"],
+        ["approved_employer", "Approved Employer"],
+        ["admin_notes", "Admin Notes", "textarea"]
+      ]
+    };
+
     function filterLocalJobs() {
       const duplicateSuspects = getDuplicateSuspectIds(state.localJobs);
       const hiddenOrganizations = new Set(state.localJobReview.hiddenOrganizations);
@@ -919,12 +1153,74 @@
       });
     }
 
+    function buildJobEditFields(recordId, source) {
+      const fieldDefs = ACTIVE_FIELD_MAP["jobs-active"];
+      return fieldDefs.map(([key, labelText, inputType]) => {
+        const rawValue = source[key];
+        const value = Array.isArray(rawValue)
+          ? rawValue.join(", ")
+          : rawValue === null || rawValue === undefined
+            ? ""
+            : String(rawValue);
+        if (inputType === "textarea") {
+          return `
+            <div class="summary-row">
+              <label for="${recordId}-${key}">${escapeHtml(labelText)}</label>
+              <textarea id="${recordId}-${key}" data-job-edit-field="${escapeHtml(key)}">${escapeHtml(value)}</textarea>
+            </div>
+          `;
+        }
+        return `
+          <div class="summary-row">
+            <label for="${recordId}-${key}">${escapeHtml(labelText)}</label>
+            <input id="${recordId}-${key}" type="${escapeHtml(inputType || "text")}" data-job-edit-field="${escapeHtml(key)}" value="${escapeHtml(value)}">
+          </div>
+        `;
+      }).join("");
+    }
+
+    function collectJobEditedRecord(card, sourceType) {
+      const display = {};
+      const edited = {
+        status: card.querySelector('[data-job-flag="status"]')?.value || "published",
+        public_visibility: card.querySelector('[data-job-flag="public_visibility"]')?.checked ?? true,
+        featured: card.querySelector('[data-job-flag="featured"]')?.checked ?? false,
+        published: card.querySelector('[data-job-flag="published"]')?.checked ?? true,
+        display_order: Number(card.querySelector('[data-job-flag="display_order"]')?.value || 0),
+        admin_notes: ""
+      };
+
+      card.querySelectorAll("[data-job-edit-field]").forEach((field) => {
+        const key = field.dataset.jobEditField;
+        const value = field.value;
+        if (key === "admin_notes") {
+          edited.admin_notes = value;
+          return;
+        }
+        if (key === "tags") {
+          display[key] = parseCsv(value);
+          return;
+        }
+        if (key === "salary_min" || key === "salary_max") {
+          display[key] = value === "" ? null : Number(value);
+          return;
+        }
+        display[key] = value;
+      });
+
+      if (sourceType === "pending") {
+        return { ...edited, display };
+      }
+      return { ...edited, display };
+    }
+
     function renderLocalJobCard(job, duplicateSuspects) {
       const reviewState = getLocalJobViewState(job);
       const confidence = confidenceBadge(job.relevance_score);
       const checked = state.localJobReview.selectedIds.includes(String(job.id)) ? "checked" : "";
       const duplicateBadge = duplicateSuspects.has(String(job.id)) ? '<span class="badge low">Duplicate Suspect</span>' : "";
       const quickPublish = isQuickPublishEligible(job);
+      const draft = getPendingDisplayDraft(job);
       return `
         <article class="record-card ${checked ? "selected" : ""}" data-local-job-id="${escapeHtml(job.id)}">
           <div style="display:flex; justify-content:space-between; gap:12px; align-items:flex-start;">
@@ -952,8 +1248,21 @@
           </div>
           <details class="summary-block">
             <summary style="cursor:pointer; color: var(--ink-secondary);">Full edit</summary>
-            <div class="summary-row"><label>Summary</label><strong>${escapeHtml(job.description || job.raw_description || "")}</strong></div>
-            <div class="summary-row"><label>Tags</label><strong>${escapeHtml(Array.isArray(job.tags) ? job.tags.join(", ") : "")}</strong></div>
+            ${buildJobEditFields(escapeHtml(job.id), draft)}
+            <div class="summary-row">
+              <label>Publish Settings</label>
+              <div style="display:flex; gap:16px; flex-wrap:wrap; align-items:center;">
+                <label style="margin:0;"><input type="checkbox" data-job-flag="published" ${parseBoolean(true, true) ? "checked" : ""}> published</label>
+                <label style="margin:0;"><input type="checkbox" data-job-flag="public_visibility" ${parseBoolean(draft.public_visibility, true) ? "checked" : ""}> public</label>
+                <label style="margin:0;"><input type="checkbox" data-job-flag="featured" ${parseBoolean(draft.featured, false) ? "checked" : ""}> featured</label>
+                <input type="text" data-job-flag="status" value="${escapeHtml(draft.status || "published")}" placeholder="Status" style="max-width:140px;">
+                <input type="number" data-job-flag="display_order" value="${escapeHtml(String(draft.display_order || 0))}" placeholder="Display order" style="max-width:140px;">
+              </div>
+            </div>
+            <div class="actions">
+              <button class="btn-secondary" type="button" data-save-local-edit="${escapeHtml(job.id)}">Save Local Edit</button>
+              <button class="btn-primary" type="button" data-publish-local-edit="${escapeHtml(job.id)}">Publish Edited</button>
+            </div>
           </details>
           <div class="actions">
             ${quickPublish ? `<button class="btn-primary" type="button" data-local-quick-publish="${escapeHtml(job.id)}">Quick Publish</button>` : ""}
@@ -1004,12 +1313,19 @@
         return;
       }
       const selectedJobs = state.localJobs.filter((job) => selectedIds.includes(String(job.id)));
+      const editedJobs = selectedJobs
+        .map((job) => ({
+          id: String(job.id),
+          editedRecord: state.localJobReview.actionsById[String(job.id)]?.editedRecord || null
+        }))
+        .filter((item) => item.editedRecord);
       queueLocalJobAction({
         operation: action,
         actor: "Admin Review Console",
         ids: selectedIds,
         organization: selectedJobs[0] ? String(selectedJobs[0].organization || "") : "",
-        jobs: selectedJobs
+        jobs: selectedJobs,
+        edited_jobs: editedJobs
       }).then((result) => {
         selectedIds.forEach((id) => {
           state.localJobReview.actionsById[id] = {
@@ -1427,6 +1743,152 @@
       return edited;
     }
 
+    function buildActiveEditableFields(tabKey, record, recordId) {
+      const defs = ACTIVE_FIELD_MAP[tabKey] || [];
+      return defs.map(([key, labelText, inputType]) => {
+        const rawValue = record[key];
+        const value = Array.isArray(rawValue)
+          ? rawValue.join(", ")
+          : typeof rawValue === "object" && rawValue !== null
+            ? JSON.stringify(rawValue, null, 2)
+            : rawValue === null || rawValue === undefined
+              ? ""
+              : String(rawValue);
+        if (inputType === "textarea") {
+          return `
+            <div class="summary-row">
+              <label for="${recordId}-${key}">${escapeHtml(labelText)}</label>
+              <textarea id="${recordId}-${key}" data-active-field="${escapeHtml(key)}">${escapeHtml(value)}</textarea>
+            </div>
+          `;
+        }
+        return `
+          <div class="summary-row">
+            <label for="${recordId}-${key}">${escapeHtml(labelText)}</label>
+            <input id="${recordId}-${key}" type="${escapeHtml(inputType || "text")}" data-active-field="${escapeHtml(key)}" value="${escapeHtml(value)}">
+          </div>
+        `;
+      }).join("");
+    }
+
+    function collectActiveEditedRecord(card, tabKey) {
+      const edited = {
+        status: card.querySelector('[data-active-flag="status"]')?.value || "published",
+        public_visibility: card.querySelector('[data-active-flag="public_visibility"]')?.checked ?? true,
+        featured: card.querySelector('[data-active-flag="featured"]')?.checked ?? false,
+        published: card.querySelector('[data-active-flag="published"]')?.checked ?? true,
+        display_order: Number(card.querySelector('[data-active-flag="display_order"]')?.value || 0),
+        admin_notes: ""
+      };
+      const display = {};
+
+      card.querySelectorAll("[data-active-field]").forEach((field) => {
+        const key = field.dataset.activeField;
+        const value = field.value;
+        if (key === "admin_notes") {
+          edited.admin_notes = value;
+          return;
+        }
+        if (key === "tags" || key === "focus_areas") {
+          const parsed = parseCsv(value);
+          if (tabKey === "jobs-active") display[key] = parsed;
+          else edited[key] = parsed;
+          return;
+        }
+        if (key === "profile_prompts") {
+          try {
+            edited[key] = value.trim() ? JSON.parse(value) : [];
+          } catch (_error) {
+            edited[key] = value.trim() ? [{ question: "Profile Prompt", answer: value.trim() }] : [];
+          }
+          return;
+        }
+        if (key === "public_contact" || key === "approved_employer") {
+          edited[key] = parseBoolean(value, false);
+          return;
+        }
+        if (key === "salary_min" || key === "salary_max") {
+          display[key] = value === "" ? null : Number(value);
+          return;
+        }
+        if (tabKey === "jobs-active") {
+          display[key] = value;
+          return;
+        }
+        edited[key] = value;
+      });
+
+      if (tabKey === "jobs-active") {
+        edited.display = {
+          ...display,
+          featured: edited.featured,
+          published: edited.published
+        };
+      }
+      return edited;
+    }
+
+    function buildActiveLocalCard(tabKey, record) {
+      const title = tabKey === "jobs-active"
+        ? record.title
+        : tabKey === "talent-active"
+          ? record.name
+          : record.organization_name;
+      const subtitle = tabKey === "jobs-active"
+        ? record.organization
+        : tabKey === "talent-active"
+          ? record.current_role
+          : record.website;
+      const actionPrefix = tabKey.replace(/-/g, "_");
+      const featureLabel = record.featured ? "Unfeature" : "Feature";
+
+      return `
+        <article class="record-card" data-active-record-id="${escapeHtml(record.id)}" data-active-tab="${escapeHtml(tabKey)}">
+          <div class="eyebrow">${escapeHtml(tabKey.replace(/-/g, " "))}</div>
+          <h3>${escapeHtml(title || "Untitled record")}</h3>
+          ${subtitle ? `<p>${escapeHtml(subtitle)}</p>` : ""}
+          <div class="meta-list">
+            <div>ID: ${escapeHtml(record.id || "")}</div>
+            <div>Status: ${escapeHtml(record.status || "")}</div>
+            <div>Updated: ${escapeHtml(record.updated_at || "")}</div>
+          </div>
+          <details class="summary-block">
+            <summary style="cursor:pointer; color: var(--ink-secondary);">Full edit</summary>
+            ${buildActiveEditableFields(tabKey, record, escapeHtml(record.id))}
+            <div class="summary-row">
+              <label>Publish Settings</label>
+              <div style="display:flex; gap:16px; flex-wrap:wrap; align-items:center;">
+                <label style="margin:0;"><input type="checkbox" data-active-flag="published" ${parseBoolean(record.published, true) ? "checked" : ""}> published</label>
+                <label style="margin:0;"><input type="checkbox" data-active-flag="public_visibility" ${parseBoolean(record.public_visibility, true) ? "checked" : ""}> public</label>
+                <label style="margin:0;"><input type="checkbox" data-active-flag="featured" ${parseBoolean(record.featured, false) ? "checked" : ""}> featured</label>
+                <input type="text" data-active-flag="status" value="${escapeHtml(String(record.status || "published"))}" placeholder="Status" style="max-width:140px;">
+                <input type="number" data-active-flag="display_order" value="${escapeHtml(String(record.display_order || 0))}" placeholder="Display order" style="max-width:140px;">
+              </div>
+            </div>
+            <div class="actions">
+              <button class="btn-primary" type="button" data-active-save="${escapeHtml(record.id)}" data-active-save-tab="${escapeHtml(tabKey)}">Save</button>
+              <button class="btn-secondary" type="button" data-active-feature="${escapeHtml(record.id)}" data-active-feature-tab="${escapeHtml(tabKey)}" data-featured="${record.featured ? "false" : "true"}">${featureLabel}</button>
+              <button class="btn-secondary" type="button" data-active-unpublish="${escapeHtml(record.id)}" data-active-unpublish-tab="${escapeHtml(tabKey)}">Unpublish</button>
+              <button class="btn-danger" type="button" data-active-archive="${escapeHtml(record.id)}" data-active-archive-tab="${escapeHtml(tabKey)}">Archive</button>
+            </div>
+          </details>
+        </article>
+      `;
+    }
+
+    function applyLocalActiveStateUpdate(tabKey, id, updater) {
+      const updateList = (items) => {
+        const index = items.findIndex((item) => String(item.id) === String(id));
+        if (index < 0) return false;
+        items[index] = updater(items[index]);
+        return true;
+      };
+      if (tabKey === "jobs-active") return updateList(state.activeJobRecords);
+      if (tabKey === "talent-active") return updateList(state.activeTalentProfiles);
+      if (tabKey === "featured-employers-active") return updateList(state.activeEmployers);
+      return false;
+    }
+
     function buildRecordCard(tabKey, record) {
       const raw = parseRawJson(record.raw_json);
       const title =
@@ -1510,6 +1972,38 @@
         renderLocalJobs();
         return;
       }
+      if (tabKey === "jobs-active") {
+        const panel = document.getElementById(TAB_CONFIG[tabKey].panelId);
+        const count = document.getElementById(TAB_CONFIG[tabKey].countId);
+        const itemsToRender = state.activeJobRecords
+          .map(resolveLocalJobRecord)
+          .filter((record) => record.status === "published" || record.public_visibility || record.published);
+        count.textContent = `${itemsToRender.length} items`;
+        panel.innerHTML = itemsToRender.length
+          ? itemsToRender.map((item) => buildActiveLocalCard(tabKey, item)).join("")
+          : `<div class="empty-state">No active jobs found in local job-records.json.</div>`;
+        return;
+      }
+      if (tabKey === "talent-active") {
+        const panel = document.getElementById(TAB_CONFIG[tabKey].panelId);
+        const count = document.getElementById(TAB_CONFIG[tabKey].countId);
+        const itemsToRender = state.activeTalentProfiles.filter((record) => record.status === "published" || record.public_visibility || record.published);
+        count.textContent = `${itemsToRender.length} items`;
+        panel.innerHTML = itemsToRender.length
+          ? itemsToRender.map((item) => buildActiveLocalCard(tabKey, item)).join("")
+          : `<div class="empty-state">No active talent profiles found.</div>`;
+        return;
+      }
+      if (tabKey === "featured-employers-active") {
+        const panel = document.getElementById(TAB_CONFIG[tabKey].panelId);
+        const count = document.getElementById(TAB_CONFIG[tabKey].countId);
+        const itemsToRender = state.activeEmployers.filter((record) => record.status === "published" || record.public_visibility || record.published);
+        count.textContent = `${itemsToRender.length} items`;
+        panel.innerHTML = itemsToRender.length
+          ? itemsToRender.map((item) => buildActiveLocalCard(tabKey, item)).join("")
+          : `<div class="empty-state">No active employer records found.</div>`;
+        return;
+      }
       const config = TAB_CONFIG[tabKey];
       const panel = document.getElementById(config.panelId);
       const count = document.getElementById(config.countId);
@@ -1527,6 +2021,21 @@
       if (tabKey === "jobs") {
         await loadLocalPendingJobs(forceReload);
         renderLocalJobs();
+        return;
+      }
+      if (tabKey === "jobs-active") {
+        await loadLocalActiveJobRecords(forceReload);
+        renderTab(tabKey);
+        return;
+      }
+      if (tabKey === "talent-active") {
+        await loadLocalActiveTalent(forceReload);
+        renderTab(tabKey);
+        return;
+      }
+      if (tabKey === "featured-employers-active") {
+        await loadLocalActiveEmployers(forceReload);
+        renderTab(tabKey);
         return;
       }
       const config = TAB_CONFIG[tabKey];
@@ -1553,7 +2062,7 @@
     }
 
     function activateTab(tabKey) {
-      if (tabKey !== "jobs" && !canUseBackendAdmin()) {
+      if (!["jobs", "jobs-active", "talent-active", "featured-employers-active"].includes(tabKey) && !canUseBackendAdmin()) {
         setStatus("Only the local pending-jobs workflow is available without an Apps Script admin token.", true);
         document.querySelectorAll(".folder-tab").forEach((button) => {
           button.classList.toggle("active", button.dataset.tab === "jobs");
@@ -1617,6 +2126,99 @@
     });
 
     document.addEventListener("click", (event) => {
+      const activeSaveButton = event.target.closest("[data-active-save]");
+      if (activeSaveButton) {
+        const id = String(activeSaveButton.dataset.activeSave || "");
+        const tabKey = String(activeSaveButton.dataset.activeSaveTab || "");
+        const card = activeSaveButton.closest(".record-card");
+        if (!id || !tabKey || !card) return;
+        const editedRecord = collectActiveEditedRecord(card, tabKey);
+        const operation = tabKey === "jobs-active"
+          ? "update_active_job"
+          : tabKey === "talent-active"
+            ? "update_active_talent"
+            : "update_active_employer";
+        queueLocalJobAction({
+          operation,
+          actor: "Admin Review Console",
+          id,
+          recordId: id,
+          editedRecord
+        }).then((result) => {
+          applyLocalActiveStateUpdate(tabKey, id, (record) => {
+            if (tabKey === "jobs-active") {
+              const next = { ...record, ...editedRecord, updated_at: new Date().toISOString() };
+              next.display = { ...(record.display || {}), ...(editedRecord.display || {}), featured: editedRecord.featured, published: editedRecord.published };
+              return next;
+            }
+            return { ...record, ...editedRecord, updated_at: new Date().toISOString() };
+          });
+          renderTab(tabKey);
+          setStatus(result.mode === "backend"
+            ? `Queued active edit for ${id} in Apps Script and mirrored locally.`
+            : `Queued active edit for ${id} locally. Export ${LOCAL_JOB_ACTION_EXPORT_FILENAME} and run apply-admin-actions to persist it.`, false);
+        }).catch((error) => setStatus(error.message || "Unable to queue active edit.", true));
+        return;
+      }
+
+      const activeFeatureButton = event.target.closest("[data-active-feature]");
+      if (activeFeatureButton) {
+        const id = String(activeFeatureButton.dataset.activeFeature || "");
+        const tabKey = String(activeFeatureButton.dataset.activeFeatureTab || "");
+        const featured = parseBoolean(activeFeatureButton.dataset.featured, true);
+        const operation = tabKey === "jobs-active"
+          ? "feature_active_job"
+          : tabKey === "talent-active"
+            ? "feature_active_talent"
+            : "feature_active_employer";
+        queueLocalJobAction({ operation, actor: "Admin Review Console", ids: [id], id, featured }).then((result) => {
+          applyLocalActiveStateUpdate(tabKey, id, (record) => ({ ...record, featured, updated_at: new Date().toISOString() }));
+          renderTab(tabKey);
+          setStatus(result.mode === "backend"
+            ? `Queued ${featured ? "feature" : "unfeature"} for ${id} in Apps Script and mirrored locally.`
+            : `Queued ${featured ? "feature" : "unfeature"} for ${id} locally. Export ${LOCAL_JOB_ACTION_EXPORT_FILENAME} and run apply-admin-actions to persist it.`, false);
+        }).catch((error) => setStatus(error.message || "Unable to queue feature update.", true));
+        return;
+      }
+
+      const activeUnpublishButton = event.target.closest("[data-active-unpublish]");
+      if (activeUnpublishButton) {
+        const id = String(activeUnpublishButton.dataset.activeUnpublish || "");
+        const tabKey = String(activeUnpublishButton.dataset.activeUnpublishTab || "");
+        const operation = tabKey === "jobs-active"
+          ? "unpublish_active_job"
+          : tabKey === "talent-active"
+            ? "unpublish_active_talent"
+            : "unpublish_active_employer";
+        queueLocalJobAction({ operation, actor: "Admin Review Console", ids: [id], id }).then((result) => {
+          applyLocalActiveStateUpdate(tabKey, id, (record) => ({ ...record, status: "pending", published: false, public_visibility: false, updated_at: new Date().toISOString() }));
+          renderTab(tabKey);
+          setStatus(result.mode === "backend"
+            ? `Queued unpublish for ${id} in Apps Script and mirrored locally.`
+            : `Queued unpublish for ${id} locally. Export ${LOCAL_JOB_ACTION_EXPORT_FILENAME} and run apply-admin-actions to persist it.`, false);
+        }).catch((error) => setStatus(error.message || "Unable to queue unpublish.", true));
+        return;
+      }
+
+      const activeArchiveButton = event.target.closest("[data-active-archive]");
+      if (activeArchiveButton) {
+        const id = String(activeArchiveButton.dataset.activeArchive || "");
+        const tabKey = String(activeArchiveButton.dataset.activeArchiveTab || "");
+        const operation = tabKey === "jobs-active"
+          ? "archive_active_job"
+          : tabKey === "talent-active"
+            ? "archive_active_talent"
+            : "archive_active_employer";
+        queueLocalJobAction({ operation, actor: "Admin Review Console", ids: [id], id }).then((result) => {
+          applyLocalActiveStateUpdate(tabKey, id, (record) => ({ ...record, status: "archived", published: false, public_visibility: false, updated_at: new Date().toISOString() }));
+          renderTab(tabKey);
+          setStatus(result.mode === "backend"
+            ? `Queued archive for ${id} in Apps Script and mirrored locally.`
+            : `Queued archive for ${id} locally. Export ${LOCAL_JOB_ACTION_EXPORT_FILENAME} and run apply-admin-actions to persist it.`, false);
+        }).catch((error) => setStatus(error.message || "Unable to queue archive.", true));
+        return;
+      }
+
       const button = event.target.closest("[data-action]");
       if (!button) return;
       handleAction(button.dataset.tab, button.dataset.action, button.dataset.id);
@@ -1661,16 +2263,67 @@
     exportLocalActionsButton.addEventListener("click", exportLocalActionsFile);
 
     document.addEventListener("click", (event) => {
+      const saveButton = event.target.closest("[data-save-local-edit]");
+      if (saveButton) {
+        const id = String(saveButton.dataset.saveLocalEdit || "");
+        const job = state.localJobs.find((item) => String(item.id) === id);
+        const card = saveButton.closest(".record-card");
+        if (!job || !card) return;
+        const editedRecord = collectJobEditedRecord(card, "pending");
+        state.localJobReview.actionsById[id] = {
+          ...(state.localJobReview.actionsById[id] || {}),
+          action: "saved_local_edit",
+          editedRecord
+        };
+        setLocalReviewState();
+        setStatus(`Saved local edit draft for ${job.title}. Use Publish Edited or bulk publish to queue it.`, false);
+        return;
+      }
+
+      const publishEditedButton = event.target.closest("[data-publish-local-edit]");
+      if (publishEditedButton) {
+        const id = String(publishEditedButton.dataset.publishLocalEdit || "");
+        const job = state.localJobs.find((item) => String(item.id) === id);
+        const card = publishEditedButton.closest(".record-card");
+        if (!job || !card) return;
+        const editedRecord = collectJobEditedRecord(card, "pending");
+        state.localJobReview.actionsById[id] = {
+          ...(state.localJobReview.actionsById[id] || {}),
+          action: "publish_edited",
+          editedRecord
+        };
+        setLocalReviewState();
+        queueLocalJobAction({
+          operation: "publish_selected",
+          actor: "Admin Review Console",
+          ids: [id],
+          organization: String(job.organization || ""),
+          jobs: [job],
+          edited_jobs: [{ id, editedRecord }]
+        }).then((result) => {
+          const message = result.mode === "backend"
+            ? `Queued edited publish for ${job.title} in Apps Script and mirrored locally.`
+            : `Queued edited publish for ${job.title} in local fallback. Export ${LOCAL_JOB_ACTION_EXPORT_FILENAME} and run apply-admin-actions to persist it.`;
+          setStatus(result.warning ? `${message} ${result.warning}` : message, false);
+          renderLocalJobs();
+        }).catch((error) => {
+          setStatus(error.message || "Unable to queue edited publish.", true);
+        });
+        return;
+      }
+
       const button = event.target.closest("[data-local-quick-publish]");
       if (!button) return;
       const job = state.localJobs.find((item) => String(item.id) === String(button.dataset.localQuickPublish));
       if (!job) return;
+      const editedRecord = state.localJobReview.actionsById[String(job.id)]?.editedRecord || null;
       queueLocalJobAction({
         operation: "publish_selected",
         actor: "Admin Review Console",
         ids: [String(job.id)],
         organization: String(job.organization || ""),
-        jobs: [job]
+        jobs: [job],
+        edited_jobs: editedRecord ? [{ id: String(job.id), editedRecord }] : []
       }).then((result) => {
         state.localJobReview.actionsById[String(job.id)] = {
           ...(state.localJobReview.actionsById[String(job.id)] || {}),

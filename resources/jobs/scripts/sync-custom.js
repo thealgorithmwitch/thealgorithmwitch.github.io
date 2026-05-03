@@ -120,6 +120,10 @@ const triaged = await triagePendingJobs(
   await writeJson(PENDING_SYNCED_FILE, triaged.adminPendingJobs);
   await upsertScrapeReports(triaged.report.sources);
 
+  console.log(
+  `[jobs:sync-custom] pending_before=${existingPending.length} pending_after=${triaged.adminPendingJobs.length}`
+);
+
   Object.entries(counts).forEach(([sourceId, count]) => {
     console.log(
       `[jobs:sync-custom] ${sourceId}: fetched=${count.fetched} active=${count.active} pending=${count.pending}${count.route ? ` route=${count.route}` : ""}${count.reason ? ` reason=${count.reason}` : ""}${count.error ? ` error=${count.error}` : ""}`

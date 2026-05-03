@@ -15,7 +15,7 @@ const BLOG_DIR = await fs.stat(path.join(ROOT_DIR, 'blog'))
 
 const TEMPLATE_PATH = path.join(BLOG_DIR, 'template-post.html');
 const POSTS_JSON_PATH = path.join(ROOT_DIR, 'posts.json');
-const ARCHIVE_SOURCE_PATH = path.join(BLOG_DIR, 'index-blog.html');
+const ARCHIVE_SOURCE_PATH = path.join(BLOG_DIR, 'index.html');
 const ARCHIVE_OUTPUT_PATH = path.join(BLOG_DIR, 'index.html');
 const OUTPUT_DIR = BLOG_DIR;
 const FALLBACK_OG = `${SITE_ORIGIN}/og.jpg?v=4`;

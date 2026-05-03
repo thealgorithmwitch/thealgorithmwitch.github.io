@@ -938,6 +938,10 @@
     }
 
     function exportLocalActionsFile() {
+      downloadLocalActionsFile(true);
+    }
+
+    function downloadLocalActionsFile(notify) {
       const actions = getLocalActionQueue();
       const payload = JSON.stringify({
         generated_at: new Date().toISOString(),
@@ -952,7 +956,9 @@
       link.click();
       link.remove();
       URL.revokeObjectURL(url);
-      setStatus(`Exported ${actions.length} local actions as ${LOCAL_JOB_ACTION_EXPORT_FILENAME}. Move it to jobs/${LOCAL_JOB_ACTION_EXPORT_FILENAME} for local apply.`, false);
+      if (notify) {
+        setStatus(`Exported ${actions.length} local actions as ${LOCAL_JOB_ACTION_EXPORT_FILENAME}. Move it to jobs/${LOCAL_JOB_ACTION_EXPORT_FILENAME} for local apply.`, false);
+      }
     }
 
     async function loadTriageSummary() {
@@ -1668,7 +1674,9 @@
           console.log("[admin-review] queueLocalJobAction backend success", {
             operation: payload.operation,
             actionId: queued && queued.id ? queued.id : "",
-            jobIds: payload.ids || []
+            jobIds: payload.ids || [],
+            recordId: payload.recordId || payload.id || "",
+            changedFields: payload.changed_fields || []
           });
           enqueueLocalAction(payload, "mirrored");
           return { mode: "backend" };
@@ -1676,18 +1684,36 @@
           console.error("[admin-review] queueLocalJobAction backend failure", {
             operation: payload.operation,
             jobIds: payload.ids || [],
+            recordId: payload.recordId || payload.id || "",
+            changedFields: payload.changed_fields || [],
             error: error.message || String(error)
           });
           enqueueLocalAction(payload, "queued");
+          downloadLocalActionsFile(false);
           return { mode: "local", warning: error.message || "Backend queue failed. Saved locally instead." };
         }
       }
       console.log("[admin-review] queueLocalJobAction local fallback", {
         operation: payload.operation,
-        jobIds: payload.ids || []
+        jobIds: payload.ids || [],
+        recordId: payload.recordId || payload.id || "",
+        changedFields: payload.changed_fields || []
       });
       enqueueLocalAction(payload, "queued");
+      downloadLocalActionsFile(false);
       return { mode: "local" };
+    }
+
+    function buildEditedFieldList(editedRecord, prefix) {
+      const fields = [];
+      Object.entries(editedRecord || {}).forEach(([key, value]) => {
+        if (key === "display" && value && typeof value === "object" && !Array.isArray(value)) {
+          Object.keys(value).forEach((displayKey) => fields.push(`${prefix || "display"}.${displayKey}`));
+          return;
+        }
+        fields.push(prefix ? `${prefix}.${key}` : key);
+      });
+      return fields.sort();
     }
 
     function buildSummaryRows(tabKey, raw) {
@@ -2280,6 +2306,7 @@
         const card = activeSaveButton.closest(".record-card");
         if (!id || !tabKey || !card) return;
         const editedRecord = collectActiveEditedRecord(card, tabKey);
+        const changedFields = buildEditedFieldList(editedRecord);
         const operation = tabKey === "jobs-active"
           ? "update_active_job"
           : tabKey === "talent-active"
@@ -2288,9 +2315,11 @@
         queueLocalJobAction({
           operation,
           actor: "Admin Review Console",
+          ids: [id],
           id,
           recordId: id,
-          editedRecord
+          editedRecord,
+          changed_fields: changedFields
         }).then((result) => {
           applyLocalActiveStateUpdate(tabKey, id, (record) => {
             if (tabKey === "jobs-active") {

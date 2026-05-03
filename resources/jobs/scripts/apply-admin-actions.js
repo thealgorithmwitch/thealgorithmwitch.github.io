@@ -1,9 +1,7 @@
 const path = require("path");
 const {
-  JOBS_FILE,
   PENDING_SYNCED_FILE,
   readJson,
-  readJobs,
   readPendingSyncedJobs,
   writeJson
 } = require("./job-utils");
@@ -15,9 +13,7 @@ const {
   EMPLOYERS_FILE
 } = require("./public-records");
 const {
-  applyPublishLifecycle,
-  resolveDisplayJobFromRecord,
-  shouldShowPublicRecord
+  applyPublishLifecycle
 } = require("./lifecycle-utils");
 const { normalizeJob, stringifySafe } = require("./job-normalizer");
 const {
@@ -30,6 +26,7 @@ const {
   writePendingOverrides
 } = require("./admin-actions-store");
 const { buildPagesFromRecords } = require("./generate-job-pages");
+const { syncPublicJobsFromRecords } = require("./public-jobs");
 
 function buildPublishedDisplay(job) {
   return {
@@ -204,6 +201,36 @@ function buildActionResult(status, detail) {
   };
 }
 
+function flattenActionFields(payload, prefix = "") {
+  if (!payload || typeof payload !== "object") return [];
+  return Object.entries(payload).flatMap(([key, value]) => {
+    const nextKey = prefix ? `${prefix}.${key}` : key;
+    if (value && typeof value === "object" && !Array.isArray(value)) {
+      return flattenActionFields(value, nextKey);
+    }
+    return [nextKey];
+  }).sort();
+}
+
+function summarizeChangedFields(previousRecord, nextRecord, options = {}) {
+  const editedRecord = options.editedRecord && typeof options.editedRecord === "object" ? options.editedRecord : null;
+  if (editedRecord) {
+    return flattenActionFields(editedRecord);
+  }
+
+  const fields = [];
+  const previousDisplay = previousRecord && previousRecord.display && typeof previousRecord.display === "object" ? previousRecord.display : {};
+  const nextDisplay = nextRecord && nextRecord.display && typeof nextRecord.display === "object" ? nextRecord.display : {};
+
+  ["status", "public_visibility", "featured", "published", "admin_notes", "display_order"].forEach((key) => {
+    if (JSON.stringify(previousRecord?.[key]) !== JSON.stringify(nextRecord?.[key])) fields.push(key);
+  });
+  Object.keys({ ...previousDisplay, ...nextDisplay }).forEach((key) => {
+    if (JSON.stringify(previousDisplay[key]) !== JSON.stringify(nextDisplay[key])) fields.push(`display.${key}`);
+  });
+  return fields.sort();
+}
+
 function countPublishedJobs(records) {
   return records.filter(isPublishedRecord).length;
 }
@@ -314,10 +341,9 @@ async function resolveLocalActions(resultsById, actions) {
 }
 
 async function main() {
-  const [pendingJobs, jobRecords, existingPublicJobs, orgRules, overrides, talentProfiles, employers] = await Promise.all([
+  const [pendingJobs, jobRecords, orgRules, overrides, talentProfiles, employers] = await Promise.all([
     readPendingSyncedJobs(),
     readJobRecords(),
-    readJobs(),
     readOrganizationRules(),
     readPendingOverrides(),
     readJson(TALENT_PROFILES_FILE, []),
@@ -353,7 +379,9 @@ async function main() {
     recordsLeftPending: 0,
     duplicatesSkipped: 0,
     alreadyPublishedSkipped: 0,
-    jobPagesRegenerated: 0
+    jobPagesRegenerated: 0,
+    jobRecordsCount: 0,
+    jobsJsonCount: 0
   };
 
   const actionResults = {};
@@ -556,9 +584,16 @@ async function main() {
       );
     } else if (action.operation === "update_active_job") {
       const id = String(action.payload.id || action.payload.recordId || ids[0] || "");
-      const applied = updateRecordListById(nextRecords, id, (record) => updateJobDisplayFromEditedRecord(record, action.payload.editedRecord || {}));
+      let changedFields = [];
+      const applied = updateRecordListById(nextRecords, id, (record) => {
+        const nextRecord = updateJobDisplayFromEditedRecord(record, action.payload.editedRecord || {});
+        changedFields = summarizeChangedFields(record, nextRecord, { editedRecord: action.payload.editedRecord || {} });
+        return nextRecord;
+      });
       actionResults[action.id] = buildActionResult(applied ? "applied" : "ignored_duplicate", applied ? `updated_active_job=${id}` : `job_not_found=${id}`);
-      console.log(`[jobs:apply-admin-actions] update_active_job action=${action.id} id=${id} applied=${applied}`);
+      console.log(
+        `[jobs:apply-admin-actions] update_active_job action_id=${action.id} record_id=${id} applied=${applied} fields_changed=${changedFields.join(",") || "none"}`
+      );
     } else if (action.operation === "archive_active_job") {
       const targetIds = ids.length ? ids : [String(action.payload.id || action.payload.recordId || "")].filter(Boolean);
       let count = 0;
@@ -669,11 +704,10 @@ async function main() {
   await writeJson(TALENT_PROFILES_FILE, nextTalentProfiles);
   await writeJson(EMPLOYERS_FILE, nextEmployers);
 
-  const publicJobs = nextRecords
-    .filter((record) => record.record_type === "job" && shouldShowPublicRecord(record))
-    .map(resolveDisplayJobFromRecord);
-  await writeJson(JOBS_FILE, publicJobs.length ? publicJobs : existingPublicJobs);
+  const publicSync = await syncPublicJobsFromRecords(nextRecords, { label: "jobs:apply-admin-actions" });
   report.recordsLeftPending = nextPending.length;
+  report.jobRecordsCount = nextRecords.length;
+  report.jobsJsonCount = publicSync.jobsCount;
   report.jobPagesRegenerated = await buildPagesFromRecords(nextRecords);
 
   try {
@@ -686,7 +720,7 @@ async function main() {
   }
 
   console.log(
-    `[jobs:apply-admin-actions] records published=${report.recordsPublished} records archived/rejected=${report.recordsArchivedOrRejected} already_published_skipped=${report.alreadyPublishedSkipped} duplicates_skipped=${report.duplicatesSkipped} records left pending=${report.recordsLeftPending} job pages regenerated=${report.jobPagesRegenerated}`
+    `[jobs:apply-admin-actions] records published=${report.recordsPublished} records archived/rejected=${report.recordsArchivedOrRejected} already_published_skipped=${report.alreadyPublishedSkipped} duplicates_skipped=${report.duplicatesSkipped} records left pending=${report.recordsLeftPending} job-records count=${report.jobRecordsCount} job-records published count=${publicSync.publishedCount} jobs.json count=${report.jobsJsonCount} generated page count=${report.jobPagesRegenerated}`
   );
 }
 

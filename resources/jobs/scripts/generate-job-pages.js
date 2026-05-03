@@ -1,7 +1,7 @@
 const fs = require("fs/promises");
 const path = require("path");
 const { readJobRecords } = require("./public-records");
-const { resolveDisplayJobFromRecord, shouldShowPublicRecord } = require("./lifecycle-utils");
+const { buildPublicJobsFromRecords, syncPublicJobsFromRecords } = require("./public-jobs");
 
 const ROOT = path.resolve(__dirname, "..");
 const PAGES_DIR = path.join(ROOT, "pages");
@@ -253,7 +253,7 @@ async function ensureDir(dir) {
 }
 
 async function buildPagesFromRecords(records) {
-  const jobs = records.filter((record) => record.record_type === "job" && shouldShowPublicRecord(record)).map(resolveDisplayJobFromRecord);
+  const jobs = buildPublicJobsFromRecords(records);
   await ensureDir(PAGES_DIR);
   const existingFiles = await fs.readdir(PAGES_DIR).catch(() => []);
   await Promise.all(
@@ -277,6 +277,7 @@ async function buildPagesFromRecords(records) {
   const htmlFiles = (await fs.readdir(PAGES_DIR).catch(() => [])).filter((fileName) => fileName.endsWith(".html"));
 
   console.log(`[jobs:build-pages] Generated ${jobs.length} job pages in ${PAGES_DIR}.`);
+  console.log(`[jobs:build-pages] job-records published count: ${jobs.length}.`);
   console.log(`[jobs:build-pages] HTML file count: ${htmlFiles.length}.`);
   console.log(`[jobs:build-pages] Resolved ${collisions.length} slug collisions.`);
   if (collisions.length) {
@@ -290,7 +291,10 @@ async function buildPagesFromRecords(records) {
 
 async function main() {
   const records = await readJobRecords();
-  await buildPagesFromRecords(records);
+  const publicSync = await syncPublicJobsFromRecords(records, { label: "jobs:build-pages" });
+  const pageCount = await buildPagesFromRecords(records);
+  console.log(`[jobs:build-pages] jobs.json count: ${publicSync.jobsCount}.`);
+  console.log(`[jobs:build-pages] generated page count: ${pageCount}.`);
 }
 
 if (require.main === module) {

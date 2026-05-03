@@ -27,7 +27,7 @@ async function runCustomSync() {
 
   const customSources = sources.filter((source) => shouldUseDiscoverySync(source));
   const managedCustomSourceIds = new Set(
-    sourcesf
+    sources
       .filter((source) => shouldUseDiscoverySync(source))
       .map((source) => source.id)
   );
@@ -41,7 +41,7 @@ async function runCustomSync() {
     };
   }
 
-  const preservedPublicJobs = existingJobs.filter((job) => !isManagedAtsJob(job, activeSourceIds));
+  const preservedPublicJobs = existingJobs;
   
   // Preserve all existing pending unless already published/excluded elsewhere.
   // Do not wipe managed ATS pending just because a source returned fewer jobs.

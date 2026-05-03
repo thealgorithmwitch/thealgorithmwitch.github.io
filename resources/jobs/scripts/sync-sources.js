@@ -23,10 +23,6 @@ const { triagePendingJobs } = require("./pending-triage");
 
 const SUPPORTED_TYPES = new Set(["greenhouse", "lever", "ashby", "bamboohr", "recruitee", "smartrecruiters", "workable"]);
 
-function isManagedAtsJob(job, activeSourceIds) {
-  return job.sync_origin === "ats" && activeSourceIds.has(String(job.source_id || ""));
-}
-
 async function fetchJobsForSource(source) {
   if (source.provider === "greenhouse" || source.type === "greenhouse") {
     return fetchGreenhouseJobsForSource(source);
@@ -80,9 +76,14 @@ async function runSyncForTypes(types = []) {
     };
   }
 
-  const activeSourceIds = new Set(enabledSources.map((source) => source.id));
-  const preservedPublicJobs = existingJobs.filter((job) => !isManagedAtsJob(job, activeSourceIds));
-  const preservedPendingJobs = existingPending.filter((job) => !isManagedAtsJob(job, activeSourceIds));
+  const existingPendingIds = new Set((existingPending || []).map((job) => String(job.id || "")));
+  
+  // Append-only scrape mode:
+  // - active/public jobs are controlled by admin publish/apply
+  // - existing pending jobs are preserved even if a source returns zero
+  // - newly scraped jobs can be added to pending after triage
+  const preservedPublicJobs = existingJobs;
+  const preservedPendingJobs = existingPending;
   const publicJobs = [];
   const pendingJobs = [];
   const counts = {};
@@ -182,7 +183,7 @@ async function runSyncForTypes(types = []) {
     }
   }
 
-  const mergedPublicJobs = dedupeJobs([...preservedPublicJobs, ...publicJobs]);
+  const mergedPublicJobs = preservedPublicJobs;
   const mergedPendingJobs = dedupeJobs([...preservedPendingJobs, ...pendingJobs]);
 
   const publicWriteResult = await safeWritePublicJobs(mergedPublicJobs, {
@@ -191,7 +192,15 @@ async function runSyncForTypes(types = []) {
   });
   await syncJobRecordStore(publicWriteResult.jobs, { logger: console });
   const scrapeReportPayload = await upsertScrapeReports(scrapeReports);
-  const triaged = await triagePendingJobs(mergedPendingJobs, publicWriteResult.jobs, scrapeReportPayload);
+  const triaged = await triagePendingJobs(
+  mergedPendingJobs,
+  publicWriteResult.jobs,
+  scrapeReportPayload,
+  {
+    preserveExistingPending: true,
+    existingPendingIds
+  }
+);
   await writeJson(PENDING_SYNCED_FILE, triaged.adminPendingJobs);
   await upsertScrapeReports(triaged.report.sources);
 

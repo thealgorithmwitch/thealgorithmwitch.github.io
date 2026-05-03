@@ -646,162 +646,172 @@ function extractDeckText(articleHtml = '', excerpt = '', title = '') {
   return '';
 }
 
+async function loadPostsFromJson() {
+  console.log(`[blog] Rendering from existing posts.json at ${POSTS_JSON_PATH}`);
+  const storedPosts = JSON.parse(await fs.readFile(POSTS_JSON_PATH, 'utf8'));
+
+  if (!Array.isArray(storedPosts) || !storedPosts.length) {
+    throw new Error('posts.json did not contain any posts.');
+  }
+
+  const posts = storedPosts.map((post) => {
+    const bodyHtml = post.body_html || '';
+
+    if (stripTags(bodyHtml).length < 300) {
+      throw new Error(`Stored article body is too short for "${post.title || 'Untitled'}".`);
+    }
+
+    const dates = formatDate(post.published_at);
+    const readingTimeMinutes = estimateReadingTime(bodyHtml);
+    const category = articleCategory(post.title);
+    const theme = themeForCategory(category);
+    const introText = getIntroText(bodyHtml);
+    const deckText = extractDeckText(bodyHtml, post.excerpt, post.title);
+
+    return {
+      ...post,
+      body_html: bodyHtml,
+      toc: Array.isArray(post.toc) ? post.toc : [],
+      figures: Array.isArray(post.figures) ? post.figures : [],
+      category,
+      theme,
+      intro_opening: extractFirstSentence(introText),
+      intro_closing: extractLastSentence(introText),
+      deck_text: deckText,
+      published_iso: dates.iso,
+      published_short: dates.short,
+      published_long: dates.long,
+      canonical_url: `${BLOG_URL}${post.website_slug}.html`,
+      og_image: post.cover_image || FALLBACK_OG,
+      og_image_alt: `${post.title} | The Algorithm Witch`,
+      reading_time_minutes: readingTimeMinutes,
+      reading_time_display: `${readingTimeMinutes} min read`,
+    };
+  });
+
+  if (!posts.length) {
+    throw new Error('No valid posts remained after posts.json normalization.');
+  }
+
+  return posts;
+}
+
 async function main() {
   const options = parseArgs(process.argv.slice(2));
   const template = await fs.readFile(TEMPLATE_PATH, 'utf8');
   let posts;
 
   if (options.fromPostsJson) {
-    console.log(`[blog] Rendering from existing posts.json at ${POSTS_JSON_PATH}`);
-    const storedPosts = JSON.parse(await fs.readFile(POSTS_JSON_PATH, 'utf8'));
-
-    if (!Array.isArray(storedPosts) || !storedPosts.length) {
-      throw new Error('posts.json did not contain any posts.');
-    }
-
-    posts = storedPosts.map((post) => {
-      const bodyHtml = post.body_html || '';
-
-      if (stripTags(bodyHtml).length < 300) {
-        throw new Error(`Stored article body is too short for "${post.title || 'Untitled'}".`);
-      }
-
-      const dates = formatDate(post.published_at);
-      const readingTimeMinutes = estimateReadingTime(bodyHtml);
-      const category = articleCategory(post.title);
-      const theme = themeForCategory(category);
-      const introText = getIntroText(bodyHtml);
-      const deckText = extractDeckText(bodyHtml, post.excerpt, post.title);
-
-      return {
-        ...post,
-        body_html: bodyHtml,
-        toc: Array.isArray(post.toc) ? post.toc : [],
-        figures: Array.isArray(post.figures) ? post.figures : [],
-        category,
-        theme,
-        intro_opening: extractFirstSentence(introText),
-        intro_closing: extractLastSentence(introText),
-        deck_text: deckText,
-        published_iso: dates.iso,
-        published_short: dates.short,
-        published_long: dates.long,
-        canonical_url: `${BLOG_URL}${post.website_slug}.html`,
-        og_image: post.cover_image || FALLBACK_OG,
-        og_image_alt: `${post.title} | The Algorithm Witch`,
-        reading_time_minutes: readingTimeMinutes,
-        reading_time_display: `${readingTimeMinutes} min read`,
-      };
-    });
-
-    if (!posts.length) {
-      throw new Error('No valid posts remained after posts.json normalization.');
-    }
+    posts = await loadPostsFromJson();
   } else {
     console.log(`[blog] Fetching Substack RSS from ${FEED_URL}`);
     let feed;
+
     try {
       feed = await fetchText(FEED_URL);
     } catch (error) {
       console.error(`[blog] RSS fetch failed: ${error.message}`);
-      console.error(`[blog] Preserving existing posts.json at ${POSTS_JSON_PATH}.`);
-      throw new Error(`RSS fetch failed: ${error.message}`);
+      console.error(`[blog] Falling back to existing posts.json at ${POSTS_JSON_PATH}`);
+      posts = await loadPostsFromJson();
     }
 
-    console.log(`[blog] RSS bytes received: ${feed.length}`);
-    const items = [...feed.matchAll(/<item>([\s\S]*?)<\/item>/g)].map((match) => match[1]);
+    if (feed) {
+      console.log(`[blog] RSS bytes received: ${feed.length}`);
+      const items = [...feed.matchAll(/<item>([\s\S]*?)<\/item>/g)].map((match) => match[1]);
 
-    if (!items.length) throw new Error('No posts were found in the Substack feed.');
-    console.log(`[blog] Feed items found: ${items.length}`);
+      if (!items.length) throw new Error('No posts were found in the Substack feed.');
+      console.log(`[blog] Feed items found: ${items.length}`);
 
-    const rawPosts = items.map((item) => ({
-      title: decodeHtml(getTagValue(item, 'title')),
-      description: decodeHtml(getTagValue(item, 'description')),
-      originalUrl: getTagValue(item, 'link'),
-      publishedAt: getTagValue(item, 'pubDate'),
-      coverImage: getAttributeValue(item, 'enclosure', 'url'),
-      contentHtml: getTagValue(item, 'content:encoded'),
-    }));
+      const rawPosts = items.map((item) => ({
+        title: decodeHtml(getTagValue(item, 'title')),
+        description: decodeHtml(getTagValue(item, 'description')),
+        originalUrl: getTagValue(item, 'link'),
+        publishedAt: getTagValue(item, 'pubDate'),
+        coverImage: getAttributeValue(item, 'enclosure', 'url'),
+        contentHtml: getTagValue(item, 'content:encoded'),
+      }));
 
-    const normalized = rawPosts.reduce((acc, post) => {
-      try {
-        if (!post.contentHtml) throw new Error('missing full HTML body');
+      const normalized = rawPosts.reduce((acc, post) => {
+        try {
+          if (!post.contentHtml) throw new Error('missing full HTML body');
 
-        const websiteSlug = TITLE_TO_SLUG.get(post.title) || slugify(post.title);
+          const websiteSlug = TITLE_TO_SLUG.get(post.title) || slugify(post.title);
 
-        acc.push({
-          title: post.title,
-          excerpt: safeExcerpt(post.description, post.contentHtml, post.title),
-          published_at: post.publishedAt,
-          cover_image: post.coverImage || '',
-          body_html: post.contentHtml,
-          original_substack_url: post.originalUrl,
-          original_substack_slug: stripQuery(post.originalUrl).split('/').pop() || '',
-          website_slug: websiteSlug,
-        });
-      } catch (error) {
-        console.warn(`Skipping malformed feed item "${post.title || 'Untitled'}": ${error.message}`);
-      }
-
-      return acc;
-    }, []).sort((a, b) => new Date(b.published_at) - new Date(a.published_at));
-
-    if (!normalized.length) {
-      throw new Error('No valid posts remained after feed normalization.');
-    }
-    console.log(`[blog] Valid feed items after normalization: ${normalized.length}`);
-
-    const linkMap = new Map(
-      normalized.map((post) => [stripQuery(post.original_substack_url), `/blog/${post.website_slug}.html`])
-    );
-
-    posts = normalized.reduce((acc, post) => {
-      try {
-        const structured = sanitizeArticleHtml(post.body_html, linkMap);
-
-        if (stripTags(structured.html).length < 300) {
-          throw new Error('sanitized article body is too short');
+          acc.push({
+            title: post.title,
+            excerpt: safeExcerpt(post.description, post.contentHtml, post.title),
+            published_at: post.publishedAt,
+            cover_image: post.coverImage || '',
+            body_html: post.contentHtml,
+            original_substack_url: post.originalUrl,
+            original_substack_slug: stripQuery(post.originalUrl).split('/').pop() || '',
+            website_slug: websiteSlug,
+          });
+        } catch (error) {
+          console.warn(`Skipping malformed feed item "${post.title || 'Untitled'}": ${error.message}`);
         }
 
-        const dates = formatDate(post.published_at);
-        const readingTimeMinutes = estimateReadingTime(structured.html);
-        const category = articleCategory(post.title);
-        const theme = themeForCategory(category);
-        const introText = getIntroText(structured.html);
-        const deckText = extractDeckText(structured.html, post.excerpt, post.title);
+        return acc;
+      }, []).sort((a, b) => new Date(b.published_at) - new Date(a.published_at));
 
-        acc.push({
-          ...post,
-          body_html: structured.html,
-          toc: structured.toc,
-          figures: structured.figures,
-          category,
-          theme,
-          intro_opening: extractFirstSentence(introText),
-          intro_closing: extractLastSentence(introText),
-          deck_text: deckText,
-          published_iso: dates.iso,
-          published_short: dates.short,
-          published_long: dates.long,
-          canonical_url: `${BLOG_URL}${post.website_slug}.html`,
-          og_image: post.cover_image || FALLBACK_OG,
-          og_image_alt: `${post.title} | The Algorithm Witch`,
-          reading_time_minutes: readingTimeMinutes,
-          reading_time_display: `${readingTimeMinutes} min read`,
-        });
-      } catch (error) {
-        console.warn(`Skipping malformed generated post "${post.title}": ${error.message}`);
+      if (!normalized.length) {
+        throw new Error('No valid posts remained after feed normalization.');
       }
 
-      return acc;
-    }, []);
+      console.log(`[blog] Valid feed items after normalization: ${normalized.length}`);
 
-    if (!posts.length) {
-      throw new Error('No valid posts remained after article sanitization.');
+      const linkMap = new Map(
+        normalized.map((post) => [stripQuery(post.original_substack_url), `/blog/${post.website_slug}.html`])
+      );
+
+      posts = normalized.reduce((acc, post) => {
+        try {
+          const structured = sanitizeArticleHtml(post.body_html, linkMap);
+
+          if (stripTags(structured.html).length < 300) {
+            throw new Error('sanitized article body is too short');
+          }
+
+          const dates = formatDate(post.published_at);
+          const readingTimeMinutes = estimateReadingTime(structured.html);
+          const category = articleCategory(post.title);
+          const theme = themeForCategory(category);
+          const introText = getIntroText(structured.html);
+          const deckText = extractDeckText(structured.html, post.excerpt, post.title);
+
+          acc.push({
+            ...post,
+            body_html: structured.html,
+            toc: structured.toc,
+            figures: structured.figures,
+            category,
+            theme,
+            intro_opening: extractFirstSentence(introText),
+            intro_closing: extractLastSentence(introText),
+            deck_text: deckText,
+            published_iso: dates.iso,
+            published_short: dates.short,
+            published_long: dates.long,
+            canonical_url: `${BLOG_URL}${post.website_slug}.html`,
+            og_image: post.cover_image || FALLBACK_OG,
+            og_image_alt: `${post.title} | The Algorithm Witch`,
+            reading_time_minutes: readingTimeMinutes,
+            reading_time_display: `${readingTimeMinutes} min read`,
+          });
+        } catch (error) {
+          console.warn(`Skipping malformed generated post "${post.title}": ${error.message}`);
+        }
+
+        return acc;
+      }, []);
+
+      if (!posts.length) {
+        throw new Error('No valid posts remained after article sanitization.');
+      }
+
+      await fs.writeFile(POSTS_JSON_PATH, `${JSON.stringify(posts, null, 2)}\n`);
+      console.log(`[blog] Wrote ${posts.length} posts to ${POSTS_JSON_PATH}`);
     }
-
-    await fs.writeFile(POSTS_JSON_PATH, `${JSON.stringify(posts, null, 2)}\n`);
-    console.log(`[blog] Wrote ${posts.length} posts to ${POSTS_JSON_PATH}`);
   }
 
   const renderPosts = options.only.size
@@ -814,9 +824,10 @@ async function main() {
 
   for (const post of renderPosts) {
     const index = posts.findIndex((entry) => entry.website_slug === post.website_slug);
-const tocLinks = post.toc.length
-  ? post.toc.map((entry) => `<a class="toc-link" href="#${entry.id}" data-theme="${entry.theme}"><span class="toc-link-number">${entry.number}</span><span class="toc-link-label">${escapeHtml(entry.text)}</span></a>`).join('')
-  : '<a class="toc-link" href="#top" data-theme="purple"><span class="toc-link-number">Intro</span><span class="toc-link-label">Intro</span></a>';
+
+    const tocLinks = post.toc.length
+      ? post.toc.map((entry) => `<a class="toc-link" href="#${entry.id}" data-theme="${entry.theme}"><span class="toc-link-number">${entry.number}</span><span class="toc-link-label">${escapeHtml(entry.text)}</span></a>`).join('')
+      : '<a class="toc-link" href="#top" data-theme="purple"><span class="toc-link-number">Intro</span><span class="toc-link-label">Intro</span></a>';
 
     const visionsPanel = buildVisionsPanel(post);
 
@@ -868,8 +879,10 @@ const tocLinks = post.toc.length
   if (shouldUpdateArchive) {
     const archiveSource = await fs.readFile(ARCHIVE_SOURCE_PATH, 'utf8');
     const archiveWithData = injectArchiveData(archiveSource, posts);
+
     await fs.writeFile(ARCHIVE_SOURCE_PATH, archiveWithData);
     await fs.writeFile(ARCHIVE_OUTPUT_PATH, archiveWithData);
+
     console.log(`[blog] Updated archive data in ${ARCHIVE_SOURCE_PATH} and ${ARCHIVE_OUTPUT_PATH}`);
   }
 }

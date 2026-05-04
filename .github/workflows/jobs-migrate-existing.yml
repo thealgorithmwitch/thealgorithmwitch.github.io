@@ -84,6 +84,18 @@ jobs:
             echo "No migration output changes detected."
           fi
 
+      - name: Check pending file size
+        if: ${{ inputs.write == 'true' }}
+        shell: bash
+        run: |
+          SIZE_BYTES=$(wc -c < "$JOBS_DIR/pending-synced-jobs.json")
+          MAX_BYTES=$((25 * 1024 * 1024))
+          echo "pending-synced-jobs.json size: $SIZE_BYTES bytes"
+          if [ "$SIZE_BYTES" -gt "$MAX_BYTES" ]; then
+            echo "pending-synced-jobs.json exceeds 25MB. Refusing to commit."
+            exit 1
+          fi
+
       - name: Commit and push migration changes
         if: ${{ inputs.write == 'true' && steps.changes.outputs.changed == 'true' }}
         shell: bash

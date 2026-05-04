@@ -791,6 +791,27 @@
     const loadMoreJobsButton = document.getElementById("load-more-jobs");
     const exportLocalActionsButton = document.getElementById("export-local-actions");
 
+    function callBackend(action, payload = {}) {
+      const url = new URL(backendUrl);
+    
+      url.searchParams.set("action", action);
+      url.searchParams.set("token", getAdminToken());
+    
+      Object.entries(payload).forEach(([key, value]) => {
+        url.searchParams.set(
+          key,
+          typeof value === "object" ? JSON.stringify(value) : String(value)
+        );
+      });
+    
+      return fetch(url.toString(), { method: "GET" })
+        .then(res => res.json())
+        .then(data => {
+          if (!data.ok) throw new Error(data.error || "Backend request failed");
+          return data;
+        });
+    }
+    
     function getLocalReviewState() {
       try {
         const parsed = JSON.parse(window.localStorage.getItem(LOCAL_JOB_REVIEW_KEY) || "{}");

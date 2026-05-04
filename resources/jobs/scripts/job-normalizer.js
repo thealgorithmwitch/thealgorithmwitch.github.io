@@ -141,6 +141,34 @@ function normalizeWhitespace(value) {
     .trim();
 }
 
+function normalizeLooseToken(value) {
+  return normalizeWhitespace(String(value || ""))
+    .toLowerCase()
+    .replace(/[_-]+/g, " ");
+}
+
+function normalizeWorkplaceType(value, fallback = "") {
+  const text = normalizeWhitespace(stringifySafe(value));
+  const normalized = normalizeLooseToken(text);
+  if (!normalized) return fallback;
+  if (normalized === "remote") return "Remote";
+  if (normalized === "hybrid") return "Hybrid";
+  if (normalized === "onsite" || normalized === "on site") return "On-site";
+  return text;
+}
+
+function normalizeEmploymentType(value, fallback = "") {
+  const text = normalizeWhitespace(stringifySafe(value));
+  const normalized = normalizeLooseToken(text);
+  if (!normalized) return fallback;
+  if (normalized === "full time") return "Full-time";
+  if (normalized === "part time") return "Part-time";
+  if (normalized === "contract" || normalized === "contractor") return "Contract";
+  if (normalized === "temporary" || normalized === "temp") return "Temporary";
+  if (normalized === "intern" || normalized === "internship") return "Internship";
+  return text;
+}
+
 function normalizeCompanyCore(value) {
   return normalizeWhitespace(stripHtml(value))
     .toLowerCase()
@@ -560,6 +588,98 @@ function splitIntoSentences(value) {
   return normalizeWhitespace(value).match(/[^.!?]+[.!?]+|[^.!?]+$/g) || [];
 }
 
+function normalizeComparableText(value) {
+  return normalizeWhitespace(stripHtml(decodeHtmlEntities(value)))
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, " ")
+    .trim();
+}
+
+function extractParagraphs(value) {
+  const raw = decodeHtmlEntities(String(value || ""))
+    .replace(/<style[\s\S]*?<\/style>/gi, " ")
+    .replace(/<script[\s\S]*?<\/script>/gi, " ")
+    .replace(/<br\s*\/?>/gi, "\n")
+    .replace(/<\/p>|<\/div>|<\/li>|<\/section>|<\/article>|<\/h[1-6]>|<\/tr>/gi, "\n\n")
+    .replace(/<li[^>]*>/gi, "\n")
+    .replace(/<[^>]*>/g, " ");
+  return raw
+    .split(/\n{2,}|\r{2,}/)
+    .map((paragraph) => normalizeWhitespace(paragraph))
+    .filter(Boolean);
+}
+
+function cleanDescriptionParagraph(paragraph, title = "") {
+  const titlePattern = title ? new RegExp(`\\b${slugify(title).replace(/-/g, "[\\s\\W]*")}\\b`, "ig") : null;
+  return normalizeWhitespace(
+    String(paragraph || "")
+      .replace(/[>›»]+/g, " ")
+      .replace(/&(amp|nbsp|quot|apos|#39|lt|gt);/gi, " ")
+      .replace(/\b(?:href|class|aria-label|target|data-[\w-]+|rel|style|headers)\s*=\s*(?:"[^"]*"|'[^']*'|[^\s>]+)/gi, " ")
+      .replace(/https?:\/\/\S+/gi, " ")
+      .replace(/\bno\s*wrap\b|\bnowrap\b/gi, " ")
+      .replace(/\b(?:next|previous)\b(?:\s*post)?[:\s-]*/gi, " ")
+      .replace(/\b(?:apply now|apply today|submit application|learn more|read more|view job|view opening|back to jobs|search jobs|job openings|applicant login|join talent community)\b/gi, " ")
+      .replace(/\b(?:job title|department|location|reports to|supervises|duration)\s*:\s*/gi, " ")
+      .replace(/\b(?:posted|job id|requisition id|req id|employment type|workplace type)\s*:\s*[^.]{0,120}/gi, " ")
+      .replace(/\b(?:equal opportunity employer|privacy policy|terms of use|cookie policy|reasonable accommodation|all qualified applicants|veteran status|gender identity)\b[^.]{0,220}/gi, " ")
+      .replace(titlePattern || /$^/g, " ")
+      .replace(/\.\s*\./g, ". ")
+  );
+}
+
+function paragraphLooksUseful(paragraph, title = "") {
+  const cleaned = cleanDescriptionParagraph(paragraph, title);
+  if (cleaned.length < 60) return false;
+  if (!/[a-z]{3,}/i.test(cleaned)) return false;
+  if (/^(apply|job title|department|location|reports to|supervises|duration)\b/i.test(cleaned)) return false;
+  if (/^(previous|next|search jobs|job openings|applicant login|join talent community)\b/i.test(cleaned)) return false;
+  return true;
+}
+
+function findTitleMatchingDescriptionParagraph(job = {}) {
+  const title = normalizeWhitespace(job.title || "");
+  const comparableTitle = normalizeComparableText(title);
+  if (!comparableTitle) return "";
+
+  const titleTokens = comparableTitle
+    .split(/\s+/)
+    .filter((token) => token.length >= 4 && !ORGANIZATION_NOISE_TOKENS.has(token));
+  if (!titleTokens.length) return "";
+
+  const sources = [
+    job.description,
+    job.raw_description,
+    job.descriptionPlain,
+    job.content,
+    job.summary,
+    job.requirements,
+    job.responsibilities,
+    job.raw_payload
+  ];
+
+  let best = { score: 0, paragraph: "" };
+  for (const source of sources) {
+    const paragraphs = extractParagraphs(source);
+    for (const paragraph of paragraphs) {
+      const cleaned = cleanDescriptionParagraph(paragraph, "");
+      if (!paragraphLooksUseful(cleaned, title)) continue;
+      const comparableParagraph = normalizeComparableText(cleaned);
+      if (!comparableParagraph) continue;
+      let score = 0;
+      if (comparableParagraph.includes(comparableTitle)) score += 6;
+      const tokenMatches = titleTokens.filter((token) => comparableParagraph.includes(token)).length;
+      score += tokenMatches;
+      if (tokenMatches >= Math.min(3, titleTokens.length)) score += 2;
+      if (score > best.score) {
+        best = { score, paragraph: cleaned };
+      }
+    }
+  }
+
+  return best.score >= 4 ? best.paragraph : "";
+}
+
 function removeBoilerplateSentences(sentences) {
   const boilerplatePatterns = [
     /equal opportunity/i,
@@ -596,7 +716,9 @@ function removeBoilerplateSentences(sentences) {
   return sentences.filter((sentence) => !boilerplatePatterns.some((pattern) => pattern.test(sentence)));
 }
 
-function normalizeDescription(description) {
+function normalizeDescription(description, options = {}) {
+  const title = normalizeWhitespace(options.title || "");
+  const titlePattern = title ? new RegExp(`\\b${slugify(title).replace(/-/g, "[\\s\\W]*")}\\b`, "ig") : null;
   const rawDescription = normalizeWhitespace(stringifySafe(description) || cleanFlattenedText(description));
   const cleaned = normalizeWhitespace(
     stripHtml(rawDescription)
@@ -607,12 +729,14 @@ function normalizeDescription(description) {
       .replace(/\bno\s*wrap\b|\bnowrap\b/gi, " ")
       .replace(/\b(?:next|previous)\s*:\s*(?:next|previous)\s+post\s*:[^.]{0,200}/gi, " ")
       .replace(/\bpost navigation\b[^.]{0,200}/gi, " ")
+      .replace(/\b(?:apply now|apply today|submit application|learn more|read more|view job|view opening|back to jobs)\b/gi, " ")
       .replace(
         /\b(?:job title|department|location|reports to|supervises)\s*:\s*[\s\S]*?(?=(?:job title|department|location|reports to|supervises|duration|context|scope|role overview|about us|what you(?:'|’)ll do)\s*:|$)/gi,
         " "
       )
       .replace(/\b(?:about us|about the company|about the role|job summary|role overview|what you’ll do|what you will do|responsibilities|requirements|qualifications|preferred qualifications|benefits|details|context|scope|what you bring)\s*:?/gi, " ")
       .replace(/\b(?:job title|department|reports to|supervises|duration|location)\s*:/gi, " ")
+      .replace(titlePattern || /$^/g, " ")
       .replace(/\.\s*\./g, ". ")
   );
 
@@ -629,7 +753,9 @@ function normalizeDescription(description) {
 
   sentences = removeBoilerplateSentences(sentences)
     .filter((sentence) => !/^(job title|department|reports to|location|duration)\b/i.test(sentence))
+    .filter((sentence) => !/^(apply now|apply today|submit application|learn more|read more|view job|view opening)\b/i.test(sentence))
     .filter((sentence) => !/^[A-Z][a-z]+(?:\s+[A-Z][a-z]+){0,2}$/.test(sentence))
+    .filter((sentence) => !title || normalizeComparableText(sentence) !== normalizeComparableText(title))
     .filter((sentence) => /[a-z]{3,}\s+(?:is|are|will|can|should|must|plans|coordinates|executes|supports|manages|builds|seeks|works|develops|leads|drives|partners)/i.test(sentence));
 
   const prioritySentences = sentences.filter((sentence) => {
@@ -664,25 +790,42 @@ function extractDescriptionText(job = {}) {
     job.content,
     job.summary
   ];
+  const seededParagraph = findTitleMatchingDescriptionParagraph(job);
+  let fallbackText = "";
 
   for (const candidate of directCandidates) {
     const text = normalizeWhitespace(stringifySafe(candidate) || cleanFlattenedText(candidate));
-    if (text.length >= 80) return text;
+    if (text.length >= 80) {
+      fallbackText = text;
+      break;
+    }
   }
 
-  const built = cleanFlattenedText({
-    description: job.description,
-    raw_description: job.raw_description,
-    descriptionPlain: job.descriptionPlain,
-    content: job.content,
-    requirements: job.requirements,
-    responsibilities: job.responsibilities,
-    lists: job.lists,
-    team: job.team,
-    department: job.department,
-    raw_payload: job.raw_payload
-  });
-  return built;
+  if (!fallbackText) {
+    fallbackText = cleanFlattenedText({
+      description: job.description,
+      raw_description: job.raw_description,
+      descriptionPlain: job.descriptionPlain,
+      content: job.content,
+      requirements: job.requirements,
+      responsibilities: job.responsibilities,
+      lists: job.lists,
+      team: job.team,
+      department: job.department,
+      raw_payload: job.raw_payload
+    });
+  }
+
+  if (!seededParagraph) return fallbackText;
+  if (!fallbackText) return seededParagraph;
+
+  const comparableSeed = normalizeComparableText(seededParagraph);
+  const comparableFallback = normalizeComparableText(fallbackText);
+  if (comparableSeed && comparableFallback.includes(comparableSeed)) {
+    return fallbackText;
+  }
+
+  return `${seededParagraph} ${fallbackText}`.trim();
 }
 
 function safeStringField(value, fallback = "") {
@@ -708,7 +851,7 @@ function normalizeJob(input = {}) {
   const explicitCurrency = safeStringField(input.salary_currency || input.salaryCurrency);
   const explicitPeriod = safeStringField(input.salary_period || input.salaryPeriod);
   const descriptionCandidate = extractDescriptionText(input);
-  const descriptionShape = normalizeDescription(descriptionCandidate);
+  const descriptionShape = normalizeDescription(descriptionCandidate, { title });
   const resolvedSalaryVisible = salaryText
     ? (typeof input.salary_visible === "boolean" ? input.salary_visible : salaryShape.salary_visible)
     : false;
@@ -747,8 +890,8 @@ function normalizeJob(input = {}) {
     title,
     organization,
     location,
-    workplace_type: safeStringField(input.workplace_type || input.workplaceType),
-    job_type: safeStringField(input.job_type || input.jobType, "Full-time"),
+    workplace_type: normalizeWorkplaceType(input.workplace_type || input.workplaceType),
+    job_type: normalizeEmploymentType(input.job_type || input.jobType, "Full-time"),
     salary: resolvedSalaryVisible ? salaryShape.salary : "",
     raw_salary: salaryShape.raw_salary,
     salary_min: resolveNumericField(input.salary_min) ?? salaryShape.salary_min,
@@ -915,7 +1058,9 @@ module.exports = {
   isOrganizationOnlyTitle,
   isSingleFirstNameOnlyTitle,
   normalizeDescription,
+  normalizeEmploymentType,
   normalizeJob,
+  normalizeWorkplaceType,
   normalizeSector,
   parseSalaryRange,
   routeSyncedJob,

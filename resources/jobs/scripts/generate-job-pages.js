@@ -2,6 +2,7 @@ const fs = require("fs/promises");
 const path = require("path");
 const { readJobRecords } = require("./public-records");
 const { buildPublicJobsFromRecords, syncPublicJobsFromRecords } = require("./public-jobs");
+const { normalizeEmploymentType, normalizeWorkplaceType } = require("./job-normalizer");
 
 const ROOT = path.resolve(__dirname, "..");
 const PAGES_DIR = path.join(ROOT, "pages");
@@ -107,6 +108,7 @@ function salaryJsonLd(job) {
 }
 
 function buildJsonLd(job) {
+  const normalizedJobType = normalizeEmploymentType(job.job_type || "");
   const payload = {
     "@context": "https://schema.org",
     "@type": "JobPosting",
@@ -128,7 +130,7 @@ function buildJsonLd(job) {
           }
         }
       : undefined,
-    employmentType: job.job_type || undefined,
+    employmentType: normalizedJobType || undefined,
     baseSalary: job.salary_min || job.salary_max ? JSON.parse(salaryJsonLd(job)) : undefined,
     validThrough: job.expires_at || undefined,
     datePosted: job.date_posted || undefined
@@ -142,6 +144,8 @@ function buildJsonLd(job) {
 }
 
 function buildPage(job, slug) {
+  const normalizedJobType = normalizeEmploymentType(job.job_type || "");
+  const normalizedWorkplaceType = normalizeWorkplaceType(job.workplace_type || "");
   const title = `${cleanVisibleText(job.title)} at ${cleanVisibleText(job.organization)}`;
   const description = truncate(job.description || job.raw_description || `${cleanVisibleText(job.title)} at ${cleanVisibleText(job.organization)} in climate, clean energy, sustainability, policy, and creative work.`);
   const originalUrl = job.original_url || job.apply_url || job.source_url || "#";
@@ -206,7 +210,8 @@ ${buildJsonLd(job)}
         <div style="font-size:1.05rem; color:var(--ink-secondary);">${escapeHtml(job.organization)}</div>
         <div class="meta-list">
           ${job.location ? `<div class="meta">${escapeHtml(job.location)}</div>` : ""}
-          ${job.job_type ? `<div class="meta">${escapeHtml(job.job_type)}</div>` : ""}
+          ${normalizedWorkplaceType ? `<div class="meta">${escapeHtml(normalizedWorkplaceType)}</div>` : ""}
+          ${normalizedJobType ? `<div class="meta">${escapeHtml(normalizedJobType)}</div>` : ""}
           ${job.salary ? `<div class="meta">${escapeHtml(job.salary)}</div>` : ""}
           ${job.source ? `<div class="meta">${escapeHtml(job.source)}</div>` : ""}
         </div>

@@ -5,6 +5,15 @@ function ensureDefault(values) {
   return Array.isArray(values) && values.length ? values[0] : "";
 }
 
+function normalizeAtsSlug(value, { stripTrailingBackslashes = false } = {}) {
+  let normalized = String(value || "").trim();
+  if (stripTrailingBackslashes) {
+    normalized = normalized.replace(/\\+$/g, "");
+  }
+  normalized = normalized.replace(/^\/+|\/+$/g, "");
+  return normalized.trim();
+}
+
 function deriveGreenhouseLocation(job) {
   if (Array.isArray(job.location?.name)) {
     return job.location.name.join(" / ");
@@ -52,7 +61,11 @@ function greenhouseJobToSchema(source, job) {
 }
 
 async function fetchGreenhouseJobsForSource(source) {
-  const url = `https://boards-api.greenhouse.io/v1/boards/${encodeURIComponent(source.board_token)}/jobs?content=true`;
+  const boardToken = normalizeAtsSlug(source.board_token);
+  if (!boardToken) {
+    throw new Error("Missing Greenhouse board slug.");
+  }
+  const url = `https://boards-api.greenhouse.io/v1/boards/${encodeURIComponent(boardToken)}/jobs?content=true`;
   console.log(`[sync-greenhouse] Fetching ${source.organization} from ${url}`);
   const response = await fetch(url);
 
@@ -108,7 +121,15 @@ function leverJobToSchema(source, job) {
 }
 
 async function fetchLeverJobsForSource(source) {
-  const url = `https://api.lever.co/v0/postings/${encodeURIComponent(source.company_slug)}?mode=json`;
+  const originalSlug = String(source.company_slug || "");
+  const companySlug = normalizeAtsSlug(originalSlug, { stripTrailingBackslashes: true });
+  if (originalSlug && companySlug !== originalSlug.trim()) {
+    console.warn(`[sync-lever] Normalized Lever slug for ${source.organization}: ${originalSlug} -> ${companySlug}`);
+  }
+  if (!companySlug) {
+    throw new Error("Missing Lever company slug.");
+  }
+  const url = `https://api.lever.co/v0/postings/${encodeURIComponent(companySlug)}?mode=json`;
   console.log(`[sync-lever] Fetching ${source.organization} from ${url}`);
   const response = await fetch(url);
 
@@ -444,11 +465,13 @@ function deriveProviderSource(source, provider, context = {}) {
   const normalizedProvider = normalizeProvider(provider);
 
   if (normalizedProvider === "greenhouse") {
-    const boardToken = source.board_token || extractGreenhouseBoardToken(contextText);
+    const boardToken = normalizeAtsSlug(source.board_token || extractGreenhouseBoardToken(contextText));
     return { ...source, provider: normalizedProvider, type: "ats", board_token: boardToken };
   }
   if (normalizedProvider === "lever") {
-    const companySlug = source.company_slug || extractLeverCompanySlug(contextText);
+    const companySlug = normalizeAtsSlug(source.company_slug || extractLeverCompanySlug(contextText), {
+      stripTrailingBackslashes: true
+    });
     return { ...source, provider: normalizedProvider, type: "ats", company_slug: companySlug };
   }
   if (normalizedProvider === "ashby") {

@@ -1715,8 +1715,8 @@
       const focusAreas = Array.isArray(profile.focus_areas)
         ? profile.focus_areas.map((item) => cleanVisibleText(item)).filter(Boolean)
         : cleanVisibleText(profile.focus_areas || "").split(",").map((item) => item.trim()).filter(Boolean);
-      const portfolioUrl = String(profile.portfolio_url || profile.website_url || "").trim();
-      const linkedInUrl = String(profile.linkedin_url || "").trim();
+      const portfolioUrl = String(profile.portfolio_url || profile.website_url || profile.website || "").trim();
+      const linkedInUrl = String(profile.linkedin_url || profile.linkedin || "").trim();
       const email = String(profile.email || "").trim();
       const resumeFile = String(profile.resume_file || "").trim();
       const coverLetterFile = String(profile.cover_letter_file || "").trim();
@@ -1823,8 +1823,9 @@
       return "";
     }
 
-    function buildProfileModalIconLink({ href, label, iconClass, clickType, profile }) {
-      return `<a class="profile-modal-icon-link" href="${escapeHtml(href)}" target="_blank" rel="noopener noreferrer" aria-label="${escapeHtml(label)}" title="${escapeHtml(label)}" data-talent-click="${escapeHtml(clickType)}" data-profile-id="${escapeHtml(profile.id)}" data-profile-name="${escapeHtml(profile.name)}"><i class="${escapeHtml(iconClass)}" aria-hidden="true"></i></a>`;
+    function buildProfileModalIconLink({ href, label, iconClass, clickType, profile, newTab = true }) {
+      const targetAttrs = newTab ? ' target="_blank" rel="noopener noreferrer"' : "";
+      return `<a class="profile-modal-icon-link" href="${escapeHtml(href)}"${targetAttrs} aria-label="${escapeHtml(label)}" title="${escapeHtml(label)}" data-talent-click="${escapeHtml(clickType)}" data-profile-id="${escapeHtml(profile.id)}" data-profile-name="${escapeHtml(profile.name)}"><i class="${escapeHtml(iconClass)}" aria-hidden="true"></i></a>`;
     }
 
     function buildProfileModalIconLinks(profile, urls) {
@@ -1853,7 +1854,8 @@
           label: "Email",
           iconClass: "ph ph-envelope",
           clickType: "email",
-          profile
+          profile,
+          newTab: false
         }));
       }
       if (!actions.length) return "";

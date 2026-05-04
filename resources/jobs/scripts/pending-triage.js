@@ -1,4 +1,5 @@
 const { PENDING_TRIAGE_SUMMARY_FILE, writeJson } = require("./job-utils");
+const { normalizeJob } = require("./job-normalizer");
 const { readOrganizationRules, readPendingOverrides } = require("./admin-actions-store");
 
 const MAX_BROAD_SOURCE_NEW_PENDING = 50;
@@ -29,6 +30,7 @@ const HIGH_VOLUME_SOURCE_PATTERNS = [
   /cribl/i
 ];
 const VERY_HIGH_RELEVANCE_SCORE = 12;
+const AUTO_PUBLISH_PUBLIC_THRESHOLD = 15;
 
 const CLIMATE_TERMS = [
   "climate",
@@ -115,6 +117,90 @@ const PRIORITY_FUNCTION_BOOST_TERMS = [
   "campaign",
   "strategy",
   "strategist"
+];
+
+const AUTO_PUBLISH_FUNCTION_TERMS = [
+  "marketing",
+  "communications",
+  "communication",
+  "comms",
+  "content",
+  "creative",
+  "policy",
+  "strategy",
+  "strategist",
+  "partnership",
+  "partnerships",
+  "product",
+  "ux",
+  "research",
+  "data",
+  "analytics",
+  "analyst",
+  "digital",
+  "press",
+  "pr",
+  "brand",
+  "social media"
+];
+
+const AUTO_PUBLISH_BLOCKED_TITLE_TERMS = [
+  "field sales",
+  "warehouse",
+  "customer support",
+  "customer operations",
+  "operations specialist",
+  "generic operations",
+  "retail",
+  "installer",
+  "installation",
+  "technician",
+  "call center",
+  "backend",
+  "back-end",
+  "smart meter",
+  "energy specialist",
+  "support agent",
+  "support specialist"
+];
+
+const MISSION_ALIGNED_TERMS = [
+  "climate",
+  "clean energy",
+  "renewable",
+  "sustainability",
+  "environmental justice",
+  "environmental",
+  "advocacy",
+  "nonprofit",
+  "non-profit",
+  "civic tech",
+  "public interest",
+  "conservation",
+  "decarbon",
+  "electrification",
+  "carbon",
+  "emissions",
+  "policy",
+  "justice"
+];
+
+const MISSION_OPS_ADMIN_TERMS = [
+  "executive assistant",
+  "administrative assistant",
+  "administrative coordinator",
+  "chief of staff",
+  "operations manager",
+  "operations coordinator",
+  "program operations",
+  "people operations",
+  "business operations",
+  "development operations",
+  "grants operations",
+  "finance & operations",
+  "finance and operations",
+  "director of operations",
+  "operations director"
 ];
 
 const CLIMATE_CONTEXT_EXTRA_TERMS = [
@@ -381,6 +467,26 @@ function hasPrioritySpecializationMatch(job) {
   );
 }
 
+function hasMissionAlignedOpsAdminMatch(job) {
+  const contextText = [
+    job.organization,
+    job.source,
+    job.source_url,
+    job.sector,
+    job.notes,
+    job.description,
+    job.raw_description
+  ].filter(Boolean).join(" ").toLowerCase();
+  const roleText = [
+    job.title,
+    job.function,
+    job.specialization,
+    Array.isArray(job.tags) ? job.tags.join(" ") : job.tags
+  ].filter(Boolean).join(" ").toLowerCase();
+  return MISSION_ALIGNED_TERMS.some((term) => contextText.includes(term)) &&
+    MISSION_OPS_ADMIN_TERMS.some((term) => roleText.includes(term));
+}
+
 function hasDirectEmployerApplyUrl(job) {
   const applyUrl = normalizeUrl(job.apply_url || job.original_url);
   const sourceUrl = normalizeUrl(job.source_url);
@@ -401,6 +507,27 @@ function buildTopExamples(jobs, limit = 3) {
       organization: String(job.organization || "").trim(),
       relevance_score: Number(job.relevance_score || 0)
     }));
+}
+
+function hasAllowedAutoPublishFunction(job) {
+  const text = [
+    job.specialization,
+    job.function,
+    job.title,
+    job.description,
+    job.raw_description,
+    Array.isArray(job.tags) ? job.tags.join(" ") : job.tags
+  ].filter(Boolean).join(" ").toLowerCase();
+  return AUTO_PUBLISH_FUNCTION_TERMS.some((term) => text.includes(term));
+}
+
+function hasBlockedAutoPublishTitle(job) {
+  const text = [
+    job.title,
+    job.function,
+    job.specialization
+  ].filter(Boolean).join(" ").toLowerCase();
+  return AUTO_PUBLISH_BLOCKED_TITLE_TERMS.some((term) => text.includes(term));
 }
 
 function normalizeUrl(value) {
@@ -466,6 +593,8 @@ function scorePendingJob(job) {
   const directEmployerApplyUrl = hasDirectEmployerApplyUrl(job);
   const climateContext = climateHitCount > 0 || trustedContext;
   const specializationMatch = hasPrioritySpecializationMatch(job);
+  const missionOpsAdminMatch = hasMissionAlignedOpsAdminMatch(job);
+  const effectiveSpecializationMatch = specializationMatch || missionOpsAdminMatch;
   const unrelatedEngineering = hasAny(text, UNRELATED_ENGINEERING_TERMS);
   const salesRole = hasAny(text, SALES_TERMS);
   const broadSource = isBroadSourceJob(job);
@@ -483,9 +612,9 @@ function scorePendingJob(job) {
     score += 3;
     reasons.push("functional_relevance");
   }
-  if (specializationMatch) {
+  if (effectiveSpecializationMatch) {
     score += 4;
-    reasons.push("priority_specialization_match");
+    reasons.push(missionOpsAdminMatch ? "mission_aligned_ops_admin_match" : "priority_specialization_match");
   }
   if (priorityBoostCount > 0) {
     score += Math.min(priorityBoostCount, 4);
@@ -523,7 +652,7 @@ function scorePendingJob(job) {
     score -= 4;
     reasons.push("pure_engineering_without_sustainability");
   }
-  if ((broadSource || highVolumeSource) && (!climateContext || !specializationMatch)) {
+  if ((broadSource || highVolumeSource) && (!climateContext || !effectiveSpecializationMatch)) {
     score -= 6;
     reasons.push("high_volume_weak_match");
   }
@@ -542,7 +671,8 @@ function scorePendingJob(job) {
     climateContext,
     functionHitCount,
     priorityBoostCount,
-    specializationMatch,
+    specializationMatch: effectiveSpecializationMatch,
+    missionOpsAdminMatch,
     trustedContext,
     payCaptured,
     locationCaptured,
@@ -762,6 +892,19 @@ function countJobsWithPay(jobs) {
   return jobs.filter((job) => Boolean(job.salary || job.raw_salary || job.salary_min || job.salary_max)).length;
 }
 
+function shouldAutoPublishRetainedJob(job) {
+  return (
+    Boolean(job.trusted) &&
+    String(job.triage_bucket || "") === "review_ready" &&
+    Number(job.relevance_score || 0) >= AUTO_PUBLISH_PUBLIC_THRESHOLD &&
+    !Boolean(job.rejected_noise) &&
+    hasAllowedAutoPublishFunction(job) &&
+    !hasBlockedAutoPublishTitle(job) &&
+    !isBroadSourceJob(job) &&
+    hasDirectEmployerApplyUrl(job)
+  );
+}
+
 function applyPendingCaps(jobs) {
   const keptBySource = new Map();
   const droppedByCapBySource = new Map();
@@ -911,7 +1054,17 @@ async function triagePendingJobs(pendingJobs, publicJobs, scrapeReport) {
   }
 
   const capped = applyPendingCaps([...buckets.review_ready, ...buckets.needs_cleanup]);
-  const adminPendingJobs = sortPendingJobs(capped.kept).map(cleanPendingJobForWrite);
+  const sortedRetainedJobs = sortPendingJobs(capped.kept);
+  const autoPublishedJobs = [];
+  const pendingRetainedJobs = [];
+  for (const job of sortedRetainedJobs) {
+    if (shouldAutoPublishRetainedJob(job)) {
+      autoPublishedJobs.push(normalizeJob({ ...job, status: "active" }));
+      continue;
+    }
+    pendingRetainedJobs.push(job);
+  }
+  const adminPendingJobs = pendingRetainedJobs.map(cleanPendingJobForWrite);
   Object.entries(capped.droppedByCapBySource).forEach(([sourceId, count]) => {
     const sourceStats = rejectedBySource.get(sourceId) || {
       review_ready: 0,
@@ -939,6 +1092,20 @@ async function triagePendingJobs(pendingJobs, publicJobs, scrapeReport) {
     sourceStats.kept += 1;
     rejectedBySource.set(sourceId, sourceStats);
   });
+  autoPublishedJobs.forEach((job) => {
+    const sourceId = getSourceKey(job);
+    const sourceStats = rejectedBySource.get(sourceId) || {
+      review_ready: 0,
+      needs_cleanup: 0,
+      rejected_noise: 0,
+      rejected_by_relevance: 0,
+      kept: 0,
+      dropped_by_cap: 0,
+      rejected_reasons: {}
+    };
+    sourceStats.auto_published = (sourceStats.auto_published || 0) + 1;
+    rejectedBySource.set(sourceId, sourceStats);
+  });
 
   const serializedPending = JSON.stringify(adminPendingJobs, null, 2) + "\n";
   const pendingBytes = Buffer.byteLength(serializedPending, "utf8");
@@ -960,6 +1127,7 @@ async function triagePendingJobs(pendingJobs, publicJobs, scrapeReport) {
     pending_needs_cleanup: buckets.needs_cleanup.length,
     rejected_noise: buckets.rejected_noise.length,
     pending_kept_after_caps: adminPendingJobs.length,
+    auto_published: autoPublishedJobs.length,
     dropped_by_cap_total: Object.values(capped.droppedByCapBySource).reduce((sum, count) => sum + count, 0),
     duplicate_count_removed: duplicateCountRemoved,
     jobs_with_pay: countJobsWithPay(adminPendingJobs),
@@ -987,6 +1155,7 @@ async function triagePendingJobs(pendingJobs, publicJobs, scrapeReport) {
         rejected_by_relevance: 0,
         kept: 0,
         dropped_by_cap: 0,
+        auto_published: 0,
         rejected_reasons: {}
       };
       return {
@@ -1000,6 +1169,7 @@ async function triagePendingJobs(pendingJobs, publicJobs, scrapeReport) {
         rejected_by_relevance: triage.rejected_by_relevance,
         dropped_by_cap: triage.dropped_by_cap,
         dropped_by_source_cap: triage.dropped_by_cap,
+        auto_published: triage.auto_published || 0,
         top_retained_examples: buildTopExamples(adminPendingJobs.filter((job) => getSourceKey(job) === String(source.source_id || ""))),
         rejected_reasons: triage.rejected_reasons
       };
@@ -1010,6 +1180,7 @@ async function triagePendingJobs(pendingJobs, publicJobs, scrapeReport) {
 
   return {
     adminPendingJobs,
+    autoPublishedJobs,
     rejectedNoiseJobs: buckets.rejected_noise,
     summary,
     report: scrapeReport

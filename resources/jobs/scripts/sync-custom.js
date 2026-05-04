@@ -104,6 +104,12 @@ async function runCustomSync() {
   await syncJobRecordStore(publicWriteResult.jobs, { logger: console });
   const scrapeReportPayload = await upsertScrapeReports(scrapeReports);
   const triaged = await triagePendingJobs(mergedPendingJobs, publicWriteResult.jobs, scrapeReportPayload);
+  const finalPublicJobs = dedupeJobs([...publicWriteResult.jobs, ...(triaged.autoPublishedJobs || [])]);
+  const finalPublicWriteResult = await safeWritePublicJobs(finalPublicJobs, {
+    logger: console,
+    label: "jobs:sync-custom"
+  });
+  await syncJobRecordStore(finalPublicWriteResult.jobs, { logger: console });
   await writeJson(PENDING_SYNCED_FILE, triaged.adminPendingJobs);
   await upsertScrapeReports(triaged.report.sources);
 
@@ -118,11 +124,11 @@ async function runCustomSync() {
     );
   });
   console.log(
-    `[jobs:sync-custom] Wrote ${publicWriteResult.jobs.length} public jobs to ${JOBS_FILE}, ${triaged.adminPendingJobs.length} admin-pending jobs to ${PENDING_SYNCED_FILE}, rejected ${triaged.summary.rejected_noise} as noise, dropped_by_cap=${triaged.summary.dropped_by_cap_total}, final_pending_size_mb=${triaged.summary.final_pending_file_size_mb}.`
+    `[jobs:sync-custom] Wrote ${finalPublicWriteResult.jobs.length} public jobs to ${JOBS_FILE}, ${triaged.adminPendingJobs.length} admin-pending jobs to ${PENDING_SYNCED_FILE}, auto_published=${triaged.summary.auto_published || 0}, rejected ${triaged.summary.rejected_noise} as noise, dropped_by_cap=${triaged.summary.dropped_by_cap_total}, final_pending_size_mb=${triaged.summary.final_pending_file_size_mb}.`
   );
 
   return {
-    publicJobs: publicWriteResult.jobs,
+    publicJobs: finalPublicWriteResult.jobs,
     pendingJobs: triaged.adminPendingJobs,
     counts,
     triageSummary: triaged.summary

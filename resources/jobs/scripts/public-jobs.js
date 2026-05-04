@@ -1,4 +1,4 @@
-const { JOBS_FILE, writeJsonIfChanged } = require("./job-utils");
+const { JOBS_FILE, readJobs, serializeForWrite, writeJson } = require("./job-utils");
 const { buildJobPagePathMap } = require("./job-page-paths");
 const { resolveDisplayJobFromRecord, shouldShowPublicRecord } = require("./lifecycle-utils");
 
@@ -18,19 +18,38 @@ function countPublishedJobRecords(records) {
 }
 
 async function syncPublicJobsFromRecords(records, options = {}) {
-  const publicJobs = buildPublicJobsFromRecords(records);
-  const wrote = await writeJsonIfChanged(JOBS_FILE, publicJobs);
   const label = options.label || "jobs:public-records";
   const logger = options.logger || console;
+  const publicJobs = buildPublicJobsFromRecords(records);
+  const existingJobs = await readJobs();
+  const existingJobsJsonCount = Array.isArray(existingJobs) ? existingJobs.length : 0;
+  const computedPublicJobsCount = publicJobs.length;
+  const existingSerialized = serializeForWrite(JOBS_FILE, existingJobs);
+  const nextSerialized = serializeForWrite(JOBS_FILE, publicJobs);
+  const shouldWrite = existingJobsJsonCount !== computedPublicJobsCount || existingSerialized !== nextSerialized;
+  let wrote = false;
+
+  if (shouldWrite) {
+    await writeJson(JOBS_FILE, publicJobs);
+    wrote = true;
+  }
+
+  const finalJobs = await readJobs();
+  const finalJobsJsonCount = Array.isArray(finalJobs) ? finalJobs.length : 0;
+  const syncMismatch = finalJobsJsonCount !== computedPublicJobsCount;
 
   logger.log(
-    `[${label}] job-records published count=${publicJobs.length} jobs.json count=${publicJobs.length} wrote_jobs_json=${wrote}`
+    `[${label}] existing_jobs_json_count=${existingJobsJsonCount} computed_public_jobs_count=${computedPublicJobsCount} final_jobs_json_count=${finalJobsJsonCount} wrote_jobs_json=${wrote} write_path=${JOBS_FILE} sync_mismatch=${syncMismatch}`
   );
+
+  if (syncMismatch) {
+    throw new Error(`jobs.json sync mismatch: expected ${computedPublicJobsCount} public jobs, found ${finalJobsJsonCount}`);
+  }
 
   return {
     publicJobs,
-    jobsCount: publicJobs.length,
-    publishedCount: publicJobs.length,
+    jobsCount: finalJobsJsonCount,
+    publishedCount: computedPublicJobsCount,
     wrote
   };
 }

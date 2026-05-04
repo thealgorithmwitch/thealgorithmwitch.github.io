@@ -28,7 +28,7 @@ async function readJson(filePath, fallback) {
 }
 
 async function writeJson(filePath, data) {
-  const next = JSON.stringify(sanitizeForWrite(filePath, data), null, 2) + "\n";
+  const next = serializeForWrite(filePath, data);
   await fs.writeFile(filePath, next, "utf8");
 }
 
@@ -109,8 +109,12 @@ function sanitizeForWrite(filePath, data) {
   return sanitizeRecursive(data);
 }
 
+function serializeForWrite(filePath, data) {
+  return serializeJson(sanitizeForWrite(filePath, data));
+}
+
 async function writeJsonIfChanged(filePath, data) {
-  const next = serializeJson(sanitizeForWrite(filePath, data));
+  const next = serializeForWrite(filePath, data);
   let current = null;
   try {
     current = await fs.readFile(filePath, "utf8");
@@ -193,6 +197,7 @@ module.exports = {
   readPendingSyncedJobs,
   readSources,
   safeWritePublicJobs,
+  serializeForWrite,
   slugify,
   todayIso,
   writeJson,

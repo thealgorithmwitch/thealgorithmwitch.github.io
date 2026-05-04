@@ -1170,6 +1170,14 @@
             <div class="filter-list" id="filter-sector"></div>
           </div>
           <div>
+            <span class="mini-filter-label">Specialization</span>
+            <div class="filter-list" id="filter-specialization"></div>
+          </div>
+          <div>
+            <span class="mini-filter-label">Salary</span>
+            <div class="filter-list" id="filter-salary"></div>
+          </div>
+          <div>
             <span class="mini-filter-label">Source</span>
             <div class="filter-list" id="filter-source"></div>
           </div>
@@ -1311,9 +1319,35 @@
         location: new Set(),
         jobType: new Set(),
         sector: new Set(),
+        specialization: new Set(),
+        salary: new Set(),
         source: new Set()
       }
     };
+
+    const SALARY_FILTER_OPTIONS = [
+      "Shows salary",
+      "$50k+",
+      "$75k+",
+      "$100k+",
+      "$125k+",
+      "$150k+"
+    ];
+
+    const SPECIALIZATION_OPTIONS = [
+      "Digital",
+      "PR / Press",
+      "Communications",
+      "Social Media",
+      "Content",
+      "Art / Creative",
+      "Design",
+      "Strategy",
+      "Web",
+      "Data",
+      "Research",
+      "Campaigns"
+    ];
 
     const TRACKING_TYPES = {
       jobClick: "job_click",
@@ -1355,6 +1389,8 @@
         location: document.getElementById("filter-location"),
         jobType: document.getElementById("filter-job-type"),
         sector: document.getElementById("filter-sector"),
+        specialization: document.getElementById("filter-specialization"),
+        salary: document.getElementById("filter-salary"),
         source: document.getElementById("filter-source")
       }
     };
@@ -1488,6 +1524,62 @@
       return text.replace(/\b\w/g, (match) => match.toUpperCase());
     }
 
+    function inferSpecialization(job) {
+      const explicit = cleanVisibleText(job.specialization || "");
+      if (explicit) return explicit;
+      const text = cleanVisibleText([
+        job.title,
+        job.function,
+        job.description,
+        Array.isArray(job.tags) ? job.tags.join(" ") : ""
+      ].join(" "));
+      if (!text) return "";
+      const rules = [
+        ["PR / Press", /\b(?:pr|public relations|press|media relations|press officer|press manager)\b/i],
+        ["Social Media", /\b(?:social media|community manager|community lead|tiktok|instagram)\b/i],
+        ["Communications", /\b(?:communications|communication|comms|internal communications|external communications)\b/i],
+        ["Content", /\b(?:content|editorial|copywriter|copywriting|storytelling|writer|newsletter)\b/i],
+        ["Art / Creative", /\b(?:creative|art director|artistic|illustration|brand studio)\b/i],
+        ["Design", /\b(?:design|designer|graphic design|visual design|product design|ux|ui)\b/i],
+        ["Strategy", /\b(?:strategy|strategist|strategic|planning)\b/i],
+        ["Web", /\b(?:web|website|frontend|front-end|back-end|backend|full stack|developer|engineer|software)\b/i],
+        ["Digital", /\b(?:digital|digital marketing|growth marketing|seo|sem|crm|email marketing)\b/i],
+        ["Data", /\b(?:data|analytics|analyst|business intelligence|insights)\b/i],
+        ["Research", /\b(?:research|researcher|research associate|user research|market research)\b/i],
+        ["Campaigns", /\b(?:campaign|campaigns|campaigner|organizing|field organizing)\b/i]
+      ];
+      const match = rules.find(([, pattern]) => pattern.test(text));
+      return match ? match[0] : "";
+    }
+
+    function getSalaryFloor(job) {
+      const salaryMin = Number(job.salary_min);
+      const salaryMax = Number(job.salary_max);
+      if (Number.isFinite(salaryMin) && salaryMin > 0) return salaryMin;
+      if (Number.isFinite(salaryMax) && salaryMax > 0) return salaryMax;
+      return null;
+    }
+
+    function matchesSalaryFilter(job) {
+      if (!state.filters.salary.size) return true;
+      const salaryFloor = getSalaryFloor(job);
+      const hasSalary = Boolean(cleanVisibleText(job.salary || "")) || salaryFloor !== null;
+      if (state.filters.salary.has("Shows salary") && !hasSalary) return false;
+      const thresholds = {
+        "$50k+": 50000,
+        "$75k+": 75000,
+        "$100k+": 100000,
+        "$125k+": 125000,
+        "$150k+": 150000
+      };
+      for (const [label, threshold] of Object.entries(thresholds)) {
+        if (state.filters.salary.has(label) && (!(salaryFloor !== null) || salaryFloor < threshold)) {
+          return false;
+        }
+      }
+      return true;
+    }
+
     function getLastUpdated(job) {
       return job.date_updated || job.date_added || job.date_posted || "";
     }
@@ -1530,6 +1622,7 @@
         experience: cleanVisibleText(display.experience_level || raw.experience || ""),
         sector: cleanVisibleText(display.sector || raw.sector || ""),
         function: cleanVisibleText(display.function || raw.function || ""),
+        specialization: cleanVisibleText(display.specialization || raw.specialization || ""),
         description: cleanVisibleText(display.description || raw.description || ""),
         source: cleanVisibleText(display.source_name || raw.source || ""),
         source_url: String(display.source_url || raw.source_url || "").trim(),
@@ -1575,6 +1668,8 @@
       if (state.filters.location.size && !state.filters.location.has(getWorkMode(job))) return false;
       if (state.filters.jobType.size && !state.filters.jobType.has(job.job_type)) return false;
       if (state.filters.sector.size && !state.filters.sector.has(job.sector)) return false;
+      if (state.filters.specialization.size && !state.filters.specialization.has(inferSpecialization(job))) return false;
+      if (!matchesSalaryFilter(job)) return false;
       if (state.filters.source.size && !state.filters.source.has(job.source)) return false;
 
       return true;
@@ -1604,6 +1699,8 @@
         location: [...new Set(activeJobs.map(getWorkMode))],
         jobType: [...new Set(activeJobs.map((job) => job.job_type).filter(Boolean))],
         sector: [...new Set(activeJobs.map((job) => job.sector).filter(Boolean))],
+        specialization: SPECIALIZATION_OPTIONS.filter((value) => activeJobs.some((job) => inferSpecialization(job) === value)),
+        salary: SALARY_FILTER_OPTIONS,
         source: [...new Set(activeJobs.map((job) => job.source).filter(Boolean))]
       };
 
@@ -1959,6 +2056,7 @@
         const ref = String(job.ref || "").trim() || String(job.id || "manual").toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 8).padEnd(8, "X");
         const salaryBlock = job.salary_visible === false && !job.salary ? "" : `<div class="card-salary">${escapeHtml(cleanVisibleText(job.salary || ""))}</div>`;
         const sectorLabel = normalizeSectorLabel(job.sector);
+        const specializationLabel = inferSpecialization(job);
         const updatedText = getLastUpdated(job);
         return `
           <a class="classified-card" href="${escapeHtml(getJobDetailPath(job))}" data-job-card="true" data-job-id="${escapeHtml(job.id)}" data-job-title="${escapeHtml(cleanVisibleText(job.title))}" data-job-organization="${escapeHtml(cleanVisibleText(job.organization))}" data-job-source="${escapeHtml(cleanVisibleText(job.source))}">
@@ -1970,6 +2068,7 @@
             <div class="tag-row" style="justify-content: flex-start; margin-top: 0;">
               ${newThisWeek ? '<span class="tag-pill" style="cursor: default;">New this week</span>' : ""}
               ${sectorLabel ? `<span class="tag-pill" style="cursor: default;">${escapeHtml(cleanVisibleText(sectorLabel))}</span>` : ""}
+              ${specializationLabel ? `<span class="tag-pill" style="cursor: default;">${escapeHtml(cleanVisibleText(specializationLabel))}</span>` : ""}
               ${getWorkMode(job) ? `<span class="tag-pill" style="cursor: default;">${escapeHtml(cleanVisibleText(getWorkMode(job)))}</span>` : ""}
               ${(job.tags || []).slice(0, 3).map((tag) => `<span class="tag-pill" style="cursor: default;">#${escapeHtml(cleanVisibleText(tag))}</span>`).join("")}
             </div>

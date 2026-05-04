@@ -271,6 +271,15 @@ function buildActionResult(status, detail) {
   };
 }
 
+function buildJobsById(jobs) {
+  const map = new Map();
+  (Array.isArray(jobs) ? jobs : []).forEach((job) => {
+    const id = String(job?.id || "").trim();
+    if (id) map.set(id, job);
+  });
+  return map;
+}
+
 function flattenActionFields(payload, prefix = "") {
   if (!payload || typeof payload !== "object") return [];
   return Object.entries(payload).flatMap(([key, value]) => {
@@ -476,6 +485,7 @@ async function main() {
     recordsLeftPending: 0,
     duplicatesSkipped: 0,
     alreadyPublishedSkipped: 0,
+    staleSkipped: 0,
     jobPagesRegenerated: 0,
     jobRecordsCount: 0,
     jobsJsonCount: 0
@@ -541,7 +551,12 @@ async function main() {
     if (action.operation === "publish_selected") {
       const pendingBefore = nextPending.length;
       const activeBefore = countPublishedJobs(nextRecords);
-      console.log(`[jobs:apply-admin-actions] operation=publish_selected action_id=${action.id} job_ids=${freshIds.join(",")} pending_before=${pendingBefore} active_before=${activeBefore}`);
+      const payloadJobsById = buildJobsById(action.payload.jobs);
+      const matchingPendingIds = freshIds.filter((id) => nextPending.some((pendingJob) => String(pendingJob.id) === id));
+      const missingPendingIds = freshIds.filter((id) => !matchingPendingIds.includes(id));
+      console.log(
+        `[jobs:apply-admin-actions] operation=publish_selected action_id=${action.id} queued_ids_count=${freshIds.length} matching_pending_ids_count=${matchingPendingIds.length} missing_pending_ids_count=${missingPendingIds.length} pending_before=${pendingBefore} active_before=${activeBefore}`
+      );
       const uniqueIds = [];
       const idsSeenInAction = new Set();
       let publishedCount = 0;
@@ -586,7 +601,7 @@ async function main() {
           publishedIds.push(String(id));
           continue;
         }
-        const job = nextPending.find((pendingJob) => String(pendingJob.id) === id);
+        const job = nextPending.find((pendingJob) => String(pendingJob.id) === id) || payloadJobsById.get(String(id));
         if (!job) {
           if (existingRecord && (initiallyPublishedJobIds.has(id) || isPublishedRecord(existingRecord))) {
             alreadyPublishedCount += 1;
@@ -619,6 +634,7 @@ async function main() {
       nextPending = removePendingByIds(nextPending, publishedIds);
       report.duplicatesSkipped += duplicateCount;
       report.alreadyPublishedSkipped += alreadyPublishedCount;
+      report.staleSkipped += staleCount;
       const pendingAfter = nextPending.length;
       const activeAfter = countPublishedJobs(nextRecords);
 
@@ -640,7 +656,7 @@ async function main() {
       }
 
       console.log(
-        `[jobs:apply-admin-actions] operation=publish_selected action_id=${action.id} job_ids=${uniqueIds.join(",")} pending_after=${pendingAfter} active_after=${activeAfter} published=${publishedCount} already_published=${alreadyPublishedCount} stale_skipped=${staleCount} duplicates_skipped=${duplicateCount} removed_from_pending=${publishedIds.length}`
+        `[jobs:apply-admin-actions] operation=publish_selected action_id=${action.id} queued_ids_count=${uniqueIds.length} matching_pending_ids_count=${matchingPendingIds.length} missing_pending_ids_count=${missingPendingIds.length} pending_after=${pendingAfter} active_after=${activeAfter} published_count=${publishedCount} skipped_stale_count=${staleCount} already_published_count=${alreadyPublishedCount} duplicates_skipped_count=${duplicateCount} removed_from_pending=${publishedIds.length}`
       );
     } else if (action.operation === "archive_selected") {
       const pendingSelection = nextPending.filter((job) => freshIds.includes(String(job.id)));
@@ -887,7 +903,7 @@ async function main() {
   }
 
   console.log(
-    `[jobs:apply-admin-actions] records published=${report.recordsPublished} records archived/rejected=${report.recordsArchivedOrRejected} already_published_skipped=${report.alreadyPublishedSkipped} duplicates_skipped=${report.duplicatesSkipped} records left pending=${report.recordsLeftPending} job-records count=${report.jobRecordsCount} job-records published count=${publicSync.publishedCount} jobs.json count=${report.jobsJsonCount} generated page count=${report.jobPagesRegenerated}`
+    `[jobs:apply-admin-actions] published_count=${report.recordsPublished} records_archived_or_rejected=${report.recordsArchivedOrRejected} skipped_stale_count=${report.staleSkipped} already_published_skipped=${report.alreadyPublishedSkipped} duplicates_skipped=${report.duplicatesSkipped} records_left_pending=${report.recordsLeftPending} final_job_records_count=${report.jobRecordsCount} final_job_records_published_count=${publicSync.publishedCount} final_jobs_json_count=${report.jobsJsonCount} generated_page_count=${report.jobPagesRegenerated}`
   );
 }
 

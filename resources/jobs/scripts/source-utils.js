@@ -64,6 +64,7 @@ function normalizeSource(source = {}) {
     type: normalizeSourceType(source.type),
     provider,
     enabled: source.enabled !== false,
+    custom_sync_enabled: source.custom_sync_enabled !== false,
     requires_browser: Boolean(source.requires_browser),
     crawl_depth: Number.isInteger(Number(source.crawl_depth))
       ? Math.max(0, Number(source.crawl_depth))
@@ -84,6 +85,7 @@ function isDirectAtsSource(source) {
 function shouldUseDiscoverySync(source) {
   const normalized = normalizeSource(source);
   if (!normalized.enabled) return false;
+  if (normalized.custom_sync_enabled === false) return false;
   if (normalized.type === "ats" && isDirectAtsProvider(normalized.provider)) return false;
   return true;
 }

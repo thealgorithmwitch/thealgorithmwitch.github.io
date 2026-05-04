@@ -9,6 +9,7 @@
   <meta property="og:type" content="website">
   <meta property="og:url" content="https://example.com/jobs/">
   <title>Fresh Roles | The Algorithm Witch</title>
+  <script src="https://unpkg.com/@phosphor-icons/web"></script>
   <style>
     @import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,100..1000;1,9..40,100..1000&family=Instrument+Serif:ital@0;1&family=Space+Mono:ital,wght@0,400;0,700;1,400;1,700&display=swap');
 
@@ -848,6 +849,42 @@
       padding: 14px 16px;
     }
 
+    .profile-modal-links-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: nowrap;
+      overflow-x: auto;
+      margin-top: 20px;
+      padding-bottom: 2px;
+    }
+
+    .profile-modal-icon-link {
+      width: 42px;
+      height: 42px;
+      min-width: 42px;
+      border-radius: 999px;
+      border: 1px solid var(--border-divider);
+      background: rgba(255, 255, 255, 0.03);
+      color: var(--accent-chartreuse);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      text-decoration: none;
+      transition: var(--transition);
+    }
+
+    .profile-modal-icon-link:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 0 15px rgba(168, 255, 62, 0.25);
+      border-color: var(--accent-chartreuse);
+    }
+
+    .profile-modal-icon-link i {
+      font-size: 1.1rem;
+      line-height: 1;
+    }
+
     .employer-section {
       background: var(--surface-alt);
       border-top: 1px solid var(--border-divider);
@@ -1397,11 +1434,41 @@
     }
 
     function getWorkMode(job) {
-      if (job.workplace_type) return job.workplace_type;
+      if (job.workplace_type) return normalizeWorkplaceTypeLabel(job.workplace_type);
       const location = String(job.location || "").toLowerCase();
       if (location.includes("remote")) return "Remote";
       if (location.includes("hybrid")) return "Hybrid";
       return "On-site";
+    }
+
+    function normalizeTypeToken(value) {
+      return String(value || "")
+        .trim()
+        .toLowerCase()
+        .replace(/[_-]+/g, " ")
+        .replace(/\s+/g, " ");
+    }
+
+    function normalizeWorkplaceTypeLabel(value) {
+      const text = cleanVisibleText(value || "");
+      const normalized = normalizeTypeToken(text);
+      if (!normalized) return "";
+      if (normalized === "remote") return "Remote";
+      if (normalized === "hybrid") return "Hybrid";
+      if (normalized === "onsite" || normalized === "on site") return "On-site";
+      return text;
+    }
+
+    function normalizeEmploymentTypeLabel(value) {
+      const text = cleanVisibleText(value || "");
+      const normalized = normalizeTypeToken(text);
+      if (!normalized) return "";
+      if (normalized === "full time") return "Full-time";
+      if (normalized === "part time") return "Part-time";
+      if (normalized === "contract" || normalized === "contractor") return "Contract";
+      if (normalized === "temporary" || normalized === "temp") return "Temporary";
+      if (normalized === "intern" || normalized === "internship") return "Internship";
+      return text;
     }
 
     function normalizeSectorLabel(value) {
@@ -1439,7 +1506,7 @@
       const title = cleanVisibleText(display.title || raw.title || "");
       const organization = cleanVisibleText(display.organization || raw.organization || "");
       const location = cleanVisibleText(display.location || raw.location || "");
-      const workplaceType = cleanVisibleText(display.location_type || raw.workplace_type || "");
+      const workplaceType = normalizeWorkplaceTypeLabel(display.location_type || raw.workplace_type || "");
       const salaryMin = Number.isFinite(Number(display.salary_min)) ? Number(display.salary_min) : raw.salary_min;
       const salaryMax = Number.isFinite(Number(display.salary_max)) ? Number(display.salary_max) : raw.salary_max;
       const payDisplay = cleanVisibleText(display.pay_display || raw.salary || "");
@@ -1455,7 +1522,7 @@
         salary: payDisplay,
         salary_min: salaryMin ?? null,
         salary_max: salaryMax ?? null,
-        job_type: cleanVisibleText(display.role_type || raw.job_type || ""),
+        job_type: normalizeEmploymentTypeLabel(display.role_type || raw.job_type || ""),
         experience: cleanVisibleText(display.experience_level || raw.experience || ""),
         sector: cleanVisibleText(display.sector || raw.sector || ""),
         function: cleanVisibleText(display.function || raw.function || ""),
@@ -1648,8 +1715,9 @@
       const focusAreas = Array.isArray(profile.focus_areas)
         ? profile.focus_areas.map((item) => cleanVisibleText(item)).filter(Boolean)
         : cleanVisibleText(profile.focus_areas || "").split(",").map((item) => item.trim()).filter(Boolean);
-      const portfolioUrl = String(profile.portfolio_url || "").trim();
+      const portfolioUrl = String(profile.portfolio_url || profile.website_url || "").trim();
       const linkedInUrl = String(profile.linkedin_url || "").trim();
+      const email = String(profile.email || "").trim();
       const resumeFile = String(profile.resume_file || "").trim();
       const coverLetterFile = String(profile.cover_letter_file || "").trim();
       const prompts = Array.isArray(profile.profile_prompts) ? profile.profile_prompts : [];
@@ -1667,7 +1735,12 @@
         focusAreas.length ? `<div class="profile-modal-stat"><div class="profile-modal-label">Focus Areas</div><div class="profile-modal-text">${escapeHtml(focusAreas.join(", "))}</div></div>` : "",
         profile.open_to ? `<div class="profile-modal-stat"><div class="profile-modal-label">Open To</div><div class="profile-modal-text">${escapeHtml(cleanVisibleText(profile.open_to || ""))}</div></div>` : ""
       ].filter(Boolean).join("");
-      ui.profileModalLinks.innerHTML = "";
+      ui.profileModalLinks.innerHTML = buildProfileModalIconLinks(profile, {
+        portfolioUrl,
+        linkedInUrl,
+        email,
+        publicContact: profile.public_contact === true
+      });
       if (prompts.length) {
         ui.profileModalPrompt.style.display = "block";
         ui.profileModalPrompt.innerHTML = `
@@ -1703,14 +1776,12 @@
         </div>
       `;
       ui.profileModalActions.innerHTML = buildProfileModalCtas(profile, {
-        portfolioUrl,
-        linkedInUrl,
         resumeFile,
         coverLetterFile
       });
-      if (profile.public_contact === true && profile.email) {
+      if (profile.public_contact === true && email) {
         ui.profileModalContact.style.display = "block";
-        ui.profileModalContact.innerHTML = `<div class="profile-modal-label">Contact</div><div class="profile-modal-text">Email: <a href="mailto:${escapeHtml(profile.email)}" style="color: var(--accent-chartreuse);">${escapeHtml(profile.email)}</a></div>`;
+        ui.profileModalContact.innerHTML = `<div class="profile-modal-label">Contact</div><div class="profile-modal-text">Email: <a href="mailto:${escapeHtml(email)}" style="color: var(--accent-chartreuse);">${escapeHtml(email)}</a></div>`;
       } else {
         ui.profileModalContact.style.display = "none";
         ui.profileModalContact.innerHTML = "";
@@ -1741,7 +1812,7 @@
     }
 
     function buildProfilePrimaryCta(profile) {
-      const portfolioUrl = String(profile.portfolio_url || "").trim();
+      const portfolioUrl = String(profile.portfolio_url || profile.website_url || "").trim();
       const linkedInUrl = String(profile.linkedin_url || "").trim();
       if (portfolioUrl) {
         return `<a class="btn-primary" href="${escapeHtml(portfolioUrl)}" target="_blank" rel="noopener noreferrer" data-talent-click="portfolio" data-profile-id="${escapeHtml(profile.id)}" data-profile-name="${escapeHtml(profile.name)}">${iconSvg("globe")} View Website</a>`;
@@ -1752,14 +1823,45 @@
       return "";
     }
 
-    function buildProfileModalCtas(profile, urls) {
+    function buildProfileModalIconLink({ href, label, iconClass, clickType, profile }) {
+      return `<a class="profile-modal-icon-link" href="${escapeHtml(href)}" target="_blank" rel="noopener noreferrer" aria-label="${escapeHtml(label)}" title="${escapeHtml(label)}" data-talent-click="${escapeHtml(clickType)}" data-profile-id="${escapeHtml(profile.id)}" data-profile-name="${escapeHtml(profile.name)}"><i class="${escapeHtml(iconClass)}" aria-hidden="true"></i></a>`;
+    }
+
+    function buildProfileModalIconLinks(profile, urls) {
       const actions = [];
       if (urls.portfolioUrl) {
-        actions.push(`<a class="btn-primary" href="${escapeHtml(urls.portfolioUrl)}" target="_blank" rel="noopener noreferrer" data-talent-click="portfolio" data-profile-id="${escapeHtml(profile.id)}" data-profile-name="${escapeHtml(profile.name)}">${iconSvg("globe")} View Website</a>`);
+        actions.push(buildProfileModalIconLink({
+          href: urls.portfolioUrl,
+          label: "Website",
+          iconClass: "ph ph-globe",
+          clickType: "portfolio",
+          profile
+        }));
       }
       if (urls.linkedInUrl) {
-        actions.push(`<a class="btn-secondary" href="${escapeHtml(urls.linkedInUrl)}" target="_blank" rel="noopener noreferrer" data-talent-click="linkedin" data-profile-id="${escapeHtml(profile.id)}" data-profile-name="${escapeHtml(profile.name)}">${iconSvg("linkedin")} View LinkedIn</a>`);
+        actions.push(buildProfileModalIconLink({
+          href: urls.linkedInUrl,
+          label: "LinkedIn",
+          iconClass: "ph ph-linkedin-logo",
+          clickType: "linkedin",
+          profile
+        }));
       }
+      if (urls.publicContact && urls.email) {
+        actions.push(buildProfileModalIconLink({
+          href: `mailto:${urls.email}`,
+          label: "Email",
+          iconClass: "ph ph-envelope",
+          clickType: "email",
+          profile
+        }));
+      }
+      if (!actions.length) return "";
+      return `<div class="profile-modal-links-row">${actions.join("")}</div>`;
+    }
+
+    function buildProfileModalCtas(profile, urls) {
+      const actions = [];
       if (urls.resumeFile) {
         actions.push(`<a class="btn-secondary" href="${escapeHtml(urls.resumeFile)}" target="_blank" rel="noopener noreferrer" data-talent-click="resume" data-profile-id="${escapeHtml(profile.id)}" data-profile-name="${escapeHtml(profile.name)}">${iconSvg("file")} Download Resume</a>`);
       }

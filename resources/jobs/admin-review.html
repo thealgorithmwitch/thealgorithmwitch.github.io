@@ -891,11 +891,11 @@
           title: String(display.title || job.title || ""),
           organization: String(display.organization || job.organization || ""),
           location: String(display.location || job.location || ""),
-          location_type: String(display.location_type || job.workplace_type || ""),
+          location_type: normalizeWorkplaceTypeLabel(display.location_type || job.workplace_type || ""),
           pay_display: String(display.pay_display || job.salary || ""),
           salary_min: display.salary_min ?? job.salary_min ?? null,
           salary_max: display.salary_max ?? job.salary_max ?? null,
-          role_type: String(display.role_type || job.job_type || ""),
+          role_type: normalizeEmploymentTypeLabel(display.role_type || job.job_type || ""),
           experience_level: String(display.experience_level || job.experience || ""),
           sector: String(display.sector || job.sector || ""),
           function: String(display.function || job.function || ""),
@@ -1139,11 +1139,11 @@
           title,
           organization,
           location: String(display.location || raw.location || "").trim(),
-          location_type: String(display.location_type || raw.workplace_type || "").trim(),
+          location_type: normalizeWorkplaceTypeLabel(display.location_type || raw.workplace_type || ""),
           pay_display: String(display.pay_display || raw.salary || "").trim(),
           salary_min: Number.isFinite(Number(display.salary_min)) ? Number(display.salary_min) : (raw.salary_min ?? null),
           salary_max: Number.isFinite(Number(display.salary_max)) ? Number(display.salary_max) : (raw.salary_max ?? null),
-          role_type: String(display.role_type || raw.job_type || "").trim(),
+          role_type: normalizeEmploymentTypeLabel(display.role_type || raw.job_type || ""),
           experience_level: String(display.experience_level || raw.experience || "").trim(),
           sector: String(display.sector || raw.sector || "").trim(),
           function: String(display.function || raw.function || "").trim(),
@@ -1172,11 +1172,11 @@
         title: String(savedDisplay.title || job.title || "").trim(),
         organization: String(savedDisplay.organization || job.organization || "").trim(),
         location: String(savedDisplay.location || job.location || "").trim(),
-        location_type: String(savedDisplay.location_type || job.workplace_type || "").trim(),
+        location_type: normalizeWorkplaceTypeLabel(savedDisplay.location_type || job.workplace_type || ""),
         pay_display: String(savedDisplay.pay_display || job.salary || "").trim(),
         salary_min: savedDisplay.salary_min ?? job.salary_min ?? "",
         salary_max: savedDisplay.salary_max ?? job.salary_max ?? "",
-        role_type: String(savedDisplay.role_type || job.job_type || "").trim(),
+        role_type: normalizeEmploymentTypeLabel(savedDisplay.role_type || job.job_type || ""),
         experience_level: String(savedDisplay.experience_level || job.experience || "").trim(),
         sector: String(savedDisplay.sector || job.sector || "").trim(),
         function: String(savedDisplay.function || job.function || "").trim(),
@@ -1505,6 +1505,36 @@
       } catch (_error) {
         return {};
       }
+    }
+
+    function normalizeTypeToken(value) {
+      return String(value || "")
+        .trim()
+        .toLowerCase()
+        .replace(/[_-]+/g, " ")
+        .replace(/\s+/g, " ");
+    }
+
+    function normalizeWorkplaceTypeLabel(value) {
+      const text = String(value || "").trim();
+      const normalized = normalizeTypeToken(text);
+      if (!normalized) return "";
+      if (normalized === "remote") return "Remote";
+      if (normalized === "hybrid") return "Hybrid";
+      if (normalized === "onsite" || normalized === "on site") return "On-site";
+      return text;
+    }
+
+    function normalizeEmploymentTypeLabel(value) {
+      const text = String(value || "").trim();
+      const normalized = normalizeTypeToken(text);
+      if (!normalized) return "";
+      if (normalized === "full time") return "Full-time";
+      if (normalized === "part time") return "Part-time";
+      if (normalized === "contract" || normalized === "contractor") return "Contract";
+      if (normalized === "temporary" || normalized === "temp") return "Temporary";
+      if (normalized === "intern" || normalized === "internship") return "Internship";
+      return text;
     }
 
     function normalizeHydrationValue(value) {

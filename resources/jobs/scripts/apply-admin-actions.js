@@ -1,5 +1,6 @@
 const path = require("path");
 const {
+  ADMIN_JOB_ACTIONS_SNAPSHOT_FILE,
   PENDING_SYNCED_FILE,
   readJson,
   readPendingSyncedJobs,
@@ -18,6 +19,7 @@ const {
 const { normalizeJob, stringifySafe } = require("./job-normalizer");
 const {
   loadBackendConfig,
+  readAdminActionSnapshot,
   readLocalAdminActions,
   readOrganizationRules,
   readPendingOverrides,
@@ -239,9 +241,20 @@ async function fetchAndSnapshotActions() {
   const config = await loadBackendConfig(path.join(__dirname, "jobs-backend-config.js"));
   const backendUrl = process.env.JOBS_BACKEND_URL || config.backendUrl;
   const adminToken = process.env.JOBS_ADMIN_TOKEN || config.adminToken;
+  const snapshotActions = await readAdminActionSnapshot();
+
+  if (snapshotActions.length) {
+    console.log(`[jobs:apply-admin-actions] Using snapshot action file: ${ADMIN_JOB_ACTIONS_SNAPSHOT_FILE} (${snapshotActions.length} actions).`);
+    return {
+      actions: snapshotActions,
+      backendUrl,
+      adminToken,
+      source: "snapshot"
+    };
+  }
 
   if (!backendUrl || !adminToken) {
-    console.log("Backend config missing; falling back to local action file.");
+    console.log("[jobs:apply-admin-actions] Source used: local fallback (backend config missing, snapshot empty).");
     return {
       actions: await readLocalAdminActions(),
       backendUrl: "",
@@ -250,7 +263,7 @@ async function fetchAndSnapshotActions() {
     };
   }
 
-  console.log("Using backend queue.");
+  console.log("[jobs:apply-admin-actions] Source used: backend queue.");
 
   try {
     const response = await fetch(backendUrl, {
@@ -286,7 +299,7 @@ async function fetchAndSnapshotActions() {
   } catch (error) {
     console.error(`[jobs:apply-admin-actions] HTTP status: ${error.httpStatus || "unknown"}`);
     console.error(`[jobs:apply-admin-actions] Response text preview: ${error.responsePreview || error.message}`);
-    console.error("[jobs:apply-admin-actions] Fallback to local action file: yes");
+    console.error("[jobs:apply-admin-actions] Source used: local fallback (backend fetch failed, snapshot empty).");
     return {
       actions: await readLocalAdminActions(),
       backendUrl: "",

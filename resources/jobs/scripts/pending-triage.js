@@ -1,6 +1,19 @@
 const { PENDING_TRIAGE_SUMMARY_FILE, writeJson } = require("./job-utils");
 const { readOrganizationRules, readPendingOverrides } = require("./admin-actions-store");
 
+const MAX_BROAD_SOURCE_NEW_PENDING = 50;
+const MAX_TOTAL_PENDING = 750;
+const MAX_PENDING_BYTES = 25 * 1024 * 1024;
+const MAX_DESCRIPTION_LENGTH = 900;
+const MAX_RAW_DESCRIPTION_LENGTH = 1500;
+const BROAD_SOURCE_PATTERNS = [
+  /climatechangejobs/i,
+  /greenjobsearch/i,
+  /idealist/i,
+  /goodcitizen/i,
+  /elemental\s*impact/i
+];
+
 const CLIMATE_TERMS = [
   "climate",
   "clean energy",
@@ -25,9 +38,17 @@ const CLIMATE_TERMS = [
 const FUNCTION_TERMS = [
   "communications",
   "communication",
+  "comms",
+  "media",
+  "press",
+  "public affairs",
+  "digital",
+  "social media",
+  "editorial",
   "design",
   "designer",
   "strategy",
+  "strategist",
   "strategic",
   "research",
   "researcher",
@@ -35,6 +56,7 @@ const FUNCTION_TERMS = [
   "analytics",
   "analyst",
   "product",
+  "marketing",
   "operations",
   "operator",
   "policy",
@@ -42,7 +64,46 @@ const FUNCTION_TERMS = [
   "content",
   "creative",
   "brand",
-  "storytelling"
+  "storytelling",
+  "web",
+  "website",
+  "developer",
+  "engineer",
+  "software"
+];
+
+const PRIORITY_FUNCTION_BOOST_TERMS = [
+  "communications",
+  "communication",
+  "comms",
+  "media",
+  "press",
+  "social media",
+  "digital",
+  "content",
+  "brand",
+  "creative",
+  "design",
+  "designer",
+  "web",
+  "website",
+  "developer",
+  "software",
+  "product",
+  "data",
+  "research",
+  "campaign",
+  "strategy",
+  "strategist"
+];
+
+const CLIMATE_CONTEXT_EXTRA_TERMS = [
+  "geothermal",
+  "justice",
+  "resilience",
+  "advocacy",
+  "renewable",
+  "environmental"
 ];
 
 const UNRELATED_ENGINEERING_TERMS = [
@@ -212,6 +273,84 @@ function scoreTextHits(text, terms) {
   return terms.filter((term) => haystack.includes(term)).length;
 }
 
+function bytesToMegabytes(bytes) {
+  return Number(bytes || 0) / (1024 * 1024);
+}
+
+function sanitizePendingText(value, maxLength) {
+  return String(value || "")
+    .replace(/\b(?:share to|share on)\s+(?:twitter|facebook|linkedin)\b/gi, " ")
+    .replace(/\b(?:share this job|email this job|copy link|tweet|webpage|readaction)\b/gi, " ")
+    .replace(/\b(?:privacy policy|terms of use|cookie policy|applicant privacy|applicant login)\b/gi, " ")
+    .replace(/https?:\/\/\S+/gi, " ")
+    .replace(/\s+/g, " ")
+    .replace(/\b([A-Za-z][A-Za-z&,'/-]{2,})\b(?:\s+\1\b){1,}/gi, "$1")
+    .trim()
+    .slice(0, maxLength);
+}
+
+function cleanPendingJobForWrite(job) {
+  const cleaned = {
+    ...job,
+    description: sanitizePendingText(job.description, MAX_DESCRIPTION_LENGTH),
+    raw_description: sanitizePendingText(job.raw_description, MAX_RAW_DESCRIPTION_LENGTH)
+  };
+  delete cleaned.__pending_preserved;
+  delete cleaned.__pending_new;
+  delete cleaned.__cap_drop_reason;
+  return cleaned;
+}
+
+function sortPendingJobs(jobs) {
+  return [...jobs].sort((a, b) => {
+    const scoreDelta = Number(b.relevance_score || 0) - Number(a.relevance_score || 0);
+    if (scoreDelta !== 0) return scoreDelta;
+    const dateB = new Date(b.date_added || b.date_posted || 0).getTime();
+    const dateA = new Date(a.date_added || a.date_posted || 0).getTime();
+    return dateB - dateA;
+  });
+}
+
+function getSourceKey(job) {
+  return String(job.source_id || job.source || "unknown").trim() || "unknown";
+}
+
+function getSourceDescriptor(job) {
+  return [
+    job.source_id,
+    job.source,
+    job.source_url,
+    job.organization
+  ].filter(Boolean).join(" ");
+}
+
+function isBroadSourceJob(job) {
+  const descriptor = getSourceDescriptor(job);
+  return BROAD_SOURCE_PATTERNS.some((pattern) => pattern.test(descriptor));
+}
+
+function hasDirectEmployerApplyUrl(job) {
+  const applyUrl = normalizeUrl(job.apply_url || job.original_url);
+  const sourceUrl = normalizeUrl(job.source_url);
+  if (!applyUrl) return false;
+  if (!sourceUrl) return !isBroadSourceJob(job);
+  try {
+    return new URL(applyUrl).hostname.replace(/^www\./, "") === new URL(sourceUrl).hostname.replace(/^www\./, "");
+  } catch (_error) {
+    return false;
+  }
+}
+
+function buildTopExamples(jobs, limit = 3) {
+  return sortPendingJobs(jobs)
+    .slice(0, limit)
+    .map((job) => ({
+      title: String(job.title || "").trim(),
+      organization: String(job.organization || "").trim(),
+      relevance_score: Number(job.relevance_score || 0)
+    }));
+}
+
 function normalizeUrl(value) {
   try {
     const url = new URL(String(value || "").trim());
@@ -250,7 +389,7 @@ function isTrustedSustainabilityContext(job) {
     job.source_url,
     job.notes
   ].join(" ").toLowerCase();
-  return Boolean(job.trusted) || hasAny(text, CLIMATE_TERMS) || /(clean energy|climate tech|sustainability|conservation|policy\/advocacy|climate communications)/i.test(String(job.sector || ""));
+  return Boolean(job.trusted) || hasAny(text, CLIMATE_TERMS) || hasAny(text, CLIMATE_CONTEXT_EXTRA_TERMS) || /(clean energy|climate tech|sustainability|conservation|policy\/advocacy|climate communications)/i.test(String(job.sector || ""));
 }
 
 function scorePendingJob(job) {
@@ -268,23 +407,31 @@ function scorePendingJob(job) {
   ].join(" ");
   const climateHitCount = scoreTextHits(text, CLIMATE_TERMS);
   const functionHitCount = scoreTextHits(text, FUNCTION_TERMS);
+  const priorityBoostCount = scoreTextHits(text, PRIORITY_FUNCTION_BOOST_TERMS);
   const trustedContext = isTrustedSustainabilityContext(job);
   const payCaptured = Boolean(job.salary || job.raw_salary || job.salary_min || job.salary_max);
   const locationCaptured = Boolean(job.location || job.workplace_type);
+  const directEmployerApplyUrl = hasDirectEmployerApplyUrl(job);
   const climateContext = climateHitCount > 0 || trustedContext;
   const unrelatedEngineering = hasAny(text, UNRELATED_ENGINEERING_TERMS);
   const salesRole = hasAny(text, SALES_TERMS);
+  const broadSource = isBroadSourceJob(job);
+  const weakEmployer = !String(job.organization || "").trim() || /unknown|multiple employers|various/i.test(String(job.organization || ""));
 
   let score = 0;
   const reasons = [];
 
   if (climateHitCount > 0) {
-    score += 3;
+    score += 4;
     reasons.push("climate_context");
   }
   if (functionHitCount > 0) {
-    score += 2;
+    score += 3;
     reasons.push("functional_relevance");
+  }
+  if (priorityBoostCount > 0) {
+    score += Math.min(priorityBoostCount, 4);
+    reasons.push("priority_function_terms");
   }
   if (trustedContext) {
     score += 2;
@@ -298,9 +445,37 @@ function scorePendingJob(job) {
     score += 1;
     reasons.push("location_captured");
   }
+  if (directEmployerApplyUrl) {
+    score += 2;
+    reasons.push("direct_employer_apply_url");
+  }
+  if (String(job.organization || job.source || job.source_url || "").match(/climate|energy|sustainab|renewable|environment|conservation|policy|advocacy/i)) {
+    score += 2;
+    reasons.push("climate_org_or_source");
+  }
   if ((unrelatedEngineering || salesRole) && !climateContext) {
-    score -= 3;
+    score -= 5;
     reasons.push(unrelatedEngineering ? "unrelated_engineering" : "unrelated_sales");
+  }
+  if (salesRole && (!climateContext || functionHitCount === 0)) {
+    score -= 4;
+    reasons.push("generic_sales_role");
+  }
+  if (unrelatedEngineering && !climateContext) {
+    score -= 4;
+    reasons.push("pure_engineering_without_sustainability");
+  }
+  if (broadSource && (!climateContext || functionHitCount === 0)) {
+    score -= 6;
+    reasons.push("broad_board_weak_match");
+  }
+  if (broadSource && weakEmployer) {
+    score -= 3;
+    reasons.push("broad_board_unclear_employer");
+  }
+  if (/(medical|beauty|retail|cosmetic|insurance|hospital|pharma)/i.test(text) && !climateContext) {
+    score -= 6;
+    reasons.push("unrelated_industry");
   }
 
   return {
@@ -308,11 +483,15 @@ function scorePendingJob(job) {
     reasons,
     climateContext,
     functionHitCount,
+    priorityBoostCount,
     trustedContext,
     payCaptured,
     locationCaptured,
+    directEmployerApplyUrl,
     unrelatedEngineering,
-    salesRole
+    salesRole,
+    broadSource,
+    weakEmployer
   };
 }
 
@@ -334,10 +513,16 @@ function classifyPendingJob(job, context = {}) {
     title.split(/\s+/).filter(Boolean).length > 12;
   const internship = /\b(intern|internship|fellowship)\b/i.test(`${title} ${job.description || ""} ${job.raw_description || ""}`);
   const duplicateUrl = Boolean(originalUrl && context.seenUrls && context.seenUrls.has(originalUrl));
+  const broadSourceStrictFail = scoreMeta.broadSource && (!scoreMeta.climateContext || scoreMeta.functionHitCount === 0);
+  const uncertainEmployerOrApply = scoreMeta.broadSource && (
+    String(job.parse_warning || "").toLowerCase().includes("organization uncertain") ||
+    scoreMeta.weakEmployer ||
+    !scoreMeta.directEmployerApplyUrl
+  );
   const roleRelevant =
-    scoreMeta.climateContext ||
+    (scoreMeta.climateContext && scoreMeta.functionHitCount > 0) ||
     (scoreMeta.trustedContext && scoreMeta.functionHitCount > 0) ||
-    scoreMeta.score >= 4;
+    scoreMeta.score >= 7;
   const reviewReady =
     title &&
     organization &&
@@ -348,7 +533,9 @@ function classifyPendingJob(job, context = {}) {
     !(internship && !scoreMeta.payCaptured) &&
     !duplicateUrl &&
     !suspiciousTitle &&
-    !((scoreMeta.unrelatedEngineering || scoreMeta.salesRole) && !scoreMeta.climateContext);
+    !((scoreMeta.unrelatedEngineering || scoreMeta.salesRole) && !scoreMeta.climateContext) &&
+    !broadSourceStrictFail &&
+    !uncertainEmployerOrApply;
 
   const nextJob = {
     ...job,
@@ -415,11 +602,30 @@ function classifyPendingJob(job, context = {}) {
       reason: "unrelated engineering or sales role without sustainability context"
     };
   }
+  if (broadSourceStrictFail) {
+    return {
+      bucket: "rejected_noise",
+      job: { ...nextJob, triage_bucket: "rejected_noise", triage_reason: "broad source missing climate context or priority function" },
+      reason: "broad source missing climate context or priority function"
+    };
+  }
   if (!roleRelevant) {
     return {
       bucket: "rejected_noise",
       job: { ...nextJob, triage_bucket: "rejected_noise", triage_reason: "low sustainability or creative relevance" },
       reason: "low sustainability or creative relevance"
+    };
+  }
+  if (uncertainEmployerOrApply) {
+    if (context.seenUrls) context.seenUrls.add(originalUrl);
+    return {
+      bucket: "needs_cleanup",
+      job: {
+        ...nextJob,
+        triage_bucket: "needs_cleanup",
+        triage_reason: "broad source employer or apply url uncertain"
+      },
+      reason: "broad source employer or apply url uncertain"
     };
   }
 
@@ -476,6 +682,57 @@ function topOrganizations(jobs, limit = 20) {
 
 function countJobsWithPay(jobs) {
   return jobs.filter((job) => Boolean(job.salary || job.raw_salary || job.salary_min || job.salary_max)).length;
+}
+
+function applyPendingCaps(jobs) {
+  const keptBySource = new Map();
+  const droppedByCapBySource = new Map();
+  const preservedJobs = sortPendingJobs(jobs.filter((job) => job.__pending_preserved));
+  const newJobs = sortPendingJobs(jobs.filter((job) => !job.__pending_preserved));
+  const cappedNewJobs = [];
+
+  for (const job of newJobs) {
+    const sourceKey = getSourceKey(job);
+    const sourceStats = keptBySource.get(sourceKey) || { total: 0, broadNew: 0 };
+    if (isBroadSourceJob(job) && sourceStats.broadNew >= MAX_BROAD_SOURCE_NEW_PENDING) {
+      droppedByCapBySource.set(sourceKey, (droppedByCapBySource.get(sourceKey) || 0) + 1);
+      continue;
+    }
+    sourceStats.total += 1;
+    if (isBroadSourceJob(job)) sourceStats.broadNew += 1;
+    keptBySource.set(sourceKey, sourceStats);
+    cappedNewJobs.push(job);
+  }
+
+  const finalJobs = [];
+  for (const job of [...preservedJobs, ...cappedNewJobs]) {
+    if (finalJobs.length >= MAX_TOTAL_PENDING) {
+      const sourceKey = getSourceKey(job);
+      droppedByCapBySource.set(sourceKey, (droppedByCapBySource.get(sourceKey) || 0) + 1);
+      continue;
+    }
+    finalJobs.push(job);
+  }
+
+  return {
+    kept: finalJobs,
+    droppedByCapBySource: Object.fromEntries(
+      Array.from(droppedByCapBySource.entries()).sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))
+    )
+  };
+}
+
+function collectPendingSizeBySource(jobs) {
+  const stats = new Map();
+  for (const job of jobs) {
+    const sourceKey = getSourceKey(job);
+    const serialized = JSON.stringify(job);
+    const entry = stats.get(sourceKey) || { source_id: sourceKey, count: 0, bytes: 0 };
+    entry.count += 1;
+    entry.bytes += Buffer.byteLength(serialized, "utf8");
+    stats.set(sourceKey, entry);
+  }
+  return Array.from(stats.values()).sort((a, b) => b.bytes - a.bytes || b.count - a.count || a.source_id.localeCompare(b.source_id));
 }
 
 async function triagePendingJobs(pendingJobs, publicJobs, scrapeReport) {
@@ -538,6 +795,8 @@ async function triagePendingJobs(pendingJobs, publicJobs, scrapeReport) {
       review_ready: 0,
       needs_cleanup: 0,
       rejected_noise: 0,
+      kept: 0,
+      dropped_by_cap: 0,
       rejected_reasons: {}
     };
     sourceStats[result.bucket] += 1;
@@ -547,17 +806,70 @@ async function triagePendingJobs(pendingJobs, publicJobs, scrapeReport) {
     rejectedBySource.set(sourceId, sourceStats);
   }
 
-  const adminPendingJobs = [...buckets.review_ready, ...buckets.needs_cleanup];
+  const capped = applyPendingCaps([...buckets.review_ready, ...buckets.needs_cleanup]);
+  const adminPendingJobs = sortPendingJobs(capped.kept).map(cleanPendingJobForWrite);
+  Object.entries(capped.droppedByCapBySource).forEach(([sourceId, count]) => {
+    const sourceStats = rejectedBySource.get(sourceId) || {
+      review_ready: 0,
+      needs_cleanup: 0,
+      rejected_noise: 0,
+      kept: 0,
+      dropped_by_cap: 0,
+      rejected_reasons: {}
+    };
+    sourceStats.dropped_by_cap += count;
+    rejectedBySource.set(sourceId, sourceStats);
+  });
+  adminPendingJobs.forEach((job) => {
+    const sourceId = getSourceKey(job);
+    const sourceStats = rejectedBySource.get(sourceId) || {
+      review_ready: 0,
+      needs_cleanup: 0,
+      rejected_noise: 0,
+      kept: 0,
+      dropped_by_cap: 0,
+      rejected_reasons: {}
+    };
+    sourceStats.kept += 1;
+    rejectedBySource.set(sourceId, sourceStats);
+  });
+
+  const serializedPending = JSON.stringify(adminPendingJobs, null, 2) + "\n";
+  const pendingBytes = Buffer.byteLength(serializedPending, "utf8");
+  const pendingSizeBySource = collectPendingSizeBySource(adminPendingJobs);
+  if (pendingBytes > MAX_PENDING_BYTES) {
+    const topSources = pendingSizeBySource
+      .slice(0, 5)
+      .map((entry) => `${entry.source_id}: count=${entry.count} size_mb=${bytesToMegabytes(entry.bytes).toFixed(2)}`)
+      .join("; ");
+    throw new Error(
+      `pending-synced-jobs.json would exceed 25MB (${bytesToMegabytes(pendingBytes).toFixed(2)} MB). Top sources by size/count: ${topSources}`
+    );
+  }
+
   const summary = {
     generated_at: new Date().toISOString(),
     public_jobs: Array.isArray(publicJobs) ? publicJobs.length : 0,
     pending_review_ready: buckets.review_ready.length,
     pending_needs_cleanup: buckets.needs_cleanup.length,
     rejected_noise: buckets.rejected_noise.length,
+    pending_kept_after_caps: adminPendingJobs.length,
+    dropped_by_cap_total: Object.values(capped.droppedByCapBySource).reduce((sum, count) => sum + count, 0),
     duplicate_count_removed: duplicateCountRemoved,
     jobs_with_pay: countJobsWithPay(adminPendingJobs),
     jobs_without_pay: adminPendingJobs.length - countJobsWithPay(adminPendingJobs),
-    top_organizations: topOrganizations(adminPendingJobs, 20)
+    top_organizations: topOrganizations(adminPendingJobs, 20),
+    final_pending_file_size_mb: Number(bytesToMegabytes(pendingBytes).toFixed(2)),
+    dropped_by_cap_by_source: capped.droppedByCapBySource,
+    retained_examples_by_source: Object.fromEntries(
+      Array.from(new Set(adminPendingJobs.map((job) => getSourceKey(job))))
+        .map((sourceId) => [sourceId, buildTopExamples(adminPendingJobs.filter((job) => getSourceKey(job) === sourceId))])
+    ),
+    size_by_source: pendingSizeBySource.slice(0, 20).map((entry) => ({
+      source_id: entry.source_id,
+      count: entry.count,
+      size_mb: Number(bytesToMegabytes(entry.bytes).toFixed(2))
+    }))
   };
 
   if (scrapeReport && Array.isArray(scrapeReport.sources)) {
@@ -566,13 +878,19 @@ async function triagePendingJobs(pendingJobs, publicJobs, scrapeReport) {
         review_ready: 0,
         needs_cleanup: 0,
         rejected_noise: 0,
+        kept: 0,
+        dropped_by_cap: 0,
         rejected_reasons: {}
       };
       return {
         ...source,
+        fetched_count: source.jobs_parsed || 0,
+        kept: triage.kept,
         review_ready: triage.review_ready,
         needs_cleanup: triage.needs_cleanup,
         rejected_noise: triage.rejected_noise,
+        dropped_by_cap: triage.dropped_by_cap,
+        top_retained_examples: buildTopExamples(adminPendingJobs.filter((job) => getSourceKey(job) === String(source.source_id || ""))),
         rejected_reasons: triage.rejected_reasons
       };
     });

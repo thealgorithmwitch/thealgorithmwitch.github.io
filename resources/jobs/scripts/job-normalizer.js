@@ -895,11 +895,40 @@ function removeBoilerplateSentences(sentences) {
   return sentences.filter((sentence) => !boilerplatePatterns.some((pattern) => pattern.test(sentence)));
 }
 
+function normalizeSentenceForDedup(sentence) {
+  return normalizeComparableText(
+    String(sentence || "")
+      .replace(/\b(?:the|a|an)\b/gi, " ")
+      .replace(/\b(?:job title|department|location|reports to|supervises|duration)\b/gi, " ")
+      .replace(/\s+/g, " ")
+      .trim()
+  );
+}
+
+function dedupeDescriptionSentences(sentences) {
+  const seen = new Set();
+  const deduped = [];
+  for (const sentence of sentences) {
+    const normalized = normalizeSentenceForDedup(sentence);
+    if (!normalized || normalized.length < 20) continue;
+    if (seen.has(normalized)) continue;
+    seen.add(normalized);
+    deduped.push(sentence);
+  }
+  return deduped;
+}
+
+function collapseRepeatedPhrases(value) {
+  return normalizeWhitespace(String(value || ""))
+    .replace(/\b(WebPage|ReadAction)\b(?:[\s,:;-]+\1\b)+/gi, "$1")
+    .replace(/\b([A-Za-z][A-Za-z&,'/-]{2,})\b(?:\s+\1\b){1,}/gi, "$1");
+}
+
 function normalizeDescription(description, options = {}) {
   const title = normalizeWhitespace(options.title || "");
   const titlePattern = title ? new RegExp(`\\b${slugify(title).replace(/-/g, "[\\s\\W]*")}\\b`, "ig") : null;
   const rawDescription = stripSocialShareJunk(normalizeWhitespace(stringifySafe(description) || cleanFlattenedText(description)));
-  const cleaned = normalizeWhitespace(
+  const cleaned = collapseRepeatedPhrases(normalizeWhitespace(
     stripSchemaMetadata(stripHtml(rawDescription))
       .replace(/[>›»]+/g, " ")
       .replace(/\s*=\s*/g, " ")
@@ -921,7 +950,7 @@ function normalizeDescription(description, options = {}) {
       .replace(/\b(?:job title|department|reports to|supervises|duration|location)\s*:/gi, " ")
       .replace(titlePattern || /$^/g, " ")
       .replace(/\.\s*\./g, ". ")
-  );
+  ));
 
   if (!cleaned) {
     return {
@@ -934,12 +963,14 @@ function normalizeDescription(description, options = {}) {
     .map((sentence) => normalizeWhitespace(sentence))
     .filter((sentence) => sentence.length >= 35);
 
-  sentences = removeBoilerplateSentences(sentences)
+  sentences = dedupeDescriptionSentences(removeBoilerplateSentences(sentences)
     .filter((sentence) => !/^(job title|department|reports to|location|duration)\b/i.test(sentence))
     .filter((sentence) => !/^(apply now|apply today|submit application|learn more|read more|view job|view opening)\b/i.test(sentence))
     .filter((sentence) => !/^[A-Z][a-z]+(?:\s+[A-Z][a-z]+){0,2}$/.test(sentence))
     .filter((sentence) => !title || normalizeComparableText(sentence) !== normalizeComparableText(title))
-    .filter((sentence) => /[a-z]{3,}\s+(?:is|are|will|can|should|must|plans|coordinates|executes|supports|manages|builds|seeks|works|develops|leads|drives|partners)/i.test(sentence));
+    .filter((sentence) => !/\b(?:webpage|readaction|privacy policy|terms of use|cookie policy|share this job|equal opportunity employer)\b/i.test(sentence))
+    .filter((sentence) => !/\b(?:the\s*,\s*market|the,\s*market)\b/i.test(sentence))
+    .filter((sentence) => /[a-z]{3,}\s+(?:is|are|will|can|should|must|plans|coordinates|executes|supports|manages|builds|seeks|works|develops|leads|drives|partners)/i.test(sentence)));
 
   const prioritySentences = sentences.filter((sentence) => {
     return /(role|position|responsible|support|manage|lead|coordinate|develop|partner|build|work with|candidate|team|mission|focus|scope)/i.test(sentence);
@@ -948,9 +979,12 @@ function normalizeDescription(description, options = {}) {
   const selected = [];
   for (const sentence of [...prioritySentences, ...sentences]) {
     if (selected.includes(sentence)) continue;
+    if (selected.some((existing) => normalizeSentenceForDedup(existing) === normalizeSentenceForDedup(sentence))) continue;
     selected.push(sentence);
     if (selected.length === 5) break;
   }
+
+  const finalDescription = collapseRepeatedPhrases(selected.join(" ").trim() || cleaned);
 
   const dominatedByNoise =
     selected.length === 0 &&
@@ -962,7 +996,7 @@ function normalizeDescription(description, options = {}) {
 
   return {
     raw_description: rawDescription,
-    description: dominatedByNoise || dominatedBySchemaMetadata || isArticleLikeDescription(selected.join(" ").trim() || cleaned) ? "" : selected.join(" ").trim() || cleaned
+    description: dominatedByNoise || dominatedBySchemaMetadata || isArticleLikeDescription(finalDescription) ? "" : finalDescription
   };
 }
 

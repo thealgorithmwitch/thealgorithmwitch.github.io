@@ -23,6 +23,10 @@ const { triagePendingJobs } = require("./pending-triage");
 
 const SUPPORTED_TYPES = new Set(["greenhouse", "lever", "ashby", "bamboohr", "recruitee", "smartrecruiters", "workable"]);
 
+function isManagedAtsJob(job, activeSourceIds) {
+  return job.sync_origin === "ats" && activeSourceIds.has(String(job.source_id || ""));
+}
+
 async function fetchJobsForSource(source) {
   if (source.provider === "greenhouse" || source.type === "greenhouse") {
     return fetchGreenhouseJobsForSource(source);
@@ -76,14 +80,11 @@ async function runSyncForTypes(types = []) {
     };
   }
 
-  const existingPendingIds = new Set((existingPending || []).map((job) => String(job.id || "")));
-  
-  // Append-only scrape mode:
-  // - active/public jobs are controlled by admin publish/apply
-  // - existing pending jobs are preserved even if a source returns zero
-  // - newly scraped jobs can be added to pending after triage
-  const preservedPublicJobs = existingJobs;
-  const preservedPendingJobs = existingPending;
+  const activeSourceIds = new Set(enabledSources.map((source) => source.id));
+  const preservedPublicJobs = existingJobs.filter((job) => !isManagedAtsJob(job, activeSourceIds));
+  const preservedPendingJobs = existingPending
+    .filter((job) => !isManagedAtsJob(job, activeSourceIds))
+    .map((job) => ({ ...job, __pending_preserved: true }));
   const publicJobs = [];
   const pendingJobs = [];
   const counts = {};
@@ -145,7 +146,7 @@ async function runSyncForTypes(types = []) {
           publicJobs.push(routed);
           counts[source.id].active += 1;
         } else {
-          pendingJobs.push(routed);
+          pendingJobs.push({ ...routed, __pending_new: true });
           counts[source.id].pending += 1;
         }
       }
@@ -183,7 +184,7 @@ async function runSyncForTypes(types = []) {
     }
   }
 
-  const mergedPublicJobs = preservedPublicJobs;
+  const mergedPublicJobs = dedupeJobs([...preservedPublicJobs, ...publicJobs]);
   const mergedPendingJobs = dedupeJobs([...preservedPendingJobs, ...pendingJobs]);
 
   const publicWriteResult = await safeWritePublicJobs(mergedPublicJobs, {
@@ -192,25 +193,22 @@ async function runSyncForTypes(types = []) {
   });
   await syncJobRecordStore(publicWriteResult.jobs, { logger: console });
   const scrapeReportPayload = await upsertScrapeReports(scrapeReports);
-  const triaged = await triagePendingJobs(
-  mergedPendingJobs,
-  publicWriteResult.jobs,
-  scrapeReportPayload,
-  {
-    preserveExistingPending: true,
-    existingPendingIds
-  }
-);
+  const triaged = await triagePendingJobs(mergedPendingJobs, publicWriteResult.jobs, scrapeReportPayload);
   await writeJson(PENDING_SYNCED_FILE, triaged.adminPendingJobs);
   await upsertScrapeReports(triaged.report.sources);
 
+  const triageBySource = new Map(
+    ((triaged.report && Array.isArray(triaged.report.sources)) ? triaged.report.sources : []).map((source) => [String(source.source_id || ""), source])
+  );
+
   Object.entries(counts).forEach(([sourceId, count]) => {
+    const triageSource = triageBySource.get(String(sourceId)) || {};
     console.log(
-      `[jobs:sync-sources] ${sourceId}: fetched=${count.fetched} active=${count.active} pending=${count.pending}${count.route ? ` route=${count.route}` : ""}${count.reason ? ` reason=${count.reason}` : ""}${count.error ? ` error=${count.error}` : ""}`
+      `[jobs:sync-sources] source_id=${sourceId} fetched=${count.fetched} active=${count.active} pending=${count.pending} kept=${triageSource.kept || 0} rejected_noise=${triageSource.rejected_noise || 0} dropped_by_cap=${triageSource.dropped_by_cap || 0}${count.route ? ` route=${count.route}` : ""}${count.reason ? ` reason=${count.reason}` : ""}${count.error ? ` error=${count.error}` : ""}${triageSource.top_retained_examples?.length ? ` top_retained=${triageSource.top_retained_examples.map((item) => `${item.title} @ ${item.organization} (${item.relevance_score})`).join(" | ")}` : ""}`
     );
   });
   console.log(
-    `[jobs:sync-sources] Wrote ${publicWriteResult.jobs.length} public jobs to ${JOBS_FILE}, ${triaged.adminPendingJobs.length} admin-pending jobs to ${PENDING_SYNCED_FILE}, and rejected ${triaged.summary.rejected_noise} as noise.`
+    `[jobs:sync-sources] Wrote ${publicWriteResult.jobs.length} public jobs to ${JOBS_FILE}, ${triaged.adminPendingJobs.length} admin-pending jobs to ${PENDING_SYNCED_FILE}, rejected ${triaged.summary.rejected_noise} as noise, dropped_by_cap=${triaged.summary.dropped_by_cap_total}, final_pending_size_mb=${triaged.summary.final_pending_file_size_mb}.`
   );
 
   return {
@@ -219,10 +217,6 @@ async function runSyncForTypes(types = []) {
     counts,
     triageSummary: triaged.summary
   };
-}
-
-function isManagedAtsJob(job, activeSourceIds) {
-  return job.sync_origin === "ats" && activeSourceIds.has(String(job.source_id || ""));
 }
 
 async function main() {

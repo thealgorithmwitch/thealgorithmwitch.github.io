@@ -41,11 +41,10 @@ async function runCustomSync() {
     };
   }
 
-  const preservedPublicJobs = existingJobs;
-  
-  // Preserve all existing pending unless already published/excluded elsewhere.
-  // Do not wipe managed ATS pending just because a source returned fewer jobs.
-  const preservedPendingJobs = existingPending;
+  const preservedPublicJobs = existingJobs.filter((job) => !isManagedCustomJob(job, managedCustomSourceIds));
+  const preservedPendingJobs = existingPending
+    .filter((job) => !isManagedCustomJob(job, managedCustomSourceIds))
+    .map((job) => ({ ...job, __pending_preserved: true }));
   const publicJobs = [];
   const pendingJobs = [];
   const counts = {};
@@ -71,7 +70,7 @@ async function runCustomSync() {
           publicJobs.push(routed);
           counts[source.id].active += 1;
         } else {
-          pendingJobs.push(routed);
+          pendingJobs.push({ ...routed, __pending_new: true });
           counts[source.id].pending += 1;
         }
       }
@@ -95,7 +94,7 @@ async function runCustomSync() {
     }
   }
 
-  const mergedPublicJobs = preservedPublicJobs;
+  const mergedPublicJobs = dedupeJobs([...preservedPublicJobs, ...publicJobs]);
   const mergedPendingJobs = dedupeJobs([...preservedPendingJobs, ...pendingJobs]);
 
   const publicWriteResult = await safeWritePublicJobs(mergedPublicJobs, {
@@ -104,33 +103,22 @@ async function runCustomSync() {
   });
   await syncJobRecordStore(publicWriteResult.jobs, { logger: console });
   const scrapeReportPayload = await upsertScrapeReports(scrapeReports);
-  const existingPendingIds = new Set(
-  (existingPending || []).map((job) => String(job.id || ""))
-);
-
-const triaged = await triagePendingJobs(
-  mergedPendingJobs,
-  publicWriteResult.jobs,
-  scrapeReportPayload,
-  {
-    preserveExistingPending: true,
-    existingPendingIds
-  }
-);
+  const triaged = await triagePendingJobs(mergedPendingJobs, publicWriteResult.jobs, scrapeReportPayload);
   await writeJson(PENDING_SYNCED_FILE, triaged.adminPendingJobs);
   await upsertScrapeReports(triaged.report.sources);
 
-  console.log(
-  `[jobs:sync-custom] pending_before=${existingPending.length} pending_after=${triaged.adminPendingJobs.length}`
-);
+  const triageBySource = new Map(
+    ((triaged.report && Array.isArray(triaged.report.sources)) ? triaged.report.sources : []).map((source) => [String(source.source_id || ""), source])
+  );
 
   Object.entries(counts).forEach(([sourceId, count]) => {
+    const triageSource = triageBySource.get(String(sourceId)) || {};
     console.log(
-      `[jobs:sync-custom] ${sourceId}: fetched=${count.fetched} active=${count.active} pending=${count.pending}${count.route ? ` route=${count.route}` : ""}${count.reason ? ` reason=${count.reason}` : ""}${count.error ? ` error=${count.error}` : ""}`
+      `[jobs:sync-custom] source_id=${sourceId} fetched=${count.fetched} active=${count.active} pending=${count.pending} kept=${triageSource.kept || 0} rejected_noise=${triageSource.rejected_noise || 0} dropped_by_cap=${triageSource.dropped_by_cap || 0}${count.route ? ` route=${count.route}` : ""}${count.reason ? ` reason=${count.reason}` : ""}${count.error ? ` error=${count.error}` : ""}${triageSource.top_retained_examples?.length ? ` top_retained=${triageSource.top_retained_examples.map((item) => `${item.title} @ ${item.organization} (${item.relevance_score})`).join(" | ")}` : ""}`
     );
   });
   console.log(
-    `[jobs:sync-custom] Wrote ${publicWriteResult.jobs.length} public jobs to ${JOBS_FILE}, ${triaged.adminPendingJobs.length} admin-pending jobs to ${PENDING_SYNCED_FILE}, and rejected ${triaged.summary.rejected_noise} as noise.`
+    `[jobs:sync-custom] Wrote ${publicWriteResult.jobs.length} public jobs to ${JOBS_FILE}, ${triaged.adminPendingJobs.length} admin-pending jobs to ${PENDING_SYNCED_FILE}, rejected ${triaged.summary.rejected_noise} as noise, dropped_by_cap=${triaged.summary.dropped_by_cap_total}, final_pending_size_mb=${triaged.summary.final_pending_file_size_mb}.`
   );
 
   return {

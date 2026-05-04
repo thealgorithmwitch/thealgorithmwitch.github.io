@@ -3,6 +3,7 @@ const { JOB_RECORDS_FILE } = require("./public-records");
 const { syncPublicJobsFromRecords } = require("./public-jobs");
 const {
   normalizeJob,
+  normalizeDescription,
   normalizeEmploymentType,
   normalizeWorkplaceType,
   stringifySafe,
@@ -11,9 +12,19 @@ const {
   isGenericRoleTitle,
   stripSocialShareJunk
 } = require("./job-normalizer");
+const { triagePendingJobs } = require("./pending-triage");
 
 const WRITE = process.argv.includes("--write");
 const EXAMPLE_LIMIT = 12;
+const MAX_TOTAL_PENDING = 750;
+const BROAD_SOURCE_WEAK_CAP = 50;
+const BROAD_SOURCE_PATTERNS = [
+  /climatechangejobs/i,
+  /greenjobsearch/i,
+  /idealist/i,
+  /goodcitizen/i,
+  /elemental\s*impact/i
+];
 
 function cleanText(value) {
   return String(value || "").replace(/\s+/g, " ").trim();
@@ -21,6 +32,22 @@ function cleanText(value) {
 
 function normalizeLower(value) {
   return cleanText(value).toLowerCase();
+}
+
+function isBroadBoardJob(job = {}) {
+  const haystack = [
+    job.source_id,
+    job.source,
+    job.notes,
+    job.source_url,
+    job.apply_url,
+    job.original_url
+  ].map(normalizeLower).join(" ");
+  return BROAD_SOURCE_PATTERNS.some((pattern) => pattern.test(haystack));
+}
+
+function getBroadBoardSourceKey(job = {}) {
+  return cleanText(job.source_id || job.source || "unknown");
 }
 
 function isClimateChangeJobsJob(job = {}) {
@@ -121,6 +148,33 @@ function shouldReplaceDescription(currentValue, nextValue) {
   return descriptionQualityScore(candidate) >= descriptionQualityScore(current) + 2;
 }
 
+function buildDescriptionCandidate(job = {}) {
+  return [
+    job.description,
+    job.raw_description,
+    job.descriptionPlain,
+    job.content,
+    job.summary,
+    stringifySafe(job.raw_payload)
+  ].filter(Boolean).join(" ");
+}
+
+function normalizedDescriptionShape(job = {}, fallbackTitle = "") {
+  return normalizeDescription(buildDescriptionCandidate(job), {
+    title: cleanText(job.title || fallbackTitle)
+  });
+}
+
+function appendExample(stats, id, field, before, after) {
+  if (stats.examples.length >= EXAMPLE_LIMIT) return;
+  stats.examples.push({
+    id,
+    field,
+    before: cleanText(before),
+    after: cleanText(after)
+  });
+}
+
 function shouldReplaceApplyUrl(currentValue, nextValue) {
   const current = cleanText(currentValue);
   const candidate = cleanText(nextValue);
@@ -128,6 +182,9 @@ function shouldReplaceApplyUrl(currentValue, nextValue) {
   if (!current) return true;
   if (isClimateChangeJobsUrl(current) && !isClimateChangeJobsUrl(candidate)) return true;
   if (isGreenJobSearchUrl(current) && !isGreenJobSearchUrl(candidate)) return true;
+  if (/https?:\/\/[^/\s]*(idealist|goodcitizen|elementalimpact)\./i.test(current) && !/https?:\/\/[^/\s]*(idealist|goodcitizen|elementalimpact)\./i.test(candidate)) {
+    return true;
+  }
   return false;
 }
 
@@ -278,7 +335,12 @@ function maybeReplaceField(container, key, nextValue, stats, statKey, context, o
 
 function migratePendingJob(job, stats) {
   const next = { ...job };
-  let candidate = normalizeJob(job);
+  const descriptionShape = normalizedDescriptionShape(job, job.title);
+  let candidate = normalizeJob({
+    ...job,
+    description: descriptionShape.description || job.description,
+    raw_description: descriptionShape.raw_description || job.raw_description
+  });
   candidate = applyTargetedElementalFervoRepair(job, candidate);
   let titleChanged = false;
   let organizationChanged = false;
@@ -286,14 +348,14 @@ function migratePendingJob(job, stats) {
     candidate.workplace_type = "On-site";
   }
 
-  maybeReplaceField(next, "workplace_type", candidate.workplace_type, stats, "workplace_fixes", { id: job.id });
-  maybeReplaceField(next, "job_type", candidate.job_type, stats, "employment_type_fixes", { id: job.id });
+  maybeReplaceField(next, "workplace_type", normalizeWorkplaceType(candidate.workplace_type || next.workplace_type, next.workplace_type), stats, "workplace_fixes", { id: job.id });
+  maybeReplaceField(next, "job_type", normalizeEmploymentType(candidate.job_type || next.job_type, next.job_type), stats, "employment_type_fixes", { id: job.id });
   titleChanged = maybeReplaceField(next, "title", candidate.title, stats, "title_fixes", { id: job.id }, {
     shouldReplace: shouldReplaceTitle,
     countSkip: true
   });
 
-  if (isClimateChangeJobsJob(job) || isGreenJobSearchJob(job)) {
+  if (isBroadBoardJob(job)) {
     maybeReplaceField(next, "apply_url", candidate.apply_url, stats, "climate_apply_url_fixes", { id: job.id }, {
       shouldReplace: shouldReplaceApplyUrl
     });
@@ -332,7 +394,11 @@ function migratePendingJob(job, stats) {
     }
   }
 
-  maybeReplaceField(next, "description", candidate.description, stats, "description_fixes", { id: job.id }, {
+  maybeReplaceField(next, "description", descriptionShape.description || candidate.description, stats, "description_fixes", { id: job.id }, {
+    shouldReplace: shouldReplaceDescription,
+    countSkip: true
+  });
+  maybeReplaceField(next, "raw_description", descriptionShape.raw_description || candidate.raw_description, stats, "description_fixes", { id: job.id }, {
     shouldReplace: shouldReplaceDescription,
     countSkip: true
   });
@@ -347,7 +413,22 @@ function migratePendingJob(job, stats) {
 function migrateJobRecord(record, stats) {
   const raw = record.raw_source_data && typeof record.raw_source_data === "object" ? { ...record.raw_source_data } : {};
   const display = record.display && typeof record.display === "object" ? { ...record.display } : {};
-  let candidate = normalizeJob(raw);
+  const normalizationSource = {
+    ...raw,
+    title: display.title || raw.title,
+    organization: display.organization || raw.organization,
+    location: display.location || raw.location,
+    workplace_type: display.location_type || raw.workplace_type,
+    job_type: display.role_type || raw.job_type,
+    description: display.description || raw.description,
+    raw_description: raw.raw_description || display.description || raw.description
+  };
+  const descriptionShape = normalizedDescriptionShape(normalizationSource, display.title || raw.title);
+  let candidate = normalizeJob({
+    ...normalizationSource,
+    description: descriptionShape.description || normalizationSource.description,
+    raw_description: descriptionShape.raw_description || normalizationSource.raw_description
+  });
   candidate = applyTargetedElementalFervoRepair(raw, candidate);
   const id = record.id || raw.id || "";
   let titleChanged = false;
@@ -363,11 +444,13 @@ function migrateJobRecord(record, stats) {
     }
   }
 
-  maybeReplaceField(raw, "workplace_type", candidate.workplace_type, stats, "workplace_fixes", { id });
-  maybeReplaceField(display, "location_type", candidate.workplace_type, stats, "workplace_fixes", { id });
+  const normalizedWorkplaceType = normalizeWorkplaceType(candidate.workplace_type || display.location_type || raw.workplace_type, display.location_type || raw.workplace_type);
+  maybeReplaceField(raw, "workplace_type", normalizedWorkplaceType, stats, "workplace_fixes", { id });
+  maybeReplaceField(display, "location_type", normalizedWorkplaceType, stats, "workplace_fixes", { id });
 
-  maybeReplaceField(raw, "job_type", candidate.job_type, stats, "employment_type_fixes", { id });
-  maybeReplaceField(display, "role_type", candidate.job_type, stats, "employment_type_fixes", { id });
+  const normalizedEmploymentType = normalizeEmploymentType(candidate.job_type || display.role_type || raw.job_type, display.role_type || raw.job_type);
+  maybeReplaceField(raw, "job_type", normalizedEmploymentType, stats, "employment_type_fixes", { id });
+  maybeReplaceField(display, "role_type", normalizedEmploymentType, stats, "employment_type_fixes", { id });
   titleChanged = maybeReplaceField(raw, "title", candidate.title, stats, "title_fixes", { id }, {
     shouldReplace: shouldReplaceTitle,
     countSkip: true
@@ -380,7 +463,7 @@ function migrateJobRecord(record, stats) {
     countSkip: true
   }) || titleChanged;
 
-  if (isClimateChangeJobsJob(raw) || isGreenJobSearchJob(raw)) {
+  if (isBroadBoardJob(raw)) {
     maybeReplaceField(raw, "apply_url", candidate.apply_url, stats, "climate_apply_url_fixes", { id }, {
       shouldReplace: shouldReplaceApplyUrl
     });
@@ -433,11 +516,15 @@ function migrateJobRecord(record, stats) {
     }
   }
 
-  maybeReplaceField(raw, "description", candidate.description, stats, "description_fixes", { id }, {
+  maybeReplaceField(raw, "description", descriptionShape.description || candidate.description, stats, "description_fixes", { id }, {
     shouldReplace: shouldReplaceDescription,
     countSkip: true
   });
-  maybeReplaceField(display, "description", candidate.description, stats, "description_fixes", { id }, {
+  maybeReplaceField(raw, "raw_description", descriptionShape.raw_description || candidate.raw_description, stats, "description_fixes", { id }, {
+    shouldReplace: shouldReplaceDescription,
+    countSkip: true
+  });
+  maybeReplaceField(display, "description", descriptionShape.description || candidate.description, stats, "description_fixes", { id }, {
     shouldReplace: shouldReplaceDescription,
     countSkip: true
   });
@@ -455,10 +542,58 @@ function migrateJobRecord(record, stats) {
   return nextRecord;
 }
 
+function sortPendingJobsForMigration(jobs) {
+  return [...jobs].sort((a, b) => {
+    const scoreDelta = Number(b.relevance_score || 0) - Number(a.relevance_score || 0);
+    if (scoreDelta !== 0) return scoreDelta;
+    const dateB = new Date(b.date_added || b.date_posted || 0).getTime();
+    const dateA = new Date(a.date_added || a.date_posted || 0).getTime();
+    return dateB - dateA;
+  });
+}
+
+function capWeakBroadBoardPending(jobs, stats) {
+  const sourceCounts = new Map();
+  const kept = [];
+  const dropped = [];
+
+  for (const job of sortPendingJobsForMigration(jobs)) {
+    const isWeakBroad = isBroadBoardJob(job) && (
+      String(job.triage_bucket || "") !== "review_ready" ||
+      Number(job.relevance_score || 0) < 8
+    );
+    if (!isWeakBroad) {
+      kept.push(job);
+      continue;
+    }
+
+    const sourceKey = getBroadBoardSourceKey(job);
+    const count = sourceCounts.get(sourceKey) || 0;
+    if (count >= BROAD_SOURCE_WEAK_CAP) {
+      dropped.push(job);
+      continue;
+    }
+    sourceCounts.set(sourceKey, count + 1);
+    kept.push(job);
+  }
+
+  if (dropped.length) {
+    stats.pending_dropped_by_weak_broad_cap += dropped.length;
+    appendExample(
+      stats,
+      dropped[0].id || "pending-cap",
+      "pending_cap",
+      `${dropped.length} weak broad-board records retained over cap`,
+      `capped at ${BROAD_SOURCE_WEAK_CAP} per broad source`
+    );
+  }
+
+  return sortPendingJobsForMigration(kept).slice(0, MAX_TOTAL_PENDING);
+}
+
 async function main() {
-  const stats = {
+  const activeStats = {
     records_scanned: 0,
-    pending_scanned: 0,
     workplace_fixes: 0,
     employment_type_fixes: 0,
     title_fixes: 0,
@@ -468,19 +603,37 @@ async function main() {
     skipped_manual_looking_fields: 0,
     examples: []
   };
+  const pendingStats = {
+    pending_scanned: 0,
+    workplace_fixes: 0,
+    employment_type_fixes: 0,
+    title_fixes: 0,
+    climate_apply_url_fixes: 0,
+    organization_fixes: 0,
+    description_fixes: 0,
+    skipped_manual_looking_fields: 0,
+    pending_dropped_by_weak_broad_cap: 0,
+    examples: []
+  };
 
   const records = await readJson(JOB_RECORDS_FILE, []);
   const pending = await readJson(PENDING_SYNCED_FILE, []);
+  const publicJobs = await readJson(JOBS_FILE, []);
 
   const nextRecords = (Array.isArray(records) ? records : []).map((record) => {
-    stats.records_scanned += 1;
-    return migrateJobRecord(record, stats);
+    activeStats.records_scanned += 1;
+    return migrateJobRecord(record, activeStats);
   });
 
-  const nextPending = (Array.isArray(pending) ? pending : []).map((job) => {
-    stats.pending_scanned += 1;
-    return migratePendingJob(job, stats);
+  const migratedPending = (Array.isArray(pending) ? pending : []).map((job) => {
+    pendingStats.pending_scanned += 1;
+    return {
+      ...migratePendingJob(job, pendingStats),
+      __pending_preserved: true
+    };
   });
+  const triagedPending = await triagePendingJobs(migratedPending, Array.isArray(publicJobs) ? publicJobs : [], { sources: [] });
+  const nextPending = capWeakBroadBoardPending(triagedPending.adminPendingJobs, pendingStats);
 
   if (WRITE) {
     await writeJsonIfChanged(JOB_RECORDS_FILE, nextRecords);
@@ -489,22 +642,41 @@ async function main() {
   }
 
   console.log(`mode: ${WRITE ? "write" : "dry-run"}`);
-  console.log(`records scanned: ${stats.records_scanned}`);
-  console.log(`pending scanned: ${stats.pending_scanned}`);
-  console.log(`workplace fixes: ${stats.workplace_fixes}`);
-  console.log(`employment type fixes: ${stats.employment_type_fixes}`);
-  console.log(`title fixes: ${stats.title_fixes}`);
-  console.log(`ClimateChangeJobs apply URL fixes: ${stats.climate_apply_url_fixes}`);
-  console.log(`organization fixes: ${stats.organization_fixes}`);
-  console.log(`description fixes: ${stats.description_fixes}`);
-  console.log(`skipped manual-looking fields: ${stats.skipped_manual_looking_fields}`);
-  appendFieldSalesExample(stats);
-  appendElementalExample(stats);
-  console.log("examples before/after:");
-  if (!stats.examples.length) {
+  console.log("active fixes:");
+  console.log(`records scanned: ${activeStats.records_scanned}`);
+  console.log(`workplace fixes: ${activeStats.workplace_fixes}`);
+  console.log(`employment type fixes: ${activeStats.employment_type_fixes}`);
+  console.log(`title fixes: ${activeStats.title_fixes}`);
+  console.log(`ClimateChangeJobs apply URL fixes: ${activeStats.climate_apply_url_fixes}`);
+  console.log(`organization fixes: ${activeStats.organization_fixes}`);
+  console.log(`description fixes: ${activeStats.description_fixes}`);
+  console.log(`skipped manual-looking fields: ${activeStats.skipped_manual_looking_fields}`);
+  console.log("pending fixes:");
+  console.log(`pending scanned: ${pendingStats.pending_scanned}`);
+  console.log(`workplace fixes: ${pendingStats.workplace_fixes}`);
+  console.log(`employment type fixes: ${pendingStats.employment_type_fixes}`);
+  console.log(`title fixes: ${pendingStats.title_fixes}`);
+  console.log(`broad-board apply URL fixes: ${pendingStats.climate_apply_url_fixes}`);
+  console.log(`organization fixes: ${pendingStats.organization_fixes}`);
+  console.log(`description fixes: ${pendingStats.description_fixes}`);
+  console.log(`skipped manual-looking fields: ${pendingStats.skipped_manual_looking_fields}`);
+  console.log(`pending after triage/caps: ${nextPending.length}`);
+  console.log(`pending dropped by weak broad-board cap: ${pendingStats.pending_dropped_by_weak_broad_cap}`);
+  appendFieldSalesExample(activeStats);
+  appendElementalExample(activeStats);
+  console.log("active examples before/after:");
+  if (!activeStats.examples.length) {
     console.log("- none");
   } else {
-    stats.examples.forEach((example) => {
+    activeStats.examples.forEach((example) => {
+      console.log(`- ${example.id} ${example.field}: "${example.before}" -> "${example.after}"`);
+    });
+  }
+  console.log("pending examples before/after:");
+  if (!pendingStats.examples.length) {
+    console.log("- none");
+  } else {
+    pendingStats.examples.forEach((example) => {
       console.log(`- ${example.id} ${example.field}: "${example.before}" -> "${example.after}"`);
     });
   }

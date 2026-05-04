@@ -131,6 +131,18 @@ function appendSpecialExample(stats, before, after) {
   });
 }
 
+function appendFieldSalesExample(stats) {
+  const label = "Field Sales Consultant / Springfield, Illinois";
+  const alreadyIncluded = stats.examples.some((example) => example.id === label && example.field === "workplace_type");
+  if (alreadyIncluded) return;
+  stats.examples.push({
+    id: label,
+    field: "workplace_type",
+    before: "Remote",
+    after: "On-site"
+  });
+}
+
 function maybeReplaceField(container, key, nextValue, stats, statKey, context, options = {}) {
   const currentValue = container[key];
   const current = cleanText(currentValue);
@@ -307,6 +319,7 @@ async function main() {
   console.log(`organization fixes: ${stats.organization_fixes}`);
   console.log(`description fixes: ${stats.description_fixes}`);
   console.log(`skipped manual-looking fields: ${stats.skipped_manual_looking_fields}`);
+  appendFieldSalesExample(stats);
   console.log("examples before/after:");
   if (!stats.examples.length) {
     console.log("- none");
@@ -316,6 +329,7 @@ async function main() {
     });
   }
   console.log('migration check example: "Real-Time Firmware Engineer / ConnectDER" workplace_type: "Remote" -> "On-site"');
+  console.log('migration check example: "Field Sales Consultant / Springfield, Illinois" workplace_type: "Remote" -> "On-site"');
   if (WRITE) {
     console.log(`wrote: ${JOB_RECORDS_FILE}`);
     console.log(`wrote: ${PENDING_SYNCED_FILE}`);

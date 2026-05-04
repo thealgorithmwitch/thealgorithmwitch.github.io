@@ -2,6 +2,7 @@ const fs = require("fs/promises");
 const path = require("path");
 const { readJobRecords } = require("./public-records");
 const { buildPublicJobsFromRecords, syncPublicJobsFromRecords } = require("./public-jobs");
+const { buildJobPagePathMap, cleanVisibleText } = require("./job-page-paths");
 const { normalizeEmploymentType, normalizeWorkplaceType } = require("./job-normalizer");
 
 const ROOT = path.resolve(__dirname, "..");
@@ -14,69 +15,6 @@ function escapeHtml(value) {
     .replace(/>/g, "&gt;")
     .replace(/"/g, "&quot;")
     .replace(/'/g, "&#39;");
-}
-
-function slugify(value) {
-  return String(value || "")
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-+|-+$/g, "")
-    .replace(/-{2,}/g, "-");
-}
-
-function cleanVisibleText(value) {
-  return String(value || "")
-    .replace(/\s*[>›»]+\s*/g, " ")
-    .replace(/\s+/g, " ")
-    .trim();
-}
-
-function buildJobSlug(job) {
-  return slugify(`${cleanVisibleText(job.title)}-${cleanVisibleText(job.organization)}`);
-}
-
-function buildIdSuffix(job) {
-  const normalizedId = slugify(job.id || "");
-  if (!normalizedId) return "job";
-  return normalizedId.slice(-8) || normalizedId;
-}
-
-function buildUniqueJobSlug(job, usedSlugs, collisions) {
-  const baseSlug = buildJobSlug(job) || buildIdSuffix(job);
-  let nextSlug = baseSlug;
-
-  if (!usedSlugs.has(nextSlug)) {
-    usedSlugs.set(nextSlug, String(job.id || ""));
-    return nextSlug;
-  }
-
-  const existingJobId = usedSlugs.get(nextSlug);
-  if (existingJobId === String(job.id || "")) {
-    return nextSlug;
-  }
-
-  collisions.push({
-    base_slug: baseSlug,
-    id: String(job.id || ""),
-    title: job.title,
-    organization: job.organization
-  });
-
-  const suffix = buildIdSuffix(job);
-  nextSlug = `${baseSlug}-${suffix}`;
-
-  if (!usedSlugs.has(nextSlug)) {
-    usedSlugs.set(nextSlug, String(job.id || ""));
-    return nextSlug;
-  }
-
-  let attempt = 2;
-  while (usedSlugs.has(`${nextSlug}-${attempt}`) && usedSlugs.get(`${nextSlug}-${attempt}`) !== String(job.id || "")) {
-    attempt += 1;
-  }
-  nextSlug = `${nextSlug}-${attempt}`;
-  usedSlugs.set(nextSlug, String(job.id || ""));
-  return nextSlug;
 }
 
 function truncate(value, max = 160) {
@@ -267,12 +205,12 @@ async function buildPagesFromRecords(records) {
       .map((fileName) => fs.unlink(path.join(PAGES_DIR, fileName)))
   );
 
-  const usedSlugs = new Map();
-  const collisions = [];
+  const { map: pagePathMap, collisions } = buildJobPagePathMap(jobs);
   let samplePagePath = "";
 
   for (const job of jobs) {
-    const slug = buildUniqueJobSlug(job, usedSlugs, collisions);
+    const relativePagePath = pagePathMap.get(String(job.id || "")) || "./pages/job.html";
+    const slug = path.basename(relativePagePath, ".html");
     const html = buildPage(job, slug);
     const pagePath = path.join(PAGES_DIR, `${slug}.html`);
     await fs.writeFile(pagePath, html, "utf8");
@@ -310,6 +248,6 @@ if (require.main === module) {
 }
 
 module.exports = {
-  buildJobSlug,
+  buildJobPagePathMap,
   buildPagesFromRecords
 };

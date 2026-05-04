@@ -1,10 +1,16 @@
 const { JOBS_FILE, writeJsonIfChanged } = require("./job-utils");
+const { buildJobPagePathMap } = require("./job-page-paths");
 const { resolveDisplayJobFromRecord, shouldShowPublicRecord } = require("./lifecycle-utils");
 
 function buildPublicJobsFromRecords(records) {
-  return (Array.isArray(records) ? records : [])
+  const publicJobs = (Array.isArray(records) ? records : [])
     .filter((record) => record && record.record_type === "job" && shouldShowPublicRecord(record))
     .map(resolveDisplayJobFromRecord);
+  const { map: pagePathMap } = buildJobPagePathMap(publicJobs);
+  return publicJobs.map((job) => ({
+    ...job,
+    page_url: pagePathMap.get(String(job.id || "")) || `./pages/${String(job.id || "job")}.html`
+  }));
 }
 
 function countPublishedJobRecords(records) {

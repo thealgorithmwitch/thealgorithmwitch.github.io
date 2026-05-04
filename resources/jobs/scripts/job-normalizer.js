@@ -113,6 +113,13 @@ const DESCRIPTION_NOISE_PATTERNS = [
   /https?:\/\/\S+/gi,
   /\s*[>›»]+\s*/g
 ];
+const SCHEMA_METADATA_PATTERNS = [
+  /\bWebPage\b/gi,
+  /\bReadAction\b/gi,
+  /\b[A-Za-z]{2,3}-[A-Za-z]{2}\b/g,
+  /\b\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?(?:Z|[+-]\d{2}:\d{2})\b/g,
+  /\|\s*[A-Z][A-Za-z0-9&.' -]+\s+WebPage\b/gi
+];
 
 function slugify(value) {
   return String(value || "")
@@ -203,7 +210,7 @@ function looksLikePhysicalLocation(value) {
   if (/^(?:remote|hybrid|united states|us|usa|nationwide|global|multiple locations)$/i.test(text)) {
     return false;
   }
-  if (/\b(?:remote|hybrid|work from home|distributed team|remote-first|anywhere|global|multiple locations|various locations|location listed on application)\b/i.test(text)) {
+  if (/\b(?:remote|hybrid|work from home|distributed team|remote-first|anywhere|global|multiple locations|various locations|location listed on application|worldwide)\b/i.test(text)) {
     return false;
   }
   if (/^[A-Za-z .'-]+,\s*[A-Z]{2}$/.test(text)) return true;
@@ -668,10 +675,34 @@ function extractParagraphs(value) {
     .filter(Boolean);
 }
 
+function stripSchemaMetadata(value) {
+  let next = String(value || "");
+  for (const pattern of SCHEMA_METADATA_PATTERNS) {
+    next = next.replace(pattern, " ");
+  }
+  next = next
+    .replace(/\|\s*\|+/g, "| ")
+    .replace(/\b(?:@context|@type)\b\s*:?\s*/gi, " ")
+    .replace(/\b(?:json-ld|schema\.org)\b/gi, " ");
+  return normalizeWhitespace(next);
+}
+
+function looksLikeSchemaMetadata(text) {
+  const normalized = normalizeWhitespace(String(text || ""));
+  if (!normalized) return false;
+  const metadataHits = [
+    /\bWebPage\b/i,
+    /\bReadAction\b/i,
+    /\b\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}/,
+    /\ben-US\b/i
+  ].filter((pattern) => pattern.test(normalized)).length;
+  return metadataHits >= 2;
+}
+
 function cleanDescriptionParagraph(paragraph, title = "") {
   const titlePattern = title ? new RegExp(`\\b${slugify(title).replace(/-/g, "[\\s\\W]*")}\\b`, "ig") : null;
   return normalizeWhitespace(
-    String(paragraph || "")
+    stripSchemaMetadata(String(paragraph || ""))
       .replace(/[>›»]+/g, " ")
       .replace(/\s*=\s*/g, " ")
       .replace(/&(amp|nbsp|quot|apos|#39|lt|gt);/gi, " ")
@@ -694,6 +725,7 @@ function paragraphLooksUseful(paragraph, title = "") {
   const cleaned = cleanDescriptionParagraph(paragraph, title);
   if (cleaned.length < 60) return false;
   if (!/[a-z]{3,}/i.test(cleaned)) return false;
+  if (looksLikeSchemaMetadata(cleaned)) return false;
   if (/^(apply|job title|department|location|reports to|supervises|duration)\b/i.test(cleaned)) return false;
   if (/^(previous|next|search jobs|job openings|applicant login|join talent community)\b/i.test(cleaned)) return false;
   if (/^(jobs search|green jobs network|climate change jobs|logo text|article|articles|news)\b/i.test(cleaned)) return false;
@@ -705,6 +737,7 @@ function isArticleLikeDescription(text) {
   const normalized = normalizeWhitespace(String(text || ""));
   if (!normalized) return false;
   if (/^jobs search\b/i.test(normalized)) return true;
+  if (looksLikeSchemaMetadata(normalized)) return true;
   if (/(?:\b\d+[mhdy]\s+ago\b|•\s*remote\s*•)/i.test(normalized) && !/[a-z]{3,}\s+(?:is|are|will|can|should|must|plans|coordinates|executes|supports|manages|builds|seeks|works|develops|leads|drives|partners)/i.test(normalized)) {
     return true;
   }
@@ -816,7 +849,7 @@ function normalizeDescription(description, options = {}) {
   const titlePattern = title ? new RegExp(`\\b${slugify(title).replace(/-/g, "[\\s\\W]*")}\\b`, "ig") : null;
   const rawDescription = normalizeWhitespace(stringifySafe(description) || cleanFlattenedText(description));
   const cleaned = normalizeWhitespace(
-    stripHtml(rawDescription)
+    stripSchemaMetadata(stripHtml(rawDescription))
       .replace(/[>›»]+/g, " ")
       .replace(/\s*=\s*/g, " ")
       .replace(/&(amp|nbsp|quot|apos|#39|lt|gt);/gi, " ")
@@ -872,10 +905,11 @@ function normalizeDescription(description, options = {}) {
     !/[a-z]{3,}\s+(?:is|are|will|can|should|must|plans|coordinates|executes|supports|manages|builds|seeks|works|develops|leads|drives|partners)/i.test(
       cleaned
     );
+  const dominatedBySchemaMetadata = looksLikeSchemaMetadata(rawDescription) && !selected.length;
 
   return {
     raw_description: rawDescription,
-    description: dominatedByNoise || isArticleLikeDescription(selected.join(" ").trim() || cleaned) ? "" : selected.join(" ").trim() || cleaned
+    description: dominatedByNoise || dominatedBySchemaMetadata || isArticleLikeDescription(selected.join(" ").trim() || cleaned) ? "" : selected.join(" ").trim() || cleaned
   };
 }
 
@@ -891,7 +925,7 @@ function extractDescriptionText(job = {}) {
   let fallbackText = "";
 
   for (const candidate of directCandidates) {
-    const text = normalizeWhitespace(stringifySafe(candidate) || cleanFlattenedText(candidate));
+    const text = stripSchemaMetadata(normalizeWhitespace(stringifySafe(candidate) || cleanFlattenedText(candidate)));
     if (text.length >= 80) {
       fallbackText = text;
       break;
@@ -899,7 +933,7 @@ function extractDescriptionText(job = {}) {
   }
 
   if (!fallbackText) {
-    fallbackText = cleanFlattenedText({
+    fallbackText = stripSchemaMetadata(cleanFlattenedText({
       description: job.description,
       raw_description: job.raw_description,
       descriptionPlain: job.descriptionPlain,
@@ -910,7 +944,7 @@ function extractDescriptionText(job = {}) {
       team: job.team,
       department: job.department,
       raw_payload: job.raw_payload
-    });
+    }));
   }
 
   if (!seededParagraph) return fallbackText;

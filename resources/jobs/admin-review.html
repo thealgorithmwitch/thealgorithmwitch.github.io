@@ -1804,28 +1804,45 @@
       }
     
       const token = getStoredToken();
-      const url = new URL(JOBS_BACKEND_URL);
-    
-      url.searchParams.set("action", action);
-      url.searchParams.set("token", token);
-      url.searchParams.set("adminToken", token);
-    
-      Object.entries(extra || {}).forEach(([key, value]) => {
-        url.searchParams.set(
-          key,
-          value && typeof value === "object" ? JSON.stringify(value) : String(value)
-        );
-      });
-    
+      const isLargeWrite = action === "queueLocalJobAction";
       let response;
       let responseText = "";
     
       try {
-        response = await fetch(url.toString(), {
-          method: "GET",
-          cache: "no-store",
-          credentials: "omit"
-        });
+        if (isLargeWrite) {
+          response = await fetch(JOBS_BACKEND_URL, {
+            method: "POST",
+            headers: {
+              "Content-Type": "text/plain;charset=utf-8"
+            },
+            cache: "no-store",
+            credentials: "omit",
+            body: JSON.stringify({
+              action,
+              token,
+              adminToken: token,
+              ...(extra || {})
+            })
+          });
+        } else {
+          const url = new URL(JOBS_BACKEND_URL);
+          url.searchParams.set("action", action);
+          url.searchParams.set("token", token);
+          url.searchParams.set("adminToken", token);
+
+          Object.entries(extra || {}).forEach(([key, value]) => {
+            url.searchParams.set(
+              key,
+              value && typeof value === "object" ? JSON.stringify(value) : String(value)
+            );
+          });
+
+          response = await fetch(url.toString(), {
+            method: "GET",
+            cache: "no-store",
+            credentials: "omit"
+          });
+        }
         responseText = await response.text();
       } catch (error) {
         const requestError = new Error(error.message || `${action} failed.`);

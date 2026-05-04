@@ -2792,31 +2792,32 @@
       window.location.reload();
     });
 
-    async function initializeAdminReview() {
-      try {
-        state.localJobReview = getLocalReviewState();
-        loadTriageSummary();
-
-        if (!isBackendConfigured() || !hasToken()) {
-          showConsoleState();
-          activateTab("jobs");
-          setStatus("Running in local-only admin mode. Apps Script review folders remain unavailable until a backend token is configured.", false);
-          return;
-        }
-
-        const sessionIsValid = await validateAdminSession();
-        if (!sessionIsValid) return;
-        showConsoleState();
-        activateTab("jobs");
-      } catch (error) {
-        console.error("[admin-review] failed to initialize admin review", error);
-        showConsoleState();
-        document.getElementById("panel-jobs").innerHTML = `<div class="empty-state">Admin review failed to initialize. Check the console for details.</div>`;
-        document.getElementById("count-jobs").textContent = "0 pending";
-        triageGeneratedAt.textContent = "Triage snapshot failed to load";
-        setStatus(error.message || "Admin review failed to initialize.", true);
+  async function initializeAdminReview() {
+    try {
+      state.localJobReview = getLocalReviewState();
+      loadTriageSummary();
+  
+      showConsoleState();
+      activateTab("jobs");
+  
+      if (!isBackendConfigured() || !hasToken()) {
+        setStatus("Running in local-only admin mode. Apps Script review folders remain unavailable until a backend token is configured.", false);
+        return;
       }
+  
+      validateAdminSession().catch((error) => {
+        console.warn("[admin-review] backend auth unavailable; local console remains active", error);
+        setStatus("Local review console is active. Backend admin session could not be validated.", true);
+      });
+    } catch (error) {
+      console.error("[admin-review] failed to initialize admin review", error);
+      showConsoleState();
+      document.getElementById("panel-jobs").innerHTML = `<div class="empty-state">Admin review failed to initialize. Check the console for details.</div>`;
+      document.getElementById("count-jobs").textContent = "0 pending";
+      triageGeneratedAt.textContent = "Triage snapshot failed to load";
+      setStatus(error.message || "Admin review failed to initialize.", true);
     }
+  }
 
     initializeAdminReview();
   </script>

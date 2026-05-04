@@ -6,6 +6,25 @@ function cleanText(value) {
   return String(value || "").replace(/\s+/g, " ").trim();
 }
 
+const GENERIC_BOARD_TITLES = new Set(["manager", "analyst", "associate", "director", "engineer"]);
+const BOARD_ORGANIZATION_BLOCKLIST = new Set([
+  "climatechangejobs",
+  "climate change jobs",
+  "greenjobsearch",
+  "green jobs search",
+  "elemental impact"
+]);
+const ELEMENTAL_ORGANIZATION_HINTS = [
+  { pattern: /\bfervo(?:'s)?\b/i, organization: "Fervo Energy", confidence: "high", reason: "elemental_text_fervo" },
+  { pattern: /\bconnectder\b/i, organization: "ConnectDER", confidence: "high", reason: "elemental_text_connectder" },
+  { pattern: /\bshifted energy\b/i, organization: "Shifted Energy", confidence: "high", reason: "elemental_text_shifted_energy" },
+  { pattern: /\bremix\b/i, organization: "Remix", confidence: "high", reason: "elemental_text_remix" },
+  { pattern: /\bproterra\b/i, organization: "Proterra", confidence: "high", reason: "elemental_text_proterra" },
+  { pattern: /\bvia\b/i, organization: "VIA", confidence: "medium", reason: "elemental_text_via" },
+  { pattern: /\bhived\b/i, organization: "HIVED", confidence: "high", reason: "elemental_text_hived" },
+  { pattern: /\bqcells\b/i, organization: "Qcells", confidence: "high", reason: "elemental_text_qcells" }
+];
+
 function matchRule(title, patterns) {
   return patterns.find((pattern) => pattern.test(title)) || null;
 }
@@ -43,7 +62,7 @@ function titleCaseSlug(value) {
 function looksLikeOrganization(value) {
   const text = cleanText(value);
   if (!text) return false;
-  if (normalizeText(text) === "elemental impact") return false;
+  if (BOARD_ORGANIZATION_BLOCKLIST.has(normalizeText(text))) return false;
   if (/^https?:\/\//i.test(text)) return false;
   if (/\b(?:job|jobs|career|careers|apply|application|details?|opportunity|opening|position|role|remote|hybrid|full[- ]?time|part[- ]?time|engineer|manager|director|analyst|coordinator|developer|designer|specialist|officer|associate|lead)\b/i.test(text)) {
     return false;
@@ -162,6 +181,84 @@ function extractOrganizationFromOriginalUrl(urlValue) {
   return null;
 }
 
+function extractOrganizationFromTextHints(job = {}, hintSet = []) {
+  const text = cleanText([
+    job.title,
+    job.description,
+    job.raw_description,
+    job.notes,
+    typeof job.raw_payload === "string" ? job.raw_payload : JSON.stringify(job.raw_payload || {})
+  ].join(" "));
+  if (!text) return null;
+  for (const hint of hintSet) {
+    if (hint.pattern.test(text)) {
+      return {
+        organization: hint.organization,
+        confidence: hint.confidence || "high",
+        reason: hint.reason || "text_hint"
+      };
+    }
+  }
+  return null;
+}
+
+function isGenericBoardTitle(title) {
+  return GENERIC_BOARD_TITLES.has(normalizeText(title));
+}
+
+function normalizeInferredBoardTitle(value) {
+  return cleanText(value)
+    .replace(/^the\s+/i, "")
+    .replace(/^the\s*,\s*/i, "")
+    .replace(/\b(?:the\s*,\s*|the\s+,\s*)/gi, "")
+    .replace(/^,\s*/, "")
+    .replace(/\s+,/g, ",")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function extractEmbeddedRolePhrases(job = {}) {
+  const sources = [
+    job.raw_description,
+    job.description,
+    typeof job.raw_payload === "string" ? job.raw_payload : JSON.stringify(job.raw_payload || {})
+  ];
+  return sources
+    .map((value) => cleanText(value))
+    .filter(Boolean)
+    .flatMap((text) => text.split(/[\n\r]|(?<=[.!?])\s+/))
+    .map((part) => cleanText(part))
+    .filter(Boolean);
+}
+
+function extractFullerTitleFromText(job = {}) {
+  const genericTitle = cleanText(job.title);
+  if (!isGenericBoardTitle(genericTitle)) return "";
+  const titleWord = normalizeText(genericTitle);
+  const patterns = [
+    new RegExp(`\\bThe\\s+(${genericTitle.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}\\s*,\\s*[A-Z][A-Za-z0-9&+/'() -]{3,80})\\b`, "i"),
+    new RegExp(`\\b(${genericTitle.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}\\s*,\\s*[A-Z][A-Za-z0-9&+/'() -]{3,80})\\b`, "i"),
+    new RegExp(`\\b(${genericTitle.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}\\s+of\\s+[A-Z][A-Za-z0-9&+/'() -]{3,80})\\b`, "i")
+  ];
+
+  for (const phrase of extractEmbeddedRolePhrases(job)) {
+    if (!new RegExp(`\\b${titleWord}\\b`, "i").test(phrase)) continue;
+    for (const pattern of patterns) {
+      const match = phrase.match(pattern);
+      if (!match || !match[1]) continue;
+      const inferred = normalizeInferredBoardTitle(match[1])
+        .replace(/\b(?:owns|leads|supports|manages|will|is responsible for)\b[\s\S]*$/i, "")
+        .trim();
+      if (!inferred) continue;
+      if (normalizeText(inferred) === titleWord) continue;
+      if (!normalizeText(inferred).startsWith(titleWord)) continue;
+      return inferred;
+    }
+  }
+
+  return "";
+}
+
 function extractClimateChangeJobsOrganizationFromAltText(job = {}) {
   const text = cleanText([
     job.raw_description,
@@ -210,6 +307,89 @@ function extractClimateChangeJobsApplyUrl(job = {}) {
   return "";
 }
 
+function extractBoardApplyUrl(job = {}, options = {}) {
+  const blockedHosts = (options.blockedHosts || []).map((value) => normalizeText(value));
+  const allowedLabelPattern = options.allowedLabelPattern || /\b(?:apply online|apply now|apply|view job|company job page)\b/i;
+  const candidates = [
+    job.apply_url,
+    job.applyUrl,
+    job.original_url,
+    job.originalUrl,
+    job.source_url,
+    job.sourceUrl,
+    job.notes,
+    job.raw_description,
+    job.description,
+    job.raw_payload
+  ];
+
+  const strings = candidates.flatMap((candidate) => {
+    if (typeof candidate === "string") return [candidate];
+    if (!candidate) return [];
+    return [JSON.stringify(candidate)];
+  }).filter(Boolean);
+
+  for (const text of strings) {
+    const matches = text.matchAll(/(?:apply online|apply now|apply|view job|company job page)[^h]{0,120}(https?:\/\/[^\s"'<>]+)/gi);
+    for (const match of matches) {
+      const url = cleanText(match[1]);
+      const parsed = safeUrl(url);
+      if (!parsed) continue;
+      if (blockedHosts.some((blockedHost) => parsed.hostname.toLowerCase().includes(blockedHost))) continue;
+      if (isImageAssetUrl(url)) continue;
+      return url;
+    }
+  }
+
+  const urls = strings.flatMap((text) => extractUrlsFromText(text));
+  const uniqueUrls = Array.from(new Set(urls.map((url) => cleanText(url)).filter(Boolean)));
+
+  for (const text of strings) {
+    if (!allowedLabelPattern.test(text)) continue;
+    for (const url of uniqueUrls) {
+      const parsed = safeUrl(url);
+      if (!parsed) continue;
+      if (blockedHosts.some((blockedHost) => parsed.hostname.toLowerCase().includes(blockedHost))) continue;
+      if (parsed.hostname.toLowerCase().includes("cloudfront.net")) continue;
+      if (parsed.hostname.toLowerCase().includes("amazonaws.com") && isImageAssetUrl(url)) continue;
+      if (isImageAssetUrl(url)) continue;
+      return url;
+    }
+  }
+
+  return "";
+}
+
+function extractGreenJobSearchApplyUrl(job = {}) {
+  return extractBoardApplyUrl(job, {
+    blockedHosts: ["greenjobsearch.org", "climatechangejobs.com"]
+  });
+}
+
+function extractGreenJobSearchOrganizationFromText(job = {}) {
+  const text = cleanText([
+    job.raw_description,
+    job.description,
+    job.raw_payload
+  ].join(" "));
+  if (!text) return null;
+
+  const patterns = [
+    /\b(?:about|join|at)\s+([A-Z][A-Za-z0-9&+.'()/-]*(?:\s+[A-Z][A-Za-z0-9&+.'()/-]*){0,4})\b/,
+    /\b([A-Z][A-Za-z0-9&+.'()/-]*(?:\s+[A-Z][A-Za-z0-9&+.'()/-]*){0,4})\s+(?:is hiring|seeks|is looking for|is growing)\b/
+  ];
+
+  for (const pattern of patterns) {
+    const match = text.match(pattern);
+    if (!match) continue;
+    const candidate = cleanText(match[1]);
+    if (!looksLikeOrganization(candidate)) continue;
+    return { organization: candidate, confidence: "medium", reason: "greenjobsearch_text_hint" };
+  }
+
+  return null;
+}
+
 const BOARD_SOURCE_CONFIGS = [
   {
     id: "elemental-impact",
@@ -234,6 +414,12 @@ const BOARD_SOURCE_CONFIGS = [
     name: "ClimateChangeJobs",
     urls: ["https://climatechangejobs.com/jobs"],
     matchers: ["climatechangejobs.com/jobs"]
+  },
+  {
+    id: "greenjobsearch",
+    name: "GreenJobSearch",
+    urls: ["https://greenjobsearch.org/"],
+    matchers: ["greenjobsearch.org", "green jobs search", "greenjobsearch"]
   }
 ];
 
@@ -300,6 +486,89 @@ function resolveBoardSourceAttribution(job = {}) {
       parseWarning: applyUrl ? "" : "ClimateChangeJobs apply URL missing",
       triageBucket: applyUrl ? "" : "needs_cleanup",
       triageReason: applyUrl ? "" : "ClimateChangeJobs apply URL missing"
+    };
+  }
+
+  if (boardConfig.id === "greenjobsearch") {
+    const applyUrl = extractGreenJobSearchApplyUrl(job);
+    const boardUrl = cleanText(job.source_url || job.sourceUrl || boardSourceUrl);
+    const chosenApplyUrl = applyUrl || boardUrl;
+    const candidates = [
+      extractOrganizationFromTitle(job.title),
+      extractOrganizationFromEmbeddedFields(job),
+      extractOrganizationFromDescriptionMetadata(job),
+      extractGreenJobSearchOrganizationFromText(job),
+      extractOrganizationFromOriginalUrl(chosenApplyUrl)
+    ].filter(Boolean);
+    const chosen = candidates.find((candidate) => candidate.confidence === "high") || candidates[0] || null;
+    const organization = cleanText(chosen && chosen.organization);
+
+    if (!organization || !looksLikeOrganization(organization)) {
+      return {
+        sourceName: boardConfig.name,
+        sourceUrl: boardUrl || boardSourceUrl,
+        organization: "Unknown organization",
+        organizationConfidence: "low",
+        applyUrl: chosenApplyUrl,
+        originalUrl: chosenApplyUrl,
+        parseWarning: applyUrl ? "GreenJobSearch organization uncertain" : "GreenJobSearch apply URL missing",
+        triageBucket: "needs_cleanup",
+        triageReason: applyUrl ? "GreenJobSearch organization uncertain" : "GreenJobSearch apply URL missing"
+      };
+    }
+
+    return {
+      sourceName: boardConfig.name,
+      sourceUrl: boardUrl || boardSourceUrl,
+      organization,
+      organizationConfidence: chosen.confidence,
+      applyUrl: chosenApplyUrl,
+      originalUrl: chosenApplyUrl,
+      parseWarning: applyUrl ? "" : "GreenJobSearch apply URL missing",
+      triageBucket: applyUrl ? "" : "needs_cleanup",
+      triageReason: applyUrl ? "" : "GreenJobSearch apply URL missing"
+    };
+  }
+
+  if (boardConfig.id === "elemental-impact") {
+    const applyUrl = cleanText(job.apply_url || job.applyUrl || job.original_url || job.originalUrl || "");
+    const candidates = [
+      extractOrganizationFromTitle(job.title),
+      extractOrganizationFromTextHints(job, ELEMENTAL_ORGANIZATION_HINTS),
+      extractOrganizationFromEmbeddedFields(job),
+      extractOrganizationFromDescriptionMetadata(job),
+      extractOrganizationFromOriginalUrl(applyUrl)
+    ].filter(Boolean);
+    const chosen = candidates.find((candidate) => candidate.confidence === "high") || candidates[0] || null;
+    const organization = cleanText(chosen && chosen.organization);
+    const repairedTitle = extractFullerTitleFromText(job);
+
+    if (!organization || !looksLikeOrganization(organization) || normalizeText(organization) === "elemental impact") {
+      return {
+        sourceName: boardConfig.name,
+        sourceUrl: boardSourceUrl,
+        organization: "Unknown organization",
+        organizationConfidence: "low",
+        title: repairedTitle,
+        applyUrl,
+        originalUrl: applyUrl,
+        parseWarning: "Elemental Impact organization uncertain",
+        triageBucket: "needs_cleanup",
+        triageReason: "Elemental Impact organization uncertain"
+      };
+    }
+
+    return {
+      sourceName: boardConfig.name,
+      sourceUrl: boardSourceUrl,
+      organization,
+      organizationConfidence: chosen.confidence,
+      title: repairedTitle,
+      applyUrl,
+      originalUrl: applyUrl,
+      parseWarning: "",
+      triageBucket: "",
+      triageReason: ""
     };
   }
 

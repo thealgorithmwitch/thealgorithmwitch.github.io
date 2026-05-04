@@ -123,6 +123,7 @@ const SUSPICIOUS_TITLE_PATTERNS = [
 ];
 
 const NON_ROLE_URL_PATTERNS = [
+  /twitter\.com\/intent/i,
   /linkedin\.com\/(?:sharearticle|company)/i,
   /facebook\.com\/sharer/i,
   /x\.com\/intent/i,
@@ -477,9 +478,7 @@ function countJobsWithPay(jobs) {
   return jobs.filter((job) => Boolean(job.salary || job.raw_salary || job.salary_min || job.salary_max)).length;
 }
 
-async function triagePendingJobs(pendingJobs, publicJobs, scrapeReport, options = {}) {
-  const preserveExisting = options.preserveExistingPending === true;
-  const existingIds = new Set(options.existingPendingIds || []);
+async function triagePendingJobs(pendingJobs, publicJobs, scrapeReport) {
   const orgRules = await readOrganizationRules();
   const overrides = await readPendingOverrides();
   const seenUrls = new Set(
@@ -513,23 +512,6 @@ async function triagePendingJobs(pendingJobs, publicJobs, scrapeReport, options 
       };
     } else {
       result = classifyPendingJob(job, { seenUrls });
-
-      // 🔒 PROTECT EXISTING PENDING JOBS
-    if (
-      preserveExisting &&
-      existingIds.has(String(job.id || "")) &&
-      result.bucket === "rejected_noise"
-    ) {
-      result = {
-        bucket: "needs_cleanup",
-        job: {
-          ...job,
-          triage_bucket: "needs_cleanup",
-          triage_reason: "preserved_existing_pending"
-        },
-        reason: "preserved_existing_pending"
-      };
-    }
       if (override.triage_bucket === "needs_cleanup") {
         result.bucket = "needs_cleanup";
         result.job = {

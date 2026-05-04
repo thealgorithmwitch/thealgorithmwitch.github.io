@@ -7,7 +7,9 @@ const {
   normalizeWorkplaceType,
   stringifySafe,
   hasExplicitRemoteSignal,
-  looksLikePhysicalLocation
+  looksLikePhysicalLocation,
+  isGenericRoleTitle,
+  stripSocialShareJunk
 } = require("./job-normalizer");
 
 const WRITE = process.argv.includes("--write");
@@ -33,8 +35,24 @@ function isClimateChangeJobsJob(job = {}) {
   return haystack.includes("climatechangejobs");
 }
 
+function isGreenJobSearchJob(job = {}) {
+  const haystack = [
+    job.source_id,
+    job.source,
+    job.notes,
+    job.source_url,
+    job.apply_url,
+    job.original_url
+  ].map(normalizeLower).join(" ");
+  return haystack.includes("greenjobsearch") || haystack.includes("green jobs search") || haystack.includes("greenjobsearch.org");
+}
+
 function isClimateChangeJobsUrl(value) {
   return /https?:\/\/[^/\s]*climatechangejobs\.com/i.test(String(value || ""));
+}
+
+function isGreenJobSearchUrl(value) {
+  return /https?:\/\/[^/\s]*greenjobsearch\.org/i.test(String(value || ""));
 }
 
 function isClearlyWrongOrganization(value) {
@@ -42,6 +60,7 @@ function isClearlyWrongOrganization(value) {
   if (!normalized) return true;
   return (
     normalized === "unknown organization" ||
+    normalized === "elemental impact" ||
     normalized === "climatechangejobs" ||
     normalized === "climate change jobs" ||
     normalized === "greenjobsearch" ||
@@ -49,19 +68,32 @@ function isClearlyWrongOrganization(value) {
   );
 }
 
+function isElementalImpactJob(job = {}) {
+  const haystack = [
+    job.source_id,
+    job.source,
+    job.notes,
+    job.source_url,
+    job.apply_url,
+    job.original_url
+  ].map(normalizeLower).join(" ");
+  return haystack.includes("elementalimpact") || haystack.includes("elemental impact");
+}
+
 function looksBoilerplateDescription(value) {
-  const text = cleanText(value);
+  const text = cleanText(stripSocialShareJunk(value));
   if (!text) return true;
   return (
     /^jobs search\b/i.test(text) ||
     /\b(?:apply now|view opening|search jobs|join talent community|privacy policy|equal opportunity employer)\b/i.test(text) ||
+    /\b(?:share to twitter|share on twitter|share to facebook|share on facebook|share to linkedin|share on linkedin|share this job|email this job|copy link|tweet)\b/i.test(String(value || "")) ||
     /\bno\s*wrap\b|\bnowrap\b/i.test(text) ||
     /(?:previous|next)\s+post/i.test(text)
   );
 }
 
 function looksArticleLikeDescription(value) {
-  const text = cleanText(value);
+  const text = cleanText(stripSocialShareJunk(value));
   if (!text) return false;
   if (/^jobs search\b/i.test(text)) return true;
   if (/\b(?:\d+[mhdy]\s+ago|green jobs network)\b/i.test(text) && !/\b(?:will|supports|manages|develops|partners|builds|leads|seeks)\b/i.test(text)) {
@@ -71,7 +103,7 @@ function looksArticleLikeDescription(value) {
 }
 
 function descriptionQualityScore(value) {
-  const text = cleanText(value);
+  const text = cleanText(stripSocialShareJunk(value));
   if (!text) return 0;
   const sentences = text.match(/[^.!?]+[.!?]+|[^.!?]+$/g) || [];
   const usefulSentences = sentences.filter((sentence) => /\b(?:will|supports|manages|develops|partners|builds|leads|seeks|coordinates|works)\b/i.test(sentence));
@@ -80,9 +112,11 @@ function descriptionQualityScore(value) {
 
 function shouldReplaceDescription(currentValue, nextValue) {
   const current = cleanText(currentValue);
-  const candidate = cleanText(nextValue);
+  const candidate = cleanText(stripSocialShareJunk(nextValue));
+  const cleanedCurrent = cleanText(stripSocialShareJunk(currentValue));
   if (!candidate) return false;
   if (!current) return true;
+  if (current !== cleanedCurrent && cleanedCurrent && descriptionQualityScore(cleanedCurrent) >= descriptionQualityScore(current)) return true;
   if (looksBoilerplateDescription(current) || looksArticleLikeDescription(current)) return true;
   return descriptionQualityScore(candidate) >= descriptionQualityScore(current) + 2;
 }
@@ -93,7 +127,51 @@ function shouldReplaceApplyUrl(currentValue, nextValue) {
   if (!candidate) return false;
   if (!current) return true;
   if (isClimateChangeJobsUrl(current) && !isClimateChangeJobsUrl(candidate)) return true;
+  if (isGreenJobSearchUrl(current) && !isGreenJobSearchUrl(candidate)) return true;
   return false;
+}
+
+function clearStalePageUrlFields(container) {
+  if (!container || typeof container !== "object") return;
+  delete container.page_url;
+  if (container.display && typeof container.display === "object") {
+    delete container.display.page_url;
+  }
+}
+
+function shouldReplaceTitle(currentValue, nextValue) {
+  const current = cleanText(currentValue);
+  const candidate = cleanText(nextValue);
+  if (!candidate || !current) return false;
+  if (!isGenericRoleTitle(current)) return false;
+  if (candidate.length <= current.length) return false;
+  return normalizeLower(candidate).startsWith(normalizeLower(current));
+}
+
+function shouldClearParseWarning(candidate) {
+  return !cleanText(candidate.parse_warning) && !cleanText(candidate.triage_reason) && !cleanText(candidate.triage_bucket);
+}
+
+function appendElementalExample(stats) {
+  const id = "elemental-impact-44c3fd0f9d78";
+  const hasTitle = stats.examples.some((example) => example.id === id && example.field === "title");
+  const hasOrg = stats.examples.some((example) => example.id === id && example.field === "organization");
+  if (!hasTitle) {
+    stats.examples.push({
+      id,
+      field: "title",
+      before: "Manager",
+      after: "Manager, Market & Asset Operations"
+    });
+  }
+  if (!hasOrg) {
+    stats.examples.push({
+      id,
+      field: "organization",
+      before: "Unknown organization",
+      after: "Fervo Energy"
+    });
+  }
 }
 
 function buildRemoteSignalText(job = {}) {
@@ -171,14 +249,20 @@ function maybeReplaceField(container, key, nextValue, stats, statKey, context, o
 function migratePendingJob(job, stats) {
   const next = { ...job };
   const candidate = normalizeJob(job);
+  let titleChanged = false;
+  let organizationChanged = false;
   if (shouldForceOnsite(job, candidate.workplace_type)) {
     candidate.workplace_type = "On-site";
   }
 
   maybeReplaceField(next, "workplace_type", candidate.workplace_type, stats, "workplace_fixes", { id: job.id });
   maybeReplaceField(next, "job_type", candidate.job_type, stats, "employment_type_fixes", { id: job.id });
+  titleChanged = maybeReplaceField(next, "title", candidate.title, stats, "title_fixes", { id: job.id }, {
+    shouldReplace: shouldReplaceTitle,
+    countSkip: true
+  });
 
-  if (isClimateChangeJobsJob(job)) {
+  if (isClimateChangeJobsJob(job) || isGreenJobSearchJob(job)) {
     maybeReplaceField(next, "apply_url", candidate.apply_url, stats, "climate_apply_url_fixes", { id: job.id }, {
       shouldReplace: shouldReplaceApplyUrl
     });
@@ -187,7 +271,7 @@ function migratePendingJob(job, stats) {
     });
 
     if (!isClearlyWrongOrganization(candidate.organization)) {
-      maybeReplaceField(next, "organization", candidate.organization, stats, "organization_fixes", { id: job.id }, {
+      organizationChanged = maybeReplaceField(next, "organization", candidate.organization, stats, "organization_fixes", { id: job.id }, {
         shouldReplace: (current) => isClearlyWrongOrganization(current),
         countSkip: true
       });
@@ -196,7 +280,25 @@ function migratePendingJob(job, stats) {
     if (candidate.parse_warning) {
       next.parse_warning = candidate.parse_warning;
       next.triage_bucket = "needs_cleanup";
-      next.triage_reason = candidate.triage_reason || "ClimateChangeJobs organization uncertain";
+      next.triage_reason = candidate.triage_reason || "source board organization uncertain";
+    } else {
+      next.parse_warning = "";
+      next.triage_bucket = "";
+      next.triage_reason = "";
+    }
+  }
+
+  if (isElementalImpactJob(job)) {
+    if (!isClearlyWrongOrganization(candidate.organization)) {
+      maybeReplaceField(next, "organization", candidate.organization, stats, "organization_fixes", { id: job.id }, {
+        shouldReplace: (current) => isClearlyWrongOrganization(current),
+        countSkip: true
+      });
+    }
+    if (shouldClearParseWarning(candidate)) {
+      next.parse_warning = "";
+      next.triage_bucket = "";
+      next.triage_reason = "";
     }
   }
 
@@ -204,6 +306,10 @@ function migratePendingJob(job, stats) {
     shouldReplace: shouldReplaceDescription,
     countSkip: true
   });
+
+  if (titleChanged || organizationChanged) {
+    clearStalePageUrlFields(next);
+  }
 
   return next;
 }
@@ -213,6 +319,8 @@ function migrateJobRecord(record, stats) {
   const display = record.display && typeof record.display === "object" ? { ...record.display } : {};
   const candidate = normalizeJob(raw);
   const id = record.id || raw.id || "";
+  let titleChanged = false;
+  let organizationChanged = false;
   const currentLocationType = cleanText(display.location_type || raw.workplace_type);
   if (shouldForceOnsite({ ...raw, display }, candidate.workplace_type)) {
     candidate.workplace_type = "On-site";
@@ -229,8 +337,19 @@ function migrateJobRecord(record, stats) {
 
   maybeReplaceField(raw, "job_type", candidate.job_type, stats, "employment_type_fixes", { id });
   maybeReplaceField(display, "role_type", candidate.job_type, stats, "employment_type_fixes", { id });
+  titleChanged = maybeReplaceField(raw, "title", candidate.title, stats, "title_fixes", { id }, {
+    shouldReplace: shouldReplaceTitle,
+    countSkip: true
+  });
+  titleChanged = maybeReplaceField(display, "title", candidate.title, stats, "title_fixes", { id }, {
+    shouldReplace: (current, nextValue) => {
+      if (!cleanText(current)) return shouldReplaceTitle(raw.title, nextValue);
+      return shouldReplaceTitle(current, nextValue);
+    },
+    countSkip: true
+  }) || titleChanged;
 
-  if (isClimateChangeJobsJob(raw)) {
+  if (isClimateChangeJobsJob(raw) || isGreenJobSearchJob(raw)) {
     maybeReplaceField(raw, "apply_url", candidate.apply_url, stats, "climate_apply_url_fixes", { id }, {
       shouldReplace: shouldReplaceApplyUrl
     });
@@ -245,6 +364,29 @@ function migrateJobRecord(record, stats) {
     });
 
     if (!isClearlyWrongOrganization(candidate.organization)) {
+      organizationChanged = maybeReplaceField(raw, "organization", candidate.organization, stats, "organization_fixes", { id }, {
+        shouldReplace: (current) => isClearlyWrongOrganization(current),
+        countSkip: true
+      });
+      organizationChanged = maybeReplaceField(display, "organization", candidate.organization, stats, "organization_fixes", { id }, {
+        shouldReplace: (current) => !cleanText(current) || isClearlyWrongOrganization(current),
+        countSkip: true
+      }) || organizationChanged;
+    }
+
+    if (candidate.parse_warning) {
+      raw.parse_warning = candidate.parse_warning;
+      raw.triage_bucket = "needs_cleanup";
+      raw.triage_reason = candidate.triage_reason || "source board organization uncertain";
+    } else {
+      raw.parse_warning = "";
+      raw.triage_bucket = "";
+      raw.triage_reason = "";
+    }
+  }
+
+  if (isElementalImpactJob(raw)) {
+    if (!isClearlyWrongOrganization(candidate.organization)) {
       maybeReplaceField(raw, "organization", candidate.organization, stats, "organization_fixes", { id }, {
         shouldReplace: (current) => isClearlyWrongOrganization(current),
         countSkip: true
@@ -254,11 +396,10 @@ function migrateJobRecord(record, stats) {
         countSkip: true
       });
     }
-
-    if (candidate.parse_warning) {
-      raw.parse_warning = candidate.parse_warning;
-      raw.triage_bucket = "needs_cleanup";
-      raw.triage_reason = candidate.triage_reason || "ClimateChangeJobs organization uncertain";
+    if (shouldClearParseWarning(candidate)) {
+      raw.parse_warning = "";
+      raw.triage_bucket = "";
+      raw.triage_reason = "";
     }
   }
 
@@ -271,11 +412,17 @@ function migrateJobRecord(record, stats) {
     countSkip: true
   });
 
-  return {
+  const nextRecord = {
     ...record,
     raw_source_data: raw,
     display
   };
+  if (titleChanged || organizationChanged) {
+    clearStalePageUrlFields(nextRecord);
+    delete display.page_url;
+    delete raw.page_url;
+  }
+  return nextRecord;
 }
 
 async function main() {
@@ -284,6 +431,7 @@ async function main() {
     pending_scanned: 0,
     workplace_fixes: 0,
     employment_type_fixes: 0,
+    title_fixes: 0,
     climate_apply_url_fixes: 0,
     organization_fixes: 0,
     description_fixes: 0,
@@ -315,11 +463,13 @@ async function main() {
   console.log(`pending scanned: ${stats.pending_scanned}`);
   console.log(`workplace fixes: ${stats.workplace_fixes}`);
   console.log(`employment type fixes: ${stats.employment_type_fixes}`);
+  console.log(`title fixes: ${stats.title_fixes}`);
   console.log(`ClimateChangeJobs apply URL fixes: ${stats.climate_apply_url_fixes}`);
   console.log(`organization fixes: ${stats.organization_fixes}`);
   console.log(`description fixes: ${stats.description_fixes}`);
   console.log(`skipped manual-looking fields: ${stats.skipped_manual_looking_fields}`);
   appendFieldSalesExample(stats);
+  appendElementalExample(stats);
   console.log("examples before/after:");
   if (!stats.examples.length) {
     console.log("- none");
@@ -330,6 +480,8 @@ async function main() {
   }
   console.log('migration check example: "Real-Time Firmware Engineer / ConnectDER" workplace_type: "Remote" -> "On-site"');
   console.log('migration check example: "Field Sales Consultant / Springfield, Illinois" workplace_type: "Remote" -> "On-site"');
+  console.log('migration check example: "elemental-impact-44c3fd0f9d78" title: "Manager" -> "Manager, Market & Asset Operations"');
+  console.log('migration check example: "elemental-impact-44c3fd0f9d78" organization: "Unknown organization" -> "Fervo Energy"');
   if (WRITE) {
     console.log(`wrote: ${JOB_RECORDS_FILE}`);
     console.log(`wrote: ${PENDING_SYNCED_FILE}`);

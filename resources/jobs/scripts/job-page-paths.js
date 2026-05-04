@@ -62,14 +62,18 @@ function buildUniqueJobSlug(job, usedSlugs, collisions = []) {
   return nextSlug;
 }
 
+function buildJobPagePath(job, usedSlugs, collisions = []) {
+  const slug = buildUniqueJobSlug(job, usedSlugs, collisions);
+  return `./pages/${slug}.html`;
+}
+
 function buildJobPagePathMap(jobs = []) {
   const usedSlugs = new Map();
   const collisions = [];
   const map = new Map();
 
   for (const job of Array.isArray(jobs) ? jobs : []) {
-    const slug = buildUniqueJobSlug(job, usedSlugs, collisions);
-    map.set(String(job && job.id || ""), `./pages/${slug}.html`);
+    map.set(String(job && job.id || ""), buildJobPagePath(job, usedSlugs, collisions));
   }
 
   return { map, collisions };
@@ -77,6 +81,7 @@ function buildJobPagePathMap(jobs = []) {
 
 module.exports = {
   buildIdSuffix,
+  buildJobPagePath,
   buildJobPagePathMap,
   buildJobSlug,
   buildUniqueJobSlug,

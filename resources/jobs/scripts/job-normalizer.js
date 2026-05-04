@@ -113,6 +113,25 @@ const DESCRIPTION_NOISE_PATTERNS = [
   /https?:\/\/\S+/gi,
   /\s*[>›»]+\s*/g
 ];
+const SOCIAL_SHARE_TEXT_PATTERNS = [
+  /\bshare to twitter\b/gi,
+  /\bshare on twitter\b/gi,
+  /\bshare to facebook\b/gi,
+  /\bshare on facebook\b/gi,
+  /\bshare to linkedin\b/gi,
+  /\bshare on linkedin\b/gi,
+  /\bemail this job\b/gi,
+  /\bshare this job\b/gi,
+  /\bcopy link\b/gi,
+  /\btweet\b/gi
+];
+const SOCIAL_SHARE_URL_PATTERNS = [
+  /https?:\/\/(?:www\.)?twitter\.com\/intent[^\s"'<>]*/gi,
+  /https?:\/\/(?:www\.)?x\.com\/intent[^\s"'<>]*/gi,
+  /https?:\/\/(?:www\.)?facebook\.com\/sharer[^\s"'<>]*/gi,
+  /https?:\/\/(?:www\.)?linkedin\.com\/shareArticle[^\s"'<>]*/gi,
+  /mailto:\?subject=[^\s"'<>]*/gi
+];
 const SCHEMA_METADATA_PATTERNS = [
   /\bWebPage\b/gi,
   /\bReadAction\b/gi,
@@ -146,6 +165,32 @@ function normalizeWhitespace(value) {
     .replace(/\u00a0/g, " ")
     .replace(/\s+/g, " ")
     .trim();
+}
+
+function stripSocialShareJunk(value) {
+  let next = String(value || "");
+  for (const pattern of SOCIAL_SHARE_URL_PATTERNS) {
+    next = next.replace(pattern, " ");
+  }
+  for (const pattern of SOCIAL_SHARE_TEXT_PATTERNS) {
+    next = next.replace(pattern, " ");
+  }
+  next = next
+    .replace(/\bfacebook\b(?=\s*(?:share|sharer)?\b)/gi, " ")
+    .replace(/\blinkedin\b(?=\s*(?:share|sharearticle)?\b)/gi, " ");
+  return normalizeWhitespace(next);
+}
+
+function isSocialShareUrl(value) {
+  const text = String(value || "").trim();
+  if (!text) return false;
+  return SOCIAL_SHARE_URL_PATTERNS.some((pattern) => pattern.test(text));
+}
+
+function sanitizeRoleUrl(value) {
+  const text = normalizeWhitespace(String(value || ""));
+  if (!text || isSocialShareUrl(text)) return "";
+  return text;
 }
 
 function normalizeLooseToken(value) {
@@ -323,6 +368,10 @@ function normalizeTitle(value, organization = "") {
 
   text = removeTitleOrganizationSuffix(normalizeWhitespace(text), organization);
   return normalizeWhitespace(text);
+}
+
+function isGenericRoleTitle(title = "") {
+  return ["manager", "analyst", "associate", "director", "engineer"].includes(normalizeWhitespace(String(title || "")).toLowerCase());
 }
 
 function stringifySafe(value) {
@@ -661,7 +710,7 @@ function normalizeComparableText(value) {
 }
 
 function extractParagraphs(value) {
-  const raw = decodeHtmlEntities(String(value || ""))
+  const raw = decodeHtmlEntities(stripSocialShareJunk(String(value || "")))
     .replace(/<style[\s\S]*?<\/style>/gi, " ")
     .replace(/<script[\s\S]*?<\/script>/gi, " ")
     .replace(/<\/h[1-6]>\s*(?=<p|<div|<section|<article|<li|<ul|<ol)/gi, "\n\n")
@@ -676,7 +725,7 @@ function extractParagraphs(value) {
 }
 
 function stripSchemaMetadata(value) {
-  let next = String(value || "");
+  let next = stripSocialShareJunk(String(value || ""));
   for (const pattern of SCHEMA_METADATA_PATTERNS) {
     next = next.replace(pattern, " ");
   }
@@ -712,6 +761,8 @@ function cleanDescriptionParagraph(paragraph, title = "") {
       .replace(/\b(?:next|previous)\b(?:\s*post)?[:\s-]*/gi, " ")
       .replace(/\b(?:apply online|apply now|apply today|submit application|learn more|read more|view job|view opening|back to jobs|search jobs|job openings|applicant login|join talent community)\b/gi, " ")
       .replace(/\b(?:jobs search|green jobs network|climate change jobs|article|articles|news|posted by|logo text)\b/gi, " ")
+      .replace(/\b(?:share to|share on)\s+(?:twitter|facebook|linkedin)\b/gi, " ")
+      .replace(/\b(?:share this job|email this job|copy link|tweet)\b/gi, " ")
       .replace(/\bnew\b(?=\s+[A-Z][a-z])/g, " ")
       .replace(/\b(?:job title|department|location|reports to|supervises|duration)\s*:\s*/gi, " ")
       .replace(/\b(?:posted|job id|requisition id|req id|employment type|workplace type)\s*:\s*[^.]{0,120}/gi, " ")
@@ -847,7 +898,7 @@ function removeBoilerplateSentences(sentences) {
 function normalizeDescription(description, options = {}) {
   const title = normalizeWhitespace(options.title || "");
   const titlePattern = title ? new RegExp(`\\b${slugify(title).replace(/-/g, "[\\s\\W]*")}\\b`, "ig") : null;
-  const rawDescription = normalizeWhitespace(stringifySafe(description) || cleanFlattenedText(description));
+  const rawDescription = stripSocialShareJunk(normalizeWhitespace(stringifySafe(description) || cleanFlattenedText(description)));
   const cleaned = normalizeWhitespace(
     stripSchemaMetadata(stripHtml(rawDescription))
       .replace(/[>›»]+/g, " ")
@@ -860,6 +911,8 @@ function normalizeDescription(description, options = {}) {
       .replace(/\bpost navigation\b[^.]{0,200}/gi, " ")
       .replace(/\b(?:jobs search|green jobs network|climate change jobs|logo text)\b/gi, " ")
       .replace(/\b(?:apply online|apply now|apply today|submit application|learn more|read more|view job|view opening|back to jobs)\b/gi, " ")
+      .replace(/\b(?:share to|share on)\s+(?:twitter|facebook|linkedin)\b/gi, " ")
+      .replace(/\b(?:share this job|email this job|copy link|tweet)\b/gi, " ")
       .replace(
         /\b(?:job title|department|location|reports to|supervises)\s*:\s*[\s\S]*?(?=(?:job title|department|location|reports to|supervises|duration|context|scope|role overview|about us|what you(?:'|’)ll do)\s*:|$)/gi,
         " "
@@ -925,7 +978,7 @@ function extractDescriptionText(job = {}) {
   let fallbackText = "";
 
   for (const candidate of directCandidates) {
-    const text = stripSchemaMetadata(normalizeWhitespace(stringifySafe(candidate) || cleanFlattenedText(candidate)));
+    const text = stripSchemaMetadata(stripSocialShareJunk(normalizeWhitespace(stringifySafe(candidate) || cleanFlattenedText(candidate))));
     if (text.length >= 80) {
       fallbackText = text;
       break;
@@ -933,7 +986,7 @@ function extractDescriptionText(job = {}) {
   }
 
   if (!fallbackText) {
-    fallbackText = stripSchemaMetadata(cleanFlattenedText({
+    fallbackText = stripSchemaMetadata(stripSocialShareJunk(cleanFlattenedText({
       description: job.description,
       raw_description: job.raw_description,
       descriptionPlain: job.descriptionPlain,
@@ -944,7 +997,7 @@ function extractDescriptionText(job = {}) {
       team: job.team,
       department: job.department,
       raw_payload: job.raw_payload
-    }));
+    })));
   }
 
   if (!seededParagraph) return fallbackText;
@@ -973,9 +1026,11 @@ function resolveNumericField(value) {
 function normalizeJob(input = {}) {
   const sourceAttribution = resolveBoardSourceAttribution(input) || null;
   const organization = safeStringField(sourceAttribution?.organization || input.organization);
-  const title = normalizeTitle(input.title, organization);
-  const applyUrl = safeStringField(sourceAttribution?.applyUrl || input.apply_url || input.applyUrl);
-  const originalUrl = safeStringField(sourceAttribution?.originalUrl || input.original_url || input.originalUrl || applyUrl || input.source_url || input.sourceUrl);
+  const attributedTitle = safeStringField(sourceAttribution?.title);
+  const title = normalizeTitle(attributedTitle || input.title, organization);
+  const applyUrl = sanitizeRoleUrl(safeStringField(sourceAttribution?.applyUrl || input.apply_url || input.applyUrl));
+  const originalUrl = sanitizeRoleUrl(safeStringField(sourceAttribution?.originalUrl || input.original_url || input.originalUrl || applyUrl || input.source_url || input.sourceUrl));
+  const sourceUrl = sanitizeRoleUrl(safeStringField(sourceAttribution?.sourceUrl || input.source_url || input.sourceUrl));
   const location = safeStringField(input.location);
   const salaryText = extractSalaryText(input);
   const salaryShape = parseSalaryRange(salaryText, location);
@@ -1035,7 +1090,7 @@ function normalizeJob(input = {}) {
     function: safeStringField(input.function || input.role_function),
     experience: safeStringField(input.experience),
     source: safeStringField(sourceAttribution?.sourceName || input.source, "Manual"),
-    source_url: safeStringField(sourceAttribution?.sourceUrl || input.source_url || input.sourceUrl),
+    source_url: sourceUrl,
     apply_url: applyUrl,
     original_url: originalUrl,
     date_posted: isValidDate(datePosted) ? new Date(datePosted).toISOString().slice(0, 10) : todayIso(),
@@ -1184,6 +1239,8 @@ module.exports = {
   flattenTextValues,
   hasExplicitHybridSignal,
   hasExplicitRemoteSignal,
+  isSocialShareUrl,
+  isGenericRoleTitle,
   isValidDate,
   hasRoleSignal,
   isClearlyNotJobTitle,
@@ -1204,5 +1261,6 @@ module.exports = {
   stableHash,
   stringifySafe,
   stripHtml,
+  stripSocialShareJunk,
   todayIso
 };

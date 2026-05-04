@@ -1716,6 +1716,7 @@
     function openProfileModal(profileId) {
       const profile = state.profiles.find((item) => item.id === profileId && isPublishedRecord(item));
       if (!profile) return;
+      resetProfileModalContent();
       const focusAreas = Array.isArray(profile.focus_areas)
         ? profile.focus_areas.map((item) => cleanVisibleText(item)).filter(Boolean)
         : cleanVisibleText(profile.focus_areas || "").split(",").map((item) => item.trim()).filter(Boolean);
@@ -1743,7 +1744,7 @@
         portfolioUrl,
         linkedInUrl,
         email,
-        publicContact: profile.public_contact === true
+        publicContact: parseBooleanLike(profile.public_contact)
       });
       if (prompts.length) {
         ui.profileModalPrompt.style.display = "block";
@@ -1783,7 +1784,7 @@
         resumeFile,
         coverLetterFile
       });
-      if (profile.public_contact === true && email) {
+      if (parseBooleanLike(profile.public_contact) && email) {
         ui.profileModalContact.style.display = "block";
         ui.profileModalContact.innerHTML = `<div class="profile-modal-label">Contact</div><div class="profile-modal-text">Email: <a href="mailto:${escapeHtml(email)}" style="color: var(--accent-chartreuse);">${escapeHtml(email)}</a></div>`;
       } else {
@@ -1797,9 +1798,20 @@
     function closeProfileModal() {
       ui.profileModal.classList.remove("visible");
       ui.profileModal.setAttribute("aria-hidden", "true");
+      resetProfileModalContent();
+    }
+
+    function resetProfileModalContent() {
+      ui.profileModalName.textContent = "";
+      ui.profileModalRole.textContent = "";
+      ui.profileModalLocation.textContent = "";
       ui.profileModalMeta.innerHTML = "";
       ui.profileModalLinks.innerHTML = "";
+      ui.profileModalBio.innerHTML = "";
       ui.profileModalProject.innerHTML = "";
+      ui.profileModalPrompt.innerHTML = "";
+      ui.profileModalPrompt.style.display = "none";
+      ui.profileModalTags.innerHTML = "";
       ui.profileModalActions.innerHTML = "";
       ui.profileModalContact.innerHTML = "";
       ui.profileModalContact.style.display = "none";
@@ -1816,8 +1828,8 @@
     }
 
     function buildProfilePrimaryCta(profile) {
-      const portfolioUrl = normalizeProfileUrl(profile.portfolio_url || profile.website_url || profile.website || "");
-      const linkedInUrl = normalizeProfileUrl(profile.linkedin_url || profile.linkedin || "");
+      const portfolioUrl = normalizeProfileUrl(profile.portfolio_url || profile.website_url || profile.website || "", "website");
+      const linkedInUrl = normalizeProfileUrl(profile.linkedin_url || profile.linkedin || "", "linkedin");
       if (portfolioUrl) {
         return `<a class="btn-primary" href="${escapeHtml(portfolioUrl)}" target="_blank" rel="noopener noreferrer" data-talent-click="portfolio" data-profile-id="${escapeHtml(profile.id)}" data-profile-name="${escapeHtml(profile.name)}">${iconSvg("globe")} View Website</a>`;
       }
@@ -1827,12 +1839,40 @@
       return "";
     }
 
-    function normalizeProfileUrl(value) {
-      const text = String(value || "").trim();
+    function parseBooleanLike(value) {
+      if (typeof value === "boolean") return value;
+      return /^(true|1|yes|public|published)$/i.test(String(value || "").trim());
+    }
+
+    function normalizeProfileUrl(value, type) {
+      const text = String(value || "")
+        .trim()
+        .replace(/^(?:website|portfolio|linkedin|email)\s*:\s*/i, "");
       if (!text) return "";
-      if (/^(?:https?:|mailto:)/i.test(text)) return text;
-      if (/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(text)) return `mailto:${text}`;
-      if (/^(?:www\.)?[a-z0-9.-]+\.[a-z]{2,}(?:\/|$)/i.test(text)) return `https://${text.replace(/^\/+/, "")}`;
+      if (type === "email" || /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(text)) return `mailto:${text.replace(/^mailto:/i, "")}`;
+      if (/^mailto:/i.test(text)) return text;
+      if (/^linkedin$/i.test(type || "") || /linkedin/i.test(text)) {
+        const normalizedLinkedIn = text
+          .replace(/^@/, "")
+          .replace(/^linkedin\.com\//i, "")
+          .replace(/^www\.linkedin\.com\//i, "")
+          .replace(/^https?:\/\/(?:www\.)?linkedin\.com\//i, "");
+        if (/^(?:in|company|school)\//i.test(normalizedLinkedIn)) {
+          return `https://www.linkedin.com/${normalizedLinkedIn}`;
+        }
+        if (/^[a-z0-9-]+$/i.test(normalizedLinkedIn)) {
+          return `https://www.linkedin.com/in/${normalizedLinkedIn}`;
+        }
+      }
+      if (/^(?:https?:\/\/|www\.)/i.test(text)) {
+        return /^https?:\/\//i.test(text) ? text : `https://${text}`;
+      }
+      if (/^(?:\/|[a-z0-9.-]+\.[a-z]{2,})(?:\/|$)/i.test(text)) {
+        return `https://${text.replace(/^\/+/, "")}`;
+      }
+      if (/^[a-z0-9-]+$/i.test(text) && type === "linkedin") {
+        return `https://www.linkedin.com/in/${text}`;
+      }
       return text;
     }
 
@@ -1842,14 +1882,15 @@
     }
 
     function renderProfileModalLinks(profile, urls) {
+      ui.profileModalLinks.innerHTML = "";
       ui.profileModalLinks.innerHTML = buildProfileModalIconLinks(profile, urls);
     }
 
     function buildProfileModalIconLinks(profile, urls) {
       const actions = [];
-      const portfolioUrl = normalizeProfileUrl(urls.portfolioUrl);
-      const linkedInUrl = normalizeProfileUrl(urls.linkedInUrl);
-      const emailHref = normalizeProfileUrl(urls.email);
+      const portfolioUrl = normalizeProfileUrl(urls.portfolioUrl, "website");
+      const linkedInUrl = normalizeProfileUrl(urls.linkedInUrl, "linkedin");
+      const emailHref = normalizeProfileUrl(urls.email, "email");
       if (portfolioUrl) {
         actions.push(buildProfileModalIconLink({
           href: portfolioUrl,
@@ -1986,10 +2027,10 @@
 
       try {
         const [recordsResponse, jobsResponse, profilesResponse, employersResponse] = await Promise.all([
-          fetch("./job-records.json", { cache: "no-store" }).catch(() => null),
-          fetch("./jobs.json", { cache: "no-store" }),
-          fetch("./talent-profiles.json", { cache: "no-store" }).catch(() => null),
-          fetch("./employers.json", { cache: "no-store" }).catch(() => null)
+          fetch(`./job-records.json?ts=${Date.now()}`, { cache: "no-store" }).catch(() => null),
+          fetch(`./jobs.json?ts=${Date.now()}`, { cache: "no-store" }),
+          fetch(`./talent-profiles.json?ts=${Date.now()}`, { cache: "no-store" }).catch(() => null),
+          fetch(`./employers.json?ts=${Date.now()}`, { cache: "no-store" }).catch(() => null)
         ]);
         if (!jobsResponse.ok) throw new Error(`HTTP ${jobsResponse.status}`);
 

@@ -656,6 +656,7 @@
   <script>
     const JOBS_BACKEND_URL = window.JOBS_BACKEND_CONFIG?.backendUrl || "";
     const TOKEN_STORAGE_KEY = "jobs_admin_token";
+    const SESSION_EXPIRED_MESSAGE = "Session expired — please log in again.";
     const TRIAGE_SUMMARY_URL = "./pending-triage-summary.json";
     const LOCAL_PENDING_URL = "./pending-synced-jobs.json";
     const LOCAL_JOB_RECORDS_URL = "./job-records.json";
@@ -964,9 +965,9 @@
     async function loadTriageSummary() {
       try {
         const [pendingResponse, recordsResponse, summaryResponse] = await Promise.all([
-          fetch(LOCAL_PENDING_URL, { cache: "no-store" }),
-          fetch(LOCAL_JOB_RECORDS_URL, { cache: "no-store" }),
-          fetch(TRIAGE_SUMMARY_URL, { cache: "no-store" })
+          fetch(buildSnapshotUrl(LOCAL_PENDING_URL), { cache: "no-store" }),
+          fetch(buildSnapshotUrl(LOCAL_JOB_RECORDS_URL), { cache: "no-store" }),
+          fetch(buildSnapshotUrl(TRIAGE_SUMMARY_URL), { cache: "no-store" })
         ]);
         if (!pendingResponse.ok || !recordsResponse.ok) throw new Error("Local JSON counts unavailable");
 
@@ -997,7 +998,8 @@
             ]);
             backendQueuedCount = (Array.isArray(queueResult.items) ? queueResult.items : []).filter((item) => String(item.status || "").toLowerCase() === "queued").length;
             backendApprovedArchiveCount = String(Array.isArray(approvedResult.items) ? approvedResult.items.length : 0);
-          } catch (_error) {
+          } catch (error) {
+            if (error.code === "AUTH_EXPIRED") return;
             backendQueuedCount = 0;
             backendApprovedArchiveCount = "—";
           }
@@ -1079,9 +1081,7 @@
 
     async function loadLocalPendingJobs(forceReload) {
       if (state.localJobsLoaded && !forceReload) return;
-      const response = await fetch(LOCAL_PENDING_URL, { cache: "no-store" });
-      if (!response.ok) throw new Error(`HTTP ${response.status}`);
-      const items = await response.json();
+      const items = await fetchJsonSnapshot(LOCAL_PENDING_URL);
       state.localJobs = Array.isArray(items) ? items : [];
       state.localJobsLoaded = true;
       loadLocalPendingFilters(state.localJobs);
@@ -1089,27 +1089,21 @@
 
     async function loadLocalActiveJobRecords(forceReload) {
       if (state.activeJobRecordsLoaded && !forceReload) return;
-      const response = await fetch(LOCAL_JOB_RECORDS_URL, { cache: "no-store" });
-      if (!response.ok) throw new Error(`HTTP ${response.status}`);
-      const items = await response.json();
+      const items = await fetchJsonSnapshot(LOCAL_JOB_RECORDS_URL);
       state.activeJobRecords = Array.isArray(items) ? items : [];
       state.activeJobRecordsLoaded = true;
     }
 
     async function loadLocalActiveTalent(forceReload) {
       if (state.activeTalentProfilesLoaded && !forceReload) return;
-      const response = await fetch(LOCAL_TALENT_URL, { cache: "no-store" });
-      if (!response.ok) throw new Error(`HTTP ${response.status}`);
-      const items = await response.json();
+      const items = await fetchJsonSnapshot(LOCAL_TALENT_URL);
       state.activeTalentProfiles = Array.isArray(items) ? items : [];
       state.activeTalentProfilesLoaded = true;
     }
 
     async function loadLocalActiveEmployers(forceReload) {
       if (state.activeEmployersLoaded && !forceReload) return;
-      const response = await fetch(LOCAL_EMPLOYERS_URL, { cache: "no-store" });
-      if (!response.ok) throw new Error(`HTTP ${response.status}`);
-      const items = await response.json();
+      const items = await fetchJsonSnapshot(LOCAL_EMPLOYERS_URL);
       state.activeEmployers = Array.isArray(items) ? items : [];
       state.activeEmployersLoaded = true;
     }
@@ -1294,18 +1288,19 @@
           : rawValue === null || rawValue === undefined
             ? ""
             : String(rawValue);
+        const fieldId = buildScopedFieldId("pending-jobs", recordId, key);
         if (inputType === "textarea") {
           return `
             <div class="summary-row">
-              <label for="${recordId}-${key}">${escapeHtml(labelText)}</label>
-              <textarea id="${recordId}-${key}" data-job-edit-field="${escapeHtml(key)}">${escapeHtml(value)}</textarea>
+              <label for="${fieldId}">${escapeHtml(labelText)}</label>
+              <textarea id="${fieldId}" data-job-edit-field="${escapeHtml(key)}">${escapeHtml(value)}</textarea>
             </div>
           `;
         }
         return `
           <div class="summary-row">
-            <label for="${recordId}-${key}">${escapeHtml(labelText)}</label>
-            <input id="${recordId}-${key}" type="${escapeHtml(inputType || "text")}" data-job-edit-field="${escapeHtml(key)}" value="${escapeHtml(value)}">
+            <label for="${fieldId}">${escapeHtml(labelText)}</label>
+            <input id="${fieldId}" type="${escapeHtml(inputType || "text")}" data-job-edit-field="${escapeHtml(key)}" value="${escapeHtml(value)}">
           </div>
         `;
       }).join("");
@@ -1460,24 +1455,27 @@
               }))
               .filter((item) => item.editedRecord)
           };
-      queueLocalJobAction(payload).then((result) => {
-        selectedIds.forEach((id) => {
-          state.localJobReview.actionsById[id] = {
-            ...(state.localJobReview.actionsById[id] || {}),
-            action
-          };
-        });
-        if (action === "publish_selected") {
-          applyOptimisticPublishSuccess(selectedJobs, "publish_selected");
-        }
-        if (action === "hide_organization" || action === "reject_all_from_organization") {
-          selectedJobs.forEach((job) => {
-            if (!state.localJobReview.hiddenOrganizations.includes(String(job.organization || ""))) {
-              state.localJobReview.hiddenOrganizations.push(String(job.organization || ""));
-            }
+      queueAdminAction(payload).then(async (result) => {
+        const optimisticUpdate = () => {
+          selectedIds.forEach((id) => {
+            state.localJobReview.actionsById[id] = {
+              ...(state.localJobReview.actionsById[id] || {}),
+              action
+            };
           });
-        }
-        setLocalReviewState();
+          if (action === "publish_selected") {
+            applyOptimisticPublishSuccess(selectedJobs, "publish_selected");
+          }
+          if (action === "hide_organization" || action === "reject_all_from_organization") {
+            selectedJobs.forEach((job) => {
+              if (!state.localJobReview.hiddenOrganizations.includes(String(job.organization || ""))) {
+                state.localJobReview.hiddenOrganizations.push(String(job.organization || ""));
+              }
+            });
+          }
+          setLocalReviewState();
+        };
+        await refreshUiAfterAdminAction(["jobs", "jobs-active"], optimisticUpdate);
         const message = result.mode === "backend"
           ? `Queued ${action} for ${selectedIds.length} local pending jobs in Apps Script and mirrored locally.`
           : `Queued ${action} for ${selectedIds.length} local pending jobs in local fallback. Export ${LOCAL_JOB_ACTION_EXPORT_FILENAME} and run apply-admin-actions to persist it.`;
@@ -1630,6 +1628,12 @@
       window.localStorage.removeItem(TOKEN_STORAGE_KEY);
     }
 
+    function clearAdminSessionState() {
+      clearStoredToken();
+      state.loadedTabs.clear();
+      state.items = {};
+    }
+
     function isBackendConfigured() {
       return Boolean(JOBS_BACKEND_URL.trim());
     }
@@ -1664,11 +1668,32 @@
       showLoginMessage("");
     }
 
+    function expireAdminSession(message) {
+      clearAdminSessionState();
+      showLoginState(message || SESSION_EXPIRED_MESSAGE);
+      showLoginMessage(message || SESSION_EXPIRED_MESSAGE);
+      console.warn("[admin-review] auth session cleared", {
+        reason: message || SESSION_EXPIRED_MESSAGE
+      });
+    }
+
+    function buildSnapshotUrl(url) {
+      const suffix = url.includes("?") ? "&" : "?";
+      return `${url}${suffix}ts=${Date.now()}`;
+    }
+
+    async function fetchJsonSnapshot(url) {
+      const response = await fetch(buildSnapshotUrl(url), { cache: "no-store" });
+      if (!response.ok) throw new Error(`HTTP ${response.status}`);
+      return response.json();
+    }
+
     async function requestAdmin(action, extra) {
       if (!canUseBackendAdmin()) {
         throw new Error("Apps Script admin backend is unavailable in this session.");
       }
       const token = getStoredToken();
+      console.log("[admin-review] auth token used:", token ? "present" : "missing");
       const payload = Object.assign(
         {
           action,
@@ -1678,30 +1703,73 @@
         extra || {}
       );
 
-      const response = await fetch(JOBS_BACKEND_URL, {
-        method: "POST",
-        body: JSON.stringify(payload)
-      });
-      const data = await response.json();
+      let response;
+      let responseText = "";
+      try {
+        response = await fetch(JOBS_BACKEND_URL, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Accept": "application/json",
+            "Authorization": `Bearer ${token}`
+          },
+          credentials: "omit",
+          body: JSON.stringify(payload)
+        });
+        responseText = await response.text();
+      } catch (error) {
+        const requestError = new Error(error.message || `${action} failed.`);
+        requestError.code = "REQUEST_FAILED";
+        requestError.allowLocalFallback = true;
+        throw requestError;
+      }
+
+      let data = {};
+      try {
+        data = responseText ? JSON.parse(responseText) : {};
+      } catch (_error) {
+        data = {};
+      }
 
       if (!response.ok || !data.ok) {
-        if (data && /unauthorized/i.test(String(data.error || ""))) {
-          clearStoredToken();
-          state.loadedTabs.clear();
-          state.items = {};
-          showLoginState("Incorrect password. Try again.");
+        const isAuthFailure = response.status === 401 ||
+          response.status === 403 ||
+          /unauthorized|forbidden/i.test(String(data.error || ""));
+        if (isAuthFailure) {
+          const authError = new Error(SESSION_EXPIRED_MESSAGE);
+          authError.code = "AUTH_EXPIRED";
+          authError.httpStatus = response.status || 401;
+          expireAdminSession(SESSION_EXPIRED_MESSAGE);
+          throw authError;
         }
-        throw new Error(data && data.error ? data.error : `${action} failed.`);
+        const apiError = new Error(data && data.error ? data.error : `${action} failed.`);
+        apiError.code = "BACKEND_ERROR";
+        apiError.httpStatus = response.status || 500;
+        apiError.allowLocalFallback = false;
+        throw apiError;
       }
 
       return data;
     }
 
-    async function queueLocalJobAction(payload) {
+    async function validateAdminSession() {
+      if (!isBackendConfigured() || !hasToken()) return false;
+      try {
+        await requestAdmin("validateAdminToken");
+        return true;
+      } catch (error) {
+        if (error.code !== "AUTH_EXPIRED") {
+          setStatus(error.message || "Unable to validate admin session.", true);
+        }
+        return false;
+      }
+    }
+
+    async function queueAdminAction(payload) {
       if (canUseBackendAdmin()) {
         try {
           const queued = await requestAdmin("queueLocalJobAction", payload);
-          console.log("[admin-review] queueLocalJobAction backend success", {
+          console.log("[admin-review] backend queue success", {
             operation: payload.operation,
             actionId: queued && queued.id ? queued.id : "",
             jobIds: payload.ids || [],
@@ -1711,27 +1779,51 @@
           enqueueLocalAction(payload, "mirrored");
           return { mode: "backend" };
         } catch (error) {
-          console.error("[admin-review] queueLocalJobAction backend failure", {
+          if (error.code === "AUTH_EXPIRED") {
+            console.warn("[admin-review] backend queue blocked by expired auth", {
+              operation: payload.operation,
+              reason: error.message || SESSION_EXPIRED_MESSAGE
+            });
+            throw error;
+          }
+          if (!error.allowLocalFallback) {
+            console.error("[admin-review] backend queue failed without fallback", {
+              operation: payload.operation,
+              reason: error.message || "unknown backend error"
+            });
+            throw error;
+          }
+          console.warn("[admin-review] local fallback used", {
             operation: payload.operation,
-            jobIds: payload.ids || [],
             recordId: payload.recordId || payload.id || "",
-            changedFields: payload.changed_fields || [],
-            error: error.message || String(error)
+            reason: error.message || "request failure"
           });
           enqueueLocalAction(payload, "queued");
           downloadLocalActionsFile(false);
-          return { mode: "local", warning: error.message || "Backend queue failed. Saved locally instead." };
+          return { mode: "local", warning: error.message || "Backend request failed. Saved locally instead." };
         }
       }
-      console.log("[admin-review] queueLocalJobAction local fallback", {
+      console.warn("[admin-review] local fallback used", {
         operation: payload.operation,
-        jobIds: payload.ids || [],
         recordId: payload.recordId || payload.id || "",
-        changedFields: payload.changed_fields || []
+        reason: isBackendConfigured() ? "missing token" : "backend not configured"
       });
       enqueueLocalAction(payload, "queued");
       downloadLocalActionsFile(false);
-      return { mode: "local" };
+      return { mode: "local", warning: isBackendConfigured() ? "Missing admin token." : "Backend is not configured." };
+    }
+
+    async function refreshUiAfterAdminAction(tabKeys, optimisticUpdate) {
+      const uniqueTabs = Array.from(new Set((tabKeys || []).filter(Boolean)));
+      const reloaders = [];
+      if (uniqueTabs.includes("jobs")) reloaders.push(loadLocalPendingJobs(true));
+      if (uniqueTabs.includes("jobs-active")) reloaders.push(loadLocalActiveJobRecords(true));
+      if (uniqueTabs.includes("talent-active")) reloaders.push(loadLocalActiveTalent(true));
+      if (uniqueTabs.includes("featured-employers-active")) reloaders.push(loadLocalActiveEmployers(true));
+      await Promise.all(reloaders);
+      if (typeof optimisticUpdate === "function") optimisticUpdate();
+      uniqueTabs.forEach((tabKey) => renderTab(tabKey));
+      await loadTriageSummary();
     }
 
     function buildEditedFieldList(editedRecord, prefix) {
@@ -1797,6 +1889,10 @@
         .join("");
     }
 
+    function buildScopedFieldId(scope, recordId, key) {
+      return `${scope}-${recordId}-${key}`;
+    }
+
     function buildEditableFields(tabKey, record, recordId) {
       const raw = Object.assign({}, record, getRecordSources(record).rawJson);
       const fieldMap = {
@@ -1859,18 +1955,19 @@
         if (hydrated === "") missingKeys.push(key);
         const value = normalizeHydrationValue(hydrated);
         const inputType = type || (key.includes("email") ? "email" : key.includes("url") ? "url" : key.includes("salary") ? "number" : "text");
+        const fieldId = buildScopedFieldId(`review-${tabKey}`, recordId, key);
         if (inputType === "textarea") {
           return `
             <div class="summary-row">
-              <label for="${recordId}-${key}">${escapeHtml(labelText)}</label>
-              <textarea id="${recordId}-${key}" data-edit-field="${escapeHtml(key)}">${escapeHtml(value)}</textarea>
+              <label for="${fieldId}">${escapeHtml(labelText)}</label>
+              <textarea id="${fieldId}" data-edit-field="${escapeHtml(key)}">${escapeHtml(value)}</textarea>
             </div>
           `;
         }
         return `
           <div class="summary-row">
-            <label for="${recordId}-${key}">${escapeHtml(labelText)}</label>
-            <input id="${recordId}-${key}" type="${escapeHtml(inputType)}" data-edit-field="${escapeHtml(key)}" value="${escapeHtml(value)}">
+            <label for="${fieldId}">${escapeHtml(labelText)}</label>
+            <input id="${fieldId}" type="${escapeHtml(inputType)}" data-edit-field="${escapeHtml(key)}" value="${escapeHtml(value)}">
           </div>
         `;
       }).join("");
@@ -1957,18 +2054,19 @@
             : rawValue === null || rawValue === undefined
               ? ""
               : String(rawValue);
+        const fieldId = buildScopedFieldId(`active-${tabKey}`, recordId, key);
         if (inputType === "textarea") {
           return `
             <div class="summary-row">
-              <label for="${recordId}-${key}">${escapeHtml(labelText)}</label>
-              <textarea id="${recordId}-${key}" data-active-field="${escapeHtml(key)}">${escapeHtml(value)}</textarea>
+              <label for="${fieldId}">${escapeHtml(labelText)}</label>
+              <textarea id="${fieldId}" data-active-field="${escapeHtml(key)}">${escapeHtml(value)}</textarea>
             </div>
           `;
         }
         return `
           <div class="summary-row">
-            <label for="${recordId}-${key}">${escapeHtml(labelText)}</label>
-            <input id="${recordId}-${key}" type="${escapeHtml(inputType || "text")}" data-active-field="${escapeHtml(key)}" value="${escapeHtml(value)}">
+            <label for="${fieldId}">${escapeHtml(labelText)}</label>
+            <input id="${fieldId}" type="${escapeHtml(inputType || "text")}" data-active-field="${escapeHtml(key)}" value="${escapeHtml(value)}">
           </div>
         `;
       }).join("");
@@ -2342,7 +2440,7 @@
           : tabKey === "talent-active"
             ? "update_active_talent"
             : "update_active_employer";
-        queueLocalJobAction({
+        queueAdminAction({
           operation,
           actor: "Admin Review Console",
           ids: [id],
@@ -2350,8 +2448,8 @@
           recordId: id,
           editedRecord,
           changed_fields: changedFields
-        }).then((result) => {
-          applyLocalActiveStateUpdate(tabKey, id, (record) => {
+        }).then(async (result) => {
+          const optimisticUpdate = () => applyLocalActiveStateUpdate(tabKey, id, (record) => {
             if (tabKey === "jobs-active") {
               const next = { ...record, ...editedRecord, updated_at: new Date().toISOString() };
               next.display = { ...(record.display || {}), ...(editedRecord.display || {}), featured: editedRecord.featured, published: editedRecord.published };
@@ -2359,7 +2457,7 @@
             }
             return { ...record, ...editedRecord, updated_at: new Date().toISOString() };
           });
-          renderTab(tabKey);
+          await refreshUiAfterAdminAction([tabKey], optimisticUpdate);
           setStatus(result.mode === "backend"
             ? `Queued active edit for ${id} in Apps Script and mirrored locally.`
             : `Queued active edit for ${id} locally. Export ${LOCAL_JOB_ACTION_EXPORT_FILENAME} and run apply-admin-actions to persist it.`, false);
@@ -2377,9 +2475,10 @@
           : tabKey === "talent-active"
             ? "feature_active_talent"
             : "feature_active_employer";
-        queueLocalJobAction({ operation, actor: "Admin Review Console", ids: [id], id, featured }).then((result) => {
-          applyLocalActiveStateUpdate(tabKey, id, (record) => ({ ...record, featured, updated_at: new Date().toISOString() }));
-          renderTab(tabKey);
+        queueAdminAction({ operation, actor: "Admin Review Console", ids: [id], id, featured }).then(async (result) => {
+          await refreshUiAfterAdminAction([tabKey], () => {
+            applyLocalActiveStateUpdate(tabKey, id, (record) => ({ ...record, featured, updated_at: new Date().toISOString() }));
+          });
           setStatus(result.mode === "backend"
             ? `Queued ${featured ? "feature" : "unfeature"} for ${id} in Apps Script and mirrored locally.`
             : `Queued ${featured ? "feature" : "unfeature"} for ${id} locally. Export ${LOCAL_JOB_ACTION_EXPORT_FILENAME} and run apply-admin-actions to persist it.`, false);
@@ -2396,9 +2495,10 @@
           : tabKey === "talent-active"
             ? "unpublish_active_talent"
             : "unpublish_active_employer";
-        queueLocalJobAction({ operation, actor: "Admin Review Console", ids: [id], id }).then((result) => {
-          applyLocalActiveStateUpdate(tabKey, id, (record) => ({ ...record, status: "pending", published: false, public_visibility: false, updated_at: new Date().toISOString() }));
-          renderTab(tabKey);
+        queueAdminAction({ operation, actor: "Admin Review Console", ids: [id], id }).then(async (result) => {
+          await refreshUiAfterAdminAction([tabKey], () => {
+            applyLocalActiveStateUpdate(tabKey, id, (record) => ({ ...record, status: "pending", published: false, public_visibility: false, updated_at: new Date().toISOString() }));
+          });
           setStatus(result.mode === "backend"
             ? `Queued unpublish for ${id} in Apps Script and mirrored locally.`
             : `Queued unpublish for ${id} locally. Export ${LOCAL_JOB_ACTION_EXPORT_FILENAME} and run apply-admin-actions to persist it.`, false);
@@ -2415,9 +2515,10 @@
           : tabKey === "talent-active"
             ? "archive_active_talent"
             : "archive_active_employer";
-        queueLocalJobAction({ operation, actor: "Admin Review Console", ids: [id], id }).then((result) => {
-          applyLocalActiveStateUpdate(tabKey, id, (record) => ({ ...record, status: "archived", published: false, public_visibility: false, updated_at: new Date().toISOString() }));
-          renderTab(tabKey);
+        queueAdminAction({ operation, actor: "Admin Review Console", ids: [id], id }).then(async (result) => {
+          await refreshUiAfterAdminAction([tabKey], () => {
+            applyLocalActiveStateUpdate(tabKey, id, (record) => ({ ...record, status: "archived", published: false, public_visibility: false, updated_at: new Date().toISOString() }));
+          });
           setStatus(result.mode === "backend"
             ? `Queued archive for ${id} in Apps Script and mirrored locally.`
             : `Queued archive for ${id} locally. Export ${LOCAL_JOB_ACTION_EXPORT_FILENAME} and run apply-admin-actions to persist it.`, false);
@@ -2499,8 +2600,10 @@
           editedRecord
         };
         setLocalReviewState();
-        queueLocalJobAction(buildPublishQueuePayload([job])).then((result) => {
-          applyOptimisticPublishSuccess([job], "publish_edited");
+        queueAdminAction(buildPublishQueuePayload([job])).then(async (result) => {
+          await refreshUiAfterAdminAction(["jobs", "jobs-active"], () => {
+            applyOptimisticPublishSuccess([job], "publish_edited");
+          });
           const message = result.mode === "backend"
             ? `Queued edited publish for ${job.title} in Apps Script and mirrored locally.`
             : `Queued edited publish for ${job.title} in local fallback. Export ${LOCAL_JOB_ACTION_EXPORT_FILENAME} and run apply-admin-actions to persist it.`;
@@ -2515,8 +2618,10 @@
       if (!button) return;
       const job = state.localJobs.find((item) => String(item.id) === String(button.dataset.localQuickPublish));
       if (!job) return;
-      queueLocalJobAction(buildPublishQueuePayload([job])).then((result) => {
-        applyOptimisticPublishSuccess([job], "quick_publish");
+      queueAdminAction(buildPublishQueuePayload([job])).then(async (result) => {
+        await refreshUiAfterAdminAction(["jobs", "jobs-active"], () => {
+          applyOptimisticPublishSuccess([job], "quick_publish");
+        });
         const message = result.mode === "backend"
           ? `Queued quick publish for ${job.title} in Apps Script and mirrored locally.`
           : `Queued quick publish for ${job.title} in local fallback. Export ${LOCAL_JOB_ACTION_EXPORT_FILENAME} and run apply-admin-actions to persist it.`;
@@ -2526,15 +2631,17 @@
       });
     });
 
-    unlockButton.addEventListener("click", () => {
+    unlockButton.addEventListener("click", async () => {
       const token = passwordInput.value.trim();
       if (!token) {
         showLoginMessage("Enter a password to continue.");
         return;
       }
+      clearStatus();
+      clearAdminSessionState();
       setStoredToken(token);
-      state.loadedTabs.clear();
-      state.items = {};
+      const sessionIsValid = await validateAdminSession();
+      if (!sessionIsValid) return;
       showConsoleState();
       loadTriageSummary();
       activateTab("jobs");
@@ -2552,17 +2659,24 @@
       window.location.reload();
     });
 
-    state.localJobReview = getLocalReviewState();
-    loadTriageSummary();
+    async function initializeAdminReview() {
+      state.localJobReview = getLocalReviewState();
+      loadTriageSummary();
 
-    if (!isBackendConfigured() || !hasToken()) {
-      showConsoleState();
-      activateTab("jobs");
-      setStatus("Running in local-only admin mode. Apps Script review folders remain unavailable until a backend token is configured.", false);
-    } else {
+      if (!isBackendConfigured() || !hasToken()) {
+        showConsoleState();
+        activateTab("jobs");
+        setStatus("Running in local-only admin mode. Apps Script review folders remain unavailable until a backend token is configured.", false);
+        return;
+      }
+
+      const sessionIsValid = await validateAdminSession();
+      if (!sessionIsValid) return;
       showConsoleState();
       activateTab("jobs");
     }
+
+    initializeAdminReview();
   </script>
 </body>
 </html>

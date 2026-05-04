@@ -194,12 +194,20 @@ async function scrapeSourceWithDiscovery(source) {
         pageUrl: current.url,
         html: page.html
       });
-      if (skipReason) {
-        directAtsError = skipReason;
-        report.errors.push(`ats:${atsDetection}: ${skipReason}`);
-        console.warn(`[jobs:sync-custom] Skipping ${source.organization || source.id}: ${skipReason}`);
-        continue;
+    if (skipReason) {
+      directAtsError = skipReason;
+      report.errors.push(`ats:${atsDetection}: ${skipReason}`);
+      report.detected_ats_provider = atsDetection;
+      report.parser_used = `skipped:ats:${atsDetection}`;
+      report.reason_for_zero_results = `Skipped configured ${atsDetection} source: ${skipReason}`;
+      console.warn(`[jobs:sync-custom] Skipping ${source.organization || source.id}: ${skipReason}`);
+    
+      if (normalizedProvider) {
+        return { jobs: [], report };
       }
+    
+      continue;
+    }
       try {
         const atsJobs = await fetchAtsJobsByProvider(atsDetection, source, {
           pageUrl: current.url,

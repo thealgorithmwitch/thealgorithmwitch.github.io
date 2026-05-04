@@ -24,6 +24,7 @@ const ELEMENTAL_ORGANIZATION_HINTS = [
   { pattern: /\bhived\b/i, organization: "HIVED", confidence: "high", reason: "elemental_text_hived" },
   { pattern: /\bqcells\b/i, organization: "Qcells", confidence: "high", reason: "elemental_text_qcells" }
 ];
+const FERVO_ELEMENTAL_PAYLOCITY_PATH = /recruiting\.paylocity\.com\/Recruiting\/Jobs\/Details\/4130814/i;
 
 function matchRule(title, patterns) {
   return patterns.find((pattern) => pattern.test(title)) || null;
@@ -234,6 +235,17 @@ function extractEmbeddedRolePhrases(job = {}) {
 function extractFullerTitleFromText(job = {}) {
   const genericTitle = cleanText(job.title);
   if (!isGenericBoardTitle(genericTitle)) return "";
+  const roleText = cleanText([
+    job.raw_description,
+    job.description,
+    typeof job.raw_payload === "string" ? job.raw_payload : JSON.stringify(job.raw_payload || {})
+  ].join(" "));
+  if (
+    normalizeText(genericTitle) === "manager" &&
+    /the manager,\s*market\s*&\s*asset operations owns fervo/i.test(roleText)
+  ) {
+    return "Manager, Market & Asset Operations";
+  }
   const titleWord = normalizeText(genericTitle);
   const patterns = [
     new RegExp(`\\bThe\\s+(${genericTitle.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}\\s*,\\s*[A-Z][A-Za-z0-9&+/'() -]{3,80})\\b`, "i"),
@@ -257,6 +269,26 @@ function extractFullerTitleFromText(job = {}) {
   }
 
   return "";
+}
+
+function isTargetedElementalFervoJob(job = {}) {
+  const sourceText = normalizeText([
+    job.source_id,
+    job.source,
+    job.source_url,
+    job.original_url,
+    job.apply_url
+  ].filter(Boolean).join(" "));
+  const bodyText = cleanText([
+    job.raw_description,
+    job.description,
+    typeof job.raw_payload === "string" ? job.raw_payload : JSON.stringify(job.raw_payload || {})
+  ].join(" "));
+  const applyText = cleanText(job.apply_url || job.original_url || "");
+  const isElemental = sourceText.includes("elemental-impact") || sourceText.includes("elementalimpact") || sourceText.includes("jobs.elementalimpact.com");
+  const matchesPaylocity = FERVO_ELEMENTAL_PAYLOCITY_PATH.test(applyText);
+  const mentionsFervo = /\bfervo(?:'s| energy)?\b/i.test(bodyText);
+  return isElemental && (matchesPaylocity || mentionsFervo);
 }
 
 function extractClimateChangeJobsOrganizationFromAltText(job = {}) {
@@ -532,7 +564,9 @@ function resolveBoardSourceAttribution(job = {}) {
 
   if (boardConfig.id === "elemental-impact") {
     const applyUrl = cleanText(job.apply_url || job.applyUrl || job.original_url || job.originalUrl || "");
+    const targetedFervo = isTargetedElementalFervoJob(job);
     const candidates = [
+      targetedFervo ? { organization: "Fervo Energy", confidence: "high", reason: "elemental_targeted_fervo_fallback" } : null,
       extractOrganizationFromTitle(job.title),
       extractOrganizationFromTextHints(job, ELEMENTAL_ORGANIZATION_HINTS),
       extractOrganizationFromEmbeddedFields(job),
@@ -541,7 +575,9 @@ function resolveBoardSourceAttribution(job = {}) {
     ].filter(Boolean);
     const chosen = candidates.find((candidate) => candidate.confidence === "high") || candidates[0] || null;
     const organization = cleanText(chosen && chosen.organization);
-    const repairedTitle = extractFullerTitleFromText(job);
+    const repairedTitle = targetedFervo && normalizeText(job.title) === "manager"
+      ? "Manager, Market & Asset Operations"
+      : extractFullerTitleFromText(job);
 
     if (!organization || !looksLikeOrganization(organization) || normalizeText(organization) === "elemental impact") {
       return {

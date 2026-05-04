@@ -174,6 +174,36 @@ function appendElementalExample(stats) {
   }
 }
 
+function isTargetedElementalFervoJob(job = {}) {
+  const sourceText = normalizeLower([
+    job.source_id,
+    job.source,
+    job.source_url,
+    job.original_url,
+    job.apply_url
+  ].filter(Boolean).join(" "));
+  const bodyText = cleanText([
+    job.raw_description,
+    job.description,
+    stringifySafe(job.raw_payload)
+  ].join(" "));
+  const applyText = cleanText(job.apply_url || job.original_url || "");
+  const isElemental = sourceText.includes("elemental-impact") || sourceText.includes("elementalimpact") || sourceText.includes("jobs.elementalimpact.com");
+  const matchesPaylocity = /recruiting\.paylocity\.com\/Recruiting\/Jobs\/Details\/4130814/i.test(applyText);
+  const mentionsFervo = /\bfervo(?:'s| energy)?\b/i.test(bodyText);
+  return isElemental && (matchesPaylocity || mentionsFervo);
+}
+
+function applyTargetedElementalFervoRepair(target, candidate) {
+  if (!isTargetedElementalFervoJob(target)) return candidate;
+  const next = { ...candidate };
+  next.organization = "Fervo Energy";
+  if (normalizeLower(target.title) === "manager" && /the manager,\s*market\s*&\s*asset operations owns fervo/i.test(cleanText(target.raw_description || target.description || stringifySafe(target.raw_payload)))) {
+    next.title = "Manager, Market & Asset Operations";
+  }
+  return next;
+}
+
 function buildRemoteSignalText(job = {}) {
   return cleanText([
     job.workplace_type,
@@ -248,7 +278,8 @@ function maybeReplaceField(container, key, nextValue, stats, statKey, context, o
 
 function migratePendingJob(job, stats) {
   const next = { ...job };
-  const candidate = normalizeJob(job);
+  let candidate = normalizeJob(job);
+  candidate = applyTargetedElementalFervoRepair(job, candidate);
   let titleChanged = false;
   let organizationChanged = false;
   if (shouldForceOnsite(job, candidate.workplace_type)) {
@@ -282,9 +313,8 @@ function migratePendingJob(job, stats) {
       next.triage_bucket = "needs_cleanup";
       next.triage_reason = candidate.triage_reason || "source board organization uncertain";
     } else {
-      next.parse_warning = "";
-      next.triage_bucket = "";
-      next.triage_reason = "";
+      if (cleanText(next.triage_reason) === "source board organization uncertain") next.triage_reason = "";
+      if (cleanText(next.parse_warning) === "source board organization uncertain") next.parse_warning = "";
     }
   }
 
@@ -317,7 +347,8 @@ function migratePendingJob(job, stats) {
 function migrateJobRecord(record, stats) {
   const raw = record.raw_source_data && typeof record.raw_source_data === "object" ? { ...record.raw_source_data } : {};
   const display = record.display && typeof record.display === "object" ? { ...record.display } : {};
-  const candidate = normalizeJob(raw);
+  let candidate = normalizeJob(raw);
+  candidate = applyTargetedElementalFervoRepair(raw, candidate);
   const id = record.id || raw.id || "";
   let titleChanged = false;
   let organizationChanged = false;
@@ -379,9 +410,8 @@ function migrateJobRecord(record, stats) {
       raw.triage_bucket = "needs_cleanup";
       raw.triage_reason = candidate.triage_reason || "source board organization uncertain";
     } else {
-      raw.parse_warning = "";
-      raw.triage_bucket = "";
-      raw.triage_reason = "";
+      if (cleanText(raw.triage_reason) === "source board organization uncertain") raw.triage_reason = "";
+      if (cleanText(raw.parse_warning) === "source board organization uncertain") raw.parse_warning = "";
     }
   }
 

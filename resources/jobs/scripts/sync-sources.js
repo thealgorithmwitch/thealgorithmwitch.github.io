@@ -192,7 +192,7 @@ async function runSyncForTypes(types = []) {
     logger: console,
     label: "jobs:sync-sources"
   });
-  await syncJobRecordStore(publicWriteResult.jobs, { logger: console });
+  await syncJobRecordStore(publicWriteResult.jobs, { logger: console, label: "jobs:sync-sources" });
   const scrapeReportPayload = await upsertScrapeReports(scrapeReports);
   const triaged = await triagePendingJobs(mergedPendingJobs, publicWriteResult.jobs, scrapeReportPayload);
   const finalPublicJobs = dedupeJobs([...publicWriteResult.jobs, ...(triaged.autoPublishedJobs || [])]);
@@ -200,7 +200,7 @@ async function runSyncForTypes(types = []) {
     logger: console,
     label: "jobs:sync-sources"
   });
-  await syncJobRecordStore(finalPublicWriteResult.jobs, { logger: console });
+  await syncJobRecordStore(finalPublicWriteResult.jobs, { logger: console, label: "jobs:sync-sources" });
   await writeJson(PENDING_SYNCED_FILE, triaged.adminPendingJobs);
   await upsertScrapeReports(triaged.report.sources);
 

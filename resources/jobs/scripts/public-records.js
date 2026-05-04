@@ -99,6 +99,16 @@ function buildJobRecord(job, existing = {}) {
   return nextRecord;
 }
 
+function isPublishedPublicJobRecord(record) {
+  return Boolean(
+    record &&
+    record.record_type === "job" &&
+    String(record.status || "").toLowerCase() === "published" &&
+    record.published === true &&
+    record.public_visibility === true
+  );
+}
+
 async function readJobRecords() {
   const records = await readJson(JOB_RECORDS_FILE, []);
   return Array.isArray(records) ? records : [];
@@ -106,6 +116,7 @@ async function readJobRecords() {
 
 async function syncJobRecordStore(publicJobs, options = {}) {
   const logger = options.logger || console;
+  const label = options.label || "jobs:record-store";
   const existingRecords = await readJobRecords();
   const byFingerprint = new Map();
   const byId = new Map();
@@ -122,10 +133,22 @@ async function syncJobRecordStore(publicJobs, options = {}) {
     const existing = byFingerprint.get(fingerprint) || byId.get(String(job.id || "")) || {};
     return buildJobRecord(job, existing);
   });
+  const existingPublishedBefore = existingRecords.filter(isPublishedPublicJobRecord);
+  const nextRecordIds = new Set(nextRecords.map((record) => String(record.id || "")).filter(Boolean));
+  const nextFingerprints = new Set(nextRecords.map((record) => stringifySafe(record.source_fingerprint)).filter(Boolean));
+  const preservedPublishedRecords = existingPublishedBefore.filter((record) => {
+    const id = String(record.id || "");
+    const fingerprint = stringifySafe(record.source_fingerprint);
+    return !nextRecordIds.has(id) && (!fingerprint || !nextFingerprints.has(fingerprint));
+  });
+  const mergedRecords = [...nextRecords, ...preservedPublishedRecords];
+  const publishedAfter = mergedRecords.filter(isPublishedPublicJobRecord).length;
 
-  const changed = await writeJsonIfChanged(JOB_RECORDS_FILE, nextRecords);
-  logger.log(`[jobs:record-store] ${changed ? "Updated" : "No changes to"} ${JOB_RECORDS_FILE}.`);
-  return nextRecords;
+  const changed = await writeJsonIfChanged(JOB_RECORDS_FILE, mergedRecords);
+  logger.log(
+    `[${label}] existing_published_before=${existingPublishedBefore.length} published_preserved=${preservedPublishedRecords.length} published_after=${publishedAfter} total_records=${mergedRecords.length} changed=${changed}`
+  );
+  return mergedRecords;
 }
 
 module.exports = {

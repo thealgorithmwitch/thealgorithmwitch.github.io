@@ -3,6 +3,7 @@ const {
   ADMIN_JOB_ACTIONS_SNAPSHOT_FILE,
   PENDING_SYNCED_FILE,
   readJson,
+  readJobs,
   readPendingSyncedJobs,
   writeJson
 } = require("./job-utils");
@@ -29,7 +30,7 @@ const {
   writePendingOverrides
 } = require("./admin-actions-store");
 const { buildPagesFromRecords } = require("./generate-job-pages");
-const { syncPublicJobsFromRecords } = require("./public-jobs");
+const { buildPublicJobsFromRecords, syncPublicJobsFromRecords } = require("./public-jobs");
 
 function buildPublishedDisplay(job) {
   return {
@@ -538,6 +539,14 @@ async function main() {
     const ids = Array.isArray(action.payload.ids) ? action.payload.ids.map(String) : [];
     const targetIds = getActionTargetIds(action);
     const selectedJobs = Array.isArray(action.payload.jobs) ? action.payload.jobs : [];
+    if (action.operation === "publish_selected" && !targetIds.length && !selectedJobs.length) {
+      actionResults[action.id] = buildActionResult("empty_payload", "publish_selected missing ids and jobs");
+      logActionOutcome(action, actionSource, "empty_payload", "publish_selected missing ids and jobs");
+      console.warn(
+        `[jobs:apply-admin-actions] operation=publish_selected action_id=${action.id} ids_count=${ids.length} jobs_count=${selectedJobs.length} outcome=empty_payload`
+      );
+      continue;
+    }
     const freshIds = targetIds.filter((id) => {
       const latest = latestDecisionByJobId.get(String(id));
       if (!latest) return true;
@@ -555,7 +564,7 @@ async function main() {
       const matchingPendingIds = freshIds.filter((id) => nextPending.some((pendingJob) => String(pendingJob.id) === id));
       const missingPendingIds = freshIds.filter((id) => !matchingPendingIds.includes(id));
       console.log(
-        `[jobs:apply-admin-actions] operation=publish_selected action_id=${action.id} queued_ids_count=${freshIds.length} matching_pending_ids_count=${matchingPendingIds.length} missing_pending_ids_count=${missingPendingIds.length} pending_before=${pendingBefore} active_before=${activeBefore}`
+        `[jobs:apply-admin-actions] operation=publish_selected action_id=${action.id} ids_count=${targetIds.length} jobs_count=${selectedJobs.length} queued_ids_count=${freshIds.length} matching_pending_ids_count=${matchingPendingIds.length} missing_pending_ids_count=${missingPendingIds.length} pending_before=${pendingBefore} active_before=${activeBefore}`
       );
       const uniqueIds = [];
       const idsSeenInAction = new Set();
@@ -656,7 +665,7 @@ async function main() {
       }
 
       console.log(
-        `[jobs:apply-admin-actions] operation=publish_selected action_id=${action.id} queued_ids_count=${uniqueIds.length} matching_pending_ids_count=${matchingPendingIds.length} missing_pending_ids_count=${missingPendingIds.length} pending_after=${pendingAfter} active_after=${activeAfter} published_count=${publishedCount} skipped_stale_count=${staleCount} already_published_count=${alreadyPublishedCount} duplicates_skipped_count=${duplicateCount} removed_from_pending=${publishedIds.length}`
+        `[jobs:apply-admin-actions] operation=publish_selected action_id=${action.id} ids_count=${targetIds.length} jobs_count=${selectedJobs.length} queued_ids_count=${uniqueIds.length} matching_pending_ids_count=${matchingPendingIds.length} missing_pending_ids_count=${missingPendingIds.length} pending_after=${pendingAfter} active_after=${activeAfter} published_count=${publishedCount} skipped_stale_count=${staleCount} already_published_count=${alreadyPublishedCount} duplicates_skipped_count=${duplicateCount} removed_from_pending=${publishedIds.length}`
       );
     } else if (action.operation === "archive_selected") {
       const pendingSelection = nextPending.filter((job) => freshIds.includes(String(job.id)));
@@ -884,10 +893,20 @@ async function main() {
   await writeJson(TALENT_PROFILES_FILE, nextTalentProfiles);
   await writeJson(EMPLOYERS_FILE, nextEmployers);
 
+  const expectedPublicJobsCount = buildPublicJobsFromRecords(nextRecords).length;
   const publicSync = await syncPublicJobsFromRecords(nextRecords, { label: "jobs:apply-admin-actions" });
+  const syncedJobs = await readJobs();
+  const finalJobsJsonCount = Array.isArray(syncedJobs) ? syncedJobs.length : 0;
+  const syncMismatch = finalJobsJsonCount !== expectedPublicJobsCount;
+  console.log(
+    `[jobs:apply-admin-actions] expected_public_jobs_count=${expectedPublicJobsCount} final_jobs_json_count=${finalJobsJsonCount} wrote_jobs_json=${publicSync.wrote} sync_mismatch=${syncMismatch}`
+  );
+  if (syncMismatch) {
+    throw new Error(`jobs.json sync mismatch: expected ${expectedPublicJobsCount} public jobs, found ${finalJobsJsonCount}`);
+  }
   report.recordsLeftPending = nextPending.length;
   report.jobRecordsCount = nextRecords.length;
-  report.jobsJsonCount = publicSync.jobsCount;
+  report.jobsJsonCount = finalJobsJsonCount;
   report.jobPagesRegenerated = await buildPagesFromRecords(nextRecords);
 
   try {

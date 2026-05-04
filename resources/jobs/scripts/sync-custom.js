@@ -102,7 +102,7 @@ async function runCustomSync() {
     logger: console,
     label: "jobs:sync-custom"
   });
-  await syncJobRecordStore(publicWriteResult.jobs, { logger: console });
+  await syncJobRecordStore(publicWriteResult.jobs, { logger: console, label: "jobs:sync-custom" });
   const scrapeReportPayload = await upsertScrapeReports(scrapeReports);
   const triaged = await triagePendingJobs(mergedPendingJobs, publicWriteResult.jobs, scrapeReportPayload);
   const finalPublicJobs = dedupeJobs([...publicWriteResult.jobs, ...(triaged.autoPublishedJobs || [])]);
@@ -110,7 +110,7 @@ async function runCustomSync() {
     logger: console,
     label: "jobs:sync-custom"
   });
-  await syncJobRecordStore(finalPublicWriteResult.jobs, { logger: console });
+  await syncJobRecordStore(finalPublicWriteResult.jobs, { logger: console, label: "jobs:sync-custom" });
   await writeJson(PENDING_SYNCED_FILE, triaged.adminPendingJobs);
   await upsertScrapeReports(triaged.report.sources);
 

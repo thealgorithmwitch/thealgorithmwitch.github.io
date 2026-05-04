@@ -1,4 +1,4 @@
-const { fetchAtsJobsByProvider } = require("../ats-clients");
+const { deriveProviderSource, fetchAtsJobsByProvider } = require("../ats-clients");
 const { parseGenericCareersPage, extractLinks, extractJsonScripts } = require("./parsers/generic-careers-page");
 const { normalizeProvider } = require("../source-utils");
 const { toAbsoluteUrl } = require("./base-utils");
@@ -99,6 +99,19 @@ async function fetchHtmlPage(url) {
   };
 }
 
+function getDirectAtsSkipReason(provider, source, context = {}) {
+  const normalizedProvider = normalizeProvider(provider || source.provider || source.type);
+  if (!normalizedProvider) return "";
+  const derivedSource = deriveProviderSource(source, normalizedProvider, context);
+  if (normalizedProvider === "greenhouse" && !String(derivedSource.board_token || "").trim()) {
+    return "missing Greenhouse board slug.";
+  }
+  if (normalizedProvider === "lever" && !String(derivedSource.company_slug || "").trim()) {
+    return "missing Lever company slug.";
+  }
+  return "";
+}
+
 function makeEmptyReport(source) {
   return {
     source_id: source.id,
@@ -170,6 +183,16 @@ async function scrapeSourceWithDiscovery(source) {
 
     if (atsDetection && !directAtsAttempted) {
       directAtsAttempted = true;
+      const skipReason = getDirectAtsSkipReason(atsDetection, source, {
+        pageUrl: current.url,
+        html: page.html
+      });
+      if (skipReason) {
+        directAtsError = skipReason;
+        report.errors.push(`ats:${atsDetection}: ${skipReason}`);
+        console.warn(`[jobs:sync-custom] Skipping ${source.organization || source.id}: ${skipReason}`);
+        continue;
+      }
       try {
         const atsJobs = await fetchAtsJobsByProvider(atsDetection, source, {
           pageUrl: current.url,

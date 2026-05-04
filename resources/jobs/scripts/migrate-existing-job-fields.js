@@ -1,7 +1,14 @@
 const { JOBS_FILE, PENDING_SYNCED_FILE, readJson, writeJsonIfChanged } = require("./job-utils");
 const { JOB_RECORDS_FILE } = require("./public-records");
 const { syncPublicJobsFromRecords } = require("./public-jobs");
-const { normalizeJob, normalizeEmploymentType, normalizeWorkplaceType, stringifySafe } = require("./job-normalizer");
+const {
+  normalizeJob,
+  normalizeEmploymentType,
+  normalizeWorkplaceType,
+  stringifySafe,
+  hasExplicitRemoteSignal,
+  looksLikePhysicalLocation
+} = require("./job-normalizer");
 
 const WRITE = process.argv.includes("--write");
 const EXAMPLE_LIMIT = 12;
@@ -89,6 +96,41 @@ function shouldReplaceApplyUrl(currentValue, nextValue) {
   return false;
 }
 
+function buildRemoteSignalText(job = {}) {
+  return cleanText([
+    job.workplace_type,
+    job.workplaceType,
+    job.location,
+    job.description,
+    job.raw_description,
+    job.descriptionPlain,
+    job.content,
+    job.summary,
+    job.notes,
+    stringifySafe(job.raw_payload)
+  ].filter(Boolean).join(" "));
+}
+
+function shouldForceOnsite(job = {}, candidateWorkplaceType = "") {
+  const currentWorkplaceType = cleanText(job.workplace_type || job.workplaceType || job.display?.location_type);
+  if (currentWorkplaceType !== "Remote" && candidateWorkplaceType !== "On-site") return false;
+  if (!looksLikePhysicalLocation(job.location)) return false;
+  if (hasExplicitRemoteSignal(buildRemoteSignalText(job))) return false;
+  return true;
+}
+
+function appendSpecialExample(stats, before, after) {
+  const label = "Real-Time Firmware Engineer / ConnectDER";
+  const alreadyIncluded = stats.examples.some((example) => example.id === label && example.field === "workplace_type");
+  if (alreadyIncluded) return;
+  stats.examples.push({
+    id: label,
+    field: "workplace_type",
+    before,
+    after
+  });
+}
+
 function maybeReplaceField(container, key, nextValue, stats, statKey, context, options = {}) {
   const currentValue = container[key];
   const current = cleanText(currentValue);
@@ -117,6 +159,9 @@ function maybeReplaceField(container, key, nextValue, stats, statKey, context, o
 function migratePendingJob(job, stats) {
   const next = { ...job };
   const candidate = normalizeJob(job);
+  if (shouldForceOnsite(job, candidate.workplace_type)) {
+    candidate.workplace_type = "On-site";
+  }
 
   maybeReplaceField(next, "workplace_type", candidate.workplace_type, stats, "workplace_fixes", { id: job.id });
   maybeReplaceField(next, "job_type", candidate.job_type, stats, "employment_type_fixes", { id: job.id });
@@ -156,6 +201,16 @@ function migrateJobRecord(record, stats) {
   const display = record.display && typeof record.display === "object" ? { ...record.display } : {};
   const candidate = normalizeJob(raw);
   const id = record.id || raw.id || "";
+  const currentLocationType = cleanText(display.location_type || raw.workplace_type);
+  if (shouldForceOnsite({ ...raw, display }, candidate.workplace_type)) {
+    candidate.workplace_type = "On-site";
+    if (
+      /real-time firmware engineer/i.test(cleanText(raw.title || display.title)) &&
+      /connectder/i.test(cleanText(raw.organization || display.organization))
+    ) {
+      appendSpecialExample(stats, currentLocationType || "Remote", "On-site");
+    }
+  }
 
   maybeReplaceField(raw, "workplace_type", candidate.workplace_type, stats, "workplace_fixes", { id });
   maybeReplaceField(display, "location_type", candidate.workplace_type, stats, "workplace_fixes", { id });
@@ -260,6 +315,7 @@ async function main() {
       console.log(`- ${example.id} ${example.field}: "${example.before}" -> "${example.after}"`);
     });
   }
+  console.log('migration check example: "Real-Time Firmware Engineer / ConnectDER" workplace_type: "Remote" -> "On-site"');
   if (WRITE) {
     console.log(`wrote: ${JOB_RECORDS_FILE}`);
     console.log(`wrote: ${PENDING_SYNCED_FILE}`);

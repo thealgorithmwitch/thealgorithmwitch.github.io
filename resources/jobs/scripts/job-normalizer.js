@@ -186,11 +186,11 @@ function buildWorkplaceSignalText(job = {}) {
 }
 
 function hasExplicitRemoteSignal(text) {
-  return /\b(?:fully remote|100%\s*remote|remote\b|work from home|wfh)\b/i.test(String(text || ""));
+  return /\b(?:fully remote|100%\s*remote|remote(?:\s+role|\s+position|\s+work)?|work from home|distributed team|remote-first)\b/i.test(String(text || ""));
 }
 
 function hasExplicitHybridSignal(text) {
-  return /\b(?:hybrid|hybrid schedule|\d+\s+days?\s+in\s+office|in-?office days?)\b/i.test(String(text || ""));
+  return /\b(?:hybrid|hybrid schedule|\d+\s+days?\s+in\s+office|in-?office days?|partially remote)\b/i.test(String(text || ""));
 }
 
 function hasExplicitOnsiteSignal(text) {
@@ -200,9 +200,14 @@ function hasExplicitOnsiteSignal(text) {
 function looksLikePhysicalLocation(value) {
   const text = normalizeWhitespace(String(value || ""));
   if (!text) return false;
-  if (/\b(?:remote|hybrid|work from home|wfh|anywhere|global|multiple locations|various locations|location listed on application)\b/i.test(text)) {
+  if (/^(?:remote|hybrid|united states|us|usa|nationwide|global|multiple locations)$/i.test(text)) {
     return false;
   }
+  if (/\b(?:remote|hybrid|work from home|distributed team|remote-first|anywhere|global|multiple locations|various locations|location listed on application)\b/i.test(text)) {
+    return false;
+  }
+  if (/^[A-Za-z .'-]+,\s*[A-Z]{2}$/.test(text)) return true;
+  if (/^[A-Za-z .'-]+,\s*[A-Za-z .'-]+(?:,\s*[A-Za-z .'-]+)?$/.test(text)) return true;
   return true;
 }
 
@@ -652,6 +657,7 @@ function extractParagraphs(value) {
   const raw = decodeHtmlEntities(String(value || ""))
     .replace(/<style[\s\S]*?<\/style>/gi, " ")
     .replace(/<script[\s\S]*?<\/script>/gi, " ")
+    .replace(/<\/h[1-6]>\s*(?=<p|<div|<section|<article|<li|<ul|<ol)/gi, "\n\n")
     .replace(/<br\s*\/?>/gi, "\n")
     .replace(/<\/p>|<\/div>|<\/li>|<\/section>|<\/article>|<\/h[1-6]>|<\/tr>/gi, "\n\n")
     .replace(/<li[^>]*>/gi, "\n")
@@ -673,8 +679,9 @@ function cleanDescriptionParagraph(paragraph, title = "") {
       .replace(/https?:\/\/\S+/gi, " ")
       .replace(/\bno\s*wrap\b|\bnowrap\b/gi, " ")
       .replace(/\b(?:next|previous)\b(?:\s*post)?[:\s-]*/gi, " ")
-      .replace(/\b(?:apply now|apply today|submit application|learn more|read more|view job|view opening|back to jobs|search jobs|job openings|applicant login|join talent community)\b/gi, " ")
-      .replace(/\b(?:jobs search|green jobs network|article|news|posted by)\b/gi, " ")
+      .replace(/\b(?:apply online|apply now|apply today|submit application|learn more|read more|view job|view opening|back to jobs|search jobs|job openings|applicant login|join talent community)\b/gi, " ")
+      .replace(/\b(?:jobs search|green jobs network|climate change jobs|article|articles|news|posted by|logo text)\b/gi, " ")
+      .replace(/\bnew\b(?=\s+[A-Z][a-z])/g, " ")
       .replace(/\b(?:job title|department|location|reports to|supervises|duration)\s*:\s*/gi, " ")
       .replace(/\b(?:posted|job id|requisition id|req id|employment type|workplace type)\s*:\s*[^.]{0,120}/gi, " ")
       .replace(/\b(?:equal opportunity employer|privacy policy|terms of use|cookie policy|reasonable accommodation|all qualified applicants|veteran status|gender identity)\b[^.]{0,220}/gi, " ")
@@ -689,7 +696,8 @@ function paragraphLooksUseful(paragraph, title = "") {
   if (!/[a-z]{3,}/i.test(cleaned)) return false;
   if (/^(apply|job title|department|location|reports to|supervises|duration)\b/i.test(cleaned)) return false;
   if (/^(previous|next|search jobs|job openings|applicant login|join talent community)\b/i.test(cleaned)) return false;
-  if (/^(jobs search|green jobs network)\b/i.test(cleaned)) return false;
+  if (/^(jobs search|green jobs network|climate change jobs|logo text|article|articles|news)\b/i.test(cleaned)) return false;
+  if (!/[.?!]/.test(cleaned) && cleaned.length < 110) return false;
   return true;
 }
 
@@ -727,7 +735,8 @@ function findTitleMatchingDescriptionParagraph(job = {}) {
   let best = { score: 0, paragraph: "" };
   for (const source of sources) {
     const paragraphs = extractParagraphs(source);
-    for (const paragraph of paragraphs) {
+    for (let index = 0; index < paragraphs.length; index += 1) {
+      const paragraph = paragraphs[index];
       const cleaned = cleanDescriptionParagraph(paragraph, "");
       if (!paragraphLooksUseful(cleaned, title)) continue;
       const comparableParagraph = normalizeComparableText(cleaned);
@@ -737,6 +746,26 @@ function findTitleMatchingDescriptionParagraph(job = {}) {
       const tokenMatches = titleTokens.filter((token) => comparableParagraph.includes(token)).length;
       score += tokenMatches;
       if (tokenMatches >= Math.min(3, titleTokens.length)) score += 2;
+      const nextParagraph = paragraphs[index + 1] ? cleanDescriptionParagraph(paragraphs[index + 1], title) : "";
+      const titleOnlyHeading =
+        comparableParagraph === comparableTitle ||
+        comparableParagraph.replace(/\bnew\b/g, "").trim() === comparableTitle ||
+        comparableParagraph.startsWith(comparableTitle) && comparableParagraph.length <= comparableTitle.length + 50;
+      if (titleOnlyHeading && paragraphLooksUseful(nextParagraph, title)) {
+        score += 4;
+        if (score > best.score) {
+          best = { score, paragraph: nextParagraph };
+        }
+        continue;
+      }
+      const titleThenBody = cleaned.match(new RegExp(`^${slugify(title).replace(/-/g, "[\\s\\W]*")}(?:\\s+|:|[-–—])+(.+)$`, "i"));
+      if (titleThenBody && paragraphLooksUseful(titleThenBody[1], title)) {
+        score += 3;
+        if (score > best.score) {
+          best = { score, paragraph: cleanDescriptionParagraph(titleThenBody[1], title) };
+        }
+        continue;
+      }
       if (score > best.score) {
         best = { score, paragraph: cleaned };
       }
@@ -796,8 +825,8 @@ function normalizeDescription(description, options = {}) {
       .replace(/\bno\s*wrap\b|\bnowrap\b/gi, " ")
       .replace(/\b(?:next|previous)\s*:\s*(?:next|previous)\s+post\s*:[^.]{0,200}/gi, " ")
       .replace(/\bpost navigation\b[^.]{0,200}/gi, " ")
-      .replace(/\b(?:jobs search|green jobs network)\b/gi, " ")
-      .replace(/\b(?:apply now|apply today|submit application|learn more|read more|view job|view opening|back to jobs)\b/gi, " ")
+      .replace(/\b(?:jobs search|green jobs network|climate change jobs|logo text)\b/gi, " ")
+      .replace(/\b(?:apply online|apply now|apply today|submit application|learn more|read more|view job|view opening|back to jobs)\b/gi, " ")
       .replace(
         /\b(?:job title|department|location|reports to|supervises)\s*:\s*[\s\S]*?(?=(?:job title|department|location|reports to|supervises|duration|context|scope|role overview|about us|what you(?:'|’)ll do)\s*:|$)/gi,
         " "
@@ -1119,12 +1148,15 @@ module.exports = {
   extractDescriptionText,
   extractSalaryText,
   flattenTextValues,
+  hasExplicitHybridSignal,
+  hasExplicitRemoteSignal,
   isValidDate,
   hasRoleSignal,
   isClearlyNotJobTitle,
   isLocationOnlyTitle,
   isOrganizationOnlyTitle,
   isSingleFirstNameOnlyTitle,
+  looksLikePhysicalLocation,
   normalizeDescription,
   normalizeEmploymentType,
   normalizeJob,

@@ -963,6 +963,7 @@
     }
 
     async function loadTriageSummary() {
+      triageGeneratedAt.textContent = "Loading triage snapshot…";
       try {
         const [pendingResponse, recordsResponse, summaryResponse] = await Promise.all([
           fetch(buildSnapshotUrl(LOCAL_PENDING_URL), { cache: "no-store" }),
@@ -971,8 +972,8 @@
         ]);
         if (!pendingResponse.ok || !recordsResponse.ok) throw new Error("Local JSON counts unavailable");
 
-        const pendingItems = await pendingResponse.json();
-        const recordItems = await recordsResponse.json();
+        const pendingItems = normalizePendingJobCollection(await pendingResponse.json());
+        const recordItems = normalizeCollectionPayload(await recordsResponse.json());
         const summary = summaryResponse.ok ? await summaryResponse.json() : {};
 
         const activeJsonJobs = (Array.isArray(recordItems) ? recordItems : []).filter((record) => (
@@ -1000,6 +1001,7 @@
             backendApprovedArchiveCount = String(Array.isArray(approvedResult.items) ? approvedResult.items.length : 0);
           } catch (error) {
             if (error.code === "AUTH_EXPIRED") return;
+            console.error("[admin-review] failed to load backend queue", error);
             backendQueuedCount = 0;
             backendApprovedArchiveCount = "—";
           }
@@ -1010,7 +1012,8 @@
         triageGeneratedAt.textContent = summary.generated_at
           ? `JSON snapshot ${new Date(summary.generated_at).toLocaleString()} • overlap ${overlapCount}`
           : `JSON snapshot loaded • overlap ${overlapCount}`;
-      } catch (_error) {
+      } catch (error) {
+        console.error("[admin-review] failed to load pending synced jobs", error);
         triageGeneratedAt.textContent = "Local JSON count snapshot unavailable";
       }
     }
@@ -1072,40 +1075,74 @@
     }
 
     function loadLocalPendingFilters(jobs) {
-      const options = Array.from(new Set(jobs.map(jobProvider))).sort((a, b) => a.localeCompare(b));
-      localJobFilterEls.source.innerHTML = ['<option value="all">all</option>']
-        .concat(options.map((value) => `<option value="${escapeHtml(value)}">${escapeHtml(value)}</option>`))
-        .join("");
-      localJobFilterEls.source.value = state.localJobFilters.source;
+      try {
+        const options = Array.from(new Set((Array.isArray(jobs) ? jobs : []).map((job) => jobProvider(job)).filter(Boolean))).sort((a, b) => a.localeCompare(b));
+        localJobFilterEls.source.innerHTML = ['<option value="all">all</option>']
+          .concat(options.map((value) => `<option value="${escapeHtml(value)}">${escapeHtml(value)}</option>`))
+          .join("");
+        if (![...localJobFilterEls.source.options].some((option) => option.value === state.localJobFilters.source)) {
+          state.localJobFilters.source = "all";
+        }
+        localJobFilterEls.source.value = state.localJobFilters.source;
+      } catch (error) {
+        console.error("[admin-review] failed to render filters", error);
+        localJobFilterEls.source.innerHTML = '<option value="all">all</option>';
+        state.localJobFilters.source = "all";
+        localJobFilterEls.source.value = "all";
+      }
     }
 
     async function loadLocalPendingJobs(forceReload) {
       if (state.localJobsLoaded && !forceReload) return;
-      const items = await fetchJsonSnapshot(LOCAL_PENDING_URL);
-      state.localJobs = Array.isArray(items) ? items : [];
-      state.localJobsLoaded = true;
-      loadLocalPendingFilters(state.localJobs);
+      try {
+        const items = await fetchJsonSnapshot(LOCAL_PENDING_URL);
+        state.localJobs = normalizePendingJobCollection(items);
+      } catch (error) {
+        console.error("[admin-review] failed to load pending synced jobs", error);
+        state.localJobs = [];
+      } finally {
+        state.localJobsLoaded = true;
+        loadLocalPendingFilters(state.localJobs);
+      }
     }
 
     async function loadLocalActiveJobRecords(forceReload) {
       if (state.activeJobRecordsLoaded && !forceReload) return;
-      const items = await fetchJsonSnapshot(LOCAL_JOB_RECORDS_URL);
-      state.activeJobRecords = Array.isArray(items) ? items : [];
-      state.activeJobRecordsLoaded = true;
+      try {
+        const items = await fetchJsonSnapshot(LOCAL_JOB_RECORDS_URL);
+        state.activeJobRecords = normalizeCollectionPayload(items).filter((item) => item && typeof item === "object" && !Array.isArray(item));
+      } catch (error) {
+        console.error("[admin-review] failed to load job records", error);
+        state.activeJobRecords = [];
+      } finally {
+        state.activeJobRecordsLoaded = true;
+      }
     }
 
     async function loadLocalActiveTalent(forceReload) {
       if (state.activeTalentProfilesLoaded && !forceReload) return;
-      const items = await fetchJsonSnapshot(LOCAL_TALENT_URL);
-      state.activeTalentProfiles = Array.isArray(items) ? items : [];
-      state.activeTalentProfilesLoaded = true;
+      try {
+        const items = await fetchJsonSnapshot(LOCAL_TALENT_URL);
+        state.activeTalentProfiles = normalizeCollectionPayload(items).filter((item) => item && typeof item === "object" && !Array.isArray(item));
+      } catch (error) {
+        console.error("[admin-review] failed to load talent records", error);
+        state.activeTalentProfiles = [];
+      } finally {
+        state.activeTalentProfilesLoaded = true;
+      }
     }
 
     async function loadLocalActiveEmployers(forceReload) {
       if (state.activeEmployersLoaded && !forceReload) return;
-      const items = await fetchJsonSnapshot(LOCAL_EMPLOYERS_URL);
-      state.activeEmployers = Array.isArray(items) ? items : [];
-      state.activeEmployersLoaded = true;
+      try {
+        const items = await fetchJsonSnapshot(LOCAL_EMPLOYERS_URL);
+        state.activeEmployers = normalizeCollectionPayload(items).filter((item) => item && typeof item === "object" && !Array.isArray(item));
+      } catch (error) {
+        console.error("[admin-review] failed to load employer records", error);
+        state.activeEmployers = [];
+      } finally {
+        state.activeEmployersLoaded = true;
+      }
     }
 
     function parseBoolean(value, fallback) {
@@ -1402,35 +1439,42 @@
     function renderLocalJobs() {
       const panel = document.getElementById("panel-jobs");
       const count = document.getElementById("count-jobs");
-      const filtered = filterLocalJobs();
-      count.textContent = `${filtered.length} pending`;
-      const duplicateSuspects = getDuplicateSuspectIds(filtered);
+      try {
+        const filtered = filterLocalJobs();
+        count.textContent = `${filtered.length} pending`;
+        const duplicateSuspects = getDuplicateSuspectIds(filtered);
 
-      if (!filtered.length) {
-        panel.innerHTML = `<div class="empty-state">No local pending jobs match the current triage filters.</div>`;
+        if (!filtered.length) {
+          panel.innerHTML = `<div class="empty-state">No local pending jobs match the current triage filters.</div>`;
+          loadMoreJobsButton.hidden = true;
+          return;
+        }
+
+        const visible = filtered.slice(0, state.localJobVisibleCount);
+        const grouped = new Map();
+        visible.forEach((job) => {
+          const key = String(job.organization || "Unknown Organization");
+          const bucket = grouped.get(key) || [];
+          bucket.push(job);
+          grouped.set(key, bucket);
+        });
+
+        panel.innerHTML = Array.from(grouped.entries()).map(([organization, jobs]) => `
+          <section class="local-job-group">
+            <div class="group-title">${escapeHtml(organization)}</div>
+            <div class="grid">
+              ${jobs.map((job) => renderLocalJobCard(job, duplicateSuspects)).join("")}
+            </div>
+          </section>
+        `).join("");
+
+        loadMoreJobsButton.hidden = visible.length >= filtered.length;
+      } catch (error) {
+        console.error("[admin-review] failed to render pending jobs", error);
+        count.textContent = "0 pending";
+        panel.innerHTML = `<div class="empty-state">Pending jobs could not be rendered. Check the console for details.</div>`;
         loadMoreJobsButton.hidden = true;
-        return;
       }
-
-      const visible = filtered.slice(0, state.localJobVisibleCount);
-      const grouped = new Map();
-      visible.forEach((job) => {
-        const key = String(job.organization || "Unknown Organization");
-        const bucket = grouped.get(key) || [];
-        bucket.push(job);
-        grouped.set(key, bucket);
-      });
-
-      panel.innerHTML = Array.from(grouped.entries()).map(([organization, jobs]) => `
-        <section class="local-job-group">
-          <div class="group-title">${escapeHtml(organization)}</div>
-          <div class="grid">
-            ${jobs.map((job) => renderLocalJobCard(job, duplicateSuspects)).join("")}
-          </div>
-        </section>
-      `).join("");
-
-      loadMoreJobsButton.hidden = visible.length >= filtered.length;
     }
 
     function applyLocalBulkAction(action) {
@@ -1682,10 +1726,76 @@
       return `${url}${suffix}ts=${Date.now()}`;
     }
 
+    function normalizeCollectionPayload(payload) {
+      if (Array.isArray(payload)) return payload;
+      if (payload && typeof payload === "object") {
+        if (Array.isArray(payload.jobs)) return payload.jobs;
+        if (Array.isArray(payload.items)) return payload.items;
+        if (Array.isArray(payload.records)) return payload.records;
+      }
+      return [];
+    }
+
+    function normalizePendingJobRecord(record, index) {
+      if (!record || typeof record !== "object" || Array.isArray(record)) {
+        throw new Error(`record ${index} is not an object`);
+      }
+      const title = String(record.title || "").trim();
+      const organization = String(record.organization || "").trim();
+      const originalUrl = String(record.original_url || record.apply_url || record.source_url || "").trim();
+      const fallbackId = [title, organization, originalUrl || index].filter(Boolean).join("::");
+      return {
+        ...record,
+        id: String(record.id || fallbackId).trim(),
+        title,
+        organization,
+        location: String(record.location || "").trim(),
+        source_id: String(record.source_id || "").trim(),
+        source: String(record.source || record.source_type || "").trim(),
+        source_type: String(record.source_type || "").trim(),
+        triage_bucket: String(record.triage_bucket || "pending").trim(),
+        triage_reason: String(record.triage_reason || "").trim(),
+        verification_status: String(record.verification_status || "").trim(),
+        stale_reason: String(record.stale_reason || "").trim(),
+        original_url: originalUrl,
+        apply_url: String(record.apply_url || "").trim(),
+        salary: String(record.salary || "").trim(),
+        raw_salary: String(record.raw_salary || "").trim(),
+        salary_min: Number.isFinite(Number(record.salary_min)) ? Number(record.salary_min) : null,
+        salary_max: Number.isFinite(Number(record.salary_max)) ? Number(record.salary_max) : null,
+        relevance_score: Number.isFinite(Number(record.relevance_score)) ? Number(record.relevance_score) : 0,
+        tags: Array.isArray(record.tags)
+          ? record.tags.filter((tag) => tag !== null && tag !== undefined).map((tag) => String(tag).trim()).filter(Boolean)
+          : typeof record.tags === "string"
+            ? parseCsv(record.tags)
+            : [],
+        featured: parseBoolean(record.featured, false)
+      };
+    }
+
+    function normalizePendingJobCollection(payload) {
+      const records = normalizeCollectionPayload(payload);
+      const normalized = [];
+      records.forEach((record, index) => {
+        try {
+          const next = normalizePendingJobRecord(record, index);
+          if (!next.id) return;
+          normalized.push(next);
+        } catch (error) {
+          console.error("[admin-review] skipped malformed pending synced job", {
+            index,
+            reason: error.message || "unknown error"
+          });
+        }
+      });
+      return normalized;
+    }
+
     async function fetchJsonSnapshot(url) {
       const response = await fetch(buildSnapshotUrl(url), { cache: "no-store" });
       if (!response.ok) throw new Error(`HTTP ${response.status}`);
-      return response.json();
+      const payload = await response.json();
+      return payload;
     }
 
     async function requestAdmin(action, extra) {
@@ -2320,23 +2430,44 @@
 
     async function loadTab(tabKey, forceReload) {
       if (tabKey === "jobs") {
-        await loadLocalPendingJobs(forceReload);
-        renderLocalJobs();
+        try {
+          await loadLocalPendingJobs(forceReload);
+          renderLocalJobs();
+        } catch (error) {
+          console.error("[admin-review] failed to load pending synced jobs", error);
+          document.getElementById("panel-jobs").innerHTML = `<div class="empty-state">Pending jobs could not be loaded.</div>`;
+          document.getElementById("count-jobs").textContent = "0 pending";
+        }
         return;
       }
       if (tabKey === "jobs-active") {
-        await loadLocalActiveJobRecords(forceReload);
-        renderTab(tabKey);
+        try {
+          await loadLocalActiveJobRecords(forceReload);
+          renderTab(tabKey);
+        } catch (error) {
+          console.error("[admin-review] failed to load job records", error);
+          document.getElementById(TAB_CONFIG[tabKey].panelId).innerHTML = `<div class="empty-state">Active jobs could not be loaded.</div>`;
+        }
         return;
       }
       if (tabKey === "talent-active") {
-        await loadLocalActiveTalent(forceReload);
-        renderTab(tabKey);
+        try {
+          await loadLocalActiveTalent(forceReload);
+          renderTab(tabKey);
+        } catch (error) {
+          console.error("[admin-review] failed to load talent records", error);
+          document.getElementById(TAB_CONFIG[tabKey].panelId).innerHTML = `<div class="empty-state">Active talent could not be loaded.</div>`;
+        }
         return;
       }
       if (tabKey === "featured-employers-active") {
-        await loadLocalActiveEmployers(forceReload);
-        renderTab(tabKey);
+        try {
+          await loadLocalActiveEmployers(forceReload);
+          renderTab(tabKey);
+        } catch (error) {
+          console.error("[admin-review] failed to load employer records", error);
+          document.getElementById(TAB_CONFIG[tabKey].panelId).innerHTML = `<div class="empty-state">Active employers could not be loaded.</div>`;
+        }
         return;
       }
       const config = TAB_CONFIG[tabKey];
@@ -2355,6 +2486,10 @@
         state.loadedTabs.add(tabKey);
         renderTab(tabKey, state.items[tabKey]);
       } catch (error) {
+        console.error(`[admin-review] failed to load backend queue`, {
+          tab: tabKey,
+          error: error.message || "unknown error"
+        });
         panel.innerHTML = `<div class="empty-state">${escapeHtml(error.message || "Unable to load this folder.")}</div>`;
         if (String(error.message || "").toLowerCase() !== "unauthorized.") {
           setStatus(error.message || "Unable to load admin folder.", true);
@@ -2660,20 +2795,29 @@
     });
 
     async function initializeAdminReview() {
-      state.localJobReview = getLocalReviewState();
-      loadTriageSummary();
+      try {
+        state.localJobReview = getLocalReviewState();
+        loadTriageSummary();
 
-      if (!isBackendConfigured() || !hasToken()) {
+        if (!isBackendConfigured() || !hasToken()) {
+          showConsoleState();
+          activateTab("jobs");
+          setStatus("Running in local-only admin mode. Apps Script review folders remain unavailable until a backend token is configured.", false);
+          return;
+        }
+
+        const sessionIsValid = await validateAdminSession();
+        if (!sessionIsValid) return;
         showConsoleState();
         activateTab("jobs");
-        setStatus("Running in local-only admin mode. Apps Script review folders remain unavailable until a backend token is configured.", false);
-        return;
+      } catch (error) {
+        console.error("[admin-review] failed to initialize admin review", error);
+        showConsoleState();
+        document.getElementById("panel-jobs").innerHTML = `<div class="empty-state">Admin review failed to initialize. Check the console for details.</div>`;
+        document.getElementById("count-jobs").textContent = "0 pending";
+        triageGeneratedAt.textContent = "Triage snapshot failed to load";
+        setStatus(error.message || "Admin review failed to initialize.", true);
       }
-
-      const sessionIsValid = await validateAdminSession();
-      if (!sessionIsValid) return;
-      showConsoleState();
-      activateTab("jobs");
     }
 
     initializeAdminReview();

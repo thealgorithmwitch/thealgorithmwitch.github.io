@@ -166,6 +166,7 @@ function resolveDisplayJobFromRecord(record) {
     experience: stringifySafe(display.experience_level) || raw.experience,
     sector: stringifySafe(display.sector) || raw.sector,
     function: stringifySafe(display.function) || raw.function,
+    specialization: stringifySafe(display.specialization) || raw.specialization,
     tags: Array.isArray(display.tags) && display.tags.length ? display.tags : raw.tags,
     description: stringifySafe(display.description) || raw.description,
     source: stringifySafe(display.source_name) || raw.source,

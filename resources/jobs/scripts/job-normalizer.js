@@ -26,6 +26,21 @@ const UK_PATTERN =
 const EU_PATTERN =
   /austria|belgium|bulgaria|croatia|cyprus|czech republic|czechia|denmark|estonia|finland|france|germany|greece|hungary|ireland|italy|latvia|lithuania|luxembourg|malta|netherlands|poland|portugal|romania|slovakia|slovenia|spain|sweden|european union|\beu\b|berlin|paris|amsterdam|madrid|barcelona|lisbon|dublin|brussels|vienna|stockholm|helsinki|rome|milan/i;
 
+const SPECIALIZATION_RULES = [
+  { label: "PR / Press", pattern: /\b(?:pr|public relations|press|press secretary|media relations|press officer|press manager|press lead)\b/i },
+  { label: "Social Media", pattern: /\b(?:social media|social strategy|community manager|community lead|tiktok|instagram|linkedin content)\b/i },
+  { label: "Communications", pattern: /\b(?:communications|communication|comms|internal communications|external communications)\b/i },
+  { label: "Content", pattern: /\b(?:content|editorial|copywriter|copywriting|storytelling|writer|newsletter|content design)\b/i },
+  { label: "Art / Creative", pattern: /\b(?:creative|art director|artistic|illustration|visual storytelling|brand studio)\b/i },
+  { label: "Design", pattern: /\b(?:design|designer|graphic design|visual design|product design|ux|ui)\b/i },
+  { label: "Strategy", pattern: /\b(?:strategy|strategist|strategic|planning|planning director)\b/i },
+  { label: "Web", pattern: /\b(?:web|website|frontend|front-end|back-end|backend|full stack|full-stack|developer|engineer|software)\b/i },
+  { label: "Digital", pattern: /\b(?:digital|digital marketing|digital campaigns|growth marketing|crm|email marketing|seo|sem)\b/i },
+  { label: "Data", pattern: /\b(?:data|analytics|analyst|business intelligence|bi analyst|insights)\b/i },
+  { label: "Research", pattern: /\b(?:research|researcher|research associate|user research|market research)\b/i },
+  { label: "Campaigns", pattern: /\b(?:campaign|campaigns|campaigner|field organizing|organizing)\b/i }
+];
+
 const PRIORITY_OBJECT_KEYS = [
   "name",
   "title",
@@ -1122,6 +1137,7 @@ function normalizeJob(input = {}) {
     featured: Boolean(input.featured),
     sector: normalizeSector(input.sector || "general"),
     function: safeStringField(input.function || input.role_function),
+    specialization: normalizeSpecialization(input.specialization || input.display?.specialization, input),
     experience: safeStringField(input.experience),
     source: safeStringField(sourceAttribution?.sourceName || input.source, "Manual"),
     source_url: sourceUrl,
@@ -1176,6 +1192,28 @@ function normalizeSector(value) {
     .split(/\s+/)
     .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
     .join(" ");
+}
+
+function normalizeSpecialization(value, job = {}) {
+  const explicit = normalizeWhitespace(stringifySafe(value));
+  if (explicit) {
+    const matchedExplicit = SPECIALIZATION_RULES.find((rule) => rule.pattern.test(explicit));
+    if (matchedExplicit) return matchedExplicit.label;
+    return explicit;
+  }
+
+  const text = normalizeWhitespace([
+    job.title,
+    job.function,
+    job.description,
+    job.raw_description,
+    Array.isArray(job.tags) ? job.tags.join(" ") : job.tags,
+    job.notes
+  ].filter(Boolean).join(" "));
+  if (!text) return "";
+
+  const matchedRule = SPECIALIZATION_RULES.find((rule) => rule.pattern.test(text));
+  return matchedRule ? matchedRule.label : "";
 }
 
 function buildDedupeKey(job) {
@@ -1285,6 +1323,7 @@ module.exports = {
   normalizeDescription,
   normalizeEmploymentType,
   normalizeJob,
+  normalizeSpecialization,
   normalizeWorkplaceType,
   resolveEmploymentType,
   resolveWorkplaceType,

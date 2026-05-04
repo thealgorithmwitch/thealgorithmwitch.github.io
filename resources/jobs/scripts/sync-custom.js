@@ -114,7 +114,7 @@ async function runCustomSync() {
   Object.entries(counts).forEach(([sourceId, count]) => {
     const triageSource = triageBySource.get(String(sourceId)) || {};
     console.log(
-      `[jobs:sync-custom] source_id=${sourceId} fetched=${count.fetched} active=${count.active} pending=${count.pending} kept=${triageSource.kept || 0} rejected_noise=${triageSource.rejected_noise || 0} dropped_by_cap=${triageSource.dropped_by_cap || 0}${count.route ? ` route=${count.route}` : ""}${count.reason ? ` reason=${count.reason}` : ""}${count.error ? ` error=${count.error}` : ""}${triageSource.top_retained_examples?.length ? ` top_retained=${triageSource.top_retained_examples.map((item) => `${item.title} @ ${item.organization} (${item.relevance_score})`).join(" | ")}` : ""}`
+      `[jobs:sync-custom] source_id=${sourceId} fetched=${count.fetched} active=${count.active} pending=${count.pending} retained=${triageSource.retained || triageSource.kept || 0} rejected_by_relevance=${triageSource.rejected_by_relevance || 0} rejected_noise=${triageSource.rejected_noise || 0} dropped_by_source_cap=${triageSource.dropped_by_source_cap || triageSource.dropped_by_cap || 0}${count.route ? ` route=${count.route}` : ""}${count.reason ? ` reason=${count.reason}` : ""}${count.error ? ` error=${count.error}` : ""}${triageSource.top_retained_examples?.length ? ` top_retained=${triageSource.top_retained_examples.map((item) => `${item.title} @ ${item.organization} (${item.relevance_score})`).join(" | ")}` : ""}`
     );
   });
   console.log(

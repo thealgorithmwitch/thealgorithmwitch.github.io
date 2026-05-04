@@ -1400,9 +1400,13 @@
     }
 
     function buildJobPathMap(jobs) {
+      const explicitMap = new Map();
       const used = new Map();
       const map = new Map();
       jobs.forEach((job) => {
+        if (job.page_url) {
+          explicitMap.set(String(job.id || ""), String(job.page_url).trim());
+        }
         const baseSlug = buildBaseJobSlug(job) || buildIdSuffix(job);
         let slug = baseSlug;
         const id = String(job.id || "");
@@ -1415,13 +1419,13 @@
           }
         }
         used.set(slug, id);
-        map.set(id, `./pages/${slug}.html`);
+        map.set(id, explicitMap.get(id) || `./pages/${slug}.html`);
       });
       return map;
     }
 
     function getJobDetailPath(job) {
-      return state.jobPagePaths.get(String(job.id || "")) || `./pages/${buildBaseJobSlug(job)}.html`;
+      return String(job && job.page_url || "").trim() || state.jobPagePaths.get(String(job.id || "")) || `./pages/${buildBaseJobSlug(job)}.html`;
     }
 
     function trackUiEvent(event) {
@@ -1735,7 +1739,7 @@
         focusAreas.length ? `<div class="profile-modal-stat"><div class="profile-modal-label">Focus Areas</div><div class="profile-modal-text">${escapeHtml(focusAreas.join(", "))}</div></div>` : "",
         profile.open_to ? `<div class="profile-modal-stat"><div class="profile-modal-label">Open To</div><div class="profile-modal-text">${escapeHtml(cleanVisibleText(profile.open_to || ""))}</div></div>` : ""
       ].filter(Boolean).join("");
-      ui.profileModalLinks.innerHTML = buildProfileModalIconLinks(profile, {
+      renderProfileModalLinks(profile, {
         portfolioUrl,
         linkedInUrl,
         email,
@@ -1812,8 +1816,8 @@
     }
 
     function buildProfilePrimaryCta(profile) {
-      const portfolioUrl = String(profile.portfolio_url || profile.website_url || "").trim();
-      const linkedInUrl = String(profile.linkedin_url || "").trim();
+      const portfolioUrl = normalizeProfileUrl(profile.portfolio_url || profile.website_url || profile.website || "");
+      const linkedInUrl = normalizeProfileUrl(profile.linkedin_url || profile.linkedin || "");
       if (portfolioUrl) {
         return `<a class="btn-primary" href="${escapeHtml(portfolioUrl)}" target="_blank" rel="noopener noreferrer" data-talent-click="portfolio" data-profile-id="${escapeHtml(profile.id)}" data-profile-name="${escapeHtml(profile.name)}">${iconSvg("globe")} View Website</a>`;
       }
@@ -1823,34 +1827,50 @@
       return "";
     }
 
+    function normalizeProfileUrl(value) {
+      const text = String(value || "").trim();
+      if (!text) return "";
+      if (/^(?:https?:|mailto:)/i.test(text)) return text;
+      if (/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(text)) return `mailto:${text}`;
+      if (/^(?:www\.)?[a-z0-9.-]+\.[a-z]{2,}(?:\/|$)/i.test(text)) return `https://${text.replace(/^\/+/, "")}`;
+      return text;
+    }
+
     function buildProfileModalIconLink({ href, label, iconClass, clickType, profile, newTab = true }) {
       const targetAttrs = newTab ? ' target="_blank" rel="noopener noreferrer"' : "";
       return `<a class="profile-modal-icon-link" href="${escapeHtml(href)}"${targetAttrs} aria-label="${escapeHtml(label)}" title="${escapeHtml(label)}" data-talent-click="${escapeHtml(clickType)}" data-profile-id="${escapeHtml(profile.id)}" data-profile-name="${escapeHtml(profile.name)}"><i class="${escapeHtml(iconClass)}" aria-hidden="true"></i></a>`;
     }
 
+    function renderProfileModalLinks(profile, urls) {
+      ui.profileModalLinks.innerHTML = buildProfileModalIconLinks(profile, urls);
+    }
+
     function buildProfileModalIconLinks(profile, urls) {
       const actions = [];
-      if (urls.portfolioUrl) {
+      const portfolioUrl = normalizeProfileUrl(urls.portfolioUrl);
+      const linkedInUrl = normalizeProfileUrl(urls.linkedInUrl);
+      const emailHref = normalizeProfileUrl(urls.email);
+      if (portfolioUrl) {
         actions.push(buildProfileModalIconLink({
-          href: urls.portfolioUrl,
+          href: portfolioUrl,
           label: "Website",
           iconClass: "ph ph-globe",
           clickType: "portfolio",
           profile
         }));
       }
-      if (urls.linkedInUrl) {
+      if (linkedInUrl) {
         actions.push(buildProfileModalIconLink({
-          href: urls.linkedInUrl,
+          href: linkedInUrl,
           label: "LinkedIn",
           iconClass: "ph ph-linkedin-logo",
           clickType: "linkedin",
           profile
         }));
       }
-      if (urls.publicContact && urls.email) {
+      if (urls.publicContact && emailHref) {
         actions.push(buildProfileModalIconLink({
-          href: `mailto:${urls.email}`,
+          href: emailHref,
           label: "Email",
           iconClass: "ph ph-envelope",
           clickType: "email",

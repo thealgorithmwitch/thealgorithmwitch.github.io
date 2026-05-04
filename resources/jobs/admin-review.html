@@ -790,27 +790,6 @@
     };
     const loadMoreJobsButton = document.getElementById("load-more-jobs");
     const exportLocalActionsButton = document.getElementById("export-local-actions");
-
-    function callBackend(action, payload = {}) {
-      const url = new URL(backendUrl);
-    
-      url.searchParams.set("action", action);
-      url.searchParams.set("token", getAdminToken());
-    
-      Object.entries(payload).forEach(([key, value]) => {
-        url.searchParams.set(
-          key,
-          typeof value === "object" ? JSON.stringify(value) : String(value)
-        );
-      });
-    
-      return fetch(url.toString(), { method: "GET" })
-        .then(res => res.json())
-        .then(data => {
-          if (!data.ok) throw new Error(data.error || "Backend request failed");
-          return data;
-        });
-    }
     
     function getLocalReviewState() {
       try {
@@ -1823,29 +1802,29 @@
       if (!canUseBackendAdmin()) {
         throw new Error("Apps Script admin backend is unavailable in this session.");
       }
+    
       const token = getStoredToken();
-      console.log("[admin-review] auth token used:", token ? "present" : "missing");
-      const payload = Object.assign(
-        {
-          action,
-          token,
-          adminToken: token
-        },
-        extra || {}
-      );
-
+      const url = new URL(JOBS_BACKEND_URL);
+    
+      url.searchParams.set("action", action);
+      url.searchParams.set("token", token);
+      url.searchParams.set("adminToken", token);
+    
+      Object.entries(extra || {}).forEach(([key, value]) => {
+        url.searchParams.set(
+          key,
+          value && typeof value === "object" ? JSON.stringify(value) : String(value)
+        );
+      });
+    
       let response;
       let responseText = "";
+    
       try {
-        response = await fetch(JOBS_BACKEND_URL, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "Accept": "application/json",
-            "Authorization": `Bearer ${token}`
-          },
-          credentials: "omit",
-          body: JSON.stringify(payload)
+        response = await fetch(url.toString(), {
+          method: "GET",
+          cache: "no-store",
+          credentials: "omit"
         });
         responseText = await response.text();
       } catch (error) {
@@ -1854,18 +1833,19 @@
         requestError.allowLocalFallback = true;
         throw requestError;
       }
-
+    
       let data = {};
       try {
         data = responseText ? JSON.parse(responseText) : {};
       } catch (_error) {
         data = {};
       }
-
+    
       if (!response.ok || !data.ok) {
         const isAuthFailure = response.status === 401 ||
           response.status === 403 ||
           /unauthorized|forbidden/i.test(String(data.error || ""));
+    
         if (isAuthFailure) {
           const authError = new Error(SESSION_EXPIRED_MESSAGE);
           authError.code = "AUTH_EXPIRED";
@@ -1873,16 +1853,17 @@
           expireAdminSession(SESSION_EXPIRED_MESSAGE);
           throw authError;
         }
+    
         const apiError = new Error(data && data.error ? data.error : `${action} failed.`);
         apiError.code = "BACKEND_ERROR";
         apiError.httpStatus = response.status || 500;
         apiError.allowLocalFallback = false;
         throw apiError;
       }
-
+    
       return data;
     }
-
+    
     async function validateAdminSession() {
       if (!isBackendConfigured() || !hasToken()) return false;
       try {

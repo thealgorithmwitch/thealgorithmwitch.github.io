@@ -1,5 +1,5 @@
 const { PENDING_TRIAGE_SUMMARY_FILE, writeJson } = require("./job-utils");
-const { normalizeJob } = require("./job-normalizer");
+const { getJobExclusionReason, normalizeJob } = require("./job-normalizer");
 const { readOrganizationRules, readPendingOverrides } = require("./admin-actions-store");
 
 const MAX_BROAD_SOURCE_NEW_PENDING = 50;
@@ -688,6 +688,7 @@ function scorePendingJob(job) {
 function classifyPendingJob(job, context = {}) {
   const title = String(job.title || "").trim();
   const organization = String(job.organization || "").trim();
+  const exclusionReason = getJobExclusionReason(job);
   const originalUrl = normalizeUrl(job.original_url || job.apply_url || job.source_url);
   const scoreMeta = scorePendingJob(job);
   const nonRoleUrl = isNonRoleUrl(originalUrl);
@@ -744,6 +745,14 @@ function classifyPendingJob(job, context = {}) {
     relevance_score: scoreMeta.score,
     relevance_reasons: scoreMeta.reasons
   };
+
+  if (exclusionReason) {
+    return {
+      bucket: "rejected_noise",
+      job: { ...nextJob, triage_bucket: "rejected_noise", triage_reason: exclusionReason },
+      reason: exclusionReason
+    };
+  }
 
   if (nextJob._reject_reason) {
     const forcedReason = nextJob._quality?.rule || nextJob._quality?.reason || nextJob._reject_reason;

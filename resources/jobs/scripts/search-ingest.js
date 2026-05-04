@@ -301,6 +301,7 @@ function mergeBroadPending(publicJobs, pendingJobs, newPendingLeads) {
   const seen = new Map();
   const add = (job) => {
     const normalized = normalizeJob(job);
+    if (!normalized) return;
     const key = buildLeadKey(normalized);
     const existing = seen.get(key);
 
@@ -337,7 +338,9 @@ async function fetchQueryResults(queryConfig) {
   }
   const payload = await response.json();
   const results = extractResults(queryConfig.provider, payload);
-  return results.map((result) => normalizeLead(queryConfig, result));
+  return results
+    .map((result) => normalizeLead(queryConfig, result))
+    .filter(Boolean);
 }
 
 async function main() {

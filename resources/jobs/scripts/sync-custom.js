@@ -66,6 +66,7 @@ async function runCustomSync() {
           ...rawJob,
           sync_origin: "custom"
         }, source);
+        if (!routed) continue;
         if (routed.status === "active") {
           publicJobs.push(routed);
           counts[source.id].active += 1;

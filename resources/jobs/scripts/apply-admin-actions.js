@@ -23,6 +23,7 @@ const {
   readLocalAdminActions,
   readOrganizationRules,
   readPendingOverrides,
+  writeAdminActionSnapshot,
   writeLocalAdminActions,
   writeOrganizationRules,
   writePendingOverrides
@@ -165,8 +166,12 @@ function updateActionStatuses(actions, resultsById) {
 }
 
 async function resolveSnapshotActions(resultsById, actions) {
-  await writeAdminActionSnapshot(updateActionStatuses(actions, resultsById));
-  console.log(`[jobs:apply-admin-actions] resolve snapshot ids=${Object.keys(resultsById || {}).join(",")}`);
+  try {
+    await writeAdminActionSnapshot(updateActionStatuses(actions, resultsById));
+    console.log(`[jobs:apply-admin-actions] resolve snapshot ids=${Object.keys(resultsById || {}).join(",")}`);
+  } catch (error) {
+    console.warn(`[jobs:apply-admin-actions] snapshot cleanup warning: ${error.message}`);
+  }
 }
 
 function logActionOutcome(action, source, outcome, detail) {

@@ -154,6 +154,19 @@ const SCHEMA_METADATA_PATTERNS = [
   /\b\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?(?:Z|[+-]\d{2}:\d{2})\b/g,
   /\|\s*[A-Z][A-Za-z0-9&.' -]+\s+WebPage\b/gi
 ];
+const CLOSED_JOB_PATTERNS = [
+  /\bapplication closed\b/i,
+  /\bapplications closed\b/i,
+  /\bno longer accepting applications\b/i,
+  /\bposition has been filled\b/i,
+  /\bjob is no longer available\b/i,
+  /\bthis role has been filled\b/i,
+  /\bclosed for applications\b/i
+];
+const BLOCKED_ORGANIZATIONS = [
+  "superside",
+  "cribl"
+];
 
 function slugify(value) {
   return String(value || "")
@@ -1066,6 +1079,40 @@ function safeStringField(value, fallback = "") {
   return text || fallback;
 }
 
+function getJobExclusionReason(input = {}) {
+  const organization = safeStringField(input.organization);
+  const text = [
+    input.title,
+    input.description,
+    input.raw_description,
+    input.descriptionPlain,
+    input.content,
+    input.summary,
+    input.notes,
+    input.apply_url,
+    input.applyUrl,
+    input.source_url,
+    input.sourceUrl
+  ].filter(Boolean).join(" ").toLowerCase();
+
+  if (CLOSED_JOB_PATTERNS.some((pattern) => pattern.test(text))) {
+    return "closed_application";
+  }
+
+  const normalizedOrganization = organization.toLowerCase();
+  if (BLOCKED_ORGANIZATIONS.some((name) => normalizedOrganization.includes(name))) {
+    return "blocked_organization";
+  }
+
+  return "";
+}
+
+function logExcludedJob(input = {}, reason) {
+  const organization = safeStringField(input.organization, "Unknown organization");
+  const title = safeStringField(input.title, "Untitled role");
+  console.log(`[jobs:normalize] Excluded ${title} @ ${organization} reason=${reason}`);
+}
+
 function resolveNumericField(value) {
   if (value === null || value === undefined || value === "") return null;
   const numeric = Number(value);
@@ -1073,6 +1120,11 @@ function resolveNumericField(value) {
 }
 
 function normalizeJob(input = {}) {
+  const exclusionReason = getJobExclusionReason(input);
+  if (exclusionReason) {
+    logExcludedJob(input, exclusionReason);
+    return null;
+  }
   const sourceAttribution = resolveBoardSourceAttribution(input) || null;
   const organization = safeStringField(sourceAttribution?.organization || input.organization);
   const attributedTitle = safeStringField(sourceAttribution?.title);
@@ -1218,6 +1270,7 @@ function normalizeSpecialization(value, job = {}) {
 
 function buildDedupeKey(job) {
   const normalized = normalizeJob(job);
+  if (!normalized) return "";
   if (normalized.external_id) {
     return `external::${normalized.external_id.toLowerCase()}`;
   }
@@ -1244,7 +1297,9 @@ function dedupeJobs(jobs) {
 
   for (const rawJob of jobs) {
     const job = normalizeJob(rawJob);
+    if (!job) continue;
     const key = buildDedupeKey(job);
+    if (!key) continue;
     const existing = seen.get(key);
     const identityKey = `${job.title.toLowerCase()}::${job.organization.toLowerCase()}`;
     const identityExistingKey = identitySeen.get(identityKey);
@@ -1291,6 +1346,7 @@ function routeSyncedJob(job, source) {
     auto_publish: Boolean(source.auto_publish),
     sync_origin: job.sync_origin || "ats"
   });
+  if (!routed) return null;
 
   if (source.trusted === true && source.auto_publish === true) {
     return normalizeJob({ ...routed, status: "active" });
@@ -1314,6 +1370,7 @@ module.exports = {
   isSocialShareUrl,
   isGenericRoleTitle,
   isValidDate,
+  getJobExclusionReason,
   hasRoleSignal,
   isClearlyNotJobTitle,
   isLocationOnlyTitle,

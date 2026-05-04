@@ -142,6 +142,7 @@ async function runSyncForTypes(types = []) {
 
       for (const rawJob of rawJobs) {
         const routed = routeSyncedJob(rawJob, source);
+        if (!routed) continue;
         if (routed.status === "active") {
           publicJobs.push(routed);
           counts[source.id].active += 1;

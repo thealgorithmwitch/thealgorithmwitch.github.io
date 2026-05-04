@@ -80,6 +80,13 @@ function findAtsUrls(html, pageUrl) {
   return Array.from(urls);
 }
 
+function canAttemptDirectAts(provider, source, currentUrl) {
+  const normalizedProvider = normalizeProvider(provider || source.provider || source.type);
+  if (!normalizedProvider) return false;
+  if (normalizeProvider(source.provider || source.type) === normalizedProvider) return true;
+  return detectAtsProvider(currentUrl) === normalizedProvider;
+}
+
 function browserFallbackRecommended(html, scripts, jobsFound) {
   if (jobsFound > 0) return false;
   const scriptCount = Array.isArray(scripts) ? scripts.length : 0;
@@ -171,7 +178,7 @@ async function scrapeSourceWithDiscovery(source) {
       continue;
     }
 
-    const pageProvider = detectAtsProvider(`${current.url}\n${page.html}`);
+    const pageProvider = detectAtsProvider(current.url);
     if (!atsDetection && pageProvider) {
       atsDetection = pageProvider;
     }
@@ -181,7 +188,7 @@ async function scrapeSourceWithDiscovery(source) {
       atsDetection = detectAtsProvider(atsUrls.join("\n"));
     }
 
-    if (atsDetection && !directAtsAttempted) {
+    if (atsDetection && !directAtsAttempted && canAttemptDirectAts(atsDetection, source, current.url)) {
       directAtsAttempted = true;
       const skipReason = getDirectAtsSkipReason(atsDetection, source, {
         pageUrl: current.url,

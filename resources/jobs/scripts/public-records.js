@@ -65,11 +65,11 @@ function buildJobRecord(job, existing = {}) {
       title: stringifySafe(existing.display?.title),
       organization: stringifySafe(existing.display?.organization),
       location: stringifySafe(existing.display?.location),
-      location_type: stringifySafe(existing.display?.location_type),
+      location_type: stringifySafe(existing.display?.location_type) || normalized.workplace_type,
       pay_display: stringifySafe(existing.display?.pay_display),
       salary_min: existing.display?.salary_min ?? null,
       salary_max: existing.display?.salary_max ?? null,
-      role_type: stringifySafe(existing.display?.role_type),
+      role_type: stringifySafe(existing.display?.role_type) || normalized.job_type,
       experience_level: stringifySafe(existing.display?.experience_level),
       sector: stringifySafe(existing.display?.sector),
       function: stringifySafe(existing.display?.function),
@@ -79,7 +79,7 @@ function buildJobRecord(job, existing = {}) {
       source_url: stringifySafe(existing.display?.source_url),
       original_url: stringifySafe(existing.display?.original_url) || normalized.original_url || normalized.source_url,
       date_collected: stringifySafe(existing.display?.date_collected) || normalized.date_posted || todayIso(),
-      application_url: stringifySafe(existing.display?.application_url),
+      application_url: stringifySafe(existing.display?.application_url) || normalized.apply_url,
       published,
       featured: typeof existing.display?.featured === "boolean" ? existing.display.featured : Boolean(normalized.featured)
     }

@@ -18,6 +18,17 @@ function safeUrl(input) {
   }
 }
 
+function isImageAssetUrl(urlValue) {
+  return /\.(?:png|jpe?g|gif|svg|webp|avif)(?:[?#].*)?$/i.test(String(urlValue || ""));
+}
+
+function extractUrlsFromText(value) {
+  return Array.from(new Set(
+    String(value || "")
+      .match(/https?:\/\/[^\s"'<>]+/gi) || []
+  ));
+}
+
 function titleCaseSlug(value) {
   return cleanText(value)
     .split(/[-_.\s]+/)
@@ -55,7 +66,7 @@ function flattenObjects(value, results = [], seen = new Set()) {
 
 function extractOrganizationFromTitle(title) {
   const text = cleanText(title);
-  for (const separator of [" — ", " – ", " - ", " | ", " @ "]) {
+  for (const separator of [" — ", " – ", " - ", " | ", " @ ", ", "]) {
     if (!text.includes(separator)) continue;
     const parts = text.split(separator).map((part) => cleanText(part)).filter(Boolean);
     if (parts.length < 2) continue;
@@ -151,6 +162,54 @@ function extractOrganizationFromOriginalUrl(urlValue) {
   return null;
 }
 
+function extractClimateChangeJobsOrganizationFromAltText(job = {}) {
+  const text = cleanText([
+    job.raw_description,
+    job.description,
+    job.raw_payload
+  ].join(" "));
+  const match = text.match(/\balt=["']([^"']{2,120})["']/i);
+  if (!match) return null;
+  const candidate = cleanText(match[1]);
+  if (!looksLikeOrganization(candidate) || /^egen hjemmeside$/i.test(candidate)) return null;
+  return { organization: candidate, confidence: "high", reason: "climatechangejobs_alt" };
+}
+
+function extractClimateChangeJobsApplyUrl(job = {}) {
+  const candidates = [
+    job.apply_url,
+    job.applyUrl,
+    job.original_url,
+    job.originalUrl,
+    job.source_url,
+    job.sourceUrl,
+    job.notes,
+    job.raw_description,
+    job.description,
+    job.raw_payload
+  ];
+
+  const urls = candidates.flatMap((candidate) => {
+    if (typeof candidate === "string") {
+      return [candidate, ...extractUrlsFromText(candidate)];
+    }
+    return extractUrlsFromText(JSON.stringify(candidate || ""));
+  });
+
+  const uniqueUrls = Array.from(new Set(urls.map((url) => cleanText(url)).filter(Boolean)));
+  for (const url of uniqueUrls) {
+    const parsed = safeUrl(url);
+    if (!parsed) continue;
+    const hostname = parsed.hostname.toLowerCase();
+    if (hostname.includes("climatechangejobs.com")) continue;
+    if (hostname.includes("cloudfront.net")) continue;
+    if (hostname.includes("amazonaws.com") && isImageAssetUrl(url)) continue;
+    if (isImageAssetUrl(url)) continue;
+    return url;
+  }
+  return "";
+}
+
 const BOARD_SOURCE_CONFIGS = [
   {
     id: "elemental-impact",
@@ -201,6 +260,49 @@ function resolveBoardSourceAttribution(job = {}) {
   const boardConfig = findBoardSourceConfig(job);
   if (!boardConfig) return null;
 
+  const boardSourceUrl = cleanText(boardConfig.urls[0] || job.source_url || job.sourceUrl || "");
+
+  if (boardConfig.id === "climatechangejobs") {
+    const applyUrl = extractClimateChangeJobsApplyUrl(job);
+    const candidates = [
+      extractOrganizationFromTitle(job.title),
+      extractClimateChangeJobsOrganizationFromAltText(job),
+      extractOrganizationFromEmbeddedFields(job),
+      extractOrganizationFromDescriptionMetadata(job),
+      extractOrganizationFromOriginalUrl(applyUrl || job.original_url || job.originalUrl || job.apply_url || job.applyUrl)
+    ].filter(Boolean);
+
+    const chosen = candidates.find((candidate) => candidate.confidence === "high") || candidates[0] || null;
+    const organization = cleanText(chosen && chosen.organization);
+    const isActualBoardOrg = normalizeText(organization) === "climatechangejobs";
+
+    if (!organization || !looksLikeOrganization(organization) || isActualBoardOrg) {
+      return {
+        sourceName: boardConfig.name,
+        sourceUrl: boardSourceUrl,
+        organization: "Unknown organization",
+        organizationConfidence: "low",
+        applyUrl,
+        originalUrl: applyUrl,
+        parseWarning: "ClimateChangeJobs organization uncertain",
+        triageBucket: "needs_cleanup",
+        triageReason: "ClimateChangeJobs organization uncertain"
+      };
+    }
+
+    return {
+      sourceName: boardConfig.name,
+      sourceUrl: boardSourceUrl,
+      organization,
+      organizationConfidence: chosen.confidence,
+      applyUrl,
+      originalUrl: applyUrl,
+      parseWarning: applyUrl ? "" : "ClimateChangeJobs apply URL missing",
+      triageBucket: applyUrl ? "" : "needs_cleanup",
+      triageReason: applyUrl ? "" : "ClimateChangeJobs apply URL missing"
+    };
+  }
+
   const candidates = [
     extractOrganizationFromTitle(job.title),
     extractOrganizationFromEmbeddedFields(job),
@@ -214,7 +316,7 @@ function resolveBoardSourceAttribution(job = {}) {
   if (!organization || !looksLikeOrganization(organization)) {
     return {
       sourceName: boardConfig.name,
-      sourceUrl: cleanText(job.source_url || job.sourceUrl || boardConfig.urls[0] || ""),
+      sourceUrl: boardSourceUrl,
       organization: "Unknown organization",
       organizationConfidence: "low",
       parseWarning: "source board organization uncertain",
@@ -225,7 +327,7 @@ function resolveBoardSourceAttribution(job = {}) {
 
   return {
     sourceName: boardConfig.name,
-    sourceUrl: cleanText(job.source_url || job.sourceUrl || boardConfig.urls[0] || ""),
+    sourceUrl: boardSourceUrl,
     organization,
     organizationConfidence: chosen.confidence,
     parseWarning: "",

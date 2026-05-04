@@ -853,7 +853,7 @@
 
     function buildPublishQueuePayload(jobs) {
       const selectedJobs = Array.isArray(jobs) ? jobs.filter(Boolean) : [];
-      return {
+      const payload = {
         operation: "publish_selected",
         actor: "Admin Review Console",
         ids: dedupeIds(selectedJobs.map((job) => job.id)),
@@ -866,6 +866,12 @@
           }))
           .filter((item) => item.editedRecord)
       };
+      console.log("[admin-review] buildPublishQueuePayload", {
+        idsCount: payload.ids.length,
+        jobsCount: payload.jobs.length,
+        editedJobsCount: payload.edited_jobs.length
+      });
+      return payload;
     }
 
     function buildOptimisticActiveJobRecord(job, editedRecord) {
@@ -1902,6 +1908,8 @@
             operation: payload.operation,
             actionId: queued && queued.id ? queued.id : "",
             jobIds: payload.ids || [],
+            idsCount: Array.isArray(payload.ids) ? payload.ids.length : 0,
+            jobsCount: Array.isArray(payload.jobs) ? payload.jobs.length : 0,
             recordId: payload.recordId || payload.id || "",
             changedFields: payload.changed_fields || []
           });
@@ -1925,6 +1933,8 @@
           console.warn("[admin-review] local fallback used", {
             operation: payload.operation,
             recordId: payload.recordId || payload.id || "",
+            idsCount: Array.isArray(payload.ids) ? payload.ids.length : 0,
+            jobsCount: Array.isArray(payload.jobs) ? payload.jobs.length : 0,
             reason: error.message || "request failure"
           });
           enqueueLocalAction(payload, "queued");
@@ -1935,6 +1945,8 @@
       console.warn("[admin-review] local fallback used", {
         operation: payload.operation,
         recordId: payload.recordId || payload.id || "",
+        idsCount: Array.isArray(payload.ids) ? payload.ids.length : 0,
+        jobsCount: Array.isArray(payload.jobs) ? payload.jobs.length : 0,
         reason: isBackendConfigured() ? "missing token" : "backend not configured"
       });
       enqueueLocalAction(payload, "queued");

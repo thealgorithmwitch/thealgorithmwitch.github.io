@@ -1,0 +1,99 @@
+name: Jobs Manual Parser Migration
+
+on:
+  workflow_dispatch:
+    inputs:
+      write:
+        description: "Apply migration changes? Use true to write, false for dry run."
+        required: true
+        default: "false"
+        type: choice
+        options:
+          - "false"
+          - "true"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: jobs-manual-parser-migration
+  cancel-in-progress: false
+
+jobs:
+  migrate-existing-jobs:
+    runs-on: ubuntu-latest
+
+    env:
+      JOBS_DIR: resources/jobs
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+          cache: npm
+          cache-dependency-path: resources/jobs/package.json
+
+      - name: Install dependencies if needed
+        shell: bash
+        run: |
+          if [ -f "$JOBS_DIR/package-lock.json" ] || [ -f "$JOBS_DIR/npm-shrinkwrap.json" ]; then
+            npm --prefix "$JOBS_DIR" ci
+          elif node -e "const p=require('./resources/jobs/package.json'); const hasDeps=Object.keys(p.dependencies||{}).length > 0 || Object.keys(p.devDependencies||{}).length > 0; process.exit(hasDeps ? 0 : 1)"; then
+            npm --prefix "$JOBS_DIR" install
+          else
+            echo "No package dependencies declared. Skipping npm install."
+          fi
+
+      - name: Validate migration script
+        run: |
+          node --check "$JOBS_DIR/scripts/migrate-existing-job-fields.js"
+
+      - name: Run migration dry run
+        if: ${{ inputs.write == 'false' }}
+        run: npm --prefix "$JOBS_DIR" run jobs:migrate-existing
+
+      - name: Run migration write
+        if: ${{ inputs.write == 'true' }}
+        run: npm --prefix "$JOBS_DIR" run jobs:migrate-existing -- --write
+
+      - name: Rebuild public job pages
+        if: ${{ inputs.write == 'true' }}
+        run: npm --prefix "$JOBS_DIR" run jobs:build-pages
+
+      - name: Check for migration output changes
+        if: ${{ inputs.write == 'true' }}
+        id: changes
+        shell: bash
+        run: |
+          CHANGED="$(git status --porcelain -- \
+            resources/jobs/job-records.json \
+            resources/jobs/jobs.json \
+            resources/jobs/pending-synced-jobs.json \
+            resources/jobs/pages \
+            || true)"
+          if [ -n "$CHANGED" ]; then
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+            echo "Detected migration output changes:"
+            echo "$CHANGED"
+          else
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+            echo "No migration output changes detected."
+          fi
+
+      - name: Commit and push migration changes
+        if: ${{ inputs.write == 'true' && steps.changes.outputs.changed == 'true' }}
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add resources/jobs/job-records.json resources/jobs/jobs.json resources/jobs/pending-synced-jobs.json resources/jobs/pages
+          git commit -m "Apply manual parser migration to jobs"
+          git push
+
+      - name: Report no-op
+        if: ${{ inputs.write == 'true' && steps.changes.outputs.changed != 'true' }}
+        run: echo "No commit created."

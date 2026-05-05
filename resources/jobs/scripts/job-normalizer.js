@@ -1079,6 +1079,14 @@ function safeStringField(value, fallback = "") {
   return text || fallback;
 }
 
+function truncateTextForStorage(value, maxLength = 16000) {
+  const text = stringifySafe(value);
+  if (!text) return "";
+  if (text.length <= maxLength) return text;
+  if (maxLength <= 1) return text.slice(0, maxLength);
+  return `${text.slice(0, maxLength - 1).trimEnd()}…`;
+}
+
 function getJobExclusionReason(input = {}) {
   const organization = safeStringField(input.organization);
   const text = [
@@ -1390,6 +1398,7 @@ module.exports = {
   slugify,
   stableHash,
   stringifySafe,
+  truncateTextForStorage,
   stripHtml,
   stripSocialShareJunk,
   todayIso

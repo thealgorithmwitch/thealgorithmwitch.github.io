@@ -1,12 +1,165 @@
 const path = require("path");
 const { readJson, writeJsonIfChanged } = require("./job-utils");
-const { normalizeJob, stableHash, stringifySafe, todayIso } = require("./job-normalizer");
+const { normalizeJob, stableHash, stringifySafe, todayIso, truncateTextForStorage } = require("./job-normalizer");
 const { applyPublishLifecycle, resolveDisplayJobFromRecord } = require("./lifecycle-utils");
 
 const ROOT = path.resolve(__dirname, "..");
 const JOB_RECORDS_FILE = path.join(ROOT, "job-records.json");
 const TALENT_PROFILES_FILE = path.join(ROOT, "talent-profiles.json");
 const EMPLOYERS_FILE = path.join(ROOT, "employers.json");
+const MAX_STORED_DESCRIPTION_LENGTH = 16000;
+const MAX_STORED_NOTES_LENGTH = 4000;
+
+const RAW_SOURCE_DATA_FIELDS = [
+  "id",
+  "ref",
+  "external_id",
+  "source_id",
+  "source_type",
+  "title",
+  "organization",
+  "location",
+  "workplace_type",
+  "job_type",
+  "salary",
+  "raw_salary",
+  "salary_min",
+  "salary_max",
+  "salary_currency",
+  "salary_period",
+  "salary_visible",
+  "featured",
+  "sector",
+  "function",
+  "specialization",
+  "experience",
+  "source",
+  "source_url",
+  "apply_url",
+  "original_url",
+  "date_posted",
+  "date_added",
+  "date_updated",
+  "status",
+  "approved_by",
+  "description",
+  "raw_description",
+  "tags",
+  "shared_by",
+  "notes",
+  "review_reason",
+  "triage_bucket",
+  "triage_reason",
+  "parse_warning",
+  "confidence",
+  "relevance_score",
+  "relevance_reasons",
+  "trusted",
+  "auto_publish",
+  "sync_origin"
+];
+
+function serializedByteLength(value) {
+  return Buffer.byteLength(JSON.stringify(value ?? null), "utf8");
+}
+
+function toMegabytes(bytes) {
+  return (bytes / (1024 * 1024)).toFixed(2);
+}
+
+function sanitizeStoredDescription(value, meta) {
+  const next = truncateTextForStorage(value, MAX_STORED_DESCRIPTION_LENGTH);
+  if (stringifySafe(value) && next !== stringifySafe(value)) {
+    meta.changed = true;
+    meta.truncated = true;
+  }
+  return next;
+}
+
+function sanitizeStoredNotes(value, meta) {
+  const next = truncateTextForStorage(value, MAX_STORED_NOTES_LENGTH);
+  if (stringifySafe(value) && next !== stringifySafe(value)) {
+    meta.changed = true;
+    meta.truncated = true;
+  }
+  return next;
+}
+
+function sanitizeRawSourceDataForStorage(rawSourceData = {}, meta = { changed: false, truncated: false }) {
+  const next = {};
+
+  for (const field of RAW_SOURCE_DATA_FIELDS) {
+    if (!Object.prototype.hasOwnProperty.call(rawSourceData || {}, field)) continue;
+    const value = rawSourceData[field];
+
+    if (field === "description" || field === "raw_description") {
+      next[field] = sanitizeStoredDescription(value, meta);
+      continue;
+    }
+
+    if (field === "notes") {
+      next[field] = sanitizeStoredNotes(value, meta);
+      continue;
+    }
+
+    if (field === "tags" || field === "relevance_reasons") {
+      next[field] = Array.isArray(value)
+        ? value.map((item) => stringifySafe(item)).filter(Boolean)
+        : [];
+      continue;
+    }
+
+    next[field] = value;
+  }
+
+  return next;
+}
+
+function sanitizeDisplayForStorage(display = {}, normalized = {}, meta = { changed: false, truncated: false }) {
+  return {
+    title: stringifySafe(display.title || normalized.title),
+    organization: stringifySafe(display.organization || normalized.organization),
+    location: stringifySafe(display.location || normalized.location),
+    location_type: stringifySafe(display.location_type || normalized.workplace_type),
+    pay_display: stringifySafe(display.pay_display || normalized.salary),
+    salary_min: display.salary_min ?? normalized.salary_min ?? null,
+    salary_max: display.salary_max ?? normalized.salary_max ?? null,
+    role_type: stringifySafe(display.role_type || normalized.job_type),
+    experience_level: stringifySafe(display.experience_level || normalized.experience),
+    sector: stringifySafe(display.sector || normalized.sector),
+    function: stringifySafe(display.function || normalized.function),
+    tags: Array.isArray(display.tags) && display.tags.length
+      ? display.tags.map((tag) => stringifySafe(tag)).filter(Boolean)
+      : Array.isArray(normalized.tags)
+        ? normalized.tags.map((tag) => stringifySafe(tag)).filter(Boolean)
+        : [],
+    description: sanitizeStoredDescription(display.description || normalized.description || normalized.raw_description, meta),
+    source_name: stringifySafe(display.source_name || normalized.source),
+    source_url: stringifySafe(display.source_url || normalized.source_url),
+    original_url: stringifySafe(display.original_url || normalized.original_url || normalized.source_url),
+    date_collected: stringifySafe(display.date_collected || normalized.date_posted || todayIso()),
+    application_url: stringifySafe(display.application_url || normalized.apply_url),
+    published: typeof display.published === "boolean" ? display.published : Boolean(normalized.status === "active"),
+    featured: typeof display.featured === "boolean" ? display.featured : Boolean(normalized.featured)
+  };
+}
+
+function sanitizeJobRecordForStorage(record = {}) {
+  const meta = { changed: false, truncated: false };
+  const normalizedRawSourceData = sanitizeRawSourceDataForStorage(record.raw_source_data || {}, meta);
+  const sanitizedRecord = {
+    ...record,
+    admin_notes: sanitizeStoredNotes(record.admin_notes, meta),
+    raw_source_data: normalizedRawSourceData,
+    display: sanitizeDisplayForStorage(record.display || {}, normalizedRawSourceData, meta)
+  };
+
+  if (JSON.stringify(sanitizedRecord) !== JSON.stringify(record)) {
+    meta.changed = true;
+  }
+
+  return { record: sanitizedRecord, meta };
+}
 
 function baseRecord(recordType, sourceType, existing = {}) {
   const now = new Date().toISOString();
@@ -61,28 +214,7 @@ function buildJobRecord(job, existing = {}) {
     published,
     source_fingerprint: stringifySafe(existing.source_fingerprint) || buildJobFingerprint(normalized),
     raw_source_data: normalized,
-    display: {
-      title: stringifySafe(existing.display?.title),
-      organization: stringifySafe(existing.display?.organization),
-      location: stringifySafe(existing.display?.location),
-      location_type: stringifySafe(existing.display?.location_type) || normalized.workplace_type,
-      pay_display: stringifySafe(existing.display?.pay_display),
-      salary_min: existing.display?.salary_min ?? null,
-      salary_max: existing.display?.salary_max ?? null,
-      role_type: stringifySafe(existing.display?.role_type) || normalized.job_type,
-      experience_level: stringifySafe(existing.display?.experience_level),
-      sector: stringifySafe(existing.display?.sector),
-      function: stringifySafe(existing.display?.function),
-      tags: Array.isArray(existing.display?.tags) ? existing.display.tags : [],
-      description: stringifySafe(existing.display?.description),
-      source_name: stringifySafe(existing.display?.source_name),
-      source_url: stringifySafe(existing.display?.source_url),
-      original_url: stringifySafe(existing.display?.original_url) || normalized.original_url || normalized.source_url,
-      date_collected: stringifySafe(existing.display?.date_collected) || normalized.date_posted || todayIso(),
-      application_url: stringifySafe(existing.display?.application_url) || normalized.apply_url,
-      published,
-      featured: typeof existing.display?.featured === "boolean" ? existing.display.featured : Boolean(normalized.featured)
-    }
+    display: sanitizeDisplayForStorage(existing.display || {}, normalized, { changed: false, truncated: false })
   };
 
   if (nextRecord.published && nextRecord.public_visibility && nextRecord.status === "published") {
@@ -142,13 +274,29 @@ async function syncJobRecordStore(publicJobs, options = {}) {
     return !nextRecordIds.has(id) && (!fingerprint || !nextFingerprints.has(fingerprint));
   });
   const mergedRecords = [...nextRecords, ...preservedPublishedRecords];
-  const publishedAfter = mergedRecords.filter(isPublishedPublicJobRecord).length;
+  const existingSizeBeforeBytes = serializedByteLength(existingRecords);
+  let recordsTruncatedCount = 0;
+  const sanitizedMergedRecords = mergedRecords.map((record) => {
+    const sanitized = sanitizeJobRecordForStorage(record);
+    if (sanitized.meta.truncated) {
+      recordsTruncatedCount += 1;
+    }
+    return sanitized.record;
+  });
+  const publishedAfter = sanitizedMergedRecords.filter(isPublishedPublicJobRecord).length;
+  const sizeAfterBytes = serializedByteLength(sanitizedMergedRecords);
+  const largestRecordSizeKbAfter = sanitizedMergedRecords.reduce((largest, record) => {
+    return Math.max(largest, serializedByteLength(record) / 1024);
+  }, 0);
 
-  const changed = await writeJsonIfChanged(JOB_RECORDS_FILE, mergedRecords);
+  const changed = await writeJsonIfChanged(JOB_RECORDS_FILE, sanitizedMergedRecords);
   logger.log(
-    `[${label}] existing_published_before=${existingPublishedBefore.length} published_preserved=${preservedPublishedRecords.length} published_after=${publishedAfter} total_records=${mergedRecords.length} changed=${changed}`
+    `[${label}] existing_published_before=${existingPublishedBefore.length} published_preserved=${preservedPublishedRecords.length} published_after=${publishedAfter} total_records=${sanitizedMergedRecords.length} changed=${changed}`
   );
-  return mergedRecords;
+  logger.log(
+    `[${label}] job_records_count=${sanitizedMergedRecords.length} job_records_size_mb_before=${toMegabytes(existingSizeBeforeBytes)} job_records_size_mb_after=${toMegabytes(sizeAfterBytes)} largest_record_size_kb_after=${largestRecordSizeKbAfter.toFixed(2)} records_truncated_count=${recordsTruncatedCount}`
+  );
+  return sanitizedMergedRecords;
 }
 
 module.exports = {
@@ -158,6 +306,7 @@ module.exports = {
   buildJobRecord,
   buildJobFingerprint,
   readJobRecords,
+  sanitizeJobRecordForStorage,
   syncJobRecordStore,
   toDisplayJob
 };

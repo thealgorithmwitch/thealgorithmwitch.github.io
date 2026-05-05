@@ -1,12 +1,13 @@
 const fs = require("fs/promises");
 const path = require("path");
-const { readJobRecords } = require("./public-records");
-const { buildPublicJobsFromRecords, syncPublicJobsFromRecords } = require("./public-jobs");
+const crypto = require("crypto");
+const { readJobs } = require("./job-utils");
 const { buildJobPagePathMap, cleanVisibleText } = require("./job-page-paths");
 const { normalizeEmploymentType, normalizeWorkplaceType } = require("./job-normalizer");
 
 const ROOT = path.resolve(__dirname, "..");
 const PAGES_DIR = path.join(ROOT, "pages");
+const JOB_PAGE_HASH_PREFIX = "<!-- job-page-hash:";
 
 function escapeHtml(value) {
   return String(value || "")
@@ -81,7 +82,39 @@ function buildJsonLd(job) {
   );
 }
 
-function buildPage(job, slug) {
+function buildPageInputHash(job, slug) {
+  const payload = {
+    id: String(job.id || ""),
+    slug,
+    title: cleanVisibleText(job.title),
+    organization: cleanVisibleText(job.organization),
+    location: cleanVisibleText(job.location),
+    workplace_type: cleanVisibleText(job.workplace_type),
+    job_type: cleanVisibleText(job.job_type),
+    salary: cleanVisibleText(job.salary),
+    salary_min: job.salary_min ?? null,
+    salary_max: job.salary_max ?? null,
+    salary_currency: cleanVisibleText(job.salary_currency),
+    salary_period: cleanVisibleText(job.salary_period),
+    source: cleanVisibleText(job.source),
+    source_url: cleanVisibleText(job.source_url),
+    apply_url: cleanVisibleText(job.apply_url),
+    original_url: cleanVisibleText(job.original_url),
+    date_posted: cleanVisibleText(job.date_posted),
+    expires_at: cleanVisibleText(job.expires_at),
+    tags: Array.isArray(job.tags) ? job.tags.map((tag) => cleanVisibleText(tag)) : [],
+    description: cleanVisibleText(job.description || ""),
+    raw_description: cleanVisibleText(job.raw_description || "")
+  };
+
+  return crypto
+    .createHash("sha256")
+    .update(JSON.stringify(payload))
+    .digest("hex")
+    .slice(0, 12);
+}
+
+function buildPage(job, slug, hash) {
   const normalizedJobType = normalizeEmploymentType(job.job_type || "");
   const normalizedWorkplaceType = normalizeWorkplaceType(job.workplace_type || "");
   const title = `${cleanVisibleText(job.title)} at ${cleanVisibleText(job.organization)}`;
@@ -91,7 +124,8 @@ function buildPage(job, slug) {
   const summary = cleanVisibleText(job.description || job.raw_description || "");
   const detailUrl = `https://example.com/jobs/pages/${slug}.html`;
 
-  return `<!DOCTYPE html>
+  return `${JOB_PAGE_HASH_PREFIX} ${hash} -->
+<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
@@ -195,49 +229,95 @@ async function ensureDir(dir) {
   await fs.mkdir(dir, { recursive: true });
 }
 
-async function buildPagesFromRecords(records) {
-  const jobs = buildPublicJobsFromRecords(records);
+async function readExistingPageHash(pagePath) {
+  let handle;
+  try {
+    handle = await fs.open(pagePath, "r");
+    const buffer = Buffer.alloc(256);
+    const { bytesRead } = await handle.read(buffer, 0, buffer.length, 0);
+    const header = buffer.toString("utf8", 0, bytesRead);
+    const match = header.match(/<!-- job-page-hash:\s*([a-f0-9]+)\s*-->/i);
+    return match ? match[1] : "";
+  } catch (error) {
+    if (error.code === "ENOENT") return "";
+    throw error;
+  } finally {
+    if (handle) await handle.close();
+  }
+}
+
+async function buildPagesFromJobs(jobs) {
   await ensureDir(PAGES_DIR);
   const existingFiles = await fs.readdir(PAGES_DIR).catch(() => []);
-  await Promise.all(
-    existingFiles
-      .filter((fileName) => fileName.endsWith(".html"))
-      .map((fileName) => fs.unlink(path.join(PAGES_DIR, fileName)))
+  const { map: pagePathMap, collisions } = buildJobPagePathMap(jobs);
+  const expectedFileNames = new Set(
+    jobs.map((job) => {
+      const relativePagePath = pagePathMap.get(String(job.id || "")) || "./pages/job.html";
+      return path.basename(relativePagePath);
+    })
   );
 
-  const { map: pagePathMap, collisions } = buildJobPagePathMap(jobs);
-  let samplePagePath = "";
+  let pagesWrittenCount = 0;
+  let pagesSkippedUnchangedCount = 0;
+  let stalePagesDeletedCount = 0;
+  let largestDescriptionLength = 0;
+
+  for (const fileName of existingFiles) {
+    if (!fileName.endsWith(".html")) continue;
+    if (expectedFileNames.has(fileName)) continue;
+    await fs.unlink(path.join(PAGES_DIR, fileName));
+    stalePagesDeletedCount += 1;
+  }
 
   for (const job of jobs) {
     const relativePagePath = pagePathMap.get(String(job.id || "")) || "./pages/job.html";
     const slug = path.basename(relativePagePath, ".html");
-    const html = buildPage(job, slug);
     const pagePath = path.join(PAGES_DIR, `${slug}.html`);
+    const nextHash = buildPageInputHash(job, slug);
+    const existingHash = await readExistingPageHash(pagePath);
+    const descriptionLength = String(job.description || job.raw_description || "").length;
+    if (descriptionLength > largestDescriptionLength) {
+      largestDescriptionLength = descriptionLength;
+    }
+
+    if (existingHash && existingHash === nextHash) {
+      pagesSkippedUnchangedCount += 1;
+      continue;
+    }
+
+    const html = buildPage(job, slug, nextHash);
     await fs.writeFile(pagePath, html, "utf8");
-    if (!samplePagePath) samplePagePath = pagePath;
+    pagesWrittenCount += 1;
   }
 
-  const htmlFiles = (await fs.readdir(PAGES_DIR).catch(() => [])).filter((fileName) => fileName.endsWith(".html"));
-
-  console.log(`[jobs:build-pages] Generated ${jobs.length} job pages in ${PAGES_DIR}.`);
-  console.log(`[jobs:build-pages] job-records published count: ${jobs.length}.`);
-  console.log(`[jobs:build-pages] HTML file count: ${htmlFiles.length}.`);
+  console.log(`[jobs:build-pages] public_jobs_loaded_count=${jobs.length}`);
+  console.log(`[jobs:build-pages] pages_expected_count=${jobs.length}`);
+  console.log(`[jobs:build-pages] pages_written_count=${pagesWrittenCount}`);
+  console.log(`[jobs:build-pages] pages_skipped_unchanged_count=${pagesSkippedUnchangedCount}`);
+  console.log(`[jobs:build-pages] stale_pages_deleted_count=${stalePagesDeletedCount}`);
+  console.log(`[jobs:build-pages] largest_description_length=${largestDescriptionLength}`);
+  console.log(`[jobs:build-pages] output_dir=${PAGES_DIR}`);
   console.log(`[jobs:build-pages] Resolved ${collisions.length} slug collisions.`);
+  if (jobs.length > 500) {
+    console.warn(`[jobs:build-pages] WARNING public_jobs_loaded_count=${jobs.length} exceeds expected threshold 500.`);
+  }
   if (collisions.length) {
     console.log(`[jobs:build-pages] Collision samples: ${collisions.slice(0, 5).map((entry) => `${entry.base_slug} -> ${entry.id}`).join("; ")}`);
   }
-  if (samplePagePath) {
-    console.log(`[jobs:build-pages] Sample page: ${samplePagePath}`);
-  }
-  return jobs.length;
+  return {
+    publicJobsLoadedCount: jobs.length,
+    pagesExpectedCount: jobs.length,
+    pagesWrittenCount,
+    pagesSkippedUnchangedCount,
+    stalePagesDeletedCount,
+    largestDescriptionLength,
+    outputDir: PAGES_DIR
+  };
 }
 
 async function main() {
-  const records = await readJobRecords();
-  const publicSync = await syncPublicJobsFromRecords(records, { label: "jobs:build-pages" });
-  const pageCount = await buildPagesFromRecords(records);
-  console.log(`[jobs:build-pages] jobs.json count: ${publicSync.jobsCount}.`);
-  console.log(`[jobs:build-pages] generated page count: ${pageCount}.`);
+  const jobs = await readJobs();
+  await buildPagesFromJobs(jobs);
 }
 
 if (require.main === module) {
@@ -249,5 +329,7 @@ if (require.main === module) {
 
 module.exports = {
   buildJobPagePathMap,
-  buildPagesFromRecords
+  buildPageInputHash,
+  buildPagesFromJobs,
+  readExistingPageHash
 };

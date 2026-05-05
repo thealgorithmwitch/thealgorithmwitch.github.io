@@ -493,6 +493,7 @@ async function main() {
     duplicatesSkipped: 0,
     alreadyPublishedSkipped: 0,
     staleSkipped: 0,
+    talentProfilesUpdated: 0,
     jobPagesRegenerated: 0,
     jobRecordsCount: 0,
     jobsJsonCount: 0
@@ -825,10 +826,18 @@ async function main() {
       console.log(`[jobs:apply-admin-actions] feature_active_job action=${action.id} count=${count} featured=${featured}`);
     } else if (action.operation === "update_active_talent") {
       const id = String(action.payload.id || action.payload.recordId || freshIds[0] || "");
-      const applied = updateRecordListById(nextTalentProfiles, id, (record) => updateStructuredRecord(record, action.payload.editedRecord || {}));
+      let changedFields = [];
+      const applied = updateRecordListById(nextTalentProfiles, id, (record) => {
+        const nextRecord = updateStructuredRecord(record, action.payload.editedRecord || {});
+        changedFields = summarizeChangedFields(record, nextRecord, { editedRecord: action.payload.editedRecord || {} });
+        return nextRecord;
+      });
+      if (applied) report.talentProfilesUpdated += 1;
       actionResults[action.id] = buildActionResult(applied ? "applied" : "ignored_duplicate", applied ? `updated_active_talent=${id}` : `talent_not_found=${id}`);
       logActionOutcome(action, actionSource, applied ? "applied" : "skipped_stale", applied ? `updated_active_talent=${id}` : `talent_not_found=${id}`);
-      console.log(`[jobs:apply-admin-actions] update_active_talent action=${action.id} id=${id} applied=${applied}`);
+      console.log(
+        `[jobs:apply-admin-actions] action_id=${action.id} operation=update_active_talent talent_id=${id} fields_changed=${changedFields.join(",") || "none"} talent_profiles_updated_count=${report.talentProfilesUpdated} applied=${applied}`
+      );
     } else if (action.operation === "archive_active_talent") {
       const targetIds = freshIds.length ? freshIds : [String(action.payload.id || action.payload.recordId || "")].filter(Boolean);
       let count = 0;
@@ -933,7 +942,7 @@ async function main() {
   }
 
   console.log(
-    `[jobs:apply-admin-actions] published_count=${report.recordsPublished} records_archived_or_rejected=${report.recordsArchivedOrRejected} skipped_stale_count=${report.staleSkipped} already_published_skipped=${report.alreadyPublishedSkipped} duplicates_skipped=${report.duplicatesSkipped} records_left_pending=${report.recordsLeftPending} final_job_records_count=${report.jobRecordsCount} final_job_records_published_count=${publicSync.publishedCount} final_jobs_json_count=${report.jobsJsonCount} generated_page_count=${report.jobPagesRegenerated}`
+    `[jobs:apply-admin-actions] published_count=${report.recordsPublished} records_archived_or_rejected=${report.recordsArchivedOrRejected} talent_profiles_updated_count=${report.talentProfilesUpdated} skipped_stale_count=${report.staleSkipped} already_published_skipped=${report.alreadyPublishedSkipped} duplicates_skipped=${report.duplicatesSkipped} records_left_pending=${report.recordsLeftPending} final_job_records_count=${report.jobRecordsCount} final_job_records_published_count=${publicSync.publishedCount} final_jobs_json_count=${report.jobsJsonCount} generated_page_count=${report.jobPagesRegenerated}`
   );
 }
 

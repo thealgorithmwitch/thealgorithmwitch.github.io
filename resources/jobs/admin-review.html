@@ -30,18 +30,6 @@
       font-family: var(--font-sans);
       padding: 0 24px 72px;
     }
-    #admin-token-open {
-      position: fixed;
-      top: 12px;
-      right: 12px;
-      z-index: 99999;
-      padding: 10px 14px;
-      border-radius: 999px;
-      border: 1px solid #111;
-      background: #fff;
-      color: #111;
-      font-weight: 700;
-    }
     .shell { max-width: 1240px; margin: 0 auto; }
     nav {
       display: flex;
@@ -407,7 +395,6 @@
   </style>
 </head>
 <body>
-  <button id="admin-token-open" type="button">Enter admin token</button>
   <div class="shell">
     <nav>
       <a class="logo" href="./">
@@ -467,10 +454,10 @@
         <div class="login-card">
           <div class="eyebrow">Admin Access</div>
           <h3 style="font-family: var(--font-serif); font-size: 2rem; margin-top: 10px;">Unlock</h3>
-          <p style="color: var(--ink-secondary); margin-top: 12px;">Enter the admin password for this backend to load the private review folders.</p>
+          <p style="color: var(--ink-secondary); margin-top: 12px;">Enter the admin token for this backend to load the private review folders and keep local-first review tools available on this device.</p>
           <div style="margin-top: 18px;">
-            <label for="admin-password">Password</label>
-            <input id="admin-password" type="password" placeholder="Enter admin password">
+            <label for="admin-password">Admin Token</label>
+            <input id="admin-password" type="password" placeholder="Enter admin token">
           </div>
           <div class="actions">
             <button id="unlock-button" type="button" class="btn-primary">Unlock</button>
@@ -1722,6 +1709,9 @@
       clearStatus();
       showLoginMessage(message || "");
       passwordInput.value = "";
+      window.requestAnimationFrame(() => {
+        passwordInput.focus();
+      });
     }
 
     function showConsoleState() {
@@ -2811,17 +2801,20 @@
     unlockButton.addEventListener("click", async () => {
       const token = passwordInput.value.trim();
       if (!token) {
-        showLoginMessage("Enter a password to continue.");
+        showLoginMessage("Enter an admin token to continue.");
         return;
       }
       clearStatus();
       clearAdminSessionState();
       setStoredToken(token);
       const sessionIsValid = await validateAdminSession();
-      if (!sessionIsValid) return;
+      if (!sessionIsValid && !hasToken()) return;
       showConsoleState();
       loadTriageSummary();
       activateTab("jobs");
+      if (!sessionIsValid) {
+        setStatus("Local review console is active. Backend admin session could not be validated.", true);
+      }
     });
 
     passwordInput.addEventListener("keydown", (event) => {
@@ -2840,42 +2833,41 @@
     try {
       state.localJobReview = getLocalReviewState();
       loadTriageSummary();
-  
-      showConsoleState();
-      activateTab("jobs");
-  
-      if (!isBackendConfigured() || !hasToken()) {
-        setStatus("Running in local-only admin mode. Apps Script review folders remain unavailable until a backend token is configured.", false);
+
+      if (!isBackendConfigured()) {
+        showLockedState();
         return;
       }
-  
-      validateAdminSession().catch((error) => {
-        console.warn("[admin-review] backend auth unavailable; local console remains active", error);
+
+      if (!hasToken()) {
+        showLoginState("");
+        return;
+      }
+
+      const sessionIsValid = await validateAdminSession();
+      if (!sessionIsValid && !hasToken()) return;
+
+      showConsoleState();
+      activateTab("jobs");
+
+      if (!sessionIsValid) {
         setStatus("Local review console is active. Backend admin session could not be validated.", true);
-      });
+      }
     } catch (error) {
       console.error("[admin-review] failed to initialize admin review", error);
-      showConsoleState();
-      document.getElementById("panel-jobs").innerHTML = `<div class="empty-state">Admin review failed to initialize. Check the console for details.</div>`;
-      document.getElementById("count-jobs").textContent = "0 pending";
+      if (isBackendConfigured() && !hasToken()) {
+        showLoginState(error.message || "Admin review failed to initialize.");
+      } else {
+        showConsoleState();
+        document.getElementById("panel-jobs").innerHTML = `<div class="empty-state">Admin review failed to initialize. Check the console for details.</div>`;
+        document.getElementById("count-jobs").textContent = "0 pending";
+      }
       triageGeneratedAt.textContent = "Triage snapshot failed to load";
       setStatus(error.message || "Admin review failed to initialize.", true);
     }
   }
 
     initializeAdminReview();
-  </script>
-  <script>
-    (function () {
-      const button = document.getElementById("admin-token-open");
-      if (!button) return;
-      button.addEventListener("click", () => {
-        const token = window.prompt("Enter admin token");
-        if (!token || !token.trim()) return;
-        localStorage.setItem("jobs_admin_token", token.trim());
-        window.location.reload();
-      });
-    })();
   </script>
 </body>
 </html>

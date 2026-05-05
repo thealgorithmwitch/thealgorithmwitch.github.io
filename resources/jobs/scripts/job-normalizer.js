@@ -167,6 +167,11 @@ const BLOCKED_ORGANIZATIONS = [
   "superside",
   "cribl"
 ];
+const PARSER_CLEANUP_STATS = {
+  title: 0,
+  organization: 0,
+  description: 0
+};
 
 function slugify(value) {
   return String(value || "")
@@ -174,6 +179,26 @@ function slugify(value) {
     .trim()
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/^-+|-+$/g, "");
+}
+
+function resetParserCleanupStats() {
+  PARSER_CLEANUP_STATS.title = 0;
+  PARSER_CLEANUP_STATS.organization = 0;
+  PARSER_CLEANUP_STATS.description = 0;
+}
+
+function getParserCleanupStats() {
+  return {
+    parser_cleaned_title_count: PARSER_CLEANUP_STATS.title,
+    parser_cleaned_org_count: PARSER_CLEANUP_STATS.organization,
+    parser_cleaned_description_count: PARSER_CLEANUP_STATS.description
+  };
+}
+
+function incrementParserCleanupStat(field) {
+  if (field === "title") PARSER_CLEANUP_STATS.title += 1;
+  if (field === "organization") PARSER_CLEANUP_STATS.organization += 1;
+  if (field === "description") PARSER_CLEANUP_STATS.description += 1;
 }
 
 function stableHash(value) {
@@ -336,6 +361,39 @@ function removeTitleOrganizationSuffix(title, organization) {
   return title;
 }
 
+function stripParserTemplateJunk(value, field = "text") {
+  let text = normalizeWhitespace(stripSocialShareJunk(stripHtml(decodeHtmlEntities(value))));
+  if (!text) return "";
+
+  text = text
+    .replace(/\b(?:href|class|aria-label|target|data-[\w-]+|rel|style|headers)\s*=\s*(?:"[^"]*"|'[^']*'|[^\s>]+)/gi, " ")
+    .replace(/\b(?:hdrDate|hdrTitle|hdr[A-Za-z]+)\b/gi, " ")
+    .replace(/\be\s*(?:(?:"|&quot;)\s*)?nowrap\b/gi, " ")
+    .replace(/\b(?:previous|next)\s*post\b[:\s-]*/gi, " ")
+    .replace(/\brelated posts?\b[:\s-]*/gi, " ")
+    .replace(/\bpost navigation\b[:\s-]*/gi, " ")
+    .replace(/\bposted by\b[:\s-]*[^|•·]{0,80}/gi, " ")
+    .replace(/\b(?:share this(?: job)?|share on|share to|email this job|copy link|tweet)\b[^.]{0,120}/gi, " ")
+    .replace(/\b(?:header|footer)\b(?=\s+(?:navigation|links|menu|content|text))/gi, " ")
+    .replace(/\b(?:article|articles|news)\b(?=\s*[|:>\-])/gi, " ")
+    .replace(/\|\s*\|+/g, " | ")
+    .replace(/\s*[|•·]+\s*/g, " | ")
+    .replace(/^[|/>,.;:\-)\](\s]+|[|/>,.;:\-(\[\s]+$/g, " ")
+    .replace(/\)\s*,\s*e\b/gi, ") ")
+    .replace(/\s{2,}/g, " ");
+
+  if (field === "title" || field === "organization" || field === "source") {
+    text = text
+      .replace(/^(?:[A-Z][a-z]{2,9}\s+\d{1,2},\s+\d{4}\s+)+/g, " ")
+      .replace(/\b(?:previous|next|related posts?|share this|posted by)\b.*$/i, " ")
+      .replace(/^(\|\s*)+|(\s*\|)+$/g, " ")
+      .replace(/\s*\|\s*/g, " ")
+      .replace(/\s{2,}/g, " ");
+  }
+
+  return normalizeWhitespace(text);
+}
+
 function isSingleFirstNameOnlyTitle(title) {
   const normalized = String(title || "").trim();
   if (!/^[A-Z][a-z]{2,20}$/.test(normalized)) return false;
@@ -380,7 +438,8 @@ function isClearlyNotJobTitle(title = "", job = {}) {
 }
 
 function normalizeTitle(value, organization = "") {
-  let text = normalizeWhitespace(stripHtml(decodeHtmlEntities(value)));
+  const original = normalizeWhitespace(stripHtml(decodeHtmlEntities(value)));
+  let text = stripParserTemplateJunk(value, "title");
   if (!text) return "";
 
   text = text
@@ -395,7 +454,31 @@ function normalizeTitle(value, organization = "") {
     .replace(/^[\/|>:\-.\s]+|[\/|>:\-.\s]+$/g, " ");
 
   text = removeTitleOrganizationSuffix(normalizeWhitespace(text), organization);
-  return normalizeWhitespace(text);
+  const normalized = normalizeWhitespace(text);
+  if (original && normalized && normalized !== original) {
+    incrementParserCleanupStat("title");
+  }
+  return normalized;
+}
+
+function normalizeOrganization(value) {
+  const original = normalizeWhitespace(stripHtml(decodeHtmlEntities(value)));
+  const cleaned = stripParserTemplateJunk(value, "organization")
+    .replace(/\b(?:posted by|share this|related posts?)\b.*$/i, " ")
+    .replace(/\s{2,}/g, " ");
+  const normalized = normalizeWhitespace(cleaned);
+  if (original && normalized && normalized !== original) {
+    incrementParserCleanupStat("organization");
+  }
+  return normalized;
+}
+
+function normalizeSourceName(value) {
+  return normalizeWhitespace(
+    stripParserTemplateJunk(value, "source")
+      .replace(/^(\|\s*)+|(\s*\|)+$/g, " ")
+      .replace(/\s{2,}/g, " ")
+  );
 }
 
 function isGenericRoleTitle(title = "") {
@@ -955,7 +1038,8 @@ function collapseRepeatedPhrases(value) {
 function normalizeDescription(description, options = {}) {
   const title = normalizeWhitespace(options.title || "");
   const titlePattern = title ? new RegExp(`\\b${slugify(title).replace(/-/g, "[\\s\\W]*")}\\b`, "ig") : null;
-  const rawDescription = stripSocialShareJunk(normalizeWhitespace(stringifySafe(description) || cleanFlattenedText(description)));
+  const descriptionInput = normalizeWhitespace(stringifySafe(description) || cleanFlattenedText(description));
+  const rawDescription = stripParserTemplateJunk(descriptionInput, "description");
   const cleaned = collapseRepeatedPhrases(normalizeWhitespace(
     stripSchemaMetadata(stripHtml(rawDescription))
       .replace(/[>›»]+/g, " ")
@@ -1134,7 +1218,7 @@ function normalizeJob(input = {}) {
     return null;
   }
   const sourceAttribution = resolveBoardSourceAttribution(input) || null;
-  const organization = safeStringField(sourceAttribution?.organization || input.organization);
+  const organization = normalizeOrganization(sourceAttribution?.organization || input.organization);
   const attributedTitle = safeStringField(sourceAttribution?.title);
   const title = normalizeTitle(attributedTitle || input.title, organization);
   const applyUrl = sanitizeRoleUrl(safeStringField(sourceAttribution?.applyUrl || input.apply_url || input.applyUrl));
@@ -1147,6 +1231,12 @@ function normalizeJob(input = {}) {
   const explicitPeriod = safeStringField(input.salary_period || input.salaryPeriod);
   const descriptionCandidate = extractDescriptionText(input);
   const descriptionShape = normalizeDescription(descriptionCandidate, { title });
+  if (descriptionCandidate && (
+    descriptionShape.raw_description !== normalizeWhitespace(stringifySafe(descriptionCandidate) || cleanFlattenedText(descriptionCandidate)) ||
+    (descriptionShape.description && descriptionShape.description !== descriptionShape.raw_description)
+  )) {
+    incrementParserCleanupStat("description");
+  }
   const resolvedSalaryVisible = salaryText
     ? (typeof input.salary_visible === "boolean" ? input.salary_visible : salaryShape.salary_visible)
     : false;
@@ -1199,7 +1289,7 @@ function normalizeJob(input = {}) {
     function: safeStringField(input.function || input.role_function),
     specialization: normalizeSpecialization(input.specialization || input.display?.specialization, input),
     experience: safeStringField(input.experience),
-    source: safeStringField(sourceAttribution?.sourceName || input.source, "Manual"),
+    source: normalizeSourceName(sourceAttribution?.sourceName || input.source) || "Manual",
     source_url: sourceUrl,
     apply_url: applyUrl,
     original_url: originalUrl,
@@ -1379,6 +1469,7 @@ module.exports = {
   isGenericRoleTitle,
   isValidDate,
   getJobExclusionReason,
+  getParserCleanupStats,
   hasRoleSignal,
   isClearlyNotJobTitle,
   isLocationOnlyTitle,
@@ -1393,7 +1484,9 @@ module.exports = {
   resolveEmploymentType,
   resolveWorkplaceType,
   normalizeSector,
+  normalizeOrganization,
   parseSalaryRange,
+  resetParserCleanupStats,
   routeSyncedJob,
   slugify,
   stableHash,

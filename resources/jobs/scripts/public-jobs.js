@@ -2,15 +2,20 @@ const { JOBS_FILE, readJobs, serializeForWrite, writeJson } = require("./job-uti
 const { buildJobPagePathMap } = require("./job-page-paths");
 const { resolveDisplayJobFromRecord, shouldShowPublicRecord } = require("./lifecycle-utils");
 
+function attachPublicJobPageUrls(jobs) {
+  const list = Array.isArray(jobs) ? jobs : [];
+  const { map: pagePathMap } = buildJobPagePathMap(list);
+  return list.map((job) => ({
+    ...job,
+    page_url: pagePathMap.get(String(job.id || "")) || `./pages/${String(job.id || "job")}.html`
+  }));
+}
+
 function buildPublicJobsFromRecords(records) {
   const publicJobs = (Array.isArray(records) ? records : [])
     .filter((record) => record && record.record_type === "job" && shouldShowPublicRecord(record))
     .map(resolveDisplayJobFromRecord);
-  const { map: pagePathMap } = buildJobPagePathMap(publicJobs);
-  return publicJobs.map((job) => ({
-    ...job,
-    page_url: pagePathMap.get(String(job.id || "")) || `./pages/${String(job.id || "job")}.html`
-  }));
+  return attachPublicJobPageUrls(publicJobs);
 }
 
 function countPublishedJobRecords(records) {
@@ -55,6 +60,7 @@ async function syncPublicJobsFromRecords(records, options = {}) {
 }
 
 module.exports = {
+  attachPublicJobPageUrls,
   buildPublicJobsFromRecords,
   countPublishedJobRecords,
   syncPublicJobsFromRecords

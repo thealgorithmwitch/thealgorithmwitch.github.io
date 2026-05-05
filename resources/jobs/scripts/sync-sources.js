@@ -7,7 +7,8 @@ const {
   safeWritePublicJobs,
   writeJson
 } = require("./job-utils");
-const { dedupeJobs, routeSyncedJob } = require("./job-normalizer");
+const { dedupeJobs, getParserCleanupStats, resetParserCleanupStats, routeSyncedJob } = require("./job-normalizer");
+const { attachPublicJobPageUrls } = require("./public-jobs");
 const {
   fetchAshbyJobsForSource,
   fetchAtsJobsByProvider,
@@ -57,6 +58,7 @@ function describeRouting(source) {
 }
 
 async function runSyncForTypes(types = []) {
+  resetParserCleanupStats();
   const requestedTypes = types.length ? new Set(types) : null;
   const [existingJobs, existingPending, sources] = await Promise.all([
     readJobs(),
@@ -185,7 +187,7 @@ async function runSyncForTypes(types = []) {
     }
   }
 
-  const mergedPublicJobs = dedupeJobs([...preservedPublicJobs, ...publicJobs]);
+  const mergedPublicJobs = attachPublicJobPageUrls(dedupeJobs([...preservedPublicJobs, ...publicJobs]));
   const mergedPendingJobs = dedupeJobs([...preservedPendingJobs, ...pendingJobs]);
 
   const publicWriteResult = await safeWritePublicJobs(mergedPublicJobs, {
@@ -195,7 +197,7 @@ async function runSyncForTypes(types = []) {
   await syncJobRecordStore(publicWriteResult.jobs, { logger: console, label: "jobs:sync-sources" });
   const scrapeReportPayload = await upsertScrapeReports(scrapeReports);
   const triaged = await triagePendingJobs(mergedPendingJobs, publicWriteResult.jobs, scrapeReportPayload);
-  const finalPublicJobs = dedupeJobs([...publicWriteResult.jobs, ...(triaged.autoPublishedJobs || [])]);
+  const finalPublicJobs = attachPublicJobPageUrls(dedupeJobs([...publicWriteResult.jobs, ...(triaged.autoPublishedJobs || [])]));
   const finalPublicWriteResult = await safeWritePublicJobs(finalPublicJobs, {
     logger: console,
     label: "jobs:sync-sources"
@@ -216,6 +218,10 @@ async function runSyncForTypes(types = []) {
   });
   console.log(
     `[jobs:sync-sources] Wrote ${finalPublicWriteResult.jobs.length} public jobs to ${JOBS_FILE}, ${triaged.adminPendingJobs.length} admin-pending jobs to ${PENDING_SYNCED_FILE}, auto_published=${triaged.summary.auto_published || 0}, rejected ${triaged.summary.rejected_noise} as noise, dropped_by_cap=${triaged.summary.dropped_by_cap_total}, final_pending_size_mb=${triaged.summary.final_pending_file_size_mb}.`
+  );
+  const parserStats = getParserCleanupStats();
+  console.log(
+    `[jobs:sync-sources] parser_cleaned_title_count=${parserStats.parser_cleaned_title_count} parser_cleaned_org_count=${parserStats.parser_cleaned_org_count} parser_cleaned_description_count=${parserStats.parser_cleaned_description_count}`
   );
 
   return {

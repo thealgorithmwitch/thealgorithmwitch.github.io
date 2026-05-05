@@ -1435,6 +1435,23 @@
 
     function cleanVisibleText(value) {
       return String(value || "")
+        .replace(/\b(?:previous|next)\s*post\b[:\s-]*/gi, " ")
+        .replace(/\b(?:previous|next)\b(?=\s*(?:post\b|$))/gi, " ")
+        .replace(/\brelated posts?\b[:\s-]*/gi, " ")
+        .replace(/\be"\s*"*\s*(?:headers?)?(?:\s*"*)+/gi, " ")
+        .replace(/\bTitle Business(?: Platform Location Date)?\b/gi, " ")
+        .replace(/\bsee (?:new|current) openings\b/gi, " ")
+        .replace(/\b\d+\s+hours?\)\s*(?:On-site|Remote|Hybrid)\b/gi, " ")
+        .replace(/\b\d*\/svg\b/gi, " ")
+        .replace(/\bviewBox(?:="[^"]*")?\b/gi, " ")
+        .replace(/<span\b/gi, " ")
+        .replace(/\bPOINT\s*\([^)]*\)/gi, " ")
+        .replace(/\blocality\b/gi, " ")
+        .replace(/\b([A-Za-z][A-Za-z&,'/-]{2,})\s*\|\s*\1\b/gi, "$1")
+        .replace(/\b(\d{3,})\b/g, (match) => {
+          const numeric = Number(match);
+          return match.length === 4 && numeric >= 1900 && numeric <= 2100 ? match : " ";
+        })
         .replace(/\s*[>›»]+\s*/g, " ")
         .replace(/\s+/g, " ")
         .trim();
@@ -1458,13 +1475,9 @@
     }
 
     function buildJobPathMap(jobs) {
-      const explicitMap = new Map();
       const used = new Map();
       const map = new Map();
       jobs.forEach((job) => {
-        if (job.page_url) {
-          explicitMap.set(String(job.id || ""), String(job.page_url).trim());
-        }
         const baseSlug = buildBaseJobSlug(job) || buildIdSuffix(job);
         let slug = baseSlug;
         const id = String(job.id || "");
@@ -1477,13 +1490,13 @@
           }
         }
         used.set(slug, id);
-        map.set(id, explicitMap.get(id) || `./pages/${slug}.html`);
+        map.set(id, `./pages/${slug}.html`);
       });
       return map;
     }
 
     function getJobDetailPath(job) {
-      return String(job && job.page_url || "").trim() || state.jobPagePaths.get(String(job.id || "")) || `./pages/${buildBaseJobSlug(job)}.html`;
+      return state.jobPagePaths.get(String(job.id || "")) || `./pages/${buildBaseJobSlug(job)}.html`;
     }
 
     function trackUiEvent(event) {
@@ -2117,7 +2130,7 @@
             <span class="card-ref">REF: ${escapeHtml(ref)}</span>
             <h3 class="card-title">${escapeHtml(cleanVisibleText(job.title))}</h3>
             <div class="card-org">${escapeHtml(cleanVisibleText(job.organization))}</div>
-            <p class="card-description">${escapeHtml(cleanVisibleText(job.description || "Open the application to review the full role details."))}</p>
+            <p class="card-description">${escapeHtml(cleanVisibleText(job.description_snippet || job.summary || job.description || "Open the application to review the full role details."))}</p>
             <div class="tag-row" style="justify-content: flex-start; margin-top: 0;">
               ${newThisWeek ? '<span class="tag-pill" style="cursor: default;">New this week</span>' : ""}
               ${sectorLabel ? `<span class="tag-pill" style="cursor: default;">${escapeHtml(cleanVisibleText(sectorLabel))}</span>` : ""}

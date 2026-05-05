@@ -29,7 +29,7 @@ const {
   writeOrganizationRules,
   writePendingOverrides
 } = require("./admin-actions-store");
-const { buildPagesFromRecords } = require("./generate-job-pages");
+const { buildPagesFromJobs } = require("./generate-job-pages");
 const { buildPublicJobsFromRecords, syncPublicJobsFromRecords } = require("./public-jobs");
 
 function buildPublishedDisplay(job) {
@@ -907,7 +907,8 @@ async function main() {
   report.recordsLeftPending = nextPending.length;
   report.jobRecordsCount = nextRecords.length;
   report.jobsJsonCount = finalJobsJsonCount;
-  report.jobPagesRegenerated = await buildPagesFromRecords(nextRecords);
+  const pageBuildResult = await buildPagesFromJobs(publicSync.publicJobs);
+  report.jobPagesRegenerated = pageBuildResult.pagesWrittenCount;
 
   try {
     await resolveActions(fetched.backendUrl, fetched.adminToken, actionResults);

@@ -2,8 +2,10 @@ const fs = require("fs/promises");
 const path = require("path");
 const crypto = require("crypto");
 const { readJobs } = require("./job-utils");
+const { readJobRecords } = require("./public-records");
 const { buildJobPagePathMap, cleanVisibleText } = require("./job-page-paths");
 const { normalizeEmploymentType, normalizeWorkplaceType } = require("./job-normalizer");
+const { countPublishedJobRecords } = require("./public-jobs");
 
 const ROOT = path.resolve(__dirname, "..");
 const PAGES_DIR = path.join(ROOT, "pages");
@@ -316,7 +318,21 @@ async function buildPagesFromJobs(jobs) {
 }
 
 async function main() {
+  const records = await readJobRecords();
   const jobs = await readJobs();
+  const jobRecordsPublicCount = countPublishedJobRecords(records);
+  const jobsJsonCount = Array.isArray(jobs) ? jobs.length : 0;
+  const pageBuildSafe = jobsJsonCount >= jobRecordsPublicCount;
+
+  console.log(`[jobs:build-pages] job_records_public_count=${jobRecordsPublicCount}`);
+  console.log(`[jobs:build-pages] jobs_json_count_before=${jobsJsonCount}`);
+  console.log(`[jobs:build-pages] jobs_json_count_after=${jobsJsonCount}`);
+  console.log(`[jobs:build-pages] page_build_safe=${pageBuildSafe}`);
+
+  if (!pageBuildSafe) {
+    throw new Error(`Refusing to build pages: jobs.json count ${jobsJsonCount} is less than public job-records count ${jobRecordsPublicCount}. Refresh jobs.json first.`);
+  }
+
   await buildPagesFromJobs(jobs);
 }
 

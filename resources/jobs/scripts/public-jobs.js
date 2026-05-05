@@ -1,4 +1,5 @@
 const { JOBS_FILE, readJobs, serializeForWrite, writeJson } = require("./job-utils");
+const { readJobRecords } = require("./public-records");
 const { buildJobPagePathMap } = require("./job-page-paths");
 const { resolveDisplayJobFromRecord, shouldShowPublicRecord } = require("./lifecycle-utils");
 
@@ -53,10 +54,28 @@ async function syncPublicJobsFromRecords(records, options = {}) {
 
   return {
     publicJobs,
+    jobsCountBefore: existingJobsJsonCount,
     jobsCount: finalJobsJsonCount,
+    jobsCountAfter: finalJobsJsonCount,
     publishedCount: computedPublicJobsCount,
     wrote
   };
+}
+
+async function main() {
+  const records = await readJobRecords();
+  const result = await syncPublicJobsFromRecords(records, { label: "jobs:refresh-public" });
+  console.log(`[jobs:refresh-public] job_records_public_count=${result.publishedCount}`);
+  console.log(`[jobs:refresh-public] jobs_json_count_before=${result.jobsCountBefore}`);
+  console.log(`[jobs:refresh-public] jobs_json_count_after=${result.jobsCountAfter}`);
+  console.log(`[jobs:refresh-public] page_build_safe=${result.jobsCountAfter >= result.publishedCount}`);
+}
+
+if (require.main === module) {
+  main().catch((error) => {
+    console.error(`[jobs:refresh-public] Failed: ${error.message}`);
+    process.exitCode = 1;
+  });
 }
 
 module.exports = {

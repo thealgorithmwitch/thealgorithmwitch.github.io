@@ -414,6 +414,7 @@ function stripHtmlFragmentNoise(value) {
   const next = normalizeWhitespace(
     stripHtml(
       original
+        .replace(/\b\d*\/svg\b/gi, " ")
         .replace(/\b\d*\/svg"\s*viewBox="[^"]*"[^<]*/gi, " ")
         .replace(/<svg[\s\S]*?<\/svg>/gi, " ")
         .replace(/<path[\s\S]*?\/?>/gi, " ")
@@ -430,9 +431,17 @@ function cleanElementalImpactText(value, field = "text") {
   let next = original
     .replace(/\bPOINT\s*\([^)]*\)/gi, " ")
     .replace(/\blocality\s+POINT\s*\([^)]*\)/gi, " ")
+    .replace(/\blocality\b/gi, " ")
     .replace(/\b(?:latitude|longitude|geocode|geocoded?|continent|county|administrative area level \d+)\b[^.]{0,160}/gi, " ")
     .replace(/\b\d{7,10}\s*-\s*(?=senior|staff|principal|lead|junior|manager|director)\b/gi, " ")
-    .replace(/\b(?:Business\/Productivity Software|Cleantech|Oil\s*&\s*Gas|Renewable Energy|funding|revenue|valuation|headquarters|employee count|employee size)\b[^.]{0,240}/gi, " ");
+    .replace(/\b(?:Business\/Productivity Software|Cleantech|Oil\s*&\s*Gas|Renewable Energy|funding|revenue|valuation|headquarters|employee count|employee size|series [a-z]|venture[- ]backed|saas|productivity software)\b[^.]{0,240}/gi, " ")
+    .replace(/\b\d{7,10}\b(?=\s*(?:[|,;:]|senior|staff|principal|lead|manager|director))/gi, " ");
+
+  next = next
+    .replace(/\b(?:other|ipo)\s+\d+\b/gi, " ")
+    .replace(/\bcareer_page\b/gi, " ")
+    .replace(/\b(?:on_site|remote_only|hybrid_only)\b/gi, " ")
+    .replace(/\b(?:north america|united states)\b/gi, " ");
 
   if (field === "description") {
     next = splitIntoSentences(next)
@@ -449,7 +458,8 @@ function cleanCustomCareerPageText(value, field = "text", options = {}) {
   const original = normalizeWhitespace(String(value || ""));
   let next = original
     .replace(/\bTitle\s+Business Platform\s+Location\s+Date\b/gi, " ")
-    .replace(/\be"\s*"\s*"[^A-Za-z0-9]{0,20}/gi, " ");
+    .replace(/\be"\s*"*\s*(?:headers?)?(?:\s*"*)+/gi, " ")
+    .replace(/\bheaders?\b(?=\s*(?:"\s*){1,6}(?:Apr|May|Jun|Jul|Aug|Sep|Sept|Oct|Nov|Dec|Jan|Feb|Mar))/gi, " ");
 
   if (field === "location") {
     next = next
@@ -468,6 +478,95 @@ function cleanCustomCareerPageText(value, field = "text", options = {}) {
   return next;
 }
 
+function extractLikelyLocationPhrase(value) {
+  const text = normalizeWhitespace(String(value || ""));
+  if (!text) return "";
+
+  const patterns = [
+    /\b([A-Z][A-Za-z.'-]+(?:\s+[A-Z][A-Za-z.'-]+){0,2},\s*(?:[A-Z]{2,3}|[A-Z][A-Za-z.' -]+)(?:,\s*(?:USA|United States|Canada|UK|United Kingdom))?(?:\s*(?:or|\/|, or|,)\s*(?:Remote|[A-Z][A-Za-z.'-]+(?:\s+[A-Z][A-Za-z.'-]+){0,2},\s*(?:[A-Z]{2,3}|[A-Z][A-Za-z.' -]+)(?:,\s*(?:USA|United States|Canada|UK|United Kingdom))?))*)/g,
+    /\b([A-Z][A-Za-z.'-]+(?:\s+[A-Z][A-Za-z.'-]+){0,2}\s*\([A-Z]{2,3}\))/g
+  ];
+
+  const matches = [];
+  for (const pattern of patterns) {
+    for (const match of text.matchAll(pattern)) {
+      const candidate = normalizeWhitespace(match[1] || match[0] || "");
+      if (candidate) matches.push(candidate);
+    }
+  }
+
+  return matches.length ? normalizeWhitespace(matches[matches.length - 1]) : "";
+}
+
+function stripLeadingMetadataBlob(value) {
+  const text = normalizeWhitespace(String(value || ""));
+  if (!text) return "";
+
+  const readableStarts = [
+    /\b(?:we|you|your|our)\b/i,
+    /\b(?:this role|this position|the role|the position|the ideal candidate|the successful candidate|in this role|as a)\b/i,
+    /\b(?:is seeking|is hiring|is looking for|seeks|seeking|looking for)\b/i,
+    /\b(?:will|can|should|must|supports|manages|develops|leads|coordinates|builds|partners|drives|provides|helps|ensures)\b/i
+  ];
+  const metadataSignals = /\b(?:career_page|other \d+|ipo \d+|point\s*\(|locality\b|north america|venture-backed|revenue|valuation|headquarters|employee size|renewables? & environment|oil\s*&\s*gas|business\/productivity software)\b/i;
+
+  let startIndex = -1;
+  for (const pattern of readableStarts) {
+    const match = pattern.exec(text);
+    if (!match) continue;
+    if (startIndex === -1 || match.index < startIndex) {
+      startIndex = match.index;
+    }
+  }
+
+  if (startIndex > 40) {
+    return normalizeWhitespace(text.slice(startIndex));
+  }
+
+  if (metadataSignals.test(text)) {
+    const boundary = text.search(/[.!?]\s+/);
+    if (boundary > 0 && boundary < text.length - 2) {
+      const remainder = normalizeWhitespace(text.slice(boundary + 1));
+      if (
+        remainder &&
+        /[A-Za-z]{3,}\s+(?:is|are|will|can|should|must|plans|coordinates|executes|supports|manages|builds|seeks|works|develops|leads|drives|partners|provides|helps|ensures)\b/i.test(remainder)
+      ) {
+        return remainder;
+      }
+    }
+  }
+
+  return text;
+}
+
+function stripStandaloneMetadataNumbers(value) {
+  return String(value || "").replace(/\b(\d{3,})\b/g, (match, digits, offset, full) => {
+    const numeric = Number(digits);
+    if (digits.length === 4 && numeric >= 1900 && numeric <= 2100) return match;
+    const context = full.slice(Math.max(0, offset - 18), Math.min(full.length, offset + digits.length + 18));
+    if (/(?:\$|£|€|USD|CAD|EUR|GBP|salary|pay|compensation|range|per hour|per day|per month|per year)/i.test(context)) return match;
+    if (/(?:jan|feb|mar|apr|may|jun|jul|aug|sep|sept|oct|nov|dec|\d{1,2}[/-]\d{1,2}[/-]\d{2,4}|:\d{2})/i.test(context)) return match;
+    if (/(?:zip|postal|postcode|suite|apt|avenue|ave|street|st\.|road|rd\.|boulevard|blvd)/i.test(context)) return match;
+    return " ";
+  });
+}
+
+function collapseRepeatedPipeSegments(value) {
+  const text = normalizeWhitespace(String(value || ""));
+  if (!text.includes("|")) return text;
+  const segments = text.split("|").map((part) => normalizeWhitespace(part)).filter(Boolean);
+  if (segments.length < 2) return text;
+  const deduped = [];
+  const seen = new Set();
+  for (const segment of segments) {
+    const key = segment.toLowerCase();
+    if (seen.has(key)) continue;
+    seen.add(key);
+    deduped.push(segment);
+  }
+  return deduped.join(" | ");
+}
+
 function stripParserTemplateJunk(value, field = "text", options = {}) {
   let text = normalizeWhitespace(stripSocialShareJunk(stripHtml(decodeHtmlEntities(value))));
   if (!text) return "";
@@ -477,10 +576,13 @@ function stripParserTemplateJunk(value, field = "text", options = {}) {
     .replace(/\b(?:href|class|aria-label|target|data-[\w-]+|rel|style|headers)\s*=\s*(?:"[^"]*"|'[^']*'|[^\s>]+)/gi, " ")
     .replace(/\b(?:hdrDate|hdrTitle|hdr[A-Za-z]+)\b/gi, " ")
     .replace(/\be\s*(?:(?:"|&quot;)\s*)?nowrap\b/gi, " ")
+    .replace(/\bheaders?\b(?:\s+(?:Jan|January|Feb|February|Mar|March|Apr|April|May|Jun|June|Jul|July|Aug|August|Sep|Sept|September|Oct|October|Nov|November|Dec|December)\s+\d{1,2},\s+\d{4})?/gi, " ")
     .replace(/\b(?:previous|next)\s*post\b[:\s-]*/gi, " ")
+    .replace(/\b(?:previous|next)\b(?=\s*(?:post\b|$))/gi, " ")
     .replace(/\brelated posts?\b[:\s-]*/gi, " ")
     .replace(/\bpost navigation\b[:\s-]*/gi, " ")
     .replace(/\bposted by\b[:\s-]*[^|•·]{0,80}/gi, " ")
+    .replace(/\bsee (?:new|current) openings\b/gi, " ")
     .replace(/\b(?:share this(?: job)?|share on|share to|email this job|copy link|tweet)\b[^.]{0,120}/gi, " ")
     .replace(/\b(?:header|footer)\b(?=\s+(?:navigation|links|menu|content|text))/gi, " ")
     .replace(/\b(?:article|articles|news)\b(?=\s*[|:>\-])/gi, " ")
@@ -488,7 +590,11 @@ function stripParserTemplateJunk(value, field = "text", options = {}) {
     .replace(/\s*[|•·]+\s*/g, " | ")
     .replace(/^[|/>,.;:\-)\](\s]+|[|/>,.;:\-(\[\s]+$/g, " ")
     .replace(/\)\s*,\s*e\b/gi, ") ")
+    .replace(/\b\d+\s+hours?\)\s*(?:On-site|Remote|Hybrid)\b/gi, " ")
     .replace(/\s{2,}/g, " ");
+
+  text = stripStandaloneMetadataNumbers(text);
+  text = collapseRepeatedPipeSegments(text);
 
   if (field === "title" || field === "organization" || field === "source") {
     text = text
@@ -619,6 +725,7 @@ function normalizeSourceNameWithOptions(value, options = {}) {
 function cleanLocationText(value, options = {}) {
   const trackStats = options.trackStats !== false;
   const original = normalizeWhitespace(stringifySafe(value));
+  const titleText = normalizeWhitespace(stringifySafe(options.title || ""));
   let text = stripParserTemplateJunk(value, "location", options)
     .replace(/\b(?:null|undefined|n\/a|not specified|location listed on application)\b/gi, " ")
     .replace(/\bPOINT\s*\([^)]*\)/gi, " ")
@@ -626,6 +733,7 @@ function cleanLocationText(value, options = {}) {
     .replace(/\b(?:county|continent|administrative area level \d+)\b[^,;|]{0,80}/gi, " ")
     .replace(/\b(?:Title|Business Platform|Location|Date)\b/gi, " ")
     .replace(/^(?:hybrid|remote|on[\s-]?site)\s*[,/-]\s*/i, "")
+    .replace(/\b\d+\s+hours?\)\s*(?:On-site|Remote|Hybrid)\b/gi, " ")
     .replace(/\b(?:Jan|January|Feb|February|Mar|March|Apr|April|May|Jun|June|Jul|July|Aug|August|Sep|Sept|September|Oct|October|Nov|November|Dec|December)\s+\d{1,2},\s+\d{4}\b.*$/i, " ")
     .replace(/\s*,\s*,+/g, ", ")
     .replace(/\s*\|\s*/g, " ")
@@ -635,18 +743,41 @@ function cleanLocationText(value, options = {}) {
     text = text.replace(new RegExp(`(?:,?\\s+)?${escapeRegExp(options.organization)}$`, "i"), "").trim();
   }
 
-  const locationMatch = text.match(/([A-Z][A-Za-z.' -]+,\s*(?:[A-Z]{2}|[A-Za-z.' -]+)(?:,\s*(?:USA|United States|Canada|UK|United Kingdom))?(?:\s*(?:or|\/|, or|,)\s*(?:Remote|[A-Z][A-Za-z.' -]+,\s*(?:[A-Z]{2}|[A-Za-z.' -]+)(?:,\s*(?:USA|United States|Canada|UK|United Kingdom))?))*)/);
-  if (locationMatch && locationMatch[1]) {
-    text = normalizeWhitespace(locationMatch[1]);
+  const extractedLocation = extractLikelyLocationPhrase(text);
+  if (extractedLocation) {
+    text = extractedLocation;
+  }
+
+  if (titleText && text.includes(",")) {
+    const titleTokens = new Set(
+      titleText
+        .toLowerCase()
+        .split(/\s+/)
+        .filter((token) => token.length > 2 && !["and", "for", "the", "with"].includes(token))
+    );
+    const locationParts = text.split(",");
+    const firstSegmentWords = normalizeWhitespace(locationParts[0]).split(/\s+/).filter(Boolean);
+    while (firstSegmentWords.length > 1 && titleTokens.has(firstSegmentWords[0].toLowerCase())) {
+      firstSegmentWords.shift();
+    }
+    if (firstSegmentWords.length && firstSegmentWords.join(" ") !== locationParts[0]) {
+      text = `${firstSegmentWords.join(" ")},${locationParts.slice(1).join(",")}`.trim();
+    }
   }
 
   text = text
+    .replace(/,\s*It$/i, ", Italy")
     .replace(/^(?:hybrid[,/\s-]*)$/i, "")
     .replace(/^(?:previous post|next post|related posts?)$/i, "")
     .replace(/^[,;:|/>\-.\s]+|[,;:|/<\-.\s]+$/g, "")
     .trim();
-
   const workplaceType = normalizeWorkplaceType(options.workplaceType || options.workplace_type || "");
+  if (titleText && text && (
+    text.toLowerCase() === titleText.toLowerCase() ||
+    (text.toLowerCase().includes(titleText.toLowerCase()) && !/[A-Za-z .'-]+,\s*(?:[A-Z]{2}|[A-Za-z .'-]+)/.test(text))
+  )) {
+    text = "";
+  }
   if (!text) {
     if (workplaceType === "Hybrid") {
       if (trackStats) incrementParserCleanupStat("hybrid_location_repaired");
@@ -657,6 +788,10 @@ function cleanLocationText(value, options = {}) {
   }
 
   if (/^hybrid$/i.test(text)) {
+    if (trackStats) incrementParserCleanupStat("hybrid_location_repaired");
+    return "Hybrid / Anywhere";
+  }
+  if (workplaceType === "Hybrid" && /^(?:anywhere|location flexible)$/i.test(text)) {
     if (trackStats) incrementParserCleanupStat("hybrid_location_repaired");
     return "Hybrid / Anywhere";
   }
@@ -674,7 +809,8 @@ function cleanLocationText(value, options = {}) {
 function normalizeLocationDisplay(job = {}, workplaceType = "") {
   const options = {
     ...buildParserSourceOptions(job),
-    workplaceType
+    workplaceType,
+    title: job.title
   };
   const locationCandidates = [
     job.location,
@@ -1281,10 +1417,19 @@ function normalizeDescription(description, options = {}) {
       .replace(/\bno\s*wrap\b|\bnowrap\b/gi, " ")
       .replace(/\b(?:next|previous)\s*:\s*(?:next|previous)\s+post\s*:[^.]{0,200}/gi, " ")
       .replace(/\bpost navigation\b[^.]{0,200}/gi, " ")
+      .replace(/\bTitle Business(?: Platform Location Date)?\b/gi, " ")
+      .replace(/\be"\s*"*\s*(?:headers?)?(?:\s*"*)+/gi, " ")
+      .replace(/\bheaders?\b(?:\s+(?:Jan|January|Feb|February|Mar|March|Apr|April|May|Jun|June|Jul|July|Aug|August|Sep|Sept|September|Oct|October|Nov|November|Dec|December)\s+\d{1,2},\s+\d{4})?/gi, " ")
       .replace(/\b(?:jobs search|green jobs network|climate change jobs|logo text)\b/gi, " ")
+      .replace(/\bsee (?:new|current) openings\b/gi, " ")
       .replace(/\b(?:apply online|apply now|apply today|submit application|learn more|read more|view job|view opening|back to jobs)\b/gi, " ")
       .replace(/\b(?:share to|share on)\s+(?:twitter|facebook|linkedin)\b/gi, " ")
       .replace(/\b(?:share this job|email this job|copy link|tweet)\b/gi, " ")
+      .replace(/\b\d+\s+hours?\)\s*(?:On-site|Remote|Hybrid)\b/gi, " ")
+      .replace(/\b\d*\/svg\b/gi, " ")
+      .replace(/\bviewBox="[^"]*"/gi, " ")
+      .replace(/<span\b/gi, " ")
+      .replace(/[>"<]+/g, " ")
       .replace(
         /\b(?:job title|department|location|reports to|supervises)\s*:\s*[\s\S]*?(?=(?:job title|department|location|reports to|supervises|duration|context|scope|role overview|about us|what you(?:'|’)ll do)\s*:|$)/gi,
         " "
@@ -1294,15 +1439,22 @@ function normalizeDescription(description, options = {}) {
       .replace(titlePattern || /$^/g, " ")
       .replace(/\.\s*\./g, ". ")
   ));
+  const numericCleaned = normalizeWhitespace(
+    collapseRepeatedPipeSegments(
+      stripLeadingMetadataBlob(
+        stripStandaloneMetadataNumbers(cleaned)
+      )
+    )
+  );
 
-  if (!cleaned) {
+  if (!numericCleaned || !/[A-Za-z]{3,}/.test(numericCleaned) || /^[>"'<\s|/\\-]+$/.test(numericCleaned)) {
     return {
       raw_description: rawDescription,
       description: ""
     };
   }
 
-  let sentences = splitIntoSentences(cleaned)
+  let sentences = splitIntoSentences(numericCleaned)
     .map((sentence) => normalizeWhitespace(sentence))
     .filter((sentence) => sentence.length >= 35);
 
@@ -1327,19 +1479,20 @@ function normalizeDescription(description, options = {}) {
     if (selected.length === 5) break;
   }
 
-  const finalDescription = collapseRepeatedPhrases(selected.join(" ").trim() || cleaned);
+  const finalDescription = collapseRepeatedPhrases(selected.join(" ").trim() || numericCleaned);
+  const metadataHeavyDescription = /\b(?:career_page|other \d+|ipo \d+|point\s*\(|locality\b|business\/productivity software|cleantech|oil\s*&\s*gas|renewable energy|revenue|valuation|headquarters|employee size)\b/i.test(finalDescription);
 
   const dominatedByNoise =
     selected.length === 0 &&
     DESCRIPTION_NOISE_PATTERNS.some((pattern) => pattern.test(rawDescription)) &&
     !/[a-z]{3,}\s+(?:is|are|will|can|should|must|plans|coordinates|executes|supports|manages|builds|seeks|works|develops|leads|drives|partners)/i.test(
-      cleaned
+      numericCleaned
     );
   const dominatedBySchemaMetadata = looksLikeSchemaMetadata(rawDescription) && !selected.length;
 
   return {
     raw_description: rawDescription,
-    description: dominatedByNoise || dominatedBySchemaMetadata || isArticleLikeDescription(finalDescription) ? "" : finalDescription
+    description: dominatedByNoise || dominatedBySchemaMetadata || isArticleLikeDescription(finalDescription) || (metadataHeavyDescription && selected.length === 0) ? "" : finalDescription
   };
 }
 
@@ -1407,6 +1560,54 @@ function truncateTextForStorage(value, maxLength = 16000) {
   if (text.length <= maxLength) return text;
   if (maxLength <= 1) return text.slice(0, maxLength);
   return `${text.slice(0, maxLength - 1).trimEnd()}…`;
+}
+
+function buildDescriptionSnippet(value, maxLength = 220) {
+  const cleaned = normalizeWhitespace(
+    stripParserTemplateJunk(
+      stripSocialShareJunk(stripHtml(decodeHtmlEntities(value))),
+      "description"
+    )
+  )
+    .replace(/\bTitle Business(?: Platform Location Date)?\b/gi, " ")
+    .replace(/\be"\s*"*\s*(?:headers?)?(?:\s*"*)+/gi, " ")
+    .replace(/\bsee (?:new|current) openings\b/gi, " ")
+    .replace(/\b(?:previous|next|related posts?)\b/gi, " ")
+    .replace(/\b\d+\s+hours?\)\s*(?:\|\s*)?(?:On-site|Remote|Hybrid)\b/gi, " ")
+    .replace(/\b\d*\/svg\b/gi, " ")
+    .replace(/\bviewBox\b/gi, " ")
+    .replace(/\bspan\b/gi, " ")
+    .replace(/\blocality\b/gi, " ")
+    .replace(/\bPOINT\s*\([^)]*\)/gi, " ")
+    .replace(/\bcareer_page\b/gi, " ")
+    .replace(/\b(?:other|ipo)\s+\d+\b/gi, " ")
+    .replace(/[>"<]+/g, " ")
+    .replace(/\s{2,}/g, " ")
+    .trim();
+  const normalized = normalizeWhitespace(
+    collapseRepeatedPipeSegments(
+      stripLeadingMetadataBlob(
+        stripStandaloneMetadataNumbers(cleaned)
+      )
+    )
+  );
+  if (!normalized) return "";
+  if (!/[A-Za-z]{3,}/.test(normalized) || /^[>"'<\s|/\\-]+$/.test(normalized)) return "";
+  const readableSentences = (normalized.match(/[^.!?]+[.!?]+|[^.!?]+$/g) || [])
+    .map((sentence) => normalizeWhitespace(sentence))
+    .filter(Boolean)
+    .filter((sentence) => !/\b(?:career_page|other \d+|ipo \d+|north america|county|viewbox|0\/svg|title business|see current openings|see new openings)\b/i.test(sentence))
+    .filter((sentence) => /[a-z]{3,}\s+(?:is|are|will|can|should|must|plans|coordinates|executes|supports|manages|builds|seeks|works|develops|leads|drives|partners|join|become|help|ensures)\b/i.test(sentence));
+  if (!readableSentences.length && !/[a-z]{3,}\s+(?:is|are|will|can|should|must|plans|coordinates|executes|supports|manages|builds|seeks|works|develops|leads|drives|partners|join|become|help|ensures)\b/i.test(normalized)) {
+    return "";
+  }
+  const finalSnippet = readableSentences[0] || (/^(?:[A-Z][A-Za-z&.' -]+\s+){4,}/.test(normalized) ? "" : normalized);
+  if (!finalSnippet) return "";
+  if (/\b(?:other \d+|ipo \d+|career_page|point\s*\(|locality\b|business\/productivity software|cleantech|oil\s*&\s*gas|renewable energy)\b/i.test(finalSnippet)) {
+    return "";
+  }
+  if (finalSnippet.length <= maxLength) return finalSnippet;
+  return `${finalSnippet.slice(0, maxLength - 1).trimEnd()}…`;
 }
 
 function getJobExclusionReason(input = {}) {
@@ -1722,6 +1923,7 @@ module.exports = {
   normalizeDescription,
   normalizeEmploymentType,
   normalizeJob,
+  buildDescriptionSnippet,
   normalizeLocationDisplay,
   normalizeSpecialization,
   normalizeWorkplaceType,

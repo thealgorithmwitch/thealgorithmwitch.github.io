@@ -540,6 +540,51 @@ function normalizeUrl(value) {
   }
 }
 
+function normalizeIdentityToken(value) {
+  return String(value || "")
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9]+/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function buildPublicDuplicateIndex(publicJobs) {
+  const index = {
+    ids: new Set(),
+    urls: new Set(),
+    externalIds: new Set(),
+    titleOrg: new Set()
+  };
+
+  for (const job of Array.isArray(publicJobs) ? publicJobs : []) {
+    const id = String(job?.id || "").trim();
+    const url = normalizeUrl(job?.original_url || job?.apply_url || job?.source_url);
+    const externalId = String(job?.external_id || "").trim().toLowerCase();
+    const titleOrg = `${normalizeIdentityToken(job?.title)}::${normalizeIdentityToken(job?.organization)}`;
+    if (id) index.ids.add(id);
+    if (url) index.urls.add(url);
+    if (externalId) index.externalIds.add(externalId);
+    if (titleOrg !== "::") index.titleOrg.add(titleOrg);
+  }
+
+  return index;
+}
+
+function isDuplicateOfPublicJob(job, publicIndex) {
+  if (!publicIndex) return false;
+  const id = String(job?.id || "").trim();
+  const url = normalizeUrl(job?.original_url || job?.apply_url || job?.source_url);
+  const externalId = String(job?.external_id || "").trim().toLowerCase();
+  const titleOrg = `${normalizeIdentityToken(job?.title)}::${normalizeIdentityToken(job?.organization)}`;
+  return Boolean(
+    (id && publicIndex.ids.has(id)) ||
+    (url && publicIndex.urls.has(url)) ||
+    (externalId && publicIndex.externalIds.has(externalId)) ||
+    (titleOrg !== "::" && publicIndex.titleOrg.has(titleOrg))
+  );
+}
+
 function isSingleFirstNameOnlyTitle(title) {
   const normalized = String(title || "").trim();
   if (!/^[A-Z][a-z]{2,20}$/.test(normalized)) return false;
@@ -983,6 +1028,7 @@ async function triagePendingJobs(pendingJobs, publicJobs, scrapeReport) {
       .map((job) => normalizeUrl(job.original_url || job.apply_url || job.source_url))
       .filter(Boolean)
   );
+  const publicIndex = buildPublicDuplicateIndex(publicJobs);
   const buckets = {
     review_ready: [],
     needs_cleanup: [],
@@ -990,6 +1036,7 @@ async function triagePendingJobs(pendingJobs, publicJobs, scrapeReport) {
   };
   const rejectedBySource = new Map();
   let duplicateCountRemoved = 0;
+  let pendingDuplicatesPublicMatchCount = 0;
 
   for (const job of Array.isArray(pendingJobs) ? pendingJobs : []) {
     const organization = String(job.organization || "").trim();
@@ -1014,6 +1061,17 @@ async function triagePendingJobs(pendingJobs, publicJobs, scrapeReport) {
           triage_reason: override.exclude_reason || (orgRules.rejected_organizations.includes(organization) ? "organization rejected by admin" : "organization hidden by admin")
         },
         reason: override.exclude_reason || "organization hidden by admin"
+      };
+    } else if (isDuplicateOfPublicJob(job, publicIndex)) {
+      pendingDuplicatesPublicMatchCount += 1;
+      result = {
+        bucket: "rejected_noise",
+        job: {
+          ...job,
+          triage_bucket: "rejected_noise",
+          triage_reason: "duplicate of already public job"
+        },
+        reason: "duplicate of already public job"
       };
     } else {
       result = classifyPendingJob(job, {
@@ -1040,6 +1098,7 @@ async function triagePendingJobs(pendingJobs, publicJobs, scrapeReport) {
     }
     buckets[result.bucket].push(result.job);
     if (result.reason === "duplicate role url") duplicateCountRemoved += 1;
+    if (result.reason === "duplicate of already public job") duplicateCountRemoved += 1;
 
     const sourceId = String(job.source_id || "");
     if (!sourceId) continue;
@@ -1139,6 +1198,8 @@ async function triagePendingJobs(pendingJobs, publicJobs, scrapeReport) {
     auto_published: autoPublishedJobs.length,
     dropped_by_cap_total: Object.values(capped.droppedByCapBySource).reduce((sum, count) => sum + count, 0),
     duplicate_count_removed: duplicateCountRemoved,
+    pending_duplicates_removed_count: duplicateCountRemoved,
+    pending_duplicates_public_match_count: pendingDuplicatesPublicMatchCount,
     jobs_with_pay: countJobsWithPay(adminPendingJobs),
     jobs_without_pay: adminPendingJobs.length - countJobsWithPay(adminPendingJobs),
     top_organizations: topOrganizations(adminPendingJobs, 20),

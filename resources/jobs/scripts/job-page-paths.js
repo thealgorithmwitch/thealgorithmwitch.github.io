@@ -8,6 +8,24 @@ function slugify(value) {
 
 function cleanVisibleText(value) {
   return String(value || "")
+    .replace(/\b(?:previous|next)\s*post\b[:\s-]*/gi, " ")
+    .replace(/\b(?:previous|next)\b(?=\s*(?:post\b|$))/gi, " ")
+    .replace(/\brelated posts?\b[:\s-]*/gi, " ")
+    .replace(/\be"\s*"*\s*(?:headers?)?(?:\s*"*)+/gi, " ")
+    .replace(/\bTitle Business(?: Platform Location Date)?\b/gi, " ")
+    .replace(/\bsee (?:new|current) openings\b/gi, " ")
+    .replace(/\b\d+\s+hours?\)\s*(?:On-site|Remote|Hybrid)\b/gi, " ")
+    .replace(/\bPOINT\s*\([^)]*\)/gi, " ")
+    .replace(/\blocality\b/gi, " ")
+    .replace(/\b\d*\/svg\b/gi, " ")
+    .replace(/\bviewBox(?:="[^"]*")?\b/gi, " ")
+    .replace(/<span\b/gi, " ")
+    .replace(/\b([A-Za-z][A-Za-z&,'/-]{2,})\s*\|\s*\1\b/gi, "$1")
+    .replace(/\b(\d{3,})\b/g, (match) => {
+      const numeric = Number(match);
+      return match.length === 4 && numeric >= 1900 && numeric <= 2100 ? match : " ";
+    })
+    .replace(/<[^>]*>/g, " ")
     .replace(/\s*[>›»]+\s*/g, " ")
     .replace(/\s+/g, " ")
     .trim();

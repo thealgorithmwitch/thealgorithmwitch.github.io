@@ -17,7 +17,12 @@ const {
 const {
   applyPublishLifecycle
 } = require("./lifecycle-utils");
-const { normalizeJob, stringifySafe } = require("./job-normalizer");
+const {
+  getParserCleanupStats,
+  normalizeJob,
+  resetParserCleanupStats,
+  stringifySafe
+} = require("./job-normalizer");
 const {
   loadBackendConfig,
   readAdminActionSnapshot,
@@ -446,6 +451,7 @@ async function resolveLocalActions(resultsById, actions) {
 }
 
 async function main() {
+  resetParserCleanupStats();
   const [pendingJobs, jobRecords, orgRules, overrides, talentProfiles, employers] = await Promise.all([
     readPendingSyncedJobs(),
     readJobRecords(),
@@ -909,6 +915,10 @@ async function main() {
   report.jobsJsonCount = finalJobsJsonCount;
   const pageBuildResult = await buildPagesFromJobs(publicSync.publicJobs);
   report.jobPagesRegenerated = pageBuildResult.pagesWrittenCount;
+  const parserStats = getParserCleanupStats();
+  console.log(
+    `[jobs:apply-admin-actions] parser_cleaned_title_count=${parserStats.parser_cleaned_title_count} parser_cleaned_org_count=${parserStats.parser_cleaned_org_count} parser_cleaned_description_count=${parserStats.parser_cleaned_description_count} parser_location_defaulted_remote_count=${parserStats.parser_location_defaulted_remote_count} parser_location_cleaned_count=${parserStats.parser_location_cleaned_count} parser_hybrid_location_repaired_count=${parserStats.parser_hybrid_location_repaired_count} parser_elemental_metadata_stripped_count=${parserStats.parser_elemental_metadata_stripped_count} parser_custom_table_header_stripped_count=${parserStats.parser_custom_table_header_stripped_count} parser_html_fragment_stripped_count=${parserStats.parser_html_fragment_stripped_count}`
+  );
 
   try {
     await resolveActions(fetched.backendUrl, fetched.adminToken, actionResults);

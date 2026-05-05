@@ -170,7 +170,13 @@ const BLOCKED_ORGANIZATIONS = [
 const PARSER_CLEANUP_STATS = {
   title: 0,
   organization: 0,
-  description: 0
+  description: 0,
+  location_defaulted_remote: 0,
+  location_cleaned: 0,
+  hybrid_location_repaired: 0,
+  elemental_metadata_stripped: 0,
+  custom_table_header_stripped: 0,
+  html_fragment_stripped: 0
 };
 
 function slugify(value) {
@@ -185,13 +191,25 @@ function resetParserCleanupStats() {
   PARSER_CLEANUP_STATS.title = 0;
   PARSER_CLEANUP_STATS.organization = 0;
   PARSER_CLEANUP_STATS.description = 0;
+  PARSER_CLEANUP_STATS.location_defaulted_remote = 0;
+  PARSER_CLEANUP_STATS.location_cleaned = 0;
+  PARSER_CLEANUP_STATS.hybrid_location_repaired = 0;
+  PARSER_CLEANUP_STATS.elemental_metadata_stripped = 0;
+  PARSER_CLEANUP_STATS.custom_table_header_stripped = 0;
+  PARSER_CLEANUP_STATS.html_fragment_stripped = 0;
 }
 
 function getParserCleanupStats() {
   return {
     parser_cleaned_title_count: PARSER_CLEANUP_STATS.title,
     parser_cleaned_org_count: PARSER_CLEANUP_STATS.organization,
-    parser_cleaned_description_count: PARSER_CLEANUP_STATS.description
+    parser_cleaned_description_count: PARSER_CLEANUP_STATS.description,
+    parser_location_defaulted_remote_count: PARSER_CLEANUP_STATS.location_defaulted_remote,
+    parser_location_cleaned_count: PARSER_CLEANUP_STATS.location_cleaned,
+    parser_hybrid_location_repaired_count: PARSER_CLEANUP_STATS.hybrid_location_repaired,
+    parser_elemental_metadata_stripped_count: PARSER_CLEANUP_STATS.elemental_metadata_stripped,
+    parser_custom_table_header_stripped_count: PARSER_CLEANUP_STATS.custom_table_header_stripped,
+    parser_html_fragment_stripped_count: PARSER_CLEANUP_STATS.html_fragment_stripped
   };
 }
 
@@ -199,6 +217,12 @@ function incrementParserCleanupStat(field) {
   if (field === "title") PARSER_CLEANUP_STATS.title += 1;
   if (field === "organization") PARSER_CLEANUP_STATS.organization += 1;
   if (field === "description") PARSER_CLEANUP_STATS.description += 1;
+  if (field === "location_defaulted_remote") PARSER_CLEANUP_STATS.location_defaulted_remote += 1;
+  if (field === "location_cleaned") PARSER_CLEANUP_STATS.location_cleaned += 1;
+  if (field === "hybrid_location_repaired") PARSER_CLEANUP_STATS.hybrid_location_repaired += 1;
+  if (field === "elemental_metadata_stripped") PARSER_CLEANUP_STATS.elemental_metadata_stripped += 1;
+  if (field === "custom_table_header_stripped") PARSER_CLEANUP_STATS.custom_table_header_stripped += 1;
+  if (field === "html_fragment_stripped") PARSER_CLEANUP_STATS.html_fragment_stripped += 1;
 }
 
 function stableHash(value) {
@@ -305,6 +329,9 @@ function hasExplicitOnsiteSignal(text) {
 function looksLikePhysicalLocation(value) {
   const text = normalizeWhitespace(String(value || ""));
   if (!text) return false;
+  if (/\b(?:previous post|next post|related posts?|title business platform location date|hdrdate|viewbox=|POINT\s*\(|locality\b)\b/i.test(text)) {
+    return false;
+  }
   if (/^(?:remote|hybrid|united states|us|usa|nationwide|global|multiple locations)$/i.test(text)) {
     return false;
   }
@@ -361,10 +388,91 @@ function removeTitleOrganizationSuffix(title, organization) {
   return title;
 }
 
-function stripParserTemplateJunk(value, field = "text") {
+function escapeRegExp(value) {
+  return String(value || "").replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+function buildParserSourceOptions(job = {}) {
+  return {
+    source: normalizeWhitespace(stringifySafe(job.source)),
+    sourceType: normalizeWhitespace(stringifySafe(job.source_type || job.sourceType)),
+    sourceUrl: normalizeWhitespace(stringifySafe(job.source_url || job.sourceUrl || job.original_url || job.originalUrl)),
+    organization: normalizeWhitespace(stringifySafe(job.organization))
+  };
+}
+
+function isElementalImpactSource(options = {}) {
+  return /elemental impact/i.test([options.source, options.sourceType, options.sourceUrl].filter(Boolean).join(" "));
+}
+
+function isCustomCareerPageSource(options = {}) {
+  return /custom careers? page/i.test([options.source, options.sourceType, options.sourceUrl].filter(Boolean).join(" "));
+}
+
+function stripHtmlFragmentNoise(value) {
+  const original = normalizeWhitespace(String(value || ""));
+  const next = normalizeWhitespace(
+    stripHtml(
+      original
+        .replace(/\b\d*\/svg"\s*viewBox="[^"]*"[^<]*/gi, " ")
+        .replace(/<svg[\s\S]*?<\/svg>/gi, " ")
+        .replace(/<path[\s\S]*?\/?>/gi, " ")
+        .replace(/\bviewBox="[^"]*"/gi, " ")
+        .replace(/\bxmlns="[^"]*"/gi, " ")
+    )
+  );
+  if (original && next !== original) incrementParserCleanupStat("html_fragment_stripped");
+  return next;
+}
+
+function cleanElementalImpactText(value, field = "text") {
+  const original = normalizeWhitespace(String(value || ""));
+  let next = original
+    .replace(/\bPOINT\s*\([^)]*\)/gi, " ")
+    .replace(/\blocality\s+POINT\s*\([^)]*\)/gi, " ")
+    .replace(/\b(?:latitude|longitude|geocode|geocoded?|continent|county|administrative area level \d+)\b[^.]{0,160}/gi, " ")
+    .replace(/\b\d{7,10}\s*-\s*(?=senior|staff|principal|lead|junior|manager|director)\b/gi, " ")
+    .replace(/\b(?:Business\/Productivity Software|Cleantech|Oil\s*&\s*Gas|Renewable Energy|funding|revenue|valuation|headquarters|employee count|employee size)\b[^.]{0,240}/gi, " ");
+
+  if (field === "description") {
+    next = splitIntoSentences(next)
+      .filter((sentence) => !/\b(?:POINT\s*\(|locality\b|funding\b|revenue\b|valuation\b|headquarters\b|Business\/Productivity Software|Cleantech|Oil\s*&\s*Gas|Renewable Energy)\b/i.test(sentence))
+      .join(" ");
+  }
+
+  next = normalizeWhitespace(next);
+  if (original && next !== original) incrementParserCleanupStat("elemental_metadata_stripped");
+  return next;
+}
+
+function cleanCustomCareerPageText(value, field = "text", options = {}) {
+  const original = normalizeWhitespace(String(value || ""));
+  let next = original
+    .replace(/\bTitle\s+Business Platform\s+Location\s+Date\b/gi, " ")
+    .replace(/\be"\s*"\s*"[^A-Za-z0-9]{0,20}/gi, " ");
+
+  if (field === "location") {
+    next = next
+      .replace(/^.*?\bLocation(?:\s+Date)?\b\s*/i, "")
+      .replace(/\b(?:Jan|January|Feb|February|Mar|March|Apr|April|May|Jun|June|Jul|July|Aug|August|Sep|Sept|September|Oct|October|Nov|November|Dec|December)\s+\d{1,2},\s+\d{4}\b.*$/i, " ");
+    if (options.organization) {
+      next = next.replace(new RegExp(`(?:,?\\s+)?${escapeRegExp(options.organization)}.*$`, "i"), " ");
+    }
+  } else {
+    next = next
+      .replace(/\b(?:Jan|January|Feb|February|Mar|March|Apr|April|May|Jun|June|Jul|July|Aug|August|Sep|Sept|September|Oct|October|Nov|November|Dec|December)\s+\d{1,2},\s+\d{4}\b/gi, " ");
+  }
+
+  next = normalizeWhitespace(next);
+  if (original && next !== original) incrementParserCleanupStat("custom_table_header_stripped");
+  return next;
+}
+
+function stripParserTemplateJunk(value, field = "text", options = {}) {
   let text = normalizeWhitespace(stripSocialShareJunk(stripHtml(decodeHtmlEntities(value))));
   if (!text) return "";
 
+  text = stripHtmlFragmentNoise(text);
   text = text
     .replace(/\b(?:href|class|aria-label|target|data-[\w-]+|rel|style|headers)\s*=\s*(?:"[^"]*"|'[^']*'|[^\s>]+)/gi, " ")
     .replace(/\b(?:hdrDate|hdrTitle|hdr[A-Za-z]+)\b/gi, " ")
@@ -389,6 +497,13 @@ function stripParserTemplateJunk(value, field = "text") {
       .replace(/^(\|\s*)+|(\s*\|)+$/g, " ")
       .replace(/\s*\|\s*/g, " ")
       .replace(/\s{2,}/g, " ");
+  }
+
+  if (isElementalImpactSource(options)) {
+    text = cleanElementalImpactText(text, field);
+  }
+  if (isCustomCareerPageSource(options)) {
+    text = cleanCustomCareerPageText(text, field, options);
   }
 
   return normalizeWhitespace(text);
@@ -437,9 +552,9 @@ function isClearlyNotJobTitle(title = "", job = {}) {
   return false;
 }
 
-function normalizeTitle(value, organization = "") {
+function normalizeTitle(value, organization = "", options = {}) {
   const original = normalizeWhitespace(stripHtml(decodeHtmlEntities(value)));
-  let text = stripParserTemplateJunk(value, "title");
+  let text = stripParserTemplateJunk(value, "title", options);
   if (!text) return "";
 
   text = text
@@ -479,6 +594,122 @@ function normalizeSourceName(value) {
       .replace(/^(\|\s*)+|(\s*\|)+$/g, " ")
       .replace(/\s{2,}/g, " ")
   );
+}
+
+function normalizeOrganizationWithOptions(value, options = {}) {
+  const original = normalizeWhitespace(stripHtml(decodeHtmlEntities(value)));
+  const cleaned = stripParserTemplateJunk(value, "organization", options)
+    .replace(/\b(?:posted by|share this|related posts?)\b.*$/i, " ")
+    .replace(/\s{2,}/g, " ");
+  const normalized = normalizeWhitespace(cleaned);
+  if (original && normalized && normalized !== original) {
+    incrementParserCleanupStat("organization");
+  }
+  return normalized;
+}
+
+function normalizeSourceNameWithOptions(value, options = {}) {
+  return normalizeWhitespace(
+    stripParserTemplateJunk(value, "source", options)
+      .replace(/^(\|\s*)+|(\s*\|)+$/g, " ")
+      .replace(/\s{2,}/g, " ")
+  );
+}
+
+function cleanLocationText(value, options = {}) {
+  const trackStats = options.trackStats !== false;
+  const original = normalizeWhitespace(stringifySafe(value));
+  let text = stripParserTemplateJunk(value, "location", options)
+    .replace(/\b(?:null|undefined|n\/a|not specified|location listed on application)\b/gi, " ")
+    .replace(/\bPOINT\s*\([^)]*\)/gi, " ")
+    .replace(/\blocality\b/gi, " ")
+    .replace(/\b(?:county|continent|administrative area level \d+)\b[^,;|]{0,80}/gi, " ")
+    .replace(/\b(?:Title|Business Platform|Location|Date)\b/gi, " ")
+    .replace(/^(?:hybrid|remote|on[\s-]?site)\s*[,/-]\s*/i, "")
+    .replace(/\b(?:Jan|January|Feb|February|Mar|March|Apr|April|May|Jun|June|Jul|July|Aug|August|Sep|Sept|September|Oct|October|Nov|November|Dec|December)\s+\d{1,2},\s+\d{4}\b.*$/i, " ")
+    .replace(/\s*,\s*,+/g, ", ")
+    .replace(/\s*\|\s*/g, " ")
+    .trim();
+
+  if (options.organization) {
+    text = text.replace(new RegExp(`(?:,?\\s+)?${escapeRegExp(options.organization)}$`, "i"), "").trim();
+  }
+
+  const locationMatch = text.match(/([A-Z][A-Za-z.' -]+,\s*(?:[A-Z]{2}|[A-Za-z.' -]+)(?:,\s*(?:USA|United States|Canada|UK|United Kingdom))?(?:\s*(?:or|\/|, or|,)\s*(?:Remote|[A-Z][A-Za-z.' -]+,\s*(?:[A-Z]{2}|[A-Za-z.' -]+)(?:,\s*(?:USA|United States|Canada|UK|United Kingdom))?))*)/);
+  if (locationMatch && locationMatch[1]) {
+    text = normalizeWhitespace(locationMatch[1]);
+  }
+
+  text = text
+    .replace(/^(?:hybrid[,/\s-]*)$/i, "")
+    .replace(/^(?:previous post|next post|related posts?)$/i, "")
+    .replace(/^[,;:|/>\-.\s]+|[,;:|/<\-.\s]+$/g, "")
+    .trim();
+
+  const workplaceType = normalizeWorkplaceType(options.workplaceType || options.workplace_type || "");
+  if (!text) {
+    if (workplaceType === "Hybrid") {
+      if (trackStats) incrementParserCleanupStat("hybrid_location_repaired");
+      return "Hybrid / Anywhere";
+    }
+    if (trackStats) incrementParserCleanupStat("location_defaulted_remote");
+    return "Remote";
+  }
+
+  if (/^hybrid$/i.test(text)) {
+    if (trackStats) incrementParserCleanupStat("hybrid_location_repaired");
+    return "Hybrid / Anywhere";
+  }
+  if (/^remote$/i.test(text)) {
+    if (trackStats && original && text !== original) incrementParserCleanupStat("location_cleaned");
+    return "Remote";
+  }
+
+  if (trackStats && original && text !== original) {
+    incrementParserCleanupStat("location_cleaned");
+  }
+  return text;
+}
+
+function normalizeLocationDisplay(job = {}, workplaceType = "") {
+  const options = {
+    ...buildParserSourceOptions(job),
+    workplaceType
+  };
+  const locationCandidates = [
+    job.location,
+    job.display?.location,
+    job.location_name,
+    job.locationName,
+    job.formatted_location,
+    job.formattedLocation,
+    job.city && job.state ? `${job.city}, ${job.state}` : "",
+    job.city && job.region ? `${job.city}, ${job.region}` : "",
+    job.city && job.country ? `${job.city}, ${job.country}` : "",
+    job.raw_payload?.location,
+    job.raw_payload?.locationName,
+    job.raw_payload?.formattedLocation,
+    job.raw_payload?.categories?.location,
+    job.metadata?.location
+  ].filter(Boolean);
+
+  for (const candidate of locationCandidates) {
+    const cleaned = cleanLocationText(candidate, { ...options, trackStats: false });
+    if (!cleaned) continue;
+    if (workplaceType === "Hybrid" && cleaned === "Hybrid / Anywhere") continue;
+    if (cleaned === "Remote" && locationCandidates.length > 1) continue;
+    if (looksLikePhysicalLocation(cleaned) || /\bremote\b/i.test(cleaned)) {
+      const original = normalizeWhitespace(stringifySafe(candidate));
+      if (cleaned === "Hybrid / Anywhere") incrementParserCleanupStat("hybrid_location_repaired");
+      else if (original && cleaned !== original) incrementParserCleanupStat("location_cleaned");
+      return cleaned;
+    }
+  }
+
+  const fallbackLocation = cleanLocationText("", { ...options, trackStats: false });
+  if (fallbackLocation === "Hybrid / Anywhere") incrementParserCleanupStat("hybrid_location_repaired");
+  else if (fallbackLocation === "Remote") incrementParserCleanupStat("location_defaulted_remote");
+  return fallbackLocation;
 }
 
 function isGenericRoleTitle(title = "") {
@@ -1113,6 +1344,7 @@ function normalizeDescription(description, options = {}) {
 }
 
 function extractDescriptionText(job = {}) {
+  const parserOptions = buildParserSourceOptions(job);
   const directCandidates = [
     job.description,
     job.raw_description,
@@ -1124,7 +1356,13 @@ function extractDescriptionText(job = {}) {
   let fallbackText = "";
 
   for (const candidate of directCandidates) {
-    const text = stripSchemaMetadata(stripSocialShareJunk(normalizeWhitespace(stringifySafe(candidate) || cleanFlattenedText(candidate))));
+    const text = stripSchemaMetadata(
+      stripParserTemplateJunk(
+        stripSocialShareJunk(normalizeWhitespace(stringifySafe(candidate) || cleanFlattenedText(candidate))),
+        "description",
+        parserOptions
+      )
+    );
     if (text.length >= 80) {
       fallbackText = text;
       break;
@@ -1132,7 +1370,7 @@ function extractDescriptionText(job = {}) {
   }
 
   if (!fallbackText) {
-    fallbackText = stripSchemaMetadata(stripSocialShareJunk(cleanFlattenedText({
+    fallbackText = stripSchemaMetadata(stripParserTemplateJunk(stripSocialShareJunk(cleanFlattenedText({
       description: job.description,
       raw_description: job.raw_description,
       descriptionPlain: job.descriptionPlain,
@@ -1143,7 +1381,7 @@ function extractDescriptionText(job = {}) {
       team: job.team,
       department: job.department,
       raw_payload: job.raw_payload
-    })));
+    })), "description", parserOptions));
   }
 
   if (!seededParagraph) return fallbackText;
@@ -1218,13 +1456,15 @@ function normalizeJob(input = {}) {
     return null;
   }
   const sourceAttribution = resolveBoardSourceAttribution(input) || null;
-  const organization = normalizeOrganization(sourceAttribution?.organization || input.organization);
+  const parserOptions = buildParserSourceOptions({ ...input, ...sourceAttribution });
+  const organization = normalizeOrganizationWithOptions(sourceAttribution?.organization || input.organization, parserOptions);
   const attributedTitle = safeStringField(sourceAttribution?.title);
-  const title = normalizeTitle(attributedTitle || input.title, organization);
+  const title = normalizeTitle(attributedTitle || input.title, organization, { ...parserOptions, organization });
   const applyUrl = sanitizeRoleUrl(safeStringField(sourceAttribution?.applyUrl || input.apply_url || input.applyUrl));
   const originalUrl = sanitizeRoleUrl(safeStringField(sourceAttribution?.originalUrl || input.original_url || input.originalUrl || applyUrl || input.source_url || input.sourceUrl));
   const sourceUrl = sanitizeRoleUrl(safeStringField(sourceAttribution?.sourceUrl || input.source_url || input.sourceUrl));
-  const location = safeStringField(input.location);
+  const inferredWorkplaceType = normalizeWorkplaceType(input.workplace_type || input.workplaceType) || resolveWorkplaceType(input);
+  const location = normalizeLocationDisplay({ ...input, organization }, inferredWorkplaceType);
   const salaryText = extractSalaryText(input);
   const salaryShape = parseSalaryRange(salaryText, location);
   const explicitCurrency = safeStringField(input.salary_currency || input.salaryCurrency);
@@ -1275,7 +1515,7 @@ function normalizeJob(input = {}) {
     title,
     organization,
     location,
-    workplace_type: resolveWorkplaceType(input),
+    workplace_type: inferredWorkplaceType || resolveWorkplaceType({ ...input, location }),
     job_type: resolveEmploymentType(input),
     salary: resolvedSalaryVisible ? salaryShape.salary : "",
     raw_salary: salaryShape.raw_salary,
@@ -1289,7 +1529,7 @@ function normalizeJob(input = {}) {
     function: safeStringField(input.function || input.role_function),
     specialization: normalizeSpecialization(input.specialization || input.display?.specialization, input),
     experience: safeStringField(input.experience),
-    source: normalizeSourceName(sourceAttribution?.sourceName || input.source) || "Manual",
+    source: normalizeSourceNameWithOptions(sourceAttribution?.sourceName || input.source, parserOptions) || "Manual",
     source_url: sourceUrl,
     apply_url: applyUrl,
     original_url: originalUrl,
@@ -1454,7 +1694,10 @@ function routeSyncedJob(job, source) {
 }
 
 module.exports = {
+  cleanCustomCareerPageText,
   cleanFlattenedText,
+  cleanElementalImpactText,
+  cleanLocationText,
   decodeHtmlEntities,
   dedupeJobs,
   detectSalaryCurrency,
@@ -1479,6 +1722,7 @@ module.exports = {
   normalizeDescription,
   normalizeEmploymentType,
   normalizeJob,
+  normalizeLocationDisplay,
   normalizeSpecialization,
   normalizeWorkplaceType,
   resolveEmploymentType,

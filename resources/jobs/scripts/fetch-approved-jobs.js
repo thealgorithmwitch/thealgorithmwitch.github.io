@@ -1,10 +1,14 @@
 const {
   dedupeJobs,
-  normalizeJob,
   readJobs,
   safeWritePublicJobs,
   JOBS_FILE
 } = require("./job-utils");
+const {
+  getParserCleanupStats,
+  normalizeJob,
+  resetParserCleanupStats
+} = require("./job-normalizer");
 const { syncJobRecordStore } = require("./public-records");
 
 const EMBEDDED_FALLBACK_URL =
@@ -61,6 +65,7 @@ async function fetchApprovedJobs() {
 }
 
 async function main() {
+  resetParserCleanupStats();
   console.log(`[jobs:fetch-approved] Fetching approved jobs from ${APPS_SCRIPT_URL}`);
   const rawJobs = await fetchApprovedJobs();
   const existingJobs = await readJobs();
@@ -81,6 +86,10 @@ async function main() {
     label: "jobs:fetch-approved"
   });
   await syncJobRecordStore(result.jobs, { logger: console });
+  const parserStats = getParserCleanupStats();
+  console.log(
+    `[jobs:fetch-approved] parser_cleaned_title_count=${parserStats.parser_cleaned_title_count} parser_cleaned_org_count=${parserStats.parser_cleaned_org_count} parser_cleaned_description_count=${parserStats.parser_cleaned_description_count} parser_location_defaulted_remote_count=${parserStats.parser_location_defaulted_remote_count} parser_location_cleaned_count=${parserStats.parser_location_cleaned_count} parser_hybrid_location_repaired_count=${parserStats.parser_hybrid_location_repaired_count} parser_elemental_metadata_stripped_count=${parserStats.parser_elemental_metadata_stripped_count} parser_custom_table_header_stripped_count=${parserStats.parser_custom_table_header_stripped_count} parser_html_fragment_stripped_count=${parserStats.parser_html_fragment_stripped_count}`
+  );
 
   if (!result.changed) {
     console.log(`[jobs:fetch-approved] No changes to ${JOBS_FILE}.`);

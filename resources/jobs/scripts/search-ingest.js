@@ -1,7 +1,14 @@
 const fs = require("fs/promises");
 const path = require("path");
 const { JOBS_FILE, PENDING_SYNCED_FILE, writeJson } = require("./job-utils");
-const { dedupeJobs, normalizeJob, stableHash, todayIso } = require("./job-normalizer");
+const {
+  dedupeJobs,
+  getParserCleanupStats,
+  normalizeJob,
+  resetParserCleanupStats,
+  stableHash,
+  todayIso
+} = require("./job-normalizer");
 
 const ROOT = path.resolve(__dirname, "..");
 const SEARCH_SOURCES_FILE = path.join(ROOT, "search-sources.json");
@@ -344,6 +351,7 @@ async function fetchQueryResults(queryConfig) {
 }
 
 async function main() {
+  resetParserCleanupStats();
   const [searchConfig, publicJobs, pendingJobs] = await Promise.all([
     readJson(SEARCH_SOURCES_FILE, { queries: [] }),
     readJson(JOBS_FILE, []),
@@ -379,6 +387,10 @@ async function main() {
 
   await writeJson(PENDING_SYNCED_FILE, mergedPending);
   console.log(`[jobs:search-ingest] Wrote ${mergedPending.length} pending leads to ${PENDING_SYNCED_FILE}.`);
+  const parserStats = getParserCleanupStats();
+  console.log(
+    `[jobs:search-ingest] parser_cleaned_title_count=${parserStats.parser_cleaned_title_count} parser_cleaned_org_count=${parserStats.parser_cleaned_org_count} parser_cleaned_description_count=${parserStats.parser_cleaned_description_count} parser_location_defaulted_remote_count=${parserStats.parser_location_defaulted_remote_count} parser_location_cleaned_count=${parserStats.parser_location_cleaned_count} parser_hybrid_location_repaired_count=${parserStats.parser_hybrid_location_repaired_count} parser_elemental_metadata_stripped_count=${parserStats.parser_elemental_metadata_stripped_count} parser_custom_table_header_stripped_count=${parserStats.parser_custom_table_header_stripped_count} parser_html_fragment_stripped_count=${parserStats.parser_html_fragment_stripped_count}`
+  );
   if (process.env.JOBS_BACKEND_URL) {
     console.log(`[jobs:search-ingest] Submitted ${submittedCount} pending leads to submitJob via JOBS_BACKEND_URL.`);
   }

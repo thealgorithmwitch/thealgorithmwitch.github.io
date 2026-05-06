@@ -1,2423 +1,1615 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="description" content="Sustainability jobs across climate, clean energy, policy, and creative roles.">
-  <meta property="og:title" content="Fresh Roles | The Algorithm Witch">
-  <meta property="og:description" content="Sustainability jobs across climate, clean energy, policy, and creative roles.">
-  <meta property="og:type" content="website">
-  <meta property="og:url" content="https://example.com/jobs/">
-  <title>Fresh Roles | The Algorithm Witch</title>
-  <link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/regular/style.css">
-  <script src="https://unpkg.com/@phosphor-icons/web"></script>
-  <style>
-    @import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,100..1000;1,9..40,100..1000&family=Instrument+Serif:ital@0;1&family=Space+Mono:ital,wght@0,400;0,700;1,400;1,700&display=swap');
-
-    :root {
-      --bg-paper: #0A1F15;
-      --ink-primary: #CFFBE3;
-      --ink-secondary: rgba(207, 251, 227, 0.7);
-      --ink-tertiary: rgba(207, 251, 227, 0.4);
-      --accent-chartreuse: #A8FF3E;
-      --accent-lavender: #D4C1FF;
-      --surface-card: #0D261A;
-      --surface-alt: #1A1429;
-      --border-divider: #163628;
-      --font-serif: 'Instrument Serif', serif;
-      --font-sans: 'DM Sans', sans-serif;
-      --font-mono: 'Space Mono', monospace;
-      --transition: 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
-    }
-
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-      -webkit-font-smoothing: antialiased;
-      -moz-osx-font-smoothing: grayscale;
-    }
-
-    html {
-      scroll-behavior: smooth;
-    }
-
-    body {
-      background-color: var(--bg-paper);
-      color: var(--ink-primary);
-      font-family: var(--font-sans);
-      line-height: 1.5;
-      overflow-x: hidden;
-    }
-
-    ::selection {
-      background: var(--accent-chartreuse);
-      color: var(--bg-paper);
-    }
-
-    .botanical-bg {
-      position: fixed;
-      pointer-events: none;
-      z-index: 0;
-      opacity: 0.05;
-      color: var(--ink-primary);
-    }
-
-    .botanical-tl { top: -5%; left: -5%; width: 40vw; height: 40vw; transform: rotate(15deg); }
-    .botanical-br { bottom: -10%; right: -5%; width: 50vw; height: 50vw; transform: rotate(-20deg); }
-
-    h1, h2, h3, h4, .font-serif { font-family: var(--font-serif); font-weight: 400; }
-
-    .app-container {
-      position: relative;
-      z-index: 10;
-      max-width: 1440px;
-      margin: 0 auto;
-      padding: 0 40px;
-    }
-
-    nav {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      gap: 24px;
-      min-height: 80px;
-      border-bottom: 1px solid var(--border-divider);
-      background: rgba(10, 31, 21, 0.9);
-      backdrop-filter: blur(10px);
-      position: sticky;
-      top: 0;
-      z-index: 100;
-      overflow: visible;
-    }
-
-    .logo {
-      display: flex;
-      align-items: baseline;
-      gap: 12px;
-      text-decoration: none;
-      color: var(--ink-primary);
-    }
-
-    .logo h1 {
-      font-size: 2rem;
-      letter-spacing: -0.02em;
-    }
-
-    .logo span {
-      font-family: var(--font-mono);
-      font-size: 0.7rem;
-      text-transform: uppercase;
-      color: var(--accent-chartreuse);
-    }
-
-    .nav-links {
-      display: flex;
-      gap: 32px;
-      flex-wrap: wrap;
-      justify-content: center;
-      flex: 1;
-    }
-
-    .nav-panel {
-      flex: 1;
-      display: grid;
-      grid-template-columns: minmax(0, 1fr) auto;
-      align-items: center;
-      gap: 24px;
-    }
-
-    .mobile-nav-handle {
-      display: none;
-      position: absolute;
-      left: 50%;
-      bottom: -22px;
-      transform: translateX(-50%);
-      width: 44px;
-      height: 44px;
-      min-width: 44px;
-      min-height: 44px;
-      border-radius: 999px;
-      border: 1px solid var(--border-divider);
-      background: var(--surface-card);
-      color: var(--accent-chartreuse);
-      align-items: center;
-      justify-content: center;
-      cursor: pointer;
-      box-shadow: 0 10px 24px rgba(0, 0, 0, 0.28);
-      z-index: 110;
-    }
-
-    .mobile-nav-handle svg {
-      width: 18px;
-      height: 18px;
-      stroke: currentColor;
-      fill: none;
-      stroke-width: 2;
-      stroke-linecap: round;
-      stroke-linejoin: round;
-      transition: transform var(--transition);
-    }
-
-    nav.nav-collapsed .mobile-nav-handle svg {
-      transform: rotate(180deg);
-    }
-
-    .nav-link {
-      font-family: var(--font-mono);
-      font-size: 0.8rem;
-      text-transform: uppercase;
-      letter-spacing: 0.05em;
-      color: var(--ink-secondary);
-      text-decoration: none;
-      transition: var(--transition);
-      position: relative;
-      padding: 8px 0;
-    }
-
-    .nav-link:hover, .nav-link.active {
-      color: var(--accent-chartreuse);
-    }
-
-    .nav-link.active::after {
-      content: "";
-      position: absolute;
-      bottom: -1px;
-      left: 0;
-      width: 100%;
-      height: 2px;
-      background: var(--accent-chartreuse);
-    }
-
-    .btn-primary,
-    .btn-secondary {
-      border: 1px solid var(--accent-chartreuse);
-      padding: 10px 20px;
-      font-family: var(--font-mono);
-      font-size: 0.75rem;
-      font-weight: 700;
-      text-transform: uppercase;
-      letter-spacing: 0.05em;
-      cursor: pointer;
-      transition: var(--transition);
-      text-decoration: none;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      gap: 8px;
-    }
-
-    .btn-primary {
-      background: var(--accent-chartreuse);
-      color: var(--bg-paper);
-    }
-
-    .btn-secondary {
-      background: transparent;
-      color: var(--accent-chartreuse);
-      border-color: var(--border-divider);
-    }
-
-    .btn-primary:hover,
-    .btn-secondary:hover {
-      box-shadow: 0 0 15px rgba(168, 255, 62, 0.25);
-      transform: translateY(-1px);
-    }
-
-    section {
-      padding: 80px 0;
-    }
-
-    .hero-section {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      padding-top: 120px;
-      padding-bottom: 60px;
-      text-align: center;
-    }
-
-    .search-container {
-      width: 100%;
-      max-width: 900px;
-      position: relative;
-    }
-
-    .search-input-wrapper {
-      background: var(--surface-card);
-      border: 1px solid var(--border-divider);
-      padding: 24px 32px;
-      display: flex;
-      align-items: center;
-      border-radius: 2px;
-      transition: var(--transition);
-    }
-
-    .search-input-wrapper:focus-within {
-      border-color: var(--accent-chartreuse);
-      box-shadow: 0 10px 40px rgba(0, 0, 0, 0.4), inset 0 0 0 1px var(--accent-chartreuse);
-    }
-
-    .search-input {
-      width: 100%;
-      border: none;
-      outline: none;
-      font-family: var(--font-serif);
-      font-size: 2.5rem;
-      color: var(--ink-primary);
-      background: transparent;
-    }
-
-    .search-input::placeholder {
-      color: var(--ink-tertiary);
-      font-style: italic;
-    }
-
-    .quick-filters,
-    .tag-row {
-      display: flex;
-      gap: 12px;
-      margin-top: 32px;
-      flex-wrap: wrap;
-      justify-content: center;
-    }
-
-    .filter-chip,
-    .tag-pill {
-      padding: 8px 20px;
-      border: 1px solid var(--border-divider);
-      background: transparent;
-      font-family: var(--font-mono);
-      font-size: 0.75rem;
-      text-transform: uppercase;
-      letter-spacing: 0.05em;
-      cursor: pointer;
-      transition: var(--transition);
-      color: var(--ink-secondary);
-      border-radius: 20px;
-    }
-
-    .filter-chip:hover,
-    .tag-pill:hover {
-      border-color: var(--ink-primary);
-      color: var(--ink-primary);
-    }
-
-    .filter-chip.active,
-    .tag-pill.active {
-      background: var(--accent-chartreuse);
-      color: var(--bg-paper);
-      border-color: var(--accent-chartreuse);
-      box-shadow: 0 0 15px rgba(168, 255, 62, 0.2);
-    }
-
-    .stats-bar {
-      font-family: var(--font-mono);
-      font-size: 0.7rem;
-      color: var(--ink-tertiary);
-      margin-top: 48px;
-      text-transform: uppercase;
-      letter-spacing: 0.1em;
-      display: flex;
-      flex-wrap: wrap;
-      gap: 16px;
-      justify-content: center;
-      align-items: center;
-    }
-
-    .stats-bar span::after {
-      content: "•";
-      margin-left: 16px;
-    }
-
-    .stats-bar span:last-child::after {
-      content: "";
-    }
-
-    .weekly-drop {
-      margin-top: 80px;
-      background: var(--surface-alt);
-      border: 1px solid rgba(212, 193, 255, 0.2);
-      padding: 40px;
-      border-radius: 4px;
-      text-align: left;
-      position: relative;
-      max-width: 900px;
-      width: 100%;
-    }
-
-    .weekly-drop::before {
-      content: "EDITORIAL NOTE";
-      position: absolute;
-      top: -10px;
-      left: 40px;
-      background: var(--accent-lavender);
-      color: var(--surface-alt);
-      font-family: var(--font-mono);
-      font-size: 0.65rem;
-      padding: 2px 8px;
-      font-weight: bold;
-      letter-spacing: 0.05em;
-    }
-
-    .grid-header {
-      border-top: 2px solid var(--accent-chartreuse);
-      border-bottom: 1px solid var(--border-divider);
-      padding: 12px 0;
-      margin-bottom: 24px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      gap: 16px;
-      font-family: var(--font-mono);
-      font-size: 0.75rem;
-      letter-spacing: 0.05em;
-      color: var(--ink-secondary);
-      text-transform: uppercase;
-    }
-
-    .filters-shell {
-      background: rgba(13, 38, 26, 0.55);
-      border: 1px solid var(--border-divider);
-      padding: 24px;
-      margin-bottom: 32px;
-    }
-
-    .filters-grid {
-      display: grid;
-      grid-template-columns: repeat(4, minmax(0, 1fr));
-      gap: 32px;
-      padding-top: 24px;
-      border-top: 1px solid var(--border-divider);
-    }
-
-    .mini-filter-label {
-      font-family: var(--font-mono);
-      font-size: 0.65rem;
-      text-transform: uppercase;
-      color: var(--accent-chartreuse);
-      margin-bottom: 12px;
-      display: block;
-    }
-
-    .filter-list {
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
-    }
-
-    .filter-list label {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      font-size: 0.85rem;
-      color: var(--ink-secondary);
-      cursor: pointer;
-    }
-
-    .filter-list input[type="checkbox"] {
-      appearance: none;
-      width: 14px;
-      height: 14px;
-      border: 1px solid var(--border-divider);
-      background: transparent;
-      cursor: pointer;
-      position: relative;
-      flex-shrink: 0;
-    }
-
-    .filter-list input[type="checkbox"]:checked {
-      background: var(--accent-chartreuse);
-      border-color: var(--accent-chartreuse);
-    }
-
-    .filter-list input[type="checkbox"]:checked::after {
-      content: "";
-      position: absolute;
-      left: 4px;
-      top: 1px;
-      width: 4px;
-      height: 8px;
-      border: solid var(--bg-paper);
-      border-width: 0 2px 2px 0;
-      transform: rotate(45deg);
-    }
-
-    .filters-actions {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      gap: 16px;
-      margin-top: 24px;
-      padding-top: 24px;
-      border-top: 1px solid var(--border-divider);
-    }
-
-    .classifieds-grid {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 0;
-      border-left: 1px solid var(--border-divider);
-      border-top: 1px solid var(--border-divider);
-    }
-
-    .classifieds-grid-message {
-      grid-column: 1 / -1;
-      background: var(--surface-card);
-      padding: 24px;
-      border-right: 1px solid var(--border-divider);
-      border-bottom: 1px solid var(--border-divider);
-      color: var(--ink-secondary);
-      min-height: 160px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      text-align: center;
-      font-family: var(--font-serif);
-      font-size: 1.5rem;
-      line-height: 1.25;
-    }
-
-    .classified-card {
-      background: var(--surface-card);
-      padding: 24px;
-      border-right: 1px solid var(--border-divider);
-      border-bottom: 1px solid var(--border-divider);
-      transition: var(--transition);
-      position: relative;
-      display: flex;
-      flex-direction: column;
-      gap: 12px;
-      min-height: 260px;
-      color: inherit;
-      text-decoration: none;
-    }
-
-    .classified-card:hover {
-      background: #113121;
-      box-shadow: inset 0 0 0 1px var(--accent-chartreuse);
-      z-index: 2;
-    }
-
-    .featured-marker {
-      position: absolute;
-      top: 0;
-      right: 0;
-      width: 0;
-      height: 0;
-      border-style: solid;
-      border-width: 0 32px 32px 0;
-      border-color: transparent var(--accent-lavender) transparent transparent;
-      z-index: 1;
-    }
-
-    .card-ref {
-      font-family: var(--font-mono);
-      font-size: 0.65rem;
-      color: var(--accent-chartreuse);
-      text-transform: uppercase;
-      letter-spacing: 0.05em;
-    }
-
-    .card-title {
-      font-family: var(--font-serif);
-      font-size: 1.6rem;
-      line-height: 1.1;
-      color: var(--ink-primary);
-    }
-
-    .card-org {
-      font-size: 0.85rem;
-      font-weight: 600;
-      color: var(--ink-secondary);
-      text-transform: uppercase;
-      letter-spacing: 0.05em;
-    }
-
-    .card-description {
-      color: var(--ink-secondary);
-      font-size: 0.92rem;
-      line-height: 1.45;
-      display: -webkit-box;
-      -webkit-line-clamp: 3;
-      -webkit-box-orient: vertical;
-      overflow: hidden;
-    }
 
-    .card-footer {
-      margin-top: auto;
-      padding-top: 16px;
-      display: flex;
-      justify-content: space-between;
-      align-items: flex-end;
-      gap: 16px;
-      border-top: 1px dotted var(--border-divider);
-    }
-
-    .card-meta {
-      font-size: 0.8rem;
-      color: var(--ink-tertiary);
-      display: flex;
-      flex-direction: column;
-      gap: 4px;
-    }
-
-    .card-meta-row {
-      display: flex;
-      align-items: center;
-      gap: 6px;
-    }
-
-    .card-salary {
-      font-family: var(--font-mono);
-      font-weight: 700;
-      font-size: 0.8rem;
-      color: var(--accent-chartreuse);
-      text-transform: uppercase;
-      text-align: right;
-    }
-
-    .section-title {
-      font-family: var(--font-serif);
-      font-size: 3.5rem;
-      margin-bottom: 16px;
-      color: var(--ink-primary);
-    }
-
-    .section-desc {
-      font-size: 1.1rem;
-      color: var(--ink-secondary);
-      max-width: 680px;
-      margin-bottom: 48px;
-    }
-
-    .state-panel {
-      background: var(--surface-card);
-      border: 1px solid var(--border-divider);
-      padding: 40px;
-      color: var(--ink-secondary);
-      display: grid;
-      place-items: center;
-      text-align: center;
-      min-height: 220px;
-    }
-
-    .profiles-grid {
-      display: grid;
-      grid-template-columns: repeat(2, 1fr);
-      gap: 24px;
-    }
-
-    .profile-card {
-      background: transparent;
-      border: 1px solid var(--border-divider);
-      display: flex;
-      transition: var(--transition);
-    }
-
-    .profile-card:hover {
-      border-color: var(--ink-tertiary);
-      background: rgba(255, 255, 255, 0.02);
-    }
-
-    .profile-visual {
-      width: 140px;
-      background: var(--surface-card);
-      border-right: 1px solid var(--border-divider);
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      padding: 20px;
-      position: relative;
-      overflow: hidden;
-    }
-
-    .avatar-placeholder {
-      width: 80px;
-      height: 80px;
-      border-radius: 50%;
-      background: var(--surface-alt);
-      border: 1px solid rgba(212, 193, 255, 0.3);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-family: var(--font-serif);
-      font-size: 2rem;
-      color: var(--accent-lavender);
-      margin-bottom: 16px;
-      box-shadow: inset 0 0 20px rgba(212, 193, 255, 0.1);
-    }
-
-    .avatar-placeholder.alt {
-      background: rgba(168, 255, 62, 0.05);
-      border-color: rgba(168, 255, 62, 0.3);
-      color: var(--accent-chartreuse);
-    }
-
-    .status-dot {
-      width: 8px;
-      height: 8px;
-      background: var(--accent-chartreuse);
-      border-radius: 50%;
-      box-shadow: 0 0 10px var(--accent-chartreuse);
-    }
-
-    .profile-content {
-      padding: 32px;
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-    }
-
-    .profile-name {
-      font-family: var(--font-serif);
-      font-size: 2rem;
-      color: var(--ink-primary);
-      line-height: 1;
-      margin-bottom: 8px;
-    }
-
-    .profile-role {
-      font-family: var(--font-mono);
-      font-size: 0.7rem;
-      text-transform: uppercase;
-      color: var(--accent-chartreuse);
-      letter-spacing: 0.05em;
-      margin-bottom: 24px;
-    }
-
-    .profile-prompt {
-      background: var(--surface-card);
-      padding: 16px;
-      border-left: 2px solid var(--accent-lavender);
-      margin-bottom: 24px;
-    }
-
-    .prompt-q {
-      font-family: var(--font-mono);
-      font-size: 0.65rem;
-      text-transform: uppercase;
-      color: var(--ink-tertiary);
-      margin-bottom: 8px;
-    }
-
-    .prompt-a {
-      font-size: 0.95rem;
-      font-style: italic;
-      color: var(--ink-secondary);
-      line-height: 1.4;
-    }
-
-    .profile-tags {
-      display: flex;
-      gap: 8px;
-      flex-wrap: wrap;
-      margin-top: auto;
-    }
-
-    .profile-tags span {
-      font-family: var(--font-mono);
-      font-size: 0.65rem;
-      padding: 4px 10px;
-      border: 1px solid var(--border-divider);
-      color: var(--ink-secondary);
-    }
-
-    .archive-apply-box {
-      margin-top: 28px;
-      background: var(--surface-card);
-      border: 1px solid var(--border-divider);
-      padding: 32px;
-      display: grid;
-      grid-template-columns: 1.2fr auto;
-      gap: 20px;
-      align-items: center;
-    }
-
-    .archive-apply-box h3 {
-      font-family: var(--font-serif);
-      font-size: 2.2rem;
-      color: var(--accent-lavender);
-      margin-bottom: 12px;
-    }
-
-    .archive-apply-box p {
-      color: var(--ink-secondary);
-      max-width: 680px;
-    }
-
-    .featured-employer-box {
-      margin-top: 24px;
-      background: rgba(255, 255, 255, 0.03);
-      border: 1px solid rgba(212, 193, 255, 0.18);
-      padding: 28px;
-    }
-
-    .featured-employer-box h3 {
-      font-family: var(--font-serif);
-      font-size: 2rem;
-      color: var(--accent-lavender);
-      margin-bottom: 12px;
-    }
-
-    .featured-employer-box p {
-      color: var(--ink-secondary);
-      margin-bottom: 18px;
-      max-width: 560px;
-    }
-
-    .profile-actions {
-      margin-top: 18px;
-      display: flex;
-      gap: 12px;
-      flex-wrap: wrap;
-      align-items: center;
-    }
-
-    .profile-links,
-    .profile-modal-links-row {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      flex-wrap: wrap;
-      margin-top: 16px;
-    }
-
-    .profile-link-icon,
-    .profile-modal-icon-link {
-      width: 42px;
-      height: 42px;
-      min-width: 42px;
-      border-radius: 999px;
-      border: 1px solid var(--border-divider);
-      background: rgba(255, 255, 255, 0.03);
-      color: var(--accent-chartreuse);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      text-decoration: none;
-      transition: var(--transition);
-      flex: 0 0 auto;
-    }
-
-    .profile-link-icon:hover,
-    .profile-modal-icon-link:hover {
-      transform: translateY(-1px);
-      box-shadow: 0 0 15px rgba(168, 255, 62, 0.25);
-      border-color: var(--accent-chartreuse);
-      color: var(--ink-primary);
-    }
-
-    .profile-link-icon i,
-    .profile-modal-icon-link i {
-      font-size: 1.15rem;
-      line-height: 1;
-      display: block;
-      width: 1em;
-      height: 1em;
-    }
-
-    .profile-modal {
-      position: fixed;
-      inset: 0;
-      background: rgba(10, 31, 21, 0.82);
-      display: none;
-      align-items: center;
-      justify-content: center;
-      padding: 24px;
-      z-index: 300;
-    }
-
-    .profile-modal.visible {
-      display: flex;
-    }
-
-    .profile-modal-card {
-      max-width: 760px;
-      width: 100%;
-      background: var(--surface-card);
-      border: 1px solid var(--border-divider);
-      padding: 32px;
-      max-height: min(88vh, 900px);
-      overflow-y: auto;
-    }
-
-    .profile-modal-grid {
-      display: grid;
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-      gap: 14px;
-      margin-top: 20px;
-    }
-
-    .profile-modal-stat,
-    .profile-modal-section {
-      border: 1px solid var(--border-divider);
-      background: rgba(255, 255, 255, 0.02);
-      padding: 16px 18px;
-    }
-
-    .profile-modal-label {
-      font-family: var(--font-mono);
-      font-size: 0.7rem;
-      color: var(--accent-chartreuse);
-      text-transform: uppercase;
-      letter-spacing: 0.05em;
-      margin-bottom: 8px;
-    }
-
-    .profile-modal-text {
-      color: var(--ink-secondary);
-      line-height: 1.6;
-    }
-
-    .profile-modal-stack {
-      display: grid;
-      gap: 16px;
-      margin-top: 20px;
-    }
-
-    .profile-modal-project {
-      border-left: 2px solid var(--accent-lavender);
-    }
-
-    .profile-modal-prompts {
-      display: grid;
-      gap: 14px;
-    }
-
-    .profile-modal-prompt-item {
-      background: rgba(0, 0, 0, 0.18);
-      border: 1px solid var(--border-divider);
-      padding: 14px 16px;
-    }
-
-    .profile-modal-links-row {
-      flex-wrap: nowrap;
-      overflow-x: auto;
-      margin-top: 20px;
-      padding-bottom: 2px;
-    }
-
-    .employer-section {
-      background: var(--surface-alt);
-      border-top: 1px solid var(--border-divider);
-      border-bottom: 1px solid var(--border-divider);
-      padding: 100px 40px;
-      margin: 80px -40px 0;
-      position: relative;
-      overflow: hidden;
-    }
-
-    .employer-content {
-      max-width: 1440px;
-      margin: 0 auto;
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 80px;
-      align-items: center;
-    }
-
-    .employer-text h2 {
-      font-family: var(--font-serif);
-      font-size: 4rem;
-      color: var(--accent-lavender);
-      line-height: 1;
-      margin-bottom: 24px;
-    }
-
-    .employer-text p {
-      font-size: 1.2rem;
-      color: var(--ink-secondary);
-      margin-bottom: 32px;
-      max-width: 480px;
-    }
-
-    .benefit-list {
-      list-style: none;
-      margin-bottom: 48px;
-    }
-
-    .benefit-list li {
-      display: flex;
-      align-items: flex-start;
-      gap: 12px;
-      margin-bottom: 16px;
-      font-size: 0.95rem;
-      color: var(--ink-primary);
-    }
-
-    .benefit-list svg {
-      color: var(--accent-chartreuse);
-      width: 20px;
-      height: 20px;
-      display: inline-block;
-      flex-shrink: 0;
-      margin-top: 2px;
-      fill: none;
-      stroke: currentColor;
-      stroke-width: 2;
-      stroke-linecap: round;
-      stroke-linejoin: round;
-    }
-
-    .action-card {
-      background: var(--surface-card);
-      border: 1px solid var(--border-divider);
-      padding: 40px;
-      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
-    }
-
-    .actions-stack {
-      display: grid;
-      gap: 20px;
-    }
-
-    .action-card p {
-      color: var(--ink-secondary);
-      margin: 14px 0 22px;
-    }
-
-    footer {
-      padding: 60px 40px;
-      text-align: center;
-      font-family: var(--font-mono);
-      font-size: 0.75rem;
-      color: var(--ink-tertiary);
-      text-transform: uppercase;
-      letter-spacing: 0.1em;
-    }
-
-    .icon {
-      width: 16px;
-      height: 16px;
-      display: inline-block;
-      fill: none;
-      stroke: currentColor;
-      stroke-width: 2;
-      stroke-linecap: round;
-      stroke-linejoin: round;
-      flex-shrink: 0;
-    }
-
-    @media (max-width: 1100px) {
-      .classifieds-grid,
-      .filters-grid,
-      .profiles-grid,
-      .employer-content {
-        grid-template-columns: repeat(2, 1fr);
-      }
-    }
-
-    @media (max-width: 800px) {
-      .app-container,
-      footer {
-        padding-left: 20px;
-        padding-right: 20px;
-      }
-
-      nav {
-        padding: 18px 0;
-        align-items: flex-start;
-        flex-direction: column;
-        gap: 12px;
-        padding-bottom: 34px;
-      }
-
-      .nav-panel {
-        width: 100%;
-        display: grid;
-        grid-template-columns: 1fr;
-        gap: 14px;
-        padding-top: 12px;
-      }
-
-      .nav-links {
-        flex: none;
-        display: flex;
-        flex-wrap: wrap;
-        align-items: center;
-        justify-content: center;
-        gap: 16px;
-      }
-
-      .nav-links a[href="#home"] {
-        display: none;
-      }
-
-      .nav-panel .btn-primary {
-        justify-self: center;
-        padding: 9px 18px;
-      }
-
-      .mobile-nav-handle {
-        display: inline-flex;
-      }
-
-      nav.nav-collapsed {
-        align-items: flex-start;
-      }
-
-      nav.nav-collapsed .nav-panel {
-        display: none;
-      }
-
-      .search-input {
-        font-size: 1.8rem;
-      }
-
-      .classifieds-grid,
-      .filters-grid,
-      .profiles-grid,
-      .employer-content {
-        grid-template-columns: 1fr;
-      }
-
-      .profile-card {
-        flex-direction: column;
-      }
-
-      .archive-apply-box {
-        grid-template-columns: 1fr;
-      }
-
-      .profile-visual {
-        width: 100%;
-        border-right: none;
-        border-bottom: 1px solid var(--border-divider);
-      }
-
-      .profile-modal-card,
-      .profile-modal-grid {
-        grid-template-columns: 1fr;
-      }
-
-      .employer-section {
-        margin-left: -20px;
-        margin-right: -20px;
-        padding: 72px 20px;
-      }
-
-      .employer-text h2,
-      .section-title {
-        font-size: 2.8rem;
-      }
-
-      .filters-actions,
-      .grid-header {
-        flex-direction: column;
-        align-items: flex-start;
-      }
-    }
-  </style>
-</head>
-<body>
-  <svg class="botanical-bg botanical-tl" viewBox="0 0 200 200" aria-hidden="true">
-    <path fill="currentColor" d="M95 20c-9 26-35 34-50 63-11 21-11 47 4 64 16 18 44 23 67 15 18-7 34-21 42-40 9-22 8-51-9-68-15-15-40-20-54-34z"></path>
-  </svg>
-  <svg class="botanical-bg botanical-br" viewBox="0 0 200 200" aria-hidden="true">
-    <path fill="currentColor" d="M108 12c19 19 18 47 33 72 13 22 41 38 47 64 6 23-5 49-25 63-24 16-58 14-82 0-22-13-35-39-37-64-2-28 9-55 26-76 11-14 26-25 38-39z"></path>
-  </svg>
-
-  <div class="app-container">
-    <nav id="site-nav">
-      <a href="#home" class="logo">
-        <h1>Fresh Roles</h1>
-        <span>The Algorithm Witch</span>
-      </a>
-      <button id="mobile-nav-handle" class="mobile-nav-handle" type="button" aria-label="Close menu" aria-expanded="true">
-        <svg viewBox="0 0 24 24" aria-hidden="true">
-          <path d="M6 9l6 6 6-6"></path>
-        </svg>
-      </button>
-      <div id="nav-panel" class="nav-panel">
-        <div class="nav-links">
-          <a href="#home" class="nav-link active">Search</a>
-          <a href="#classifieds" class="nav-link">Classifieds</a>
-          <a href="#profiles" class="nav-link">Profiles</a>
-          <a href="#employers" class="nav-link">For Employers</a>
+<html lang="en" vid="0"><head vid="1">
+    <meta charset="UTF-8" vid="2">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" vid="3">
+    <title vid="4">Resource Gallery | The Algorithm Witch</title>
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com" vid="6">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="" vid="7">
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@400;700;900&amp;family=Inter:wght@300;400;500;600&amp;family=JetBrains+Mono:wght@100..800&amp;display=swap" rel="stylesheet" vid="8">
+    <script src="https://unpkg.com/@phosphor-icons/web" vid="9"></script>
+    <style vid="10">
+        :root {
+            --bg-base: #02000a;
+            --bg-surface: #0a0618;
+            --accent-purple: #a855f7;
+            --accent-cyan: #06b6d4;
+            --accent-amber: #f59e0b;
+            --accent-fuchsia: #d946ef;
+        }
+
+        body {
+            background-color: var(--bg-base);
+            color: #e2e8f0;
+            font-family: 'Inter', sans-serif;
+            overflow-x: hidden;
+            scroll-behavior: smooth;
+        }
+
+        .font-cinzel { font-family: 'Cinzel Decorative', cursive; }
+        .font-mono-tech { font-family: 'JetBrains Mono', monospace; }
+
+        .stars-container {
+            position: fixed;
+            inset: 0;
+            z-index: 0;
+            pointer-events: none;
+            background: radial-gradient(circle at 50% 0%, #150a30 0%, var(--bg-base) 70%);
+        }
+
+        .star {
+            position: absolute;
+            background: #fff;
+            border-radius: 50%;
+            animation: twinkle var(--twinkle-dur) ease-in-out infinite alternate;
+            opacity: var(--base-opacity);
+        }
+
+        @keyframes twinkle {
+            0% { opacity: var(--base-opacity); transform: scale(0.8); }
+            100% { opacity: 1; transform: scale(1.5); box-shadow: 0 0 6px 1px rgba(255,255,255,0.6); }
+        }
+
+        .orb {
+            position: fixed;
+            border-radius: 50%;
+            filter: blur(120px);
+            opacity: 0.15;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .glass-panel {
+            background: rgba(13, 12, 34, 0.6);
+            backdrop-filter: blur(16px);
+            border: 1px solid rgba(139, 92, 246, 0.15);
+        }
+
+        
+        .gallery-container {
+            display: grid;
+            grid-template-columns: repeat(12, 1fr);
+            gap: 2rem;
+            align-items: start;
+        }
+
+        .gallery-item {
+            position: relative;
+            transition: all 0.6s cubic-bezier(0.23, 1, 0.32, 1);
+            z-index: 10;
+        }
+
+        .gallery-item:hover {
+            z-index: 50;
+            transform: scale(1.02) translateY(-10px);
+        }
+
+        .resource-card {
+            background: var(--bg-surface);
+            border: 1px solid rgba(255,255,255,0.05);
+            box-shadow: 0 10px 30px -10px rgba(0,0,0,0.5);
+            overflow: hidden;
+        }
+
+        .card-purple:hover { border-color: rgba(168, 85, 247, 0.4); box-shadow: 0 30px 60px -12px rgba(168, 85, 247, 0.2); }
+        .card-cyan:hover { border-color: rgba(6, 182, 212, 0.4); box-shadow: 0 30px 60px -12px rgba(6, 182, 212, 0.2); }
+        .card-amber:hover { border-color: rgba(245, 158, 11, 0.4); box-shadow: 0 30px 60px -12px rgba(245, 158, 11, 0.2); }
+        .card-fuchsia:hover { border-color: rgba(217, 70, 239, 0.4); box-shadow: 0 30px 60px -12px rgba(217, 70, 239, 0.2); }
+
+        
+        .item-1 { grid-column: 1 / 5; margin-top: 0; }
+        .item-2 { grid-column: 6 / 10; margin-top: 120px; z-index: 20; }
+        .item-3 { grid-column: 3 / 7; margin-top: -80px; }
+        .item-4 { grid-column: 8 / 13; margin-top: 40px; }
+        .item-5 { grid-column: 1 / 6; margin-top: 60px; }
+        .item-6 { grid-column: 7 / 11; margin-top: -140px; }
+
+        .text-glow-gold {
+            background: linear-gradient(135deg, #fde047 0%, #b45309 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .fade-in-up {
+            opacity: 0;
+            transform: translateY(40px);
+            transition: opacity 1.2s ease-out, transform 1.2s ease-out;
+        }
+        .fade-in-up.is-visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .nav-item { position: relative; }
+        .nav-item::after {
+            content: '';
+            position: absolute;
+            width: 0; height: 1px; bottom: -4px; left: 0;
+            background: var(--accent-purple);
+            transition: width 0.3s ease;
+        }
+        .nav-item:hover::after { width: 100%; }
+
+        .showcase-card {
+            background: linear-gradient(145deg, rgba(13, 8, 34, 0.82), rgba(2, 0, 10, 0.94));
+            border: 1px solid rgba(168, 85, 247, 0.2);
+            box-shadow: 0 18px 60px -28px rgba(0, 0, 0, 0.85);
+            transition: border-color 0.45s ease, transform 0.45s ease, box-shadow 0.45s ease, background 0.45s ease;
+        }
+
+        .showcase-card:hover {
+            border-color: rgba(168, 85, 247, 0.5);
+            transform: translateY(-4px) scale(1.01);
+            box-shadow: 0 0 50px -10px rgba(168, 85, 247, 0.24);
+        }
+
+        .sidebar-module {
+            background: rgba(255, 255, 255, 0.025);
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            transition: background 0.35s ease, border-color 0.35s ease, transform 0.35s ease;
+        }
+
+        .sidebar-module:hover {
+            background: rgba(255, 255, 255, 0.055);
+            border-color: rgba(255, 255, 255, 0.12);
+            transform: translateY(-3px);
+        }
+
+        .library-card.hidden {
+            display: none !important;
+        }
+
+        .resource-filter {
+            transition: background 0.25s ease, color 0.25s ease, border-color 0.25s ease, transform 0.25s ease;
+        }
+
+        .resource-filter:hover {
+            border-color: rgba(168, 85, 247, 0.45);
+            transform: translateY(-1px);
+        }
+
+        .resource-filter.is-active {
+            background: rgba(255, 255, 255, 0.1);
+            color: #ffffff;
+            border-color: rgba(168, 85, 247, 0.45);
+        }
+
+        #library-search {
+            scroll-margin-top: 110px;
+        }
+
+        #strategy,
+        #instrumentation,
+        #alignment,
+        #jobs,
+        #dispatches {
+            scroll-margin-top: 120px;
+        }
+
+        @media (max-width: 1024px) {
+            .gallery-container {
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+                gap: 1.25rem;
+            }
+
+            .item-1,
+            .item-2,
+            .item-3,
+            .item-4,
+            .item-5,
+            .item-6 {
+                grid-column: auto;
+                margin-top: 0;
+                z-index: auto;
+            }
+        }
+
+        @media (max-width: 640px) {
+            .gallery-container {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+
+  <style type="text/css">
+*, ::before, ::after {
+  --tw-border-spacing-x: 0;
+  --tw-border-spacing-y: 0;
+  --tw-translate-x: 0;
+  --tw-translate-y: 0;
+  --tw-rotate: 0;
+  --tw-skew-x: 0;
+  --tw-skew-y: 0;
+  --tw-scale-x: 1;
+  --tw-scale-y: 1;
+  --tw-pan-x:  ;
+  --tw-pan-y:  ;
+  --tw-pinch-zoom:  ;
+  --tw-scroll-snap-strictness: proximity;
+  --tw-gradient-from-position:  ;
+  --tw-gradient-via-position:  ;
+  --tw-gradient-to-position:  ;
+  --tw-ordinal:  ;
+  --tw-slashed-zero:  ;
+  --tw-numeric-figure:  ;
+  --tw-numeric-spacing:  ;
+  --tw-numeric-fraction:  ;
+  --tw-ring-inset:  ;
+  --tw-ring-offset-width: 0px;
+  --tw-ring-offset-color: #fff;
+  --tw-ring-color: rgb(59 130 246 / 0.5);
+  --tw-ring-offset-shadow: 0 0 #0000;
+  --tw-ring-shadow: 0 0 #0000;
+  --tw-shadow: 0 0 #0000;
+  --tw-shadow-colored: 0 0 #0000;
+  --tw-blur:  ;
+  --tw-brightness:  ;
+  --tw-contrast:  ;
+  --tw-grayscale:  ;
+  --tw-hue-rotate:  ;
+  --tw-invert:  ;
+  --tw-saturate:  ;
+  --tw-sepia:  ;
+  --tw-drop-shadow:  ;
+  --tw-backdrop-blur:  ;
+  --tw-backdrop-brightness:  ;
+  --tw-backdrop-contrast:  ;
+  --tw-backdrop-grayscale:  ;
+  --tw-backdrop-hue-rotate:  ;
+  --tw-backdrop-invert:  ;
+  --tw-backdrop-opacity:  ;
+  --tw-backdrop-saturate:  ;
+  --tw-backdrop-sepia:  ;
+  --tw-contain-size:  ;
+  --tw-contain-layout:  ;
+  --tw-contain-paint:  ;
+  --tw-contain-style:  ;
+}
+
+::backdrop {
+  --tw-border-spacing-x: 0;
+  --tw-border-spacing-y: 0;
+  --tw-translate-x: 0;
+  --tw-translate-y: 0;
+  --tw-rotate: 0;
+  --tw-skew-x: 0;
+  --tw-skew-y: 0;
+  --tw-scale-x: 1;
+  --tw-scale-y: 1;
+  --tw-pan-x:  ;
+  --tw-pan-y:  ;
+  --tw-pinch-zoom:  ;
+  --tw-scroll-snap-strictness: proximity;
+  --tw-gradient-from-position:  ;
+  --tw-gradient-via-position:  ;
+  --tw-gradient-to-position:  ;
+  --tw-ordinal:  ;
+  --tw-slashed-zero:  ;
+  --tw-numeric-figure:  ;
+  --tw-numeric-spacing:  ;
+  --tw-numeric-fraction:  ;
+  --tw-ring-inset:  ;
+  --tw-ring-offset-width: 0px;
+  --tw-ring-offset-color: #fff;
+  --tw-ring-color: rgb(59 130 246 / 0.5);
+  --tw-ring-offset-shadow: 0 0 #0000;
+  --tw-ring-shadow: 0 0 #0000;
+  --tw-shadow: 0 0 #0000;
+  --tw-shadow-colored: 0 0 #0000;
+  --tw-blur:  ;
+  --tw-brightness:  ;
+  --tw-contrast:  ;
+  --tw-grayscale:  ;
+  --tw-hue-rotate:  ;
+  --tw-invert:  ;
+  --tw-saturate:  ;
+  --tw-sepia:  ;
+  --tw-drop-shadow:  ;
+  --tw-backdrop-blur:  ;
+  --tw-backdrop-brightness:  ;
+  --tw-backdrop-contrast:  ;
+  --tw-backdrop-grayscale:  ;
+  --tw-backdrop-hue-rotate:  ;
+  --tw-backdrop-invert:  ;
+  --tw-backdrop-opacity:  ;
+  --tw-backdrop-saturate:  ;
+  --tw-backdrop-sepia:  ;
+  --tw-contain-size:  ;
+  --tw-contain-layout:  ;
+  --tw-contain-paint:  ;
+  --tw-contain-style:  ;
+}/*
+! tailwindcss v3.4.17 | MIT License | https://tailwindcss.com
+*//*
+1. Prevent padding and border from affecting element width. (https://github.com/mozdevs/cssremedy/issues/4)
+2. Allow adding a border to an element by just adding a border-width. (https://github.com/tailwindcss/tailwindcss/pull/116)
+*/
+
+*,
+::before,
+::after {
+  box-sizing: border-box; /* 1 */
+  border-width: 0; /* 2 */
+  border-style: solid; /* 2 */
+  border-color: #e5e7eb; /* 2 */
+}
+
+::before,
+::after {
+  --tw-content: '';
+}
+
+/*
+1. Use a consistent sensible line-height in all browsers.
+2. Prevent adjustments of font size after orientation changes in iOS.
+3. Use a more readable tab size.
+4. Use the user's configured `sans` font-family by default.
+5. Use the user's configured `sans` font-feature-settings by default.
+6. Use the user's configured `sans` font-variation-settings by default.
+7. Disable tap highlights on iOS
+*/
+
+html,
+:host {
+  line-height: 1.5; /* 1 */
+  -webkit-text-size-adjust: 100%; /* 2 */
+  -moz-tab-size: 4; /* 3 */
+  tab-size: 4; /* 3 */
+  font-family: ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji"; /* 4 */
+  font-feature-settings: normal; /* 5 */
+  font-variation-settings: normal; /* 6 */
+  -webkit-tap-highlight-color: transparent; /* 7 */
+}
+
+/*
+1. Remove the margin in all browsers.
+2. Inherit line-height from `html` so users can set them as a class directly on the `html` element.
+*/
+
+body {
+  margin: 0; /* 1 */
+  line-height: inherit; /* 2 */
+}
+
+/*
+1. Add the correct height in Firefox.
+2. Correct the inheritance of border color in Firefox. (https://bugzilla.mozilla.org/show_bug.cgi?id=190655)
+3. Ensure horizontal rules are visible by default.
+*/
+
+hr {
+  height: 0; /* 1 */
+  color: inherit; /* 2 */
+  border-top-width: 1px; /* 3 */
+}
+
+/*
+Add the correct text decoration in Chrome, Edge, and Safari.
+*/
+
+abbr:where([title]) {
+  text-decoration: underline dotted;
+}
+
+/*
+Remove the default font size and weight for headings.
+*/
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  font-size: inherit;
+  font-weight: inherit;
+}
+
+/*
+Reset links to optimize for opt-in styling instead of opt-out.
+*/
+
+a {
+  color: inherit;
+  text-decoration: inherit;
+}
+
+/*
+Add the correct font weight in Edge and Safari.
+*/
+
+b,
+strong {
+  font-weight: bolder;
+}
+
+/*
+1. Use the user's configured `mono` font-family by default.
+2. Use the user's configured `mono` font-feature-settings by default.
+3. Use the user's configured `mono` font-variation-settings by default.
+4. Correct the odd `em` font sizing in all browsers.
+*/
+
+code,
+kbd,
+samp,
+pre {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; /* 1 */
+  font-feature-settings: normal; /* 2 */
+  font-variation-settings: normal; /* 3 */
+  font-size: 1em; /* 4 */
+}
+
+/*
+Add the correct font size in all browsers.
+*/
+
+small {
+  font-size: 80%;
+}
+
+/*
+Prevent `sub` and `sup` elements from affecting the line height in all browsers.
+*/
+
+sub,
+sup {
+  font-size: 75%;
+  line-height: 0;
+  position: relative;
+  vertical-align: baseline;
+}
+
+sub {
+  bottom: -0.25em;
+}
+
+sup {
+  top: -0.5em;
+}
+
+/*
+1. Remove text indentation from table contents in Chrome and Safari. (https://bugs.chromium.org/p/chromium/issues/detail?id=999088, https://bugs.webkit.org/show_bug.cgi?id=201297)
+2. Correct table border color inheritance in all Chrome and Safari. (https://bugs.chromium.org/p/chromium/issues/detail?id=935729, https://bugs.webkit.org/show_bug.cgi?id=195016)
+3. Remove gaps between table borders by default.
+*/
+
+table {
+  text-indent: 0; /* 1 */
+  border-color: inherit; /* 2 */
+  border-collapse: collapse; /* 3 */
+}
+
+/*
+1. Change the font styles in all browsers.
+2. Remove the margin in Firefox and Safari.
+3. Remove default padding in all browsers.
+*/
+
+button,
+input,
+optgroup,
+select,
+textarea {
+  font-family: inherit; /* 1 */
+  font-feature-settings: inherit; /* 1 */
+  font-variation-settings: inherit; /* 1 */
+  font-size: 100%; /* 1 */
+  font-weight: inherit; /* 1 */
+  line-height: inherit; /* 1 */
+  letter-spacing: inherit; /* 1 */
+  color: inherit; /* 1 */
+  margin: 0; /* 2 */
+  padding: 0; /* 3 */
+}
+
+/*
+Remove the inheritance of text transform in Edge and Firefox.
+*/
+
+button,
+select {
+  text-transform: none;
+}
+
+/*
+1. Correct the inability to style clickable types in iOS and Safari.
+2. Remove default button styles.
+*/
+
+button,
+input:where([type='button']),
+input:where([type='reset']),
+input:where([type='submit']) {
+  -webkit-appearance: button; /* 1 */
+  background-color: transparent; /* 2 */
+  background-image: none; /* 2 */
+}
+
+/*
+Use the modern Firefox focus style for all focusable elements.
+*/
+
+:-moz-focusring {
+  outline: auto;
+}
+
+/*
+Remove the additional `:invalid` styles in Firefox. (https://github.com/mozilla/gecko-dev/blob/2f9eacd9d3d995c937b4251a5557d95d494c9be1/layout/style/res/forms.css#L728-L737)
+*/
+
+:-moz-ui-invalid {
+  box-shadow: none;
+}
+
+/*
+Add the correct vertical alignment in Chrome and Firefox.
+*/
+
+progress {
+  vertical-align: baseline;
+}
+
+/*
+Correct the cursor style of increment and decrement buttons in Safari.
+*/
+
+::-webkit-inner-spin-button,
+::-webkit-outer-spin-button {
+  height: auto;
+}
+
+/*
+1. Correct the odd appearance in Chrome and Safari.
+2. Correct the outline style in Safari.
+*/
+
+[type='search'] {
+  -webkit-appearance: textfield; /* 1 */
+  outline-offset: -2px; /* 2 */
+}
+
+/*
+Remove the inner padding in Chrome and Safari on macOS.
+*/
+
+::-webkit-search-decoration {
+  -webkit-appearance: none;
+}
+
+/*
+1. Correct the inability to style clickable types in iOS and Safari.
+2. Change font properties to `inherit` in Safari.
+*/
+
+::-webkit-file-upload-button {
+  -webkit-appearance: button; /* 1 */
+  font: inherit; /* 2 */
+}
+
+/*
+Add the correct display in Chrome and Safari.
+*/
+
+summary {
+  display: list-item;
+}
+
+/*
+Removes the default spacing and border for appropriate elements.
+*/
+
+blockquote,
+dl,
+dd,
+h1,
+h2,
+h3,
+h4,
+h5,
+h6,
+hr,
+figure,
+p,
+pre {
+  margin: 0;
+}
+
+fieldset {
+  margin: 0;
+  padding: 0;
+}
+
+legend {
+  padding: 0;
+}
+
+ol,
+ul,
+menu {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+/*
+Reset default styling for dialogs.
+*/
+dialog {
+  padding: 0;
+}
+
+/*
+Prevent resizing textareas horizontally by default.
+*/
+
+textarea {
+  resize: vertical;
+}
+
+/*
+1. Reset the default placeholder opacity in Firefox. (https://github.com/tailwindlabs/tailwindcss/issues/3300)
+2. Set the default placeholder color to the user's configured gray 400 color.
+*/
+
+input::placeholder,
+textarea::placeholder {
+  opacity: 1; /* 1 */
+  color: #9ca3af; /* 2 */
+}
+
+/*
+Set the default cursor for buttons.
+*/
+
+button,
+[role="button"] {
+  cursor: pointer;
+}
+
+/*
+Make sure disabled buttons don't get the pointer cursor.
+*/
+:disabled {
+  cursor: default;
+}
+
+/*
+1. Make replaced elements `display: block` by default. (https://github.com/mozdevs/cssremedy/issues/14)
+2. Add `vertical-align: middle` to align replaced elements more sensibly by default. (https://github.com/jensimmons/cssremedy/issues/14#issuecomment-634934210)
+   This can trigger a poorly considered lint error in some tools but is included by design.
+*/
+
+img,
+svg,
+video,
+canvas,
+audio,
+iframe,
+embed,
+object {
+  display: block; /* 1 */
+  vertical-align: middle; /* 2 */
+}
+
+/*
+Constrain images and videos to the parent width and preserve their intrinsic aspect ratio. (https://github.com/mozdevs/cssremedy/issues/14)
+*/
+
+img,
+video {
+  max-width: 100%;
+  height: auto;
+}
+
+/* Make elements with the HTML hidden attribute stay hidden by default */
+[hidden]:where(:not([hidden="until-found"])) {
+  display: none;
+}
+.fixed {
+  position: fixed;
+}
+.absolute {
+  position: absolute;
+}
+.relative {
+  position: relative;
+}
+.bottom-\[-10\%\] {
+  bottom: -10%;
+}
+.left-\[-10\%\] {
+  left: -10%;
+}
+.right-\[-5\%\] {
+  right: -5%;
+}
+.top-0 {
+  top: 0px;
+}
+.top-\[-20\%\] {
+  top: -20%;
+}
+.z-10 {
+  z-index: 10;
+}
+.z-50 {
+  z-index: 50;
+}
+.mx-auto {
+  margin-left: auto;
+  margin-right: auto;
+}
+.mb-1 {
+  margin-bottom: 0.25rem;
+}
+.mb-10 {
+  margin-bottom: 2.5rem;
+}
+.mb-3 {
+  margin-bottom: 0.75rem;
+}
+.mb-4 {
+  margin-bottom: 1rem;
+}
+.mb-6 {
+  margin-bottom: 1.5rem;
+}
+.mb-8 {
+  margin-bottom: 2rem;
+}
+.mt-auto {
+  margin-top: auto;
+}
+.flex {
+  display: flex;
+}
+.grid {
+  display: grid;
+}
+.hidden {
+  display: none;
+}
+.h-10 {
+  height: 2.5rem;
+}
+.h-16 {
+  height: 4rem;
+}
+.h-20 {
+  height: 5rem;
+}
+.h-\[1px\] {
+  height: 1px;
+}
+.h-\[600px\] {
+  height: 600px;
+}
+.h-\[800px\] {
+  height: 800px;
+}
+.w-10 {
+  width: 2.5rem;
+}
+.w-16 {
+  width: 4rem;
+}
+.w-20 {
+  width: 5rem;
+}
+.w-8 {
+  width: 2rem;
+}
+.w-\[600px\] {
+  width: 600px;
+}
+.w-\[800px\] {
+  width: 800px;
+}
+.w-full {
+  width: 100%;
+}
+.max-w-2xl {
+  max-width: 42rem;
+}
+.max-w-\[1200px\] {
+  max-width: 1200px;
+}
+.max-w-\[1600px\] {
+  max-width: 1600px;
+}
+.shrink-0 {
+  flex-shrink: 0;
+}
+.scale-110 {
+  --tw-scale-x: 1.1;
+  --tw-scale-y: 1.1;
+  transform: translate(var(--tw-translate-x), var(--tw-translate-y)) rotate(var(--tw-rotate)) skewX(var(--tw-skew-x)) skewY(var(--tw-skew-y)) scaleX(var(--tw-scale-x)) scaleY(var(--tw-scale-y));
+}
+.transform {
+  transform: translate(var(--tw-translate-x), var(--tw-translate-y)) rotate(var(--tw-rotate)) skewX(var(--tw-skew-x)) skewY(var(--tw-skew-y)) scaleX(var(--tw-scale-x)) scaleY(var(--tw-scale-y));
+}
+.flex-col {
+  flex-direction: column;
+}
+.items-start {
+  align-items: flex-start;
+}
+.items-center {
+  align-items: center;
+}
+.justify-center {
+  justify-content: center;
+}
+.justify-between {
+  justify-content: space-between;
+}
+.gap-10 {
+  gap: 2.5rem;
+}
+.gap-2 {
+  gap: 0.5rem;
+}
+.gap-3 {
+  gap: 0.75rem;
+}
+.gap-4 {
+  gap: 1rem;
+}
+.gap-6 {
+  gap: 1.5rem;
+}
+.gap-8 {
+  gap: 2rem;
+}
+.rounded {
+  border-radius: 0.25rem;
+}
+.rounded-full {
+  border-radius: 9999px;
+}
+.rounded-lg {
+  border-radius: 0.5rem;
+}
+.rounded-xl {
+  border-radius: 0.75rem;
+}
+.border {
+  border-width: 1px;
+}
+.border-b {
+  border-bottom-width: 1px;
+}
+.border-l-4 {
+  border-left-width: 4px;
+}
+.border-t {
+  border-top-width: 1px;
+}
+.border-amber-500\/40 {
+  border-color: rgb(245 158 11 / 0.4);
+}
+.border-cyan-500\/20 {
+  border-color: rgb(6 182 212 / 0.2);
+}
+.border-cyan-500\/30 {
+  border-color: rgb(6 182 212 / 0.3);
+}
+.border-fuchsia-500\/20 {
+  border-color: rgb(217 70 239 / 0.2);
+}
+.border-purple-500\/20 {
+  border-color: rgb(168 85 247 / 0.2);
+}
+.border-purple-500\/30 {
+  border-color: rgb(168 85 247 / 0.3);
+}
+.border-white\/10 {
+  border-color: rgb(255 255 255 / 0.1);
+}
+.border-white\/5 {
+  border-color: rgb(255 255 255 / 0.05);
+}
+.bg-\[\#02000a\] {
+  --tw-bg-opacity: 1;
+  background-color: rgb(2 0 10 / var(--tw-bg-opacity, 1));
+}
+.bg-\[\#02000a\]\/80 {
+  background-color: rgb(2 0 10 / 0.8);
+}
+.bg-cyan-500\/10 {
+  background-color: rgb(6 182 212 / 0.1);
+}
+.bg-cyan-900 {
+  --tw-bg-opacity: 1;
+  background-color: rgb(22 78 99 / var(--tw-bg-opacity, 1));
+}
+.bg-fuchsia-500\/10 {
+  background-color: rgb(217 70 239 / 0.1);
+}
+.bg-purple-500\/10 {
+  background-color: rgb(168 85 247 / 0.1);
+}
+.bg-purple-500\/5 {
+  background-color: rgb(168 85 247 / 0.05);
+}
+.bg-purple-500\/50 {
+  background-color: rgb(168 85 247 / 0.5);
+}
+.bg-purple-600 {
+  --tw-bg-opacity: 1;
+  background-color: rgb(147 51 234 / var(--tw-bg-opacity, 1));
+}
+.bg-white\/5 {
+  background-color: rgb(255 255 255 / 0.05);
+}
+.p-10 {
+  padding: 2.5rem;
+}
+.p-12 {
+  padding: 3rem;
+}
+.p-8 {
+  padding: 2rem;
+}
+.px-2 {
+  padding-left: 0.5rem;
+  padding-right: 0.5rem;
+}
+.px-3 {
+  padding-left: 0.75rem;
+  padding-right: 0.75rem;
+}
+.px-5 {
+  padding-left: 1.25rem;
+  padding-right: 1.25rem;
+}
+.px-6 {
+  padding-left: 1.5rem;
+  padding-right: 1.5rem;
+}
+.py-1 {
+  padding-top: 0.25rem;
+  padding-bottom: 0.25rem;
+}
+.py-12 {
+  padding-top: 3rem;
+  padding-bottom: 3rem;
+}
+.py-2\.5 {
+  padding-top: 0.625rem;
+  padding-bottom: 0.625rem;
+}
+.py-3 {
+  padding-top: 0.75rem;
+  padding-bottom: 0.75rem;
+}
+.py-4 {
+  padding-top: 1rem;
+  padding-bottom: 1rem;
+}
+.pb-20 {
+  padding-bottom: 5rem;
+}
+.pb-40 {
+  padding-bottom: 10rem;
+}
+.pt-40 {
+  padding-top: 10rem;
+}
+.text-center {
+  text-align: center;
+}
+.text-2xl {
+  font-size: 1.5rem;
+  line-height: 2rem;
+}
+.text-3xl {
+  font-size: 1.875rem;
+  line-height: 2.25rem;
+}
+.text-4xl {
+  font-size: 2.25rem;
+  line-height: 2.5rem;
+}
+.text-6xl {
+  font-size: 3.75rem;
+  line-height: 1;
+}
+.text-\[10px\] {
+  font-size: 10px;
+}
+.text-\[11px\] {
+  font-size: 11px;
+}
+.text-\[9px\] {
+  font-size: 9px;
+}
+.text-base {
+  font-size: 1rem;
+  line-height: 1.5rem;
+}
+.text-lg {
+  font-size: 1.125rem;
+  line-height: 1.75rem;
+}
+.text-sm {
+  font-size: 0.875rem;
+  line-height: 1.25rem;
+}
+.text-xl {
+  font-size: 1.25rem;
+  line-height: 1.75rem;
+}
+.text-xs {
+  font-size: 0.75rem;
+  line-height: 1rem;
+}
+.font-light {
+  font-weight: 300;
+}
+.uppercase {
+  text-transform: uppercase;
+}
+.leading-relaxed {
+  line-height: 1.625;
+}
+.tracking-\[0\.15em\] {
+  letter-spacing: 0.15em;
+}
+.tracking-\[0\.2em\] {
+  letter-spacing: 0.2em;
+}
+.tracking-\[0\.3em\] {
+  letter-spacing: 0.3em;
+}
+.tracking-widest {
+  letter-spacing: 0.1em;
+}
+.text-amber-400 {
+  --tw-text-opacity: 1;
+  color: rgb(251 191 36 / var(--tw-text-opacity, 1));
+}
+.text-amber-500\/70 {
+  color: rgb(245 158 11 / 0.7);
+}
+.text-cyan-400 {
+  --tw-text-opacity: 1;
+  color: rgb(34 211 238 / var(--tw-text-opacity, 1));
+}
+.text-fuchsia-400 {
+  --tw-text-opacity: 1;
+  color: rgb(232 121 249 / var(--tw-text-opacity, 1));
+}
+.text-gray-300 {
+  --tw-text-opacity: 1;
+  color: rgb(209 213 219 / var(--tw-text-opacity, 1));
+}
+.text-gray-400 {
+  --tw-text-opacity: 1;
+  color: rgb(156 163 175 / var(--tw-text-opacity, 1));
+}
+.text-gray-500 {
+  --tw-text-opacity: 1;
+  color: rgb(107 114 128 / var(--tw-text-opacity, 1));
+}
+.text-gray-600 {
+  --tw-text-opacity: 1;
+  color: rgb(75 85 99 / var(--tw-text-opacity, 1));
+}
+.text-purple-400 {
+  --tw-text-opacity: 1;
+  color: rgb(192 132 252 / var(--tw-text-opacity, 1));
+}
+.text-purple-900 {
+  --tw-text-opacity: 1;
+  color: rgb(88 28 135 / var(--tw-text-opacity, 1));
+}
+.text-white {
+  --tw-text-opacity: 1;
+  color: rgb(255 255 255 / var(--tw-text-opacity, 1));
+}
+.blur {
+  --tw-blur: blur(8px);
+  filter: var(--tw-blur) var(--tw-brightness) var(--tw-contrast) var(--tw-grayscale) var(--tw-hue-rotate) var(--tw-invert) var(--tw-saturate) var(--tw-sepia) var(--tw-drop-shadow);
+}
+.filter {
+  filter: var(--tw-blur) var(--tw-brightness) var(--tw-contrast) var(--tw-grayscale) var(--tw-hue-rotate) var(--tw-invert) var(--tw-saturate) var(--tw-sepia) var(--tw-drop-shadow);
+}
+.backdrop-blur-xl {
+  --tw-backdrop-blur: blur(24px);
+  -webkit-backdrop-filter: var(--tw-backdrop-blur) var(--tw-backdrop-brightness) var(--tw-backdrop-contrast) var(--tw-backdrop-grayscale) var(--tw-backdrop-hue-rotate) var(--tw-backdrop-invert) var(--tw-backdrop-opacity) var(--tw-backdrop-saturate) var(--tw-backdrop-sepia);
+  backdrop-filter: var(--tw-backdrop-blur) var(--tw-backdrop-brightness) var(--tw-backdrop-contrast) var(--tw-backdrop-grayscale) var(--tw-backdrop-hue-rotate) var(--tw-backdrop-invert) var(--tw-backdrop-opacity) var(--tw-backdrop-saturate) var(--tw-backdrop-sepia);
+}
+.backdrop-filter {
+  -webkit-backdrop-filter: var(--tw-backdrop-blur) var(--tw-backdrop-brightness) var(--tw-backdrop-contrast) var(--tw-backdrop-grayscale) var(--tw-backdrop-hue-rotate) var(--tw-backdrop-invert) var(--tw-backdrop-opacity) var(--tw-backdrop-saturate) var(--tw-backdrop-sepia);
+  backdrop-filter: var(--tw-backdrop-blur) var(--tw-backdrop-brightness) var(--tw-backdrop-contrast) var(--tw-backdrop-grayscale) var(--tw-backdrop-hue-rotate) var(--tw-backdrop-invert) var(--tw-backdrop-opacity) var(--tw-backdrop-saturate) var(--tw-backdrop-sepia);
+}
+.transition {
+  transition-property: color, background-color, border-color, text-decoration-color, fill, stroke, opacity, box-shadow, transform, filter, backdrop-filter;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  transition-duration: 150ms;
+}
+.transition-all {
+  transition-property: all;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  transition-duration: 150ms;
+}
+.transition-colors {
+  transition-property: color, background-color, border-color, text-decoration-color, fill, stroke;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  transition-duration: 150ms;
+}
+.ease-in-out {
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+}
+.selection\:bg-purple-900 *::selection {
+  --tw-bg-opacity: 1;
+  background-color: rgb(88 28 135 / var(--tw-bg-opacity, 1));
+}
+.selection\:text-purple-100 *::selection {
+  --tw-text-opacity: 1;
+  color: rgb(243 232 255 / var(--tw-text-opacity, 1));
+}
+.selection\:bg-purple-900::selection {
+  --tw-bg-opacity: 1;
+  background-color: rgb(88 28 135 / var(--tw-bg-opacity, 1));
+}
+.selection\:text-purple-100::selection {
+  --tw-text-opacity: 1;
+  color: rgb(243 232 255 / var(--tw-text-opacity, 1));
+}
+.hover\:border-fuchsia-500:hover {
+  --tw-border-opacity: 1;
+  border-color: rgb(217 70 239 / var(--tw-border-opacity, 1));
+}
+.hover\:bg-cyan-500:hover {
+  --tw-bg-opacity: 1;
+  background-color: rgb(6 182 212 / var(--tw-bg-opacity, 1));
+}
+.hover\:bg-fuchsia-500:hover {
+  --tw-bg-opacity: 1;
+  background-color: rgb(217 70 239 / var(--tw-bg-opacity, 1));
+}
+.hover\:bg-purple-500\/20:hover {
+  background-color: rgb(168 85 247 / 0.2);
+}
+.hover\:bg-white\/5:hover {
+  background-color: rgb(255 255 255 / 0.05);
+}
+.hover\:text-purple-400:hover {
+  --tw-text-opacity: 1;
+  color: rgb(192 132 252 / var(--tw-text-opacity, 1));
+}
+.hover\:text-white:hover {
+  --tw-text-opacity: 1;
+  color: rgb(255 255 255 / var(--tw-text-opacity, 1));
+}
+.hover\:underline:hover {
+  text-decoration-line: underline;
+}
+.group:hover .group-hover\:border-purple-500\/50 {
+  border-color: rgb(168 85 247 / 0.5);
+}
+.group:hover .group-hover\:text-white {
+  --tw-text-opacity: 1;
+  color: rgb(255 255 255 / var(--tw-text-opacity, 1));
+}
+@media (min-width: 768px) {
+
+  .md\:flex {
+    display: flex;
+  }
+
+  .md\:flex-row {
+    flex-direction: row;
+  }
+}
+@media (min-width: 1024px) {
+
+  .lg\:px-12 {
+    padding-left: 3rem;
+    padding-right: 3rem;
+  }
+
+  .lg\:px-24 {
+    padding-left: 6rem;
+    padding-right: 6rem;
+  }
+
+  .lg\:text-8xl {
+    font-size: 6rem;
+    line-height: 1;
+  }
+}* {
+      -ms-overflow-style: none !important;
+      scrollbar-width: none !important;
+    }
+
+    *::-webkit-scrollbar {
+      display: none !important;
+      width: 0 !important;
+      height: 0 !important;
+    }
+  </style></head>
+<body class="selection:bg-purple-900 selection:text-purple-100" vid="11">
+
+    <div class="stars-container" id="stars-container" vid="12"></div>
+    <div class="orb bg-purple-600 w-[800px] h-[800px] top-[-20%] left-[-10%]" vid="13"></div>
+    <div class="orb bg-cyan-900 w-[600px] h-[600px] bottom-[-10%] right-[-5%]" vid="14"></div>
+
+    <nav class="fixed top-0 w-full z-50 border-b border-white/5 bg-[#02000a]/80 backdrop-blur-xl" vid="15">
+        <div class="max-w-[1600px] mx-auto px-6 lg:px-12 h-20 flex justify-between items-center" vid="16">
+            <a href="/resources/index.html" class="flex items-center gap-4 group" vid="17">
+                <div class="relative flex items-center justify-center w-10 h-10 rounded-lg bg-white/5 border border-white/10 group-hover:border-purple-500/50 transition-colors" vid="18">
+                    <i class="ph-fill ph-sparkle text-purple-400 text-xl" vid="19"></i>
+                </div>
+                <span class="font-cinzel text-lg tracking-[0.15em] text-white" vid="20">Algorithm Witch</span>
+            </a>
+            <div class="hidden md:flex items-center gap-10 font-mono-tech text-[11px] uppercase tracking-[0.2em] text-gray-400" vid="21">
+                <a href="#featured" class="nav-item hover:text-white" vid="22">Featured</a>
+                <a href="#pathways" class="nav-item hover:text-white" vid="23">Pathways</a>
+                <a href="#highlights" class="nav-item hover:text-white" vid="24">Library</a>
+                <a href="#library-search" class="nav-item hover:text-white" vid="25">Full Library</a>
+            </div>
+            <a href="#library-search" class="flex items-center gap-2 px-5 py-2.5 bg-white/5 border border-white/10 rounded-lg font-mono-tech text-[10px] uppercase tracking-widest text-white group" vid="26">
+                <i class="ph-bold ph-books text-purple-400 group-hover:text-white" vid="27"></i>
+                <span vid="28">Open Library</span>
+            </a>
         </div>
-        <a href="./submit.html" class="btn-primary">Submit Job</a>
-      </div>
     </nav>
 
-    <section id="home" class="hero-section">
-      <div class="search-container">
-        <div class="search-input-wrapper">
-          <input id="job-search" type="text" class="search-input" placeholder="Search roles, skills, or organizations...">
+    <header class="relative z-10 max-w-[1280px] mx-auto px-6 pt-40 pb-16" vid="29">
+        <div class="flex items-center gap-3 mb-6 fade-in-up" vid="30">
+            <div class="h-[1px] w-8 bg-purple-500/50" vid="31"></div>
+            <span class="font-mono-tech text-[10px] text-purple-400 uppercase tracking-[0.3em]" vid="32">Resource Gallery</span>
+            <div class="h-[1px] w-8 bg-purple-500/50" vid="33"></div>
         </div>
-
-        <div class="quick-filters">
-          <button class="filter-chip" data-quick-filter="remote">Remote</button>
-          <button class="filter-chip" data-quick-filter="climate tech">Climate Tech</button>
-          <button class="filter-chip" data-quick-filter="communications">Communications</button>
-          <button class="filter-chip" data-quick-filter="advocacy">Advocacy</button>
-        </div>
-
-        <div class="stats-bar">
-          <span id="stat-count">Curated climate and sustainability roles</span>
-          <span id="stat-status">Updated as new roles are approved</span>
-          <span id="stat-updated">Remote, hybrid, and mission-driven opportunities</span>
-        </div>
-
-        <div class="weekly-drop">
-          <h2 style="font-size: 2.2rem; margin-bottom: 16px;">A focused board for thoughtful climate and sustainability job searching.</h2>
-          <p style="font-size: 1.05rem; color: var(--ink-secondary);">
-            This board is built for people looking for meaningful climate, clean energy, sustainability, advocacy, and nonprofit work. Roles are gathered from trusted sources and reviewed for relevance so you can spend less time searching and more time applying.
-          </p>
-        </div>
-      </div>
-    </section>
-
-    <section id="classifieds">
-      <div class="grid-header">
-        <span>Curated Opportunities</span>
-        <span id="grid-summary">Waiting on jobs.json</span>
-      </div>
-
-      <div class="filters-shell">
-        <div class="tag-row" id="active-tag-row"></div>
-        <div class="filters-grid" id="filters-grid">
-          <div>
-            <span class="mini-filter-label">Work Mode</span>
-            <div class="filter-list" id="filter-location"></div>
-          </div>
-          <div>
-            <span class="mini-filter-label">Job Type</span>
-            <div class="filter-list" id="filter-job-type"></div>
-          </div>
-          <div>
-            <span class="mini-filter-label">Sector</span>
-            <div class="filter-list" id="filter-sector"></div>
-          </div>
-          <div>
-            <span class="mini-filter-label">Specialization</span>
-            <div class="filter-list" id="filter-specialization"></div>
-          </div>
-          <div>
-            <span class="mini-filter-label">Salary</span>
-            <div class="filter-list" id="filter-salary"></div>
-          </div>
-          <div>
-            <span class="mini-filter-label">Source</span>
-            <div class="filter-list" id="filter-source"></div>
-          </div>
-        </div>
-
-        <div class="filters-actions">
-          <div id="filter-match-count" style="font-family: var(--font-mono); font-size: 0.75rem; color: var(--ink-tertiary);">Loading filters</div>
-          <div style="display: flex; gap: 12px; flex-wrap: wrap;">
-            <button id="clear-filters" class="btn-secondary" type="button">Clear All</button>
-            <button id="apply-filters" class="btn-primary" type="button">Apply Filters</button>
-          </div>
-        </div>
-      </div>
-
-      <div id="jobs-grid" class="classifieds-grid">
-        <div class="classifieds-grid-message">Loading current roles…</div>
-      </div>
-
-      <div style="text-align: center; margin-top: 40px;">
-        <button id="load-more-button" class="btn-primary" style="background: transparent; color: var(--accent-chartreuse);" type="button" hidden>
-          Load More Opportunities
-        </button>
-      </div>
-    </section>
-
-    <section id="profiles">
-      <h2 class="section-title">The Talent Archive</h2>
-      <p class="section-desc">Published profiles appear here after review. This archive is built for thoughtful introductions, not generic self-promotion.</p>
-
-      <div id="profiles-grid" class="profiles-grid">
-        <div class="state-panel">Loading published profiles…</div>
-      </div>
-
-      <div class="archive-apply-box">
-        <div>
-          <div style="font-family: var(--font-mono); font-size: 0.75rem; color: var(--accent-chartreuse); text-transform: uppercase; letter-spacing: 0.05em;">Reviewed Profiles</div>
-          <h3>Apply to Be Featured</h3>
-          <p>Featured talent profiles are reviewed before they appear publicly. Share your focus areas, portfolio, and role goals so the archive can stay curated and genuinely useful.</p>
-        </div>
-        <div>
-          <a href="./talent-apply.html" class="btn-primary">Apply to Be Featured</a>
-        </div>
-      </div>
-    </section>
-
-    <section id="employers" class="employer-section">
-      <div class="employer-content">
-        <div class="employer-text">
-          <h2>Hire the minds working on what matters.</h2>
-          <p>Reach job seekers who care about climate, clean energy, advocacy, nonprofit work, and sustainability. Every role on the board is reviewed so the experience stays thoughtful, aligned, and genuinely useful.</p>
-
-          <ul class="benefit-list">
-            <li>
-              <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
-              share roles with a focused audience of designers, strategists, researchers, and operators
-            </li>
-            <li>
-              <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
-              highlight opportunities across climate, clean energy, advocacy, nonprofit, and sustainability work
-            </li>
-            <li>
-              <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
-              keep the board curated so every listing feels relevant and worth a closer look
-            </li>
-          </ul>
-
-          <div class="featured-employer-box">
-            <div style="font-family: var(--font-mono); font-size: 0.75rem; color: var(--accent-chartreuse); text-transform: uppercase; letter-spacing: 0.05em;">Featured Employers</div>
-            <h3>Become a Featured Employer</h3>
-            <p>Featured employers are reviewed before appearing on the board. This is for organizations that want stronger visibility with aligned job seekers across climate, clean energy, advocacy, nonprofit, and sustainability audiences.</p>
-            <a href="./featured-employer.html" class="btn-primary">Become a Featured Employer</a>
-            <div id="employers-list" style="display:grid; gap:16px; margin-top:24px;">
-              <div style="color: var(--ink-secondary);">Published employer profiles will appear here after review and approval.</div>
+        <div class="grid lg:grid-cols-[1.35fr_0.85fr] gap-10 items-end">
+            <div>
+                <h1 class="font-cinzel text-6xl lg:text-8xl text-white mb-6 text-glow-gold fade-in-up" style="transition-delay: 100ms;" vid="34">Resources</h1>
+                <p class="max-w-3xl text-gray-400 text-base lg:text-lg leading-relaxed font-light fade-in-up" style="transition-delay: 200ms;" vid="35">
+                    A curated collection of high-signal guides, tools, dispatches, and pathways designed to feel exploratory, useful, and a little bit spellbound.
+                </p>
             </div>
-          </div>
-        </div>
-
-        <div class="actions-stack">
-          <div class="action-card">
-            <div style="font-family: var(--font-mono); font-size: 0.75rem; color: var(--accent-chartreuse); text-transform: uppercase;">Curated Submission</div>
-            <h3 style="font-family: var(--font-serif); font-size: 2.4rem; margin-top: 12px;">Submit an Opportunity</h3>
-            <p>Share a role with the details candidates need. Every listing is reviewed before it appears on the board.</p>
-            <a href="./submit.html" class="btn-primary">Submit a Job</a>
-          </div>
-
-          <div class="action-card">
-            <div style="font-family: var(--font-mono); font-size: 0.75rem; color: var(--accent-lavender); text-transform: uppercase;">Job Seeker Note</div>
-            <h3 style="font-family: var(--font-serif); font-size: 2rem; margin-top: 12px;">Search with less noise</h3>
-            <p>Use the filters to narrow by work mode, sector, job type, and source. New roles are reviewed regularly so the board stays relevant without turning into a generic job dump.</p>
-            <a href="#classifieds" class="btn-secondary">Browse Current Roles</a>
-          </div>
-        </div>
-      </div>
-    </section>
-  </div>
-
-  <footer>
-    <div>THE ALGORITHM WITCH // FRESH ROLES</div>
-    <div style="margin-top: 12px; opacity: 0.5;">CLIMATE, CLEAN ENERGY, SUSTAINABILITY, ADVOCACY, AND NONPROFIT WORK</div>
-  </footer>
-
-  <div id="profile-modal" class="profile-modal" aria-hidden="true">
-    <div class="profile-modal-card">
-      <div style="display:flex; justify-content:space-between; gap:16px; align-items:flex-start;">
-        <div>
-          <div id="profile-modal-role" class="profile-role" style="margin-bottom:10px;"></div>
-          <h3 id="profile-modal-name" class="profile-name" style="margin-bottom:10px;"></h3>
-          <div id="profile-modal-location" style="color: var(--ink-secondary);"></div>
-        </div>
-        <button id="close-profile-modal" class="btn-secondary" type="button">Close</button>
-      </div>
-      <div id="profile-modal-meta" class="profile-modal-grid"></div>
-      <div id="profile-modal-bio" class="profile-modal-section" style="margin-top:20px;"></div>
-      <div id="profile-modal-links"></div>
-      <div id="profile-modal-project" class="profile-modal-section profile-modal-project" style="display:none; margin-top:20px;"></div>
-      <div id="profile-modal-prompt" class="profile-modal-section" style="margin-top:20px; display:none;"></div>
-      <div id="profile-modal-tags" class="profile-modal-section" style="margin-top:20px;"></div>
-      <div id="profile-modal-contact" class="profile-modal-section" style="display:none; margin-top:20px;"></div>
-      <div id="profile-modal-actions" class="profile-actions" style="margin-top:20px;"></div>
-    </div>
-  </div>
-
-  <script src="./scripts/jobs-backend-config.js"></script>
-  <script src="./tracking.js"></script>
-  <script>
-    const state = {
-      jobs: [],
-      jobRecords: [],
-      jobPagePaths: new Map(),
-      profiles: [],
-      employers: [],
-      filteredJobs: [],
-      visibleCount: 9,
-      renderedJobsKey: "",
-      renderedJobCount: 0,
-      search: "",
-      quickFilters: new Set(),
-      filters: {
-        location: new Set(),
-        jobType: new Set(),
-        sector: new Set(),
-        specialization: new Set(),
-        salary: new Set(),
-        source: new Set()
-      }
-    };
-
-    const SALARY_FILTER_OPTIONS = [
-      "Shows salary",
-      "$50k+",
-      "$75k+",
-      "$100k+",
-      "$125k+",
-      "$150k+"
-    ];
-
-    const SPECIALIZATION_OPTIONS = [
-      "Digital",
-      "PR / Press",
-      "Communications",
-      "Social Media",
-      "Content",
-      "Art / Creative",
-      "Design",
-      "Strategy",
-      "Web",
-      "Data",
-      "Research",
-      "Campaigns"
-    ];
-
-    const TRACKING_TYPES = {
-      jobClick: "job_click",
-      talentClick: "talent_click",
-      ctaClick: "cta_click",
-      filterInteraction: "filter_interaction"
-    };
-
-    const ui = {
-      searchInput: document.getElementById("job-search"),
-      quickFilters: Array.from(document.querySelectorAll("[data-quick-filter]")),
-      jobsGrid: document.getElementById("jobs-grid"),
-      loadMoreButton: document.getElementById("load-more-button"),
-      statCount: document.getElementById("stat-count"),
-      statStatus: document.getElementById("stat-status"),
-      statUpdated: document.getElementById("stat-updated"),
-      gridSummary: document.getElementById("grid-summary"),
-      filterMatchCount: document.getElementById("filter-match-count"),
-      activeTagRow: document.getElementById("active-tag-row"),
-      profilesGrid: document.getElementById("profiles-grid"),
-      employersList: document.getElementById("employers-list"),
-      profileModal: document.getElementById("profile-modal"),
-      siteNav: document.getElementById("site-nav"),
-      navPanel: document.getElementById("nav-panel"),
-      mobileNavHandle: document.getElementById("mobile-nav-handle"),
-      profileModalName: document.getElementById("profile-modal-name"),
-      profileModalRole: document.getElementById("profile-modal-role"),
-      profileModalLocation: document.getElementById("profile-modal-location"),
-      profileModalMeta: document.getElementById("profile-modal-meta"),
-      profileModalBio: document.getElementById("profile-modal-bio"),
-      profileModalLinks: document.getElementById("profile-modal-links"),
-      profileModalProject: document.getElementById("profile-modal-project"),
-      profileModalPrompt: document.getElementById("profile-modal-prompt"),
-      profileModalTags: document.getElementById("profile-modal-tags"),
-      profileModalContact: document.getElementById("profile-modal-contact"),
-      profileModalActions: document.getElementById("profile-modal-actions"),
-      closeProfileModal: document.getElementById("close-profile-modal"),
-      filterContainers: {
-        location: document.getElementById("filter-location"),
-        jobType: document.getElementById("filter-job-type"),
-        sector: document.getElementById("filter-sector"),
-        specialization: document.getElementById("filter-specialization"),
-        salary: document.getElementById("filter-salary"),
-        source: document.getElementById("filter-source")
-      }
-    };
-
-    function formatDate(value) {
-      if (!value) return "Posted recently";
-      const date = new Date(value);
-      if (Number.isNaN(date.getTime())) return "Posted recently";
-      return `Posted ${date.toLocaleDateString("en-US", { month: "short", day: "numeric" })}`;
-    }
-
-    function escapeHtml(value) {
-      return String(value || "")
-        .replace(/&/g, "&amp;")
-        .replace(/</g, "&lt;")
-        .replace(/>/g, "&gt;")
-        .replace(/"/g, "&quot;")
-        .replace(/'/g, "&#39;");
-    }
-
-    function cleanVisibleText(value) {
-      return String(value || "")
-        .replace(/\s*[>›»]+\s*/g, " ")
-        .replace(/\s+/g, " ")
-        .trim();
-    }
-
-    function slugify(value) {
-      return String(value || "")
-        .toLowerCase()
-        .replace(/[^a-z0-9]+/g, "-")
-        .replace(/^-+|-+$/g, "")
-        .replace(/-{2,}/g, "-");
-    }
-
-    function buildIdSuffix(job) {
-      const normalizedId = slugify(job && job.id || "");
-      return normalizedId ? normalizedId.slice(-8) || normalizedId : "job";
-    }
-
-    function buildBaseJobSlug(job) {
-      return slugify(`${cleanVisibleText(job.title)}-${cleanVisibleText(job.organization)}`);
-    }
-
-    function buildJobPathMap(jobs) {
-      const used = new Map();
-      const map = new Map();
-      jobs.forEach((job) => {
-        const baseSlug = buildBaseJobSlug(job) || buildIdSuffix(job);
-        let slug = baseSlug;
-        const id = String(job.id || "");
-        if (used.has(slug) && used.get(slug) !== id) {
-          slug = `${baseSlug}-${buildIdSuffix(job)}`;
-          let attempt = 2;
-          while (used.has(slug) && used.get(slug) !== id) {
-            slug = `${baseSlug}-${buildIdSuffix(job)}-${attempt}`;
-            attempt += 1;
-          }
-        }
-        used.set(slug, id);
-        map.set(id, `./pages/${slug}.html`);
-      });
-      return map;
-    }
-
-    function getJobDetailPath(job) {
-      return state.jobPagePaths.get(String(job.id || "")) || `./pages/${buildBaseJobSlug(job)}.html`;
-    }
-
-    function trackUiEvent(event) {
-      if (typeof window.trackEvent === "function") {
-        window.trackEvent({
-          ...event,
-          timestamp: new Date().toISOString()
-        });
-      }
-    }
-
-    function getWorkMode(job) {
-      if (job.workplace_type) return normalizeWorkplaceTypeLabel(job.workplace_type);
-      const location = String(job.location || "").toLowerCase();
-      if (location.includes("remote")) return "Remote";
-      if (location.includes("hybrid")) return "Hybrid";
-      return "On-site";
-    }
-
-    function normalizeTypeToken(value) {
-      return String(value || "")
-        .trim()
-        .toLowerCase()
-        .replace(/[_-]+/g, " ")
-        .replace(/\s+/g, " ");
-    }
-
-    function normalizeWorkplaceTypeLabel(value) {
-      const text = cleanVisibleText(value || "");
-      const normalized = normalizeTypeToken(text);
-      if (!normalized) return "";
-      if (normalized === "remote") return "Remote";
-      if (normalized === "hybrid") return "Hybrid";
-      if (normalized === "onsite" || normalized === "on site") return "On-site";
-      return text;
-    }
-
-    function normalizeEmploymentTypeLabel(value) {
-      const text = cleanVisibleText(value || "");
-      const normalized = normalizeTypeToken(text);
-      if (!normalized) return "";
-      if (normalized === "full time") return "Full-time";
-      if (normalized === "part time") return "Part-time";
-      if (normalized === "contract" || normalized === "contractor") return "Contract";
-      if (normalized === "temporary" || normalized === "temp") return "Temporary";
-      if (normalized === "intern" || normalized === "internship") return "Internship";
-      return text;
-    }
-
-    function normalizeSectorLabel(value) {
-      const text = String(value || "").trim();
-      const lower = text.toLowerCase();
-      if (!lower) return "";
-      if (/clean energy|electrification|renewable/.test(lower)) return "Clean Energy";
-      if (/climate tech|climate software|carbon software/.test(lower)) return "Climate Tech";
-      if (/policy|advocacy|campaign/.test(lower)) return "Policy/Advocacy";
-      if (/conservation|nature|oceans|biodiversity/.test(lower)) return "Conservation";
-      if (/sustainability/.test(lower)) return "Sustainability";
-      if (/communications|storytelling|brand/.test(lower)) return "Climate Communications";
-      return text.replace(/\b\w/g, (match) => match.toUpperCase());
-    }
-
-    function inferSpecialization(job) {
-      const explicit = cleanVisibleText(job.specialization || "");
-      if (explicit) return explicit;
-      const text = cleanVisibleText([
-        job.title,
-        job.function,
-        job.description,
-        Array.isArray(job.tags) ? job.tags.join(" ") : ""
-      ].join(" "));
-      if (!text) return "";
-      const rules = [
-        ["PR / Press", /\b(?:pr|public relations|press|media relations|press officer|press manager)\b/i],
-        ["Social Media", /\b(?:social media|community manager|community lead|tiktok|instagram)\b/i],
-        ["Communications", /\b(?:communications|communication|comms|internal communications|external communications)\b/i],
-        ["Content", /\b(?:content|editorial|copywriter|copywriting|storytelling|writer|newsletter)\b/i],
-        ["Art / Creative", /\b(?:creative|art director|artistic|illustration|brand studio)\b/i],
-        ["Design", /\b(?:design|designer|graphic design|visual design|product design|ux|ui)\b/i],
-        ["Strategy", /\b(?:strategy|strategist|strategic|planning)\b/i],
-        ["Web", /\b(?:web|website|frontend|front-end|back-end|backend|full stack|developer|engineer|software)\b/i],
-        ["Digital", /\b(?:digital|digital marketing|growth marketing|seo|sem|crm|email marketing)\b/i],
-        ["Data", /\b(?:data|analytics|analyst|business intelligence|insights)\b/i],
-        ["Research", /\b(?:research|researcher|research associate|user research|market research)\b/i],
-        ["Campaigns", /\b(?:campaign|campaigns|campaigner|organizing|field organizing)\b/i]
-      ];
-      const match = rules.find(([, pattern]) => pattern.test(text));
-      return match ? match[0] : "";
-    }
-
-    function getSalaryFloor(job) {
-      const salaryMin = Number(job.salary_min);
-      const salaryMax = Number(job.salary_max);
-      if (Number.isFinite(salaryMin) && salaryMin > 0) return salaryMin;
-      if (Number.isFinite(salaryMax) && salaryMax > 0) return salaryMax;
-      return null;
-    }
-
-    function matchesSalaryFilter(job) {
-      if (!state.filters.salary.size) return true;
-      const salaryFloor = getSalaryFloor(job);
-      const hasSalary = Boolean(cleanVisibleText(job.salary || "")) || salaryFloor !== null;
-      if (state.filters.salary.has("Shows salary") && !hasSalary) return false;
-      const thresholds = {
-        "$50k+": 50000,
-        "$75k+": 75000,
-        "$100k+": 100000,
-        "$125k+": 125000,
-        "$150k+": 150000
-      };
-      for (const [label, threshold] of Object.entries(thresholds)) {
-        if (state.filters.salary.has(label) && (!(salaryFloor !== null) || salaryFloor < threshold)) {
-          return false;
-        }
-      }
-      return true;
-    }
-
-    function getLastUpdated(job) {
-      return job.date_updated || job.date_added || job.date_posted || "";
-    }
-
-    function isPublishedRecord(record) {
-      const verificationStatus = String(record && record.verification_status || "").toLowerCase();
-      return Boolean(
-        record &&
-        record.published &&
-        record.public_visibility &&
-        String(record.status || "").toLowerCase() === "published" &&
-        !["expired", "removed"].includes(verificationStatus)
-      );
-    }
-
-    function resolveDisplayJob(record) {
-      if (!record || typeof record !== "object") return null;
-      const raw = record.raw_source_data || record.raw || {};
-      const display = record.display || {};
-      const title = cleanVisibleText(display.title || raw.title || "");
-      const organization = cleanVisibleText(display.organization || raw.organization || "");
-      const location = cleanVisibleText(display.location || raw.location || "");
-      const workplaceType = normalizeWorkplaceTypeLabel(display.location_type || raw.workplace_type || "");
-      const salaryMin = Number.isFinite(Number(display.salary_min)) ? Number(display.salary_min) : raw.salary_min;
-      const salaryMax = Number.isFinite(Number(display.salary_max)) ? Number(display.salary_max) : raw.salary_max;
-      const payDisplay = cleanVisibleText(display.pay_display || raw.salary || "");
-      const tags = Array.isArray(display.tags) && display.tags.length ? display.tags : (Array.isArray(raw.tags) ? raw.tags : []);
-
-      return {
-        ...raw,
-        id: String(record.id || raw.id || "").trim(),
-        title,
-        organization,
-        location,
-        workplace_type: workplaceType,
-        salary: payDisplay,
-        salary_min: salaryMin ?? null,
-        salary_max: salaryMax ?? null,
-        job_type: normalizeEmploymentTypeLabel(display.role_type || raw.job_type || ""),
-        experience: cleanVisibleText(display.experience_level || raw.experience || ""),
-        sector: cleanVisibleText(display.sector || raw.sector || ""),
-        function: cleanVisibleText(display.function || raw.function || ""),
-        specialization: cleanVisibleText(display.specialization || raw.specialization || ""),
-        description: cleanVisibleText(display.description || raw.description || ""),
-        source: cleanVisibleText(display.source_name || raw.source || ""),
-        source_url: String(display.source_url || raw.source_url || "").trim(),
-        original_url: String(display.original_url || raw.original_url || raw.source_url || "").trim(),
-        apply_url: String(display.application_url || raw.apply_url || "").trim(),
-        date_posted: String(display.date_collected || raw.date_posted || "").trim(),
-        featured: typeof record.featured === "boolean" ? record.featured : Boolean(raw.featured),
-        salary_visible: payDisplay ? true : raw.salary_visible,
-        tags: tags.map((tag) => cleanVisibleText(tag)).filter(Boolean),
-        status: "published",
-        verification_status: String(record.verification_status || "verified").trim(),
-        display_order: Number(record.display_order || 0)
-      };
-    }
-
-    function isNewThisWeek(job) {
-      const candidate = Date.parse(job.date_added || job.date_updated || job.date_posted);
-      if (!candidate) return false;
-      const delta = Date.now() - candidate;
-      return delta <= 7 * 24 * 60 * 60 * 1000;
-    }
-
-    function filterJob(job) {
-      const status = String(job.status || "").toLowerCase();
-      if (!["active", "approved", "published"].includes(status)) return false;
-
-      const haystack = [
-        job.title,
-        job.organization,
-        job.location,
-        job.job_type,
-        job.sector,
-        job.description,
-        ...(job.tags || [])
-      ]
-        .join(" ")
-        .toLowerCase();
-
-      if (state.search && !haystack.includes(state.search)) return false;
-      for (const quickFilter of state.quickFilters) {
-        if (!haystack.includes(quickFilter)) return false;
-      }
-      if (state.filters.location.size && !state.filters.location.has(getWorkMode(job))) return false;
-      if (state.filters.jobType.size && !state.filters.jobType.has(job.job_type)) return false;
-      if (state.filters.sector.size && !state.filters.sector.has(job.sector)) return false;
-      if (state.filters.specialization.size && !state.filters.specialization.has(inferSpecialization(job))) return false;
-      if (!matchesSalaryFilter(job)) return false;
-      if (state.filters.source.size && !state.filters.source.has(job.source)) return false;
-
-      return true;
-    }
-
-    function renderState(message) {
-      state.renderedJobsKey = "";
-      state.renderedJobCount = 0;
-      ui.loadMoreButton.hidden = true;
-      ui.jobsGrid.innerHTML = `<div class="classifieds-grid-message">${escapeHtml(message)}</div>`;
-    }
-
-    function buildFilterOption(groupKey, value) {
-      const id = `${groupKey}-${value}`.toLowerCase().replace(/[^a-z0-9]+/g, "-");
-      const checked = state.filters[groupKey].has(value) ? "checked" : "";
-      return `
-        <label for="${id}">
-          <input id="${id}" type="checkbox" data-filter-group="${groupKey}" data-filter-value="${escapeHtml(value)}" ${checked}>
-          <span>${escapeHtml(value)}</span>
-        </label>
-      `;
-    }
-
-    function renderFilters() {
-      const activeJobs = state.jobs.filter((job) => ["active", "approved", "published"].includes(String(job.status || "").toLowerCase()));
-      const optionMap = {
-        location: [...new Set(activeJobs.map(getWorkMode))],
-        jobType: [...new Set(activeJobs.map((job) => job.job_type).filter(Boolean))],
-        sector: [...new Set(activeJobs.map((job) => job.sector).filter(Boolean))],
-        specialization: SPECIALIZATION_OPTIONS.filter((value) => activeJobs.some((job) => inferSpecialization(job) === value)),
-        salary: SALARY_FILTER_OPTIONS,
-        source: [...new Set(activeJobs.map((job) => job.source).filter(Boolean))]
-      };
-
-      Object.entries(optionMap).forEach(([groupKey, values]) => {
-        ui.filterContainers[groupKey].innerHTML = values
-          .sort((a, b) => a.localeCompare(b))
-          .map((value) => buildFilterOption(groupKey, value))
-          .join("");
-      });
-    }
-
-    function renderActiveTags() {
-      const pills = [];
-      state.quickFilters.forEach((value) => pills.push({ value, kind: "quick" }));
-      Object.entries(state.filters).forEach(([groupKey, values]) => {
-        values.forEach((value) => pills.push({ value, kind: groupKey }));
-      });
-
-      if (!pills.length && !state.search) {
-        ui.activeTagRow.innerHTML = "";
-        return;
-      }
-
-      const searchPill = state.search
-        ? `<button class="tag-pill active" type="button" data-clear-search="true">Search: ${escapeHtml(state.search)}</button>`
-        : "";
-
-      ui.activeTagRow.innerHTML =
-        searchPill +
-        pills
-          .map((pill) => `<button class="tag-pill active" type="button" data-remove-filter="${escapeHtml(pill.value)}" data-remove-kind="${escapeHtml(pill.kind)}">${escapeHtml(pill.value)}</button>`)
-          .join("");
-    }
-
-    function renderProfiles() {
-      const profiles = state.profiles
-        .filter(isPublishedRecord)
-        .sort((a, b) => Number(a.display_order || 0) - Number(b.display_order || 0));
-
-      if (!profiles.length) {
-        ui.profilesGrid.innerHTML = `<div class="state-panel">Published profiles will appear here after review.</div>`;
-        return;
-      }
-
-      ui.profilesGrid.innerHTML = profiles.map((profile, index) => {
-        const initials = String(profile.name || "")
-          .split(/\s+/)
-          .filter(Boolean)
-          .slice(0, 2)
-          .map((part) => part.charAt(0).toUpperCase())
-          .join("") || "TA";
-        const prompt = Array.isArray(profile.profile_prompts) && profile.profile_prompts.length
-          ? profile.profile_prompts[0]
-          : null;
-        const tags = Array.isArray(profile.tags) ? profile.tags : [];
-        const focusAreas = Array.isArray(profile.focus_areas) ? profile.focus_areas.join(", ") : String(profile.focus_areas || "");
-        const cta = buildProfilePrimaryCta(profile);
-        const links = resolveProfileLinks(profile);
-        return `
-          <div class="profile-card" data-profile-card="${escapeHtml(profile.id)}">
-            <div class="profile-visual">
-              <div class="avatar-placeholder ${index % 2 ? "alt" : ""}">${escapeHtml(initials)}</div>
-              <div style="display: flex; align-items: center; gap: 6px; font-family: var(--font-mono); font-size: 0.65rem; color: var(--ink-secondary);">
-                <div class="status-dot"></div> ${escapeHtml(profile.availability || "Open to conversations")}
-              </div>
-            </div>
-            <div class="profile-content">
-              <div class="profile-role">${escapeHtml(profile.current_role || "Talent Profile")}</div>
-              <h3 class="profile-name">${escapeHtml(profile.name)}</h3>
-              <div style="color: var(--ink-secondary); margin-bottom: 14px;">${escapeHtml(cleanVisibleText(profile.location || ""))}${focusAreas ? ` // ${escapeHtml(cleanVisibleText(focusAreas))}` : ""}</div>
-              ${prompt ? `
-                <div class="profile-prompt">
-                  <div class="prompt-q">${escapeHtml(cleanVisibleText(prompt.question || "Profile Note"))}</div>
-                  <div class="prompt-a">"${escapeHtml(cleanVisibleText(prompt.answer || ""))}"</div>
+            <div class="glass-panel rounded-2xl p-6 fade-in-up" style="transition-delay: 300ms;">
+                <div class="font-mono-tech text-[10px] text-purple-400 uppercase tracking-[0.25em] mb-3">How To Use This Space</div>
+                <div class="space-y-3 text-sm text-gray-400 leading-relaxed">
+                    <p>Use the featured cards for the highest-priority guides and tools.</p>
+                    <p>Use the pathways section to jump into strategy, instrumentation, and alignment work.</p>
+                    <p>Scroll into the library when you want the broader archive and searchable browsing.</p>
                 </div>
-              ` : ""}
-              <div class="prompt-a" style="font-style: normal; margin-bottom: 20px;">${escapeHtml(cleanVisibleText(profile.short_bio || ""))}</div>
-              ${buildProfileLinkIcons(profile, links)}
-              <div class="profile-actions">
-                ${cta}
-                <button class="btn-secondary" type="button" data-profile-action="${escapeHtml(profile.id)}" data-talent-click="modal" data-profile-id="${escapeHtml(profile.id)}" data-profile-name="${escapeHtml(profile.name)}">View Profile</button>
-              </div>
-              <div class="profile-tags">
-                ${tags.map((tag) => `<span>#${escapeHtml(tag)}</span>`).join("")}
-              </div>
             </div>
-          </div>
-        `;
-      }).join("");
-    }
-
-    function renderEmployers() {
-      const employers = state.employers
-        .filter(isPublishedRecord)
-        .sort((a, b) => Number(a.display_order || 0) - Number(b.display_order || 0));
-
-      if (!employers.length) {
-        ui.employersList.innerHTML = `<div style="color: var(--ink-secondary);">Published employer profiles will appear here after review and approval.</div>`;
-        return;
-      }
-
-      ui.employersList.innerHTML = employers.map((employer) => `
-        <article style="border: 1px solid var(--border-divider); padding: 16px; background: rgba(0,0,0,0.18);">
-          <div style="font-family: var(--font-mono); font-size: 0.65rem; color: var(--accent-chartreuse); text-transform: uppercase; letter-spacing: 0.05em;">${escapeHtml(cleanVisibleText(employer.hiring_focus || "Published employer"))}</div>
-          <h4 style="font-family: var(--font-serif); font-size: 1.6rem; margin-top: 8px;">${escapeHtml(cleanVisibleText(employer.organization_name || ""))}</h4>
-          <p style="color: var(--ink-secondary); margin-top: 8px;">${escapeHtml(cleanVisibleText(employer.description || ""))}</p>
-          <div style="margin-top: 12px; color: var(--ink-tertiary); font-family: var(--font-mono); font-size: 0.72rem;">${escapeHtml(cleanVisibleText(employer.submitted_roles || ""))}</div>
-        </article>
-      `).join("");
-    }
-
-    function openProfileModal(profileId) {
-      const profile = state.profiles.find((item) => item.id === profileId && isPublishedRecord(item));
-      if (!profile) return;
-      resetProfileModalContent();
-      const links = resolveProfileLinks(profile);
-      const focusAreas = Array.isArray(profile.focus_areas)
-        ? profile.focus_areas.map((item) => cleanVisibleText(item)).filter(Boolean)
-        : cleanVisibleText(profile.focus_areas || "").split(",").map((item) => item.trim()).filter(Boolean);
-      const email = String(getFirstProfileValue(profile, ["email"]) || "").trim();
-      const resumeFile = String(links.resumeUrl || "").trim();
-      const coverLetterFile = String(profile.cover_letter_file || "").trim();
-      const prompts = Array.isArray(profile.profile_prompts) ? profile.profile_prompts : [];
-
-      ui.profileModalName.textContent = cleanVisibleText(profile.name || "");
-      ui.profileModalRole.textContent = cleanVisibleText(profile.current_role || "Talent Profile");
-      ui.profileModalLocation.textContent = cleanVisibleText(profile.location || "");
-      ui.profileModalBio.innerHTML = `
-        <div class="profile-modal-label">Short Bio</div>
-        <div class="profile-modal-text">${escapeHtml(cleanVisibleText(profile.short_bio || ""))}</div>
-      `;
-      ui.profileModalMeta.innerHTML = [
-        profile.current_role ? `<div class="profile-modal-stat"><div class="profile-modal-label">Current Role</div><div class="profile-modal-text">${escapeHtml(cleanVisibleText(profile.current_role || ""))}</div></div>` : "",
-        profile.location ? `<div class="profile-modal-stat"><div class="profile-modal-label">Location</div><div class="profile-modal-text">${escapeHtml(cleanVisibleText(profile.location || ""))}</div></div>` : "",
-        focusAreas.length ? `<div class="profile-modal-stat"><div class="profile-modal-label">Focus Areas</div><div class="profile-modal-text">${escapeHtml(focusAreas.join(", "))}</div></div>` : "",
-        profile.open_to ? `<div class="profile-modal-stat"><div class="profile-modal-label">Open To</div><div class="profile-modal-text">${escapeHtml(cleanVisibleText(profile.open_to || ""))}</div></div>` : ""
-      ].filter(Boolean).join("");
-      renderProfileModalLinks(profile, links);
-      if (prompts.length) {
-        ui.profileModalPrompt.style.display = "block";
-        ui.profileModalPrompt.innerHTML = `
-          <div class="profile-modal-label">Profile Prompts</div>
-          <div class="profile-modal-prompts">
-            ${prompts.map((prompt) => `
-          <div class="profile-modal-prompt-item">
-            <div class="prompt-q">${escapeHtml(cleanVisibleText(prompt.question || "Profile Note"))}</div>
-            <div class="prompt-a">"${escapeHtml(cleanVisibleText(prompt.answer || ""))}"</div>
-          </div>
-        `).join("")}
-          </div>
-        `;
-      } else {
-        ui.profileModalPrompt.style.display = "none";
-        ui.profileModalPrompt.innerHTML = "";
-      }
-      if (cleanVisibleText(profile.featured_project || "")) {
-        ui.profileModalProject.style.display = "block";
-        ui.profileModalProject.innerHTML = `
-          <div class="profile-modal-label">Featured Project</div>
-          <div class="profile-modal-text">${escapeHtml(cleanVisibleText(profile.featured_project || ""))}</div>
-        `;
-      } else {
-        ui.profileModalProject.style.display = "none";
-        ui.profileModalProject.innerHTML = "";
-      }
-      const tags = Array.isArray(profile.tags) ? profile.tags : [];
-      ui.profileModalTags.innerHTML = `
-        <div class="profile-modal-label">Tags</div>
-        <div class="profile-tags">
-          ${tags.map((tag) => `<span>#${escapeHtml(tag)}</span>`).join("")}
         </div>
-      `;
-      ui.profileModalActions.innerHTML = buildProfileModalCtas(profile, {
-        resumeFile,
-        coverLetterFile
-      });
-      if (links.publicContact && email) {
-        ui.profileModalContact.style.display = "block";
-        ui.profileModalContact.innerHTML = `<div class="profile-modal-label">Contact</div><div class="profile-modal-text">Email: <a href="mailto:${escapeHtml(email)}" style="color: var(--accent-chartreuse);">${escapeHtml(email)}</a></div>`;
-      } else {
-        ui.profileModalContact.style.display = "none";
-        ui.profileModalContact.innerHTML = "";
-      }
-      ui.profileModal.classList.add("visible");
-      ui.profileModal.setAttribute("aria-hidden", "false");
-    }
+    </header>
 
-    function closeProfileModal() {
-      ui.profileModal.classList.remove("visible");
-      ui.profileModal.setAttribute("aria-hidden", "true");
-      resetProfileModalContent();
-    }
-
-    function resetProfileModalContent() {
-      ui.profileModalName.textContent = "";
-      ui.profileModalRole.textContent = "";
-      ui.profileModalLocation.textContent = "";
-      ui.profileModalMeta.innerHTML = "";
-      ui.profileModalLinks.innerHTML = "";
-      ui.profileModalBio.innerHTML = "";
-      ui.profileModalProject.innerHTML = "";
-      ui.profileModalPrompt.innerHTML = "";
-      ui.profileModalPrompt.style.display = "none";
-      ui.profileModalTags.innerHTML = "";
-      ui.profileModalActions.innerHTML = "";
-      ui.profileModalContact.innerHTML = "";
-      ui.profileModalContact.style.display = "none";
-    }
-
-    function iconSvg(name) {
-      if (name === "globe") {
-        return '<svg viewBox="0 0 24 24" width="14" height="14" aria-hidden="true" style="stroke:currentColor; fill:none; stroke-width:1.8;"><circle cx="12" cy="12" r="9"></circle><path d="M3 12h18"></path><path d="M12 3a15 15 0 0 1 0 18"></path><path d="M12 3a15 15 0 0 0 0 18"></path></svg>';
-      }
-      if (name === "linkedin") {
-        return '<svg viewBox="0 0 24 24" width="14" height="14" aria-hidden="true" style="fill:currentColor;"><path d="M6.94 8.5H3.56V20h3.38V8.5Zm-1.69-5A1.96 1.96 0 1 0 5.25 7.4a1.95 1.95 0 0 0 0-3.9ZM20.44 13.03c0-3.41-1.82-4.99-4.26-4.99a3.68 3.68 0 0 0-3.31 1.82V8.5H9.5c.04.9 0 11.5 0 11.5h3.37v-6.42c0-.34.03-.68.12-.93a2.2 2.2 0 0 1 2.07-1.47c1.46 0 2.05 1.12 2.05 2.76V20h3.33Z"></path></svg>';
-      }
-      return '<svg viewBox="0 0 24 24" width="14" height="14" aria-hidden="true" style="stroke:currentColor; fill:none; stroke-width:1.8;"><path d="M14 3H6a2 2 0 0 0-2 2v14l4-2 4 2 4-2 4 2V9Z"></path><path d="M14 3v6h6"></path></svg>';
-    }
-
-    function buildProfilePrimaryCta(profile) {
-      const links = resolveProfileLinks(profile);
-      const portfolioUrl = links.portfolioUrl || links.websiteUrl;
-      const linkedInUrl = links.linkedInUrl;
-      if (portfolioUrl) {
-        return `<a class="btn-primary" href="${escapeHtml(portfolioUrl)}" target="_blank" rel="noopener noreferrer" data-talent-click="portfolio" data-profile-id="${escapeHtml(profile.id)}" data-profile-name="${escapeHtml(profile.name)}">${iconSvg("globe")} View Website</a>`;
-      }
-      if (linkedInUrl) {
-        return `<a class="btn-primary" href="${escapeHtml(linkedInUrl)}" target="_blank" rel="noopener noreferrer" data-talent-click="linkedin" data-profile-id="${escapeHtml(profile.id)}" data-profile-name="${escapeHtml(profile.name)}">${iconSvg("linkedin")} View LinkedIn</a>`;
-      }
-      return "";
-    }
-
-    function parseBooleanLike(value) {
-      if (typeof value === "boolean") return value;
-      return /^(true|1|yes|public|published)$/i.test(String(value || "").trim());
-    }
-
-    function getFirstProfileValue(profile, keys) {
-      for (const key of keys) {
-        const value = profile && Object.prototype.hasOwnProperty.call(profile, key) ? profile[key] : "";
-        if (cleanVisibleText(value)) return value;
-      }
-      return "";
-    }
-
-    function normalizeProfileUrl(value, type) {
-      const text = String(value || "")
-        .trim()
-        .replace(/^(?:website|portfolio|linkedin|email|resume)\s*:\s*/i, "");
-      if (!text) return "";
-      if (type === "email" || /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(text)) return `mailto:${text.replace(/^mailto:/i, "")}`;
-      if (/^mailto:/i.test(text)) return text;
-      if (/^linkedin$/i.test(type || "") || /linkedin/i.test(text)) {
-        const normalizedLinkedIn = text
-          .replace(/^@/, "")
-          .replace(/^linkedin\.com\//i, "")
-          .replace(/^www\.linkedin\.com\//i, "")
-          .replace(/^https?:\/\/(?:www\.)?linkedin\.com\//i, "");
-        if (/^(?:in|company|school)\//i.test(normalizedLinkedIn)) {
-          return `https://www.linkedin.com/${normalizedLinkedIn}`;
-        }
-        if (/^[a-z0-9-]+$/i.test(normalizedLinkedIn)) {
-          return `https://www.linkedin.com/in/${normalizedLinkedIn}`;
-        }
-      }
-      if (/^(?:https?:\/\/|www\.)/i.test(text)) {
-        return /^https?:\/\//i.test(text) ? text : `https://${text}`;
-      }
-      if (/^(?:\/|[a-z0-9.-]+\.[a-z]{2,})(?:\/|$)/i.test(text)) {
-        return `https://${text.replace(/^\/+/, "")}`;
-      }
-      if (/^[a-z0-9-]+$/i.test(text) && type === "linkedin") {
-        return `https://www.linkedin.com/in/${text}`;
-      }
-      return text;
-    }
-
-    function resolveProfileLinks(profile) {
-      return {
-        portfolioUrl: normalizeProfileUrl(getFirstProfileValue(profile, ["portfolioUrl", "portfolio_url", "portfolio", "portfolioLink"]), "website"),
-        websiteUrl: normalizeProfileUrl(getFirstProfileValue(profile, ["websiteUrl", "website_url", "website", "personalWebsite"]), "website"),
-        linkedInUrl: normalizeProfileUrl(getFirstProfileValue(profile, ["linkedinUrl", "linkedInUrl", "linkedin_url", "linkedIn", "linkedin"]), "linkedin"),
-        resumeUrl: normalizeProfileUrl(getFirstProfileValue(profile, ["resumeUrl", "resume_url", "resume", "resumeLink", "resume_file"]), "file"),
-        email: normalizeProfileUrl(getFirstProfileValue(profile, ["email"]), "email"),
-        publicContact: parseBooleanLike(profile.public_contact)
-      };
-    }
-
-    function buildProfileIconLink({ href, label, iconClass, clickType, profile, extraClass = "", newTab = true }) {
-      if (!href) return "";
-      const targetAttrs = newTab ? ' target="_blank" rel="noopener noreferrer"' : "";
-      const className = extraClass ? `profile-link-icon ${extraClass}` : "profile-link-icon";
-      return `<a class="${escapeHtml(className)}" href="${escapeHtml(href)}"${targetAttrs} aria-label="${escapeHtml(label)}" title="${escapeHtml(label)}" data-talent-click="${escapeHtml(clickType)}" data-profile-id="${escapeHtml(profile.id)}" data-profile-name="${escapeHtml(profile.name)}"><i class="${escapeHtml(iconClass)}" aria-hidden="true"></i></a>`;
-    }
-
-    function buildProfileLinkIcons(profile, links, options = {}) {
-      const iconClassName = options.iconClassName || "profile-link-icon";
-      const items = [
-        {
-          href: links.portfolioUrl,
-          label: "Portfolio",
-          iconClass: "ph ph-briefcase",
-          clickType: "portfolio"
-        },
-        {
-          href: links.linkedInUrl,
-          label: "LinkedIn",
-          iconClass: "ph ph-linkedin-logo",
-          clickType: "linkedin"
-        },
-        {
-          href: links.websiteUrl,
-          label: "Website",
-          iconClass: "ph ph-globe",
-          clickType: "website"
-        },
-        {
-          href: links.resumeUrl,
-          label: "Resume",
-          iconClass: "ph ph-file-text",
-          clickType: "resume"
-        }
-      ].filter((item) => item.href);
-
-      if (!items.length) return "";
-      return `<div class="${escapeHtml(options.rowClassName || "profile-links")}">${items.map((item) => buildProfileIconLink({
-        ...item,
-        profile,
-        extraClass: iconClassName === "profile-link-icon" ? "" : iconClassName
-      })).join("")}</div>`;
-    }
-
-    function buildProfileModalIconLink({ href, label, iconClass, clickType, profile, newTab = true }) {
-      const targetAttrs = newTab ? ' target="_blank" rel="noopener noreferrer"' : "";
-      return `<a class="profile-modal-icon-link" href="${escapeHtml(href)}"${targetAttrs} aria-label="${escapeHtml(label)}" title="${escapeHtml(label)}" data-talent-click="${escapeHtml(clickType)}" data-profile-id="${escapeHtml(profile.id)}" data-profile-name="${escapeHtml(profile.name)}"><i class="${escapeHtml(iconClass)}" aria-hidden="true"></i></a>`;
-    }
-
-    function renderProfileModalLinks(profile, urls) {
-      ui.profileModalLinks.innerHTML = "";
-      ui.profileModalLinks.innerHTML = buildProfileModalIconLinks(profile, urls);
-    }
-
-    function buildProfileModalIconLinks(profile, urls) {
-      const html = buildProfileLinkIcons(profile, urls, {
-        rowClassName: "profile-modal-links-row",
-        iconClassName: "profile-modal-icon-link"
-      });
-      return html;
-    }
-
-    function buildProfileModalCtas(profile, urls) {
-      const actions = [];
-      if (urls.resumeFile) {
-        actions.push(`<a class="btn-secondary" href="${escapeHtml(urls.resumeFile)}" target="_blank" rel="noopener noreferrer" data-talent-click="resume" data-profile-id="${escapeHtml(profile.id)}" data-profile-name="${escapeHtml(profile.name)}">${iconSvg("file")} Download Resume</a>`);
-      }
-      if (urls.coverLetterFile) {
-        actions.push(`<a class="btn-secondary" href="${escapeHtml(urls.coverLetterFile)}" target="_blank" rel="noopener noreferrer" data-talent-click="cover-letter" data-profile-id="${escapeHtml(profile.id)}" data-profile-name="${escapeHtml(profile.name)}">${iconSvg("file")} Download Cover Letter</a>`);
-      }
-      return actions.join("");
-    }
-
-    function renderJobs() {
-      state.filteredJobs = state.jobs.filter(filterJob);
-      const visibleJobs = state.filteredJobs.slice(0, state.visibleCount);
-      const renderedJobsKey = state.filteredJobs.map((job) => String(job.id || "")).join("|");
-
-      ui.gridSummary.textContent = `${state.filteredJobs.length} roles in the current view`;
-      ui.filterMatchCount.textContent = `${state.filteredJobs.length} roles match your filters`;
-      ui.statCount.textContent = "Curated climate and sustainability roles";
-      ui.statStatus.textContent = "Updated as new roles are approved";
-      ui.statUpdated.textContent = "Remote, hybrid, and mission-driven opportunities";
-      renderActiveTags();
-
-      if (!state.filteredJobs.length) {
-        state.renderedJobsKey = "";
-        state.renderedJobCount = 0;
-        renderState("No roles match the current filters.");
-        return;
-      }
-
-      const buildJobCardMarkup = (job) => {
-        const featured = Boolean(job.featured);
-        const newThisWeek = isNewThisWeek(job);
-        const ref = String(job.ref || "").trim() || String(job.id || "manual").toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 8).padEnd(8, "X");
-        const salaryBlock = job.salary_visible === false && !job.salary ? "" : `<div class="card-salary">${escapeHtml(cleanVisibleText(job.salary || ""))}</div>`;
-        const sectorLabel = normalizeSectorLabel(job.sector);
-        const specializationLabel = inferSpecialization(job);
-        const updatedText = getLastUpdated(job);
-        return `
-          <a class="classified-card" href="${escapeHtml(getJobDetailPath(job))}" data-job-card="true" data-job-id="${escapeHtml(job.id)}" data-job-title="${escapeHtml(cleanVisibleText(job.title))}" data-job-organization="${escapeHtml(cleanVisibleText(job.organization))}" data-job-source="${escapeHtml(cleanVisibleText(job.source))}">
-            ${featured ? '<div class="featured-marker"></div>' : ""}
-            <span class="card-ref">REF: ${escapeHtml(ref)}</span>
-            <h3 class="card-title">${escapeHtml(cleanVisibleText(job.title))}</h3>
-            <div class="card-org">${escapeHtml(cleanVisibleText(job.organization))}</div>
-            <p class="card-description">${escapeHtml(cleanVisibleText(job.description_snippet || job.summary || job.description || "Open the application to review the full role details."))}</p>
-            <div class="tag-row" style="justify-content: flex-start; margin-top: 0;">
-              ${newThisWeek ? '<span class="tag-pill" style="cursor: default;">New this week</span>' : ""}
-              ${sectorLabel ? `<span class="tag-pill" style="cursor: default;">${escapeHtml(cleanVisibleText(sectorLabel))}</span>` : ""}
-              ${specializationLabel ? `<span class="tag-pill" style="cursor: default;">${escapeHtml(cleanVisibleText(specializationLabel))}</span>` : ""}
-              ${getWorkMode(job) ? `<span class="tag-pill" style="cursor: default;">${escapeHtml(cleanVisibleText(getWorkMode(job)))}</span>` : ""}
-              ${(job.tags || []).slice(0, 3).map((tag) => `<span class="tag-pill" style="cursor: default;">#${escapeHtml(cleanVisibleText(tag))}</span>`).join("")}
-            </div>
-            <div class="card-footer">
-              <div class="card-meta">
-                <div class="card-meta-row">
-                  <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M21 10c0 7-9 13-9 13S3 17 3 10a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>
-                  ${escapeHtml(cleanVisibleText(job.location))}
+    <main class="relative z-10 max-w-[1600px] mx-auto px-6 lg:px-24 pb-40" vid="36">
+        <section id="featured" class="mb-20">
+            <div class="flex items-center justify-between gap-6 mb-10 fade-in-up">
+                <div>
+                    <div class="font-mono-tech text-[10px] text-gray-500 uppercase tracking-[0.28em] mb-3">Featured Resources</div>
+                    <h2 class="font-cinzel text-3xl lg:text-5xl text-white">Top-level tools, boards, and dispatches</h2>
                 </div>
-                <div class="card-meta-row">
-                  <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"></rect><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"></path></svg>
-                  ${escapeHtml(cleanVisibleText(job.job_type))}
-                </div>
-                ${updatedText ? `<div class="card-meta-row">Last updated ${escapeHtml(new Date(updatedText).toLocaleDateString("en-US", { month: "short", day: "numeric" }))}</div>` : ""}
-              </div>
-              ${salaryBlock}
+                <a href="#library-search" class="hidden md:inline-flex items-center gap-2 px-5 py-3 border border-white/10 rounded-lg font-mono-tech text-[10px] uppercase tracking-[0.22em] text-white hover:bg-white/5">
+                    Browse Full Library
+                    <i class="ph-bold ph-arrow-right"></i>
+                </a>
             </div>
-          </a>
-        `;
-      };
 
-      const shouldRerenderAll =
-        state.renderedJobsKey !== renderedJobsKey ||
-        state.renderedJobCount === 0 ||
-        visibleJobs.length < state.renderedJobCount;
+            <div class="gallery-container" vid="37">
+                <div class="gallery-item item-1 fade-in-up" vid="38">
+                    <article class="resource-card card-purple rounded-xl p-10 flex flex-col group min-h-[420px]" vid="39">
+                        <div class="flex justify-between items-start mb-8" vid="40">
+                            <i class="ph-duotone ph-briefcase text-5xl text-purple-400" vid="41"></i>
+                            <span class="font-mono-tech text-[9px] text-gray-500 border border-white/10 px-2 py-1" vid="42">PRIMARY RESOURCE</span>
+                        </div>
+                        <h3 class="font-cinzel text-4xl text-white mb-4" vid="43">Jobs Board</h3>
+                        <p class="text-base text-gray-400 leading-relaxed font-light mb-8" vid="44">The clearest entry point into live roles, clean listings, and the active jobs ecosystem.</p>
+                        <div class="grid sm:grid-cols-2 gap-4 mb-8">
+                            <div class="glass-panel rounded-2xl p-4">
+                                <div class="font-mono-tech text-[9px] uppercase tracking-[0.18em] text-purple-300/80 mb-2">Primary Path</div>
+                                <p class="text-sm text-gray-400 leading-relaxed">Browse current opportunities with the strongest visibility and job-seeker relevance.</p>
+                            </div>
+                            <div class="glass-panel rounded-2xl p-4">
+                                <div class="font-mono-tech text-[9px] uppercase tracking-[0.18em] text-purple-300/80 mb-2">Best Use</div>
+                                <p class="text-sm text-gray-400 leading-relaxed">Start here if you need the opportunity layer before guides, diagnostics, or essays.</p>
+                            </div>
+                        </div>
+                        <a href="/resources/jobs/" class="mt-auto w-full py-4 bg-purple-500/10 hover:bg-purple-500 border border-purple-500/30 text-white rounded-lg text-[10px] font-mono-tech uppercase tracking-widest transition-all text-center">Open Jobs Board</a>
+                    </article>
+                </div>
 
-      if (shouldRerenderAll) {
-        ui.jobsGrid.innerHTML = visibleJobs.map(buildJobCardMarkup).join("");
-      } else if (visibleJobs.length > state.renderedJobCount) {
-        ui.jobsGrid.insertAdjacentHTML(
-          "beforeend",
-          visibleJobs.slice(state.renderedJobCount).map(buildJobCardMarkup).join("")
-        );
-      }
+                <div class="gallery-item item-2 fade-in-up" style="transition-delay: 140ms;" vid="46">
+                    <article class="resource-card card-cyan rounded-xl p-8 flex flex-col group scale-110 min-h-[320px]" vid="47">
+                        <div class="flex justify-between items-start mb-8" vid="48">
+                            <i class="ph-duotone ph-chart-line-up text-4xl text-cyan-400" vid="49"></i>
+                            <span class="font-mono-tech text-[9px] text-gray-500 border border-white/10 px-2 py-1" vid="50">FEATURED GUIDE</span>
+                        </div>
+                        <h3 class="font-cinzel text-3xl text-white mb-4" vid="51">Google Ads Guide</h3>
+                        <p class="text-base text-gray-400 leading-relaxed font-light mb-10" vid="52">Placeholder flagship guide for paid acquisition structure, campaign architecture, and practical performance setup.</p>
+                        <a href="/resources/google-ads-guide.html" class="mt-auto w-full py-4 bg-cyan-500/10 hover:bg-cyan-500 border border-cyan-500/30 text-white rounded-lg text-[11px] font-mono-tech uppercase tracking-widest transition-all text-center" vid="53">Open Guide</a>
+                    </article>
+                </div>
 
-      state.renderedJobsKey = renderedJobsKey;
-      state.renderedJobCount = visibleJobs.length;
+                <div class="gallery-item item-3 fade-in-up" style="transition-delay: 150ms;" vid="54">
+                    <article class="resource-card card-amber rounded-xl p-8 flex flex-col group border-l-4 border-amber-500/40 min-h-[260px]" vid="55">
+                        <div class="mb-6" vid="56">
+                            <i class="ph-duotone ph-path text-3xl text-amber-400" vid="57"></i>
+                        </div>
+                        <h3 class="font-cinzel text-xl text-white mb-3" vid="58">Platform Alignment Quiz</h3>
+                        <p class="text-xs text-gray-400 leading-relaxed mb-6" vid="59">Interactive checkpoint for matching offers, channels, and platform-fit before deeper execution work.</p>
+                        <div class="flex justify-between items-center mt-auto" vid="60">
+                            <span class="font-mono-tech text-[9px] text-amber-500/70" vid="61">DIAGNOSTIC</span>
+                            <a href="/align.html" class="text-white text-xs font-mono-tech hover:underline" vid="62">Take Quiz →</a>
+                        </div>
+                    </article>
+                </div>
 
-      ui.loadMoreButton.hidden = visibleJobs.length >= state.filteredJobs.length;
-    }
+                <div class="gallery-item item-4 fade-in-up" style="transition-delay: 320ms;" vid="63">
+                    <article class="resource-card card-fuchsia rounded-xl p-10 flex flex-col group min-h-[300px]" vid="64">
+                        <div class="w-20 h-20 mb-8 mx-auto bg-fuchsia-500/10 rounded-full flex items-center justify-center border border-fuchsia-500/20" vid="65">
+                            <i class="ph-duotone ph-newspaper-clipping text-4xl text-fuchsia-400" vid="66"></i>
+                        </div>
+                        <h3 class="font-cinzel text-2xl text-white text-center mb-4" vid="67">Blog / Dispatches</h3>
+                        <p class="text-sm text-gray-400 text-center leading-relaxed font-light mb-8" vid="68">Essays, field notes, and deeper strategy writing from The Algorithm Witch archive.</p>
+                        <a href="/blog/" class="w-full py-3 bg-white/5 hover:bg-fuchsia-500 border border-white/10 hover:border-fuchsia-500 text-white rounded-lg text-[10px] font-mono-tech uppercase tracking-widest transition-all text-center" vid="69">Read Dispatches</a>
+                    </article>
+                </div>
 
-    function resetFilters() {
-      state.search = "";
-      state.visibleCount = 9;
-      state.quickFilters.clear();
-      Object.values(state.filters).forEach((set) => set.clear());
-      ui.searchInput.value = "";
-      ui.quickFilters.forEach((chip) => chip.classList.remove("active"));
-      renderFilters();
-      renderJobs();
-    }
+                <div class="gallery-item item-5 fade-in-up" style="transition-delay: 200ms;" vid="70">
+                    <article class="resource-card card-purple rounded-xl p-8 flex items-center gap-6 group min-h-[180px]" vid="71">
+                        <div class="w-16 h-16 shrink-0 bg-purple-500/10 rounded border border-purple-500/20 flex items-center justify-center" vid="72">
+                            <i class="ph-duotone ph-funnel text-3xl text-purple-400" vid="73"></i>
+                        </div>
+                        <div vid="74">
+                            <h3 class="font-cinzel text-lg text-white mb-1" vid="75">GTM Guide</h3>
+                            <p class="text-[11px] text-gray-500 font-mono-tech uppercase tracking-widest" vid="76">Instrumentation / Tracking</p>
+                            <a href="/resources/GTM-Guide.html" class="inline-block mt-3 text-[10px] font-mono-tech uppercase tracking-[0.18em] text-purple-300 hover:text-white">Open Guide</a>
+                        </div>
+                    </article>
+                </div>
 
-    async function loadJobs() {
-      renderState("Loading current roles…");
+                <div class="gallery-item item-6 fade-in-up" style="transition-delay: 500ms;" vid="77">
+                    <article class="resource-card card-cyan rounded-xl p-8 flex flex-col group min-h-[220px]" vid="78">
+                        <div class="flex justify-between items-center mb-6" vid="79">
+                            <span class="px-3 py-1 bg-cyan-500/10 text-cyan-400 font-mono-tech text-[9px] rounded-full border border-cyan-500/20" vid="80">LIBRARY PATH</span>
+                        </div>
+                        <h3 class="font-cinzel text-xl text-white mb-4" vid="81">Full Resource Library</h3>
+                        <p class="text-sm text-gray-400 leading-relaxed font-light mb-6" vid="82">Continue below into the searchable archive, category filters, and the full list of resources.</p>
+                        <a href="#library-search" class="mt-auto w-full py-3 border border-white/10 text-gray-300 hover:text-white hover:bg-white/5 transition-all text-[10px] font-mono-tech uppercase tracking-widest text-center" vid="83">Browse Library</a>
+                    </article>
+                </div>
+            </div>
+        </section>
 
-      try {
-        const [recordsResponse, jobsResponse, profilesResponse, employersResponse] = await Promise.all([
-          fetch(`./job-records.json?ts=${Date.now()}`, { cache: "no-store" }).catch(() => null),
-          fetch(`./jobs.json?ts=${Date.now()}`, { cache: "no-store" }),
-          fetch(`./talent-profiles.json?ts=${Date.now()}`, { cache: "no-store" }).catch(() => null),
-          fetch(`./employers.json?ts=${Date.now()}`, { cache: "no-store" }).catch(() => null)
-        ]);
-        if (!jobsResponse.ok) throw new Error(`HTTP ${jobsResponse.status}`);
+        <section id="pathways" class="mb-20">
+            <div class="mb-8 fade-in-up">
+                <div class="font-mono-tech text-[10px] text-gray-500 uppercase tracking-[0.28em] mb-3">Quick Pathways</div>
+                <h2 class="font-cinzel text-3xl lg:text-4xl text-white">Major categories at a glance</h2>
+            </div>
+            <div class="grid md:grid-cols-2 xl:grid-cols-4 gap-6">
+                <article class="glass-panel rounded-2xl p-7 fade-in-up">
+                    <i class="ph-duotone ph-megaphone-simple text-3xl text-purple-400 mb-5"></i>
+                    <h3 class="font-cinzel text-xl text-white mb-3">Acquisition Strategy</h3>
+                    <p class="text-sm text-gray-400 leading-relaxed mb-6">Paid growth, offer positioning, demand capture, and campaign planning.</p>
+                    <a href="#strategy" class="font-mono-tech text-[10px] uppercase tracking-[0.22em] text-purple-300 hover:text-white">Open Category</a>
+                </article>
+                <article class="glass-panel rounded-2xl p-7 fade-in-up" style="transition-delay: 120ms;">
+                    <i class="ph-duotone ph-circuitry text-3xl text-cyan-400 mb-5"></i>
+                    <h3 class="font-cinzel text-xl text-white mb-3">Instrumentation</h3>
+                    <p class="text-sm text-gray-400 leading-relaxed mb-6">Tracking plans, GTM structure, analytics hygiene, and implementation scaffolds.</p>
+                    <a href="#instrumentation" class="font-mono-tech text-[10px] uppercase tracking-[0.22em] text-cyan-300 hover:text-white">Open Category</a>
+                </article>
+                <article class="glass-panel rounded-2xl p-7 fade-in-up" style="transition-delay: 220ms;">
+                    <i class="ph-duotone ph-compass-tool text-3xl text-amber-400 mb-5"></i>
+                    <h3 class="font-cinzel text-xl text-white mb-3">Alignment Tools</h3>
+                    <p class="text-sm text-gray-400 leading-relaxed mb-6">Diagnostic frameworks, prioritization tools, and fit-checking resources.</p>
+                    <a href="#alignment" class="font-mono-tech text-[10px] uppercase tracking-[0.22em] text-amber-300 hover:text-white">Open Category</a>
+                </article>
+                <article class="glass-panel rounded-2xl p-7 fade-in-up" style="transition-delay: 320ms;">
+                    <i class="ph-duotone ph-books text-3xl text-fuchsia-400 mb-5"></i>
+                    <h3 class="font-cinzel text-xl text-white mb-3">Full Library</h3>
+                    <p class="text-sm text-gray-400 leading-relaxed mb-6">The complete resource archive now lives directly below with search, filters, and the full browsing grid.</p>
+                    <a href="#library-search" class="font-mono-tech text-[10px] uppercase tracking-[0.22em] text-fuchsia-300 hover:text-white">Enter Library</a>
+                </article>
+            </div>
+        </section>
 
-        const [jobRecords, jobs, profiles, employers] = await Promise.all([
-          recordsResponse && recordsResponse.ok ? recordsResponse.json() : [],
-          jobsResponse.json(),
-          profilesResponse && profilesResponse.ok ? profilesResponse.json() : [],
-          employersResponse && employersResponse.ok ? employersResponse.json() : []
-        ]);
+        <section id="highlights" class="fade-in-up">
+            <div class="glass-panel rounded-3xl p-10 lg:p-14 border-purple-500/10">
+                <div class="grid lg:grid-cols-[1.1fr_0.9fr] gap-10 items-start">
+                    <div>
+                        <div class="font-mono-tech text-[10px] text-purple-400 uppercase tracking-[0.28em] mb-3">Resource Library</div>
+                        <h2 class="font-cinzel text-3xl lg:text-5xl text-white mb-5">Search, filter, and browse the archive.</h2>
+                        <p class="text-gray-400 text-sm lg:text-base leading-relaxed max-w-2xl">
+                            Browse the wider archive, move through categories, and use the filters to narrow the collection without losing the original gallery energy at the top of the page.
+                        </p>
+                    </div>
+                    <div class="grid gap-4">
+                        <div class="resource-card rounded-2xl p-6">
+                            <div class="font-mono-tech text-[9px] uppercase tracking-[0.22em] text-gray-500 mb-2">Next Step</div>
+                            <h3 class="font-cinzel text-xl text-white mb-3">Jump into the full resource library</h3>
+                            <p class="text-sm text-gray-400 leading-relaxed mb-5">Search across entries, switch by category, and browse the full archive in-page.</p>
+                            <a href="#library-search" class="inline-flex items-center gap-2 px-5 py-3 border border-white/10 rounded-lg font-mono-tech text-[10px] uppercase tracking-widest text-white hover:bg-white/5">
+                                View Full Library
+                                <i class="ph-bold ph-arrow-right"></i>
+                            </a>
+                        </div>
+                        <div class="resource-card rounded-2xl p-6">
+                            <div class="font-mono-tech text-[9px] uppercase tracking-[0.22em] text-gray-500 mb-2">Placeholder Coverage</div>
+                            <p class="text-sm text-gray-400 leading-relaxed">Featured resources wired in: Jobs Board, Google Ads Guide, GTM Guide, Platform Alignment Quiz, and Blog / Dispatches.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
 
-        if (!Array.isArray(jobs)) throw new Error("jobs.json must contain an array.");
+            <div id="library-search" class="showcase-card rounded-3xl p-8 lg:p-10 overflow-hidden relative mt-10">
+                <div class="absolute -right-20 -top-20 w-80 h-80 bg-purple-500/10 blur-[100px] rounded-full"></div>
+                <div class="relative z-10">
+                    <div class="flex flex-col lg:flex-row lg:items-end gap-8">
+                        <div class="lg:flex-1">
+                            <span class="font-mono-tech text-[11px] text-purple-400 uppercase tracking-widest mb-4 block">Library Controls</span>
+                            <h2 class="font-cinzel text-3xl lg:text-5xl text-white mb-4 leading-tight">Search the full archive</h2>
+                            <p class="text-gray-400 text-base leading-relaxed max-w-2xl">Use the search field and collection buttons to narrow the full list without leaving the page.</p>
+                        </div>
+                        <div class="lg:w-[360px]">
+                            <label for="resource-search" class="font-mono-tech text-[10px] uppercase tracking-[0.22em] text-gray-500 block mb-3">Search resources</label>
+                            <input id="resource-search" type="text" placeholder="Search guides, tools, quizzes..." class="w-full px-5 py-4 rounded-2xl bg-white/5 border border-white/10 text-white placeholder:text-gray-500 focus:outline-none focus:border-purple-500">
+                        </div>
+                    </div>
+                    <div class="flex flex-wrap gap-3 mt-8">
+                        <button data-filter="all" class="resource-filter is-active px-4 py-2 rounded-full border border-white/10 text-white font-mono-tech text-[10px] uppercase tracking-[0.18em]">All Resources</button>
+                        <button data-filter="jobs" class="resource-filter px-4 py-2 rounded-full border border-white/10 text-gray-300 font-mono-tech text-[10px] uppercase tracking-[0.18em]">Jobs</button>
+                        <button data-filter="strategy" class="resource-filter px-4 py-2 rounded-full border border-white/10 text-gray-300 font-mono-tech text-[10px] uppercase tracking-[0.18em]">Strategy</button>
+                        <button data-filter="instrumentation" class="resource-filter px-4 py-2 rounded-full border border-white/10 text-gray-300 font-mono-tech text-[10px] uppercase tracking-[0.18em]">Instrumentation</button>
+                        <button data-filter="alignment" class="resource-filter px-4 py-2 rounded-full border border-white/10 text-gray-300 font-mono-tech text-[10px] uppercase tracking-[0.18em]">Alignment</button>
+                        <button data-filter="dispatches" class="resource-filter px-4 py-2 rounded-full border border-white/10 text-gray-300 font-mono-tech text-[10px] uppercase tracking-[0.18em]">Dispatches</button>
+                        <button data-filter="utilities" class="resource-filter px-4 py-2 rounded-full border border-white/10 text-gray-300 font-mono-tech text-[10px] uppercase tracking-[0.18em]">Utilities</button>
+                    </div>
+                </div>
+            </div>
 
-        state.jobRecords = Array.isArray(jobRecords) ? jobRecords : [];
-        state.profiles = Array.isArray(profiles) ? profiles : [];
-        state.employers = Array.isArray(employers) ? employers : [];
+            <div id="library-grid" class="grid md:grid-cols-2 xl:grid-cols-3 gap-6 mt-10">
+                <article data-category="jobs" data-search="jobs board careers opportunities roles listings job search" class="library-card showcase-card rounded-3xl p-8">
+                    <div class="font-mono-tech text-[10px] text-purple-400 uppercase tracking-[0.2em] mb-3">Jobs</div>
+                    <h3 class="font-cinzel text-2xl text-white mb-4">Jobs Board</h3>
+                    <p class="text-sm text-gray-400 leading-relaxed mb-6">The central public jobs board for active opportunities, cleaned listings, and current role browsing.</p>
+                    <a href="/resources/jobs/" class="text-[10px] font-mono-tech uppercase text-purple-300 flex items-center gap-2">Open Jobs Board <i class="ph-bold ph-arrow-right"></i></a>
+                </article>
+                <article id="strategy" data-category="strategy" data-search="google ads guide paid media acquisition campaigns strategy" class="library-card showcase-card rounded-3xl p-8">
+                    <div class="font-mono-tech text-[10px] text-cyan-400 uppercase tracking-[0.2em] mb-3">Strategy</div>
+                    <h3 class="font-cinzel text-2xl text-white mb-4">Google Ads Guide</h3>
+                    <p class="text-sm text-gray-400 leading-relaxed mb-6">Placeholder featured guide for campaign structure, paid acquisition planning, and conversion-focused architecture.</p>
+                    <a href="/resources/google-ads-guide.html" class="text-[10px] font-mono-tech uppercase text-cyan-300 flex items-center gap-2">Open Guide <i class="ph-bold ph-arrow-right"></i></a>
+                </article>
+                <article id="instrumentation" data-category="instrumentation" data-search="gtm guide tracking instrumentation analytics events measurement tag manager" class="library-card showcase-card rounded-3xl p-8">
+                    <div class="font-mono-tech text-[10px] text-purple-400 uppercase tracking-[0.2em] mb-3">Instrumentation</div>
+                    <h3 class="font-cinzel text-2xl text-white mb-4">GTM Guide</h3>
+                    <p class="text-sm text-gray-400 leading-relaxed mb-6">Placeholder implementation guide for Google Tag Manager setup, event design, and cleaner reporting foundations.</p>
+                    <a href="/resources/GTM-Guide.html" class="text-[10px] font-mono-tech uppercase text-purple-300 flex items-center gap-2">Open Guide <i class="ph-bold ph-arrow-right"></i></a>
+                </article>
+                <article id="alignment" data-category="alignment" data-search="platform alignment quiz diagnostic alignment fit assessment" class="library-card showcase-card rounded-3xl p-8">
+                    <div class="font-mono-tech text-[10px] text-amber-400 uppercase tracking-[0.2em] mb-3">Alignment</div>
+                    <h3 class="font-cinzel text-2xl text-white mb-4">Platform Alignment Quiz</h3>
+                    <p class="text-sm text-gray-400 leading-relaxed mb-6">Placeholder interactive checkpoint for determining fit, sequencing, and the strongest next operational move.</p>
+                    <a href="/align.html" class="text-[10px] font-mono-tech uppercase text-amber-300 flex items-center gap-2">Open Quiz <i class="ph-bold ph-arrow-right"></i></a>
+                </article>
+                <article id="dispatches" data-category="dispatches" data-search="blog dispatches newsletter articles essays resources content strategy visibility social media climate clean energy" class="library-card showcase-card rounded-3xl p-8">
+                    <div class="font-mono-tech text-[10px] text-fuchsia-400 uppercase tracking-[0.2em] mb-3">Dispatches</div>
+                    <h3 class="font-cinzel text-2xl text-white mb-4">Blog / Dispatches</h3>
+                    <p class="text-sm text-gray-400 leading-relaxed mb-6">
+                        Essays, field notes, and deeper strategy writing from The Algorithm Witch archive.
+                    </p>
+                    <a href="/blog/" class="text-[10px] font-mono-tech uppercase text-fuchsia-300 flex items-center gap-2">
+                        Read Dispatches <i class="ph-bold ph-arrow-right"></i>
+                    </a>
+                </article>
+                <article data-category="strategy" data-search="messaging positioning offer strategy resource placeholder" class="library-card sidebar-module rounded-3xl p-8">
+                    <div class="font-mono-tech text-[10px] text-fuchsia-400 uppercase tracking-[0.2em] mb-3">Strategy</div>
+                    <h3 class="font-cinzel text-2xl text-white mb-4">Offer Positioning Workbook</h3>
+                    <p class="text-sm text-gray-400 leading-relaxed mb-6">Placeholder workbook slot for sharpening offer framing, message hierarchy, and decision clarity.</p>
+                    <span class="text-[10px] font-mono-tech uppercase text-gray-500">Placeholder Entry</span>
+                </article>
+                <article data-category="instrumentation" data-search="analytics audit measurement diagnostics utilities resource placeholder" class="library-card sidebar-module rounded-3xl p-8">
+                    <div class="font-mono-tech text-[10px] text-cyan-400 uppercase tracking-[0.2em] mb-3">Instrumentation</div>
+                    <h3 class="font-cinzel text-2xl text-white mb-4">Measurement Audit Checklist</h3>
+                    <p class="text-sm text-gray-400 leading-relaxed mb-6">Placeholder checklist slot for analytics QA, event coverage checks, and reporting sanity reviews.</p>
+                    <span class="text-[10px] font-mono-tech uppercase text-gray-500">Placeholder Entry</span>
+                </article>
+                <article data-category="utilities" data-search="resource map templates utilities archive planning placeholder" class="library-card sidebar-module rounded-3xl p-8">
+                    <div class="font-mono-tech text-[10px] text-purple-400 uppercase tracking-[0.2em] mb-3">Utilities</div>
+                    <h3 class="font-cinzel text-2xl text-white mb-4">Resource Mapping Template</h3>
+                    <p class="text-sm text-gray-400 leading-relaxed mb-6">Placeholder template slot for planning stacks, documenting workflows, and organizing future library entries.</p>
+                    <span class="text-[10px] font-mono-tech uppercase text-gray-500">Placeholder Entry</span>
+                </article>
+            </div>
 
-        const publishedRecordJobs = state.jobRecords
-          .filter(isPublishedRecord)
-          .map(resolveDisplayJob)
-          .filter(Boolean);
+            <div id="library-empty" class="hidden glass-panel rounded-3xl p-12 text-center mt-8">
+                <h3 class="font-cinzel text-3xl text-white mb-4">No matching resources</h3>
+                <p class="text-gray-400 max-w-xl mx-auto text-sm leading-relaxed">Try a broader search term or switch back to the full collection filter.</p>
+            </div>
+        </section>
+    </main>
 
-        state.jobs = (Array.isArray(jobRecords) ? publishedRecordJobs : jobs)
-          .sort((a, b) => {
-            const orderDelta = Number(a.display_order || 0) - Number(b.display_order || 0);
-            if (orderDelta !== 0) return orderDelta;
-            return new Date(b.date_posted) - new Date(a.date_posted);
-          });
-        state.jobPagePaths = buildJobPathMap(state.jobs);
-        renderFilters();
-        renderJobs();
-        renderProfiles();
-        renderEmployers();
-      } catch (error) {
-        console.error(error);
-        ui.statCount.textContent = "Unable to load roles";
-        ui.statStatus.textContent = "Check jobs.json";
-        ui.statUpdated.textContent = "Static board offline";
-        renderState("The board is having trouble loading roles right now.");
-        renderProfiles();
-        renderEmployers();
-      }
-    }
+    <footer class="border-t border-white/5 bg-[#02000a] py-12" vid="84">
+        <div class="max-w-[1600px] mx-auto px-6 flex flex-col md:flex-row justify-between items-center gap-6" vid="85">
+            <div class="flex items-center gap-2 text-gray-500" vid="86">
+                <i class="ph-fill ph-sparkle text-purple-900" vid="87"></i>
+                <span class="font-cinzel text-sm" vid="88">The Algorithm Witch • Resources</span>
+            </div>
+            <div class="flex gap-8 font-mono-tech text-[10px] uppercase tracking-widest text-gray-600" vid="89">
+                <a href="#featured" class="hover:text-purple-400" vid="90">Featured</a>
+                <a href="#library-search" class="hover:text-purple-400" vid="91">Library</a>
+                <a href="/align.html" class="hover:text-purple-400" vid="92">Alignment Quiz</a>
+            </div>
+            <div class="font-mono-tech text-[10px] text-gray-600 uppercase" vid="93">
+                © 2024 • Crafted in the Ether
+            </div>
+        </div>
+    </footer>
 
-    ui.searchInput.addEventListener("input", (event) => {
-      state.search = event.target.value.trim().toLowerCase();
-      state.visibleCount = 9;
-      trackUiEvent({
-        type: TRACKING_TYPES.filterInteraction,
-        target: "search",
-        value: state.search
-      });
-      renderJobs();
-    });
-
-    ui.quickFilters.forEach((chip) => {
-      chip.addEventListener("click", () => {
-        const value = chip.dataset.quickFilter.toLowerCase();
-        if (state.quickFilters.has(value)) {
-          state.quickFilters.delete(value);
-          chip.classList.remove("active");
-        } else {
-          state.quickFilters.add(value);
-          chip.classList.add("active");
+    <script vid="94">
+        const starContainer = document.getElementById('stars-container');
+        for (let i = 0; i < 150; i++) {
+            const star = document.createElement('div');
+            star.classList.add('star');
+            star.style.left = `${Math.random() * 100}%`;
+            star.style.top = `${Math.random() * 100}%`;
+            const size = Math.random() * 1.5 + 0.5;
+            star.style.width = `${size}px`;
+            star.style.height = `${size}px`;
+            star.style.setProperty('--twinkle-dur', `${2 + Math.random() * 4}s`);
+            star.style.setProperty('--base-opacity', `${0.1 + Math.random() * 0.4}`);
+            starContainer.appendChild(star);
         }
-        state.visibleCount = 9;
-        trackUiEvent({
-          type: TRACKING_TYPES.filterInteraction,
-          target: "quick_filter",
-          value
-        });
-        renderJobs();
-      });
-    });
 
-    document.getElementById("filters-grid").addEventListener("change", (event) => {
-      const input = event.target;
-      if (!(input instanceof HTMLInputElement)) return;
-      const groupKey = input.dataset.filterGroup;
-      const value = input.dataset.filterValue;
-      if (!groupKey || !value || !state.filters[groupKey]) return;
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('is-visible');
+                }
+            });
+        }, { threshold: 0.1 });
 
-      if (input.checked) state.filters[groupKey].add(value);
-      else state.filters[groupKey].delete(value);
-      trackUiEvent({
-        type: TRACKING_TYPES.filterInteraction,
-        target: groupKey,
-        value,
-        checked: input.checked
-      });
-    });
+        document.querySelectorAll('.fade-in-up').forEach(el => observer.observe(el));
 
-    document.getElementById("apply-filters").addEventListener("click", () => {
-      state.visibleCount = 9;
-      trackUiEvent({
-        type: TRACKING_TYPES.filterInteraction,
-        target: "apply_filters"
-      });
-      renderJobs();
-    });
+        const searchInput = document.getElementById('resource-search');
+        const filterButtons = document.querySelectorAll('.resource-filter');
+        const cards = document.querySelectorAll('.library-card');
+        const emptyState = document.getElementById('library-empty');
+        let activeFilter = 'all';
 
-    document.getElementById("clear-filters").addEventListener("click", () => {
-      trackUiEvent({
-        type: TRACKING_TYPES.filterInteraction,
-        target: "clear_filters"
-      });
-      resetFilters();
-    });
+        function renderLibrary() {
+            const query = (searchInput?.value || '').trim().toLowerCase();
+            let visibleCount = 0;
 
-    ui.activeTagRow.addEventListener("click", (event) => {
-      const button = event.target.closest("button");
-      if (!button) return;
+            cards.forEach((card) => {
+                const category = card.dataset.category || '';
+                const searchable = card.dataset.search || '';
+                const matchesFilter = activeFilter === 'all' || category === activeFilter;
+                const matchesQuery = !query || searchable.includes(query);
+                const visible = matchesFilter && matchesQuery;
+                card.classList.toggle('hidden', !visible);
+                if (visible) visibleCount += 1;
+            });
 
-      if (button.dataset.clearSearch) {
-        state.search = "";
-        ui.searchInput.value = "";
-        trackUiEvent({
-          type: TRACKING_TYPES.filterInteraction,
-          target: "clear_search"
-        });
-      }
-
-      const kind = button.dataset.removeKind;
-      const value = button.dataset.removeFilter;
-
-      if (kind === "quick" && value) {
-        state.quickFilters.delete(value);
-        ui.quickFilters.forEach((chip) => {
-          if (chip.dataset.quickFilter.toLowerCase() === value) chip.classList.remove("active");
-        });
-        trackUiEvent({
-          type: TRACKING_TYPES.filterInteraction,
-          target: "remove_quick_filter",
-          value
-        });
-      }
-
-      if (kind && kind !== "quick" && value && state.filters[kind]) {
-        state.filters[kind].delete(value);
-        trackUiEvent({
-          type: TRACKING_TYPES.filterInteraction,
-          target: `remove_${kind}`,
-          value
-        });
-        renderFilters();
-      }
-
-      renderJobs();
-    });
-
-    ui.loadMoreButton.addEventListener("click", () => {
-      state.visibleCount += 9;
-      renderJobs();
-    });
-
-    ui.jobsGrid.addEventListener("click", (event) => {
-      const card = event.target.closest("[data-job-card]");
-      if (!card) return;
-      trackUiEvent({
-        type: TRACKING_TYPES.jobClick,
-        job_id: card.dataset.jobId,
-        title: card.dataset.jobTitle,
-        organization: card.dataset.jobOrganization,
-        source: card.dataset.jobSource
-      });
-    });
-
-    ui.profilesGrid.addEventListener("click", (event) => {
-      const target = event.target.closest("[data-talent-click]");
-      if (target) {
-        trackUiEvent({
-          type: TRACKING_TYPES.talentClick,
-          interaction: target.dataset.talentClick,
-          profile_id: target.dataset.profileId,
-          name: target.dataset.profileName
-        });
-      }
-      const button = event.target.closest("[data-profile-action]");
-      if (!button) return;
-      openProfileModal(button.dataset.profileAction);
-    });
-
-    document.querySelector('a[href="./talent-apply.html"]').addEventListener("click", () => {
-      trackUiEvent({
-        type: TRACKING_TYPES.ctaClick,
-        target: "create_profile"
-      });
-    });
-
-    ui.closeProfileModal.addEventListener("click", closeProfileModal);
-    ui.profileModal.addEventListener("click", (event) => {
-      if (event.target === ui.profileModal) closeProfileModal();
-    });
-
-    const mobileNavMediaQuery = window.matchMedia("(max-width: 800px)");
-
-    function setMobileNavCollapsed(collapsed) {
-      const shouldCollapse = mobileNavMediaQuery.matches && collapsed;
-      ui.siteNav.classList.toggle("nav-collapsed", shouldCollapse);
-      ui.mobileNavHandle.setAttribute("aria-expanded", shouldCollapse ? "false" : "true");
-      ui.mobileNavHandle.setAttribute("aria-label", shouldCollapse ? "Open menu" : "Close menu");
-    }
-
-    ui.mobileNavHandle.addEventListener("click", () => {
-      if (!mobileNavMediaQuery.matches) return;
-      setMobileNavCollapsed(!ui.siteNav.classList.contains("nav-collapsed"));
-    });
-
-    mobileNavMediaQuery.addEventListener("change", (event) => {
-      if (!event.matches) {
-        setMobileNavCollapsed(false);
-      }
-    });
-
-    const sections = document.querySelectorAll("section");
-    const navLinks = document.querySelectorAll(".nav-link");
-
-    window.addEventListener("scroll", () => {
-      let current = "";
-      sections.forEach((section) => {
-        const sectionTop = section.offsetTop;
-        if (window.scrollY >= sectionTop - 200) current = section.getAttribute("id");
-      });
-
-      navLinks.forEach((link) => {
-        const href = link.getAttribute("href") || "";
-        if (!href.startsWith("#")) return;
-        link.classList.toggle("active", href.includes(current));
-      });
-    });
-
-    navLinks.forEach((link) => {
-      link.addEventListener("click", () => {
-        if (mobileNavMediaQuery.matches) {
-          setMobileNavCollapsed(true);
+            emptyState.classList.toggle('hidden', visibleCount > 0);
         }
-      });
-    });
 
-    loadJobs();
-  </script>
-</body>
-</html>
+        filterButtons.forEach((button) => {
+            button.addEventListener('click', () => {
+                activeFilter = button.dataset.filter || 'all';
+                filterButtons.forEach((item) => {
+                    item.classList.toggle('is-active', item === button);
+                    item.classList.toggle('text-gray-300', item !== button);
+                });
+                renderLibrary();
+            });
+        });
+
+        searchInput?.addEventListener('input', renderLibrary);
+        renderLibrary();
+    </script>
+
+
+</body></html>

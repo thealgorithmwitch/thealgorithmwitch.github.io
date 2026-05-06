@@ -384,6 +384,49 @@
       margin-bottom: 32px;
     }
 
+    .companies-hiring-panel {
+      border: 1px solid var(--border-divider);
+      background: linear-gradient(135deg, rgba(26, 20, 41, 0.78), rgba(13, 38, 26, 0.88));
+      padding: 24px 28px;
+      margin-bottom: 28px;
+      display: grid;
+      gap: 14px;
+    }
+
+    .companies-hiring-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+
+    .companies-hiring-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    .company-filter-button {
+      border: 1px solid var(--border-divider);
+      background: rgba(10, 31, 21, 0.6);
+      color: var(--ink-primary);
+      padding: 9px 14px;
+      font-family: var(--font-mono);
+      font-size: 0.72rem;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      cursor: pointer;
+      transition: var(--transition);
+    }
+
+    .company-filter-button:hover,
+    .company-filter-button.active {
+      border-color: var(--accent-chartreuse);
+      color: var(--accent-chartreuse);
+      box-shadow: 0 0 0 1px rgba(168, 255, 62, 0.18) inset;
+    }
+
     .filters-grid {
       display: grid;
       grid-template-columns: repeat(4, minmax(0, 1fr));
@@ -1200,8 +1243,8 @@
             <div class="filter-list" id="filter-salary"></div>
           </div>
           <div>
-            <span class="mini-filter-label">Source</span>
-            <div class="filter-list" id="filter-source"></div>
+            <span class="mini-filter-label">Company</span>
+            <div class="filter-list" id="filter-company"></div>
           </div>
         </div>
 
@@ -1211,6 +1254,18 @@
             <button id="clear-filters" class="btn-secondary" type="button">Clear All</button>
             <button id="apply-filters" class="btn-primary" type="button">Apply Filters</button>
           </div>
+        </div>
+      </div>
+
+      <div class="companies-hiring-panel" id="companies-hiring-panel">
+        <div class="companies-hiring-header">
+          <div>
+            <div style="font-family: var(--font-mono); font-size: 0.72rem; color: var(--accent-chartreuse); text-transform: uppercase; letter-spacing: 0.05em;">Companies Hiring</div>
+            <div style="color: var(--ink-secondary); margin-top: 6px;">Companies with multiple active roles on the board right now.</div>
+          </div>
+        </div>
+        <div class="companies-hiring-list" id="companies-hiring-list">
+          <div style="color: var(--ink-secondary);">Loading companies…</div>
         </div>
       </div>
 
@@ -1288,7 +1343,7 @@
           <div class="action-card">
             <div style="font-family: var(--font-mono); font-size: 0.75rem; color: var(--accent-lavender); text-transform: uppercase;">Job Seeker Note</div>
             <h3 style="font-family: var(--font-serif); font-size: 2rem; margin-top: 12px;">Search with less noise</h3>
-            <p>Use the filters to narrow by work mode, sector, job type, and source. New roles are reviewed regularly so the board stays relevant without turning into a generic job dump.</p>
+            <p>Use the filters to narrow by work mode, company, sector, and job type. New roles are reviewed regularly so the board stays relevant without turning into a generic job dump.</p>
             <a href="#classifieds" class="btn-secondary">Browse Current Roles</a>
           </div>
         </div>
@@ -1344,7 +1399,7 @@
         sector: new Set(),
         specialization: new Set(),
         salary: new Set(),
-        source: new Set()
+        company: new Set()
       }
     };
 
@@ -1398,6 +1453,7 @@
       gridSummary: document.getElementById("grid-summary"),
       filterMatchCount: document.getElementById("filter-match-count"),
       activeTagRow: document.getElementById("active-tag-row"),
+      companiesHiringList: document.getElementById("companies-hiring-list"),
       profilesGrid: document.getElementById("profiles-grid"),
       employersList: document.getElementById("employers-list"),
       profileModal: document.getElementById("profile-modal"),
@@ -1422,9 +1478,41 @@
         sector: document.getElementById("filter-sector"),
         specialization: document.getElementById("filter-specialization"),
         salary: document.getElementById("filter-salary"),
-        source: document.getElementById("filter-source")
+        company: document.getElementById("filter-company")
       }
     };
+
+    function getSelectedCompanyFilter() {
+      const values = Array.from(state.filters.company || []);
+      return values[0] || "";
+    }
+
+    function setSelectedCompanyFilter(company) {
+      state.filters.company.clear();
+      if (company) state.filters.company.add(company);
+    }
+
+    function syncCompanyFilterFromUrl() {
+      try {
+        const url = new URL(window.location.href);
+        const company = String(url.searchParams.get("company") || "").trim();
+        if (company) setSelectedCompanyFilter(company);
+      } catch (_error) {
+        // Ignore malformed URL state.
+      }
+    }
+
+    function updateCompanyFilterUrlState() {
+      try {
+        const url = new URL(window.location.href);
+        const company = getSelectedCompanyFilter();
+        if (company) url.searchParams.set("company", company);
+        else url.searchParams.delete("company");
+        window.history.replaceState({}, "", url.toString());
+      } catch (_error) {
+        // Ignore URL update failures.
+      }
+    }
 
     function formatDate(value) {
       if (!value) return "Posted recently";
@@ -1689,12 +1777,12 @@
       for (const quickFilter of state.quickFilters) {
         if (!haystack.includes(quickFilter)) return false;
       }
+      if (state.filters.company.size && !state.filters.company.has(String(job.organization || "").trim())) return false;
       if (state.filters.location.size && !state.filters.location.has(getWorkMode(job))) return false;
       if (state.filters.jobType.size && !state.filters.jobType.has(job.job_type)) return false;
       if (state.filters.sector.size && !state.filters.sector.has(job.sector)) return false;
       if (state.filters.specialization.size && !state.filters.specialization.has(inferSpecialization(job))) return false;
       if (!matchesSalaryFilter(job)) return false;
-      if (state.filters.source.size && !state.filters.source.has(job.source)) return false;
 
       return true;
     }
@@ -1725,7 +1813,7 @@
         sector: [...new Set(activeJobs.map((job) => job.sector).filter(Boolean))],
         specialization: SPECIALIZATION_OPTIONS.filter((value) => activeJobs.some((job) => inferSpecialization(job) === value)),
         salary: SALARY_FILTER_OPTIONS,
-        source: [...new Set(activeJobs.map((job) => job.source).filter(Boolean))]
+        company: [...new Set(activeJobs.map((job) => String(job.organization || "").trim()).filter(Boolean))]
       };
 
       Object.entries(optionMap).forEach(([groupKey, values]) => {
@@ -1757,6 +1845,33 @@
         pills
           .map((pill) => `<button class="tag-pill active" type="button" data-remove-filter="${escapeHtml(pill.value)}" data-remove-kind="${escapeHtml(pill.kind)}">${escapeHtml(pill.value)}</button>`)
           .join("");
+    }
+
+    function renderCompaniesHiring() {
+      const activeJobs = state.jobs.filter((job) => ["active", "approved", "published"].includes(String(job.status || "").toLowerCase()));
+      const companyCounts = new Map();
+
+      activeJobs.forEach((job) => {
+        const organization = cleanVisibleText(job.organization || "");
+        if (!organization) return;
+        companyCounts.set(organization, (companyCounts.get(organization) || 0) + 1);
+      });
+
+      const featuredCompanies = Array.from(companyCounts.entries())
+        .filter(([, count]) => count >= 2)
+        .sort((left, right) => right[1] - left[1] || left[0].localeCompare(right[0]));
+
+      if (!featuredCompanies.length) {
+        ui.companiesHiringList.innerHTML = `<div style="color: var(--ink-secondary);">No repeat employers on the board yet.</div>`;
+        return;
+      }
+
+      ui.companiesHiringList.innerHTML = featuredCompanies
+        .map(([company, count]) => {
+          const activeClass = getSelectedCompanyFilter() === company ? " active" : "";
+          return `<button class="company-filter-button${activeClass}" type="button" data-company-filter="${escapeHtml(company)}">${escapeHtml(company)} <span style="opacity:0.7;">(${count})</span></button>`;
+        })
+        .join("");
     }
 
     function renderProfiles() {
@@ -2096,6 +2211,7 @@
       ui.statCount.textContent = "Curated climate and sustainability roles";
       ui.statStatus.textContent = "Updated as new roles are approved";
       ui.statUpdated.textContent = "Remote, hybrid, and mission-driven opportunities";
+      updateCompanyFilterUrlState();
       renderActiveTags();
 
       if (!state.filteredJobs.length) {
@@ -2189,6 +2305,7 @@
       Object.values(state.filters).forEach((set) => set.clear());
       ui.searchInput.value = "";
       ui.quickFilters.forEach((chip) => chip.classList.remove("active"));
+      renderCompaniesHiring();
       renderFilters();
       renderJobs();
     }
@@ -2222,6 +2339,8 @@
             return new Date(b.date_posted) - new Date(a.date_posted);
           });
         state.jobPagePaths = buildJobPathMap(state.jobs);
+        syncCompanyFilterFromUrl();
+        renderCompaniesHiring();
         renderFilters();
         renderJobs();
         renderProfiles();
@@ -2331,6 +2450,16 @@
         });
       }
 
+      if (kind === "company") {
+        setSelectedCompanyFilter("");
+        renderCompaniesHiring();
+        trackUiEvent({
+          type: TRACKING_TYPES.filterInteraction,
+          target: "remove_company",
+          value
+        });
+      }
+
       if (kind && kind !== "quick" && value && state.filters[kind]) {
         state.filters[kind].delete(value);
         trackUiEvent({
@@ -2346,6 +2475,23 @@
 
     ui.loadMoreButton.addEventListener("click", () => {
       state.visibleCount += 9;
+      renderJobs();
+    });
+
+    ui.companiesHiringList.addEventListener("click", (event) => {
+      const button = event.target.closest("[data-company-filter]");
+      if (!button) return;
+      const company = String(button.dataset.companyFilter || "").trim();
+      if (!company) return;
+      state.visibleCount = 9;
+      setSelectedCompanyFilter(getSelectedCompanyFilter() === company ? "" : company);
+      renderFilters();
+      renderCompaniesHiring();
+      trackUiEvent({
+        type: TRACKING_TYPES.filterInteraction,
+        target: "company_filter",
+        value: company
+      });
       renderJobs();
     });
 

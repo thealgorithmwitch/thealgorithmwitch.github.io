@@ -79,6 +79,29 @@ const normalizedArevonJob = normalizeJob({
 });
 assert.ok(/^Senior Analyst/.test(normalizedArevonJob.title));
 
+const counselRemoteJob = normalizeJob({
+  title: "Counsel Remote",
+  organization: "Arevon Energy",
+  location: "Hybrid / Anywhere"
+});
+assert.strictEqual(counselRemoteJob.title, "Counsel");
+assert.strictEqual(counselRemoteJob.workplace_type, "Remote");
+
+const solarRemoteSuffixJob = normalizeJob({
+  title: "Solar Field Technician – Rosamond, CA Remote",
+  organization: "Arevon Energy",
+  location: "Rosamond, CA"
+});
+assert.strictEqual(solarRemoteSuffixJob.title, "Solar Field Technician");
+assert.strictEqual(solarRemoteSuffixJob.workplace_type, "Remote");
+
+const headlinePollutedTitleJob = normalizeJob({
+  title: "Pivoting Climate Job Linkedins Green Economy Lead",
+  organization: "Environmental Defense Fund"
+});
+assert.strictEqual(headlinePollutedTitleJob.title_confidence, "low");
+assert.ok(/headline_like_title/i.test(headlinePollutedTitleJob.parse_warning));
+
 const normalizedChevronJob = normalizeJob({
   title: "> What counts are the people at RWE >",
   organization: "RWE",
@@ -140,14 +163,28 @@ const elementalImpactJob = normalizeJob({
   source: "Custom Careers Page",
   source_url: "https://jobs.elementalimpact.com/jobs",
   title: "Senior Software Engineer",
-  organization: "Elemental Impact",
+  organization: "Resource Innovations",
   original_url: "https://apply.workable.com/resource-innovations/j/68FA4D2A36",
   raw_description: "Senior Software Engineer https://apply.workable.com/resource-innovations/j/68FA4D2A36 77070162 Shifted Energy other https://cdn.getro.com/company.png"
 });
 assert.strictEqual(elementalImpactJob.source, "Elemental Impact");
 assert.strictEqual(elementalImpactJob.source_url, "https://jobs.elementalimpact.com/jobs");
-assert.strictEqual(elementalImpactJob.organization, "Shifted Energy");
+assert.strictEqual(elementalImpactJob.organization, "Resource Innovations");
 assert.strictEqual(elementalImpactJob.parse_warning, "");
+
+const elementalImpactMismatchedBodyJob = normalizeJob({
+  id: "elemental-impact-95090d1a6bc6",
+  source_id: "elemental-impact",
+  source: "Custom Careers Page",
+  source_url: "https://jobs.elementalimpact.com/jobs",
+  title: "Software Engineer Lead",
+  organization: "Resource Innovations",
+  location: "US - Multiple locations",
+  original_url: "https://apply.workable.com/resource-innovations/j/DD39335D06",
+  raw_description: "Shifted Energy other 2 Business/Productivity Software shifted-energy Chicago, IL, USA locality POINT (-87.6297982 41.8781136)"
+});
+assert.strictEqual(elementalImpactMismatchedBodyJob.organization, "Resource Innovations");
+assert.strictEqual(elementalImpactMismatchedBodyJob.title, "Software Engineer Lead");
 
 const uncertainElementalImpactJob = normalizeJob({
   id: "elemental-impact-unknown",
@@ -183,6 +220,11 @@ const solarCanonicalPay = parseSalaryRange("$80,000.00 - $95,880.00 annual salar
 assert.strictEqual(solarCanonicalPay.salary_min, 80000);
 assert.strictEqual(solarCanonicalPay.salary_max, 95880);
 assert.strictEqual(solarCanonicalPay.salary_period, "year");
+
+const malformedPay = parseSalaryRange("41 147", "Remote");
+assert.strictEqual(malformedPay.salary, "");
+assert.strictEqual(malformedPay.salary_visible, false);
+assert.strictEqual(malformedPay.pay_parse_warning, "malformed_split_salary_fragment");
 
 const edpInterconnectionJunk = "Apr 29, 2026 Apr 29, 2026 Apr 29, 2026 Houston, TX Interconnection Analyst EDP";
 assert.strictEqual(hasUsableDescription(edpInterconnectionJunk, { title: "Interconnection Analyst", organization: "EDP" }), false);

@@ -482,12 +482,14 @@ function resolveBoardSourceAttribution(job = {}) {
 
   if (boardConfig.id === "climatechangejobs") {
     const applyUrl = extractClimateChangeJobsApplyUrl(job);
+    const boardUrl = cleanText(job.original_url || job.originalUrl || job.apply_url || job.applyUrl || job.source_url || job.sourceUrl || boardSourceUrl);
+    const chosenApplyUrl = applyUrl || boardUrl;
     const candidates = [
       extractOrganizationFromTitle(job.title),
       extractClimateChangeJobsOrganizationFromAltText(job),
       extractOrganizationFromEmbeddedFields(job),
-      extractOrganizationFromDescriptionMetadata(job),
-      extractOrganizationFromOriginalUrl(applyUrl || job.original_url || job.originalUrl || job.apply_url || job.applyUrl)
+      extractOrganizationFromOriginalUrl(chosenApplyUrl),
+      extractOrganizationFromDescriptionMetadata(job)
     ].filter(Boolean);
 
     const chosen = candidates.find((candidate) => candidate.confidence === "high") || candidates[0] || null;
@@ -497,11 +499,11 @@ function resolveBoardSourceAttribution(job = {}) {
     if (!organization || !looksLikeOrganization(organization) || isActualBoardOrg) {
       return {
         sourceName: boardConfig.name,
-        sourceUrl: boardSourceUrl,
+        sourceUrl: boardUrl || boardSourceUrl,
         organization: "Unknown organization",
         organizationConfidence: "low",
-        applyUrl,
-        originalUrl: applyUrl,
+        applyUrl: chosenApplyUrl,
+        originalUrl: chosenApplyUrl,
         parseWarning: "ClimateChangeJobs organization uncertain",
         triageBucket: "needs_cleanup",
         triageReason: "ClimateChangeJobs organization uncertain"
@@ -510,14 +512,14 @@ function resolveBoardSourceAttribution(job = {}) {
 
     return {
       sourceName: boardConfig.name,
-      sourceUrl: boardSourceUrl,
+      sourceUrl: boardUrl || boardSourceUrl,
       organization,
       organizationConfidence: chosen.confidence,
-      applyUrl,
-      originalUrl: applyUrl,
-      parseWarning: applyUrl ? "" : "ClimateChangeJobs apply URL missing",
-      triageBucket: applyUrl ? "" : "needs_cleanup",
-      triageReason: applyUrl ? "" : "ClimateChangeJobs apply URL missing"
+      applyUrl: chosenApplyUrl,
+      originalUrl: chosenApplyUrl,
+      parseWarning: applyUrl ? "" : "ClimateChangeJobs board listing URL only",
+      triageBucket: "",
+      triageReason: ""
     };
   }
 
@@ -565,19 +567,24 @@ function resolveBoardSourceAttribution(job = {}) {
   if (boardConfig.id === "elemental-impact") {
     const applyUrl = cleanText(job.apply_url || job.applyUrl || job.original_url || job.originalUrl || "");
     const targetedFervo = isTargetedElementalFervoJob(job);
+    const boardOrganization = cleanText(job.organization);
+    const boardOrganizationCandidate =
+      boardOrganization &&
+      looksLikeOrganization(boardOrganization) &&
+      normalizeText(boardOrganization) !== "elemental impact"
+        ? { organization: boardOrganization, confidence: "high", reason: "elemental_board_default" }
+        : null;
     const candidates = [
+      boardOrganizationCandidate,
       targetedFervo ? { organization: "Fervo Energy", confidence: "high", reason: "elemental_targeted_fervo_fallback" } : null,
-      extractOrganizationFromTitle(job.title),
-      extractOrganizationFromTextHints(job, ELEMENTAL_ORGANIZATION_HINTS),
-      extractOrganizationFromEmbeddedFields(job),
-      extractOrganizationFromDescriptionMetadata(job),
       extractOrganizationFromOriginalUrl(applyUrl)
     ].filter(Boolean);
     const chosen = candidates.find((candidate) => candidate.confidence === "high") || candidates[0] || null;
     const organization = cleanText(chosen && chosen.organization);
+    const boardTitle = cleanText(job.title);
     const repairedTitle = targetedFervo && normalizeText(job.title) === "manager"
       ? "Manager, Market & Asset Operations"
-      : extractFullerTitleFromText(job);
+      : (isGenericBoardTitle(boardTitle) ? extractFullerTitleFromText(job) : "");
 
     if (!organization || !looksLikeOrganization(organization) || normalizeText(organization) === "elemental impact") {
       return {
@@ -599,7 +606,7 @@ function resolveBoardSourceAttribution(job = {}) {
       sourceUrl: boardSourceUrl,
       organization,
       organizationConfidence: chosen.confidence,
-      title: repairedTitle,
+      title: repairedTitle || boardTitle,
       applyUrl,
       originalUrl: applyUrl,
       parseWarning: "",

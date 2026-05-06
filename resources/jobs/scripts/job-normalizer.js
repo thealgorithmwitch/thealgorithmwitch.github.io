@@ -212,7 +212,14 @@ const CLOSED_JOB_PATTERNS = [
 ];
 const BLOCKED_ORGANIZATIONS = [
   "superside",
-  "cribl"
+  "cribl",
+  "stackblitz",
+  "teramind",
+  "marcus millichap",
+  "marcus & millichap",
+  "dataiku",
+  "spring health",
+  "plos"
 ];
 const PARSER_CLEANUP_STATS = {
   title: 0,
@@ -226,10 +233,12 @@ const PARSER_CLEANUP_STATS = {
   html_fragment_stripped: 0,
   salary_invalid_removed: 0,
   salary_display_built_from_range: 0,
+  salary_parse_warning: 0,
   workplace_type_cleaned: 0,
   workplace_type_invalid_removed: 0,
   workplace_type_field_misplacement_repaired: 0,
-  elemental_impact_routed_pending: 0
+  elemental_impact_routed_pending: 0,
+  low_confidence_title: 0
 };
 
 function slugify(value) {
@@ -252,10 +261,12 @@ function resetParserCleanupStats() {
   PARSER_CLEANUP_STATS.html_fragment_stripped = 0;
   PARSER_CLEANUP_STATS.salary_invalid_removed = 0;
   PARSER_CLEANUP_STATS.salary_display_built_from_range = 0;
+  PARSER_CLEANUP_STATS.salary_parse_warning = 0;
   PARSER_CLEANUP_STATS.workplace_type_cleaned = 0;
   PARSER_CLEANUP_STATS.workplace_type_invalid_removed = 0;
   PARSER_CLEANUP_STATS.workplace_type_field_misplacement_repaired = 0;
   PARSER_CLEANUP_STATS.elemental_impact_routed_pending = 0;
+  PARSER_CLEANUP_STATS.low_confidence_title = 0;
 }
 
 function getParserCleanupStats() {
@@ -271,10 +282,12 @@ function getParserCleanupStats() {
     parser_html_fragment_stripped_count: PARSER_CLEANUP_STATS.html_fragment_stripped,
     salary_invalid_removed_count: PARSER_CLEANUP_STATS.salary_invalid_removed,
     salary_display_built_from_range_count: PARSER_CLEANUP_STATS.salary_display_built_from_range,
+    salary_parse_warning_count: PARSER_CLEANUP_STATS.salary_parse_warning,
     workplace_type_cleaned_count: PARSER_CLEANUP_STATS.workplace_type_cleaned,
     workplace_type_invalid_removed_count: PARSER_CLEANUP_STATS.workplace_type_invalid_removed,
     workplace_type_field_misplacement_repaired_count: PARSER_CLEANUP_STATS.workplace_type_field_misplacement_repaired,
-    elemental_impact_routed_pending_count: PARSER_CLEANUP_STATS.elemental_impact_routed_pending
+    elemental_impact_routed_pending_count: PARSER_CLEANUP_STATS.elemental_impact_routed_pending,
+    low_confidence_title_count: PARSER_CLEANUP_STATS.low_confidence_title
   };
 }
 
@@ -290,10 +303,12 @@ function incrementParserCleanupStat(field) {
   if (field === "html_fragment_stripped") PARSER_CLEANUP_STATS.html_fragment_stripped += 1;
   if (field === "salary_invalid_removed") PARSER_CLEANUP_STATS.salary_invalid_removed += 1;
   if (field === "salary_display_built_from_range") PARSER_CLEANUP_STATS.salary_display_built_from_range += 1;
+  if (field === "salary_parse_warning") PARSER_CLEANUP_STATS.salary_parse_warning += 1;
   if (field === "workplace_type_cleaned") PARSER_CLEANUP_STATS.workplace_type_cleaned += 1;
   if (field === "workplace_type_invalid_removed") PARSER_CLEANUP_STATS.workplace_type_invalid_removed += 1;
   if (field === "workplace_type_field_misplacement_repaired") PARSER_CLEANUP_STATS.workplace_type_field_misplacement_repaired += 1;
   if (field === "elemental_impact_routed_pending") PARSER_CLEANUP_STATS.elemental_impact_routed_pending += 1;
+  if (field === "low_confidence_title") PARSER_CLEANUP_STATS.low_confidence_title += 1;
 }
 
 function stableHash(value) {
@@ -483,6 +498,148 @@ function removeTitleOrganizationSuffix(title, organization) {
 
 function escapeRegExp(value) {
   return String(value || "").replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+function mergeWarnings(...warningSets) {
+  return Array.from(
+    new Set(
+      warningSets
+        .flat()
+        .map((warning) => normalizeWhitespace(String(warning || "")))
+        .filter(Boolean)
+    )
+  );
+}
+
+function titleCaseWorkplace(value) {
+  const normalized = normalizeLooseToken(value);
+  if (!normalized) return "";
+  if (normalized.includes("remote")) return "Remote";
+  if (normalized.includes("hybrid")) return "Hybrid";
+  if (normalized.includes("on site") || normalized.includes("onsite")) return "On-site";
+  return "";
+}
+
+function looksLikeLocationSuffix(value) {
+  const text = normalizeWhitespace(String(value || ""));
+  if (!text) return false;
+  if (/^(?:remote|hybrid|on[\s-]?site|anywhere|global|worldwide|multiple locations)$/i.test(text)) return true;
+  if (/^[A-Z][A-Za-z.' -]+,\s*[A-Z]{2,3}(?:\s+(?:Remote|Hybrid|On-site))?$/i.test(text)) return true;
+  if (/^[A-Z][A-Za-z.' -]+,\s*(?:United States|USA|Canada|UK|United Kingdom|Germany|France|Italy|Spain|Portugal|Netherlands|Ireland|Australia)$/i.test(text)) return true;
+  if (/^(?:new york|london|berlin|paris|madrid|dublin|chicago|remote within [a-z ]+|us - multiple locations)$/i.test(text)) return true;
+  return false;
+}
+
+function stripWorkplaceLocationSuffixFromTitle(value) {
+  const original = normalizeWhitespace(String(value || ""));
+  let text = original;
+  let workplaceType = "";
+  let location = "";
+  const warnings = [];
+  if (!text) return { title: "", workplaceType, location, warnings };
+
+  const parenMatch = text.match(/\s*\((Remote|Hybrid|On[\s-]?site)\)\s*$/i);
+  if (parenMatch) {
+    workplaceType = titleCaseWorkplace(parenMatch[1]);
+    text = normalizeWhitespace(text.replace(/\s*\((Remote|Hybrid|On[\s-]?site)\)\s*$/i, ""));
+    warnings.push("title_workplace_suffix_stripped");
+  }
+
+  const separatorMatch = text.match(/^(.*?)(?:\s+[—–-]\s+)([^—–-]+)$/);
+  if (separatorMatch) {
+    const left = normalizeWhitespace(separatorMatch[1]);
+    const right = normalizeWhitespace(separatorMatch[2]);
+    const rightWorkplace = titleCaseWorkplace(right);
+    if (rightWorkplace) {
+      workplaceType = workplaceType || rightWorkplace;
+      text = left;
+      warnings.push("title_workplace_suffix_stripped");
+    } else if (looksLikeLocationSuffix(right)) {
+      text = left;
+      warnings.push("title_location_suffix_stripped");
+      if (!rightWorkplace) {
+        const rightWorkplaceToken = right.match(/\b(Remote|Hybrid|On[\s-]?site)\b/i);
+        if (rightWorkplaceToken) workplaceType = workplaceType || titleCaseWorkplace(rightWorkplaceToken[1]);
+      }
+      location = normalizeWhitespace(right.replace(/\b(Remote|Hybrid|On[\s-]?site)\b/gi, " "));
+    }
+  }
+
+  const trailingMatch = text.match(/^(.*?)(?:\s+)(Remote|Hybrid|On[\s-]?site)$/i);
+  if (trailingMatch) {
+    const left = normalizeWhitespace(trailingMatch[1]);
+    if (left.split(/\s+/).filter(Boolean).length >= 1) {
+      workplaceType = workplaceType || titleCaseWorkplace(trailingMatch[2]);
+      text = left;
+      warnings.push("title_workplace_suffix_stripped");
+    }
+  }
+
+  const combinedLocationMatch = text.match(/^(.*?)(?:\s+[—–-]\s+)([A-Z][^,]{1,40},\s*[A-Z]{2,3})\s+(Remote|Hybrid|On[\s-]?site)$/i);
+  if (combinedLocationMatch) {
+    text = normalizeWhitespace(combinedLocationMatch[1]);
+    location = location || normalizeWhitespace(combinedLocationMatch[2]);
+    workplaceType = workplaceType || titleCaseWorkplace(combinedLocationMatch[3]);
+    warnings.push("title_location_suffix_stripped");
+    warnings.push("title_workplace_suffix_stripped");
+  }
+
+  return {
+    title: normalizeWhitespace(text),
+    workplaceType,
+    location,
+    warnings
+  };
+}
+
+function hasSentenceLikeVerbPattern(value) {
+  return /\b(?:can|will|would|should|could|starting|read|learn|work|build|share|pivoting|explains|announces|joined|starting with|interview|impact|stands on|learn from)\b/i.test(
+    String(value || "")
+  );
+}
+
+function looksLikeHeadlineContamination(value) {
+  const text = normalizeWhitespace(String(value || ""));
+  if (!text) return false;
+  if (/[!?]/.test(text) || /[A-Za-z]{3,}\.\s+[A-Z]/.test(text) || /\.\.\./.test(text)) return true;
+  if (/[“”"']/.test(text) && text.split(/\s+/).length > 8) return true;
+  if (/\b(?:linkedins?|article|interview|career questions|share their stories|click here|read my interview|want a .* career)\b/i.test(text)) return true;
+  if (hasSentenceLikeVerbPattern(text) && text.split(/\s+/).length > 8) return true;
+  return false;
+}
+
+function looksLikeConcatenatedTitle(value) {
+  const text = normalizeWhitespace(String(value || ""));
+  if (!text) return false;
+  if (/<div|href=|class=|aria-label=|https?:\/\//i.test(text)) return true;
+  if (/(?:Current Openings|Open Positions)/i.test(text)) return true;
+  if (countRegexMatches(text, /\b(?:Remote|Hybrid|On-site|Onsite)\b/gi) >= 2) return true;
+  if (countRegexMatches(text, /(?:[—–-]|,)\s*[A-Z][A-Za-z.' -]+,\s*[A-Z]{2,3}/g) >= 2) return true;
+  if (text.split(/\s+/).filter(Boolean).length > 14) return true;
+  return false;
+}
+
+function assessTitleQuality(value, options = {}) {
+  const text = normalizeWhitespace(String(value || ""));
+  const warnings = [];
+  if (!text) {
+    return { confidence: "low", warnings: ["missing_title"] };
+  }
+  if (looksLikeHeadlineContamination(text)) warnings.push("headline_like_title");
+  if (looksLikeConcatenatedTitle(text)) warnings.push("concatenated_title");
+  if (/\b(?:Remote|Hybrid|On-site|Onsite)\b$/.test(text)) warnings.push("workplace_suffix_in_title");
+  if (/\b(?:Jan|January|Feb|February|Mar|March|Apr|April|May|Jun|June|Jul|July|Aug|August|Sep|Sept|September|Oct|October|Nov|November|Dec|December)\b/i.test(text)) {
+    warnings.push("date_fragment_in_title");
+  }
+  if (text.split(/\s+/).filter(Boolean).length > 10) warnings.push("long_title");
+  if (/^(?:current openings|open positions|jobs?)$/i.test(text)) warnings.push("navigation_title");
+
+  if (warnings.some((warning) => ["headline_like_title", "concatenated_title", "navigation_title"].includes(warning))) {
+    return { confidence: "low", warnings };
+  }
+  if (warnings.length) return { confidence: "medium", warnings };
+  if (!hasRoleSignal(text)) return { confidence: "low", warnings: mergeWarnings(warnings, "missing_role_signal") };
+  return { confidence: "high", warnings };
 }
 
 function hasDescriptionVerbSignal(value) {
@@ -843,6 +1000,7 @@ function normalizeTitle(value, organization = "", options = {}) {
     .replace(/^[\/|>:\-.\s]+|[\/|>:\-.\s]+$/g, " ");
 
   text = removeTitleOrganizationSuffix(normalizeWhitespace(text), organization);
+  text = stripWorkplaceLocationSuffixFromTitle(text).title;
   const normalized = normalizeWhitespace(text);
   if (original && normalized && normalized !== original) {
     incrementParserCleanupStat("title");
@@ -1178,6 +1336,7 @@ function isInvalidPayDisplayText(value, options = {}) {
   const text = normalizeWhitespace(stringifySafe(value));
   if (!text) return true;
   if (/^(?:-|—|–|\$-|\$0|0|n\/a|na|not listed|not disclosed|undisclosed)$/i.test(text)) return true;
+  if (/\b\d{1,3}\s+\d{3}\b/.test(text) && !/[€$£]|usd|cad|eur|gbp|annual|year|month|hour|day|salary|compensation|pay/i.test(text)) return true;
   if (/^[£€$]?\d{1,3}(?:\.\d{1,2})?$/.test(text)) {
     const amount = Number(text.replace(/[^\d.]/g, ""));
     const period = String(options.period || "").toLowerCase();
@@ -1185,6 +1344,19 @@ function isInvalidPayDisplayText(value, options = {}) {
     if ((period === "hour" || period === "day") && amount <= 0) return true;
   }
   return false;
+}
+
+function detectMalformedPayText(value) {
+  const text = normalizeWhitespace(stringifySafe(value));
+  if (!text) return "";
+  if (/\b41\s+147\b/.test(text)) return "malformed_split_salary_fragment";
+  if (/\b\d{1,3}\s+\d{3}\b/.test(text) && !/[€$£]|usd|cad|eur|gbp/.test(text) && !/(?:range|salary|compensation|pay).*(?:-|–|—|to)/i.test(text)) {
+    return "malformed_split_salary_fragment";
+  }
+  if (/salary\s+0{2,}\s*-\s*\$\d/i.test(text) || /\$\d{1,3}\s+\d{3}\s*-\s*\$\d{1,3}\s+\d{3}/i.test(text)) {
+    return "malformed_salary_range";
+  }
+  return "";
 }
 
 function normalizePayDisplay(options = {}) {
@@ -1287,6 +1459,7 @@ function salaryCandidateToText(value) {
 function findBestSalaryMatch(text) {
   const cleaned = normalizeWhitespace(stripHtml(text));
   if (!cleaned) return "";
+  if (detectMalformedPayText(cleaned)) return cleaned;
 
   const matchers = [
     /(?:annual salary range is|salary range(?: for this position)? is|salary for this position is|compensation range:?|pay range:?|salary:?|compensation:?|pay:?|wage:?|rate:?)[^.]{0,160}(?:USD|CAD|EUR|GBP|US\$|CA\$|[$€£])\s*\d[\d,]*(?:\.\d+)?\s*[kKmM]?(?:\s*(?:-|–|—|to)\s*(?:USD|CAD|EUR|GBP|US\$|CA\$|[$€£])?\s*\d[\d,]*(?:\.\d+)?\s*[kKmM]?)?(?:\s*(?:hourly|daily|monthly|annual|annually|per hour|per day|per month|per year|\/hr|\/hour|\/day|\/month|\/mo|\/year|\/yr))?/i,
@@ -1359,6 +1532,7 @@ function parseSalaryRange(salary, location) {
   const salaryText = rawSalary.trim();
   const salaryCurrency = salaryText ? detectSalaryCurrency(salaryText, location) : "Unknown";
   const salaryPeriod = salaryText ? detectSalaryPeriod(salaryText) : "Unknown";
+  const malformedReason = detectMalformedPayText(salaryText);
   const empty = {
     raw_salary: rawSalary,
     salary: "",
@@ -1366,10 +1540,16 @@ function parseSalaryRange(salary, location) {
     salary_max: null,
     salary_currency: salaryCurrency,
     salary_period: salaryPeriod,
-    salary_visible: false
+    salary_visible: false,
+    pay_parse_warning: malformedReason
   };
 
   if (!salaryText) return empty;
+  if (malformedReason) {
+    incrementParserCleanupStat("salary_parse_warning");
+    incrementParserCleanupStat("salary_invalid_removed");
+    return empty;
+  }
 
   if (/\b(?:salary not listed|compensation not listed|pay not listed|salary unavailable|compensation unavailable|not disclosed|undisclosed)\b/i.test(salaryText)) {
     return empty;
@@ -1378,7 +1558,8 @@ function parseSalaryRange(salary, location) {
     return {
       ...empty,
       salary: salaryText,
-      salary_visible: true
+      salary_visible: true,
+      pay_parse_warning: ""
     };
   }
 
@@ -1953,12 +2134,13 @@ function normalizeJob(input = {}) {
   const parserOptions = buildParserSourceOptions({ ...input, ...sourceAttribution });
   const organization = normalizeOrganizationWithOptions(sourceAttribution?.organization || input.organization, parserOptions);
   const attributedTitle = safeStringField(sourceAttribution?.title);
-  const title = normalizeTitle(attributedTitle || input.title, organization, { ...parserOptions, organization });
+  const titleCleanup = stripWorkplaceLocationSuffixFromTitle(attributedTitle || input.title);
+  const title = normalizeTitle(titleCleanup.title || attributedTitle || input.title, organization, { ...parserOptions, organization });
   const applyUrl = sanitizeRoleUrl(safeStringField(sourceAttribution?.applyUrl || input.apply_url || input.applyUrl));
   const originalUrl = sanitizeRoleUrl(safeStringField(sourceAttribution?.originalUrl || input.original_url || input.originalUrl || applyUrl || input.source_url || input.sourceUrl));
   const sourceUrl = sanitizeRoleUrl(safeStringField(sourceAttribution?.sourceUrl || input.source_url || input.sourceUrl));
-  const inferredWorkplaceType = normalizeWorkplaceType(input.workplace_type || input.workplaceType) || resolveWorkplaceType(input);
-  const location = normalizeLocationDisplay({ ...input, organization }, inferredWorkplaceType);
+  const inferredWorkplaceType = normalizeWorkplaceType(input.workplace_type || input.workplaceType) || titleCleanup.workplaceType || resolveWorkplaceType(input);
+  const location = normalizeLocationDisplay({ ...input, organization, location: titleCleanup.location || input.location }, inferredWorkplaceType);
   const salaryText = extractSalaryText(input);
   const salaryShape = parseSalaryRange(salaryText, location);
   const explicitCurrency = safeStringField(input.salary_currency || input.salaryCurrency);
@@ -1991,15 +2173,27 @@ function normalizeJob(input = {}) {
     organization,
     location
   });
+  const titleQuality = assessTitleQuality(title, { ...input, organization, location });
   const invalidTitle = title ? isClearlyNotJobTitle(title, { ...input, organization, location }) : true;
   const rejectRule = sourceRuleMatch?.reason || (invalidTitle ? "semantic_title_rule:invalid_job_title_pattern" : "");
   const rejectReason = rejectRule ? "invalid_job_title_pattern" : "";
   const inheritedTriageBucket = safeStringField(input.triage_bucket || input.triageBucket);
   const inheritedTriageReason = safeStringField(input.triage_reason || input.triageReason);
-  const parseWarning = safeStringField(sourceAttribution?.parseWarning || input.parse_warning || input.parseWarning);
-  const triageBucket = safeStringField(sourceAttribution?.triageBucket || inheritedTriageBucket);
-  const triageReason = safeStringField(sourceAttribution?.triageReason || inheritedTriageReason);
+  const combinedWarnings = mergeWarnings(
+    sourceAttribution?.parseWarning,
+    input.parse_warning || input.parseWarning,
+    salaryShape.pay_parse_warning,
+    titleCleanup.warnings,
+    titleQuality.warnings
+  );
+  const parseWarning = combinedWarnings.join("; ");
+  const inheritedBucket = safeStringField(sourceAttribution?.triageBucket || inheritedTriageBucket);
+  const inheritedReason = safeStringField(sourceAttribution?.triageReason || inheritedTriageReason);
+  const titleNeedsCleanup = titleQuality.confidence === "low" || titleQuality.warnings.includes("workplace_suffix_in_title");
+  const triageBucket = inheritedBucket || (titleNeedsCleanup ? "needs_cleanup" : "");
+  const triageReason = inheritedReason || (titleQuality.confidence === "low" ? "low-confidence title parse" : "");
   const specializationShape = normalizeSpecializationDetailed(input.specialization || input.display?.specialization, input);
+  if (titleQuality.confidence === "low") incrementParserCleanupStat("low_confidence_title");
 
   return {
     id,
@@ -2019,6 +2213,7 @@ function normalizeJob(input = {}) {
     salary_currency: VALID_CURRENCIES.has(explicitCurrency) ? explicitCurrency : salaryShape.salary_currency,
     salary_period: VALID_PERIODS.has(explicitPeriod) ? explicitPeriod : salaryShape.salary_period,
     salary_visible: resolvedSalaryVisible,
+    pay_parse_warning: safeStringField(input.pay_parse_warning || input.payParseWarning || salaryShape.pay_parse_warning),
     featured: Boolean(input.featured),
     sector: normalizeSector(input.sector || "general"),
     function: safeStringField(input.function || input.role_function),
@@ -2043,6 +2238,7 @@ function normalizeJob(input = {}) {
     triage_bucket: triageBucket,
     triage_reason: triageReason,
     parse_warning: parseWarning,
+    title_confidence: titleQuality.confidence,
     _reject_reason: rejectReason,
     _quality: rejectReason
       ? {
@@ -2204,6 +2400,10 @@ function routeSyncedJob(job, source) {
     /elemental impact/i.test(String(routed.source || ""));
   if (elementalImpactSource) {
     incrementParserCleanupStat("elemental_impact_routed_pending");
+    return normalizeJob({ ...routed, trusted: false, auto_publish: false, status: "pending" });
+  }
+
+  if (String(routed.title_confidence || "").toLowerCase() === "low") {
     return normalizeJob({ ...routed, trusted: false, auto_publish: false, status: "pending" });
   }
 

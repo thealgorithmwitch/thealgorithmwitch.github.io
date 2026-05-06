@@ -248,10 +248,15 @@ async function scrapeSourceWithDiscovery(source) {
   const dedupedJobs = [];
   const seen = new Set();
   for (const job of allJobs) {
-    const key = `${String(job.title || "").toLowerCase()}::${String(job.apply_url || "").toLowerCase()}`;
-    if (!job?.title || !job?.organization || !job?.apply_url || seen.has(key)) continue;
+    const fallbackUrl = String(job.apply_url || job.original_url || job.source_url || source.source_url || "").toLowerCase();
+    const key = `${String(job.title || "").toLowerCase()}::${fallbackUrl}`;
+    if (!job?.title || seen.has(key)) continue;
     seen.add(key);
-    dedupedJobs.push(job);
+    dedupedJobs.push({
+      ...job,
+      source_url: job.source_url || source.source_url || "",
+      original_url: job.original_url || job.apply_url || job.source_url || source.source_url || ""
+    });
   }
 
   report.detected_ats_provider = atsDetection;

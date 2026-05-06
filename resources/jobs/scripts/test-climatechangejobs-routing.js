@@ -42,16 +42,47 @@ async function main() {
   });
   assert(triaged.adminPendingJobs.length >= 1, "ClimateChangeJobs fixture did not survive into pending review");
 
+  const lowSignalRouted = routeSyncedJob({
+    id: "climatechangejobs-fixture-002",
+    external_id: "climatechangejobs-fixture-002",
+    title: "Project Coordinator",
+    organization: "Climate Housing Alliance",
+    location: "Remote",
+    workplace_type: "Remote",
+    salary: "",
+    description: "Support project coordination across a climate and housing portfolio.",
+    source: "ClimateChangeJobs",
+    source_id: "climatechangejobs",
+    source_url: "https://climatechangejobs.com/jobs",
+    apply_url: "https://climatechangejobs.com/jobs/fixture-project-coordinator",
+    original_url: "https://climatechangejobs.com/jobs/fixture-project-coordinator",
+    tags: ["climate"],
+    sync_origin: "custom"
+  }, source);
+  assert(lowSignalRouted, "routeSyncedJob returned null for low-signal climatechangejobs fixture");
+  const lowSignalTriaged = await triagePendingJobs([lowSignalRouted], [], {
+    sources: [{
+      source_id: "climatechangejobs",
+      source_name: "ClimateChangeJobs",
+      source_url: "https://climatechangejobs.com/jobs",
+      jobs_parsed: 1
+    }]
+  });
+  assert.strictEqual(lowSignalTriaged.adminPendingJobs.length, 1, "Low-signal climatechangejobs fixture should still route to pending");
+  assert.strictEqual(lowSignalTriaged.adminPendingJobs[0].triage_bucket, "needs_cleanup");
+
   console.log(JSON.stringify({
     source_checked: "climatechangejobs",
-    jobs_found: 1,
-    jobs_normalized: 1,
+    jobs_found: 2,
+    jobs_normalized: 2,
     jobs_skipped: 0,
-    jobs_written_to_pending: triaged.adminPendingJobs.length,
+    jobs_written_to_pending: triaged.adminPendingJobs.length + lowSignalTriaged.adminPendingJobs.length,
     routed_status: routed.status,
     specialization: routed.specialization,
     triage_bucket: triaged.adminPendingJobs[0]?.triage_bucket || "",
-    triage_reason: triaged.adminPendingJobs[0]?.triage_reason || ""
+    triage_reason: triaged.adminPendingJobs[0]?.triage_reason || "",
+    low_signal_triage_bucket: lowSignalTriaged.adminPendingJobs[0]?.triage_bucket || "",
+    low_signal_triage_reason: lowSignalTriaged.adminPendingJobs[0]?.triage_reason || ""
   }, null, 2));
 }
 

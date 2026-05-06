@@ -40,7 +40,8 @@ const BAD_PAY_PATTERNS = [
   /^(?:-|—|–|\$-|\$0|0|n\/a|na|not listed|not disclosed|undisclosed)$/i,
   /\$\s*,|\bpay range\s*\$[\s,.-]*\$\s*[,.-]*/i,
   /\$\d{1,3},\s*\.\d{1,2}\s*(?:to|-|–|—)\s*\$\s*[,.\s\d]*/i,
-  /\bup to\s*\$[\s,.-]*$/i
+  /\bup to\s*\$[\s,.-]*$/i,
+  /\b41\s+147\b/i
 ];
 const BAD_SOLAR_PAY_PATTERN = /\$?\s*50\s*\/?\s*(?:mo|month)\b/i;
 const VIDEO_SIGNAL_PATTERN = /\b(?:video|videographer|video editor|video producer|multimedia producer|motion designer|motion graphics|youtube|documentary|short-form video|short form video|digital video|social video|film producer)\b/i;
@@ -49,6 +50,19 @@ const RAW_FIELD_USAGE_PATTERNS = [
   /\braw_description\b/,
   /\braw_salary\b/
 ];
+
+function hasInvalidPublicTitle(value) {
+  const text = String(value || "").trim();
+  if (!text) return true;
+  if (/\b(?:Remote|Hybrid|On-site|Onsite)\b$/.test(text)) return true;
+  if (/[!?]/.test(text) || /[A-Za-z]{3,}\.\s+[A-Z]/.test(text) || /\.\.\./.test(text)) return true;
+  if (/\b(?:pivoting|click here|read my interview|linkedin|share their stories|want a .* career)\b/i.test(text)) return true;
+  if (/\b(?:Jan|January|Feb|February|Mar|March|Apr|April|May|Jun|June|Jul|July|Aug|August|Sep|Sept|September|Oct|October|Nov|November|Dec|December)\b/i.test(text)) return true;
+  if (/<div|href=|class=|aria-label=|https?:\/\//i.test(text)) return true;
+  if (text.split(/\s+/).filter(Boolean).length > 12) return true;
+  if ((text.match(/\b(?:Remote|Hybrid|On-site|Onsite)\b/g) || []).length > 1) return true;
+  return false;
+}
 
 function slugify(value) {
   return String(value || "")
@@ -68,6 +82,18 @@ function extractUrlCompanyHint(value) {
     .filter(Boolean)
     .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
     .join(" ");
+}
+
+function extractDisplayedCompanyFromPage(contents) {
+  const text = String(contents || "");
+  if (!text) return "";
+  const heroMatch = text.match(/<div style="font-size:1\.05rem; color:var\(--ink-secondary\);">([^<]+)<\/div>/i);
+  if (heroMatch && heroMatch[1]) return cleanVisibleText(heroMatch[1]);
+  const jsonLdMatch = text.match(/"hiringOrganization":\s*\{\s*"@type":\s*"Organization",\s*"name":\s*"([^"]+)"/i);
+  if (jsonLdMatch && jsonLdMatch[1]) return cleanVisibleText(jsonLdMatch[1]);
+  const titleMatch = text.match(/<title>[^<]+ at ([^<|]+) \| Fresh Roles<\/title>/i);
+  if (titleMatch && titleMatch[1]) return cleanVisibleText(titleMatch[1]);
+  return "";
 }
 
 function normalizePath(value) {
@@ -159,7 +185,17 @@ async function buildValidationReport(options = {}) {
   const publicJobs = buildPublicJobsFromRecords(records);
   const derivedJobs = jobs.map((job) => ({ ...job }));
   const { map, collisions } = buildJobPagePathMap(derivedJobs);
-  const pageFileSet = new Set(pageFiles.filter((file) => file.endsWith(".html")).map((file) => `./pages/${file}`));
+  const htmlPageFiles = pageFiles.filter((file) => file.endsWith(".html"));
+  const pageFileSet = new Set(htmlPageFiles.map((file) => `./pages/${file}`));
+  const pageContentsByPath = new Map(
+    await Promise.all(
+      htmlPageFiles.map(async (file) => {
+        const pagePath = `./pages/${file}`;
+        const contents = await fs.readFile(path.join(PAGES_DIR, file), "utf8").catch(() => "");
+        return [pagePath, contents];
+      })
+    )
+  );
   const expectedById = new Map(publicJobs.map((job) => [String(job.id || ""), job]));
   const jobsById = new Map(jobs.map((job) => [String(job.id || ""), job]));
 
@@ -170,6 +206,7 @@ async function buildValidationReport(options = {}) {
   const invalidWorkplace = [];
   const invalidLocation = [];
   const invalidSnippet = [];
+  const invalidTitle = [];
   const suspiciousSpecialization = [];
   const videoSpecializationMisses = [];
   const lowConfidenceSpecializations = [];
@@ -281,6 +318,18 @@ async function buildValidationReport(options = {}) {
     const organizationSlug = slugify(job.organization);
     const pageUrlSlug = normalizePath(pageUrl).replace(/^\.\/pages\//, "").replace(/\.html$/, "");
     const applyUrlHint = extractUrlCompanyHint(job.apply_url || job.original_url || job.source_url);
+    const pageContents = pageContentsByPath.get(pageUrl) || "";
+    const pageCompany = extractDisplayedCompanyFromPage(pageContents);
+    const elementalPublicText = JSON.stringify({
+      title: job.title,
+      organization: job.organization,
+      page_url: job.page_url,
+      apply_url: job.apply_url,
+      original_url: job.original_url,
+      description: job.description,
+      description_snippet: job.description_snippet,
+      summary: job.summary
+    });
 
     if (!pageUrl) {
       missingPageUrl.push({ id, title: job.title, organization: job.organization });
@@ -315,6 +364,23 @@ async function buildValidationReport(options = {}) {
 
     if (!isValidPayDisplay(payDisplay)) {
       invalidPay.push({ id, title: job.title, organization: job.organization, salary: payDisplay });
+      if (/\b41\s+147\b|\b\d{1,3}\s+\d{3}\b/.test(payDisplay)) {
+        hardValidationFailures.push({
+          id,
+          title: job.title,
+          organization: job.organization,
+          reason: "malformed_public_pay"
+        });
+      }
+    }
+    if (hasInvalidPublicTitle(job.title) || String(job.title_confidence || "").trim().toLowerCase() === "low") {
+      invalidTitle.push({ id, title: job.title, organization: job.organization, title_confidence: job.title_confidence || "" });
+      hardValidationFailures.push({
+        id,
+        title: job.title,
+        organization: job.organization,
+        reason: "invalid_public_title"
+      });
     }
     if (isProfessionalFullTimeJob(job) && extractPayFacts(payDisplay).tinyMonthly) {
       suspiciousTinyMonthlyPay.push({ id, title: job.title, organization: job.organization, salary: payDisplay });
@@ -344,6 +410,70 @@ async function buildValidationReport(options = {}) {
           title: job.title,
           organization: job.organization,
           reason: "resource_innovations_identity_corruption"
+        });
+      }
+    }
+    if (String(job.source_id || "").trim() === "elemental-impact") {
+      const hasResourceInnovations = /resource innovations/i.test(elementalPublicText);
+      const hasShiftedEnergy = /shifted energy/i.test(elementalPublicText);
+      if (hasResourceInnovations && hasShiftedEnergy) {
+        hardValidationFailures.push({
+          id,
+          title: job.title,
+          organization: job.organization,
+          reason: "elemental_company_cross_contamination"
+        });
+      }
+      if (String(job.organization || "").trim() === "Resource Innovations" && hasShiftedEnergy) {
+        hardValidationFailures.push({
+          id,
+          title: job.title,
+          organization: job.organization,
+          reason: "resource_innovations_contains_shifted_energy"
+        });
+      }
+      if (String(job.organization || "").trim() === "Shifted Energy" && hasResourceInnovations) {
+        hardValidationFailures.push({
+          id,
+          title: job.title,
+          organization: job.organization,
+          reason: "shifted_energy_contains_resource_innovations"
+        });
+      }
+      if (organizationSlug && pageUrlSlug && !pageUrlSlug.includes(organizationSlug)) {
+        hardValidationFailures.push({
+          id,
+          title: job.title,
+          organization: job.organization,
+          reason: "elemental_page_url_company_slug_conflict"
+        });
+      }
+      if (
+        applyUrlHint &&
+        String(applyUrlHint).toLowerCase() !== String(job.organization || "").toLowerCase() &&
+        /^(Resource Innovations|Shifted Energy)$/i.test(String(job.organization || "").trim())
+      ) {
+        hardValidationFailures.push({
+          id,
+          title: job.title,
+          organization: job.organization,
+          reason: "elemental_apply_context_company_conflict"
+        });
+      }
+      if (pageCompany && pageCompany !== String(job.organization || "").trim()) {
+        hardValidationFailures.push({
+          id,
+          title: job.title,
+          organization: job.organization,
+          reason: "elemental_detail_page_company_mismatch"
+        });
+      }
+      if (pageContents && /resource innovations/i.test(pageContents) && /shifted energy/i.test(pageContents)) {
+        hardValidationFailures.push({
+          id,
+          title: job.title,
+          organization: job.organization,
+          reason: "elemental_detail_page_cross_contamination"
         });
       }
     }
@@ -428,6 +558,7 @@ async function buildValidationReport(options = {}) {
   if (options.requirePages !== false && generatedPageCount < jobsJsonCount) errors.push(`generated page count ${generatedPageCount} is less than jobs.json count ${jobsJsonCount}`);
   if (brokenLinks.length) errors.push(`broken link count ${brokenLinks.length}`);
   if (invalidPay.length) errors.push(`invalid pay count ${invalidPay.length}`);
+  if (invalidTitle.length) errors.push(`invalid title count ${invalidTitle.length}`);
   if (invalidWorkplace.length) errors.push(`invalid workplace_type count ${invalidWorkplace.length}`);
   if (invalidLocation.length) errors.push(`invalid location count ${invalidLocation.length}`);
   if (invalidSnippet.length > BLANK_SNIPPET_THRESHOLD) errors.push(`invalid snippet count ${invalidSnippet.length}`);
@@ -452,6 +583,7 @@ async function buildValidationReport(options = {}) {
     duplicate_page_url_count: duplicatePageUrls.length,
     duplicate_canonical_id_count: duplicateIds.length,
     broken_link_count: brokenLinks.length,
+    invalid_title_count: invalidTitle.length,
     pending_public_overlap_count: pendingPublicOverlapCount,
     invalid_snippet_count: invalidSnippet.length,
     missing_canonical_description_count: missingCanonicalDescription.length,
@@ -482,6 +614,7 @@ async function buildValidationReport(options = {}) {
       duplicate_page_url: duplicatePageUrls.slice(0, 10),
       broken_link: brokenLinks.slice(0, 10),
       invalid_pay: invalidPay.slice(0, 10),
+      invalid_title: invalidTitle.slice(0, 20),
       invalid_workplace_type: invalidWorkplace.slice(0, 10),
       invalid_location: invalidLocation.slice(0, 10),
       invalid_snippet: invalidSnippet.slice(0, 10),

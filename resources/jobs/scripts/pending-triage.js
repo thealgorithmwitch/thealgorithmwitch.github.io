@@ -461,6 +461,11 @@ function isBroadSourceJob(job) {
   return BROAD_SOURCE_PATTERNS.some((pattern) => pattern.test(descriptor));
 }
 
+function isLenientBoardPendingSource(job) {
+  const descriptor = getSourceDescriptor(job);
+  return /climatechangejobs|greenjobsearch|elemental\s*impact/i.test(descriptor);
+}
+
 function isHighVolumeSourceJob(job) {
   const descriptor = getSourceDescriptor(job);
   return HIGH_VOLUME_SOURCE_PATTERNS.some((pattern) => pattern.test(descriptor));
@@ -775,11 +780,13 @@ function classifyPendingJob(job, context = {}) {
   const internship = /\b(intern|internship|fellowship)\b/i.test(`${title} ${job.description || ""} ${job.raw_description || ""}`);
   const duplicateUrl = Boolean(originalUrl && context.seenUrls && context.seenUrls.has(originalUrl));
   const broadSourceStrictFail = (scoreMeta.broadSource || scoreMeta.highVolumeSource) && (!scoreMeta.climateContext || !scoreMeta.specializationMatch);
+  const lenientBoardSource = isLenientBoardPendingSource(job);
   const uncertainEmployerOrApply = (scoreMeta.broadSource || scoreMeta.highVolumeSource) && (
     String(job.parse_warning || "").toLowerCase().includes("organization uncertain") ||
     scoreMeta.weakEmployer ||
     !scoreMeta.directEmployerApplyUrl
   );
+  const titleConfidence = String(job.title_confidence || "").trim().toLowerCase() || "high";
   const hasManualProtection = Boolean(
     context.manualProtection ||
     String(job.admin_review_state || "").trim() ||
@@ -791,6 +798,12 @@ function classifyPendingJob(job, context = {}) {
     scoreMeta.climateContext &&
     scoreMeta.specializationMatch &&
     scoreMeta.score >= 7;
+  const lenientPendingEligible = lenientBoardSource &&
+    title &&
+    organization &&
+    originalUrl &&
+    !titleLooksBad &&
+    !nonRoleUrl;
   const minimumPreserveRelevant =
     scoreMeta.climateContext &&
     scoreMeta.specializationMatch &&
@@ -805,6 +818,7 @@ function classifyPendingJob(job, context = {}) {
     !(internship && !scoreMeta.payCaptured) &&
     !duplicateUrl &&
     !suspiciousTitle &&
+    titleConfidence !== "low" &&
     !((scoreMeta.unrelatedEngineering || scoreMeta.salesRole) && !scoreMeta.climateContext) &&
     !broadSourceStrictFail &&
     !uncertainEmployerOrApply;
@@ -868,6 +882,18 @@ function classifyPendingJob(job, context = {}) {
       reason: "non-role title"
     };
   }
+  if (titleConfidence === "low") {
+    if (context.seenUrls) context.seenUrls.add(originalUrl);
+    return {
+      bucket: "needs_cleanup",
+      job: {
+        ...nextJob,
+        triage_bucket: "needs_cleanup",
+        triage_reason: "low-confidence title parse"
+      },
+      reason: "low-confidence title parse"
+    };
+  }
   if (internship && !scoreMeta.payCaptured) {
     return {
       bucket: "rejected_noise",
@@ -890,6 +916,18 @@ function classifyPendingJob(job, context = {}) {
     };
   }
   if (broadSourceStrictFail) {
+    if (lenientPendingEligible) {
+      if (context.seenUrls) context.seenUrls.add(originalUrl);
+      return {
+        bucket: "needs_cleanup",
+        job: {
+          ...nextJob,
+          triage_bucket: "needs_cleanup",
+          triage_reason: "broad-board pending review required"
+        },
+        reason: "broad-board pending review required"
+      };
+    }
     return {
       bucket: "rejected_noise",
       job: { ...nextJob, triage_bucket: "rejected_noise", triage_reason: "high-volume source missing climate context or priority specialization" },
@@ -897,6 +935,18 @@ function classifyPendingJob(job, context = {}) {
     };
   }
   if (!roleRelevant) {
+    if (lenientPendingEligible) {
+      if (context.seenUrls) context.seenUrls.add(originalUrl);
+      return {
+        bucket: "needs_cleanup",
+        job: {
+          ...nextJob,
+          triage_bucket: "needs_cleanup",
+          triage_reason: "low-confidence or broad-board role held for pending review"
+        },
+        reason: "low-confidence or broad-board role held for pending review"
+      };
+    }
     return {
       bucket: "rejected_noise",
       job: { ...nextJob, triage_bucket: "rejected_noise", triage_reason: "low sustainability or priority specialization relevance" },
@@ -1133,11 +1183,17 @@ async function triagePendingJobs(pendingJobs, publicJobs, scrapeReport) {
       rejected_noise: 0,
       rejected_by_relevance: 0,
       kept: 0,
+      duplicates: 0,
+      low_confidence_routed_to_pending: 0,
       dropped_by_cap: 0,
       rejected_reasons: {},
       rejected_examples: []
     };
     sourceStats[result.bucket] += 1;
+    if (/duplicate/i.test(String(result.reason || ""))) sourceStats.duplicates += 1;
+    if (/low-confidence title parse|broad-board pending review required|low-confidence or broad-board role held for pending review/i.test(String(result.reason || ""))) {
+      sourceStats.low_confidence_routed_to_pending += result.bucket === "rejected_noise" ? 0 : 1;
+    }
     if (result.bucket === "rejected_noise") {
       sourceStats.rejected_reasons[result.reason] = (sourceStats.rejected_reasons[result.reason] || 0) + 1;
       pushRejectedExample(sourceStats, result.job, result.reason);
@@ -1167,6 +1223,8 @@ async function triagePendingJobs(pendingJobs, publicJobs, scrapeReport) {
       rejected_noise: 0,
       rejected_by_relevance: 0,
       kept: 0,
+      duplicates: 0,
+      low_confidence_routed_to_pending: 0,
       dropped_by_cap: 0,
       rejected_reasons: {},
       rejected_examples: []
@@ -1182,6 +1240,8 @@ async function triagePendingJobs(pendingJobs, publicJobs, scrapeReport) {
       rejected_noise: 0,
       rejected_by_relevance: 0,
       kept: 0,
+      duplicates: 0,
+      low_confidence_routed_to_pending: 0,
       dropped_by_cap: 0,
       rejected_reasons: {},
       rejected_examples: []
@@ -1197,6 +1257,8 @@ async function triagePendingJobs(pendingJobs, publicJobs, scrapeReport) {
       rejected_noise: 0,
       rejected_by_relevance: 0,
       kept: 0,
+      duplicates: 0,
+      low_confidence_routed_to_pending: 0,
       dropped_by_cap: 0,
       rejected_reasons: {}
     };
@@ -1254,6 +1316,8 @@ async function triagePendingJobs(pendingJobs, publicJobs, scrapeReport) {
         rejected_noise: 0,
         rejected_by_relevance: 0,
         kept: 0,
+        duplicates: 0,
+        low_confidence_routed_to_pending: 0,
         dropped_by_cap: 0,
         auto_published: 0,
         rejected_reasons: {}
@@ -1267,6 +1331,8 @@ async function triagePendingJobs(pendingJobs, publicJobs, scrapeReport) {
         needs_cleanup: triage.needs_cleanup,
         rejected_noise: triage.rejected_noise,
         rejected_by_relevance: triage.rejected_by_relevance,
+        duplicates: triage.duplicates,
+        low_confidence_routed_to_pending: triage.low_confidence_routed_to_pending,
         dropped_by_cap: triage.dropped_by_cap,
         dropped_by_source_cap: triage.dropped_by_cap,
         auto_published: triage.auto_published || 0,

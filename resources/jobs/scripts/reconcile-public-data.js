@@ -17,6 +17,7 @@ const {
   CANONICAL_SPECIALIZATIONS,
   buildDescriptionSnippet,
   hasUsableDescription,
+  normalizeJob,
   normalizePayDisplay,
   slugify,
   normalizeWorkplaceType,
@@ -37,6 +38,7 @@ const REPORTS_DIR = path.resolve(__dirname, "..", "reports");
 const RECONCILE_REPORT_JSON = path.join(REPORTS_DIR, "reconcile-audit-latest.json");
 const RECONCILE_REPORT_MD = path.join(REPORTS_DIR, "reconcile-audit-latest.md");
 const RESOLUTIONS_FILE = path.join(__dirname, "reconcile-public-data-resolutions.json");
+const OLD_JOBS_FILE = path.resolve(__dirname, "..", "oldjobs.json");
 
 const PROTECTED_FIELD_MAP = {
   title: ["display.title", "raw_source_data.title"],
@@ -74,6 +76,10 @@ const JUNK_REASON_PATTERNS = [
   { label: "taxonomy blobs", pattern: /\b(?:Business\/Productivity Software|Cleantech|Oil\s*&\s*Gas|Renewable Energy)\b/i },
   { label: "giant numeric metadata strings", pattern: /\b\d{7,10}\b/ },
   { label: "repeated date/header fragments", pattern: REPEATED_DATE_JUNK }
+];
+const URL_COMPANY_HINTS = [
+  { pattern: /apply\.workable\.com\/resource-innovations\//i, company: "Resource Innovations" },
+  { pattern: /apply\.workable\.com\/shifted-energy\//i, company: "Shifted Energy" }
 ];
 
 function cleanText(value) {
@@ -205,6 +211,50 @@ function isValidPay(value) {
   return Boolean(normalized);
 }
 
+function extractPayFacts(value) {
+  const text = cleanText(value);
+  const amountMatches = Array.from(text.matchAll(/\d[\d,]*(?:\.\d+)?/g))
+    .map((match) => Number(String(match[0]).replace(/,/g, "")))
+    .filter((amount) => Number.isFinite(amount) && amount > 0);
+  const period =
+    /\b(?:per month|\/\s*month|\/\s*mo\b|monthly|month)\b/i.test(text) ? "month"
+      : /\b(?:per year|\/\s*year|\/\s*yr\b|annual|annually|year)\b/i.test(text) ? "year"
+        : /\b(?:per hour|\/\s*hour|\/\s*hr\b|hourly|hour)\b/i.test(text) ? "hour"
+          : /\b(?:per day|\/\s*day|daily|day)\b/i.test(text) ? "day"
+            : "unknown";
+  const minAmount = amountMatches.length ? Math.min(...amountMatches) : null;
+  const maxAmount = amountMatches.length ? Math.max(...amountMatches) : null;
+  const isRange = amountMatches.length >= 2 && /(?:-|–|—|\bto\b)/i.test(text);
+  return {
+    text,
+    period,
+    minAmount,
+    maxAmount,
+    isRange,
+    tinyMonthly: period === "month" && maxAmount !== null && maxAmount < 1000,
+    annualLike: period === "year" || (period === "unknown" && maxAmount !== null && maxAmount >= 10000),
+    professionalRangeLike: isRange && maxAmount !== null && maxAmount >= 10000
+  };
+}
+
+function isSuspiciousPayDowngrade(currentValue, candidateValue) {
+  const current = extractPayFacts(currentValue);
+  const candidate = extractPayFacts(candidateValue);
+  if (!current.text || !candidate.text) return false;
+  return Boolean((current.annualLike || current.professionalRangeLike) && candidate.tinyMonthly);
+}
+
+function deriveSalaryShapeFromChosenPay(chosenPay) {
+  const normalized = normalizeJob({ salary: cleanText(chosenPay) });
+  return {
+    salary: cleanText(normalized.salary || chosenPay),
+    salary_min: normalized.salary_min ?? null,
+    salary_max: normalized.salary_max ?? null,
+    salary_currency: normalized.salary_currency || "Unknown",
+    salary_period: normalized.salary_period || "Unknown"
+  };
+}
+
 function isCleanLocation(value) {
   const text = cleanText(value);
   if (!text) return false;
@@ -221,19 +271,71 @@ function normalizeWinnerReason(reason) {
   return [
     "keep_jobs_json_cleaner",
     "use_job_records_cleaner",
+    "use_placeholder",
+    "restore_oldjobs",
     "jobs_json_blank",
     "jobs_json_corrupted",
     "manual_review_required"
   ].includes(reason) ? reason : "manual_review_required";
 }
 
-function decideDescription(job, recordValue, resolution = null) {
+async function readOldJobs() {
+  return readJson(OLD_JOBS_FILE, []);
+}
+
+function buildJobsIndex(jobs = []) {
+  return new Map((Array.isArray(jobs) ? jobs : []).map((job) => [cleanText(job.id), job]));
+}
+
+function normalizeDescriptionForComparison(value) {
+  return cleanText(value)
+    .replace(/\s+/g, " ")
+    .replace(/[“”]/g, "\"")
+    .trim();
+}
+
+function countRepeatedFragments(value) {
+  const text = normalizeDescriptionForComparison(value);
+  if (!text) return 0;
+  const fragments = text
+    .split(/(?<=[.?!])\s+/)
+    .map((part) => part.trim())
+    .filter((part) => part.length >= 24);
+  const seen = new Set();
+  let repeated = 0;
+  fragments.forEach((fragment) => {
+    const key = fragment.toLowerCase();
+    if (seen.has(key)) repeated += 1;
+    seen.add(key);
+  });
+  return repeated;
+}
+
+function isReadableDescription(value, title = "") {
+  const text = cleanText(value);
+  return Boolean(text) && hasUsableDescription(text, { title }) && !isCorruptedDescription(text);
+}
+
+function isClearlyBetterThanCurrent(currentValue, candidateValue, title = "") {
+  const currentText = normalizeDescriptionForComparison(currentValue);
+  const candidateText = normalizeDescriptionForComparison(candidateValue);
+  if (!candidateText || !isReadableDescription(candidateText, title)) return false;
+  if (!currentText) return true;
+  if (!isReadableDescription(currentText, title)) return true;
+  if (countRepeatedFragments(currentText) > countRepeatedFragments(candidateText)) return true;
+  if (candidateText.length + 80 < currentText.length && countRepeatedFragments(currentText) > 0) return true;
+  if (candidateText.length > currentText.length + 100 && candidateText.includes(currentText)) return true;
+  return false;
+}
+
+function decideDescription(job, recordValue, resolution = null, oldJob = null) {
   const jobsValue = getCanonicalDescription(job);
   const recordText = cleanText(recordValue);
+  const oldText = getCanonicalDescription(oldJob || {});
   if (resolution?.action === "keep_jobs_json") {
     return { chosen: jobsValue, reason: "keep_jobs_json_cleaner", resolution_action: "keep_jobs_json" };
   }
-  if (resolution?.action === "use_job_records_cleaner" && recordText && !isCorruptedDescription(recordText)) {
+  if (resolution?.action === "use_job_records_cleaner" && recordText && hasUsableDescription(recordText, { title: job.title })) {
     return { chosen: recordText, reason: "use_job_records_cleaner", resolution_action: "use_job_records_cleaner" };
   }
   if (resolution?.action === "use_placeholder") {
@@ -244,6 +346,14 @@ function decideDescription(job, recordValue, resolution = null) {
   }
   const jobsClean = jobsValue && hasUsableDescription(jobsValue, { title: job.title }) && !isCorruptedDescription(jobsValue);
   const recordClean = recordText && hasUsableDescription(recordText, { title: job.title }) && !isCorruptedDescription(recordText);
+  const oldClean = oldText && hasUsableDescription(oldText, { title: job.title }) && !isCorruptedDescription(oldText);
+
+  if (jobsClean && recordClean && isClearlyBetterThanCurrent(jobsValue, recordText, job.title)) {
+    return { chosen: recordText, reason: "use_job_records_cleaner" };
+  }
+  if (oldClean && isClearlyBetterThanCurrent(jobsValue, oldText, job.title) && !isClearlyBetterThanCurrent(oldText, recordText, job.title)) {
+    return { chosen: oldText, reason: "restore_oldjobs" };
+  }
 
   if (jobsClean) {
     return { chosen: jobsValue, reason: "keep_jobs_json_cleaner" };
@@ -251,37 +361,60 @@ function decideDescription(job, recordValue, resolution = null) {
   if (!jobsValue && recordClean) {
     return { chosen: recordText, reason: "jobs_json_blank" };
   }
+  if (!jobsValue && oldClean) {
+    return { chosen: oldText, reason: "restore_oldjobs" };
+  }
   if (jobsValue && !jobsClean && recordClean) {
     return { chosen: recordText, reason: "jobs_json_corrupted" };
+  }
+  if (jobsValue && !jobsClean && oldClean) {
+    return { chosen: oldText, reason: "restore_oldjobs" };
   }
   return { chosen: jobsValue || recordText, reason: "manual_review_required" };
 }
 
-function decideSnippet(job, recordDescription, descriptionDecision = null) {
+function decideSnippet(job, recordDescription, descriptionDecision = null, oldJob = null) {
   if (descriptionDecision?.resolution_action === "use_placeholder" && descriptionDecision.snippet) {
-    return { chosen: cleanText(descriptionDecision.snippet), reason: "use_job_records_cleaner", resolution_action: "use_placeholder" };
+    return { chosen: cleanText(descriptionDecision.snippet), reason: "use_placeholder", resolution_action: "use_placeholder" };
   }
   const jobsValue = getCanonicalSnippet(job);
   const jobsClean = jobsValue && !isCorruptedDescription(jobsValue);
   const derivedRecord = buildDescriptionSnippet(recordDescription, 220, { title: job.title });
   const recordClean = derivedRecord && !isCorruptedDescription(derivedRecord);
+  const oldSnippet = getCanonicalSnippet(oldJob || {});
+  const oldClean = oldSnippet && !isCorruptedDescription(oldSnippet);
+  if (descriptionDecision?.reason === "restore_oldjobs" && oldClean) {
+    return { chosen: oldSnippet, reason: "restore_oldjobs" };
+  }
   if (jobsClean) {
     return { chosen: jobsValue, reason: "keep_jobs_json_cleaner" };
   }
   if (!jobsValue && recordClean) {
     return { chosen: derivedRecord, reason: "jobs_json_blank" };
   }
+  if (!jobsValue && oldClean) {
+    return { chosen: oldSnippet, reason: "restore_oldjobs" };
+  }
   if (jobsValue && !jobsClean && recordClean) {
     return { chosen: derivedRecord, reason: "jobs_json_corrupted" };
+  }
+  if (jobsValue && !jobsClean && oldClean) {
+    return { chosen: oldSnippet, reason: "restore_oldjobs" };
   }
   return { chosen: jobsValue || derivedRecord, reason: "manual_review_required" };
 }
 
-function decidePay(job, recordValue) {
+function decidePay(job, recordValue, resolution = null) {
   const jobsValue = getCanonicalPay(job);
   const recordPay = normalizePayDisplay({ payDisplay: recordValue });
+  if (resolution?.action === "use_fixed_pay" && cleanText(resolution.salary)) {
+    return { chosen: cleanText(resolution.salary), reason: "keep_jobs_json_cleaner", resolution_action: "use_fixed_pay" };
+  }
   if (samePayMeaning(jobsValue, recordPay)) {
     return { chosen: jobsValue || recordPay, reason: "keep_jobs_json_cleaner", equivalent: true };
+  }
+  if (isSuspiciousPayDowngrade(jobsValue, recordPay)) {
+    return { chosen: jobsValue, reason: "keep_jobs_json_cleaner", suspicious_downgrade_blocked: true };
   }
   if (cleanText(job.id) === "solar-united-neighbors-5dd5c717f705") {
     return { chosen: jobsValue, reason: "keep_jobs_json_cleaner" };
@@ -298,9 +431,26 @@ function decidePay(job, recordValue) {
   return { chosen: jobsValue || recordPay, reason: jobsValue ? "manual_review_required" : "use_job_records_cleaner" };
 }
 
-function decideLocation(job, recordValue) {
+function decideLocation(job, recordValue, companyResolution = null, locationResolution = null) {
   const jobsValue = getCanonicalLocation(job);
   const recordText = cleanText(recordValue);
+  if (locationResolution?.action === "use_fixed_location" && cleanText(locationResolution.location)) {
+    return {
+      chosen: cleanText(locationResolution.location),
+      reason: "keep_jobs_json_cleaner",
+      resolution_action: "use_fixed_location"
+    };
+  }
+  if (locationResolution?.action === "keep_jobs_json" && jobsValue) {
+    return {
+      chosen: jobsValue,
+      reason: "keep_jobs_json_cleaner",
+      resolution_action: "keep_jobs_json_location"
+    };
+  }
+  if (companyResolution?.action === "use_jobs_json_company" && jobsValue) {
+    return { chosen: jobsValue, reason: "keep_jobs_json_cleaner" };
+  }
   if (cleanText(job.id) === "edp-f365739f6c21" && jobsValue) {
     return { chosen: jobsValue, reason: "keep_jobs_json_cleaner" };
   }
@@ -371,9 +521,10 @@ function decideSpecialization(job, recordValue) {
   return { chosen: jobsValue || recordText, reason: "manual_review_required" };
 }
 
-function decidePageUrl(job, companyDecision = null) {
+function decidePageUrl(job, companyDecision = null, titleDecision = null) {
   if (companyDecision?.resolution_action === "use_job_records_company" && companyDecision.chosen) {
-    const next = normalizeManualPagePath(`./pages/${slugify(cleanText(job.title))}-${slugify(cleanText(companyDecision.chosen))}.html`);
+    const nextTitle = cleanText(titleDecision?.chosen || job.title);
+    const next = normalizeManualPagePath(`./pages/${slugify(nextTitle)}-${slugify(cleanText(companyDecision.chosen))}.html`);
     return { chosen: next, reason: "use_job_records_cleaner", resolution_action: "regenerate_with_redirect" };
   }
   const pageUrl = normalizeManualPagePath(job.page_url);
@@ -387,13 +538,13 @@ function buildFieldDecision(field, job, recordDisplay, context = {}) {
   const recordValue = recordDisplay[field] || "";
   switch (field) {
     case "description":
-      return decideDescription(job, recordValue, context.descriptionResolution);
+      return decideDescription(job, recordValue, context.descriptionResolution, context.oldJob);
     case "snippet":
-      return decideSnippet(job, recordDisplay.description || "", context.descriptionDecision);
+      return decideSnippet(job, recordDisplay.description || "", context.descriptionDecision, context.oldJob);
     case "salary":
-      return decidePay(job, recordValue);
+      return decidePay(job, recordValue, context.payResolution);
     case "location":
-      return decideLocation(job, recordValue);
+      return decideLocation(job, recordValue, context.companyResolution, context.locationResolution);
     case "workplace_type":
       return decideWorkplaceType(job, recordValue);
     case "organization":
@@ -401,8 +552,17 @@ function buildFieldDecision(field, job, recordDisplay, context = {}) {
     case "specialization":
       return decideSpecialization(job, recordValue);
     case "page_url":
-      return decidePageUrl(job, context.companyDecision);
+      return decidePageUrl(job, context.companyDecision, context.titleDecision);
     case "title":
+      if (
+        context.companyResolution?.action === "use_job_records_company" &&
+        cleanText(recordValue) &&
+        cleanText(recordValue) !== cleanText(job.title) &&
+        cleanText(job.organization) &&
+        cleanText(recordValue).toLowerCase().includes(cleanText(job.organization).toLowerCase())
+      ) {
+        return { chosen: cleanText(recordValue), reason: "use_job_records_cleaner" };
+      }
       return cleanText(job.title)
         ? { chosen: cleanText(job.title), reason: "keep_jobs_json_cleaner" }
         : { chosen: cleanText(recordValue), reason: recordValue ? "jobs_json_blank" : "manual_review_required" };
@@ -436,7 +596,13 @@ function collectManualOverrides(existing = {}, decisions = {}) {
       .concat(Array.isArray(existing.protected_fields) ? existing.protected_fields : [])
   );
   Object.entries(decisions).forEach(([field, decision]) => {
-    if (decision.reason === "keep_jobs_json_cleaner" || decision.reason === "jobs_json_blank" || decision.reason === "jobs_json_corrupted") {
+    if (
+      decision.reason === "keep_jobs_json_cleaner" ||
+      decision.reason === "jobs_json_blank" ||
+      decision.reason === "jobs_json_corrupted" ||
+      decision.reason === "restore_oldjobs" ||
+      decision.reason === "use_placeholder"
+    ) {
       (PROTECTED_FIELD_MAP[field] || []).forEach((path) => fields.add(path));
     }
   });
@@ -453,10 +619,14 @@ function setImportedFieldMeta(record, decisions, now) {
   };
   Object.entries(decisions).forEach(([field, decision]) => {
     const metaKey = field === "salary" ? "pay_display" : field === "workplace_type" ? "location_type" : field;
+    const importedFromCurrentJobsJson = ["keep_jobs_json_cleaner", "jobs_json_blank", "jobs_json_corrupted"].includes(decision.reason);
     next.field_meta[metaKey] = {
       ...(next.field_meta[metaKey] || {}),
-      imported_from_current_jobs_json: decision.reason !== "use_job_records_cleaner",
-      last_manual_edit_at: decision.reason !== "use_job_records_cleaner" ? now : (next.field_meta[metaKey] || {}).last_manual_edit_at || "",
+      imported_from_current_jobs_json: importedFromCurrentJobsJson,
+      last_manual_edit_at:
+        importedFromCurrentJobsJson || decision.reason === "restore_oldjobs" || decision.reason === "use_placeholder"
+          ? now
+          : (next.field_meta[metaKey] || {}).last_manual_edit_at || "",
       last_reconcile_decision_at: now,
       last_reconcile_reason: normalizeWinnerReason(decision.reason)
     };
@@ -500,12 +670,16 @@ async function readResolutions() {
   const payload = await readJson(RESOLUTIONS_FILE, {
     description_resolutions: {},
     company_resolutions: {},
-    specialization_resolutions: {}
+    specialization_resolutions: {},
+    pay_resolutions: {},
+    location_resolutions: {}
   });
   return payload && typeof payload === "object" ? payload : {
     description_resolutions: {},
     company_resolutions: {},
-    specialization_resolutions: {}
+    specialization_resolutions: {},
+    pay_resolutions: {},
+    location_resolutions: {}
   };
 }
 
@@ -515,6 +689,14 @@ function getDescriptionResolution(resolutions, id) {
 
 function getCompanyResolution(resolutions, id) {
   return resolutions?.company_resolutions?.[id] || null;
+}
+
+function getPayResolution(resolutions, id) {
+  return resolutions?.pay_resolutions?.[id] || null;
+}
+
+function getLocationResolution(resolutions, id) {
+  return resolutions?.location_resolutions?.[id] || null;
 }
 
 function buildProposedPublicIndex(publicJobs = []) {
@@ -615,6 +797,18 @@ function buildMarkdownReport(report) {
     lines.push(`- ${item.title} | jobs.json=${item.jobs_json_company} | job-records=${item.job_records_company} | id=${item.canonical_id} | ${item.page_url} | action=${item.suggested_action}`);
   });
   lines.push("");
+  lines.push("## Location Resolutions");
+  lines.push("");
+  (report.location_resolution_review || []).forEach((item) => {
+    lines.push(`- ${item.title} | jobs.json=${item.jobs_json_location} | job-records=${item.job_records_location} | proposed=${item.proposed_location} | id=${item.canonical_id} | action=${item.resolution_action}`);
+  });
+  lines.push("");
+  lines.push("## Pay Mismatches");
+  lines.push("");
+  (report.pay_mismatch_review || []).forEach((item) => {
+    lines.push(`- ${item.title} | jobs.json=${item.jobs_json_pay} | job-records=${item.job_records_pay} | proposed=${item.proposed_pay} | id=${item.canonical_id} | action=${item.resolution_label}`);
+  });
+  lines.push("");
   return `${lines.join("\n")}\n`;
 }
 
@@ -655,11 +849,14 @@ function buildReconcileWriteBlockers({ overwriteAudit, manualReviewList, missing
   if (Array.isArray(severeCorruption) && severeCorruption.length) {
     blockers.push(`severe_corrupted_descriptions_require_manual_review=${severeCorruption.length}`);
   }
+  if (Array.isArray(manualReviewList) && manualReviewList.length) {
+    blockers.push(`manual_review_required_count=${manualReviewList.length}`);
+  }
   const companyMismatchReviews = (Array.isArray(manualReviewList) ? manualReviewList : []).filter((item) => item.reason === "organization/company mismatch");
   if (companyMismatchReviews.length) {
     blockers.push(`company_mismatches_require_manual_review=${companyMismatchReviews.length}`);
   }
-  if (!missingBackfillCount && blockers.length === 0) {
+  if (!missingBackfillCount && blockers.length === 0 && Number(overwriteAudit?.field_counts?.jobs_changed || 0) === 0) {
     blockers.push("no_reconcile_changes_detected");
   }
   return Array.from(new Set(blockers));
@@ -683,16 +880,126 @@ function applyResolutionAwareOverwriteAudit(overwriteAudit, resolutions) {
   };
 }
 
+function classifyDiffDecision({ currentJob, oldJob, proposedJob, recordDisplay, decisions }) {
+  const decisionList = Object.values(decisions || {});
+  if (decisionList.some((decision) => decision.resolution_action === "use_placeholder" || decision.reason === "use_placeholder")) {
+    return "use_placeholder";
+  }
+  if (decisionList.some((decision) => decision.reason === "manual_review_required")) {
+    return "manual_review_required";
+  }
+  if (decisionList.some((decision) => decision.reason === "restore_oldjobs")) {
+    return "restore_oldjobs";
+  }
+  if (decisionList.some((decision) => decision.reason === "use_job_records_cleaner")) {
+    return "use_job_records_cleaner";
+  }
+  if (proposedJob && currentJob && cleanText(proposedJob.organization) === cleanText(currentJob.organization) && cleanText(proposedJob.title) === cleanText(currentJob.title)) {
+    return "keep_current";
+  }
+  return "manual_review_required";
+}
+
+function summarizeOldJobsDiffs({ currentJobs, oldJobsById, proposedById, recordDisplayById, decisionsById }) {
+  const records = [];
+  (Array.isArray(currentJobs) ? currentJobs : []).forEach((job) => {
+    const id = cleanText(job.id);
+    const oldJob = oldJobsById.get(id);
+    if (!oldJob) return;
+    const changedFields = [];
+    [
+      "organization",
+      "title",
+      "description",
+      "description_snippet",
+      "summary",
+      "location",
+      "specialization",
+      "salary",
+      "page_url",
+      "apply_url"
+    ].forEach((field) => {
+      if (cleanText(oldJob[field]) !== cleanText(job[field])) {
+        changedFields.push(field);
+      }
+    });
+    if (!changedFields.length) return;
+    records.push({
+      id,
+      title: cleanText(job.title),
+      company: cleanText(job.organization),
+      changed_fields: changedFields,
+      resolution_label: classifyDiffDecision({
+        currentJob: job,
+        oldJob,
+        proposedJob: proposedById.get(id) || job,
+        recordDisplay: recordDisplayById.get(id) || {},
+        decisions: decisionsById.get(id) || {}
+      })
+    });
+  });
+  return records.sort((left, right) => left.company.localeCompare(right.company) || left.title.localeCompare(right.title));
+}
+
+function buildTargetedIssueStatus(proposedById, jobsById) {
+  const resource = proposedById.get("elemental-impact-446c301b54b2") || jobsById.get("elemental-impact-446c301b54b2") || {};
+  const fervo = proposedById.get("elemental-impact-c6c7ccd02120") || jobsById.get("elemental-impact-c6c7ccd02120") || {};
+  const edpInterconnection = proposedById.get("edp-e87960ee8c52") || jobsById.get("edp-e87960ee8c52") || {};
+  const edpProject = proposedById.get("edp-0164b558d6e6") || jobsById.get("edp-0164b558d6e6") || {};
+  const nextEra = proposedById.get("nextera-energy-50fe226b28a5") || jobsById.get("nextera-energy-50fe226b28a5") || {};
+  const shifted = proposedById.get("elemental-impact-95090d1a6bc6") || jobsById.get("elemental-impact-95090d1a6bc6") || {};
+  const solar = proposedById.get("solar-united-neighbors-5dd5c717f705") || jobsById.get("solar-united-neighbors-5dd5c717f705") || {};
+  return {
+    resource_innovations_protected: {
+      resolved: cleanText(resource.organization) === "Resource Innovations" && /resource-innovations/i.test(cleanText(resource.page_url)),
+      company: cleanText(resource.organization),
+      page_url: cleanText(resource.page_url)
+    },
+    fervo_director_corrected: {
+      resolved: cleanText(fervo.title) === "Director, Internal Audit" && cleanText(fervo.organization) === "Fervo Energy" && /director-internal-audit-fervo-energy/i.test(cleanText(fervo.page_url)),
+      title: cleanText(fervo.title),
+      company: cleanText(fervo.organization),
+      page_url: cleanText(fervo.page_url)
+    },
+    edp_interconnection_cleaned: {
+      resolved:
+        Boolean(cleanText(edpInterconnection.description)) &&
+        !REPEATED_DATE_JUNK.test(cleanText(edpInterconnection.description)) &&
+        !/hdrDate|Interconnection Analyst Interconnection Analyst|Apr \d{1,2}, \d{4}/i.test(cleanText(edpInterconnection.description)),
+      description_excerpt: getExcerpt(cleanText(edpInterconnection.description))
+    },
+    edp_project_cleanest_selected: {
+      resolved: /^The Project Development Analyst\b/.test(cleanText(edpProject.description)) && !/Cover letters are strongly encouraged This role/i.test(cleanText(edpProject.description)),
+      description_excerpt: getExcerpt(cleanText(edpProject.description))
+    },
+    nextera_not_over_stripped: {
+      resolved: cleanText(nextEra.description).length > cleanText(jobsById.get("nextera-energy-50fe226b28a5")?.description).length,
+      description_excerpt: getExcerpt(cleanText(nextEra.description))
+    },
+    shifted_energy_not_corrupted: {
+      resolved: isReadableDescription(cleanText(shifted.description), cleanText(shifted.title)),
+      description_excerpt: getExcerpt(cleanText(shifted.description))
+    },
+    solar_united_neighbors_pay_protected: {
+      resolved: /\$80,000(?:\.00)?\s*[–-]\s*\$95,880(?:\.00)?(?:\s+annual salary| \/ year)?/i.test(cleanText(solar.salary)),
+      pay: cleanText(solar.salary)
+    }
+  };
+}
+
 async function main() {
   const shouldWrite = process.argv.includes("--write");
   const preferCurrentJobsJson = process.argv.includes("--prefer-current-jobs-json");
   const now = new Date().toISOString();
-  const [records, jobs, pendingBefore, resolutions] = await Promise.all([
+  const [records, jobs, pendingBefore, resolutions, oldJobs] = await Promise.all([
     readJobRecords(),
     readJobs(),
     readPendingSyncedJobs(),
-    readResolutions()
+    readResolutions(),
+    readOldJobs()
   ]);
+  const jobsById = buildJobsIndex(jobs);
+  const oldJobsById = buildJobsIndex(oldJobs);
 
   const jobRecords = Array.isArray(records) ? records.filter((record) => record && record.record_type === "job") : [];
   const nonJobRecords = Array.isArray(records) ? records.filter((record) => !record || record.record_type !== "job") : [];
@@ -702,6 +1009,8 @@ async function main() {
   const reconciledJobRecords = [];
   const proposedPublicJobs = [];
   const fieldDecisions = [];
+  const decisionsById = new Map();
+  const recordDisplayById = new Map();
   const manualReview = [];
   const missingJobsBackfilled = [];
   const severeCorruption = [];
@@ -713,29 +1022,47 @@ async function main() {
     const existingRecord = baseEntry ? baseEntry.record : {};
     if (baseEntry) usedRecordIndexes.add(baseEntry.index);
     const recordDisplay = buildRecordDisplay(existingRecord);
+    recordDisplayById.set(cleanText(job.id), recordDisplay);
+    const oldJob = oldJobsById.get(cleanText(job.id)) || null;
     const descriptionResolution = getDescriptionResolution(resolutions, cleanText(job.id));
     const companyResolution = getCompanyResolution(resolutions, cleanText(job.id));
+    const locationResolution = getLocationResolution(resolutions, cleanText(job.id));
     const descriptionDecision = buildFieldDecision("description", job, recordDisplay, {
-      descriptionResolution
+      descriptionResolution,
+      oldJob
     });
     const organizationDecision = buildFieldDecision("organization", job, recordDisplay, {
       companyResolution
     });
     const decisions = {
-      title: buildFieldDecision("title", job, recordDisplay),
+      title: buildFieldDecision("title", job, recordDisplay, {
+        companyResolution
+      }),
       organization: organizationDecision,
       description: descriptionDecision,
       snippet: buildFieldDecision("snippet", job, recordDisplay, {
-        descriptionDecision
+        descriptionDecision,
+        oldJob
       }),
-      salary: buildFieldDecision("salary", job, recordDisplay),
-      location: buildFieldDecision("location", job, recordDisplay),
+      salary: buildFieldDecision("salary", job, recordDisplay, {
+        payResolution: getPayResolution(resolutions, cleanText(job.id))
+      }),
+      location: buildFieldDecision("location", job, recordDisplay, {
+        companyResolution,
+        locationResolution
+      }),
       workplace_type: buildFieldDecision("workplace_type", job, recordDisplay),
       specialization: buildFieldDecision("specialization", job, recordDisplay),
       page_url: buildFieldDecision("page_url", job, recordDisplay, {
-        companyDecision: organizationDecision
+        companyDecision: organizationDecision,
+        titleDecision: null
       })
     };
+    decisions.page_url = buildFieldDecision("page_url", job, recordDisplay, {
+      companyDecision: organizationDecision,
+      titleDecision: decisions.title
+    });
+    decisionsById.set(cleanText(job.id), decisions);
 
     [
       ["description mismatch", "description", getCanonicalDescription(job), recordDisplay.description],
@@ -760,7 +1087,8 @@ async function main() {
           jobs_json_value: left,
           job_records_value: right,
           chosen_value: cleanText(decisions[field].chosen),
-          winner_reason: normalizeWinnerReason(decisions[field].reason)
+          winner_reason: normalizeWinnerReason(decisions[field].reason),
+          resolution_action: cleanText(decisions[field].resolution_action || "")
         });
         if (normalizeWinnerReason(decisions[field].reason) === "manual_review_required") {
           manualReview.push({
@@ -780,7 +1108,7 @@ async function main() {
       title: cleanText(decisions.title.chosen),
       organization: cleanText(decisions.organization.chosen),
       description: cleanText(decisions.description.chosen),
-      salary: cleanText(decisions.salary.chosen),
+      ...deriveSalaryShapeFromChosenPay(decisions.salary.chosen),
       location: cleanText(decisions.location.chosen),
       workplace_type: cleanText(decisions.workplace_type.chosen),
       specialization: cleanText(decisions.specialization.chosen),
@@ -857,6 +1185,8 @@ async function main() {
   const proposedRecords = [...nonJobRecords, ...reconciledJobRecords, ...untouchedJobRecords];
 
   const overwriteAudit = applyResolutionAwareOverwriteAudit(compareJobsOutputs(jobs, proposedPublicJobs), resolutions);
+  const proposedById = buildJobsIndex(proposedPublicJobs);
+  const targetedIssueStatus = buildTargetedIssueStatus(proposedById, jobsById);
   const proposedPublicIndex = buildProposedPublicIndex(proposedPublicJobs);
   const backfilledIds = new Set(missingJobsBackfilled.map((item) => cleanText(item.canonical_id)));
   const pendingOverlapJobs = pendingBefore
@@ -872,12 +1202,22 @@ async function main() {
     missingBackfillCount: missingJobsBackfilled.length,
     severeCorruption
   });
+  Object.entries(targetedIssueStatus).forEach(([key, value]) => {
+    if (!value.resolved) writeBlockers.push(`targeted_issue_unresolved=${key}`);
+  });
   if (pendingOverlapAfter > 0) {
     writeBlockers.push(`pending_public_overlap_after_proposed=${pendingOverlapAfter}`);
   }
   const writeAllowed = writeBlockers.length === 0;
 
   const groupedDecisions = summarizeDecisions(fieldDecisions);
+  const oldJobsDiffReview = summarizeOldJobsDiffs({
+    currentJobs: jobs,
+    oldJobsById,
+    proposedById,
+    recordDisplayById,
+    decisionsById
+  });
   const descriptionReviewDetails = descriptionReview.map((item) => {
     const job = (Array.isArray(jobs) ? jobs : []).find((entry) => cleanText(entry.id) === item.id) || {};
     const resolution = getDescriptionResolution(resolutions, item.id);
@@ -936,6 +1276,31 @@ async function main() {
         suggested_action: resolution?.action || "manual_review_required"
       };
     });
+  const payMismatchReview = groupedDecisions["pay mismatch"].map((item) => {
+    const payResolution = getPayResolution(resolutions, item.id);
+    return {
+      canonical_id: item.id,
+      title: item.title,
+      company: item.company,
+      jobs_json_pay: item.jobs_json_value,
+      job_records_pay: item.job_records_value,
+      proposed_pay: item.chosen_value,
+      resolution_label: item.winner_reason,
+      suspicious_downgrade_blocked: isSuspiciousPayDowngrade(item.jobs_json_value, item.job_records_value),
+      fixed_resolution_applied: payResolution?.action === "use_fixed_pay"
+    };
+  });
+  const locationResolutionReview = groupedDecisions["location mismatch"]
+    .filter((item) => item.resolution_action === "use_fixed_location" || item.resolution_action === "keep_jobs_json_location")
+    .map((item) => ({
+      canonical_id: item.id,
+      title: item.title,
+      company: item.company,
+      jobs_json_location: item.jobs_json_value,
+      job_records_location: item.job_records_value,
+      proposed_location: item.chosen_value,
+      resolution_action: item.resolution_action
+    }));
   const report = {
     mode: shouldWrite ? "write" : "dry-run",
     prefer_current_jobs_json: preferCurrentJobsJson,
@@ -957,10 +1322,14 @@ async function main() {
       }, {})
     ])),
     field_decisions: groupedDecisions,
+    old_jobs_diff_review: oldJobsDiffReview,
     manual_review_list: dedupeList(manualReview),
     description_resolution_review: descriptionReviewDetails,
     severe_corruption_list: severeCorruptionDetails,
     company_mismatch_review: companyMismatchReview,
+    location_resolution_review: locationResolutionReview,
+    pay_mismatch_review: payMismatchReview,
+    targeted_issue_status: targetedIssueStatus,
     overwrite_audit: overwriteAudit,
     write_allowed: writeAllowed,
     write_blocked_reasons: writeBlockers,

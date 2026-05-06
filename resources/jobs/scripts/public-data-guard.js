@@ -25,6 +25,35 @@ function cleanText(value) {
   return stringifySafe(value).trim();
 }
 
+function extractPayFacts(value) {
+  const text = cleanText(value);
+  const amounts = Array.from(text.matchAll(/\d[\d,]*(?:\.\d+)?/g))
+    .map((match) => Number(String(match[0]).replace(/,/g, "")))
+    .filter((amount) => Number.isFinite(amount) && amount > 0);
+  const period =
+    /\b(?:per month|\/\s*month|\/\s*mo\b|monthly|month)\b/i.test(text) ? "month"
+      : /\b(?:per year|\/\s*year|\/\s*yr\b|annual|annually|year)\b/i.test(text) ? "year"
+        : /\b(?:per hour|\/\s*hour|\/\s*hr\b|hourly|hour)\b/i.test(text) ? "hour"
+          : /\b(?:per day|\/\s*day|daily|day)\b/i.test(text) ? "day"
+            : "unknown";
+  const maxAmount = amounts.length ? Math.max(...amounts) : null;
+  const isRange = amounts.length >= 2 && /(?:-|–|—|\bto\b)/i.test(text);
+  return {
+    text,
+    period,
+    isRange,
+    tinyMonthly: period === "month" && maxAmount !== null && maxAmount < 1000,
+    annualLike: period === "year" || (period === "unknown" && maxAmount !== null && maxAmount >= 10000)
+  };
+}
+
+function isSuspiciousPayDowngrade(currentValue, proposedValue) {
+  const current = extractPayFacts(currentValue);
+  const proposed = extractPayFacts(proposedValue);
+  if (!current.text || !proposed.text) return false;
+  return Boolean((current.annualLike || current.isRange) && proposed.tinyMonthly);
+}
+
 function isJunkDescription(value) {
   const text = cleanText(value);
   if (!text) return false;
@@ -166,6 +195,7 @@ function compareJobsOutputs(currentJobs = [], proposedJobs = []) {
       (!proposedSnippet && currentSnippet) ||
       (isJunkDescription(proposedSnippet) && !isJunkDescription(currentSnippet)) ||
       (!getCanonicalPay(proposed) && getCanonicalPay(current)) ||
+      (isSuspiciousPayDowngrade(getCanonicalPay(current), getCanonicalPay(proposed))) ||
       (!getCanonicalLocation(proposed) && getCanonicalLocation(current)) ||
       (!proposedWorkplace && currentWorkplace);
 

@@ -10,7 +10,7 @@ const {
   readJobRecords
 } = require("./public-records");
 const { syncPublicJobsFromRecords } = require("./public-jobs");
-const { CANONICAL_SPECIALIZATIONS, hasUsableDescription, normalizePayDisplay, stringifySafe } = require("./job-normalizer");
+const { CANONICAL_SPECIALIZATIONS, hasUsableDescription, normalizeJob, normalizePayDisplay, stringifySafe } = require("./job-normalizer");
 const { buildValidationReport } = require("./validate-public-data");
 
 function buildJobsById(jobs) {
@@ -148,6 +148,19 @@ function summarizeDifferences(before, after) {
   return changed;
 }
 
+function deriveSalaryInput(publicJob, display, raw) {
+  const normalized = normalizeJob({
+    salary: stringifySafe(publicJob?.salary || display.pay_display || raw.salary)
+  });
+  return {
+    salary: stringifySafe(normalized.salary || publicJob?.salary || display.pay_display || raw.salary),
+    salary_min: normalized.salary_min ?? null,
+    salary_max: normalized.salary_max ?? null,
+    salary_currency: normalized.salary_currency || stringifySafe(raw.salary_currency || publicJob?.salary_currency || "Unknown"),
+    salary_period: normalized.salary_period || stringifySafe(raw.salary_period || publicJob?.salary_period || "Unknown")
+  };
+}
+
 async function main() {
   const [records, jobs, pendingBefore] = await Promise.all([
     readJobRecords(),
@@ -169,15 +182,14 @@ async function main() {
     const specializationProtected = manualOverrideFields.includes("display.specialization") || manualOverrideFields.includes("raw_source_data.specialization");
     const raw = record.raw_source_data || {};
     const display = record.display || {};
+    const salaryInput = deriveSalaryInput(publicJob, display, raw);
     const nextInput = {
       ...raw,
       title: stringifySafe(publicJob?.title || display.title || raw.title),
       organization: stringifySafe(publicJob?.organization || display.organization || raw.organization),
       location: stringifySafe(publicJob?.location || display.location || raw.location),
       workplace_type: stringifySafe(publicJob?.workplace_type || display.location_type || raw.workplace_type),
-      salary: stringifySafe(publicJob?.salary || display.pay_display || raw.salary),
-      salary_min: publicJob?.salary_min ?? display.salary_min ?? raw.salary_min ?? null,
-      salary_max: publicJob?.salary_max ?? display.salary_max ?? raw.salary_max ?? null,
+      ...salaryInput,
       specialization: specializationProtected ? stringifySafe(publicJob?.specialization || display.specialization || raw.specialization) : "",
       description: stringifySafe(publicJob?.description || display.description || raw.description || raw.raw_description),
       source: stringifySafe(publicJob?.source || display.source_name || raw.source),

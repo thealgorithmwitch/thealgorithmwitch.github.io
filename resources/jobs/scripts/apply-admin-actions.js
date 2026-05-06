@@ -233,6 +233,23 @@ function updateJobDisplayFromEditedRecord(record, editedRecord = {}) {
     const displayOrder = Number(editedRecord.display_order || 0);
     next.display_order = Number.isFinite(displayOrder) ? displayOrder : 0;
   }
+  const manualOverrides = new Set(
+    []
+      .concat(Array.isArray(record.manual_overrides) ? record.manual_overrides : [])
+      .concat(Array.isArray(record.protected_fields) ? record.protected_fields : [])
+  );
+  if (editedRecord.display && typeof editedRecord.display === "object") {
+    Object.keys(editedRecord.display).forEach((key) => {
+      manualOverrides.add(`display.${key}`);
+      if (["title", "organization", "location", "workplace_type", "salary", "description"].includes(key)) {
+        const rawKey = key === "workplace_type" ? "workplace_type" : key === "salary" ? "salary" : key;
+        manualOverrides.add(`raw_source_data.${rawKey}`);
+      }
+      if (key === "location_type") manualOverrides.add("raw_source_data.workplace_type");
+      if (key === "pay_display") manualOverrides.add("raw_source_data.salary");
+    });
+  }
+  next.manual_overrides = Array.from(manualOverrides);
   next.updated_at = new Date().toISOString();
 
   if (String(next.status || "").toLowerCase() === "published" && next.published && next.public_visibility) {
@@ -926,7 +943,7 @@ async function main() {
   report.jobPagesRegenerated = pageBuildResult.pagesWrittenCount;
   const parserStats = getParserCleanupStats();
   console.log(
-    `[jobs:apply-admin-actions] parser_cleaned_title_count=${parserStats.parser_cleaned_title_count} parser_cleaned_org_count=${parserStats.parser_cleaned_org_count} parser_cleaned_description_count=${parserStats.parser_cleaned_description_count} parser_location_defaulted_remote_count=${parserStats.parser_location_defaulted_remote_count} parser_location_cleaned_count=${parserStats.parser_location_cleaned_count} parser_hybrid_location_repaired_count=${parserStats.parser_hybrid_location_repaired_count} parser_elemental_metadata_stripped_count=${parserStats.parser_elemental_metadata_stripped_count} parser_custom_table_header_stripped_count=${parserStats.parser_custom_table_header_stripped_count} parser_html_fragment_stripped_count=${parserStats.parser_html_fragment_stripped_count}`
+    `[jobs:apply-admin-actions] parser_cleaned_title_count=${parserStats.parser_cleaned_title_count} parser_cleaned_org_count=${parserStats.parser_cleaned_org_count} parser_cleaned_description_count=${parserStats.parser_cleaned_description_count} parser_location_defaulted_remote_count=${parserStats.parser_location_defaulted_remote_count} parser_location_cleaned_count=${parserStats.parser_location_cleaned_count} parser_hybrid_location_repaired_count=${parserStats.parser_hybrid_location_repaired_count} parser_elemental_metadata_stripped_count=${parserStats.parser_elemental_metadata_stripped_count} parser_custom_table_header_stripped_count=${parserStats.parser_custom_table_header_stripped_count} parser_html_fragment_stripped_count=${parserStats.parser_html_fragment_stripped_count} salary_invalid_removed_count=${parserStats.salary_invalid_removed_count} salary_display_built_from_range_count=${parserStats.salary_display_built_from_range_count} workplace_type_cleaned_count=${parserStats.workplace_type_cleaned_count} workplace_type_invalid_removed_count=${parserStats.workplace_type_invalid_removed_count} workplace_type_field_misplacement_repaired_count=${parserStats.workplace_type_field_misplacement_repaired_count} elemental_impact_routed_pending_count=${parserStats.elemental_impact_routed_pending_count}`
   );
 
   try {

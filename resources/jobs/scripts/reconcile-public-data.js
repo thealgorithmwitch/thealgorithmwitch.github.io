@@ -12,6 +12,7 @@ const {
 const { syncPublicJobsFromRecords } = require("./public-jobs");
 const { CANONICAL_SPECIALIZATIONS, hasUsableDescription, normalizePayDisplay, stringifySafe } = require("./job-normalizer");
 const { buildValidationReport } = require("./validate-public-data");
+const { compareJobsOutputs } = require("./public-data-guard");
 
 function buildJobsById(jobs) {
   const map = new Map();
@@ -48,7 +49,6 @@ function buildPublicDuplicateIndex(publicJobs) {
     externalIds: new Set(),
     titleOrg: new Set()
   };
-
   for (const job of Array.isArray(publicJobs) ? publicJobs : []) {
     const id = String(job?.id || "").trim();
     const url = normalizeUrl(job?.original_url || job?.apply_url || job?.source_url);
@@ -59,7 +59,6 @@ function buildPublicDuplicateIndex(publicJobs) {
     if (externalId) index.externalIds.add(externalId);
     if (titleOrg !== "::") index.titleOrg.add(titleOrg);
   }
-
   return index;
 }
 
@@ -76,16 +75,17 @@ function isDuplicateOfPublicJob(job, publicIndex) {
   );
 }
 
-function existingManualOverrideFields(record, publicJob) {
+function buildManualOverrideFields(record, publicJob) {
   const fields = new Set(
     []
       .concat(Array.isArray(record.manual_overrides) ? record.manual_overrides : [])
       .concat(Array.isArray(record.protected_fields) ? record.protected_fields : [])
   );
+  if (!publicJob) return Array.from(fields);
 
   const display = record.display || {};
   const raw = record.raw_source_data || {};
-  const protectedPairs = [
+  const pairs = [
     ["title", "display.title", "raw_source_data.title"],
     ["organization", "display.organization", "raw_source_data.organization"],
     ["location", "display.location", "raw_source_data.location"],
@@ -99,30 +99,16 @@ function existingManualOverrideFields(record, publicJob) {
     ["page_url_override", "display.page_url_override", "raw_source_data.page_url_override"]
   ];
 
-  for (const [publicKey, displayKey, rawKey] of protectedPairs) {
+  for (const [publicKey, displayKey, rawKey] of pairs) {
     const publicValue = stringifySafe(publicJob?.[publicKey]);
-    const displayValue = stringifySafe(display[displayKey.split(".").pop()] || raw[rawKey.split(".").pop()]);
-    if (!publicValue || publicValue === displayValue) continue;
-
-    if (publicKey === "description" && !hasUsableDescription(publicValue, { title: publicJob?.title || display.title || raw.title })) {
-      continue;
-    }
-    if (publicKey === "salary" && !normalizePayDisplay({ payDisplay: publicValue })) {
-      continue;
-    }
-    if (publicKey === "specialization" && !CANONICAL_SPECIALIZATIONS.includes(publicValue)) {
-      continue;
-    }
-    if (publicKey === "location" && /\b(?:Title Business|POINT\s*\(|locality\b|\d+\s+hours?\))/i.test(publicValue)) {
-      continue;
-    }
-
-    if (publicValue && publicValue !== displayValue) {
-      fields.add(displayKey);
-      fields.add(rawKey);
-    }
+    const currentValue = stringifySafe(display[displayKey.split(".").pop()] || raw[rawKey.split(".").pop()]);
+    if (!publicValue || publicValue === currentValue) continue;
+    if (publicKey === "description" && !hasUsableDescription(publicValue, { title: publicJob?.title || display.title || raw.title })) continue;
+    if (publicKey === "salary" && !normalizePayDisplay({ payDisplay: publicValue })) continue;
+    if (publicKey === "specialization" && publicValue && !CANONICAL_SPECIALIZATIONS.includes(publicValue)) continue;
+    fields.add(displayKey);
+    fields.add(rawKey);
   }
-
   return Array.from(fields);
 }
 
@@ -149,24 +135,25 @@ function summarizeDifferences(before, after) {
 }
 
 async function main() {
+  const shouldWrite = process.argv.includes("--write");
+  const preferCurrentJobsJson = process.argv.includes("--prefer-current-jobs-json");
   const [records, jobs, pendingBefore] = await Promise.all([
     readJobRecords(),
     readJobs(),
     readPendingSyncedJobs()
   ]);
+
   const jobsById = buildJobsById(jobs);
-  const repairedRecords = [];
+  const reconciledRecords = [];
   const changedExamples = [];
 
   for (const record of Array.isArray(records) ? records : []) {
     if (record.record_type !== "job") {
-      repairedRecords.push(record);
+      reconciledRecords.push(record);
       continue;
     }
-
-    const publicJob = jobsById.get(String(record.id || ""));
-    const manualOverrideFields = existingManualOverrideFields(record, publicJob);
-    const specializationProtected = manualOverrideFields.includes("display.specialization") || manualOverrideFields.includes("raw_source_data.specialization");
+    const publicJob = preferCurrentJobsJson ? jobsById.get(String(record.id || "")) : null;
+    const manualOverrideFields = buildManualOverrideFields(record, publicJob);
     const raw = record.raw_source_data || {};
     const display = record.display || {};
     const nextInput = {
@@ -178,7 +165,7 @@ async function main() {
       salary: stringifySafe(publicJob?.salary || display.pay_display || raw.salary),
       salary_min: publicJob?.salary_min ?? display.salary_min ?? raw.salary_min ?? null,
       salary_max: publicJob?.salary_max ?? display.salary_max ?? raw.salary_max ?? null,
-      specialization: specializationProtected ? stringifySafe(publicJob?.specialization || display.specialization || raw.specialization) : "",
+      specialization: stringifySafe(publicJob?.specialization || display.specialization || raw.specialization),
       description: stringifySafe(publicJob?.description || display.description || raw.description || raw.raw_description),
       source: stringifySafe(publicJob?.source || display.source_name || raw.source),
       source_url: stringifySafe(publicJob?.source_url || display.source_url || raw.source_url),
@@ -188,53 +175,73 @@ async function main() {
       status: stringifySafe(raw.status || record.status)
     };
 
-    const repaired = buildJobRecord(nextInput, {
+    const reconciled = buildJobRecord(nextInput, {
       ...record,
       manual_overrides: manualOverrideFields
     });
-    const changedFields = summarizeDifferences(record, repaired);
+    const changedFields = summarizeDifferences(record, reconciled);
     if (changedFields.length) {
       changedExamples.push({
-        id: repaired.id,
-        title: repaired.display?.title || repaired.raw_source_data?.title,
+        id: reconciled.id,
+        title: reconciled.display?.title || reconciled.raw_source_data?.title,
         changed_fields: changedFields
       });
     }
-    repairedRecords.push(repaired);
+    reconciledRecords.push(reconciled);
   }
 
-  const previewPublicSync = await syncPublicJobsFromRecords(repairedRecords, {
-    label: "jobs:repair-public-data",
-    dryRun: true,
+  const previewPublicSync = await syncPublicJobsFromRecords(reconciledRecords, {
+    label: "jobs:reconcile-public-data",
+    allowWorseOverwrite: false,
+    dryRun: true
+  }).catch((error) => ({
+    error: error.message
+  }));
+
+  const dryRunAudit = previewPublicSync.error
+    ? { error: previewPublicSync.error }
+    : compareJobsOutputs(jobs, previewPublicSync.publicJobs);
+
+  const report = {
+    mode: shouldWrite ? "write" : "dry-run",
+    prefer_current_jobs_json: preferCurrentJobsJson,
+    job_records_before: records.length,
+    job_records_after: reconciledRecords.length,
+    jobs_json_before: jobs.length,
+    jobs_changed: changedExamples.length,
+    overwrite_audit: dryRunAudit,
+    examples: changedExamples.slice(0, 20)
+  };
+
+  console.log(JSON.stringify(report, null, 2));
+
+  if (!shouldWrite) {
+    return;
+  }
+  if (previewPublicSync.error) {
+    throw new Error(previewPublicSync.error);
+  }
+
+  await writeJson(JOB_RECORDS_FILE, reconciledRecords);
+  const publicSync = await syncPublicJobsFromRecords(reconciledRecords, {
+    label: "jobs:reconcile-public-data",
     allowWorseOverwrite: false
   });
-
-  console.log(
-    `[jobs:repair-public-data] preview jobs_changed=${previewPublicSync.overwriteAudit.field_counts.jobs_changed} descriptions_replaced=${previewPublicSync.overwriteAudit.field_counts.descriptions_replaced} snippets_replaced=${previewPublicSync.overwriteAudit.field_counts.snippets_replaced} pay_fields_replaced=${previewPublicSync.overwriteAudit.field_counts.pay_fields_replaced} locations_replaced=${previewPublicSync.overwriteAudit.field_counts.locations_replaced} specializations_replaced=${previewPublicSync.overwriteAudit.field_counts.specializations_replaced} page_urls_changed=${previewPublicSync.overwriteAudit.field_counts.page_urls_changed}`
-  );
-
-  await writeJson(JOB_RECORDS_FILE, repairedRecords);
-  const publicSync = await syncPublicJobsFromRecords(repairedRecords, { label: "jobs:repair-public-data" });
   const publicIndex = buildPublicDuplicateIndex(publicSync.publicJobs);
   const nextPending = pendingBefore.filter((job) => !isDuplicateOfPublicJob(job, publicIndex));
   await writeJson(PENDING_SYNCED_FILE, nextPending);
   const validation = await buildValidationReport({ requirePages: false });
-
-  console.log(`[jobs:repair-public-data] job_records_before=${records.length} job_records_after=${repairedRecords.length}`);
-  console.log(`[jobs:repair-public-data] jobs_json_before=${jobs.length} jobs_json_after=${publicSync.jobsCountAfter}`);
-  console.log(`[jobs:repair-public-data] pending_before=${pendingBefore.length} pending_after=${nextPending.length}`);
-  console.log(`[jobs:repair-public-data] changed_records=${changedExamples.length}`);
-  changedExamples.slice(0, 20).forEach((example) => {
-    console.log(`[jobs:repair-public-data] example id=${example.id} title=${example.title} changed_fields=${example.changed_fields.join(",")}`);
-  });
-  console.log(
-    `[jobs:repair-public-data] public_records_count=${validation.public_records_count} jobs_json_count=${validation.jobs_json_count} missing_page_url_count=${validation.missing_page_url_count} stale_page_url_count=${validation.stale_page_url_count} duplicate_slug_count=${validation.duplicate_slug_count} pending_public_overlap_count=${validation.pending_public_overlap_count}`
-  );
+  console.log(JSON.stringify({
+    wrote: true,
+    jobs_json_after: publicSync.jobsCountAfter,
+    pending_after: nextPending.length,
+    validation_errors: validation.errors
+  }, null, 2));
 }
 
 if (require.main === module) {
   main().catch((error) => {
-    console.error(`[jobs:repair-public-data] Failed: ${error.message}`);
+    console.error(`[jobs:reconcile-public-data] Failed: ${error.message}`);
     process.exitCode = 1;
   });
 }

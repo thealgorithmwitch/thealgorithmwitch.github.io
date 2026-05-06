@@ -3,6 +3,7 @@ const { JOBS_FILE, readJobs, serializeForWrite, writeJson } = require("./job-uti
 const { readJobRecords } = require("./public-records");
 const { buildJobPagePathMap, cleanVisibleText } = require("./job-page-paths");
 const { resolveDisplayJobFromRecord, shouldShowPublicRecord } = require("./lifecycle-utils");
+const { compareJobsOutputs } = require("./public-data-guard");
 
 function enrichPublicJob(job) {
   const title = cleanVisibleText(stringifySafe(job?.title));
@@ -54,6 +55,8 @@ function countPublishedJobRecords(records) {
 async function syncPublicJobsFromRecords(records, options = {}) {
   const label = options.label || "jobs:public-records";
   const logger = options.logger || console;
+  const allowWorseOverwrite = options.allowWorseOverwrite === true;
+  const dryRun = options.dryRun === true;
   const existingJobs = await readJobs();
   const existingById = new Map((Array.isArray(existingJobs) ? existingJobs : []).map((job) => [String(job.id || ""), job]));
   const publicJobs = buildPublicJobsFromRecords(records).map((job) => {
@@ -71,19 +74,33 @@ async function syncPublicJobsFromRecords(records, options = {}) {
   });
   const existingJobsJsonCount = Array.isArray(existingJobs) ? existingJobs.length : 0;
   const computedPublicJobsCount = publicJobs.length;
+  const overwriteAudit = compareJobsOutputs(existingJobs, publicJobs);
   const existingSerialized = serializeForWrite(JOBS_FILE, existingJobs);
   const nextSerialized = serializeForWrite(JOBS_FILE, publicJobs);
   const shouldWrite = existingJobsJsonCount !== computedPublicJobsCount || existingSerialized !== nextSerialized;
   let wrote = false;
 
-  if (shouldWrite) {
+  logger.log(
+    `[${label}] jobs_changed=${overwriteAudit.field_counts.jobs_changed} descriptions_replaced=${overwriteAudit.field_counts.descriptions_replaced} snippets_replaced=${overwriteAudit.field_counts.snippets_replaced} pay_fields_replaced=${overwriteAudit.field_counts.pay_fields_replaced} locations_replaced=${overwriteAudit.field_counts.locations_replaced} specializations_replaced=${overwriteAudit.field_counts.specializations_replaced} page_urls_changed=${overwriteAudit.field_counts.page_urls_changed}`
+  );
+  overwriteAudit.risky_examples.slice(0, 10).forEach((example) => {
+    logger.log(
+      `[${label}] risky_change id=${example.id} title=${example.title} organization=${example.organization} current_pay=${example.current_pay} proposed_pay=${example.proposed_pay} current_location=${example.current_location} proposed_location=${example.proposed_location}`
+    );
+  });
+
+  if (overwriteAudit.worse_reasons.length && !allowWorseOverwrite) {
+    throw new Error(`Refusing to overwrite jobs.json: ${overwriteAudit.worse_reasons.join("; ")}`);
+  }
+
+  if (shouldWrite && !dryRun) {
     await writeJson(JOBS_FILE, publicJobs);
     wrote = true;
   }
 
-  const finalJobs = await readJobs();
-  const finalJobsJsonCount = Array.isArray(finalJobs) ? finalJobs.length : 0;
-  const syncMismatch = finalJobsJsonCount !== computedPublicJobsCount;
+  const finalJobs = dryRun ? existingJobs : await readJobs();
+  const finalJobsJsonCount = dryRun ? existingJobsJsonCount : (Array.isArray(finalJobs) ? finalJobs.length : 0);
+  const syncMismatch = dryRun ? false : finalJobsJsonCount !== computedPublicJobsCount;
   const descriptionSnippetGeneratedCount = publicJobs.filter((job) => String(job.description_snippet || "").trim()).length;
   const descriptionCleanedCount = publicJobs.filter((job) => {
     const description = String(job.description || "").trim();
@@ -92,7 +109,7 @@ async function syncPublicJobsFromRecords(records, options = {}) {
   }).length;
 
   logger.log(
-    `[${label}] existing_jobs_json_count=${existingJobsJsonCount} computed_public_jobs_count=${computedPublicJobsCount} final_jobs_json_count=${finalJobsJsonCount} wrote_jobs_json=${wrote} write_path=${JOBS_FILE} sync_mismatch=${syncMismatch}`
+    `[${label}] existing_jobs_json_count=${existingJobsJsonCount} computed_public_jobs_count=${computedPublicJobsCount} final_jobs_json_count=${finalJobsJsonCount} wrote_jobs_json=${wrote} dry_run=${dryRun} write_path=${JOBS_FILE} sync_mismatch=${syncMismatch}`
   );
   logger.log(
     `[${label}] description_snippet_generated_count=${descriptionSnippetGeneratedCount} description_cleaned_count=${descriptionCleanedCount}`
@@ -105,10 +122,11 @@ async function syncPublicJobsFromRecords(records, options = {}) {
   return {
     publicJobs,
     jobsCountBefore: existingJobsJsonCount,
-    jobsCount: finalJobsJsonCount,
-    jobsCountAfter: finalJobsJsonCount,
+    jobsCount: dryRun ? computedPublicJobsCount : finalJobsJsonCount,
+    jobsCountAfter: dryRun ? computedPublicJobsCount : finalJobsJsonCount,
     publishedCount: computedPublicJobsCount,
-    wrote
+    wrote,
+    overwriteAudit
   };
 }
 

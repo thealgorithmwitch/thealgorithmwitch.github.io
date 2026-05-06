@@ -118,6 +118,21 @@
       background: rgba(212, 193, 255, 0.08);
       border-color: rgba(212, 193, 255, 0.4);
     }
+    .debug-panel {
+      display: grid;
+      gap: 8px;
+      padding: 14px 16px;
+      border: 1px solid var(--border-divider);
+      background: rgba(0, 0, 0, 0.16);
+      color: var(--ink-secondary);
+      font-family: var(--font-mono);
+      font-size: 0.72rem;
+      line-height: 1.45;
+      word-break: break-word;
+    }
+    .debug-panel strong {
+      color: var(--ink-primary);
+    }
     .folders {
       display: flex;
       gap: 12px;
@@ -461,8 +476,10 @@
           </div>
           <div class="actions">
             <button id="unlock-button" type="button" class="btn-primary">Unlock</button>
+            <button id="local-emergency-button" type="button" class="btn-secondary" style="display:none;">Use Local Emergency Mode</button>
           </div>
           <div id="login-message" class="status-message error" style="margin-top:16px;"></div>
+          <div id="admin-debug" class="debug-panel" style="margin-top:16px; display:none;"></div>
         </div>
       </section>
 
@@ -760,6 +777,15 @@
         hiddenOrganizations: [],
         selectedIds: [],
         actionsById: {}
+      },
+      forceLocalMode: false,
+      adminDebug: {
+        backendUrlPresent: false,
+        tokenPresent: false,
+        validationAction: "validateAdminToken",
+        httpStatus: "",
+        backendResponse: "",
+        finalMode: "locked"
       }
     };
 
@@ -768,8 +794,10 @@
     const consoleShell = document.getElementById("console-shell");
     const statusMessage = document.getElementById("status-message");
     const loginMessage = document.getElementById("login-message");
+    const adminDebugPanel = document.getElementById("admin-debug");
     const passwordInput = document.getElementById("admin-password");
     const unlockButton = document.getElementById("unlock-button");
+    const localEmergencyButton = document.getElementById("local-emergency-button");
     const logoutButton = document.getElementById("logout-button");
     const triageGeneratedAt = document.getElementById("triage-generated-at");
     const triageMetricEls = {
@@ -790,6 +818,26 @@
     };
     const loadMoreJobsButton = document.getElementById("load-more-jobs");
     const exportLocalActionsButton = document.getElementById("export-local-actions");
+
+    function setAdminDebug(next = {}) {
+      state.adminDebug = {
+        ...state.adminDebug,
+        backendUrlPresent: Boolean(JOBS_BACKEND_URL.trim()),
+        tokenPresent: Boolean(getStoredToken().trim()),
+        ...next
+      };
+      const entries = [
+        ["backendUrl", state.adminDebug.backendUrlPresent ? "present" : "missing"],
+        ["token", state.adminDebug.tokenPresent ? "present" : "missing"],
+        ["validation action", state.adminDebug.validationAction || "validateAdminToken"],
+        ["HTTP status", state.adminDebug.httpStatus || "n/a"],
+        ["backend response", state.adminDebug.backendResponse || "n/a"],
+        ["final mode", state.adminDebug.finalMode || "unknown"]
+      ];
+      adminDebugPanel.innerHTML = entries.map(([label, value]) => `<div><strong>${escapeHtml(label)}:</strong> ${escapeHtml(String(value))}</div>`).join("");
+      adminDebugPanel.style.display = "grid";
+      console.log("[admin-review] debug", state.adminDebug);
+    }
     
     function getLocalReviewState() {
       try {
@@ -1184,12 +1232,15 @@
           experience_level: String(display.experience_level || raw.experience || "").trim(),
           sector: String(display.sector || raw.sector || "").trim(),
           function: String(display.function || raw.function || "").trim(),
+          specialization: String(display.specialization || raw.specialization || "").trim(),
+          specialization_confidence: String(display.specialization_confidence || raw.specialization_confidence || "low").trim(),
           tags: Array.isArray(display.tags) && display.tags.length ? display.tags : (Array.isArray(raw.tags) ? raw.tags : []),
           description: String(display.description || raw.description || "").trim(),
           source_name: String(display.source_name || raw.source || "").trim(),
           source_url: String(display.source_url || raw.source_url || "").trim(),
           original_url: String(display.original_url || raw.original_url || raw.source_url || "").trim(),
           application_url: String(display.application_url || raw.apply_url || "").trim(),
+          page_url_override: String(display.page_url_override || raw.page_url_override || "").trim(),
           featured: typeof record.featured === "boolean" ? record.featured : Boolean(raw.featured),
           published: typeof record.published === "boolean" ? record.published : true
         },
@@ -1217,12 +1268,15 @@
         experience_level: String(savedDisplay.experience_level || job.experience || "").trim(),
         sector: String(savedDisplay.sector || job.sector || "").trim(),
         function: String(savedDisplay.function || job.function || "").trim(),
+        specialization: String(savedDisplay.specialization || job.specialization || "").trim(),
+        specialization_confidence: String(savedDisplay.specialization_confidence || job.specialization_confidence || "low").trim(),
         tags: Array.isArray(savedDisplay.tags) ? savedDisplay.tags : (Array.isArray(job.tags) ? job.tags : []),
         description: String(savedDisplay.description || job.description || job.raw_description || "").trim(),
         source_name: String(savedDisplay.source_name || job.source || "").trim(),
         source_url: String(savedDisplay.source_url || job.source_url || "").trim(),
         original_url: String(savedDisplay.original_url || job.original_url || job.apply_url || "").trim(),
         application_url: String(savedDisplay.application_url || job.apply_url || "").trim(),
+        page_url_override: String(savedDisplay.page_url_override || job.page_url_override || "").trim(),
         featured: typeof saved.featured === "boolean" ? saved.featured : Boolean(job.featured),
         public_visibility: typeof saved.public_visibility === "boolean" ? saved.public_visibility : true,
         status: String(saved.status || "published"),
@@ -1244,12 +1298,15 @@
         ["experience_level", "Experience Level"],
         ["sector", "Sector"],
         ["function", "Function"],
+        ["specialization", "Specialization"],
+        ["specialization_confidence", "Specialization Confidence"],
         ["tags", "Tags"],
         ["description", "Description", "textarea"],
         ["source_name", "Source Name"],
         ["source_url", "Source URL", "url"],
         ["original_url", "Original URL", "url"],
         ["application_url", "Application URL", "url"],
+        ["page_url_override", "Page URL Override", "url"],
         ["admin_notes", "Admin Notes", "textarea"]
       ],
       "talent-active": [
@@ -1682,6 +1739,7 @@
       clearStoredToken();
       state.loadedTabs.clear();
       state.items = {};
+      state.forceLocalMode = false;
     }
 
     function isBackendConfigured() {
@@ -1693,13 +1751,15 @@
     }
 
     function canUseBackendAdmin() {
-      return isBackendConfigured() && hasToken();
+      return isBackendConfigured() && hasToken() && !state.forceLocalMode;
     }
 
     function showLockedState() {
       lockedState.style.display = "block";
       loginState.style.display = "none";
       consoleShell.style.display = "none";
+      localEmergencyButton.style.display = "none";
+      setAdminDebug({ finalMode: "locked" });
     }
 
     function showLoginState(message) {
@@ -1708,10 +1768,14 @@
       consoleShell.style.display = "none";
       clearStatus();
       showLoginMessage(message || "");
-      passwordInput.value = "";
+      if (!message) {
+        passwordInput.value = "";
+      }
+      localEmergencyButton.style.display = isBackendConfigured() && hasToken() ? "inline-flex" : "none";
       window.requestAnimationFrame(() => {
         passwordInput.focus();
       });
+      setAdminDebug({ finalMode: "login" });
     }
 
     function showConsoleState() {
@@ -1719,12 +1783,19 @@
       loginState.style.display = "none";
       consoleShell.style.display = "block";
       showLoginMessage("");
+      setAdminDebug({ finalMode: state.forceLocalMode ? "localEmergency" : "backend" });
     }
 
     function expireAdminSession(message) {
       clearAdminSessionState();
       showLoginState(message || SESSION_EXPIRED_MESSAGE);
       showLoginMessage(message || SESSION_EXPIRED_MESSAGE);
+      localEmergencyButton.style.display = isBackendConfigured() ? "inline-flex" : "none";
+      setAdminDebug({
+        httpStatus: "401/403",
+        backendResponse: message || SESSION_EXPIRED_MESSAGE,
+        finalMode: "login"
+      });
       console.warn("[admin-review] auth session cleared", {
         reason: message || SESSION_EXPIRED_MESSAGE
       });
@@ -1853,10 +1924,21 @@
           });
         }
         responseText = await response.text();
+        setAdminDebug({
+          validationAction: action,
+          httpStatus: response.status,
+          backendResponse: responseText ? responseText.slice(0, 400) : ""
+        });
       } catch (error) {
         const requestError = new Error(error.message || `${action} failed.`);
         requestError.code = "REQUEST_FAILED";
         requestError.allowLocalFallback = true;
+        setAdminDebug({
+          validationAction: action,
+          httpStatus: "request_failed",
+          backendResponse: error.message || `${action} failed.`,
+          finalMode: "login"
+        });
         throw requestError;
       }
     
@@ -1884,6 +1966,12 @@
         apiError.code = "BACKEND_ERROR";
         apiError.httpStatus = response.status || 500;
         apiError.allowLocalFallback = false;
+        setAdminDebug({
+          validationAction: action,
+          httpStatus: apiError.httpStatus,
+          backendResponse: data && data.error ? data.error : `${action} failed.`,
+          finalMode: "login"
+        });
         throw apiError;
       }
     
@@ -1894,11 +1982,16 @@
       if (!isBackendConfigured() || !hasToken()) return false;
       try {
         await requestAdmin("validateAdminToken");
+        setAdminDebug({
+          validationAction: "validateAdminToken",
+          finalMode: "backend"
+        });
         return true;
       } catch (error) {
         if (error.code !== "AUTH_EXPIRED") {
           setStatus(error.message || "Unable to validate admin session.", true);
         }
+        localEmergencyButton.style.display = isBackendConfigured() ? "inline-flex" : "none";
         return false;
       }
     }
@@ -2052,12 +2145,15 @@
           ["experience_level", "Experience Level"],
           ["sector", "Sector"],
           ["function", "Function"],
+          ["specialization", "Specialization"],
+          ["specialization_confidence", "Specialization Confidence"],
           ["tags", "Tags"],
           ["description", "Description", null, "textarea"],
           ["source_name", "Source Name"],
           ["source_url", "Source URL", null, "url"],
           ["original_url", "Original URL", null, "url"],
           ["application_url", "Application URL", null, "url"],
+          ["page_url_override", "Page URL Override", null, "url"],
           ["admin_notes", "Admin Notes", null, "textarea"]
         ],
         talent: [
@@ -2808,13 +2904,22 @@
       clearAdminSessionState();
       setStoredToken(token);
       const sessionIsValid = await validateAdminSession();
-      if (!sessionIsValid && !hasToken()) return;
+      if (!sessionIsValid) {
+        showLoginState("Backend admin session could not be validated. Check the debug panel below before using local emergency mode.");
+        return;
+      }
       showConsoleState();
       loadTriageSummary();
       activateTab("jobs");
-      if (!sessionIsValid) {
-        setStatus("Local review console is active. Backend admin session could not be validated.", true);
-      }
+    });
+
+    localEmergencyButton.addEventListener("click", () => {
+      state.forceLocalMode = true;
+      showConsoleState();
+      loadTriageSummary();
+      activateTab("jobs");
+      setStatus("Local emergency review mode is active. Backend-authenticated tabs will remain unavailable until validation succeeds.", true);
+      setAdminDebug({ finalMode: "localEmergency" });
     });
 
     passwordInput.addEventListener("keydown", (event) => {
@@ -2845,25 +2950,26 @@
       }
 
       const sessionIsValid = await validateAdminSession();
-      if (!sessionIsValid && !hasToken()) return;
+      if (!sessionIsValid) {
+        showLoginState("Backend admin session could not be validated. Check the debug panel below before using local emergency mode.");
+        return;
+      }
 
       showConsoleState();
       activateTab("jobs");
-
-      if (!sessionIsValid) {
-        setStatus("Local review console is active. Backend admin session could not be validated.", true);
-      }
     } catch (error) {
       console.error("[admin-review] failed to initialize admin review", error);
       if (isBackendConfigured() && !hasToken()) {
         showLoginState(error.message || "Admin review failed to initialize.");
       } else {
-        showConsoleState();
-        document.getElementById("panel-jobs").innerHTML = `<div class="empty-state">Admin review failed to initialize. Check the console for details.</div>`;
-        document.getElementById("count-jobs").textContent = "0 pending";
+        showLoginState(error.message || "Admin review failed to initialize.");
       }
       triageGeneratedAt.textContent = "Triage snapshot failed to load";
       setStatus(error.message || "Admin review failed to initialize.", true);
+      setAdminDebug({
+        backendResponse: error.message || "Admin review failed to initialize.",
+        finalMode: "login"
+      });
     }
   }
 

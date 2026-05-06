@@ -1498,11 +1498,6 @@ document.addEventListener("DOMContentLoaded", () => {
     console.error("[startup] loadAuditPanelData failed", error);
   });
 
-  console.log("[startup] calling loadResourcesFromSheet");
-  loadResourcesFromSheet().catch((error) => {
-    console.error("[startup] loadResourcesFromSheet failed", error);
-  });
-
   loadSettingsFromSheet()
     .then(applyWorkspaceConfig)
     .catch((error) => console.error("Initial settings load failed:", error));
@@ -2117,7 +2112,12 @@ async function loadAuditFromSheet(status = "all") {
     console.log("[resources] raw links", response.links);
     currentResourceLinks = Array.isArray(response.links) ? response.links : [];
     currentResourcesLoaded = true;
-    renderResourceLinks(currentResourceLinks);
+    try {
+      renderResourceLinks(currentResourceLinks);
+    } catch (error) {
+      console.error("[resources] renderResourceLinks failed", error);
+      throw error;
+    }
   }
 
 async function loadPerformanceFromSheet() {
@@ -4952,3 +4952,126 @@ function categoryBadgeClass(category) {
         labelText: "Data Loaded"
       },
       error: {
+        boxClass: "border-rose-400/20",
+        dot: "bg-rose-400",
+        labelText: "Data Error"
+      }
+    };
+
+    const config = states[state] || states.loading;
+
+    box.className = `bg-black/20 rounded-lg p-3 border flex items-start gap-3 ${config.boxClass}`;
+    indicator.innerHTML = `
+      <span class="animate-ping absolute inline-flex h-full w-full rounded-full ${config.dot} opacity-75"></span>
+      <span class="relative inline-flex rounded-full h-2.5 w-2.5 ${config.dot}"></span>
+    `;
+    label.textContent = config.labelText;
+    text.textContent = message || "";
+  }
+
+  function exportCurrentReportCsv() {
+    const rows = Array.isArray(currentPerformanceTrend) ? currentPerformanceTrend : [];
+
+    if (!rows.length) {
+      showToast("No Data", "There is no report data to export.", "ph-warning", "text-amber-400");
+      return;
+    }
+
+    const headers = ["date", "sessions", "users", "conversions", "conversion_rate"];
+    const csvRows = [
+      headers.join(","),
+      ...rows.map((row) => {
+        return [
+          csvEscape(row.date),
+          csvEscape(row.sessions),
+          csvEscape(row.users),
+          csvEscape(row.conversions),
+          csvEscape(row.conversionRate)
+        ].join(",");
+      })
+    ];
+
+    const blob = new Blob([csvRows.join("\n")], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    const dateLabel = new Date().toISOString().slice(0, 10);
+
+    link.href = url;
+    link.download = `analytics-report-${dateLabel}.csv`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+
+    showToast("Export Ready", "Report CSV downloaded.", "ph-download-simple");
+  }
+
+  function csvEscape(value) {
+    const str = String(value ?? "");
+    if (/[",\n]/.test(str)) {
+      return `"${str.replace(/"/g, '""')}"`;
+    }
+    return str;
+  }
+
+  function showToast(title, message, iconClass, colorClass = "text-emerald-400") {
+    const toast = document.getElementById("toast");
+    const titleEl = document.getElementById("toast-title");
+    const msgEl = document.getElementById("toast-msg");
+    const iconEl = document.getElementById("toast-icon");
+
+    if (!toast || !titleEl || !msgEl || !iconEl) return;
+
+    titleEl.textContent = title;
+    msgEl.textContent = message;
+    iconEl.className = `ph-fill ${iconClass} ${colorClass} text-lg`;
+
+    toast.classList.add("toast-show");
+    window.clearTimeout(window.__toastTimer);
+    window.__toastTimer = window.setTimeout(() => {
+      toast.classList.remove("toast-show");
+    }, 2500);
+  }
+
+  function bindWorkspaceDropdown() {
+  const toggle = document.getElementById("workspace-dropdown-toggle");
+  const dropdown = document.getElementById("workspace-dropdown");
+  const caret = document.getElementById("workspace-caret");
+
+  if (!toggle || !dropdown || !caret) return;
+
+  toggle.addEventListener("click", (event) => {
+    event.stopPropagation();
+    dropdown.classList.toggle("hidden");
+    caret.classList.toggle("rotate-180");
+  });
+
+  document.addEventListener("click", (event) => {
+    if (!toggle.contains(event.target) && !dropdown.contains(event.target)) {
+      dropdown.classList.add("hidden");
+      caret.classList.remove("rotate-180");
+    }
+  });
+}
+
+  function initStars() {
+    const container = document.getElementById("star-container");
+    if (!container) return;
+
+    for (let i = 0; i < 50; i += 1) {
+      const star = document.createElement("div");
+      star.className = "star";
+      star.style.left = `${Math.random() * 100}%`;
+      star.style.top = `${Math.random() * 100}%`;
+      const size = Math.random() < 0.1 ? 2 : 1;
+      star.style.width = `${size}px`;
+      star.style.height = `${size}px`;
+      star.style.setProperty("--duration", `${2 + Math.random() * 4}s`);
+      star.style.setProperty("--delay", `${Math.random() * 5}s`);
+      star.style.setProperty("--opacity", `${0.2 + Math.random() * 0.5}`);
+      container.appendChild(star);
+    }
+  }
+</script>
+</body>
+</html>

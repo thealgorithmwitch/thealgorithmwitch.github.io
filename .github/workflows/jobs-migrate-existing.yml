@@ -60,6 +60,14 @@ jobs:
         if: ${{ inputs.write == 'true' }}
         run: npm --prefix "$JOBS_DIR" run jobs:migrate-existing -- --write
 
+      - name: Repair public job data
+        if: ${{ inputs.write == 'true' }}
+        run: npm --prefix "$JOBS_DIR" run jobs:repair-public-data
+
+      - name: Refresh public jobs from record store
+        if: ${{ inputs.write == 'true' }}
+        run: npm --prefix "$JOBS_DIR" run jobs:refresh-public
+
       - name: Rebuild public job pages
         if: ${{ inputs.write == 'true' }}
         run: npm --prefix "$JOBS_DIR" run jobs:build-pages

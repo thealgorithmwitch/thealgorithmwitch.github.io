@@ -722,9 +722,6 @@
                   <h3 class="text-sm font-bold text-white">Conversions Over Time</h3>
                   <span class="text-[10px] text-gray-500">Daily conversions</span>
                 </div>
-                <p class="text-[11px] text-gray-500 mb-3 leading-relaxed">
-                  Conversions shown here come from GA4 key events synced into the performance_data sheet. Google Ads conversions may differ if Ads conversion actions are configured separately.
-                </p>
                 <div class="h-52 relative" id="chart-conversions-trend">
                   <svg class="w-full h-full" viewBox="0 0 400 150" preserveAspectRatio="none">
                     <defs>
@@ -3710,7 +3707,8 @@ function renderHomeOverviewSnapshot(summary, comparison) {
       metricKey: "paidCost",
       gradientId: "costGradient",
       strokeColor: "#f59e0b",
-      labelsColorClass: "text-gray-500"
+      labelsColorClass: "text-gray-500",
+      emptyStateMessage: "No paid cost trend is available for this date range."
     });
 
     renderSparklineChart({
@@ -3719,7 +3717,8 @@ function renderHomeOverviewSnapshot(summary, comparison) {
       metricKey: "costPerConversion",
       gradientId: "cpaGradient",
       strokeColor: "#fb7185",
-      labelsColorClass: "text-gray-500"
+      labelsColorClass: "text-gray-500",
+      emptyStateMessage: "Cost per conversion is unavailable because no conversions were recorded for this date range."
     });
   }
 
@@ -3737,12 +3736,27 @@ function renderHomeOverviewSnapshot(summary, comparison) {
       return;
     }
 
-    const isAllZeroSeries = points.every((item) => {
-      const rawValue = item && Object.prototype.hasOwnProperty.call(item, metricKey) ? item[metricKey] : 0;
-      return rawValue === "" || rawValue === null || rawValue === undefined || Number(rawValue) === 0;
+    const rawSeries = points.map((item) => (
+      item && Object.prototype.hasOwnProperty.call(item, metricKey) ? item[metricKey] : 0
+    ));
+    const normalizedValues = rawSeries.map((value) => {
+      const numeric = Number(value);
+      return Number.isFinite(numeric) ? numeric : null;
     });
+    const finiteValues = normalizedValues.filter((value) => value !== null);
+    const hasAnyFiniteValues = finiteValues.length > 0;
+    const uniqueFiniteValues = Array.from(new Set(finiteValues.map((value) => String(value))));
+    const isAllZeroSeries = normalizedValues.every((value) => value === null || value === 0);
+    const isAllIdenticalSeries = hasAnyFiniteValues && uniqueFiniteValues.length === 1;
+    const isInvalidCpaSeries = metricKey === "costPerConversion" && normalizedValues.every((value) => value === null || value === 0);
+    const shouldShowEmptyState =
+      Boolean(emptyStateMessage) && (
+        isAllZeroSeries ||
+        (metricKey === "paidCost" && isAllIdenticalSeries) ||
+        (metricKey === "costPerConversion" && (isInvalidCpaSeries || isAllIdenticalSeries))
+      );
 
-    if (emptyStateMessage && isAllZeroSeries) {
+    if (shouldShowEmptyState) {
       const labels = points.map((item) => formatShortDateLabel(item.date));
       container.innerHTML = `
         <div class="h-full w-full relative">
@@ -3760,7 +3774,7 @@ function renderHomeOverviewSnapshot(summary, comparison) {
       return;
     }
 
-    const values = points.map((item) => Number(item[metricKey] || 0));
+    const values = normalizedValues.map((value) => value === null ? 0 : value);
     const labels = points.map((item) => formatShortDateLabel(item.date));
     const width = 400;
     const minY = 10;

@@ -2,6 +2,8 @@ name: Update Blog From Substack
 
 on:
   workflow_dispatch:
+  schedule:
+    - cron: "0 */6 * * *"
 
 permissions:
   contents: write
@@ -19,51 +21,26 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: "20"
 
-      - name: Generate blog pages through RSS proxy
+      - name: Generate blog pages
+        env:
+          SUBSTACK_FEED_URL: "https://feedless.org/feed-builder?url=https:%2F%2Fthealgorithmwitch.substack.com%2Ffeed"
         run: |
           set -euo pipefail
-          echo "[workflow] Trying RSS proxy first"
 
-          PROXY_FEED="https://rssproxy.migor.org/api/feed?url=https%3A%2F%2Fthealgorithmwitch.substack.com%2Ffeed"
+          echo "[workflow] Fetching feed from Feedless proxy"
 
-          if FEED_URL="$PROXY_FEED" node generate-blog.mjs; then
-            echo "[workflow] Generated from proxied Substack RSS"
-          elif node generate-blog.mjs; then
-            echo "[workflow] Generated from direct Substack RSS"
-          elif [ -f posts.json ]; then
-            echo "[workflow] RSS failed. Rendering from root posts.json"
-            node generate-blog.mjs --from-posts-json
-          else
-            echo "[workflow] RSS failed and root posts.json is missing"
-            exit 1
-          fi
+          node generate-blog.mjs
 
-      - name: Finalize generated blog subpages
-        run: |
-          set -euo pipefail
-          node finalize_blog_subpages.mjs
-
-      - name: Check for changes
-        id: changes
-        run: |
-          git status --short
-          if [ -z "$(git status --porcelain)" ]; then
-            echo "changed=false" >> "$GITHUB_OUTPUT"
-          else
-            echo "changed=true" >> "$GITHUB_OUTPUT"
-          fi
-
-      - name: Commit and push updates
-        if: steps.changes.outputs.changed == 'true'
+      - name: Commit changes
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add posts.json blog/*.html blog/index.html index.html || true
-          git commit -m "chore: update blog pages"
-          git push
 
-      - name: No changes
-        if: steps.changes.outputs.changed != 'true'
-        run: echo "No blog updates detected."
+          git add blog posts.json
+
+          git diff --cached --quiet || git commit -m "Update blog from Substack"
+
+      - name: Push changes
+        run: git push

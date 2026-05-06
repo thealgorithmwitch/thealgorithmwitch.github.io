@@ -21,33 +21,34 @@ jobs:
         with:
           node-version: '20'
 
-      - name: Generate blog
+      - name: Generate blog pages through RSS proxy
         run: |
           set -euo pipefail
-          echo "[workflow] Trying Substack RSS first"
-      
-          if node generate-blog.mjs; then
-            echo "[workflow] Generated from Substack RSS"
+          echo "[workflow] Trying RSS proxy first"
+
+          PROXY_FEED="https://rssproxy.migor.org/api/feed?url=https%3A%2F%2Fthealgorithmwitch.substack.com%2Ffeed"
+
+          if FEED_URL="$PROXY_FEED" node generate-blog.mjs; then
+            echo "[workflow] Generated from proxied Substack RSS"
+          elif node generate-blog.mjs; then
+            echo "[workflow] Generated from direct Substack RSS"
           elif [ -f posts.json ]; then
-            echo "[workflow] RSS failed. Generated from root posts.json fallback"
+            echo "[workflow] RSS failed. Rendering from root posts.json"
             node generate-blog.mjs --from-posts-json
           else
-            echo "[workflow] RSS failed and posts.json is missing"
+            echo "[workflow] RSS failed and root posts.json is missing"
             exit 1
           fi
 
       - name: Finalize generated blog subpages
         run: |
           set -euo pipefail
-          echo "[workflow] Finalizing generated blog subpages"
           node finalize_blog_subpages.mjs
 
       - name: Check for changes
         id: changes
         run: |
-          echo "[workflow] Git status after generation:"
           git status --short
-
           if [ -z "$(git status --porcelain)" ]; then
             echo "changed=false" >> "$GITHUB_OUTPUT"
           else
@@ -59,7 +60,7 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add posts.json blog/*.html index.html || true
+          git add posts.json blog/*.html blog/index.html index.html || true
           git commit -m "chore: update blog pages"
           git push
 

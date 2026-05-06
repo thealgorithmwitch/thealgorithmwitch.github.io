@@ -21,20 +21,18 @@ jobs:
         with:
           node-version: '20'
 
-      - name: Generate blog from Substack feed (with fallback)
+      - name: Generate blog pages
         run: |
           set -euo pipefail
-          echo "[workflow] Generating blog from Substack RSS"
-      
+          echo "[workflow] Trying Substack RSS first"
+
           if node generate-blog.mjs; then
-            echo "[workflow] Feed generation succeeded"
-      
+            echo "[workflow] Generated from Substack RSS"
           elif [ -f posts.json ]; then
-            echo "[workflow] Feed failed (likely 403). Falling back to root posts.json"
+            echo "[workflow] RSS failed. Rendering from root posts.json"
             node generate-blog.mjs --from-posts-json
-      
           else
-            echo "[workflow] Feed failed and no posts.json exists. Run locally once and commit it."
+            echo "[workflow] RSS failed and root posts.json is missing"
             exit 1
           fi
 
@@ -49,6 +47,7 @@ jobs:
         run: |
           echo "[workflow] Git status after generation:"
           git status --short
+
           if [ -z "$(git status --porcelain)" ]; then
             echo "changed=false" >> "$GITHUB_OUTPUT"
           else
@@ -60,8 +59,8 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add -A
-          git commit -m "chore: update blog from Substack feed"
+          git add posts.json blog/*.html blog/index.html index.html || true
+          git commit -m "chore: update blog pages"
           git push
 
       - name: No changes

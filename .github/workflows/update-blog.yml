@@ -24,14 +24,28 @@ jobs:
           node-version: "20"
 
       - name: Generate blog pages
-        env:
-          SUBSTACK_FEED_URL: "https://feeds.feedburner.com/substack/Y6jFx8FF2qq"
         run: |
           set -euo pipefail
 
-          echo "[workflow] Fetching feed from Feedless proxy"
+          DIRECT_FEED="https://thealgorithmwitch.substack.com/feed"
+          PROXY_FEED="https://feeds.feedburner.com/substack/Y6jFx8FF2qq"
 
-          node generate-blog.mjs
+          echo "[workflow] Testing proxied RSS"
+          curl -L "$PROXY_FEED" -o /tmp/feed.xml
+
+          if grep -q "<item>" /tmp/feed.xml; then
+            echo "[workflow] Proxy returned RSS items"
+            FEED_URL="$PROXY_FEED" node generate-blog.mjs
+          elif curl -L "$DIRECT_FEED" -o /tmp/direct-feed.xml && grep -q "<item>" /tmp/direct-feed.xml; then
+            echo "[workflow] Direct Substack feed returned RSS items"
+            FEED_URL="$DIRECT_FEED" node generate-blog.mjs
+          elif [ -f posts.json ]; then
+            echo "[workflow] No valid RSS available. Rendering from root posts.json"
+            node generate-blog.mjs --from-posts-json
+          else
+            echo "[workflow] No valid RSS and no root posts.json fallback"
+            exit 1
+          fi
 
       - name: Commit changes
         run: |

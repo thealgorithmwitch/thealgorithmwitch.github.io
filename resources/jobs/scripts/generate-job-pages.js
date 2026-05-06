@@ -368,6 +368,53 @@ async function buildPagesFromJobs(jobs) {
   };
 }
 
+async function buildPagesForSelectedJobs(jobs, options = {}) {
+  await ensureDir(PAGES_DIR);
+  const selectedIds = new Set((options.selectedIds || []).map((id) => String(id || "")));
+  const { map: pagePathMap } = buildJobPagePathMap(jobs);
+  let pagesWrittenCount = 0;
+  let redirectPagesWrittenCount = 0;
+
+  for (const job of jobs) {
+    const id = String(job.id || "");
+    if (!selectedIds.has(id)) continue;
+    const relativePagePath = pagePathMap.get(id) || "./pages/job.html";
+    const slug = path.basename(relativePagePath, ".html");
+    const pagePath = path.join(PAGES_DIR, `${slug}.html`);
+    const nextHash = buildPageInputHash(job, slug);
+    const existingHash = await readExistingPageHash(pagePath);
+    if (existingHash !== nextHash) {
+      await fs.writeFile(pagePath, buildPage(job, slug, nextHash), "utf8");
+      pagesWrittenCount += 1;
+    }
+
+    for (const redirectPath of Array.isArray(job.redirect_paths) ? job.redirect_paths : []) {
+      const normalizedRedirectPath = String(redirectPath || "").trim();
+      if (!normalizedRedirectPath || normalizedRedirectPath === relativePagePath) continue;
+      const redirectPagePath = path.join(ROOT, normalizedRedirectPath.replace(/^\.\//, ""));
+      const redirectHtml = buildRedirectPage(path.basename(relativePagePath));
+      let existingRedirectHtml = "";
+      try {
+        existingRedirectHtml = await fs.readFile(redirectPagePath, "utf8");
+      } catch (error) {
+        if (error.code !== "ENOENT") throw error;
+      }
+      if (existingRedirectHtml === redirectHtml) continue;
+      await fs.writeFile(redirectPagePath, redirectHtml, "utf8");
+      redirectPagesWrittenCount += 1;
+    }
+  }
+
+  console.log(`[jobs:build-pages:selected] selected_jobs_count=${selectedIds.size}`);
+  console.log(`[jobs:build-pages:selected] pages_written_count=${pagesWrittenCount}`);
+  console.log(`[jobs:build-pages:selected] redirect_pages_written_count=${redirectPagesWrittenCount}`);
+  return {
+    selectedJobsCount: selectedIds.size,
+    pagesWrittenCount,
+    redirectPagesWrittenCount
+  };
+}
+
 async function main() {
   const records = await readJobRecords();
   const jobs = await readJobs();
@@ -411,5 +458,6 @@ module.exports = {
   buildJobPagePathMap,
   buildPageInputHash,
   buildPagesFromJobs,
+  buildPagesForSelectedJobs,
   readExistingPageHash
 };

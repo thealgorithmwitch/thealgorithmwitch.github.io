@@ -173,6 +173,8 @@ const DESCRIPTION_JUNK_PATTERNS = [
   /\bCleantech\b/i,
   /\bOil\s*&\s*Gas\b/i
 ];
+const MONTH_NAME_PATTERN =
+  /\b(?:Jan|January|Feb|February|Mar|March|Apr|April|May|Jun|June|Jul|July|Aug|August|Sep|Sept|September|Oct|October|Nov|November|Dec|December)\s+\d{1,2},\s+\d{4}\b/gi;
 const SOCIAL_SHARE_TEXT_PATTERNS = [
   /\bshare to twitter\b/gi,
   /\bshare on twitter\b/gi,
@@ -481,6 +483,81 @@ function removeTitleOrganizationSuffix(title, organization) {
 
 function escapeRegExp(value) {
   return String(value || "").replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+function hasDescriptionVerbSignal(value) {
+  return /[a-z]{3,}\s+(?:is|are|will|can|should|must|plans|coordinates|executes|supports|manages|builds|seeks|works|develops|leads|drives|partners)\b/i.test(
+    String(value || "")
+  );
+}
+
+function countRegexMatches(value, pattern) {
+  const text = String(value || "");
+  const flags = pattern.flags.includes("g") ? pattern.flags : `${pattern.flags}g`;
+  const globalPattern = new RegExp(pattern.source, flags);
+  return Array.from(text.matchAll(globalPattern)).length;
+}
+
+function isCompanyOnlyDescription(value, options = {}) {
+  const text = normalizeWhitespace(String(value || ""));
+  if (!text) return false;
+  const comparableText = normalizeComparableText(text);
+  const comparableTitle = normalizeComparableText(options.title || "");
+  const comparableOrganization = normalizeComparableText(options.organization || "");
+  const shortWordCount = text.split(/\s+/).filter(Boolean).length;
+  if (comparableText && (comparableText === comparableTitle || comparableText === comparableOrganization)) {
+    return true;
+  }
+  if (
+    shortWordCount <= 12 &&
+    comparableOrganization &&
+    comparableText.startsWith(comparableOrganization) &&
+    !hasDescriptionVerbSignal(text)
+  ) {
+    return true;
+  }
+  return false;
+}
+
+function isRepeatedDateDescription(value) {
+  const text = normalizeWhitespace(String(value || ""));
+  if (!text) return false;
+  const matches = Array.from(text.matchAll(new RegExp(MONTH_NAME_PATTERN.source, MONTH_NAME_PATTERN.flags.includes("g") ? MONTH_NAME_PATTERN.flags : `${MONTH_NAME_PATTERN.flags}g`)))
+    .map((match) => normalizeWhitespace(match[0]));
+  const dateMatches = matches.length;
+  if (dateMatches < 3) return false;
+  const wordCount = text.split(/\s+/).filter(Boolean).length;
+  const duplicateDateCounts = new Map();
+  for (const match of matches) {
+    duplicateDateCounts.set(match, (duplicateDateCounts.get(match) || 0) + 1);
+  }
+  const maxDuplicateCount = Math.max(...Array.from(duplicateDateCounts.values()), 0);
+  return wordCount > 0 && (dateMatches >= 8 || (dateMatches * 4) >= wordCount || maxDuplicateCount >= 3);
+}
+
+function isMostlyMetadataDescription(value) {
+  const text = normalizeWhitespace(String(value || ""));
+  if (!text) return false;
+  const metadataHits = [
+    /\b(?:remote|hybrid|on-site|onsite)\b/gi,
+    /\b(?:united states|usa|us|canada|uk|europe)\b/gi,
+    /\b(?:tailwind css|node\.?\s*js|restful api|single page application|serverless computing|business intelligence|data science)\b/gi,
+    /\b(?:renewables? & environment|solar power|wind power|sustainability technology|security)\b/gi,
+    /\b(?:career_page|point\s*\(|locality|title business(?: platform location date)?)\b/gi
+  ].reduce((sum, pattern) => sum + countRegexMatches(text, pattern), 0);
+  return metadataHits >= 4 && !hasDescriptionVerbSignal(text);
+}
+
+function dedupeTitleMentions(value, title = "") {
+  const text = normalizeWhitespace(String(value || ""));
+  const normalizedTitle = normalizeWhitespace(title);
+  if (!text || !normalizedTitle) return text;
+  const titlePattern = escapeRegExp(normalizedTitle).replace(/\s+/g, "\\s+");
+  return normalizeWhitespace(
+    text
+      .replace(new RegExp(`^(?:${titlePattern}\\s*){2,}`, "i"), `${normalizedTitle} `)
+      .replace(new RegExp(`(${titlePattern})(?:\\s*[|:–—-]?\\s*\\1)+`, "ig"), "$1")
+  );
 }
 
 function buildParserSourceOptions(job = {}) {
@@ -1129,6 +1206,10 @@ function normalizePayDisplay(options = {}) {
     /[kK]\b/.test(payDisplay)
   );
 
+  if (payDisplay && /\bannual salary\b/i.test(payDisplay) && !isInvalidPayDisplayText(payDisplay, { period })) {
+    return payDisplay.trim();
+  }
+
   if (payDisplay && !shouldPreferRange && !isInvalidPayDisplayText(payDisplay, { period })) {
     return payDisplay
       .replace(/\bpay range\b[:\s-]*/i, "")
@@ -1293,6 +1374,13 @@ function parseSalaryRange(salary, location) {
   if (/\b(?:salary not listed|compensation not listed|pay not listed|salary unavailable|compensation unavailable|not disclosed|undisclosed)\b/i.test(salaryText)) {
     return empty;
   }
+  if (/\b(?:competitive|commensurate|depending on experience|doe)\b/i.test(salaryText)) {
+    return {
+      ...empty,
+      salary: salaryText,
+      salary_visible: true
+    };
+  }
 
   const isMaxOnly = /\b(?:up to|maximum|max\.?)\b/i.test(salaryText);
   const isMinOnly = /\b(?:starting at|starts at|from|minimum|min\.?)\b/i.test(salaryText) || /\+$/.test(salaryText);
@@ -1417,7 +1505,6 @@ function looksLikeSchemaMetadata(text) {
 }
 
 function cleanDescriptionParagraph(paragraph, title = "") {
-  const titlePattern = title ? new RegExp(`\\b${slugify(title).replace(/-/g, "[\\s\\W]*")}\\b`, "ig") : null;
   return normalizeWhitespace(
     stripSchemaMetadata(String(paragraph || ""))
       .replace(/[>›»]+/g, " ")
@@ -1427,6 +1514,7 @@ function cleanDescriptionParagraph(paragraph, title = "") {
       .replace(/https?:\/\/\S+/gi, " ")
       .replace(/\bno\s*wrap\b|\bnowrap\b/gi, " ")
       .replace(/\b(?:next|previous)\b(?:\s*post)?[:\s-]*/gi, " ")
+      .replace(/\bPrevious:\s*[^.]{0,200}\bNext:\s*[^.]{0,200}/gi, " ")
       .replace(/\b(?:apply online|apply now|apply today|submit application|learn more|read more|view job|view opening|back to jobs|search jobs|job openings|applicant login|join talent community)\b/gi, " ")
       .replace(/\b(?:jobs search|green jobs network|climate change jobs|article|articles|news|posted by|logo text)\b/gi, " ")
       .replace(/\b(?:share to|share on)\s+(?:twitter|facebook|linkedin)\b/gi, " ")
@@ -1435,7 +1523,6 @@ function cleanDescriptionParagraph(paragraph, title = "") {
       .replace(/\b(?:job title|department|location|reports to|supervises|duration)\s*:\s*/gi, " ")
       .replace(/\b(?:posted|job id|requisition id|req id|employment type|workplace type)\s*:\s*[^.]{0,120}/gi, " ")
       .replace(/\b(?:equal opportunity employer|privacy policy|terms of use|cookie policy|reasonable accommodation|all qualified applicants|veteran status|gender identity)\b[^.]{0,220}/gi, " ")
-      .replace(titlePattern || /$^/g, " ")
       .replace(/\.\s*\./g, ". ")
   );
 }
@@ -1594,7 +1681,6 @@ function collapseRepeatedPhrases(value) {
 
 function normalizeDescription(description, options = {}) {
   const title = normalizeWhitespace(options.title || "");
-  const titlePattern = title ? new RegExp(`\\b${slugify(title).replace(/-/g, "[\\s\\W]*")}\\b`, "ig") : null;
   const descriptionInput = normalizeWhitespace(stringifySafe(description) || cleanFlattenedText(description));
   const rawDescription = stripParserTemplateJunk(descriptionInput, "description");
   const cleaned = collapseRepeatedPhrases(normalizeWhitespace(
@@ -1606,6 +1692,7 @@ function normalizeDescription(description, options = {}) {
       .replace(/https?:\/\/\S+/gi, " ")
       .replace(/\bno\s*wrap\b|\bnowrap\b/gi, " ")
       .replace(/\b(?:next|previous)\s*:\s*(?:next|previous)\s+post\s*:[^.]{0,200}/gi, " ")
+      .replace(/\bPrevious:\s*[^.]{0,200}\bNext:\s*[^.]{0,200}/gi, " ")
       .replace(/\bpost navigation\b[^.]{0,200}/gi, " ")
       .replace(/\bTitle Business(?: Platform Location Date)?\b/gi, " ")
       .replace(/\be"\s*"*\s*(?:headers?)?(?:\s*"*)+/gi, " ")
@@ -1626,7 +1713,6 @@ function normalizeDescription(description, options = {}) {
       )
       .replace(/\b(?:about us|about the company|about the role|job summary|role overview|what you’ll do|what you will do|responsibilities|requirements|qualifications|preferred qualifications|benefits|details|context|scope|what you bring)\s*:?/gi, " ")
       .replace(/\b(?:job title|department|reports to|supervises|duration|location)\s*:/gi, " ")
-      .replace(titlePattern || /$^/g, " ")
       .replace(/\.\s*\./g, ". ")
   ));
   const numericCleaned = normalizeWhitespace(
@@ -1669,7 +1755,7 @@ function normalizeDescription(description, options = {}) {
     if (selected.length === 5) break;
   }
 
-  const finalDescription = collapseRepeatedPhrases(selected.join(" ").trim() || numericCleaned);
+  const finalDescription = dedupeTitleMentions(collapseRepeatedPhrases(selected.join(" ").trim() || numericCleaned), title);
   const metadataHeavyDescription = /\b(?:career_page|other \d+|ipo \d+|point\s*\(|locality\b|business\/productivity software|cleantech|oil\s*&\s*gas|renewable energy|revenue|valuation|headquarters|employee size)\b/i.test(finalDescription);
 
   const dominatedByNoise =
@@ -1776,11 +1862,18 @@ function isLikelyCorruptedDescription(value, options = {}) {
   const text = normalizeWhitespace(String(value || ""));
   if (!text) return false;
   const title = normalizeWhitespace(options.title || "");
+  const organization = normalizeWhitespace(options.organization || "");
   if (DESCRIPTION_JUNK_PATTERNS.some((pattern) => pattern.test(text))) return true;
+  if (isCompanyOnlyDescription(text, { title, organization })) return true;
+  if (isRepeatedDateDescription(text)) return true;
+  if (isMostlyMetadataDescription(text)) return true;
   if (!/[A-Za-z]{3,}/.test(text) || /^[>"'<\s|/\\-]+$/.test(text)) return true;
   const normalized = normalizeDescription(text, { title }).description;
   if (!normalized) return true;
   if (DESCRIPTION_JUNK_PATTERNS.some((pattern) => pattern.test(normalized))) return true;
+  if (isCompanyOnlyDescription(normalized, { title, organization })) return true;
+  if (isRepeatedDateDescription(normalized)) return true;
+  if (isMostlyMetadataDescription(normalized)) return true;
   if (!/[A-Za-z]{3,}/.test(normalized)) return true;
   return false;
 }

@@ -84,7 +84,9 @@ function sanitizePublicJob(job) {
     period: job.salary_period
   });
   const canonicalDescription = stringifySafe(job.description || job.raw_description);
-  const canonicalSnippet = buildDescriptionSnippet(canonicalDescription, 220, { title: canonicalTitle });
+  const canonicalSnippet =
+    stringifySafe(job.description_snippet || job.summary) ||
+    buildDescriptionSnippet(canonicalDescription, 220, { title: canonicalTitle });
   return {
     ...sanitizeRecursive(job),
     salary: canonicalSalary,

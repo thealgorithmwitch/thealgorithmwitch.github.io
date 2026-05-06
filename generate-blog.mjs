@@ -5,7 +5,7 @@ import { fileURLToPath } from 'url';
 
 const FEED_URL =
   process.env.SUBSTACK_FEED_URL ||
-  "https://feeds.feedburner.com/substack/Y6jFx8FF2q";
+  "https://feeds.feedburner.com/substack/Y6jFx8FF2qq";
 const SITE_ORIGIN = 'https://thealgorithmwitch.com';
 const BLOG_URL = `${SITE_ORIGIN}/blog/`;
 const SUBSTACK_URL = 'https://thealgorithmwitch.substack.com/';

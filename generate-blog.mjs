@@ -3,7 +3,7 @@ import path from 'path';
 import https from 'https';
 import { fileURLToPath } from 'url';
 
-const FEED_URL = 'https://thealgorithmwitch.substack.com/feed';
+const FEED_URL = process.env.FEED_URL || 'https://thealgorithmwitch.substack.com/feed';
 const SITE_ORIGIN = 'https://thealgorithmwitch.com';
 const BLOG_URL = `${SITE_ORIGIN}/blog/`;
 const SUBSTACK_URL = 'https://thealgorithmwitch.substack.com/';

@@ -1,6 +1,6 @@
 const path = require("path");
 const { readJson, writeJsonIfChanged } = require("./job-utils");
-const { normalizeJob, normalizePayDisplay, normalizeWorkplaceType, stableHash, stringifySafe, todayIso, truncateTextForStorage } = require("./job-normalizer");
+const { hasUsableDescription, normalizeJob, normalizePayDisplay, normalizeWorkplaceType, stableHash, stringifySafe, todayIso, truncateTextForStorage } = require("./job-normalizer");
 const { applyPublishLifecycle, resolveDisplayJobFromRecord } = require("./lifecycle-utils");
 
 const ROOT = path.resolve(__dirname, "..");
@@ -17,7 +17,13 @@ const JOB_MANUAL_OVERRIDE_FIELDS = [
   "display.pay_display",
   "display.salary_min",
   "display.salary_max",
+  "display.specialization",
+  "display.specialization_confidence",
   "display.description",
+  "display.source_url",
+  "display.original_url",
+  "display.application_url",
+  "display.page_url_override",
   "raw_source_data.title",
   "raw_source_data.organization",
   "raw_source_data.location",
@@ -50,6 +56,7 @@ const RAW_SOURCE_DATA_FIELDS = [
   "sector",
   "function",
   "specialization",
+  "specialization_confidence",
   "experience",
   "source",
   "source_url",
@@ -75,6 +82,23 @@ const RAW_SOURCE_DATA_FIELDS = [
   "trusted",
   "auto_publish",
   "sync_origin"
+];
+
+const TRACKED_DISPLAY_FIELDS = [
+  "title",
+  "organization",
+  "location",
+  "location_type",
+  "pay_display",
+  "salary_min",
+  "salary_max",
+  "specialization",
+  "specialization_confidence",
+  "description",
+  "source_url",
+  "original_url",
+  "application_url",
+  "page_url_override"
 ];
 
 function serializedByteLength(value) {
@@ -153,6 +177,8 @@ function sanitizeDisplayForStorage(display = {}, normalized = {}, meta = { chang
     experience_level: stringifySafe(display.experience_level || normalized.experience),
     sector: stringifySafe(display.sector || normalized.sector),
     function: stringifySafe(display.function || normalized.function),
+    specialization: stringifySafe(display.specialization || normalized.specialization),
+    specialization_confidence: stringifySafe(display.specialization_confidence || normalized.specialization_confidence || "low"),
     tags: Array.isArray(display.tags) && display.tags.length
       ? display.tags.map((tag) => stringifySafe(tag)).filter(Boolean)
       : Array.isArray(normalized.tags)
@@ -164,6 +190,7 @@ function sanitizeDisplayForStorage(display = {}, normalized = {}, meta = { chang
     original_url: stringifySafe(display.original_url || normalized.original_url || normalized.source_url),
     date_collected: stringifySafe(display.date_collected || normalized.date_posted || todayIso()),
     application_url: stringifySafe(display.application_url || normalized.apply_url),
+    page_url_override: stringifySafe(display.page_url_override || normalized.page_url_override),
     published: typeof display.published === "boolean" ? display.published : Boolean(normalized.status === "active"),
     featured: typeof display.featured === "boolean" ? display.featured : Boolean(normalized.featured)
   };
@@ -195,6 +222,66 @@ function hasLikelyManualOverride(record = {}, fieldPath, existingValue, sourceVa
   if (overrides.has(normalizedPath) || overrides.has(leaf)) return true;
   if (record.admin_notes && hasMeaningfulText(existingValue) && textDiffers(existingValue, sourceValue)) return true;
   return false;
+}
+
+function parseTimestampMs(value) {
+  const parsed = Date.parse(String(value || ""));
+  return Number.isFinite(parsed) ? parsed : 0;
+}
+
+function getFieldMeta(record = {}, field) {
+  return record.field_meta && typeof record.field_meta === "object" && record.field_meta[field]
+    ? { ...record.field_meta[field] }
+    : {};
+}
+
+function hasNewerManualFieldValue(record = {}, field) {
+  const meta = getFieldMeta(record, field);
+  const manualAt = parseTimestampMs(meta.last_manual_edit_at || record.last_manual_edit_at);
+  const sourceAt = parseTimestampMs(meta.last_source_sync_at || record.last_source_sync_at);
+  return manualAt > 0 && manualAt >= sourceAt;
+}
+
+function buildFieldMetaSnapshot(existing = {}, nextDisplay = {}, options = {}, conflicts = []) {
+  const now = String(options.now || new Date().toISOString());
+  const sourceContext = options.context === "source_sync";
+  const fieldMeta = {};
+
+  for (const field of TRACKED_DISPLAY_FIELDS) {
+    const previous = getFieldMeta(existing, field);
+    fieldMeta[field] = {
+      ...previous
+    };
+    if (sourceContext) {
+      fieldMeta[field].last_source_sync_at = now;
+    }
+    if (options.context === "manual_edit" && options.manualFields && options.manualFields.has(field)) {
+      fieldMeta[field].last_manual_edit_at = now;
+    }
+    if (options.conflictedFields && options.conflictedFields.has(field)) {
+      fieldMeta[field].last_conflict_at = now;
+      fieldMeta[field].conflict = true;
+      fieldMeta[field].conflict_reason = "manual_value_preserved_over_source_refresh";
+      conflicts.push({
+        field,
+        detected_at: now,
+        reason: "manual_value_preserved_over_source_refresh"
+      });
+    } else {
+      fieldMeta[field].conflict = false;
+      delete fieldMeta[field].conflict_reason;
+    }
+    fieldMeta[field].last_value = stringifySafe(nextDisplay[field]);
+  }
+
+  return fieldMeta;
+}
+
+function shouldPreserveProtectedDescription(existingValue, incomingValue, title = "") {
+  const existingUsable = hasUsableDescription(existingValue, { title });
+  if (!existingUsable) return false;
+  if (!hasUsableDescription(incomingValue, { title })) return true;
+  return true;
 }
 
 function isWeakLocation(value) {
@@ -261,8 +348,9 @@ function toDisplayJob(record) {
   return resolved;
 }
 
-function buildJobRecord(job, existing = {}) {
+function buildJobRecord(job, existing = {}, options = {}) {
   const normalized = normalizeJob(job);
+  const now = String(options.now || new Date().toISOString());
   const sourceType =
     stringifySafe(existing.source_type) ||
     (normalized.sync_origin === "ats" ? "scraped" : normalized.sync_origin === "manual" ? "manual" : "scraped");
@@ -280,6 +368,7 @@ function buildJobRecord(job, existing = {}) {
     location_preserved_manual_count: 0,
     description_preserved_manual_count: 0
   };
+  const conflictedFields = new Set();
   const salaryProtected = hasLikelyManualOverride(
     existing,
     "display.pay_display",
@@ -306,43 +395,136 @@ function buildJobRecord(job, existing = {}) {
     existingDisplay.location_type,
     existing.raw_source_data?.workplace_type
   );
+  const specializationProtected = hasLikelyManualOverride(
+    existing,
+    "display.specialization",
+    existingDisplay.specialization,
+    existing.raw_source_data?.specialization
+  );
+  const specializationConfidenceProtected = hasLikelyManualOverride(
+    existing,
+    "display.specialization_confidence",
+    existingDisplay.specialization_confidence,
+    existing.raw_source_data?.specialization_confidence
+  );
+  const sourceUrlProtected = hasLikelyManualOverride(
+    existing,
+    "display.source_url",
+    existingDisplay.source_url,
+    existing.raw_source_data?.source_url
+  );
+  const originalUrlProtected = hasLikelyManualOverride(
+    existing,
+    "display.original_url",
+    existingDisplay.original_url,
+    existing.raw_source_data?.original_url
+  );
+  const applicationUrlProtected = hasLikelyManualOverride(
+    existing,
+    "display.application_url",
+    existingDisplay.application_url,
+    existing.raw_source_data?.apply_url
+  );
+  const pageUrlOverrideProtected = hasLikelyManualOverride(
+    existing,
+    "display.page_url_override",
+    existingDisplay.page_url_override,
+    existing.raw_source_data?.page_url_override
+  );
 
   const canonicalExistingPay = buildCanonicalPay(existing.raw_source_data || {}, existingDisplay);
   const canonicalIncomingPay = buildCanonicalPay(normalized, incomingDisplay);
+  const existingDescriptionUsable = hasUsableDescription(existingDisplay.description, { title: existingDisplay.title || normalized.title });
+  const incomingDescriptionUsable = hasUsableDescription(incomingDisplay.description, { title: incomingDisplay.title || normalized.title });
+  const manualTitleWins = hasNewerManualFieldValue(existing, "title");
+  const manualOrganizationWins = hasNewerManualFieldValue(existing, "organization");
+  const manualLocationWins = hasNewerManualFieldValue(existing, "location");
+  const manualWorkplaceWins = hasNewerManualFieldValue(existing, "location_type");
+  const manualSpecializationWins = hasNewerManualFieldValue(existing, "specialization");
+  const manualDescriptionWins = hasNewerManualFieldValue(existing, "description");
+  const manualPayWins = hasNewerManualFieldValue(existing, "pay_display");
+  const manualSourceUrlWins = hasNewerManualFieldValue(existing, "source_url");
+  const manualOriginalUrlWins = hasNewerManualFieldValue(existing, "original_url");
+  const manualApplicationUrlWins = hasNewerManualFieldValue(existing, "application_url");
+  const manualPageOverrideWins = hasNewerManualFieldValue(existing, "page_url_override");
   const mergedDisplay = {
     ...incomingDisplay,
-    title: titleProtected && hasMeaningfulText(existingDisplay.title) ? existingDisplay.title : (incomingDisplay.title || existingDisplay.title),
+    title: ((titleProtected || manualTitleWins) && hasMeaningfulText(existingDisplay.title)) ? existingDisplay.title : (incomingDisplay.title || existingDisplay.title),
     organization:
-      organizationProtected && hasMeaningfulText(existingDisplay.organization)
+      (organizationProtected || manualOrganizationWins) && hasMeaningfulText(existingDisplay.organization)
         ? existingDisplay.organization
         : (incomingDisplay.organization || existingDisplay.organization),
     location:
-      (locationProtected && hasMeaningfulText(existingDisplay.location)) ||
+      ((locationProtected || manualLocationWins) && hasMeaningfulText(existingDisplay.location)) ||
       (hasMeaningfulText(existingDisplay.location) && isWeakLocation(incomingDisplay.location) && !isWeakLocation(existingDisplay.location))
         ? existingDisplay.location
         : (incomingDisplay.location || existingDisplay.location),
     location_type:
-      workplaceProtected && hasMeaningfulText(existingDisplay.location_type)
+      (workplaceProtected || manualWorkplaceWins) && hasMeaningfulText(existingDisplay.location_type)
         ? existingDisplay.location_type
         : (incomingDisplay.location_type || existingDisplay.location_type),
+    specialization:
+      (specializationProtected || manualSpecializationWins) && hasMeaningfulText(existingDisplay.specialization)
+        ? existingDisplay.specialization
+        : (incomingDisplay.specialization || existingDisplay.specialization),
+    specialization_confidence:
+      (specializationConfidenceProtected || manualSpecializationWins) && hasMeaningfulText(existingDisplay.specialization_confidence)
+        ? existingDisplay.specialization_confidence
+        : (incomingDisplay.specialization_confidence || existingDisplay.specialization_confidence || "low"),
     description:
-      (descriptionProtected && hasMeaningfulText(existingDisplay.description)) ||
-      (hasMeaningfulText(existingDisplay.description) && !hasMeaningfulText(incomingDisplay.description))
+      ((descriptionProtected || manualDescriptionWins) && shouldPreserveProtectedDescription(existingDisplay.description, incomingDisplay.description, existingDisplay.title || normalized.title)) ||
+      (existingDescriptionUsable && !incomingDescriptionUsable)
         ? existingDisplay.description
         : (incomingDisplay.description || existingDisplay.description),
     pay_display:
-      (salaryProtected && canonicalExistingPay) || (!canonicalIncomingPay && canonicalExistingPay)
+      ((salaryProtected || manualPayWins) && canonicalExistingPay) || (!canonicalIncomingPay && canonicalExistingPay)
         ? canonicalExistingPay
         : canonicalIncomingPay,
     salary_min:
-      (salaryProtected && existingDisplay.salary_min !== null && existingDisplay.salary_min !== undefined)
+      ((salaryProtected || manualPayWins) && existingDisplay.salary_min !== null && existingDisplay.salary_min !== undefined)
         ? existingDisplay.salary_min
         : (incomingDisplay.salary_min ?? existingDisplay.salary_min ?? null),
     salary_max:
-      (salaryProtected && existingDisplay.salary_max !== null && existingDisplay.salary_max !== undefined)
+      ((salaryProtected || manualPayWins) && existingDisplay.salary_max !== null && existingDisplay.salary_max !== undefined)
         ? existingDisplay.salary_max
-        : (incomingDisplay.salary_max ?? existingDisplay.salary_max ?? null)
+        : (incomingDisplay.salary_max ?? existingDisplay.salary_max ?? null),
+    source_url:
+      (sourceUrlProtected || manualSourceUrlWins) && hasMeaningfulText(existingDisplay.source_url)
+        ? existingDisplay.source_url
+        : (incomingDisplay.source_url || existingDisplay.source_url),
+    original_url:
+      (originalUrlProtected || manualOriginalUrlWins) && hasMeaningfulText(existingDisplay.original_url)
+        ? existingDisplay.original_url
+        : (incomingDisplay.original_url || existingDisplay.original_url),
+    application_url:
+      (applicationUrlProtected || manualApplicationUrlWins) && hasMeaningfulText(existingDisplay.application_url)
+        ? existingDisplay.application_url
+        : (incomingDisplay.application_url || existingDisplay.application_url),
+    page_url_override:
+      (pageUrlOverrideProtected || manualPageOverrideWins) && hasMeaningfulText(existingDisplay.page_url_override)
+        ? existingDisplay.page_url_override
+        : (incomingDisplay.page_url_override || existingDisplay.page_url_override)
   };
+
+  if (options.context === "source_sync") {
+    [
+      ["title", manualTitleWins, existingDisplay.title, incomingDisplay.title],
+      ["organization", manualOrganizationWins, existingDisplay.organization, incomingDisplay.organization],
+      ["location", manualLocationWins, existingDisplay.location, incomingDisplay.location],
+      ["location_type", manualWorkplaceWins, existingDisplay.location_type, incomingDisplay.location_type],
+      ["specialization", manualSpecializationWins, existingDisplay.specialization, incomingDisplay.specialization],
+      ["description", manualDescriptionWins, existingDisplay.description, incomingDisplay.description],
+      ["pay_display", manualPayWins, canonicalExistingPay, canonicalIncomingPay],
+      ["source_url", manualSourceUrlWins, existingDisplay.source_url, incomingDisplay.source_url],
+      ["original_url", manualOriginalUrlWins, existingDisplay.original_url, incomingDisplay.original_url],
+      ["application_url", manualApplicationUrlWins, existingDisplay.application_url, incomingDisplay.application_url],
+      ["page_url_override", manualPageOverrideWins, existingDisplay.page_url_override, incomingDisplay.page_url_override]
+    ].forEach(([field, manualWins, previousValue, incomingValue]) => {
+      if (manualWins && stringifySafe(previousValue) && stringifySafe(incomingValue) && stringifySafe(previousValue) !== stringifySafe(incomingValue)) {
+        conflictedFields.add(field);
+      }
+    });
+  }
 
   if (salaryProtected && canonicalExistingPay) {
     mergeStats.salary_preserved_manual_count += 1;
@@ -355,7 +537,7 @@ function buildJobRecord(job, existing = {}) {
   if (locationProtected && hasMeaningfulText(existingDisplay.location)) {
     mergeStats.location_preserved_manual_count += 1;
   }
-  if (descriptionProtected && hasMeaningfulText(existingDisplay.description)) {
+  if (descriptionProtected && shouldPreserveProtectedDescription(existingDisplay.description, incomingDisplay.description, existingDisplay.title || normalized.title)) {
     mergeStats.description_preserved_manual_count += 1;
   }
 
@@ -370,6 +552,9 @@ function buildJobRecord(job, existing = {}) {
     featured: typeof existing.featured === "boolean" ? existing.featured : Boolean(normalized.featured),
     published,
     source_fingerprint: stringifySafe(existing.source_fingerprint) || buildJobFingerprint(normalized),
+    last_normalized_at: now,
+    last_source_sync_at: options.context === "source_sync" ? now : stringifySafe(existing.last_source_sync_at),
+    last_manual_edit_at: stringifySafe(existing.last_manual_edit_at),
     raw_source_data: {
       ...normalized,
       title: mergedDisplay.title || normalized.title,
@@ -379,9 +564,33 @@ function buildJobRecord(job, existing = {}) {
       salary: mergedDisplay.pay_display || normalized.salary,
       salary_min: mergedDisplay.salary_min ?? normalized.salary_min,
       salary_max: mergedDisplay.salary_max ?? normalized.salary_max,
+      specialization: mergedDisplay.specialization || normalized.specialization,
+      specialization_confidence: mergedDisplay.specialization_confidence || normalized.specialization_confidence,
+      source_url: mergedDisplay.source_url || normalized.source_url,
+      original_url: mergedDisplay.original_url || normalized.original_url,
+      apply_url: mergedDisplay.application_url || normalized.apply_url,
+      page_url_override: mergedDisplay.page_url_override || normalized.page_url_override,
       description: mergedDisplay.description || normalized.description
     },
     display: mergedDisplay,
+    field_meta: buildFieldMetaSnapshot(existing, mergedDisplay, {
+      now,
+      context: options.context,
+      manualFields: options.manualFields,
+      conflictedFields
+    }, []),
+    field_conflicts: options.context === "source_sync"
+      ? Array.from(new Map(
+        [
+          ...(Array.isArray(existing.field_conflicts) ? existing.field_conflicts : []),
+          ...Array.from(conflictedFields).map((field) => ({
+            field,
+            detected_at: now,
+            reason: "manual_value_preserved_over_source_refresh"
+          }))
+        ].map((item) => [String(item.field || ""), item])
+      ).values())
+      : (Array.isArray(existing.field_conflicts) ? existing.field_conflicts : []),
     manual_overrides: Array.from(
       new Set(
         []
@@ -417,6 +626,16 @@ function isPublishedPublicJobRecord(record) {
   );
 }
 
+function shouldPreserveNonPublishedJobRecord(record) {
+  if (!record || record.record_type !== "job") return false;
+  const status = String(record.status || "").toLowerCase();
+  if (["archived", "rejected"].includes(status)) return true;
+  if (Array.isArray(record.manual_overrides) && record.manual_overrides.length) return true;
+  if (Array.isArray(record.protected_fields) && record.protected_fields.length) return true;
+  if (hasMeaningfulText(record.admin_notes)) return true;
+  return false;
+}
+
 async function readJobRecords() {
   const records = await readJson(JOB_RECORDS_FILE, []);
   return Array.isArray(records) ? records : [];
@@ -439,9 +658,10 @@ async function syncJobRecordStore(publicJobs, options = {}) {
   const nextRecords = publicJobs.map((job) => {
     const fingerprint = buildJobFingerprint(job);
     const existing = byFingerprint.get(fingerprint) || byId.get(String(job.id || "")) || {};
-    return buildJobRecord(job, existing);
+    return buildJobRecord(job, existing, { context: "source_sync" });
   });
   const existingPublishedBefore = existingRecords.filter(isPublishedPublicJobRecord);
+  const existingProtectedNonPublished = existingRecords.filter(shouldPreserveNonPublishedJobRecord);
   const nextRecordIds = new Set(nextRecords.map((record) => String(record.id || "")).filter(Boolean));
   const nextFingerprints = new Set(nextRecords.map((record) => stringifySafe(record.source_fingerprint)).filter(Boolean));
   const preservedPublishedRecords = existingPublishedBefore.filter((record) => {
@@ -449,7 +669,12 @@ async function syncJobRecordStore(publicJobs, options = {}) {
     const fingerprint = stringifySafe(record.source_fingerprint);
     return !nextRecordIds.has(id) && (!fingerprint || !nextFingerprints.has(fingerprint));
   });
-  const mergedRecords = [...nextRecords, ...preservedPublishedRecords];
+  const preservedProtectedRecords = existingProtectedNonPublished.filter((record) => {
+    const id = String(record.id || "");
+    const fingerprint = stringifySafe(record.source_fingerprint);
+    return !nextRecordIds.has(id) && (!fingerprint || !nextFingerprints.has(fingerprint));
+  });
+  const mergedRecords = [...nextRecords, ...preservedPublishedRecords, ...preservedProtectedRecords];
   const existingSizeBeforeBytes = serializedByteLength(existingRecords);
   let recordsTruncatedCount = 0;
   const mergeStats = {
@@ -478,7 +703,7 @@ async function syncJobRecordStore(publicJobs, options = {}) {
 
   const changed = await writeJsonIfChanged(JOB_RECORDS_FILE, sanitizedMergedRecords);
   logger.log(
-    `[${label}] existing_published_before=${existingPublishedBefore.length} published_preserved=${preservedPublishedRecords.length} published_after=${publishedAfter} total_records=${sanitizedMergedRecords.length} changed=${changed}`
+    `[${label}] existing_published_before=${existingPublishedBefore.length} published_preserved=${preservedPublishedRecords.length} protected_non_published_preserved=${preservedProtectedRecords.length} published_after=${publishedAfter} total_records=${sanitizedMergedRecords.length} changed=${changed}`
   );
   logger.log(
     `[${label}] job_records_count=${sanitizedMergedRecords.length} job_records_size_mb_before=${toMegabytes(existingSizeBeforeBytes)} job_records_size_mb_after=${toMegabytes(sizeAfterBytes)} largest_record_size_kb_after=${largestRecordSizeKbAfter.toFixed(2)} records_truncated_count=${recordsTruncatedCount}`

@@ -50,6 +50,8 @@ function buildPublishedDisplay(job) {
     experience_level: stringifySafe(job.experience),
     sector: stringifySafe(job.sector),
     function: stringifySafe(job.function),
+    specialization: stringifySafe(job.specialization),
+    specialization_confidence: stringifySafe(job.specialization_confidence || "low"),
     tags: Array.isArray(job.tags) ? job.tags : [],
     description: stringifySafe(job.description),
     source_name: stringifySafe(job.source),
@@ -57,6 +59,7 @@ function buildPublishedDisplay(job) {
     original_url: stringifySafe(job.original_url),
     date_collected: stringifySafe(job.date_posted),
     application_url: stringifySafe(job.apply_url),
+    page_url_override: stringifySafe(job.page_url_override),
     published: true,
     featured: Boolean(job.featured)
   };
@@ -66,7 +69,22 @@ function upsertJobRecord(records, pendingJob, status, options = {}) {
   const normalized = normalizeJob(pendingJob);
   const existingIndex = records.findIndex((record) => String(record.id) === String(normalized.id));
   const existing = existingIndex >= 0 ? records[existingIndex] : {};
-  let next = buildJobRecord({ ...normalized, status }, existing);
+  const manualFields = new Set([
+    "title",
+    "organization",
+    "location",
+    "location_type",
+    "pay_display",
+    "salary_min",
+    "salary_max",
+    "specialization",
+    "description",
+    "source_url",
+    "original_url",
+    "application_url",
+    "page_url_override"
+  ]);
+  let next = buildJobRecord({ ...normalized, status }, existing, { context: "admin_publish", manualFields });
   next.display = {
     ...(next.display || {}),
     ...buildPublishedDisplay(normalized),
@@ -214,6 +232,7 @@ function updateJobDisplayFromEditedRecord(record, editedRecord = {}) {
     ...(record.display || {}),
     ...((editedRecord.display && typeof editedRecord.display === "object") ? editedRecord.display : {})
   };
+  const now = new Date().toISOString();
 
   next.display = display;
   if (typeof editedRecord.featured === "boolean") {
@@ -250,7 +269,21 @@ function updateJobDisplayFromEditedRecord(record, editedRecord = {}) {
     });
   }
   next.manual_overrides = Array.from(manualOverrides);
-  next.updated_at = new Date().toISOString();
+  next.updated_at = now;
+  next.last_manual_edit_at = now;
+  next.field_meta = {
+    ...(record.field_meta && typeof record.field_meta === "object" ? record.field_meta : {})
+  };
+  if (editedRecord.display && typeof editedRecord.display === "object") {
+    Object.keys(editedRecord.display).forEach((key) => {
+      next.field_meta[key] = {
+        ...(next.field_meta[key] || {}),
+        last_manual_edit_at: now,
+        last_value: stringifySafe(editedRecord.display[key]),
+        conflict: false
+      };
+    });
+  }
 
   if (String(next.status || "").toLowerCase() === "published" && next.published && next.public_visibility) {
     return applyPublishLifecycle(next);

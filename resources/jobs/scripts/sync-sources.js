@@ -21,6 +21,7 @@ const { syncJobRecordStore } = require("./public-records");
 const { upsertScrapeReports } = require("./scrape-report");
 const { isDirectAtsSource, normalizeSource } = require("./source-utils");
 const { triagePendingJobs } = require("./pending-triage");
+const { readSourceHealthSnapshot, writeSourceHealthSnapshot } = require("./source-health-store");
 
 const SUPPORTED_TYPES = new Set(["greenhouse", "lever", "ashby", "bamboohr", "recruitee", "smartrecruiters", "workable"]);
 
@@ -58,6 +59,7 @@ function describeRouting(source) {
 }
 
 async function runSyncForTypes(types = []) {
+  const syncStartedAt = Date.now();
   resetParserCleanupStats();
   const requestedTypes = types.length ? new Set(types) : null;
   const [existingJobs, existingPending, sources] = await Promise.all([
@@ -91,8 +93,10 @@ async function runSyncForTypes(types = []) {
   const pendingJobs = [];
   const counts = {};
   const scrapeReports = [];
+  const sourceHealthEntries = [];
 
   for (const source of enabledSources) {
+    const sourceStartedAt = Date.now();
     const provider = source.provider || source.type;
     if (!SUPPORTED_TYPES.has(provider)) {
       counts[source.id] = {
@@ -116,6 +120,19 @@ async function runSyncForTypes(types = []) {
         browser_fallback_recommended: false
       });
       console.log(`[jobs:sync-sources] ${source.id}: Skipped: unsupported direct ATS provider.`);
+      sourceHealthEntries.push({
+        source_id: source.id,
+        source_checked: true,
+        jobs_found: 0,
+        jobs_normalized: 0,
+        jobs_skipped: 0,
+        skip_reasons: ["unsupported direct ATS provider"],
+        pending_count_delta: 0,
+        public_count_delta: 0,
+        last_successful_sync: "",
+        sync_duration_ms: Date.now() - sourceStartedAt,
+        failure_error_count: 0
+      });
       continue;
     }
 
@@ -153,6 +170,19 @@ async function runSyncForTypes(types = []) {
           counts[source.id].pending += 1;
         }
       }
+      sourceHealthEntries.push({
+        source_id: source.id,
+        source_checked: true,
+        jobs_found: rawJobs.length,
+        jobs_normalized: counts[source.id].active + counts[source.id].pending,
+        jobs_skipped: Math.max(0, rawJobs.length - (counts[source.id].active + counts[source.id].pending)),
+        skip_reasons: [],
+        pending_count_delta: counts[source.id].pending,
+        public_count_delta: counts[source.id].active,
+        last_successful_sync: new Date().toISOString(),
+        sync_duration_ms: Date.now() - sourceStartedAt,
+        failure_error_count: 0
+      });
     } catch (error) {
       counts[source.id] = { fetched: 0, active: 0, pending: 0, error: error.message };
       const attemptedUrl =
@@ -184,6 +214,19 @@ async function runSyncForTypes(types = []) {
       console.error(
         `[jobs:sync-sources] source_id=${source.id} source_type=${provider} url=${attemptedUrl} failure=${error.message}`
       );
+      sourceHealthEntries.push({
+        source_id: source.id,
+        source_checked: true,
+        jobs_found: 0,
+        jobs_normalized: 0,
+        jobs_skipped: 0,
+        skip_reasons: [error.message],
+        pending_count_delta: 0,
+        public_count_delta: 0,
+        last_successful_sync: "",
+        sync_duration_ms: Date.now() - sourceStartedAt,
+        failure_error_count: 1
+      });
     }
   }
 
@@ -212,6 +255,16 @@ async function runSyncForTypes(types = []) {
 
   Object.entries(counts).forEach(([sourceId, count]) => {
     const triageSource = triageBySource.get(String(sourceId)) || {};
+    const healthEntry = sourceHealthEntries.find((entry) => String(entry.source_id) === String(sourceId));
+    if (healthEntry) {
+      const skipReasons = Array.isArray(triageSource.rejected_examples)
+        ? Array.from(new Set(triageSource.rejected_examples.map((item) => String(item.reason || "").trim()).filter(Boolean)))
+        : [];
+      healthEntry.jobs_skipped += Number(triageSource.rejected_by_relevance || 0) + Number(triageSource.rejected_noise || 0) + Number(triageSource.dropped_by_source_cap || triageSource.dropped_by_cap || 0);
+      healthEntry.skip_reasons = Array.from(new Set([...(healthEntry.skip_reasons || []), ...skipReasons])).slice(0, 12);
+      healthEntry.pending_count_delta = Number(triageSource.retained || triageSource.kept || healthEntry.pending_count_delta || 0);
+      healthEntry.public_count_delta = Number(count.active || 0) + Number(triageSource.auto_published || 0);
+    }
     console.log(
       `[jobs:sync-sources] source_id=${sourceId} fetched=${count.fetched} active=${count.active} pending=${count.pending} retained=${triageSource.retained || triageSource.kept || 0} rejected_by_relevance=${triageSource.rejected_by_relevance || 0} rejected_noise=${triageSource.rejected_noise || 0} dropped_by_source_cap=${triageSource.dropped_by_source_cap || triageSource.dropped_by_cap || 0}${count.route ? ` route=${count.route}` : ""}${count.reason ? ` reason=${count.reason}` : ""}${count.error ? ` error=${count.error}` : ""}${triageSource.top_retained_examples?.length ? ` top_retained=${triageSource.top_retained_examples.map((item) => `${item.title} @ ${item.organization} (${item.relevance_score})`).join(" | ")}` : ""}`
     );
@@ -223,6 +276,21 @@ async function runSyncForTypes(types = []) {
   console.log(
     `[jobs:sync-sources] parser_cleaned_title_count=${parserStats.parser_cleaned_title_count} parser_cleaned_org_count=${parserStats.parser_cleaned_org_count} parser_cleaned_description_count=${parserStats.parser_cleaned_description_count} parser_location_defaulted_remote_count=${parserStats.parser_location_defaulted_remote_count} parser_location_cleaned_count=${parserStats.parser_location_cleaned_count} parser_hybrid_location_repaired_count=${parserStats.parser_hybrid_location_repaired_count} parser_elemental_metadata_stripped_count=${parserStats.parser_elemental_metadata_stripped_count} parser_custom_table_header_stripped_count=${parserStats.parser_custom_table_header_stripped_count} parser_html_fragment_stripped_count=${parserStats.parser_html_fragment_stripped_count} salary_invalid_removed_count=${parserStats.salary_invalid_removed_count} salary_display_built_from_range_count=${parserStats.salary_display_built_from_range_count} workplace_type_cleaned_count=${parserStats.workplace_type_cleaned_count} workplace_type_invalid_removed_count=${parserStats.workplace_type_invalid_removed_count} workplace_type_field_misplacement_repaired_count=${parserStats.workplace_type_field_misplacement_repaired_count} elemental_impact_routed_pending_count=${parserStats.elemental_impact_routed_pending_count}`
   );
+  const previousHealth = await readSourceHealthSnapshot();
+  const previousBySource = new Map((previousHealth.sources || []).map((item) => [String(item.source_id || ""), item]));
+  const nextHealthEntries = sourceHealthEntries.map((entry) => {
+    const previous = previousBySource.get(String(entry.source_id || "")) || {};
+    return {
+      ...entry,
+      failure_error_count: Number(previous.failure_error_count || 0) + Number(entry.failure_error_count || 0)
+    };
+  });
+  await writeSourceHealthSnapshot({
+    generated_at: new Date().toISOString(),
+    sync_type: "sync-sources",
+    sources: nextHealthEntries
+  });
+  console.log(`[jobs:sync-sources] source_health_written=true sources=${nextHealthEntries.length} sync_duration_ms=${Date.now() - syncStartedAt}`);
 
   return {
     publicJobs: finalPublicWriteResult.jobs,

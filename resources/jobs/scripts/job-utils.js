@@ -1,6 +1,7 @@
 const fs = require("fs/promises");
 const path = require("path");
 const { buildDescriptionSnippet, dedupeJobs, normalizeJob, normalizePayDisplay, normalizeWorkplaceType, slugify, stringifySafe, todayIso } = require("./job-normalizer");
+const { buildJobPagePathMap } = require("./job-page-paths");
 const { normalizeSource } = require("./source-utils");
 
 const ROOT = path.resolve(__dirname, "..");
@@ -53,6 +54,7 @@ const PUBLIC_STRING_FIELDS = new Set([
   "salary_period",
   "sector",
   "function",
+  "specialization_confidence",
   "experience",
   "source",
   "source_url",
@@ -73,6 +75,7 @@ const PUBLIC_STRING_FIELDS = new Set([
 
 function sanitizePublicJob(job) {
   if (!job || typeof job !== "object") return job;
+  const canonicalTitle = stringifySafe(job.title);
   const canonicalSalary = normalizePayDisplay({
     payDisplay: job.salary,
     salaryMin: job.salary_min,
@@ -81,7 +84,7 @@ function sanitizePublicJob(job) {
     period: job.salary_period
   });
   const canonicalDescription = stringifySafe(job.description || job.raw_description);
-  const canonicalSnippet = stringifySafe(job.description_snippet || job.summary) || buildDescriptionSnippet(canonicalDescription);
+  const canonicalSnippet = buildDescriptionSnippet(canonicalDescription, 220, { title: canonicalTitle });
   return {
     ...sanitizeRecursive(job),
     salary: canonicalSalary,
@@ -89,8 +92,18 @@ function sanitizePublicJob(job) {
     description: canonicalDescription,
     description_snippet: canonicalSnippet,
     summary: canonicalSnippet,
-    page_url: stringifySafe(job.page_url)
+    page_url: stringifySafe(job.page_url),
+    redirect_paths: Array.isArray(job.redirect_paths) ? job.redirect_paths.map((item) => stringifySafe(item)).filter(Boolean) : []
   };
+}
+
+function attachDerivedPageUrls(jobs) {
+  const list = Array.isArray(jobs) ? jobs : [];
+  const { map } = buildJobPagePathMap(list);
+  return list.map((job) => ({
+    ...job,
+    page_url: map.get(String(job && job.id || "")) || stringifySafe(job && job.page_url)
+  }));
 }
 
 function sanitizeRecursive(value) {
@@ -117,7 +130,12 @@ function sanitizeRecursive(value) {
 
 function sanitizeForWrite(filePath, data) {
   const basename = path.basename(filePath);
-  if (basename === "jobs.json" || basename === "pending-synced-jobs.json") {
+  if (basename === "jobs.json") {
+    if (Array.isArray(data)) {
+      return attachDerivedPageUrls(data).map((job) => sanitizeRecursive(sanitizePublicJob(job)));
+    }
+  }
+  if (basename === "pending-synced-jobs.json") {
     if (Array.isArray(data)) {
       return data.map((job) => sanitizeRecursive(sanitizePublicJob(job)));
     }

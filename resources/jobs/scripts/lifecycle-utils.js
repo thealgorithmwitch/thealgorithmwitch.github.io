@@ -1,4 +1,4 @@
-const { buildDescriptionSnippet, normalizeJob, normalizePayDisplay, normalizeWorkplaceType, stringifySafe } = require("./job-normalizer");
+const { buildDescriptionSnippet, buildFallbackDescription, hasUsableDescription, normalizeJob, normalizePayDisplay, normalizeWorkplaceType, stringifySafe } = require("./job-normalizer");
 
 const CLOSED_PATTERNS = [
   /no longer accepting applications/i,
@@ -177,6 +177,7 @@ function resolveDisplayJobFromRecord(record) {
     sector: stringifySafe(display.sector) || raw.sector,
     function: stringifySafe(display.function) || raw.function,
     specialization: stringifySafe(display.specialization) || raw.specialization,
+    specialization_confidence: stringifySafe(display.specialization_confidence) || raw.specialization_confidence || "low",
     tags: Array.isArray(display.tags) && display.tags.length ? display.tags : raw.tags,
     description: canonicalDescription,
     source: stringifySafe(display.source_name) || raw.source,
@@ -188,8 +189,10 @@ function resolveDisplayJobFromRecord(record) {
     status: shouldShowPublicRecord(record) ? "published" : String(record.status || raw.status || "")
   });
   if (!normalized) return null;
-  const fullDescription = canonicalDescription || stringifySafe(normalized.description || normalized.raw_description);
-  const descriptionSnippet = buildDescriptionSnippet(fullDescription);
+  const fullDescription = hasUsableDescription(canonicalDescription || stringifySafe(normalized.description || normalized.raw_description), { title: normalized.title })
+    ? (canonicalDescription || stringifySafe(normalized.description || normalized.raw_description))
+    : buildFallbackDescription(normalized);
+  const descriptionSnippet = buildDescriptionSnippet(fullDescription, 220, { title: normalized.title });
   return {
     ...normalized,
     location: canonicalLocation || normalized.location,

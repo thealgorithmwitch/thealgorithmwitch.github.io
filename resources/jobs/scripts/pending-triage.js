@@ -102,6 +102,14 @@ const PRIORITY_FUNCTION_BOOST_TERMS = [
   "social media",
   "digital",
   "content",
+  "video",
+  "videographer",
+  "video editor",
+  "video producer",
+  "motion designer",
+  "motion graphics",
+  "youtube",
+  "documentary",
   "brand",
   "creative",
   "design",
@@ -125,6 +133,12 @@ const AUTO_PUBLISH_FUNCTION_TERMS = [
   "communication",
   "comms",
   "content",
+  "video",
+  "videographer",
+  "video editor",
+  "video producer",
+  "motion designer",
+  "motion graphics",
   "creative",
   "policy",
   "strategy",
@@ -463,7 +477,7 @@ function hasPrioritySpecializationMatch(job) {
     job.notes
   ].filter(Boolean).join(" ").toLowerCase();
   return Boolean(
-    /\b(?:digital|pr|public relations|press|communications|communication|comms|social media|content|art|creative|design|designer|strategy|strategist|web|website|developer|software|product|product manager|data|analytics|analyst|research|campaign)\b/.test(text)
+    /\b(?:digital|pr|public relations|press|communications|communication|comms|social media|content|video|videographer|video editor|video producer|motion designer|motion graphics|youtube|documentary|social video|short-form video|art|creative|design|designer|strategy|strategist|web|website|developer|software|product|product manager|data|analytics|analyst|research|campaign)\b/.test(text)
   );
 }
 
@@ -507,6 +521,17 @@ function buildTopExamples(jobs, limit = 3) {
       organization: String(job.organization || "").trim(),
       relevance_score: Number(job.relevance_score || 0)
     }));
+}
+
+function pushRejectedExample(sourceStats, job, reason, limit = 8) {
+  sourceStats.rejected_examples = Array.isArray(sourceStats.rejected_examples) ? sourceStats.rejected_examples : [];
+  if (sourceStats.rejected_examples.length >= limit) return;
+  sourceStats.rejected_examples.push({
+    id: String(job.id || ""),
+    title: String(job.title || "").trim(),
+    organization: String(job.organization || "").trim(),
+    reason: String(reason || "").trim()
+  });
 }
 
 function hasAllowedAutoPublishFunction(job) {
@@ -1109,11 +1134,13 @@ async function triagePendingJobs(pendingJobs, publicJobs, scrapeReport) {
       rejected_by_relevance: 0,
       kept: 0,
       dropped_by_cap: 0,
-      rejected_reasons: {}
+      rejected_reasons: {},
+      rejected_examples: []
     };
     sourceStats[result.bucket] += 1;
     if (result.bucket === "rejected_noise") {
       sourceStats.rejected_reasons[result.reason] = (sourceStats.rejected_reasons[result.reason] || 0) + 1;
+      pushRejectedExample(sourceStats, result.job, result.reason);
       if (/relevance|specialization|high-volume source missing|minimum relevance/i.test(String(result.reason || ""))) {
         sourceStats.rejected_by_relevance += 1;
       }
@@ -1141,7 +1168,8 @@ async function triagePendingJobs(pendingJobs, publicJobs, scrapeReport) {
       rejected_by_relevance: 0,
       kept: 0,
       dropped_by_cap: 0,
-      rejected_reasons: {}
+      rejected_reasons: {},
+      rejected_examples: []
     };
     sourceStats.dropped_by_cap += count;
     rejectedBySource.set(sourceId, sourceStats);
@@ -1155,7 +1183,8 @@ async function triagePendingJobs(pendingJobs, publicJobs, scrapeReport) {
       rejected_by_relevance: 0,
       kept: 0,
       dropped_by_cap: 0,
-      rejected_reasons: {}
+      rejected_reasons: {},
+      rejected_examples: []
     };
     sourceStats.kept += 1;
     rejectedBySource.set(sourceId, sourceStats);
@@ -1242,7 +1271,8 @@ async function triagePendingJobs(pendingJobs, publicJobs, scrapeReport) {
         dropped_by_source_cap: triage.dropped_by_cap,
         auto_published: triage.auto_published || 0,
         top_retained_examples: buildTopExamples(adminPendingJobs.filter((job) => getSourceKey(job) === String(source.source_id || ""))),
-        rejected_reasons: triage.rejected_reasons
+        rejected_reasons: triage.rejected_reasons,
+        rejected_examples: triage.rejected_examples || []
       };
     });
   }

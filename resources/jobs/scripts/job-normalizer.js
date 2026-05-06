@@ -26,15 +26,46 @@ const UK_PATTERN =
 const EU_PATTERN =
   /austria|belgium|bulgaria|croatia|cyprus|czech republic|czechia|denmark|estonia|finland|france|germany|greece|hungary|ireland|italy|latvia|lithuania|luxembourg|malta|netherlands|poland|portugal|romania|slovakia|slovenia|spain|sweden|european union|\beu\b|berlin|paris|amsterdam|madrid|barcelona|lisbon|dublin|brussels|vienna|stockholm|helsinki|rome|milan/i;
 
+const CANONICAL_SPECIALIZATIONS = [
+  "Digital",
+  "PR / Press",
+  "Communications",
+  "Policy",
+  "Social Media",
+  "Content",
+  "Video",
+  "Art / Creative",
+  "Design",
+  "Product",
+  "Strategy",
+  "Engineering",
+  "Web",
+  "Operations",
+  "Programs",
+  "Admin",
+  "Sales",
+  "Data",
+  "Research",
+  "Campaigns"
+];
+
 const SPECIALIZATION_RULES = [
   { label: "PR / Press", pattern: /\b(?:pr|public relations|press|press secretary|media relations|press officer|press manager|press lead)\b/i },
+  { label: "Policy", pattern: /\b(?:policy|public affairs|government affairs|external affairs|regulatory affairs|advocacy)\b/i },
   { label: "Social Media", pattern: /\b(?:social media|social strategy|community manager|community lead|tiktok|instagram|linkedin content)\b/i },
   { label: "Communications", pattern: /\b(?:communications|communication|comms|internal communications|external communications)\b/i },
+  { label: "Video", pattern: /\b(?:video|videographer|video editor|video producer|multimedia producer|motion designer|motion graphics|youtube|documentary|short-form video|short form video|digital video|social video|creative producer|content producer|film producer)\b/i },
   { label: "Content", pattern: /\b(?:content|editorial|copywriter|copywriting|storytelling|writer|newsletter|content design)\b/i },
   { label: "Art / Creative", pattern: /\b(?:creative|art director|artistic|illustration|visual storytelling|brand studio)\b/i },
   { label: "Design", pattern: /\b(?:design|designer|graphic design|visual design|product design|ux|ui)\b/i },
+  { label: "Product", pattern: /\b(?:product manager|product owner|product lead|product strategy)\b/i },
   { label: "Strategy", pattern: /\b(?:strategy|strategist|strategic|planning|planning director)\b/i },
-  { label: "Web", pattern: /\b(?:web|website|frontend|front-end|back-end|backend|full stack|full-stack|developer|engineer|software)\b/i },
+  { label: "Engineering", pattern: /\b(?:firmware|platform engineer|software engineer|engineer|engineering|developer|backend|back-end|frontend|front-end|full stack|full-stack|devops|sre|site reliability|technical architect)\b/i },
+  { label: "Web", pattern: /\b(?:web|website|webmaster|wordpress)\b/i },
+  { label: "Operations", pattern: /\b(?:operations|operator|operations coordinator|operations specialist|supervisor|scada|field operations|customer operations|mobilization|implementation|logistics|supply chain)\b/i },
+  { label: "Programs", pattern: /\b(?:program manager|programme manager|program director|program coordinator|program lead)\b/i },
+  { label: "Admin", pattern: /\b(?:executive assistant|administrative assistant|admin|administrator|office manager)\b/i },
+  { label: "Sales", pattern: /\b(?:sales|account executive|account manager|business development|partnerships|customer success|consultant|revenue)\b/i },
   { label: "Digital", pattern: /\b(?:digital|digital marketing|digital campaigns|growth marketing|crm|email marketing|seo|sem)\b/i },
   { label: "Data", pattern: /\b(?:data|analytics|analyst|business intelligence|bi analyst|insights)\b/i },
   { label: "Research", pattern: /\b(?:research|researcher|research associate|user research|market research)\b/i },
@@ -127,6 +158,20 @@ const DESCRIPTION_NOISE_PATTERNS = [
   /\bno\s*wrap\b|\bnowrap\b/gi,
   /https?:\/\/\S+/gi,
   /\s*[>›»]+\s*/g
+];
+const DESCRIPTION_JUNK_PATTERNS = [
+  /\bprevious\b/i,
+  /\bnext post\b/i,
+  /\bviewBox\b/i,
+  /\b0\/svg\b/i,
+  /<span\b/i,
+  /\bPOINT\s*\(/i,
+  /\blocality\b/i,
+  /\bTitle Business(?: Platform Location Date)?\b/i,
+  /\bcareer_page\b/i,
+  /\bBusiness\/Productivity Software\b/i,
+  /\bCleantech\b/i,
+  /\bOil\s*&\s*Gas\b/i
 ];
 const SOCIAL_SHARE_TEXT_PATTERNS = [
   /\bshare to twitter\b/gi,
@@ -1707,50 +1752,60 @@ function truncateTextForStorage(value, maxLength = 16000) {
   return `${text.slice(0, maxLength - 1).trimEnd()}…`;
 }
 
-function buildDescriptionSnippet(value, maxLength = 220) {
-  const cleaned = normalizeWhitespace(
-    stripParserTemplateJunk(
-      stripSocialShareJunk(stripHtml(decodeHtmlEntities(value))),
-      "description"
-    )
-  )
-    .replace(/\bTitle Business(?: Platform Location Date)?\b/gi, " ")
-    .replace(/\be"\s*"*\s*(?:headers?)?(?:\s*"*)+/gi, " ")
-    .replace(/\bsee (?:new|current) openings\b/gi, " ")
-    .replace(/\b(?:previous|next|related posts?)\b/gi, " ")
-    .replace(/\b\d+\s+hours?\)\s*(?:\|\s*)?(?:On-site|Remote|Hybrid)\b/gi, " ")
-    .replace(/\b\d*\/svg\b/gi, " ")
-    .replace(/\bviewBox\b/gi, " ")
-    .replace(/\bspan\b/gi, " ")
-    .replace(/\blocality\b/gi, " ")
-    .replace(/\bPOINT\s*\([^)]*\)/gi, " ")
-    .replace(/\bcareer_page\b/gi, " ")
-    .replace(/\b(?:other|ipo)\s+\d+\b/gi, " ")
-    .replace(/[>"<]+/g, " ")
-    .replace(/\s{2,}/g, " ")
-    .trim();
-  const normalized = normalizeWhitespace(
-    collapseRepeatedPipeSegments(
-      stripLeadingMetadataBlob(
-        stripStandaloneMetadataNumbers(cleaned)
-      )
-    )
-  );
-  if (!normalized) return "";
-  if (!/[A-Za-z]{3,}/.test(normalized) || /^[>"'<\s|/\\-]+$/.test(normalized)) return "";
-  const readableSentences = (normalized.match(/[^.!?]+[.!?]+|[^.!?]+$/g) || [])
+function buildFallbackDescription(job = {}) {
+  const title = normalizeWhitespace(stringifySafe(job.title));
+  const organization = normalizeWhitespace(stringifySafe(job.organization));
+  const location = normalizeWhitespace(stringifySafe(job.location));
+  const workplaceType = normalizeWhitespace(stringifySafe(job.workplace_type));
+  if (!title && !organization) return "";
+
+  const pieces = [];
+  const subject = [title, organization ? `at ${organization}` : ""].filter(Boolean).join(" ");
+  if (subject) {
+    pieces.push(`${subject} is a climate and sustainability role that should be reviewed through the original application listing for full responsibilities.`);
+  }
+  if (location || workplaceType) {
+    pieces.push(
+      `This position is listed${location ? ` in ${location}` : ""}${workplaceType ? `${location ? " and " : " as "}a ${workplaceType.toLowerCase()} role` : ""}.`
+    );
+  }
+  return normalizeWhitespace(pieces.join(" "));
+}
+
+function isLikelyCorruptedDescription(value, options = {}) {
+  const text = normalizeWhitespace(String(value || ""));
+  if (!text) return false;
+  const title = normalizeWhitespace(options.title || "");
+  if (DESCRIPTION_JUNK_PATTERNS.some((pattern) => pattern.test(text))) return true;
+  if (!/[A-Za-z]{3,}/.test(text) || /^[>"'<\s|/\\-]+$/.test(text)) return true;
+  const normalized = normalizeDescription(text, { title }).description;
+  if (!normalized) return true;
+  if (DESCRIPTION_JUNK_PATTERNS.some((pattern) => pattern.test(normalized))) return true;
+  if (!/[A-Za-z]{3,}/.test(normalized)) return true;
+  return false;
+}
+
+function hasUsableDescription(value, options = {}) {
+  const text = normalizeWhitespace(String(value || ""));
+  if (!text) return false;
+  return !isLikelyCorruptedDescription(text, options);
+}
+
+function buildDescriptionSnippet(value, maxLength = 220, options = {}) {
+  const title = normalizeWhitespace(options.title || "");
+  const normalizedDescription = normalizeDescription(value, { title }).description;
+  if (!normalizedDescription) return "";
+  if (isLikelyCorruptedDescription(normalizedDescription, { title })) return "";
+
+  const sentences = splitIntoSentences(normalizedDescription)
     .map((sentence) => normalizeWhitespace(sentence))
     .filter(Boolean)
-    .filter((sentence) => !/\b(?:career_page|other \d+|ipo \d+|north america|county|viewbox|0\/svg|title business|see current openings|see new openings)\b/i.test(sentence))
-    .filter((sentence) => /[a-z]{3,}\s+(?:is|are|will|can|should|must|plans|coordinates|executes|supports|manages|builds|seeks|works|develops|leads|drives|partners|join|become|help|ensures)\b/i.test(sentence));
-  if (!readableSentences.length && !/[a-z]{3,}\s+(?:is|are|will|can|should|must|plans|coordinates|executes|supports|manages|builds|seeks|works|develops|leads|drives|partners|join|become|help|ensures)\b/i.test(normalized)) {
-    return "";
-  }
-  const finalSnippet = readableSentences[0] || (/^(?:[A-Z][A-Za-z&.' -]+\s+){4,}/.test(normalized) ? "" : normalized);
-  if (!finalSnippet) return "";
-  if (/\b(?:other \d+|ipo \d+|career_page|point\s*\(|locality\b|business\/productivity software|cleantech|oil\s*&\s*gas|renewable energy)\b/i.test(finalSnippet)) {
-    return "";
-  }
+    .filter((sentence) => sentence.length >= 25)
+    .filter((sentence) => !DESCRIPTION_JUNK_PATTERNS.some((pattern) => pattern.test(sentence)))
+    .filter((sentence) => !/^(?:milan,\s*italy|southampton,\s*uk|greer,\s*sc|madison,\s*wi|date operations)/i.test(sentence));
+
+  const finalSnippet = sentences[0] || normalizeWhitespace(normalizedDescription);
+  if (!finalSnippet || isLikelyCorruptedDescription(finalSnippet, { title })) return "";
   if (finalSnippet.length <= maxLength) return finalSnippet;
   return `${finalSnippet.slice(0, maxLength - 1).trimEnd()}…`;
 }
@@ -1851,6 +1906,7 @@ function normalizeJob(input = {}) {
   const parseWarning = safeStringField(sourceAttribution?.parseWarning || input.parse_warning || input.parseWarning);
   const triageBucket = safeStringField(sourceAttribution?.triageBucket || inheritedTriageBucket);
   const triageReason = safeStringField(sourceAttribution?.triageReason || inheritedTriageReason);
+  const specializationShape = normalizeSpecializationDetailed(input.specialization || input.display?.specialization, input);
 
   return {
     id,
@@ -1873,7 +1929,8 @@ function normalizeJob(input = {}) {
     featured: Boolean(input.featured),
     sector: normalizeSector(input.sector || "general"),
     function: safeStringField(input.function || input.role_function),
-    specialization: normalizeSpecialization(input.specialization || input.display?.specialization, input),
+    specialization: specializationShape.specialization,
+    specialization_confidence: specializationShape.confidence,
     experience: safeStringField(input.experience),
     source: normalizeSourceNameWithOptions(sourceAttribution?.sourceName || input.source, parserOptions) || "Manual",
     source_url: sourceUrl,
@@ -1931,25 +1988,42 @@ function normalizeSector(value) {
 }
 
 function normalizeSpecialization(value, job = {}) {
+  return normalizeSpecializationDetailed(value, job).specialization;
+}
+
+function normalizeSpecializationDetailed(value, job = {}) {
   const explicit = normalizeWhitespace(stringifySafe(value));
   if (explicit) {
     const matchedExplicit = SPECIALIZATION_RULES.find((rule) => rule.pattern.test(explicit));
-    if (matchedExplicit) return matchedExplicit.label;
-    return explicit;
+    if (matchedExplicit) return { specialization: matchedExplicit.label, confidence: "high" };
+    if (CANONICAL_SPECIALIZATIONS.includes(explicit)) return { specialization: explicit, confidence: "high" };
+    return { specialization: explicit, confidence: "medium" };
   }
 
-  const text = normalizeWhitespace([
-    job.title,
-    job.function,
-    job.description,
-    job.raw_description,
-    Array.isArray(job.tags) ? job.tags.join(" ") : job.tags,
-    job.notes
-  ].filter(Boolean).join(" "));
-  if (!text) return "";
+  const sources = [
+    { confidence: "high", text: normalizeWhitespace(job.title) },
+    { confidence: "medium", text: normalizeWhitespace(job.function) },
+    { confidence: "medium", text: normalizeWhitespace(Array.isArray(job.tags) ? job.tags.join(" ") : job.tags) },
+    { confidence: "low", text: normalizeWhitespace(job.description) },
+    { confidence: "low", text: normalizeWhitespace(job.raw_description) },
+    { confidence: "low", text: normalizeWhitespace(job.notes) }
+  ];
 
-  const matchedRule = SPECIALIZATION_RULES.find((rule) => rule.pattern.test(text));
-  return matchedRule ? matchedRule.label : "";
+  for (const source of sources) {
+    if (!source.text) continue;
+    const matchedRule = SPECIALIZATION_RULES.find((rule) => rule.pattern.test(source.text));
+    if (matchedRule) {
+      return {
+        specialization: matchedRule.label,
+        confidence: source.confidence
+      };
+    }
+  }
+
+  return {
+    specialization: "",
+    confidence: "low"
+  };
 }
 
 function buildDedupeKey(job) {
@@ -2048,6 +2122,7 @@ function routeSyncedJob(job, source) {
 }
 
 module.exports = {
+  CANONICAL_SPECIALIZATIONS,
   cleanCustomCareerPageText,
   cleanFlattenedText,
   cleanElementalImpactText,
@@ -2062,9 +2137,11 @@ module.exports = {
   flattenTextValues,
   hasExplicitHybridSignal,
   hasExplicitRemoteSignal,
+  hasUsableDescription,
   isSocialShareUrl,
   isGenericRoleTitle,
   isValidDate,
+  isLikelyCorruptedDescription,
   getJobExclusionReason,
   getParserCleanupStats,
   hasRoleSignal,
@@ -2077,8 +2154,10 @@ module.exports = {
   normalizeEmploymentType,
   normalizeJob,
   buildDescriptionSnippet,
+  buildFallbackDescription,
   normalizeLocationDisplay,
   normalizeSpecialization,
+  normalizeSpecializationDetailed,
   normalizeWorkplaceType,
   resolveEmploymentType,
   resolveWorkplaceType,

@@ -134,6 +134,36 @@ const goodProductManagerJob = normalizeJob({
 assert.strictEqual(goodProductManagerJob._reject_reason, "");
 assert.strictEqual(goodProductManagerJob._quality.validTitle, true);
 
+const elementalImpactJob = normalizeJob({
+  id: "elemental-impact-446c301b54b2",
+  source_id: "elemental-impact",
+  source: "Custom Careers Page",
+  source_url: "https://jobs.elementalimpact.com/jobs",
+  title: "Senior Software Engineer",
+  organization: "Elemental Impact",
+  original_url: "https://apply.workable.com/resource-innovations/j/68FA4D2A36",
+  raw_description: "Senior Software Engineer https://apply.workable.com/resource-innovations/j/68FA4D2A36 77070162 Shifted Energy other https://cdn.getro.com/company.png"
+});
+assert.strictEqual(elementalImpactJob.source, "Elemental Impact");
+assert.strictEqual(elementalImpactJob.source_url, "https://jobs.elementalimpact.com/jobs");
+assert.strictEqual(elementalImpactJob.organization, "Shifted Energy");
+assert.strictEqual(elementalImpactJob.parse_warning, "");
+
+const uncertainElementalImpactJob = normalizeJob({
+  id: "elemental-impact-unknown",
+  source_id: "elemental-impact",
+  source_url: "https://jobs.elementalimpact.com/jobs",
+  source: "Custom Careers Page",
+  title: "Program Manager",
+  organization: "Elemental Impact",
+  original_url: "https://recruiting.paylocity.com/Recruiting/Jobs/Details/999999",
+  raw_description: "Program Manager https://recruiting.paylocity.com/Recruiting/Jobs/Details/999999"
+});
+assert.strictEqual(uncertainElementalImpactJob.organization, "Unknown organization");
+assert.strictEqual(uncertainElementalImpactJob.source, "Elemental Impact");
+assert.strictEqual(uncertainElementalImpactJob.parse_warning, "source board organization uncertain");
+assert.strictEqual(uncertainElementalImpactJob.triage_bucket, "needs_cleanup");
+
 const normalizedNavDescription = normalizeDescription(
   'href="https://www.dylan-green.com/jobs/senior-associate-portfolio-management/" rel="prev"> Previous: Previous post: Senior Associate, Portfolio Management Next: Next post: Associate, Acquisitions'
 );

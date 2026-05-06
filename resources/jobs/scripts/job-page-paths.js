@@ -31,6 +31,26 @@ function cleanVisibleText(value) {
     .trim();
 }
 
+function normalizeManualPagePath(value) {
+  const text = String(value || "").trim();
+  if (!text) return "";
+  const match = text.match(/(?:^|\/)pages\/([a-z0-9][a-z0-9-]*)\.html$/i);
+  if (!match || !match[1]) return "";
+  return `./pages/${match[1].toLowerCase()}.html`;
+}
+
+function getManualPagePathOverride(job = {}) {
+  return normalizeManualPagePath(
+    job.page_url_override ||
+    job.manual_page_url ||
+    job.slug_override ||
+    job.display?.page_url_override ||
+    job.display?.slug_override ||
+    job.raw_source_data?.page_url_override ||
+    job.raw_source_data?.slug_override
+  );
+}
+
 function buildJobSlug(job) {
   return slugify(`${cleanVisibleText(job.title)}-${cleanVisibleText(job.organization)}`);
 }
@@ -81,8 +101,31 @@ function buildUniqueJobSlug(job, usedSlugs, collisions = []) {
 }
 
 function buildJobPagePath(job, usedSlugs, collisions = []) {
+  const manualPathOverride = getManualPagePathOverride(job);
+  if (manualPathOverride) {
+    const manualSlug = pathBasenameWithoutExt(manualPathOverride);
+    const existingJobId = usedSlugs.get(manualSlug);
+    const jobId = String(job && job.id || "");
+    if (!existingJobId || existingJobId === jobId) {
+      usedSlugs.set(manualSlug, jobId);
+      return manualPathOverride;
+    }
+    collisions.push({
+      base_slug: manualSlug,
+      id: jobId,
+      title: job && job.title,
+      organization: job && job.organization,
+      manual_override_collision: true
+    });
+  }
   const slug = buildUniqueJobSlug(job, usedSlugs, collisions);
   return `./pages/${slug}.html`;
+}
+
+function pathBasenameWithoutExt(pagePath) {
+  return String(pagePath || "")
+    .replace(/^.*\//, "")
+    .replace(/\.html$/i, "");
 }
 
 function buildJobPagePathMap(jobs = []) {
@@ -104,5 +147,8 @@ module.exports = {
   buildJobSlug,
   buildUniqueJobSlug,
   cleanVisibleText,
+  getManualPagePathOverride,
+  normalizeManualPagePath,
+  pathBasenameWithoutExt,
   slugify
 };

@@ -18,7 +18,7 @@ function enrichPublicJob(job) {
     trackStats: false
   });
   const fullDescription = String(job?.description || job?.raw_description || "").trim();
-  const descriptionSnippet = buildDescriptionSnippet(fullDescription);
+  const descriptionSnippet = buildDescriptionSnippet(fullDescription, 220, { title });
   return {
     ...job,
     title: title || stringifySafe(job?.title),
@@ -54,8 +54,21 @@ function countPublishedJobRecords(records) {
 async function syncPublicJobsFromRecords(records, options = {}) {
   const label = options.label || "jobs:public-records";
   const logger = options.logger || console;
-  const publicJobs = buildPublicJobsFromRecords(records);
   const existingJobs = await readJobs();
+  const existingById = new Map((Array.isArray(existingJobs) ? existingJobs : []).map((job) => [String(job.id || ""), job]));
+  const publicJobs = buildPublicJobsFromRecords(records).map((job) => {
+    const existing = existingById.get(String(job.id || "")) || {};
+    const existingPageUrl = String(existing.page_url || "").trim();
+    const redirectPaths = new Set(Array.isArray(existing.redirect_paths) ? existing.redirect_paths.map((item) => String(item || "").trim()).filter(Boolean) : []);
+    if (existingPageUrl && existingPageUrl !== job.page_url) {
+      redirectPaths.add(existingPageUrl);
+    }
+    redirectPaths.delete(job.page_url);
+    return {
+      ...job,
+      redirect_paths: Array.from(redirectPaths)
+    };
+  });
   const existingJobsJsonCount = Array.isArray(existingJobs) ? existingJobs.length : 0;
   const computedPublicJobsCount = publicJobs.length;
   const existingSerialized = serializeForWrite(JOBS_FILE, existingJobs);

@@ -1335,6 +1335,7 @@
       visibleCount: 9,
       renderedJobsKey: "",
       renderedJobCount: 0,
+      pendingRenderTimer: 0,
       search: "",
       quickFilters: new Set(),
       filters: {
@@ -1360,12 +1361,20 @@
       "Digital",
       "PR / Press",
       "Communications",
+      "Policy",
       "Social Media",
       "Content",
+      "Video",
       "Art / Creative",
       "Design",
+      "Product",
       "Strategy",
+      "Engineering",
       "Web",
+      "Operations",
+      "Programs",
+      "Admin",
+      "Sales",
       "Data",
       "Research",
       "Campaigns"
@@ -1535,7 +1544,14 @@
     }
 
     function getJobDetailPath(job) {
-      return state.jobPagePaths.get(String(job.id || "")) || `./pages/${buildBaseJobSlug(job)}.html`;
+      const canonicalPath = String(job && job.page_url || "").trim();
+      if (canonicalPath) return canonicalPath;
+      console.warn("[jobs:index] missing canonical page_url", {
+        id: String(job && job.id || ""),
+        title: String(job && job.title || ""),
+        organization: String(job && job.organization || "")
+      });
+      return "";
     }
 
     function trackUiEvent(event) {
@@ -1600,30 +1616,7 @@
 
     function inferSpecialization(job) {
       const explicit = cleanVisibleText(job.specialization || "");
-      if (explicit) return explicit;
-      const text = cleanVisibleText([
-        job.title,
-        job.function,
-        job.description,
-        Array.isArray(job.tags) ? job.tags.join(" ") : ""
-      ].join(" "));
-      if (!text) return "";
-      const rules = [
-        ["PR / Press", /\b(?:pr|public relations|press|media relations|press officer|press manager)\b/i],
-        ["Social Media", /\b(?:social media|community manager|community lead|tiktok|instagram)\b/i],
-        ["Communications", /\b(?:communications|communication|comms|internal communications|external communications)\b/i],
-        ["Content", /\b(?:content|editorial|copywriter|copywriting|storytelling|writer|newsletter)\b/i],
-        ["Art / Creative", /\b(?:creative|art director|artistic|illustration|brand studio)\b/i],
-        ["Design", /\b(?:design|designer|graphic design|visual design|product design|ux|ui)\b/i],
-        ["Strategy", /\b(?:strategy|strategist|strategic|planning)\b/i],
-        ["Web", /\b(?:web|website|frontend|front-end|back-end|backend|full stack|developer|engineer|software)\b/i],
-        ["Digital", /\b(?:digital|digital marketing|growth marketing|seo|sem|crm|email marketing)\b/i],
-        ["Data", /\b(?:data|analytics|analyst|business intelligence|insights)\b/i],
-        ["Research", /\b(?:research|researcher|research associate|user research|market research)\b/i],
-        ["Campaigns", /\b(?:campaign|campaigns|campaigner|organizing|field organizing)\b/i]
-      ];
-      const match = rules.find(([, pattern]) => pattern.test(text));
-      return match ? match[0] : "";
+      return explicit;
     }
 
     function getSalaryFloor(job) {
@@ -1637,7 +1630,7 @@
     function matchesSalaryFilter(job) {
       if (!state.filters.salary.size) return true;
       const salaryFloor = getSalaryFloor(job);
-      const hasSalary = Boolean(cleanVisibleText(job.salary || "")) || salaryFloor !== null;
+      const hasSalary = Boolean(getPayDisplay(job)) || salaryFloor !== null;
       if (state.filters.salary.has("Shows salary") && !hasSalary) return false;
       const thresholds = {
         "$50k+": 50000,
@@ -1667,59 +1660,6 @@
         String(record.status || "").toLowerCase() === "published" &&
         !["expired", "removed"].includes(verificationStatus)
       );
-    }
-
-    function resolveDisplayJob(record) {
-      if (!record || typeof record !== "object") return null;
-      const raw = record.raw_source_data || record.raw || {};
-      const display = record.display || {};
-      const title = cleanVisibleText(display.title || raw.title || "");
-      const organization = cleanVisibleText(display.organization || raw.organization || "");
-      const location = cleanVisibleText(display.location || raw.location || "");
-      const workplaceType = normalizeWorkplaceTypeLabel(display.location_type || raw.workplace_type || "");
-      const salaryMin = Number.isFinite(Number(display.salary_min)) ? Number(display.salary_min) : raw.salary_min;
-      const salaryMax = Number.isFinite(Number(display.salary_max)) ? Number(display.salary_max) : raw.salary_max;
-      const payDisplay = getPayDisplay({
-        id: String(record.id || raw.id || "").trim(),
-        title: display.title || raw.title || "",
-        display,
-        pay_display: raw.pay_display || "",
-        salary: raw.salary || "",
-        salary_min: salaryMin ?? null,
-        salary_max: salaryMax ?? null,
-        salary_currency: raw.salary_currency || "",
-        salary_period: raw.salary_period || ""
-      });
-      const tags = Array.isArray(display.tags) && display.tags.length ? display.tags : (Array.isArray(raw.tags) ? raw.tags : []);
-
-      return {
-        ...raw,
-        id: String(record.id || raw.id || "").trim(),
-        title,
-        organization,
-        location,
-        workplace_type: workplaceType,
-        salary: payDisplay,
-        salary_min: salaryMin ?? null,
-        salary_max: salaryMax ?? null,
-        job_type: normalizeEmploymentTypeLabel(display.role_type || raw.job_type || ""),
-        experience: cleanVisibleText(display.experience_level || raw.experience || ""),
-        sector: cleanVisibleText(display.sector || raw.sector || ""),
-        function: cleanVisibleText(display.function || raw.function || ""),
-        specialization: cleanVisibleText(display.specialization || raw.specialization || ""),
-        description: cleanVisibleText(display.description || raw.description || ""),
-        source: cleanVisibleText(display.source_name || raw.source || ""),
-        source_url: String(display.source_url || raw.source_url || "").trim(),
-        original_url: String(display.original_url || raw.original_url || raw.source_url || "").trim(),
-        apply_url: String(display.application_url || raw.apply_url || "").trim(),
-        date_posted: String(display.date_collected || raw.date_posted || "").trim(),
-        featured: typeof record.featured === "boolean" ? record.featured : Boolean(raw.featured),
-        salary_visible: payDisplay ? true : raw.salary_visible,
-        tags: tags.map((tag) => cleanVisibleText(tag)).filter(Boolean),
-        status: "published",
-        verification_status: String(record.verification_status || "verified").trim(),
-        display_order: Number(record.display_order || 0)
-      };
     }
 
     function isNewThisWeek(job) {
@@ -2174,13 +2114,19 @@
         const sectorLabel = normalizeSectorLabel(job.sector);
         const specializationLabel = inferSpecialization(job);
         const updatedText = getLastUpdated(job);
+        const jobHref = getJobDetailPath(job);
+        const descriptionSnippet = String(job.description_snippet || job.summary || "").trim() || "Open the application to review the full role details.";
+        const cardTag = jobHref ? "a" : "div";
+        const cardAttrs = jobHref
+          ? ` href="${escapeHtml(jobHref)}" data-job-card="true" data-job-id="${escapeHtml(job.id)}" data-job-title="${escapeHtml(cleanVisibleText(job.title))}" data-job-organization="${escapeHtml(cleanVisibleText(job.organization))}" data-job-source="${escapeHtml(cleanVisibleText(job.source))}"`
+          : ` data-job-card-broken="true" data-job-id="${escapeHtml(job.id)}"`;
         return `
-          <a class="classified-card" href="${escapeHtml(getJobDetailPath(job))}" data-job-card="true" data-job-id="${escapeHtml(job.id)}" data-job-title="${escapeHtml(cleanVisibleText(job.title))}" data-job-organization="${escapeHtml(cleanVisibleText(job.organization))}" data-job-source="${escapeHtml(cleanVisibleText(job.source))}">
+          <${cardTag} class="classified-card"${cardAttrs}>
             ${featured ? '<div class="featured-marker"></div>' : ""}
             <span class="card-ref">REF: ${escapeHtml(ref)}</span>
             <h3 class="card-title">${escapeHtml(cleanVisibleText(job.title))}</h3>
             <div class="card-org">${escapeHtml(cleanVisibleText(job.organization))}</div>
-            <p class="card-description">${escapeHtml(cleanVisibleText(job.description_snippet || job.summary || job.description || "Open the application to review the full role details."))}</p>
+            <p class="card-description">${escapeHtml(descriptionSnippet)}</p>
             <div class="tag-row" style="justify-content: flex-start; margin-top: 0;">
               ${newThisWeek ? '<span class="tag-pill" style="cursor: default;">New this week</span>' : ""}
               ${sectorLabel ? `<span class="tag-pill" style="cursor: default;">${escapeHtml(cleanVisibleText(sectorLabel))}</span>` : ""}
@@ -2192,7 +2138,7 @@
               <div class="card-meta">
                 <div class="card-meta-row">
                   <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M21 10c0 7-9 13-9 13S3 17 3 10a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>
-                  ${escapeHtml(cleanVisibleText(job.location))}
+                  ${escapeHtml(String(job.location || "").trim())}
                 </div>
                 <div class="card-meta-row">
                   <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"></rect><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"></path></svg>
@@ -2202,7 +2148,7 @@
               </div>
               ${salaryBlock}
             </div>
-          </a>
+          </${cardTag}>
         `;
       };
 
@@ -2226,6 +2172,16 @@
       ui.loadMoreButton.hidden = visibleJobs.length >= state.filteredJobs.length;
     }
 
+    function scheduleRenderJobs(delay = 120) {
+      if (state.pendingRenderTimer) {
+        window.clearTimeout(state.pendingRenderTimer);
+      }
+      state.pendingRenderTimer = window.setTimeout(() => {
+        state.pendingRenderTimer = 0;
+        renderJobs();
+      }, delay);
+    }
+
     function resetFilters() {
       state.search = "";
       state.visibleCount = 9;
@@ -2241,16 +2197,14 @@
       renderState("Loading current roles…");
 
       try {
-        const [recordsResponse, jobsResponse, profilesResponse, employersResponse] = await Promise.all([
-          fetch(`./job-records.json?ts=${Date.now()}`, { cache: "no-store" }).catch(() => null),
+        const [jobsResponse, profilesResponse, employersResponse] = await Promise.all([
           fetch(`./jobs.json?ts=${Date.now()}`, { cache: "no-store" }),
           fetch(`./talent-profiles.json?ts=${Date.now()}`, { cache: "no-store" }).catch(() => null),
           fetch(`./employers.json?ts=${Date.now()}`, { cache: "no-store" }).catch(() => null)
         ]);
         if (!jobsResponse.ok) throw new Error(`HTTP ${jobsResponse.status}`);
 
-        const [jobRecords, jobs, profiles, employers] = await Promise.all([
-          recordsResponse && recordsResponse.ok ? recordsResponse.json() : [],
+        const [jobs, profiles, employers] = await Promise.all([
           jobsResponse.json(),
           profilesResponse && profilesResponse.ok ? profilesResponse.json() : [],
           employersResponse && employersResponse.ok ? employersResponse.json() : []
@@ -2258,16 +2212,10 @@
 
         if (!Array.isArray(jobs)) throw new Error("jobs.json must contain an array.");
 
-        state.jobRecords = Array.isArray(jobRecords) ? jobRecords : [];
         state.profiles = Array.isArray(profiles) ? profiles : [];
         state.employers = Array.isArray(employers) ? employers : [];
 
-        const publishedRecordJobs = state.jobRecords
-          .filter(isPublishedRecord)
-          .map(resolveDisplayJob)
-          .filter(Boolean);
-
-        state.jobs = (Array.isArray(jobRecords) ? publishedRecordJobs : jobs)
+        state.jobs = jobs
           .sort((a, b) => {
             const orderDelta = Number(a.display_order || 0) - Number(b.display_order || 0);
             if (orderDelta !== 0) return orderDelta;
@@ -2297,7 +2245,7 @@
         target: "search",
         value: state.search
       });
-      renderJobs();
+      scheduleRenderJobs();
     });
 
     ui.quickFilters.forEach((chip) => {
@@ -2316,7 +2264,7 @@
           target: "quick_filter",
           value
         });
-        renderJobs();
+        scheduleRenderJobs();
       });
     });
 
@@ -2335,6 +2283,7 @@
         value,
         checked: input.checked
       });
+      scheduleRenderJobs();
     });
 
     document.getElementById("apply-filters").addEventListener("click", () => {

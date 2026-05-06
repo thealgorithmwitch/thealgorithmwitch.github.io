@@ -461,8 +461,9 @@
 
       <section id="locked-state" class="locked-card" style="display:none;">
         <div class="eyebrow">Locked</div>
-        <h3 style="font-family: var(--font-serif); font-size: 2rem; margin-top: 10px;">Admin review is not configured on this device.</h3>
-        <p style="color: var(--ink-secondary); margin-top: 12px;">Add the backend URL in <code>jobs/scripts/jobs-backend-config.js</code> before using this console.</p>
+        <h3 id="locked-title" style="font-family: var(--font-serif); font-size: 2rem; margin-top: 10px;">Admin review is not configured on this device.</h3>
+        <p id="locked-body" style="color: var(--ink-secondary); margin-top: 12px;">Add the backend URL in <code>jobs/scripts/jobs-backend-config.js</code> before using this console.</p>
+        <div id="locked-details" class="admin-note" style="display:none;"></div>
       </section>
 
       <section id="login-state" class="login-wrap" style="display:none;">
@@ -790,6 +791,9 @@
     };
 
     const lockedState = document.getElementById("locked-state");
+    const lockedTitle = document.getElementById("locked-title");
+    const lockedBody = document.getElementById("locked-body");
+    const lockedDetails = document.getElementById("locked-details");
     const loginState = document.getElementById("login-state");
     const consoleShell = document.getElementById("console-shell");
     const statusMessage = document.getElementById("status-message");
@@ -1755,11 +1759,38 @@
     }
 
     function showLockedState() {
+      lockedTitle.textContent = "Admin review is not configured on this device.";
+      lockedBody.innerHTML = `Add the backend URL in <code>jobs/scripts/jobs-backend-config.js</code> before using this console.`;
+      lockedDetails.textContent = "";
+      lockedDetails.style.display = "none";
       lockedState.style.display = "block";
       loginState.style.display = "none";
       consoleShell.style.display = "none";
       localEmergencyButton.style.display = "none";
       setAdminDebug({ finalMode: "locked" });
+    }
+
+    function showBackendOutdatedState() {
+      const backendUrl = JOBS_BACKEND_URL.trim() || "(missing backend URL)";
+      lockedTitle.textContent = "Backend deployment is outdated.";
+      lockedBody.innerHTML = "This console reached the Apps Script backend, but the deployed Web App does not recognize <code>validateAdminToken</code>. Redeploy the current Apps Script project before using this admin review console.";
+      lockedDetails.innerHTML = [
+        "Redeploy steps:",
+        "1. Open the Google Sheet bound to this backend.",
+        "2. Extensions -> Apps Script.",
+        "3. Confirm the project includes the current jobs/backend/apps-script/Code.gs source.",
+        "4. Deploy -> Manage deployments.",
+        "5. Update the existing Web App deployment or create a new Web App deployment.",
+        `6. Confirm this configured /exec URL is the redeployed backend: ${escapeHtml(backendUrl)}`
+      ].join("<br>");
+      lockedDetails.style.display = "block";
+      lockedState.style.display = "block";
+      loginState.style.display = "none";
+      consoleShell.style.display = "none";
+      localEmergencyButton.style.display = "none";
+      clearStatus();
+      showLoginMessage("");
+      setAdminDebug({ finalMode: "backendOutdated" });
     }
 
     function showLoginState(message) {
@@ -1950,6 +1981,27 @@
       }
     
       if (!response.ok || !data.ok) {
+        const responseErrorText = String(data && data.error ? data.error : responseText || "").trim();
+        const backendOutdated =
+          action === "validateAdminToken" &&
+          response.ok &&
+          /invalid action\.?/i.test(responseErrorText);
+
+        if (backendOutdated) {
+          const outdatedError = new Error("Backend deployment is outdated. Redeploy the Apps Script Web App with validateAdminToken.");
+          outdatedError.code = "BACKEND_OUTDATED";
+          outdatedError.httpStatus = response.status || 200;
+          outdatedError.allowLocalFallback = false;
+          showBackendOutdatedState();
+          setAdminDebug({
+            validationAction: action,
+            httpStatus: outdatedError.httpStatus,
+            backendResponse: responseErrorText || "Invalid action.",
+            finalMode: "backendOutdated"
+          });
+          throw outdatedError;
+        }
+
         const isAuthFailure = response.status === 401 ||
           response.status === 403 ||
           /unauthorized|forbidden/i.test(String(data.error || ""));
@@ -1988,6 +2040,9 @@
         });
         return true;
       } catch (error) {
+        if (error.code === "BACKEND_OUTDATED") {
+          return false;
+        }
         if (error.code !== "AUTH_EXPIRED") {
           setStatus(error.message || "Unable to validate admin session.", true);
         }

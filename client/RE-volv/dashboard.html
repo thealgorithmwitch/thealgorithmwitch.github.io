@@ -722,6 +722,9 @@
                   <h3 class="text-sm font-bold text-white">Conversions Over Time</h3>
                   <span class="text-[10px] text-gray-500">Daily conversions</span>
                 </div>
+                <p class="text-[11px] text-gray-500 mb-3 leading-relaxed">
+                  Conversions shown here come from GA4 key events synced into the performance_data sheet. Google Ads conversions may differ if Ads conversion actions are configured separately.
+                </p>
                 <div class="h-52 relative" id="chart-conversions-trend">
                   <svg class="w-full h-full" viewBox="0 0 400 150" preserveAspectRatio="none">
                     <defs>
@@ -1149,7 +1152,7 @@
 
 <script>
   const APP_CONFIG = {
-    API_BASE: "https://script.google.com/macros/s/AKfycbwo5cfXY06x9GtcTDwM9XVCjwsuHhtGBZglZ_P42mD2z5gRv6C7AcTkTlGifMfboVof/exec",
+    API_BASE: "https://script.google.com/macros/s/AKfycbz3_9w8Y4zKmKi51dFNrqKegKfyxQqjDKC7CbBVwc7T8LiB58K_oIthJ3IHXs33xqRX/exec",
     AUTO_SYNC_PERFORMANCE_ON_LOAD: false
   };
   console.log("API_BASE:", APP_CONFIG.API_BASE);
@@ -1555,6 +1558,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const sourceType = String(item?.sourceType || "").trim();
     const priority = String(item?.priority || item?.severity || "").trim();
     const recommendation = String(item?.recommendation || "").trim();
+    const zombieMeta = getZombieConditionMeta_(item);
     const chips = [label, sourceType ? sourceType.replace(/_/g, " ") : "", priority]
       .filter(Boolean)
       .map((value) => `
@@ -1569,8 +1573,12 @@ document.addEventListener("DOMContentLoaded", () => {
         <i class="ph-bold ${iconClass} ${colorClass} mt-1"></i>
         <div class="min-w-0">
           <div class="text-sm text-white font-medium">${escapeHtml(title || "Highlight")}</div>
-          ${chips ? `<div class="flex flex-wrap gap-1 mt-1">${chips}</div>` : ""}
+          ${(chips || zombieMeta) ? `<div class="flex flex-wrap gap-1 mt-1">
+            ${chips}
+            ${zombieMeta ? `<span class="inline-flex items-center rounded-full border border-amber-500/20 bg-amber-500/10 px-2 py-0.5 text-[10px] uppercase tracking-wide text-amber-300">Zombie ad condition</span>` : ""}
+          </div>` : ""}
           <div class="text-xs text-gray-400 leading-relaxed mt-1">${escapeHtml(detail || "No detail available.")}</div>
+          ${zombieMeta ? `<div class="text-[11px] text-amber-200/80 leading-relaxed mt-2">${escapeHtml(zombieMeta.note)}</div>` : ""}
           ${metricLabel || metricValue ? `
             <div class="text-[11px] text-gray-500 mt-1 uppercase tracking-wide">
               ${escapeHtml(metricLabel)}${metricLabel && metricValue ? ": " : ""}${escapeHtml(metricValue)}
@@ -3692,7 +3700,8 @@ function renderHomeOverviewSnapshot(summary, comparison) {
       metricKey: "conversions",
       gradientId: "convGradient",
       strokeColor: "#00f0ff",
-      labelsColorClass: "text-gray-500"
+      labelsColorClass: "text-gray-500",
+      emptyStateMessage: "No GA4 key events were recorded for this date range. Traffic may still be syncing correctly."
     });
 
     renderSparklineChart({
@@ -3714,7 +3723,7 @@ function renderHomeOverviewSnapshot(summary, comparison) {
     });
   }
 
-  function renderSparklineChart({ targetId, data, metricKey, gradientId, strokeColor, labelsColorClass }) {
+  function renderSparklineChart({ targetId, data, metricKey, gradientId, strokeColor, labelsColorClass, emptyStateMessage }) {
     const container = document.getElementById(targetId);
     if (!container) return;
 
@@ -3723,6 +3732,29 @@ function renderHomeOverviewSnapshot(summary, comparison) {
       container.innerHTML = `
         <div class="h-full w-full flex items-center justify-center text-sm text-gray-500">
           No data for current filters
+        </div>
+      `;
+      return;
+    }
+
+    const isAllZeroSeries = points.every((item) => {
+      const rawValue = item && Object.prototype.hasOwnProperty.call(item, metricKey) ? item[metricKey] : 0;
+      return rawValue === "" || rawValue === null || rawValue === undefined || Number(rawValue) === 0;
+    });
+
+    if (emptyStateMessage && isAllZeroSeries) {
+      const labels = points.map((item) => formatShortDateLabel(item.date));
+      container.innerHTML = `
+        <div class="h-full w-full relative">
+          <svg class="w-full h-full" viewBox="0 0 400 150" preserveAspectRatio="none" aria-hidden="true">
+            <path d="M0,110 L400,110" fill="none" stroke="${strokeColor}" stroke-width="2" stroke-opacity="0.45"></path>
+          </svg>
+          <div class="absolute inset-0 flex items-center justify-center px-6 text-center">
+            <div class="text-sm text-gray-400 max-w-xs leading-relaxed">${escapeHtml(emptyStateMessage)}</div>
+          </div>
+          <div class="absolute bottom-0 left-0 right-0 flex justify-between text-[9px] ${labelsColorClass} px-2">
+            ${buildTrendLabels(labels)}
+          </div>
         </div>
       `;
       return;
@@ -3777,6 +3809,41 @@ function renderHomeOverviewSnapshot(summary, comparison) {
         needsAttention: Boolean(candidate.usedFallbacks?.needsAttention),
         nextAction: Boolean(candidate.usedFallbacks?.nextAction)
       }
+    };
+  }
+
+  function getZombieConditionMeta_(item) {
+    if (!item || typeof item !== "object") return null;
+
+    const haystack = [
+      item.title,
+      item.finding,
+      item.recommendation,
+      item.evidence,
+      item.category,
+      item.sourceType,
+      item.label,
+      item.linkedTo,
+      item.linkedLandingPage
+    ].join(" ").toLowerCase();
+
+    const hasInactiveStatus = /(inactive|stale|paused|relaunch|before relaunch|requires review before relaunch)/.test(haystack);
+    const hasZeroConversionRisk = /(zero conversions|no conversions|without google ads conversions|without ad-platform conversions|not converting)/.test(haystack);
+    const hasWeakCtrRisk = /(ctr is weak|underperforming on click-through|under-earning clicks|search result ctr opportunity)/.test(haystack);
+    const hasWeakLandingRisk = /(landing page friction|weak downstream site conversion|not converting on-site|landing-page message match|low engagement depth|weak ux page|friction signals)/.test(haystack);
+    const hasRegistryRisk = /(registry|naming or tracking issues|fragmenting reporting|could not be matched safely|aligned to the registry)/.test(haystack);
+    const hasTrackingRisk = /(tracking|gtm|attribution confidence|conversion imports|conversion tracking|mismatch|tracking mismatches)/.test(haystack);
+    const hasDeadOrOutdatedLandingRisk = /(dead|outdated landing|broken page|dead-click|dead click)/.test(haystack);
+
+    if (!(hasInactiveStatus || hasZeroConversionRisk || hasWeakCtrRisk || hasWeakLandingRisk || hasRegistryRisk || hasTrackingRisk || hasDeadOrOutdatedLandingRisk)) {
+      return null;
+    }
+
+    return {
+      label: "Zombie ad condition",
+      note: hasInactiveStatus
+        ? "Zombie ad condition: this campaign requires review before relaunch because it shows one or more risk signals such as inactive status, spend or clicks without conversions, weak CTR, registry mismatch, or tracking uncertainty."
+        : "Zombie ad condition: this campaign should be reviewed before relaunch because it shows one or more risk signals such as inactive status, spend or clicks without conversions, weak CTR, registry mismatch, or tracking uncertainty."
     };
   }
 
@@ -4070,6 +4137,7 @@ function renderAuditTable(items, activeStatus = "all") {
       </td>
       <td class="font-medium text-white text-sm">
         ${escapeHtml(item.title || "")}
+        ${getZombieConditionMeta_(item) ? `<div class="text-[10px] uppercase tracking-wide text-amber-300 mt-1">Zombie ad condition</div>` : ""}
       </td>
       <td>
         <span class="badge ${categoryBadgeClass(item.category)}">${escapeHtml(item.category || "")}</span>
@@ -4095,6 +4163,62 @@ function renderAuditTable(items, activeStatus = "all") {
 
   showAuditDetail(filteredItems[0].noteId);
 }
+
+  function sanitizeResourceIconClass_(value) {
+    const raw = String(value || "").trim();
+    if (!raw) return "";
+    const normalized = raw
+      .replace(/[^\w-\s]/g, " ")
+      .trim()
+      .replace(/\s+/g, " ");
+    if (!normalized) return "";
+    return normalized.includes("ph-") ? normalized : `ph-${normalized}`;
+  }
+
+  function getResourceIconClass_(item) {
+    const custom = sanitizeResourceIconClass_(item?.icon);
+    if (custom) return custom;
+
+    const category = String(item?.category || "").trim().toLowerCase();
+    if (category.includes("dashboard") || category.includes("report")) return "ph-chart-line-up";
+    if (category.includes("clarity")) return "ph-eye";
+    if (category.includes("ga4") || category.includes("analytics")) return "ph-chart-bar";
+    if (category.includes("gtm") || category.includes("tracking")) return "ph-plugs-connected";
+    if (category.includes("google_ads") || category.includes("ads") || category.includes("paid")) return "ph-megaphone";
+    if (category.includes("search_console") || category.includes("seo") || category.includes("search")) return "ph-magnifying-glass";
+    if (category.includes("sop") || category.includes("training") || category.includes("guide")) return "ph-book-open-text";
+    if (category.includes("qa") || category.includes("check")) return "ph-shield-check";
+    if (category.includes("landing_pages") || category.includes("landing") || category.includes("page")) return "ph-browser";
+    return "ph-link";
+  }
+
+  function getResourceColorClasses_(item) {
+    const custom = String(item?.color || "").trim().toLowerCase();
+    const map = {
+      purple: "bg-purple-900/30 text-purple-400",
+      cyan: "bg-cyan-900/30 text-cyan-400",
+      emerald: "bg-emerald-900/30 text-emerald-400",
+      gold: "bg-amber-900/30 text-amber-300",
+      amber: "bg-amber-900/30 text-amber-300",
+      blue: "bg-blue-900/30 text-blue-400",
+      rose: "bg-rose-900/30 text-rose-400",
+      slate: "bg-slate-800/60 text-slate-300"
+    };
+
+    if (custom && map[custom]) return map[custom];
+
+    const category = String(item?.category || "").trim().toLowerCase();
+    if (category.includes("dashboard") || category.includes("report")) return "bg-purple-900/30 text-purple-400";
+    if (category.includes("clarity")) return "bg-cyan-900/30 text-cyan-400";
+    if (category.includes("ga4") || category.includes("analytics")) return "bg-emerald-900/30 text-emerald-400";
+    if (category.includes("gtm") || category.includes("tracking")) return "bg-cyan-900/30 text-cyan-400";
+    if (category.includes("google_ads") || category.includes("ads") || category.includes("paid")) return "bg-amber-900/30 text-amber-300";
+    if (category.includes("search_console") || category.includes("seo") || category.includes("search")) return "bg-blue-900/30 text-blue-400";
+    if (category.includes("sop") || category.includes("training") || category.includes("guide")) return "bg-slate-800/60 text-slate-300";
+    if (category.includes("qa") || category.includes("check")) return "bg-rose-900/30 text-rose-400";
+    if (category.includes("landing_pages") || category.includes("landing") || category.includes("page")) return "bg-emerald-900/30 text-emerald-400";
+    return "bg-blue-900/30 text-blue-400";
+  }
 
   function renderResourceLinks(items) {
     const resourceCard = Array.from(document.querySelectorAll("#view-audit .glass-card")).find((card) => {
@@ -4132,14 +4256,8 @@ function renderAuditTable(items, activeStatus = "all") {
     }
 
     target.innerHTML = renderedLinks.map((item) => {
-      const category = String(item.category || "").toLowerCase();
-      const iconClass =
-        category.includes("report") || category.includes("dashboard") ? "ph-chart-line-up" :
-        "ph-link";
-
-      const badgeClass =
-        category.includes("report") || category.includes("dashboard") ? "bg-purple-900/30 text-purple-400" :
-        "bg-blue-900/30 text-blue-400";
+      const iconClass = getResourceIconClass_(item);
+      const badgeClass = getResourceColorClasses_(item);
 
       return `
         <button
@@ -4204,6 +4322,7 @@ function showAuditDetail(id) {
   );
 
   if (liveItem) {
+    const zombieMeta = getZombieConditionMeta_(liveItem);
     const evidence = String(liveItem.evidence || "").trim();
     const evidenceMetric = String(liveItem.evidenceMetric || "").trim();
     const evidenceValue = String(liveItem.evidenceValue ?? "").trim();
@@ -4282,6 +4401,10 @@ function showAuditDetail(id) {
         <h4 class="text-xs font-bold text-cyan-300 mb-2 uppercase tracking-wider">
           ${escapeHtml(liveItem.title || "")}
         </h4>
+        ${zombieMeta ? `<div class="mb-3 rounded border border-amber-500/20 bg-amber-500/10 px-3 py-2 text-[11px] text-amber-200/90 leading-relaxed">
+          <span class="font-semibold uppercase tracking-wide text-amber-300">Zombie ad condition</span>
+          <span class="block mt-1">${escapeHtml(zombieMeta.note)}</span>
+        </div>` : ""}
         <p class="text-xs text-gray-400 mb-3">
           ${escapeHtml(liveItem.finding || "")}
         </p>
@@ -4829,126 +4952,3 @@ function categoryBadgeClass(category) {
         labelText: "Data Loaded"
       },
       error: {
-        boxClass: "border-rose-400/20",
-        dot: "bg-rose-400",
-        labelText: "Data Error"
-      }
-    };
-
-    const config = states[state] || states.loading;
-
-    box.className = `bg-black/20 rounded-lg p-3 border flex items-start gap-3 ${config.boxClass}`;
-    indicator.innerHTML = `
-      <span class="animate-ping absolute inline-flex h-full w-full rounded-full ${config.dot} opacity-75"></span>
-      <span class="relative inline-flex rounded-full h-2.5 w-2.5 ${config.dot}"></span>
-    `;
-    label.textContent = config.labelText;
-    text.textContent = message || "";
-  }
-
-  function exportCurrentReportCsv() {
-    const rows = Array.isArray(currentPerformanceTrend) ? currentPerformanceTrend : [];
-
-    if (!rows.length) {
-      showToast("No Data", "There is no report data to export.", "ph-warning", "text-amber-400");
-      return;
-    }
-
-    const headers = ["date", "sessions", "users", "conversions", "conversion_rate"];
-    const csvRows = [
-      headers.join(","),
-      ...rows.map((row) => {
-        return [
-          csvEscape(row.date),
-          csvEscape(row.sessions),
-          csvEscape(row.users),
-          csvEscape(row.conversions),
-          csvEscape(row.conversionRate)
-        ].join(",");
-      })
-    ];
-
-    const blob = new Blob([csvRows.join("\n")], { type: "text/csv;charset=utf-8;" });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    const dateLabel = new Date().toISOString().slice(0, 10);
-
-    link.href = url;
-    link.download = `analytics-report-${dateLabel}.csv`;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    URL.revokeObjectURL(url);
-
-    showToast("Export Ready", "Report CSV downloaded.", "ph-download-simple");
-  }
-
-  function csvEscape(value) {
-    const str = String(value ?? "");
-    if (/[",\n]/.test(str)) {
-      return `"${str.replace(/"/g, '""')}"`;
-    }
-    return str;
-  }
-
-  function showToast(title, message, iconClass, colorClass = "text-emerald-400") {
-    const toast = document.getElementById("toast");
-    const titleEl = document.getElementById("toast-title");
-    const msgEl = document.getElementById("toast-msg");
-    const iconEl = document.getElementById("toast-icon");
-
-    if (!toast || !titleEl || !msgEl || !iconEl) return;
-
-    titleEl.textContent = title;
-    msgEl.textContent = message;
-    iconEl.className = `ph-fill ${iconClass} ${colorClass} text-lg`;
-
-    toast.classList.add("toast-show");
-    window.clearTimeout(window.__toastTimer);
-    window.__toastTimer = window.setTimeout(() => {
-      toast.classList.remove("toast-show");
-    }, 2500);
-  }
-
-  function bindWorkspaceDropdown() {
-  const toggle = document.getElementById("workspace-dropdown-toggle");
-  const dropdown = document.getElementById("workspace-dropdown");
-  const caret = document.getElementById("workspace-caret");
-
-  if (!toggle || !dropdown || !caret) return;
-
-  toggle.addEventListener("click", (event) => {
-    event.stopPropagation();
-    dropdown.classList.toggle("hidden");
-    caret.classList.toggle("rotate-180");
-  });
-
-  document.addEventListener("click", (event) => {
-    if (!toggle.contains(event.target) && !dropdown.contains(event.target)) {
-      dropdown.classList.add("hidden");
-      caret.classList.remove("rotate-180");
-    }
-  });
-}
-
-  function initStars() {
-    const container = document.getElementById("star-container");
-    if (!container) return;
-
-    for (let i = 0; i < 50; i += 1) {
-      const star = document.createElement("div");
-      star.className = "star";
-      star.style.left = `${Math.random() * 100}%`;
-      star.style.top = `${Math.random() * 100}%`;
-      const size = Math.random() < 0.1 ? 2 : 1;
-      star.style.width = `${size}px`;
-      star.style.height = `${size}px`;
-      star.style.setProperty("--duration", `${2 + Math.random() * 4}s`);
-      star.style.setProperty("--delay", `${Math.random() * 5}s`);
-      star.style.setProperty("--opacity", `${0.2 + Math.random() * 0.5}`);
-      container.appendChild(star);
-    }
-  }
-</script>
-</body>
-</html>

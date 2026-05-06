@@ -450,6 +450,13 @@
       gap: 10px;
     }
 
+    .filter-list.filter-list-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 10px 18px;
+      align-items: start;
+    }
+
     .filter-list label {
       display: flex;
       align-items: center;
@@ -1235,16 +1242,12 @@
             <div class="filter-list" id="filter-sector"></div>
           </div>
           <div>
-            <span class="mini-filter-label">Specialization</span>
-            <div class="filter-list" id="filter-specialization"></div>
-          </div>
-          <div>
             <span class="mini-filter-label">Salary</span>
             <div class="filter-list" id="filter-salary"></div>
           </div>
           <div>
-            <span class="mini-filter-label">Company</span>
-            <div class="filter-list" id="filter-company"></div>
+            <span class="mini-filter-label">Specialization</span>
+            <div class="filter-list filter-list-grid" id="filter-specialization"></div>
           </div>
         </div>
 
@@ -1477,8 +1480,7 @@
         jobType: document.getElementById("filter-job-type"),
         sector: document.getElementById("filter-sector"),
         specialization: document.getElementById("filter-specialization"),
-        salary: document.getElementById("filter-salary"),
-        company: document.getElementById("filter-company")
+        salary: document.getElementById("filter-salary")
       }
     };
 
@@ -1811,9 +1813,8 @@
         location: [...new Set(activeJobs.map(getWorkMode))],
         jobType: [...new Set(activeJobs.map((job) => job.job_type).filter(Boolean))],
         sector: [...new Set(activeJobs.map((job) => job.sector).filter(Boolean))],
-        specialization: SPECIALIZATION_OPTIONS.filter((value) => activeJobs.some((job) => inferSpecialization(job) === value)),
         salary: SALARY_FILTER_OPTIONS,
-        company: [...new Set(activeJobs.map((job) => String(job.organization || "").trim()).filter(Boolean))]
+        specialization: SPECIALIZATION_OPTIONS.filter((value) => activeJobs.some((job) => inferSpecialization(job) === value))
       };
 
       Object.entries(optionMap).forEach(([groupKey, values]) => {

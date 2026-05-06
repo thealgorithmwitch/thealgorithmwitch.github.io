@@ -1,6 +1,6 @@
 const fs = require("fs/promises");
 const path = require("path");
-const { dedupeJobs, normalizeJob, slugify, stringifySafe, todayIso } = require("./job-normalizer");
+const { buildDescriptionSnippet, dedupeJobs, normalizeJob, normalizePayDisplay, normalizeWorkplaceType, slugify, stringifySafe, todayIso } = require("./job-normalizer");
 const { normalizeSource } = require("./source-utils");
 
 const ROOT = path.resolve(__dirname, "..");
@@ -73,8 +73,24 @@ const PUBLIC_STRING_FIELDS = new Set([
 
 function sanitizePublicJob(job) {
   if (!job || typeof job !== "object") return job;
-  const normalized = normalizeJob(job);
-  return normalized;
+  const canonicalSalary = normalizePayDisplay({
+    payDisplay: job.salary,
+    salaryMin: job.salary_min,
+    salaryMax: job.salary_max,
+    currency: job.salary_currency,
+    period: job.salary_period
+  });
+  const canonicalDescription = stringifySafe(job.description || job.raw_description);
+  const canonicalSnippet = stringifySafe(job.description_snippet || job.summary) || buildDescriptionSnippet(canonicalDescription);
+  return {
+    ...sanitizeRecursive(job),
+    salary: canonicalSalary,
+    workplace_type: normalizeWorkplaceType(job.workplace_type, ""),
+    description: canonicalDescription,
+    description_snippet: canonicalSnippet,
+    summary: canonicalSnippet,
+    page_url: stringifySafe(job.page_url)
+  };
 }
 
 function sanitizeRecursive(value) {

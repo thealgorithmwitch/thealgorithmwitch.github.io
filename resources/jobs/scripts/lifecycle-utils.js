@@ -1,4 +1,4 @@
-const { normalizeJob, stringifySafe } = require("./job-normalizer");
+const { buildDescriptionSnippet, normalizeJob, normalizePayDisplay, normalizeWorkplaceType, stringifySafe } = require("./job-normalizer");
 
 const CLOSED_PATTERNS = [
   /no longer accepting applications/i,
@@ -153,13 +153,23 @@ function extendVerification(record, method = "source_recheck", options = {}) {
 function resolveDisplayJobFromRecord(record) {
   const raw = record.raw_source_data || {};
   const display = record.display || {};
-  return normalizeJob({
+  const canonicalPayDisplay = normalizePayDisplay({
+    payDisplay: stringifySafe(display.pay_display || raw.salary),
+    salaryMin: display.salary_min ?? raw.salary_min,
+    salaryMax: display.salary_max ?? raw.salary_max,
+    currency: raw.salary_currency,
+    period: raw.salary_period
+  });
+  const canonicalWorkplaceType = normalizeWorkplaceType(stringifySafe(display.location_type || raw.workplace_type), "");
+  const canonicalLocation = stringifySafe(display.location || raw.location);
+  const canonicalDescription = stringifySafe(display.description || raw.description || raw.raw_description);
+  const normalized = normalizeJob({
     ...raw,
     title: stringifySafe(display.title) || raw.title,
     organization: stringifySafe(display.organization) || raw.organization,
-    location: stringifySafe(display.location) || raw.location,
-    workplace_type: stringifySafe(display.location_type) || raw.workplace_type,
-    salary: stringifySafe(display.pay_display) || raw.salary,
+    location: canonicalLocation,
+    workplace_type: canonicalWorkplaceType || raw.workplace_type,
+    salary: canonicalPayDisplay || raw.salary,
     salary_min: display.salary_min ?? raw.salary_min,
     salary_max: display.salary_max ?? raw.salary_max,
     job_type: stringifySafe(display.role_type) || raw.job_type,
@@ -168,7 +178,7 @@ function resolveDisplayJobFromRecord(record) {
     function: stringifySafe(display.function) || raw.function,
     specialization: stringifySafe(display.specialization) || raw.specialization,
     tags: Array.isArray(display.tags) && display.tags.length ? display.tags : raw.tags,
-    description: stringifySafe(display.description) || raw.description,
+    description: canonicalDescription,
     source: stringifySafe(display.source_name) || raw.source,
     source_url: stringifySafe(display.source_url) || raw.source_url,
     original_url: stringifySafe(display.original_url) || raw.original_url || raw.source_url,
@@ -177,6 +187,20 @@ function resolveDisplayJobFromRecord(record) {
     featured: typeof record.featured === "boolean" ? record.featured : raw.featured,
     status: shouldShowPublicRecord(record) ? "published" : String(record.status || raw.status || "")
   });
+  if (!normalized) return null;
+  const fullDescription = canonicalDescription || stringifySafe(normalized.description || normalized.raw_description);
+  const descriptionSnippet = buildDescriptionSnippet(fullDescription);
+  return {
+    ...normalized,
+    location: canonicalLocation || normalized.location,
+    workplace_type: canonicalWorkplaceType || normalized.workplace_type,
+    salary: canonicalPayDisplay,
+    salary_min: display.salary_min ?? raw.salary_min ?? normalized.salary_min ?? null,
+    salary_max: display.salary_max ?? raw.salary_max ?? normalized.salary_max ?? null,
+    description: fullDescription,
+    description_snippet: descriptionSnippet,
+    summary: descriptionSnippet
+  };
 }
 
 module.exports = {

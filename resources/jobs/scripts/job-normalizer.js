@@ -176,7 +176,13 @@ const PARSER_CLEANUP_STATS = {
   hybrid_location_repaired: 0,
   elemental_metadata_stripped: 0,
   custom_table_header_stripped: 0,
-  html_fragment_stripped: 0
+  html_fragment_stripped: 0,
+  salary_invalid_removed: 0,
+  salary_display_built_from_range: 0,
+  workplace_type_cleaned: 0,
+  workplace_type_invalid_removed: 0,
+  workplace_type_field_misplacement_repaired: 0,
+  elemental_impact_routed_pending: 0
 };
 
 function slugify(value) {
@@ -197,6 +203,12 @@ function resetParserCleanupStats() {
   PARSER_CLEANUP_STATS.elemental_metadata_stripped = 0;
   PARSER_CLEANUP_STATS.custom_table_header_stripped = 0;
   PARSER_CLEANUP_STATS.html_fragment_stripped = 0;
+  PARSER_CLEANUP_STATS.salary_invalid_removed = 0;
+  PARSER_CLEANUP_STATS.salary_display_built_from_range = 0;
+  PARSER_CLEANUP_STATS.workplace_type_cleaned = 0;
+  PARSER_CLEANUP_STATS.workplace_type_invalid_removed = 0;
+  PARSER_CLEANUP_STATS.workplace_type_field_misplacement_repaired = 0;
+  PARSER_CLEANUP_STATS.elemental_impact_routed_pending = 0;
 }
 
 function getParserCleanupStats() {
@@ -209,7 +221,13 @@ function getParserCleanupStats() {
     parser_hybrid_location_repaired_count: PARSER_CLEANUP_STATS.hybrid_location_repaired,
     parser_elemental_metadata_stripped_count: PARSER_CLEANUP_STATS.elemental_metadata_stripped,
     parser_custom_table_header_stripped_count: PARSER_CLEANUP_STATS.custom_table_header_stripped,
-    parser_html_fragment_stripped_count: PARSER_CLEANUP_STATS.html_fragment_stripped
+    parser_html_fragment_stripped_count: PARSER_CLEANUP_STATS.html_fragment_stripped,
+    salary_invalid_removed_count: PARSER_CLEANUP_STATS.salary_invalid_removed,
+    salary_display_built_from_range_count: PARSER_CLEANUP_STATS.salary_display_built_from_range,
+    workplace_type_cleaned_count: PARSER_CLEANUP_STATS.workplace_type_cleaned,
+    workplace_type_invalid_removed_count: PARSER_CLEANUP_STATS.workplace_type_invalid_removed,
+    workplace_type_field_misplacement_repaired_count: PARSER_CLEANUP_STATS.workplace_type_field_misplacement_repaired,
+    elemental_impact_routed_pending_count: PARSER_CLEANUP_STATS.elemental_impact_routed_pending
   };
 }
 
@@ -223,6 +241,12 @@ function incrementParserCleanupStat(field) {
   if (field === "elemental_metadata_stripped") PARSER_CLEANUP_STATS.elemental_metadata_stripped += 1;
   if (field === "custom_table_header_stripped") PARSER_CLEANUP_STATS.custom_table_header_stripped += 1;
   if (field === "html_fragment_stripped") PARSER_CLEANUP_STATS.html_fragment_stripped += 1;
+  if (field === "salary_invalid_removed") PARSER_CLEANUP_STATS.salary_invalid_removed += 1;
+  if (field === "salary_display_built_from_range") PARSER_CLEANUP_STATS.salary_display_built_from_range += 1;
+  if (field === "workplace_type_cleaned") PARSER_CLEANUP_STATS.workplace_type_cleaned += 1;
+  if (field === "workplace_type_invalid_removed") PARSER_CLEANUP_STATS.workplace_type_invalid_removed += 1;
+  if (field === "workplace_type_field_misplacement_repaired") PARSER_CLEANUP_STATS.workplace_type_field_misplacement_repaired += 1;
+  if (field === "elemental_impact_routed_pending") PARSER_CLEANUP_STATS.elemental_impact_routed_pending += 1;
 }
 
 function stableHash(value) {
@@ -280,10 +304,32 @@ function normalizeWorkplaceType(value, fallback = "") {
   const text = normalizeWhitespace(stringifySafe(value));
   const normalized = normalizeLooseToken(text);
   if (!normalized) return fallback;
-  if (/\bhybrid\b/.test(normalized)) return "Hybrid";
-  if (/\bonsite\b|\bon site\b/.test(normalized)) return "On-site";
-  if (/\bremote\b|\bwork from home\b|\bwfh\b/.test(normalized)) return "Remote";
-  return text;
+  if (/(?:\$|£|€|usd|cad|eur|gbp|\b\d{2,3}(?:,\d{3})*(?:\.\d+)?\b.*(?:hour|hr|year|month|salary|pay|compensation))/i.test(text)) {
+    incrementParserCleanupStat("workplace_type_field_misplacement_repaired");
+    return fallback;
+  }
+  if (
+    looksLikePhysicalLocation(text) &&
+    !/\b(?:remote|hybrid|onsite|on site|remote first|remote eligible|work from home|wfh|in office|office based)\b/i.test(normalized)
+  ) {
+    incrementParserCleanupStat("workplace_type_field_misplacement_repaired");
+    return fallback;
+  }
+
+  if (/\bhybrid\b/.test(normalized)) {
+    if (text !== "Hybrid") incrementParserCleanupStat("workplace_type_cleaned");
+    return "Hybrid";
+  }
+  if (/\bonsite\b|\bon site\b|\bin office\b|\boffice based\b/.test(normalized)) {
+    if (text !== "On-site") incrementParserCleanupStat("workplace_type_cleaned");
+    return "On-site";
+  }
+  if (/\bremote\b|\bwork from home\b|\bwfh\b/.test(normalized)) {
+    if (text !== "Remote") incrementParserCleanupStat("workplace_type_cleaned");
+    return "Remote";
+  }
+  incrementParserCleanupStat("workplace_type_invalid_removed");
+  return fallback;
 }
 
 function normalizeEmploymentType(value, fallback = "") {
@@ -993,6 +1039,85 @@ function normalizeSalaryPeriodToken(value) {
   return "";
 }
 
+function formatSalaryAmount(amount) {
+  if (!Number.isFinite(Number(amount))) return "";
+  const rounded = Math.round(Number(amount));
+  return rounded.toLocaleString("en-US");
+}
+
+function salaryCurrencySymbol(currency) {
+  if (currency === "CAD") return "CA$";
+  if (currency === "EUR") return "€";
+  if (currency === "GBP") return "£";
+  return "$";
+}
+
+function isInvalidPayDisplayText(value, options = {}) {
+  const text = normalizeWhitespace(stringifySafe(value));
+  if (!text) return true;
+  if (/^(?:-|—|–|\$-|\$0|0|n\/a|na|not listed|not disclosed|undisclosed)$/i.test(text)) return true;
+  if (/^[£€$]?\d{1,3}(?:\.\d{1,2})?$/.test(text)) {
+    const amount = Number(text.replace(/[^\d.]/g, ""));
+    const period = String(options.period || "").toLowerCase();
+    if (!period || period === "unknown" || period === "year" || period === "month") return true;
+    if ((period === "hour" || period === "day") && amount <= 0) return true;
+  }
+  return false;
+}
+
+function normalizePayDisplay(options = {}) {
+  const payDisplay = normalizeWhitespace(stringifySafe(options.payDisplay || options.salary || ""));
+  const salaryMin = Number.isFinite(Number(options.salaryMin)) ? Number(options.salaryMin) : null;
+  const salaryMax = Number.isFinite(Number(options.salaryMax)) ? Number(options.salaryMax) : null;
+  const detectedCurrency = payDisplay ? detectSalaryCurrency(payDisplay, options.location || "") : "Unknown";
+  const detectedPeriod = payDisplay ? detectSalaryPeriod(payDisplay) : "Unknown";
+  const currency = VALID_CURRENCIES.has(String(options.currency || "")) && String(options.currency) !== "Unknown"
+    ? String(options.currency)
+    : detectedCurrency;
+  const period = VALID_PERIODS.has(String(options.period || "")) && String(options.period) !== "Unknown"
+    ? String(options.period)
+    : detectedPeriod;
+  const rangeAmounts = [salaryMin, salaryMax].filter((value) => Number.isFinite(value) && value > 0);
+  const shouldPreferRange = rangeAmounts.length > 0 && (
+    /(?:compensation|salary|pay|wage|hourly|annual|annually|per year|per hour)/i.test(payDisplay) ||
+    /^(?:USD|CAD|EUR|GBP)\s*\d/i.test(payDisplay) ||
+    /[kK]\b/.test(payDisplay)
+  );
+
+  if (payDisplay && !shouldPreferRange && !isInvalidPayDisplayText(payDisplay, { period })) {
+    return payDisplay
+      .replace(/\bpay range\b[:\s-]*/i, "")
+      .replace(/\bsalary range\b[:\s-]*/i, "")
+      .replace(/\s*-\s*/g, "–")
+      .trim();
+  }
+
+  if (payDisplay) incrementParserCleanupStat("salary_invalid_removed");
+
+  const effectivePeriod = period !== "Unknown" ? period : (rangeAmounts.some((value) => value >= 1000) ? "year" : "Unknown");
+
+  if (!rangeAmounts.length) return "";
+  if (effectivePeriod !== "hour" && effectivePeriod !== "day" && rangeAmounts.some((value) => value < 1000)) {
+    incrementParserCleanupStat("salary_invalid_removed");
+    return "";
+  }
+
+  const symbol = salaryCurrencySymbol(currency);
+  let next = "";
+  if (salaryMin && salaryMax && salaryMin !== salaryMax) {
+    next = `${symbol}${formatSalaryAmount(salaryMin)}–${symbol}${formatSalaryAmount(salaryMax)}`;
+  } else {
+    const onlyAmount = salaryMin || salaryMax;
+    next = `${symbol}${formatSalaryAmount(onlyAmount)}`;
+  }
+
+  if (effectivePeriod !== "Unknown") {
+    next = `${next} / ${effectivePeriod}`;
+  }
+  incrementParserCleanupStat("salary_display_built_from_range");
+  return next;
+}
+
 function salaryCandidateToText(value) {
   if (!value || typeof value !== "object" || Array.isArray(value)) return "";
 
@@ -1141,8 +1266,8 @@ function parseSalaryRange(salary, location) {
   if (!amounts.length) {
     return {
       ...empty,
-      salary: salaryText,
-      salary_visible: true
+      salary: "",
+      salary_visible: false
     };
   }
 
@@ -1160,9 +1285,20 @@ function parseSalaryRange(salary, location) {
     salaryMax = amounts[0];
   }
 
-  return {
+  const next = {
     raw_salary: rawSalary,
-    salary: salaryText,
+    salary: normalizePayDisplay({
+      payDisplay: salaryText,
+      salaryMin,
+      salaryMax,
+      currency: salaryCurrency,
+      period:
+        salaryPeriod !== "Unknown"
+          ? salaryPeriod
+          : amounts.some((amount) => amount >= 1000 || /[kKmM]/.test(text))
+            ? "year"
+            : "Unknown"
+    }),
     salary_min: salaryMin,
     salary_max: salaryMax,
     salary_currency: salaryCurrency,
@@ -1174,6 +1310,15 @@ function parseSalaryRange(salary, location) {
           : "Unknown",
     salary_visible: true
   };
+
+  if (!next.salary) {
+    return {
+      ...next,
+      salary_visible: false
+    };
+  }
+
+  return next;
 }
 
 function splitIntoSentences(value) {
@@ -1887,6 +2032,14 @@ function routeSyncedJob(job, source) {
   });
   if (!routed) return null;
 
+  const elementalImpactSource = /elemental impact/i.test(String(source.organization || "")) ||
+    /elementalimpact\.com/i.test(String(source.source_url || "")) ||
+    /elemental impact/i.test(String(routed.source || ""));
+  if (elementalImpactSource) {
+    incrementParserCleanupStat("elemental_impact_routed_pending");
+    return normalizeJob({ ...routed, trusted: false, auto_publish: false, status: "pending" });
+  }
+
   if (source.trusted === true && source.auto_publish === true) {
     return normalizeJob({ ...routed, status: "active" });
   }
@@ -1931,6 +2084,7 @@ module.exports = {
   resolveWorkplaceType,
   normalizeSector,
   normalizeOrganization,
+  normalizePayDisplay,
   parseSalaryRange,
   resetParserCleanupStats,
   routeSyncedJob,

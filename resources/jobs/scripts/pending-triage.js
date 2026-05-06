@@ -1200,6 +1200,7 @@ async function triagePendingJobs(pendingJobs, publicJobs, scrapeReport) {
     duplicate_count_removed: duplicateCountRemoved,
     pending_duplicates_removed_count: duplicateCountRemoved,
     pending_duplicates_public_match_count: pendingDuplicatesPublicMatchCount,
+    elemental_impact_routed_pending_count: adminPendingJobs.filter((job) => /elemental impact/i.test(String(job.source || ""))).length,
     jobs_with_pay: countJobsWithPay(adminPendingJobs),
     jobs_without_pay: adminPendingJobs.length - countJobsWithPay(adminPendingJobs),
     top_organizations: topOrganizations(adminPendingJobs, 20),

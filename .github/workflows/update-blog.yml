@@ -21,18 +21,18 @@ jobs:
         with:
           node-version: '20'
 
-      - name: Generate blog pages
+      - name: Generate blog
         run: |
           set -euo pipefail
           echo "[workflow] Trying Substack RSS first"
-
+      
           if node generate-blog.mjs; then
             echo "[workflow] Generated from Substack RSS"
           elif [ -f posts.json ]; then
-            echo "[workflow] RSS failed. Rendering from root posts.json"
+            echo "[workflow] RSS failed. Generated from root posts.json fallback"
             node generate-blog.mjs --from-posts-json
           else
-            echo "[workflow] RSS failed and root posts.json is missing"
+            echo "[workflow] RSS failed and posts.json is missing"
             exit 1
           fi
 

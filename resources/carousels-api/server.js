@@ -181,81 +181,216 @@ async function waitForAssets(page) {
 function getEmojiFallbackMapScript() {
   return `
     window.__scryerEmojiFallbackMap = {
-      "✨": { type: "text", value: "✦" },
-      "💖": { type: "text", value: "♥" },
-      "🎯": { type: "text", value: "◎" },
-      "🧠": { type: "text", value: "◉" },
-      "🌱": {
-        type: "svg",
-        value: '<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12 20c0-4.6 1.2-8.1 3.58-10.52C17.35 7.7 19.85 6.5 23 6.5c0 3.16-1.2 5.66-2.98 7.42C17.6 16.3 14.1 17.5 9.5 17.5" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/><path d="M12 20c0-3.7-.92-6.55-2.77-8.52C7.38 9.53 4.82 8.5 1 8.5c0 3.17 1.03 5.73 2.98 7.58C5.95 18.03 8.8 19 12.5 19" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/><path d="M12 21V11.5" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>'
-      },
-      "🔮": {
-        type: "svg",
-        value: '<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="12" cy="9.5" r="5.5" stroke="currentColor" stroke-width="1.7"/><path d="M9 15.2h6l1.7 4.3H7.3L9 15.2Z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/><path d="M8 20h8" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/><path d="M9.2 7.5c.7-1.2 1.7-1.9 3-2.1" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" opacity=".65"/></svg>'
-      }
+      "🔮": "●",
+      "✨": "✦",
+      "💖": "♥",
+      "🎯": "◎",
+      "🧠": "◉",
+      "🪴": "♣",
+      "🌱": "⌁",
+      "💚": "♥",
+      "🍀": "✤",
+      "🌳": "♣",
+      "🌻": "✺",
+      "🌞": "☀",
+      "🪷": "✿",
+      "🌼": "✼",
+      "🌿": "❧",
+      "⚡": "ϟ",
+      "🪄": "✦",
+      "📚": "▤",
+      "🤝": "◇",
+      "🗳️": "▣",
+      "🏘️": "⌂"
     };
 
-    window.__scryerCreateEmojiFallbackSpan = function(entry) {
+    window.__scryerLogEmoji = function(message, detail) {
+      if (typeof detail === "undefined") console.warn(message);
+      else console.warn(message, detail);
+    };
+
+    window.__scryerEmojiPattern = new RegExp(
+      Object.keys(window.__scryerEmojiFallbackMap)
+        .sort((a, b) => b.length - a.length)
+        .map((emoji) => emoji.replace(/[|\\\\{}()\\[\\]^$+*?.]/g, "\\\\$&"))
+        .join("|"),
+      "gu"
+    );
+
+    window.__scryerCreateEmojiFallbackSpan = function(symbol) {
       const span = document.createElement("span");
       span.className = "scryer-emoji-fallback";
-      span.style.display = "inline-flex";
-      span.style.alignItems = "center";
-      span.style.justifyContent = "center";
-      span.style.width = "1em";
-      span.style.height = "1em";
-      span.style.verticalAlign = "-0.12em";
-      span.style.color = "currentColor";
+      span.dataset.scryerEmojiFallback = "true";
+      span.textContent = (window.__scryerEmojiFallbackMap || {})[symbol] || symbol;
+      span.style.display = "inline-block";
+      span.style.fontFamily = '"Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", serif';
+      span.style.fontWeight = "700";
       span.style.lineHeight = "1";
-      span.style.whiteSpace = "nowrap";
-      if (entry.type === "svg") {
-        span.innerHTML = entry.value;
-        const svg = span.querySelector("svg");
-        if (svg) {
-          svg.style.width = "100%";
-          svg.style.height = "100%";
-          svg.style.display = "block";
-        }
-      } else {
-        span.textContent = entry.value;
-      }
+      span.style.verticalAlign = "-0.08em";
+      span.style.color = "currentColor";
+      span.style.textShadow = "0 0 10px rgba(212,255,0,0.35)";
       return span;
     };
 
-    window.__scryerApplyDeterministicEmojiFallbacks = function(root) {
-      const map = window.__scryerEmojiFallbackMap || {};
-      const emojiPattern = /✨|💖|🎯|🧠|🌱|🔮/g;
+    window.__scryerWrapEmojiTextNodes = function(root) {
+      return root;
+    };
+
+    window.__scryerApplyEmojiFallbacks = function(root) {
+      if (!root) return false;
+      const emojiPattern = window.__scryerEmojiPattern;
+      if (!emojiPattern) return false;
       const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, {
         acceptNode(node) {
           if (!node.nodeValue || !node.nodeValue.trim()) return NodeFilter.FILTER_REJECT;
+          emojiPattern.lastIndex = 0;
+          if (!emojiPattern.test(node.nodeValue)) return NodeFilter.FILTER_REJECT;
           const parent = node.parentElement;
-          if (!parent || parent.closest("script, style, textarea, svg")) return NodeFilter.FILTER_REJECT;
+          emojiPattern.lastIndex = 0;
+          if (!parent || parent.closest("script, style, textarea, svg, .scryer-emoji-fallback")) {
+            return NodeFilter.FILTER_REJECT;
+          }
           return NodeFilter.FILTER_ACCEPT;
         }
       });
 
       const nodes = [];
       while (walker.nextNode()) nodes.push(walker.currentNode);
+      if (!nodes.length) return false;
 
       for (const node of nodes) {
         const text = node.nodeValue;
-        emojiPattern.lastIndex = 0;
-        if (!emojiPattern.test(text)) continue;
-        emojiPattern.lastIndex = 0;
-
         const frag = document.createDocumentFragment();
         let cursor = 0;
+        emojiPattern.lastIndex = 0;
 
         for (const match of text.matchAll(emojiPattern)) {
+          const index = match.index || 0;
           const symbol = match[0];
-          const i = match.index || 0;
-          if (i > cursor) frag.appendChild(document.createTextNode(text.slice(cursor, i)));
-          frag.appendChild(window.__scryerCreateEmojiFallbackSpan(map[symbol]));
-          cursor = i + symbol.length;
+          if (index > cursor) {
+            frag.appendChild(document.createTextNode(text.slice(cursor, index)));
+          }
+          frag.appendChild(window.__scryerCreateEmojiFallbackSpan(symbol));
+          cursor = index + symbol.length;
         }
 
-        if (cursor < text.length) frag.appendChild(document.createTextNode(text.slice(cursor)));
+        if (cursor < text.length) {
+          frag.appendChild(document.createTextNode(text.slice(cursor)));
+        }
+
         node.replaceWith(frag);
       }
+
+      return true;
+    };
+
+    window.__scryerParseTwemoji = function(root) {
+      if (!root || !window.twemoji) return false;
+      const before = root.querySelectorAll("img.scryer-twemoji").length;
+
+      const attachFallback = (images) => {
+        images.forEach((img) => {
+          if (img.dataset.scryerTwemojiBound === "true") return;
+          img.dataset.scryerTwemojiBound = "true";
+          img.decoding = "sync";
+          img.loading = "eager";
+          img.onerror = () => {
+            if (img.dataset.scryerTwemojiSource !== "cdn") {
+              window.__scryerLogEmoji("[scryer emoji] local Twemoji failed", img.src);
+              img.dataset.scryerTwemojiSource = "cdn";
+              img.src = img.src.replace(
+                "http://localhost:3000/assets/twemoji/",
+                "https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/"
+              );
+              return;
+            }
+            window.__scryerLogEmoji("[scryer emoji] CDN Twemoji failed", img.src);
+          };
+        });
+      };
+
+      try {
+        window.twemoji.parse(root, {
+          base: "http://localhost:3000/assets/twemoji/",
+          folder: "svg",
+          ext: ".svg",
+          className: "scryer-twemoji"
+        });
+        root.querySelectorAll('img.scryer-twemoji:not([data-scryer-twemoji-source])').forEach((img) => {
+          img.dataset.scryerTwemojiSource = "local";
+        });
+        attachFallback(Array.from(root.querySelectorAll("img.scryer-twemoji")));
+      } catch (_localError) {
+        window.__scryerLogEmoji("[scryer emoji] local Twemoji failed");
+        try {
+          window.twemoji.parse(root, {
+            base: "https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/",
+            folder: "svg",
+            ext: ".svg",
+            className: "scryer-twemoji"
+          });
+          root.querySelectorAll('img.scryer-twemoji:not([data-scryer-twemoji-source])').forEach((img) => {
+            img.dataset.scryerTwemojiSource = "cdn";
+          });
+          attachFallback(Array.from(root.querySelectorAll("img.scryer-twemoji")));
+        } catch (_cdnError) {
+          window.__scryerLogEmoji("[scryer emoji] CDN Twemoji failed");
+          return false;
+        }
+      }
+
+      const after = root.querySelectorAll("img.scryer-twemoji").length;
+      return after > before;
+    };
+
+    window.__scryerHideExportControls = function(root) {
+      if (!root) return 0;
+      const selector = ".nav-controls, .export-hide, button[onclick*='Slide'], button[onclick*='prevSlide'], button[onclick*='nextSlide'], [onclick*='moveSlide'], .btn-prev, .btn-next, .btn-nav";
+      const controls = Array.from(root.querySelectorAll(selector));
+      controls.forEach((el) => {
+        el.style.display = "none";
+      });
+      if (controls.length) {
+        console.warn("[scryer export] hidden nav controls found and removed", controls.length);
+      }
+      return controls.length;
+    };
+
+    window.__scryerAuditExportRoot = function(root) {
+      if (!root) return null;
+      return {
+        twemojiActive: !!window.twemoji,
+        twemojiImages: root.querySelectorAll("img.scryer-twemoji").length,
+        emojiFallbacks: root.querySelectorAll(".scryer-emoji-fallback").length,
+        hiddenControls: root.querySelectorAll(".nav-controls, .export-hide, button[onclick*='Slide'], button[onclick*='prevSlide'], button[onclick*='nextSlide'], [onclick*='moveSlide'], .btn-prev, .btn-next, .btn-nav").length,
+        navDots: root.querySelectorAll(".nav-dots").length,
+        slideCounter: root.querySelectorAll(".slide-counter").length
+      };
+    };
+
+    window.__scryerPrepareEmojiClone = function(root, options) {
+      if (!root) return { twemojiApplied: false, fallbackApplied: false };
+      window.__scryerHideExportControls(root);
+      if (options && options.auditOnly) {
+        console.log("[scryer audit]", window.__scryerAuditExportRoot(root));
+        return { twemojiApplied: false, fallbackApplied: false };
+      }
+      if (options && options.emojiFallback === false) {
+        return { twemojiApplied: false, fallbackApplied: false };
+      }
+      const twemojiApplied = window.__scryerParseTwemoji && window.__scryerParseTwemoji(root);
+      if (!twemojiApplied) {
+        window.__scryerLogEmoji("[scryer emoji] using text fallback");
+        window.__scryerWrapEmojiTextNodes && window.__scryerWrapEmojiTextNodes(root);
+        const fallbackApplied = window.__scryerApplyEmojiFallbacks && window.__scryerApplyEmojiFallbacks(root);
+        return { twemojiApplied: false, fallbackApplied: !!fallbackApplied };
+      }
+      return { twemojiApplied: true, fallbackApplied: false };
+    };
+
+    window.__scryerApplyDeterministicEmojiFallbacks = function(root) {
+      const result = window.__scryerPrepareEmojiClone(root, { emojiFallback: true });
+      return !!(result && (result.twemojiApplied || result.fallbackApplied));
     };
   `;
 }
@@ -326,6 +461,12 @@ async function captureFullPage(page, outputPath, payload) {
     width: payload.width,
     height: payload.height
   });
+  await page.evaluate(({ emojiFallback }) => {
+    window.__scryerPrepareEmojiClone?.(document.body, { emojiFallback });
+  }, {
+    emojiFallback: payload.emojiFallback
+  }).catch(() => {});
+  await waitForAssets(page);
   await page.screenshot({
     path: outputPath,
     type: "png",
@@ -339,9 +480,6 @@ async function captureFullPage(page, outputPath, payload) {
 }
 
 async function captureElements(page, selector, outputDir, payload) {
-  await page.addScriptTag({
-    content: getEmojiFallbackMapScript()
-  }).catch(() => {});
   let count;
   try {
     count = await page.$$eval(selector, (nodes) => nodes.length);
@@ -376,7 +514,7 @@ async function captureElements(page, selector, outputDir, payload) {
       screenshot: filename,
       targetBoundingBox
     });
-    await page.evaluate(({ selector: selectorValue, index: itemIndex, width, height }) => {
+    await page.evaluate(({ selector: selectorValue, index: itemIndex, width, height, emojiFallback }) => {
       const nodes = Array.from(document.querySelectorAll(selectorValue));
       const original = nodes[itemIndex];
       if (!original) throw new Error(`Could not find slide ${itemIndex + 1}`);
@@ -492,7 +630,7 @@ async function captureElements(page, selector, outputDir, payload) {
       if (!cloneHasOwnBackground) {
         clone.style.background = background;
       }
-      window.__scryerApplyDeterministicEmojiFallbacks?.(clone);
+      window.__scryerPrepareEmojiClone?.(clone, { emojiFallback });
       clone.style.zIndex = "1";
       clone.style.flexShrink = "0";
       console.log("HTML Scryer clone forced size", {
@@ -521,7 +659,8 @@ async function captureElements(page, selector, outputDir, payload) {
       selector,
       index,
       width: payload.width,
-      height: payload.height
+      height: payload.height,
+      emojiFallback: payload.emojiFallback
     });
     await waitForAssets(page);
     await page.screenshot({
@@ -550,6 +689,9 @@ async function captureElements(page, selector, outputDir, payload) {
 }
 
 async function installExportRuntime(page, payload) {
+  await page.addScriptTag({
+    url: "https://cdn.jsdelivr.net/npm/@twemoji/api@15.1.0/dist/twemoji.min.js"
+  }).catch(() => {});
   await page.addStyleTag({
     content: `
       @import url('https://fonts.googleapis.com/css2?family=Noto+Color+Emoji&display=swap');
@@ -569,6 +711,14 @@ async function installExportRuntime(page, payload) {
         vertical-align: -0.08em;
         white-space: nowrap;
       }
+      img.scryer-twemoji {
+        display: inline-block !important;
+        width: 1em !important;
+        height: 1em !important;
+        vertical-align: -0.12em !important;
+        margin: 0 0.04em !important;
+        filter: drop-shadow(0 0 8px rgba(212, 255, 0, 0.35));
+      }
       .scryer-emoji,
       .emoji,
       [data-emoji="true"] {
@@ -576,7 +726,13 @@ async function installExportRuntime(page, payload) {
         font-variant-emoji: emoji;
       }
       .scryer-emoji-fallback {
-        font-weight: 700;
+        display: inline-block !important;
+        font-family: "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", serif !important;
+        font-weight: 700 !important;
+        line-height: 1 !important;
+        vertical-align: -0.08em !important;
+        color: currentColor !important;
+        text-shadow: 0 0 10px rgba(212,255,0,0.35);
       }
       #__scryer_capture_viewport__ {
         position: fixed !important;
@@ -631,7 +787,9 @@ async function installExportRuntime(page, payload) {
     };
     window.__scryerIsMeaningful = function(el, slide) {
       if (!el || el === slide) return false;
-      if (el.closest(".grid-overlay, .mystic-frame, .mystic-corner, .nav-controls, .slide-counter")) return false;
+      if (el.closest(".grid-overlay, .mystic-frame, .mystic-corner, .nav-controls, .export-hide")) return false;
+      if (el.matches(".btn-prev, .btn-next, .btn-nav")) return false;
+      if ((el.getAttribute("onclick") || "").match(/Slide|prevSlide|nextSlide|moveSlide/)) return false;
       if (el.getAttribute("aria-hidden") === "true") return false;
       const style = getComputedStyle(el);
       if (style.display === "none" || style.visibility === "hidden") return false;
@@ -718,11 +876,8 @@ async function installExportRuntime(page, payload) {
         track.style.transition = "none";
         track.style.height = `${height}px`;
       });
-      clone.querySelectorAll(".nav-controls, .slide-counter").forEach((el) => {
-        el.style.display = "none";
-      });
+      window.__scryerPrepareEmojiClone?.(clone, { emojiFallback: options.emojiFallback !== false });
       if (exportPadding > 0) {
-        window.__scryerApplyDeterministicEmojiFallbacks?.(clone);
         stage.appendChild(clone);
         viewport.appendChild(stage);
         document.body.appendChild(viewport);
@@ -742,7 +897,6 @@ async function installExportRuntime(page, payload) {
       viewport.appendChild(stage);
       document.body.appendChild(viewport);
       document.body.classList.add("__scryer_capturing__");
-      window.__scryerApplyDeterministicEmojiFallbacks?.(clone);
       const safePadding = Number.isFinite(options.safePadding)
         ? options.safePadding
         : Math.min(Math.round(Math.min(width, height) * 0.09), height >= 1800 ? 120 : height > width ? 96 : 72);
@@ -816,9 +970,6 @@ async function captureOne(page, outputPath, payload, selector, index) {
 }
 
 async function captureElementsPreserveLayout(page, selector, outputDir, payload) {
-  await page.addScriptTag({
-    content: getEmojiFallbackMapScript()
-  }).catch(() => {});
   await page.addStyleTag({
     url: "https://unpkg.com/@phosphor-icons/web/src/bold/style.css"
   }).catch(() => {});
@@ -861,7 +1012,7 @@ async function captureElementsPreserveLayout(page, selector, outputDir, payload)
       outputDir,
       `slide-${String(index + 1).padStart(2, "0")}.png`
     );
-    const prepared = await page.evaluate(({ selector: selectorValue, index: itemIndex, width, height }) => {
+    const prepared = await page.evaluate(({ selector: selectorValue, index: itemIndex, width, height, emojiFallback }) => {
       const el = document.querySelectorAll(selectorValue)[itemIndex];
       if (!el) return null;
 
@@ -924,7 +1075,7 @@ async function captureElementsPreserveLayout(page, selector, outputDir, payload)
         (cloneStyle.backgroundColor && cloneStyle.backgroundColor !== "rgba(0, 0, 0, 0)" && cloneStyle.backgroundColor !== "transparent");
       if (!hasOwnBg) clone.style.background = background;
 
-      window.__scryerApplyDeterministicEmojiFallbacks?.(clone);
+      window.__scryerPrepareEmojiClone?.(clone, { emojiFallback });
       root.appendChild(clone);
       document.body.appendChild(root);
       return true;
@@ -932,7 +1083,8 @@ async function captureElementsPreserveLayout(page, selector, outputDir, payload)
       selector,
       index,
       width: payload.width,
-      height: payload.height
+      height: payload.height,
+      emojiFallback: payload.emojiFallback
     });
     if (!prepared) {
       throw new Error(`Could not measure slide ${index + 1}.`);
@@ -1037,13 +1189,19 @@ app.post("/api/export-html", async (request, response) => {
     await page.addStyleTag({
       content: buildScryerCaptureStyles(payload.width, payload.height)
     });
+    await installExportRuntime(page, payload);
 
     const files = [];
     if (payload.mode === "full") {
       const outputPath = path.join(tempDir, `${payload.codexName}.png`);
       await captureFullPage(page, outputPath, payload);
       files.push(outputPath);
+    } else if (payload.preserveLayout === true) {
+      console.log("[scryer export] using preserveLayout capture path");
+      const captured = await captureElementsPreserveLayout(page, payload.selector, tempDir, payload);
+      files.push(...captured);
     } else {
+      console.log("[scryer export] using clone capture path");
       const captured = await captureElements(page, payload.selector, tempDir, payload);
       files.push(...captured);
     }

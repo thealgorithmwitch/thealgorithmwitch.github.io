@@ -361,7 +361,8 @@ function getEmojiFallbackMapScript() {
         emojiFallbacks: root.querySelectorAll(".scryer-emoji-fallback").length,
         hiddenControls: root.querySelectorAll(window.__scryerControlSelector || "").length,
         navDots: root.querySelectorAll(".nav-dots").length,
-        slideCounter: root.querySelectorAll(".slide-counter").length
+        slideCounter: root.querySelectorAll(".slide-counter").length,
+        swipeHints: root.querySelectorAll(".swipe-hint").length
       };
     };
 
@@ -862,7 +863,7 @@ async function installExportRuntime(page, payload) {
     };
     window.__scryerIsMeaningful = function(el, slide) {
       if (!el || el === slide) return false;
-      if (el.closest(".grid-overlay, .mystic-frame, .mystic-corner, .nav-controls, .export-hide")) return false;
+      if (el.closest(".grid-overlay, .mystic-frame, .mystic-corner, .mystic-border, .corner-l, .corner-r, .corner-t, .corner-b, .nav-controls, .export-hide")) return false;
       if (el.matches(".btn-prev, .btn-next, .btn-nav")) return false;
       if ((el.getAttribute("onclick") || "").match(/Slide|prevSlide|nextSlide|moveSlide/)) return false;
       if (el.getAttribute("aria-hidden") === "true") return false;

@@ -1404,9 +1404,36 @@ video {
                             </div>
                         </div>
                         <div id="compatibility-report" class="rounded-lg border border-white/5 bg-black/20 p-3 font-mono-tech text-[10px] leading-relaxed text-slate-300 whitespace-pre-wrap">Run audit to inspect export compatibility.</div>
+                        <div class="grid grid-cols-1 gap-2 sm:grid-cols-2">
+                            <label class="flex items-center gap-2 rounded-lg border border-white/5 bg-black/20 px-3 py-2 font-mono-tech text-[10px] text-slate-200">
+                                <input id="preserve-top-bar" type="checkbox" class="accent-emerald-400" checked>
+                                <span>Preserve top bar / ticker</span>
+                            </label>
+                            <label class="flex items-center gap-2 rounded-lg border border-white/5 bg-black/20 px-3 py-2 font-mono-tech text-[10px] text-slate-200">
+                                <input id="preserve-bottom-dots" type="checkbox" class="accent-emerald-400" checked>
+                                <span>Preserve bottom nav dots</span>
+                            </label>
+                            <label class="flex items-center gap-2 rounded-lg border border-white/5 bg-black/20 px-3 py-2 font-mono-tech text-[10px] text-slate-200">
+                                <input id="preserve-slide-counter" type="checkbox" class="accent-emerald-400" checked>
+                                <span>Preserve slide counter</span>
+                            </label>
+                            <label class="flex items-center gap-2 rounded-lg border border-white/5 bg-black/20 px-3 py-2 font-mono-tech text-[10px] text-slate-200">
+                                <input id="preserve-swipe-hint" type="checkbox" class="accent-emerald-400">
+                                <span>Preserve swipe hint</span>
+                            </label>
+                            <label class="flex items-center gap-2 rounded-lg border border-white/5 bg-black/20 px-3 py-2 font-mono-tech text-[10px] text-slate-200">
+                                <input id="hide-arrow-controls" type="checkbox" class="accent-emerald-400" checked>
+                                <span>Hide arrow controls</span>
+                            </label>
+                            <label class="flex items-center gap-2 rounded-lg border border-white/5 bg-black/20 px-3 py-2 font-mono-tech text-[10px] text-slate-200">
+                                <input id="freeze-animations" type="checkbox" class="accent-emerald-400" checked>
+                                <span>Freeze animations for export</span>
+                            </label>
+                        </div>
                         <div class="flex flex-col gap-2">
                             <label class="block font-mono-tech text-[10px] text-gray-500 uppercase tracking-widest">Converted Output</label>
                             <textarea id="converted-code" class="h-48 w-full p-4 rounded-lg input-dark font-mono-tech text-[11px] leading-relaxed resize-none scrollbar-mystic" placeholder="Converted export-safe code will appear here."></textarea>
+                            <div id="conversion-status" class="rounded-lg border border-emerald-500/20 bg-emerald-500/5 p-3 font-mono-tech text-[10px] leading-relaxed text-emerald-100 whitespace-pre-wrap">Compatible export code has not been generated yet.</div>
                             <button id="use-converted-btn" class="self-end px-4 py-2 rounded-lg border border-cyan-500/30 text-cyan-200 font-mono-tech text-[10px] uppercase tracking-[0.2em] hover:bg-cyan-500/10 transition-all">Use converted code</button>
                         </div>
                     </div>
@@ -1567,12 +1594,19 @@ video {
         const htmlCode = document.getElementById('html-code');
         const convertedCode = document.getElementById('converted-code');
         const compatibilityReport = document.getElementById('compatibility-report');
+        const conversionStatus = document.getElementById('conversion-status');
         const previewButton = document.getElementById('preview-btn');
         const auditCodeButton = document.getElementById('audit-code-btn');
         const convertCodeButton = document.getElementById('convert-code-btn');
         const useConvertedButton = document.getElementById('use-converted-btn');
         const exportButton = document.getElementById('export-btn');
         const preserveLayoutInput = document.getElementById('preserve-layout');
+        const preserveTopBarInput = document.getElementById('preserve-top-bar');
+        const preserveBottomDotsInput = document.getElementById('preserve-bottom-dots');
+        const preserveSlideCounterInput = document.getElementById('preserve-slide-counter');
+        const preserveSwipeHintInput = document.getElementById('preserve-swipe-hint');
+        const hideArrowControlsInput = document.getElementById('hide-arrow-controls');
+        const freezeAnimationsInput = document.getElementById('freeze-animations');
         const exportStatus = document.getElementById('export-status');
         const manifestStatus = document.getElementById('manifest-status');
         const manifestProgress = document.getElementById('manifest-progress');
@@ -1584,6 +1618,21 @@ video {
         let previewZoomMode = 'fit';
         let currentPreviewBlobUrl = null;
         let currentPreviewBackground = 'transparent';
+        const COMPATIBLE_CONTROL_SELECTOR = '.nav-controls, .export-hide, .btn-prev, .btn-next, .btn-nav, button[onclick*="Slide"], button[onclick*="prevSlide"], button[onclick*="nextSlide"], [onclick*="moveSlide"]';
+        const SHARED_CHROME_SELECTORS = {
+            topBar: '.ticker-scroll, .ticker, .top-bar, .topbar, .header-bar, .header, [class*="ticker"], [class*="top-bar"], [class*="topbar"], [class*="header-bar"]',
+            navDots: '.nav-dots, #dots, [class*="nav-dots"]',
+            slideCounter: '.slide-counter, #counter, [class*="slide-counter"], [class*="counter"]',
+            swipeHint: '.swipe-hint, [class*="swipe-hint"]',
+            overlays: '.mystic-border, .corner-l, .corner-r, .corner-t, .corner-b, .grid-overlay, .border-frame, .frame-border, .mystic-frame, .mystic-corner'
+        };
+        const SHARED_CHROME_LABELS = {
+            topBar: 'top bar / ticker',
+            navDots: 'bottom nav dots',
+            slideCounter: 'slide counter',
+            swipeHint: 'swipe hint',
+            overlays: 'border / frame overlays'
+        };
 
         function syncModeInputs() {
             customInput.classList.toggle('hidden', !customRadio.checked);
@@ -1629,15 +1678,149 @@ video {
             return 'Full Page Grimoire';
         }
 
+        function getConverterOptions() {
+            return {
+                preserveTopBar: preserveTopBarInput.checked,
+                preserveBottomDots: preserveBottomDotsInput.checked,
+                preserveSlideCounter: preserveSlideCounterInput.checked,
+                preserveSwipeHint: preserveSwipeHintInput.checked,
+                hideArrowControls: hideArrowControlsInput.checked,
+                freezeAnimations: freezeAnimationsInput.checked
+            };
+        }
+
+        function formatSlideNumber(value) {
+            return String(value).padStart(2, '0');
+        }
+
+        function getFrameSelector(mode, analysis) {
+            if (mode === 'page') return '.page';
+            if (mode === 'custom') return analysis.hasCarouselPattern && analysis.slideCount ? '.slide' : analysis.selector;
+            if (mode === 'full') {
+                if (analysis.slideCount) return '.slide';
+                if (analysis.pageCount) return '.page';
+                return 'body';
+            }
+            return '.slide';
+        }
+
+        function selectorSafeCount(root, selector) {
+            try {
+                return selector ? root.querySelectorAll(selector).length : 0;
+            } catch (_error) {
+                return 0;
+            }
+        }
+
+        function listDuplicateIds(doc) {
+            const counts = new Map();
+            Array.from(doc.querySelectorAll('[id]')).forEach((node) => {
+                const id = node.id.trim();
+                if (!id) return;
+                counts.set(id, (counts.get(id) || 0) + 1);
+            });
+            return Array.from(counts.entries()).filter(([, count]) => count > 1).map(([id, count]) => ({ id, count }));
+        }
+
+        function hasNodeContainingFrame(node, frames) {
+            return frames.some((frame) => frame !== node && node.contains(frame));
+        }
+
+        function isOutsideFrames(node, frames) {
+            return !frames.some((frame) => frame === node || frame.contains(node)) && !hasNodeContainingFrame(node, frames);
+        }
+
+        function nodeSignature(node) {
+            if (!node) return '';
+            const className = typeof node.className === 'string' ? node.className : '';
+            return `${node.tagName}:${node.id || ''}:${className}`;
+        }
+
+        function nodeLooksLikeTopBar(node) {
+            const signature = nodeSignature(node);
+            const inlineStyle = node.getAttribute('style') || '';
+            return /ticker|top-bar|topbar|header-bar|header/i.test(signature)
+                || /top\s*:\s*0|position\s*:\s*(fixed|absolute)/i.test(inlineStyle)
+                || /\btop-0\b|\babsolute\b|\bfixed\b|\bw-full\b/.test(signature);
+        }
+
+        function getSharedChromeRoot(node, type, frames) {
+            let current = node;
+            let candidate = node;
+            while (current.parentElement && current.parentElement !== node.ownerDocument.body) {
+                const parent = current.parentElement;
+                if (!isOutsideFrames(parent, frames)) break;
+                if (type === 'topBar' && nodeLooksLikeTopBar(parent)) {
+                    candidate = parent;
+                } else if (type === 'navDots' && (parent.matches('.nav-dots, #dots, [class*="nav-dots"]') || parent.childElementCount === 1)) {
+                    candidate = parent;
+                } else if (type === 'slideCounter' && (parent.matches('.slide-counter, #counter, [class*="slide-counter"], [class*="counter"]') || parent.childElementCount === 1)) {
+                    candidate = parent;
+                } else if (type === 'swipeHint' && (parent.matches('.swipe-hint, [class*="swipe-hint"]') || parent.childElementCount === 1)) {
+                    candidate = parent;
+                } else if (type === 'overlays' && /border|frame|grid|corner|overlay/i.test(nodeSignature(parent))) {
+                    candidate = parent;
+                }
+                current = parent;
+            }
+            return candidate;
+        }
+
+        function collectSharedChromeCandidates(doc, frames) {
+            const result = {
+                topBar: [],
+                navDots: [],
+                slideCounter: [],
+                swipeHint: [],
+                overlays: []
+            };
+
+            Object.entries(SHARED_CHROME_SELECTORS).forEach(([type, selector]) => {
+                const seen = new Set();
+                Array.from(doc.body.querySelectorAll(selector)).forEach((node) => {
+                    if (!isOutsideFrames(node, frames)) return;
+                    const candidate = getSharedChromeRoot(node, type, frames);
+                    if (!candidate || !isOutsideFrames(candidate, frames)) return;
+                    if (candidate.matches('.slides-container, #slides-container, .slides-wrapper, .carousel-viewport')) return;
+                    if (candidate.querySelector('.slides-container, #slides-container, .slides-wrapper, .carousel-viewport')) return;
+                    const key = candidate.outerHTML;
+                    if (seen.has(key)) return;
+                    seen.add(key);
+                    result[type].push(candidate);
+                });
+            });
+
+            return result;
+        }
+
+        function collectExternalTextureNodes(doc) {
+            return Array.from(doc.querySelectorAll('[style], img[src], source[src], video[src], [poster]')).filter((node) => {
+                const raw = [
+                    node.getAttribute('style') || '',
+                    node.getAttribute('src') || '',
+                    node.getAttribute('poster') || ''
+                ].join(' ');
+                return /https?:\/\/[^"')\s]+/i.test(raw);
+            });
+        }
+
+        function updateConversionStatus(message) {
+            conversionStatus.textContent = message;
+        }
+
         function analyzeCompatibility() {
             const source = htmlCode.value;
             const mode = getSelectedMode();
             const size = getSize();
             const selector = getSelector(mode);
+            const options = getConverterOptions();
             const parser = new DOMParser();
             const doc = parser.parseFromString(source, 'text/html');
-            const slideCount = doc.querySelectorAll('.slide').length;
-            const pageCount = doc.querySelectorAll('.page').length;
+            const slideFrames = Array.from(doc.querySelectorAll('.slide'));
+            const pageFrames = Array.from(doc.querySelectorAll('.page'));
+            const exportFrames = slideFrames.length ? slideFrames : pageFrames;
+            const slideCount = slideFrames.length;
+            const pageCount = pageFrames.length;
             const matchedCount = mode === 'full'
                 ? 1
                 : (() => {
@@ -1650,49 +1833,60 @@ video {
             const carouselRoot = doc.querySelector('.carousel-viewport, .slides-wrapper, #slider, #slides-container');
             const slidesContainer = doc.querySelector('.slides-container, #slides-container, .slides-wrapper');
             const carouselSlides = slidesContainer ? Array.from(slidesContainer.querySelectorAll('.slide, .page')) : [];
-            const arrowControls = doc.querySelectorAll('.nav-controls, .export-hide, .btn-prev, .btn-next, .btn-nav, button[onclick*="Slide"], button[onclick*="prevSlide"], button[onclick*="nextSlide"], [onclick*="moveSlide"]').length;
-            const exportFrames = Array.from(doc.querySelectorAll('.slide, .page'));
-            const sharedFrameElements = Array.from(doc.body.querySelectorAll('.nav-dots, .ticker, .border-frame, .frame-border, .nav-controls, [class*="ticker"], [class*="nav"]')).filter((node) => {
-                return !exportFrames.some((frame) => frame.contains(node));
-            }).length;
+            const arrowControls = doc.querySelectorAll(COMPATIBLE_CONTROL_SELECTOR).length;
+            const sharedChrome = collectSharedChromeCandidates(doc, exportFrames);
+            const sharedFrameElements = Object.values(sharedChrome).reduce((sum, nodes) => sum + nodes.length, 0);
             const hiddenSlides = Array.from(doc.querySelectorAll('.slide, .page')).filter((node) => {
                 const style = node.getAttribute('style') || '';
                 const className = node.className || '';
                 return /display\s*:\s*none/i.test(style) || /\bhidden\b/.test(className);
             }).length;
-            const externalAssets = Array.from(doc.querySelectorAll('img[src], source[src], video[src], [style*="background"]')).some((node) => {
-                const src = node.getAttribute('src') || node.getAttribute('poster') || node.getAttribute('style') || '';
-                return /https?:\/\//i.test(src);
-            });
-            const svgEmojiFallbacks = Array.from(doc.querySelectorAll('svg')).some((svg) => {
-                const html = svg.outerHTML || '';
-                return /emoji|currentColor|viewBox="0 0 24 24"/i.test(html);
-            }) || /__scryerEmojiFallbackMap|scryer-emoji-fallback/i.test(source);
-            const hasTwemojiMarkup = /twemoji|scryer-twemoji/i.test(source);
+            const externalTextureNodes = collectExternalTextureNodes(doc);
+            const externalAssets = externalTextureNodes.length > 0;
+            const svgCount = doc.querySelectorAll('svg').length;
+            const scriptCount = doc.querySelectorAll('script').length;
+            const inlineHandlerCount = Array.from(doc.querySelectorAll('*')).reduce((count, node) => {
+                return count + node.getAttributeNames().filter((name) => name.startsWith('on')).length;
+            }, 0);
             const hasCarouselPattern = !!(carouselRoot && slidesContainer && carouselSlides.length > 1);
             const usesTranslateCarouselState = Array.from(doc.querySelectorAll('[style], style')).some((node) => {
                 const text = node.tagName === 'STYLE' ? node.textContent || '' : node.getAttribute('style') || '';
                 return /translateX\s*\(/i.test(text);
             });
+            const animationCount = Array.from(doc.querySelectorAll('style, [style]')).reduce((count, node) => {
+                const text = node.tagName === 'STYLE' ? node.textContent || '' : node.getAttribute('style') || '';
+                return count + (/animation|transition|@keyframes|ticker-scroll|rotating-medallion|star-sparkle/i.test(text) ? 1 : 0);
+            }, 0);
+            const duplicateIds = listDuplicateIds(doc);
+            const frameSelector = getFrameSelector(mode, { hasCarouselPattern, slideCount, pageCount, selector });
 
             return {
                 mode,
                 modeLabel: modeLabel(mode),
                 selector,
                 size,
+                options,
                 slideCount,
                 pageCount,
                 matchedCount,
+                frameSelector,
                 arrowControls,
+                sharedChrome,
                 sharedFrameElements,
                 hiddenSlides,
                 externalAssets,
-                svgEmojiFallbacks,
-                hasTwemojiMarkup,
+                externalTextureNodes,
+                svgCount,
+                scriptCount,
+                inlineHandlerCount,
+                duplicateIds,
                 hasCarouselPattern,
                 usesTranslateCarouselState,
+                animationCount,
                 source,
-                doc
+                doc,
+                carouselRootFound: !!carouselRoot,
+                slidesContainerFound: !!slidesContainer
             };
         }
 
@@ -1702,19 +1896,52 @@ video {
                 `Pages found: ${analysis.pageCount}`,
                 `Selected export mode: ${analysis.modeLabel}${analysis.mode === 'custom' ? ` (${analysis.selector || 'missing selector'})` : ''}`,
                 `Selected dimensions: ${analysis.size.width} × ${analysis.size.height}`,
+                `Export frame selector: ${analysis.frameSelector}`,
                 `Selector matches: ${analysis.matchedCount}`,
+                `Slide/page detection: .slide=${analysis.slideCount}, .page=${analysis.pageCount}`,
+                `Carousel root detected (.carousel-viewport/.slides-wrapper/#slider/#slides-container): ${analysis.carouselRootFound ? 'yes' : 'no'}`,
+                `Slides container detected (.slides-container/#slides-container/.slides-wrapper): ${analysis.slidesContainerFound ? 'yes' : 'no'}`,
                 `Arrow/button controls found: ${analysis.arrowControls ? 'yes' : 'no'} (${analysis.arrowControls})`,
                 `Shared frame elements outside .slide: ${analysis.sharedFrameElements ? 'yes' : 'no'} (${analysis.sharedFrameElements})`,
+                `Shared top bars detected: ${analysis.sharedChrome.topBar.length}`,
+                `Shared nav dots detected: ${analysis.sharedChrome.navDots.length}`,
+                `Shared counters detected: ${analysis.sharedChrome.slideCounter.length}`,
+                `Shared swipe hints detected: ${analysis.sharedChrome.swipeHint.length}`,
+                `Shared overlays detected: ${analysis.sharedChrome.overlays.length}`,
                 `Hidden slides/pages found: ${analysis.hiddenSlides ? 'yes' : 'no'} (${analysis.hiddenSlides})`,
-                `External textures/images found: ${analysis.externalAssets ? 'yes' : 'no'}`,
-                `SVG emoji fallbacks found: ${analysis.svgEmojiFallbacks ? 'yes' : 'no'}`,
-                `Twemoji runtime active: yes (server export runtime injects it)`,
+                `Duplicate IDs found: ${analysis.duplicateIds.length ? 'yes' : 'no'} (${analysis.duplicateIds.length})`,
+                `Scripts found: ${analysis.scriptCount}`,
+                `Inline event handlers found: ${analysis.inlineHandlerCount}`,
+                `External textures/images found: ${analysis.externalAssets ? 'yes' : 'no'} (${analysis.externalTextureNodes.length})`,
+                `Inline SVG decorative/icon markup found: ${analysis.svgCount ? 'yes' : 'no'} (${analysis.svgCount})`,
+                `Animations/transitions found: ${analysis.animationCount ? 'yes' : 'no'} (${analysis.animationCount})`,
                 `Carousel stack conversion candidate: ${analysis.hasCarouselPattern ? 'yes' : 'no'}`,
                 `JS carousel translateX state found: ${analysis.usesTranslateCarouselState ? 'yes' : 'no'}`
             ];
 
             if (analysis.mode === 'custom' && !analysis.matchedCount) {
                 lines.push('Warning: custom selector matched zero elements.');
+            }
+
+            if (analysis.sharedFrameElements) {
+                lines.push('Warning: Shared chrome outside slides detected.');
+                lines.push('Warning: Converted output will duplicate selected chrome into each slide.');
+            }
+
+            if (analysis.scriptCount || analysis.inlineHandlerCount) {
+                lines.push('Warning: Scripts removed for export compatibility.');
+            }
+
+            if (analysis.duplicateIds.length) {
+                lines.push('Warning: Duplicate IDs rewritten.');
+            }
+
+            if (analysis.externalAssets) {
+                lines.push('Warning: External texture detected.');
+            }
+
+            if (analysis.options.freezeAnimations && analysis.animationCount) {
+                lines.push('Warning: Animations frozen.');
             }
 
             if (analysis.hasCarouselPattern || analysis.sharedFrameElements || analysis.usesTranslateCarouselState) {
@@ -1724,57 +1951,216 @@ video {
             compatibilityReport.textContent = lines.join('\n');
         }
 
+        function stripScriptsAndHandlers(root) {
+            root.querySelectorAll('script').forEach((node) => node.remove());
+            root.querySelectorAll('*').forEach((node) => {
+                node.getAttributeNames().forEach((name) => {
+                    if (name.startsWith('on')) {
+                        node.removeAttribute(name);
+                    }
+                });
+            });
+        }
+
+        function isExportControl(node) {
+            if (!(node instanceof Element)) return false;
+            if (node.matches('.nav-controls, .export-hide, .btn-prev, .btn-next, .btn-nav')) return true;
+            const onclick = node.getAttribute('onclick') || '';
+            if (/Slide|prevSlide|nextSlide|moveSlide/.test(onclick)) return true;
+            const interactive = node.tagName === 'BUTTON' || node.getAttribute('role') === 'button';
+            if (!interactive) return false;
+            const label = `${node.getAttribute('aria-label') || ''} ${node.textContent || ''}`.trim();
+            return /^(next|prev|previous|back|>|<|→|←)/i.test(label);
+        }
+
+        function hideArrowControls(root) {
+            root.querySelectorAll('*').forEach((node) => {
+                if (!isExportControl(node)) return;
+                node.classList.add('export-hide');
+                node.style.setProperty('display', 'none', 'important');
+            });
+        }
+
+        function rewriteIds(root, suffix) {
+            const idMap = new Map();
+            root.querySelectorAll('[id]').forEach((node) => {
+                const originalId = node.id;
+                if (!originalId) return;
+                const nextId = `${originalId}-${suffix}`;
+                node.setAttribute('data-original-id', originalId);
+                node.id = nextId;
+                idMap.set(originalId, nextId);
+            });
+
+            const refAttributes = ['for', 'aria-labelledby', 'aria-describedby', 'aria-controls', 'aria-owns', 'href'];
+            root.querySelectorAll('*').forEach((node) => {
+                refAttributes.forEach((attribute) => {
+                    const value = node.getAttribute(attribute);
+                    if (!value) return;
+                    const nextValue = value.split(/\s+/).map((token) => {
+                        if (attribute === 'href' && token.startsWith('#')) {
+                            const raw = token.slice(1);
+                            return idMap.has(raw) ? `#${idMap.get(raw)}` : token;
+                        }
+                        return idMap.has(token) ? idMap.get(token) : token;
+                    }).join(' ');
+                    node.setAttribute(attribute, nextValue);
+                });
+            });
+        }
+
+        function counterLabel(index, total) {
+            return `${formatSlideNumber(index + 1)} / ${formatSlideNumber(total)}`;
+        }
+
+        function updateCounterValues(root, index, total) {
+            root.querySelectorAll('.slide-counter, [id^="counter"], [class*="slide-counter"], [class*="counter"]').forEach((node) => {
+                const current = node.querySelector('.current, .current-slide, [data-counter-current], [class*="current"]');
+                const totalNode = node.querySelector('.total, .total-slides, [data-counter-total], [class*="total"]');
+                if (current || totalNode) {
+                    if (current) current.textContent = formatSlideNumber(index + 1);
+                    if (totalNode) totalNode.textContent = formatSlideNumber(total);
+                    return;
+                }
+                const text = node.textContent || '';
+                if (/\d+\s*\/\s*\d+/.test(text)) {
+                    node.textContent = text.replace(/\d+\s*\/\s*\d+/, counterLabel(index, total));
+                    return;
+                }
+                node.textContent = counterLabel(index, total);
+            });
+        }
+
+        function updateNavDots(root, index, total) {
+            root.querySelectorAll('.nav-dots, [id^="dots"], [class*="nav-dots"]').forEach((container) => {
+                const dots = Array.from(container.children).filter((node) => node.nodeType === 1);
+                if (!dots.length) return;
+                while (dots.length < total) {
+                    const template = dots[dots.length - 1].cloneNode(true);
+                    template.classList.remove('active');
+                    template.removeAttribute('aria-current');
+                    template.removeAttribute('data-export-active');
+                    container.appendChild(template);
+                    dots.push(template);
+                }
+                dots.forEach((dot, dotIndex) => {
+                    const active = dotIndex === index;
+                    dot.classList.toggle('active', active);
+                    dot.toggleAttribute('aria-current', active);
+                    dot.setAttribute('data-export-active', active ? 'true' : 'false');
+                });
+            });
+        }
+
+        function normalizeSharedChromeClone(node, type) {
+            node.classList.add('export-shared-chrome', `export-shared-${type}`);
+            if (type !== 'overlays' && node.classList.contains('fixed')) {
+                node.classList.remove('fixed');
+                node.classList.add('absolute');
+            }
+            if (type === 'overlays') {
+                node.setAttribute('aria-hidden', 'true');
+            }
+        }
+
+        function cloneSelectedChrome(frame, analysis, options, index, total) {
+            const work = [
+                { key: 'topBar', enabled: options.preserveTopBar, selector: SHARED_CHROME_SELECTORS.topBar },
+                { key: 'navDots', enabled: options.preserveBottomDots, selector: SHARED_CHROME_SELECTORS.navDots },
+                { key: 'slideCounter', enabled: options.preserveSlideCounter, selector: SHARED_CHROME_SELECTORS.slideCounter },
+                { key: 'swipeHint', enabled: options.preserveSwipeHint, selector: SHARED_CHROME_SELECTORS.swipeHint },
+                { key: 'overlays', enabled: true, selector: SHARED_CHROME_SELECTORS.overlays }
+            ];
+
+            work.forEach(({ key, enabled, selector }) => {
+                if (!enabled) return;
+                const existing = frame.querySelector(selector);
+                if (existing) {
+                    normalizeSharedChromeClone(existing, key);
+                    return;
+                }
+                analysis.sharedChrome[key].forEach((sourceNode) => {
+                    const clone = sourceNode.cloneNode(true);
+                    normalizeSharedChromeClone(clone, key);
+                    frame.appendChild(clone);
+                });
+            });
+
+            updateCounterValues(frame, index, total);
+            updateNavDots(frame, index, total);
+        }
+
         function buildCompatibleCode() {
             const analysis = analyzeCompatibility();
             renderCompatibilityReport(analysis);
-
-            const frameSelector = analysis.mode === 'page'
-                ? '.page'
-                : analysis.mode === 'custom'
-                    ? analysis.selector
-                    : '.slide';
-
+            const options = analysis.options;
+            const frameSelector = analysis.frameSelector;
             let exportFrames = [];
-            if (analysis.mode === 'full') {
-                exportFrames = Array.from(analysis.doc.body.children)
-                    .filter((node) => node.tagName !== 'SCRIPT')
-                    .map((node) => node.outerHTML);
-            } else {
-                try {
-                    exportFrames = Array.from(analysis.doc.querySelectorAll(frameSelector)).map((node) => {
-                        const clone = node.cloneNode(true);
-                        clone.querySelectorAll('.nav-controls, .export-hide, .btn-prev, .btn-next, .btn-nav, button[onclick*="Slide"], button[onclick*="prevSlide"], button[onclick*="nextSlide"], [onclick*="moveSlide"]').forEach((el) => {
-                            el.remove();
-                        });
-                        return clone.outerHTML;
-                    });
-                } catch (_error) {
-                    exportFrames = [];
-                }
-            }
+            const rawFrames = frameSelector === 'body'
+                ? [analysis.doc.body]
+                : (() => {
+                    try {
+                        return Array.from(analysis.doc.querySelectorAll(frameSelector));
+                    } catch (_error) {
+                        return [];
+                    }
+                })();
 
-            if (!exportFrames.length && analysis.hasCarouselPattern) {
-                exportFrames = Array.from(analysis.doc.querySelectorAll('.slide, .page')).map((node) => node.outerHTML);
-            }
-
-            if (!exportFrames.length) {
+            if (!rawFrames.length) {
                 convertedCode.value = '';
                 compatibilityReport.textContent += '\nNo export frames could be generated from the current markup.';
+                updateConversionStatus('Compatible export code could not be generated from the current markup.');
                 return;
             }
 
             const width = analysis.size.width;
             const height = analysis.size.height;
-            const frameClass = analysis.mode === 'page' ? 'page' : 'slide';
+            const frameClass = frameSelector === '.page' ? 'page' : 'slide';
             const styleTags = Array.from(analysis.doc.querySelectorAll('style')).map((node) => node.outerHTML).join('\n');
             const linkTags = Array.from(analysis.doc.querySelectorAll('link[rel="stylesheet"]')).map((node) => node.outerHTML).join('\n');
+            const totalFrames = rawFrames.length;
 
-            const wrappedFrames = exportFrames.map((markup) => {
-                if (analysis.mode === 'full') {
-                    return `<section class="${frameClass} scryer-converted-frame">\n${markup}\n</section>`;
+            exportFrames = rawFrames.map((node, index) => {
+                const clone = node.cloneNode(true);
+                if (frameSelector === 'body') {
+                    clone.classList.add(frameClass, 'scryer-converted-frame');
                 }
-                return markup;
-            }).join('\n\n');
+                clone.querySelectorAll('script').forEach((scriptNode) => scriptNode.remove());
+                clone.querySelectorAll('.carousel-viewport, .slides-container, #slides-container, .slides-wrapper').forEach((container) => {
+                    if (container !== clone && container.querySelector(`.${frameClass}`)) {
+                        container.remove();
+                    }
+                });
+                clone.classList.add('scryer-converted-slide');
+                if (options.freezeAnimations) {
+                    clone.classList.add('export-freeze');
+                }
+                clone.style.width = `${width}px`;
+                clone.style.height = `${height}px`;
+                clone.style.minWidth = `${width}px`;
+                clone.style.minHeight = `${height}px`;
+                clone.style.maxWidth = `${width}px`;
+                clone.style.maxHeight = `${height}px`;
+                clone.style.position = 'relative';
+                clone.style.overflow = 'hidden';
+                clone.style.transform = 'none';
+                cloneSelectedChrome(clone, analysis, options, index, totalFrames);
+                rewriteIds(clone, `slide-${formatSlideNumber(index + 1)}`);
+                stripScriptsAndHandlers(clone);
+                if (options.hideArrowControls) {
+                    hideArrowControls(clone);
+                }
+                return clone.outerHTML;
+            });
+
+            const preservedOptions = [];
+            if (options.preserveTopBar && analysis.sharedChrome.topBar.length) preservedOptions.push(SHARED_CHROME_LABELS.topBar);
+            if (options.preserveBottomDots && (analysis.sharedChrome.navDots.length || selectorSafeCount(analysis.doc, '.slide .nav-dots, .page .nav-dots'))) preservedOptions.push(SHARED_CHROME_LABELS.navDots);
+            if (options.preserveSlideCounter && (analysis.sharedChrome.slideCounter.length || selectorSafeCount(analysis.doc, '.slide .slide-counter, .page .slide-counter, .slide #counter, .page #counter'))) preservedOptions.push(SHARED_CHROME_LABELS.slideCounter);
+            if (options.preserveSwipeHint && analysis.sharedChrome.swipeHint.length) preservedOptions.push(SHARED_CHROME_LABELS.swipeHint);
+            if (analysis.sharedChrome.overlays.length) preservedOptions.push(SHARED_CHROME_LABELS.overlays);
+
+            const wrappedFrames = exportFrames.join('\n\n');
 
             convertedCode.value = `${linkTags}
 ${styleTags}
@@ -1812,6 +2198,53 @@ ${styleTags}
     box-sizing: border-box;
   }
 
+  .scryer-converted-slide {
+    isolation: isolate;
+  }
+
+  .export-shared-chrome {
+    pointer-events: none;
+    z-index: 25;
+  }
+
+  .export-shared-chrome.fixed {
+    position: absolute !important;
+  }
+
+  .export-shared-navDots,
+  .export-shared-slideCounter,
+  .export-shared-swipeHint,
+  .export-shared-topBar {
+    max-width: 100%;
+  }
+
+  .nav-dots .active,
+  .nav-dots [aria-current="true"],
+  .nav-dots [data-export-active="true"] {
+    opacity: 1 !important;
+    background: rgba(255, 255, 255, 0.95) !important;
+    transform: scale(1.08);
+  }
+
+  .export-shared-overlays {
+    position: absolute !important;
+    inset: 0 !important;
+    pointer-events: none !important;
+  }
+
+  .export-freeze *,
+  .export-freeze *::before,
+  .export-freeze *::after {
+    animation: none !important;
+    transition: none !important;
+  }
+
+  .export-freeze .ticker-scroll,
+  .export-freeze .rotating-medallion,
+  .export-freeze .star-sparkle {
+    animation: none !important;
+  }
+
   .export-hide,
   .nav-controls,
   button[onclick*="Slide"],
@@ -1827,6 +2260,15 @@ ${styleTags}
 <div class="main-wrapper">
 ${wrappedFrames}
 </div>`;
+
+            updateConversionStatus([
+                '✓ Compatible export code generated',
+                `Slides: ${totalFrames}`,
+                `Dimensions: ${width} × ${height}`,
+                `Preserved chrome: ${preservedOptions.length ? preservedOptions.join(', ') : 'none'}`,
+                `Hide arrow controls: ${options.hideArrowControls ? 'on' : 'off'}`,
+                `Freeze animations: ${options.freezeAnimations ? 'on' : 'off'}`
+            ].join('\n'));
         }
 
         function updateSizeLabels() {

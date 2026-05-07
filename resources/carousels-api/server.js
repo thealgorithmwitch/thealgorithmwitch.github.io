@@ -14,6 +14,7 @@ const MIN_DIMENSION = 200;
 const MAX_DIMENSION = 4000;
 const MAX_EXPORT_PADDING = 400;
 const executablePath = process.env.PUPPETEER_EXECUTABLE_PATH || puppeteer.executablePath();
+const EXPORT_CONTROL_SELECTOR = ".nav-controls, .export-hide, button[onclick*='Slide'], button[onclick*='prevSlide'], button[onclick*='nextSlide'], [onclick*='moveSlide'], .btn-prev, .btn-next, .btn-nav";
 
 app.use(cors({ origin: "*", methods: ["GET", "POST", "OPTIONS"], allowedHeaders: ["Content-Type"] }));
 app.use(express.json({ limit: MAX_HTML_SIZE }));
@@ -345,14 +346,10 @@ function getEmojiFallbackMapScript() {
 
     window.__scryerHideExportControls = function(root) {
       if (!root) return 0;
-      const selector = ".nav-controls, .export-hide, button[onclick*='Slide'], button[onclick*='prevSlide'], button[onclick*='nextSlide'], [onclick*='moveSlide'], .btn-prev, .btn-next, .btn-nav";
-      const controls = Array.from(root.querySelectorAll(selector));
-      controls.forEach((el) => {
-        el.style.display = "none";
-      });
-      if (controls.length) {
-        console.warn("[scryer export] hidden nav controls found and removed", controls.length);
-      }
+      const controls = window.__scryerHideControlsForCapture
+        ? window.__scryerHideControlsForCapture(root)
+        : [];
+      if (controls.length) console.warn("[scryer export] hidden nav controls found and removed", controls.length);
       return controls.length;
     };
 
@@ -362,7 +359,7 @@ function getEmojiFallbackMapScript() {
         twemojiActive: !!window.twemoji,
         twemojiImages: root.querySelectorAll("img.scryer-twemoji").length,
         emojiFallbacks: root.querySelectorAll(".scryer-emoji-fallback").length,
-        hiddenControls: root.querySelectorAll(".nav-controls, .export-hide, button[onclick*='Slide'], button[onclick*='prevSlide'], button[onclick*='nextSlide'], [onclick*='moveSlide'], .btn-prev, .btn-next, .btn-nav").length,
+        hiddenControls: root.querySelectorAll(window.__scryerControlSelector || "").length,
         navDots: root.querySelectorAll(".nav-dots").length,
         slideCounter: root.querySelectorAll(".slide-counter").length
       };
@@ -514,44 +511,15 @@ async function captureElements(page, selector, outputDir, payload) {
       screenshot: filename,
       targetBoundingBox
     });
-    await page.evaluate(({ selector: selectorValue, index: itemIndex, width, height, emojiFallback }) => {
+    const prepareLog = await page.evaluate(({ selector: selectorValue, index: itemIndex, width, height, emojiFallback }) => {
       const nodes = Array.from(document.querySelectorAll(selectorValue));
       const original = nodes[itemIndex];
       if (!original) throw new Error(`Could not find slide ${itemIndex + 1}`);
-      window.__scryerRestore = [];
+      window.__scryerBeginCaptureState?.();
       const safePadding = 72;
-      const save = (el) => {
-        window.__scryerRestore.push([el, el.getAttribute("style")]);
-      };
-      save(document.documentElement);
-      save(document.body);
-      const hasVisibleBackground = (style) => {
-        if (!style) return false;
-        const color = style.backgroundColor;
-        const image = style.backgroundImage;
-        return (image && image !== "none") ||
-          (color && color !== "rgba(0, 0, 0, 0)" && color !== "transparent");
-      };
-      const resolveBackground = (el) => {
-        let node = el;
-        while (node && node.nodeType === 1) {
-          const style = window.getComputedStyle(node);
-          if (hasVisibleBackground(style)) return style.background;
-          node = node.parentElement;
-        }
-
-        const carouselRoot = document.querySelector("#carousel-root");
-        if (carouselRoot) {
-          const style = window.getComputedStyle(carouselRoot);
-          if (hasVisibleBackground(style)) return style.background;
-        }
-
-        const bodyStyle = window.getComputedStyle(document.body);
-        if (hasVisibleBackground(bodyStyle)) return bodyStyle.background;
-
-        return "#ffffff";
-      };
-      const background = resolveBackground(original);
+      window.__scryerRememberStyle?.(document.documentElement);
+      window.__scryerRememberStyle?.(document.body);
+      const background = window.__scryerResolveBackground ? window.__scryerResolveBackground(original) : "#ffffff";
       const backgroundImage = window.getComputedStyle(original).backgroundImage || "none";
       const colorMatch = background.match(/rgba?\(([^)]+)\)/);
       let isPlainDark = false;
@@ -575,9 +543,10 @@ async function captureElements(page, selector, outputDir, payload) {
         overflow:hidden!important;
         background:${background}!important;
       `;
+      window.__scryerHideControlsForCapture?.(document);
       nodes.forEach((node) => {
         if (node !== original) {
-          save(node);
+          window.__scryerRememberStyle?.(node);
           node.style.display = "none";
         }
       });
@@ -586,12 +555,14 @@ async function captureElements(page, selector, outputDir, payload) {
 
       const root = document.createElement("div");
       root.id = "__scryer_capture_root__";
+      root.style.setProperty("--scryer-bg", background);
       root.style.position = "fixed";
       root.style.inset = "0";
       root.style.width = `${width}px`;
       root.style.height = `${height}px`;
       root.style.overflow = "hidden";
       root.style.background = background;
+      root.style.isolation = "isolate";
       root.style.display = "flex";
       root.style.alignItems = "center";
       root.style.justifyContent = "center";
@@ -626,11 +597,16 @@ async function captureElements(page, selector, outputDir, payload) {
       clone.style.transform = "none";
       clone.style.boxSizing = "border-box";
       const cloneComputed = window.getComputedStyle(original);
-      const cloneHasOwnBackground = hasVisibleBackground(cloneComputed);
+      const cloneHasOwnBackground = cloneComputed.backgroundImage !== "none" ||
+        (cloneComputed.backgroundColor && cloneComputed.backgroundColor !== "rgba(0, 0, 0, 0)" && cloneComputed.backgroundColor !== "transparent");
       if (!cloneHasOwnBackground) {
         clone.style.background = background;
       }
-      window.__scryerPrepareEmojiClone?.(clone, { emojiFallback });
+      const emojiState = window.__scryerPrepareEmojiClone?.(clone, { emojiFallback }) || {
+        twemojiApplied: false,
+        fallbackApplied: false
+      };
+      window.__scryerHideControlsForCapture?.(clone);
       clone.style.zIndex = "1";
       clone.style.flexShrink = "0";
       console.log("HTML Scryer clone forced size", {
@@ -655,6 +631,19 @@ async function captureElements(page, selector, outputDir, payload) {
             : `scale(${scale})`;
         }
       });
+      document.body.classList.add("__scryer_capturing__");
+      const visibleSlidesSelector = original.matches(".slide") ? ".slide" : selectorValue;
+      return {
+        index: itemIndex,
+        selector: selectorValue,
+        backgroundResolved: background,
+        twemojiApplied: !!emojiState.twemojiApplied,
+        textFallbackApplied: !!emojiState.fallbackApplied,
+        originalBodyChildrenHidden: window.__scryerOriginalBodyChildrenHidden ? window.__scryerOriginalBodyChildrenHidden() : false,
+        visibleCaptureRootsBeforeScreenshot: window.__scryerCountVisibleCaptureRoots ? window.__scryerCountVisibleCaptureRoots() : 0,
+        visibleMatchingSlidesBeforeScreenshot: window.__scryerCountVisibleMatches ? window.__scryerCountVisibleMatches(visibleSlidesSelector) : 0,
+        visualEffects: window.__scryerInspectVisualEffects ? window.__scryerInspectVisualEffects(clone) : null
+      };
     }, {
       selector,
       index,
@@ -662,6 +651,7 @@ async function captureElements(page, selector, outputDir, payload) {
       height: payload.height,
       emojiFallback: payload.emojiFallback
     });
+    console.log("[scryer export] selector capture prepared", prepareLog);
     await waitForAssets(page);
     await page.screenshot({
       path: outputPath,
@@ -673,16 +663,7 @@ async function captureElements(page, selector, outputDir, payload) {
         height: payload.height
       }
     });
-    await page.evaluate(() => {
-      document.getElementById("__scryer_capture_root__")?.remove();
-      if (window.__scryerRestore) {
-        for (const [el, style] of window.__scryerRestore.reverse()) {
-          if (style === null) el.removeAttribute("style");
-          else el.setAttribute("style", style);
-        }
-      }
-      delete window.__scryerRestore;
-    });
+    await page.evaluate(() => window.__scryerCleanupCapture && window.__scryerCleanupCapture());
     files.push(outputPath);
   }
   return files;
@@ -738,8 +719,16 @@ async function installExportRuntime(page, payload) {
         position: fixed !important;
         left: 0 !important;
         top: 0 !important;
+        background: var(--scryer-bg, #08140E) !important;
         overflow: hidden !important;
         z-index: 2147483647 !important;
+        isolation: isolate !important;
+      }
+      #__scryer_capture_root__,
+      #__scryer_preserve_capture_root__,
+      #__scryer_capture_viewport__ {
+        background: var(--scryer-bg, #08140E) !important;
+        overflow: hidden !important;
         isolation: isolate !important;
       }
       #__scryer_capture_viewport__,
@@ -747,7 +736,7 @@ async function installExportRuntime(page, payload) {
         -webkit-font-smoothing: antialiased;
         text-rendering: geometricPrecision;
       }
-      body.__scryer_capturing__ > *:not(#__scryer_capture_viewport__) {
+      body.__scryer_capturing__ > *:not(#__scryer_capture_root__):not(#__scryer_preserve_capture_root__):not(#__scryer_capture_viewport__) {
         visibility: hidden !important;
       }
       @media (prefers-reduced-motion: reduce) {
@@ -762,7 +751,93 @@ async function installExportRuntime(page, payload) {
   await page.addScriptTag({
     content: getEmojiFallbackMapScript()
   }).catch(() => {});
-  await page.evaluate(() => {
+  await page.evaluate((controlSelector) => {
+    window.__scryerControlSelector = window.__scryerControlSelector || controlSelector;
+    window.__scryerBeginCaptureState = function() {
+      window.__scryerCaptureState = {
+        styles: [],
+        saved: new WeakSet()
+      };
+      return window.__scryerCaptureState;
+    };
+    window.__scryerGetCaptureState = function() {
+      return window.__scryerCaptureState || window.__scryerBeginCaptureState();
+    };
+    window.__scryerRememberStyle = function(el) {
+      if (!el) return;
+      const state = window.__scryerGetCaptureState();
+      if (state.saved.has(el)) return;
+      state.saved.add(el);
+      state.styles.push([el, el.getAttribute("style")]);
+    };
+    window.__scryerQueryWithin = function(root, selector) {
+      if (!root || !selector) return [];
+      if (root.nodeType === Node.DOCUMENT_NODE) {
+        return Array.from(root.querySelectorAll(selector));
+      }
+      if (root.matches && root.matches(selector)) {
+        return [root, ...Array.from(root.querySelectorAll(selector))];
+      }
+      return Array.from(root.querySelectorAll(selector));
+    };
+    window.__scryerHideControlsForCapture = function(root) {
+      const controls = window.__scryerQueryWithin(root, window.__scryerControlSelector);
+      controls.forEach((el) => {
+        window.__scryerRememberStyle(el);
+        el.style.display = "none";
+      });
+      return controls;
+    };
+    window.__scryerIsEffectivelyVisible = function(el) {
+      if (!el || !(el instanceof Element)) return false;
+      const rect = el.getBoundingClientRect();
+      if (rect.width <= 0 || rect.height <= 0) return false;
+      let node = el;
+      while (node && node.nodeType === 1) {
+        const style = getComputedStyle(node);
+        if (style.display === "none" || style.visibility === "hidden" || parseFloat(style.opacity || "1") <= 0) {
+          return false;
+        }
+        node = node.parentElement;
+      }
+      return true;
+    };
+    window.__scryerCountVisibleMatches = function(selector) {
+      if (!selector) return 0;
+      return Array.from(document.querySelectorAll(selector)).filter((el) => window.__scryerIsEffectivelyVisible(el)).length;
+    };
+    window.__scryerCountVisibleCaptureRoots = function() {
+      return ["__scryer_capture_root__", "__scryer_preserve_capture_root__", "__scryer_capture_viewport__"]
+        .map((id) => document.getElementById(id))
+        .filter((el) => window.__scryerIsEffectivelyVisible(el)).length;
+    };
+    window.__scryerOriginalBodyChildrenHidden = function() {
+      return Array.from(document.body.children)
+        .filter((child) => !["__scryer_capture_root__", "__scryer_preserve_capture_root__", "__scryer_capture_viewport__"].includes(child.id))
+        .every((child) => getComputedStyle(child).visibility === "hidden");
+    };
+    window.__scryerInspectVisualEffects = function(root) {
+      const nodes = window.__scryerQueryWithin(root, "*");
+      const summary = {
+        textShadow: 0,
+        filter: 0,
+        opacityBelowOne: 0,
+        mixBlendMode: 0,
+        backdropFilter: 0,
+        transform: 0
+      };
+      nodes.forEach((el) => {
+        const style = getComputedStyle(el);
+        if (style.textShadow && style.textShadow !== "none") summary.textShadow += 1;
+        if (style.filter && style.filter !== "none") summary.filter += 1;
+        if (parseFloat(style.opacity || "1") < 1) summary.opacityBelowOne += 1;
+        if (style.mixBlendMode && style.mixBlendMode !== "normal") summary.mixBlendMode += 1;
+        const backdrop = style.backdropFilter || style.webkitBackdropFilter;
+        if (backdrop && backdrop !== "none") summary.backdropFilter += 1;
+        if (style.transform && style.transform !== "none") summary.transform += 1;
+      });
+      return summary;
+    };
     window.__scryerResolveBackground = function(element) {
       const isVisibleBg = (style) => {
         if (!style) return false;
@@ -821,6 +896,7 @@ async function installExportRuntime(page, payload) {
       return { left, top, right, bottom, width: right - left, height: bottom - top };
     };
     window.__scryerPrepareClone = function(original, width, height, options) {
+      window.__scryerBeginCaptureState();
       document.getElementById("__scryer_capture_viewport__")?.remove();
       const bg = window.__scryerResolveBackground(original);
       const slideIndex = Number.isInteger(options.index) ? options.index : 0;
@@ -829,12 +905,14 @@ async function installExportRuntime(page, payload) {
       const canvasHeight = height + exportPadding * 2;
       const viewport = document.createElement("div");
       viewport.id = "__scryer_capture_viewport__";
+      viewport.style.setProperty("--scryer-bg", bg);
       viewport.style.width = `${canvasWidth}px`;
       viewport.style.height = `${canvasHeight}px`;
       viewport.style.background = bg;
       viewport.style.overflow = "hidden";
       const stage = document.createElement("div");
       stage.id = "__scryer_capture_stage__";
+      stage.style.setProperty("--scryer-bg", bg);
       stage.style.position = "absolute";
       stage.style.inset = "0";
       stage.style.width = "100%";
@@ -865,6 +943,7 @@ async function installExportRuntime(page, payload) {
       const hasOwnBg = cloneStyle.backgroundImage !== "none" ||
         (cloneStyle.backgroundColor && cloneStyle.backgroundColor !== "rgba(0, 0, 0, 0)" && cloneStyle.backgroundColor !== "transparent");
       if (!hasOwnBg) clone.style.background = bg;
+      window.__scryerHideControlsForCapture(document);
       clone.querySelectorAll("#slides-container, [id='slides-container']").forEach((track) => {
         const slides = track.querySelectorAll(".slide");
         if (slides.length > 1) {
@@ -877,6 +956,7 @@ async function installExportRuntime(page, payload) {
         track.style.height = `${height}px`;
       });
       window.__scryerPrepareEmojiClone?.(clone, { emojiFallback: options.emojiFallback !== false });
+      window.__scryerHideControlsForCapture(clone);
       if (exportPadding > 0) {
         stage.appendChild(clone);
         viewport.appendChild(stage);
@@ -928,10 +1008,21 @@ async function installExportRuntime(page, payload) {
       return { background: bg };
     };
     window.__scryerCleanupCapture = function() {
-      document.body.classList.remove("__scryer_capturing__");
+      document.getElementById("__scryer_capture_root__")?.remove();
+      document.getElementById("__scryer_preserve_capture_root__")?.remove();
       document.getElementById("__scryer_capture_viewport__")?.remove();
+      document.body.classList.remove("__scryer_capturing__");
+      const state = window.__scryerCaptureState;
+      if (state && state.styles) {
+        for (const [el, style] of state.styles.reverse()) {
+          if (!el) continue;
+          if (style === null) el.removeAttribute("style");
+          else el.setAttribute("style", style);
+        }
+      }
+      delete window.__scryerCaptureState;
     };
-  });
+  }, EXPORT_CONTROL_SELECTOR);
 }
 
 async function captureOne(page, outputPath, payload, selector, index) {
@@ -1015,31 +1106,16 @@ async function captureElementsPreserveLayout(page, selector, outputDir, payload)
     const prepared = await page.evaluate(({ selector: selectorValue, index: itemIndex, width, height, emojiFallback }) => {
       const el = document.querySelectorAll(selectorValue)[itemIndex];
       if (!el) return null;
+      window.__scryerBeginCaptureState?.();
 
       document.getElementById("__scryer_preserve_capture_root__")?.remove();
 
-      const isVisibleBg = (style) => {
-        if (!style) return false;
-        const color = style.backgroundColor;
-        const image = style.backgroundImage;
-        return (image && image !== "none") || (color && color !== "rgba(0, 0, 0, 0)" && color !== "transparent");
-      };
-      const resolveBackground = (node) => {
-        let current = node;
-        while (current && current.nodeType === 1) {
-          const style = window.getComputedStyle(current);
-          if (isVisibleBg(style)) return style.background;
-          current = current.parentElement;
-        }
-        const bodyStyle = window.getComputedStyle(document.body);
-        if (isVisibleBg(bodyStyle)) return bodyStyle.background;
-        return "#ffffff";
-      };
-
       el.scrollIntoView({ block: "start", inline: "start" });
-      const background = resolveBackground(el);
+      const background = window.__scryerResolveBackground ? window.__scryerResolveBackground(el) : "#ffffff";
+      window.__scryerHideControlsForCapture?.(document);
       const root = document.createElement("div");
       root.id = "__scryer_preserve_capture_root__";
+      root.style.setProperty("--scryer-bg", background);
       root.style.position = "fixed";
       root.style.left = "0";
       root.style.top = "0";
@@ -1075,10 +1151,26 @@ async function captureElementsPreserveLayout(page, selector, outputDir, payload)
         (cloneStyle.backgroundColor && cloneStyle.backgroundColor !== "rgba(0, 0, 0, 0)" && cloneStyle.backgroundColor !== "transparent");
       if (!hasOwnBg) clone.style.background = background;
 
-      window.__scryerPrepareEmojiClone?.(clone, { emojiFallback });
+      const emojiState = window.__scryerPrepareEmojiClone?.(clone, { emojiFallback }) || {
+        twemojiApplied: false,
+        fallbackApplied: false
+      };
+      window.__scryerHideControlsForCapture?.(clone);
       root.appendChild(clone);
       document.body.appendChild(root);
-      return true;
+      document.body.classList.add("__scryer_capturing__");
+      const visibleSlidesSelector = el.matches(".slide") ? ".slide" : selectorValue;
+      return {
+        index: itemIndex,
+        selector: selectorValue,
+        backgroundResolved: background,
+        twemojiApplied: !!emojiState.twemojiApplied,
+        textFallbackApplied: !!emojiState.fallbackApplied,
+        originalBodyChildrenHidden: window.__scryerOriginalBodyChildrenHidden ? window.__scryerOriginalBodyChildrenHidden() : false,
+        visibleCaptureRootsBeforeScreenshot: window.__scryerCountVisibleCaptureRoots ? window.__scryerCountVisibleCaptureRoots() : 0,
+        visibleMatchingSlidesBeforeScreenshot: window.__scryerCountVisibleMatches ? window.__scryerCountVisibleMatches(visibleSlidesSelector) : 0,
+        visualEffects: window.__scryerInspectVisualEffects ? window.__scryerInspectVisualEffects(clone) : null
+      };
     }, {
       selector,
       index,
@@ -1089,6 +1181,7 @@ async function captureElementsPreserveLayout(page, selector, outputDir, payload)
     if (!prepared) {
       throw new Error(`Could not measure slide ${index + 1}.`);
     }
+    console.log("[scryer export] preserveLayout capture prepared", prepared);
     await page.evaluate(() => document.fonts && document.fonts.ready ? document.fonts.ready : Promise.resolve()).catch(() => {});
     await new Promise((resolve) => setTimeout(resolve, 300));
     await page.screenshot({
@@ -1097,9 +1190,7 @@ async function captureElementsPreserveLayout(page, selector, outputDir, payload)
       clip: { x: 0, y: 0, width: payload.width, height: payload.height },
       omitBackground: false
     });
-    await page.evaluate(() => {
-      document.getElementById("__scryer_preserve_capture_root__")?.remove();
-    }).catch(() => {});
+    await page.evaluate(() => window.__scryerCleanupCapture && window.__scryerCleanupCapture()).catch(() => {});
     files.push(outputPath);
   }
   return files;

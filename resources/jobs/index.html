@@ -1729,6 +1729,7 @@
       const text = String(value || "").trim();
       const lower = text.toLowerCase();
       if (!lower) return "";
+      if (["unknown", "n/a", "na", "null", "none"].includes(lower)) return "";
       if (/clean energy|electrification|renewable/.test(lower)) return "Clean Energy";
       if (/climate tech|climate software|carbon software/.test(lower)) return "Climate Tech";
       if (/policy|advocacy|campaign/.test(lower)) return "Policy/Advocacy";
@@ -1738,9 +1739,37 @@
       return text.replace(/\b\w/g, (match) => match.toUpperCase());
     }
 
+    function getSectorFilterLabel(job) {
+      return normalizeSectorLabel(job && job.sector);
+    }
+
     function inferSpecialization(job) {
       const explicit = cleanVisibleText(job.specialization || "");
       return explicit;
+    }
+
+    function getSpecializationFilterValues(job) {
+      const values = new Set();
+      const explicit = inferSpecialization(job);
+      if (explicit) values.add(explicit);
+      const haystack = [
+        explicit,
+        job.title,
+        job.function,
+        job.description,
+        job.description_snippet,
+        job.summary,
+        ...(Array.isArray(job.tags) ? job.tags : [])
+      ].filter(Boolean).join(" ");
+      if (
+        explicit === "Communications" ||
+        explicit === "Social Media" ||
+        explicit === "PR / Press" ||
+        /\b(?:social media|social|community|digital communications|digital media|media relations|public relations|\bpr\b|communications strategy|communications?|linkedin content|content creator)\b/i.test(haystack)
+      ) {
+        values.add("Communications");
+      }
+      return values;
     }
 
     function getSalaryFloor(job) {
@@ -1816,8 +1845,8 @@
       if (state.filters.company.size && !state.filters.company.has(String(job.organization || "").trim())) return false;
       if (state.filters.location.size && !state.filters.location.has(getWorkMode(job))) return false;
       if (state.filters.jobType.size && !state.filters.jobType.has(job.job_type)) return false;
-      if (state.filters.sector.size && !state.filters.sector.has(job.sector)) return false;
-      if (state.filters.specialization.size && !state.filters.specialization.has(inferSpecialization(job))) return false;
+      if (state.filters.sector.size && !state.filters.sector.has(getSectorFilterLabel(job))) return false;
+      if (state.filters.specialization.size && !Array.from(state.filters.specialization).some((value) => getSpecializationFilterValues(job).has(value))) return false;
       if (!matchesSalaryFilter(job)) return false;
 
       return true;
@@ -1846,9 +1875,9 @@
       const optionMap = {
         location: [...new Set(activeJobs.map(getWorkMode))],
         jobType: [...new Set(activeJobs.map((job) => job.job_type).filter(Boolean))],
-        sector: [...new Set(activeJobs.map((job) => job.sector).filter(Boolean))],
+        sector: [...new Set(activeJobs.map((job) => getSectorFilterLabel(job)).filter(Boolean))],
         salary: SALARY_FILTER_OPTIONS,
-        specialization: SPECIALIZATION_OPTIONS.filter((value) => activeJobs.some((job) => inferSpecialization(job) === value))
+        specialization: SPECIALIZATION_OPTIONS.filter((value) => activeJobs.some((job) => getSpecializationFilterValues(job).has(value)))
       };
 
       Object.entries(optionMap).forEach(([groupKey, values]) => {
@@ -2088,8 +2117,17 @@
       if (name === "globe") {
         return '<svg viewBox="0 0 24 24" width="14" height="14" aria-hidden="true" style="stroke:currentColor; fill:none; stroke-width:1.8;"><circle cx="12" cy="12" r="9"></circle><path d="M3 12h18"></path><path d="M12 3a15 15 0 0 1 0 18"></path><path d="M12 3a15 15 0 0 0 0 18"></path></svg>';
       }
+      if (name === "briefcase") {
+        return '<svg viewBox="0 0 24 24" width="14" height="14" aria-hidden="true" style="stroke:currentColor; fill:none; stroke-width:1.8;"><rect x="3" y="7" width="18" height="13" rx="2"></rect><path d="M8 7V5a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><path d="M3 12h18"></path></svg>';
+      }
       if (name === "linkedin") {
         return '<svg viewBox="0 0 24 24" width="14" height="14" aria-hidden="true" style="fill:currentColor;"><path d="M6.94 8.5H3.56V20h3.38V8.5Zm-1.69-5A1.96 1.96 0 1 0 5.25 7.4a1.95 1.95 0 0 0 0-3.9ZM20.44 13.03c0-3.41-1.82-4.99-4.26-4.99a3.68 3.68 0 0 0-3.31 1.82V8.5H9.5c.04.9 0 11.5 0 11.5h3.37v-6.42c0-.34.03-.68.12-.93a2.2 2.2 0 0 1 2.07-1.47c1.46 0 2.05 1.12 2.05 2.76V20h3.33Z"></path></svg>';
+      }
+      if (name === "email") {
+        return '<svg viewBox="0 0 24 24" width="14" height="14" aria-hidden="true" style="stroke:currentColor; fill:none; stroke-width:1.8;"><rect x="3" y="5" width="18" height="14" rx="2"></rect><path d="M4 7l8 6 8-6"></path></svg>';
+      }
+      if (name === "file") {
+        return '<svg viewBox="0 0 24 24" width="14" height="14" aria-hidden="true" style="stroke:currentColor; fill:none; stroke-width:1.8;"><path d="M14 3H6a2 2 0 0 0-2 2v14l4-2 4 2 4-2 4 2V9Z"></path><path d="M14 3v6h6"></path></svg>';
       }
       return '<svg viewBox="0 0 24 24" width="14" height="14" aria-hidden="true" style="stroke:currentColor; fill:none; stroke-width:1.8;"><path d="M14 3H6a2 2 0 0 0-2 2v14l4-2 4 2 4-2 4 2V9Z"></path><path d="M14 3v6h6"></path></svg>';
     }
@@ -2167,7 +2205,7 @@
       if (!href) return "";
       const targetAttrs = newTab ? ' target="_blank" rel="noopener noreferrer"' : "";
       const className = extraClass ? `profile-link-icon ${extraClass}` : "profile-link-icon";
-      return `<a class="${escapeHtml(className)}" href="${escapeHtml(href)}"${targetAttrs} aria-label="${escapeHtml(label)}" title="${escapeHtml(label)}" data-talent-click="${escapeHtml(clickType)}" data-profile-id="${escapeHtml(profile.id)}" data-profile-name="${escapeHtml(profile.name)}"><i class="${escapeHtml(iconClass)}" aria-hidden="true"></i></a>`;
+      return `<a class="${escapeHtml(className)}" href="${escapeHtml(href)}"${targetAttrs} aria-label="${escapeHtml(label)}" title="${escapeHtml(label)}" data-talent-click="${escapeHtml(clickType)}" data-profile-id="${escapeHtml(profile.id)}" data-profile-name="${escapeHtml(profile.name)}">${iconSvg(iconClass)}</a>`;
     }
 
     function buildProfileLinkIcons(profile, links, options = {}) {
@@ -2176,25 +2214,32 @@
         {
           href: links.portfolioUrl,
           label: "Portfolio",
-          iconClass: "ph ph-briefcase",
+          iconClass: "briefcase",
           clickType: "portfolio"
         },
         {
           href: links.linkedInUrl,
           label: "LinkedIn",
-          iconClass: "ph ph-linkedin-logo",
+          iconClass: "linkedin",
           clickType: "linkedin"
+        },
+        {
+          href: links.publicContact && links.email ? links.email : "",
+          label: "Email",
+          iconClass: "email",
+          clickType: "email",
+          newTab: false
         },
         {
           href: links.websiteUrl,
           label: "Website",
-          iconClass: "ph ph-globe",
+          iconClass: "globe",
           clickType: "website"
         },
         {
           href: links.resumeUrl,
           label: "Resume",
-          iconClass: "ph ph-file-text",
+          iconClass: "file",
           clickType: "resume"
         }
       ].filter((item) => item.href);
@@ -2203,13 +2248,14 @@
       return `<div class="${escapeHtml(options.rowClassName || "profile-links")}">${items.map((item) => buildProfileIconLink({
         ...item,
         profile,
-        extraClass: iconClassName === "profile-link-icon" ? "" : iconClassName
+        extraClass: iconClassName === "profile-link-icon" ? "" : iconClassName,
+        newTab: item.newTab !== false
       })).join("")}</div>`;
     }
 
     function buildProfileModalIconLink({ href, label, iconClass, clickType, profile, newTab = true }) {
       const targetAttrs = newTab ? ' target="_blank" rel="noopener noreferrer"' : "";
-      return `<a class="profile-modal-icon-link" href="${escapeHtml(href)}"${targetAttrs} aria-label="${escapeHtml(label)}" title="${escapeHtml(label)}" data-talent-click="${escapeHtml(clickType)}" data-profile-id="${escapeHtml(profile.id)}" data-profile-name="${escapeHtml(profile.name)}"><i class="${escapeHtml(iconClass)}" aria-hidden="true"></i></a>`;
+      return `<a class="profile-modal-icon-link" href="${escapeHtml(href)}"${targetAttrs} aria-label="${escapeHtml(label)}" title="${escapeHtml(label)}" data-talent-click="${escapeHtml(clickType)}" data-profile-id="${escapeHtml(profile.id)}" data-profile-name="${escapeHtml(profile.name)}">${iconSvg(iconClass)}</a>`;
     }
 
     function renderProfileModalLinks(profile, urls) {

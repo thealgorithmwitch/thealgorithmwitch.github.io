@@ -1388,8 +1388,27 @@ video {
   }
 &lt;/style&gt;
 &lt;div class="slide"&gt;
-  &lt;h1&gt;Ethereal Visions&lt;/h1&gt;
+&lt;h1&gt;Ethereal Visions&lt;/h1&gt;
 &lt;/div&gt;</textarea>
+                    </div>
+
+                    <div class="mt-4 rounded-xl border border-emerald-500/20 bg-emerald-500/5 p-4 space-y-4">
+                        <div class="flex items-center justify-between gap-3">
+                            <div>
+                                <p class="font-cinzel text-sm text-white">Convert to compatible code</p>
+                                <p class="font-mono-tech text-[10px] text-emerald-200/70 uppercase tracking-widest">Audit first. Output stays separate until you apply it.</p>
+                            </div>
+                            <div class="flex gap-2">
+                                <button id="audit-code-btn" class="px-3 py-2 rounded-lg border border-emerald-400/30 text-emerald-200 font-mono-tech text-[10px] uppercase tracking-[0.2em] hover:bg-emerald-400/10 transition-all">Audit</button>
+                                <button id="convert-code-btn" class="px-3 py-2 rounded-lg border border-emerald-400/40 text-emerald-100 font-mono-tech text-[10px] uppercase tracking-[0.2em] hover:bg-emerald-400/15 transition-all">Convert</button>
+                            </div>
+                        </div>
+                        <div id="compatibility-report" class="rounded-lg border border-white/5 bg-black/20 p-3 font-mono-tech text-[10px] leading-relaxed text-slate-300 whitespace-pre-wrap">Run audit to inspect export compatibility.</div>
+                        <div class="flex flex-col gap-2">
+                            <label class="block font-mono-tech text-[10px] text-gray-500 uppercase tracking-widest">Converted Output</label>
+                            <textarea id="converted-code" class="h-48 w-full p-4 rounded-lg input-dark font-mono-tech text-[11px] leading-relaxed resize-none scrollbar-mystic" placeholder="Converted export-safe code will appear here."></textarea>
+                            <button id="use-converted-btn" class="self-end px-4 py-2 rounded-lg border border-cyan-500/30 text-cyan-200 font-mono-tech text-[10px] uppercase tracking-[0.2em] hover:bg-cyan-500/10 transition-all">Use converted code</button>
+                        </div>
                     </div>
 
                     <button id="preview-btn" class="w-full py-4 rounded-xl btn-ritual font-mono-tech text-xs uppercase tracking-[0.2em] text-white transition-all flex items-center justify-center gap-2 mt-4" vid="75">
@@ -1546,7 +1565,12 @@ video {
         const previewFrame = document.getElementById('preview-frame');
         const previewStage = document.getElementById('preview-stage');
         const htmlCode = document.getElementById('html-code');
+        const convertedCode = document.getElementById('converted-code');
+        const compatibilityReport = document.getElementById('compatibility-report');
         const previewButton = document.getElementById('preview-btn');
+        const auditCodeButton = document.getElementById('audit-code-btn');
+        const convertCodeButton = document.getElementById('convert-code-btn');
+        const useConvertedButton = document.getElementById('use-converted-btn');
         const exportButton = document.getElementById('export-btn');
         const preserveLayoutInput = document.getElementById('preserve-layout');
         const exportStatus = document.getElementById('export-status');
@@ -1603,6 +1627,206 @@ video {
             if (mode === 'page') return 'Page Runes';
             if (mode === 'custom') return 'Custom Selector';
             return 'Full Page Grimoire';
+        }
+
+        function analyzeCompatibility() {
+            const source = htmlCode.value;
+            const mode = getSelectedMode();
+            const size = getSize();
+            const selector = getSelector(mode);
+            const parser = new DOMParser();
+            const doc = parser.parseFromString(source, 'text/html');
+            const slideCount = doc.querySelectorAll('.slide').length;
+            const pageCount = doc.querySelectorAll('.page').length;
+            const matchedCount = mode === 'full'
+                ? 1
+                : (() => {
+                    try {
+                        return selector ? doc.querySelectorAll(selector).length : 0;
+                    } catch (_error) {
+                        return 0;
+                    }
+                })();
+            const carouselRoot = doc.querySelector('.carousel-viewport, .slides-wrapper, #slider, #slides-container');
+            const slidesContainer = doc.querySelector('.slides-container, #slides-container, .slides-wrapper');
+            const carouselSlides = slidesContainer ? Array.from(slidesContainer.querySelectorAll('.slide, .page')) : [];
+            const arrowControls = doc.querySelectorAll('.nav-controls, .export-hide, .btn-prev, .btn-next, .btn-nav, button[onclick*="Slide"], button[onclick*="prevSlide"], button[onclick*="nextSlide"], [onclick*="moveSlide"]').length;
+            const exportFrames = Array.from(doc.querySelectorAll('.slide, .page'));
+            const sharedFrameElements = Array.from(doc.body.querySelectorAll('.nav-dots, .ticker, .border-frame, .frame-border, .nav-controls, [class*="ticker"], [class*="nav"]')).filter((node) => {
+                return !exportFrames.some((frame) => frame.contains(node));
+            }).length;
+            const hiddenSlides = Array.from(doc.querySelectorAll('.slide, .page')).filter((node) => {
+                const style = node.getAttribute('style') || '';
+                const className = node.className || '';
+                return /display\s*:\s*none/i.test(style) || /\bhidden\b/.test(className);
+            }).length;
+            const externalAssets = Array.from(doc.querySelectorAll('img[src], source[src], video[src], [style*="background"]')).some((node) => {
+                const src = node.getAttribute('src') || node.getAttribute('poster') || node.getAttribute('style') || '';
+                return /https?:\/\//i.test(src);
+            });
+            const svgEmojiFallbacks = Array.from(doc.querySelectorAll('svg')).some((svg) => {
+                const html = svg.outerHTML || '';
+                return /emoji|currentColor|viewBox="0 0 24 24"/i.test(html);
+            }) || /__scryerEmojiFallbackMap|scryer-emoji-fallback/i.test(source);
+            const hasTwemojiMarkup = /twemoji|scryer-twemoji/i.test(source);
+            const hasCarouselPattern = !!(carouselRoot && slidesContainer && carouselSlides.length > 1);
+            const usesTranslateCarouselState = Array.from(doc.querySelectorAll('[style], style')).some((node) => {
+                const text = node.tagName === 'STYLE' ? node.textContent || '' : node.getAttribute('style') || '';
+                return /translateX\s*\(/i.test(text);
+            });
+
+            return {
+                mode,
+                modeLabel: modeLabel(mode),
+                selector,
+                size,
+                slideCount,
+                pageCount,
+                matchedCount,
+                arrowControls,
+                sharedFrameElements,
+                hiddenSlides,
+                externalAssets,
+                svgEmojiFallbacks,
+                hasTwemojiMarkup,
+                hasCarouselPattern,
+                usesTranslateCarouselState,
+                source,
+                doc
+            };
+        }
+
+        function renderCompatibilityReport(analysis) {
+            const lines = [
+                `Slides found: ${analysis.slideCount}`,
+                `Pages found: ${analysis.pageCount}`,
+                `Selected export mode: ${analysis.modeLabel}${analysis.mode === 'custom' ? ` (${analysis.selector || 'missing selector'})` : ''}`,
+                `Selected dimensions: ${analysis.size.width} × ${analysis.size.height}`,
+                `Selector matches: ${analysis.matchedCount}`,
+                `Arrow/button controls found: ${analysis.arrowControls ? 'yes' : 'no'} (${analysis.arrowControls})`,
+                `Shared frame elements outside .slide: ${analysis.sharedFrameElements ? 'yes' : 'no'} (${analysis.sharedFrameElements})`,
+                `Hidden slides/pages found: ${analysis.hiddenSlides ? 'yes' : 'no'} (${analysis.hiddenSlides})`,
+                `External textures/images found: ${analysis.externalAssets ? 'yes' : 'no'}`,
+                `SVG emoji fallbacks found: ${analysis.svgEmojiFallbacks ? 'yes' : 'no'}`,
+                `Twemoji runtime active: yes (server export runtime injects it)`,
+                `Carousel stack conversion candidate: ${analysis.hasCarouselPattern ? 'yes' : 'no'}`,
+                `JS carousel translateX state found: ${analysis.usesTranslateCarouselState ? 'yes' : 'no'}`
+            ];
+
+            if (analysis.mode === 'custom' && !analysis.matchedCount) {
+                lines.push('Warning: custom selector matched zero elements.');
+            }
+
+            if (analysis.hasCarouselPattern || analysis.sharedFrameElements || analysis.usesTranslateCarouselState) {
+                lines.push('Warning: Shared frame elements outside .slide can duplicate or disappear during selector export. Use Convert to compatible code so each .slide is self-contained.');
+            }
+
+            compatibilityReport.textContent = lines.join('\n');
+        }
+
+        function buildCompatibleCode() {
+            const analysis = analyzeCompatibility();
+            renderCompatibilityReport(analysis);
+
+            const frameSelector = analysis.mode === 'page'
+                ? '.page'
+                : analysis.mode === 'custom'
+                    ? analysis.selector
+                    : '.slide';
+
+            let exportFrames = [];
+            if (analysis.mode === 'full') {
+                exportFrames = Array.from(analysis.doc.body.children)
+                    .filter((node) => node.tagName !== 'SCRIPT')
+                    .map((node) => node.outerHTML);
+            } else {
+                try {
+                    exportFrames = Array.from(analysis.doc.querySelectorAll(frameSelector)).map((node) => {
+                        const clone = node.cloneNode(true);
+                        clone.querySelectorAll('.nav-controls, .export-hide, .btn-prev, .btn-next, .btn-nav, button[onclick*="Slide"], button[onclick*="prevSlide"], button[onclick*="nextSlide"], [onclick*="moveSlide"]').forEach((el) => {
+                            el.remove();
+                        });
+                        return clone.outerHTML;
+                    });
+                } catch (_error) {
+                    exportFrames = [];
+                }
+            }
+
+            if (!exportFrames.length && analysis.hasCarouselPattern) {
+                exportFrames = Array.from(analysis.doc.querySelectorAll('.slide, .page')).map((node) => node.outerHTML);
+            }
+
+            if (!exportFrames.length) {
+                convertedCode.value = '';
+                compatibilityReport.textContent += '\nNo export frames could be generated from the current markup.';
+                return;
+            }
+
+            const width = analysis.size.width;
+            const height = analysis.size.height;
+            const frameClass = analysis.mode === 'page' ? 'page' : 'slide';
+            const styleTags = Array.from(analysis.doc.querySelectorAll('style')).map((node) => node.outerHTML).join('\n');
+            const linkTags = Array.from(analysis.doc.querySelectorAll('link[rel="stylesheet"]')).map((node) => node.outerHTML).join('\n');
+
+            const wrappedFrames = exportFrames.map((markup) => {
+                if (analysis.mode === 'full') {
+                    return `<section class="${frameClass} scryer-converted-frame">\n${markup}\n</section>`;
+                }
+                return markup;
+            }).join('\n\n');
+
+            convertedCode.value = `${linkTags}
+${styleTags}
+<style>
+  html, body {
+    margin: 0;
+    padding: 0;
+    width: 100%;
+    min-height: 100%;
+    overflow-x: hidden;
+    overflow-y: auto;
+    background-color: #111;
+  }
+
+  *, *::before, *::after {
+    box-sizing: border-box;
+  }
+
+  .main-wrapper {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 48px;
+    padding: 48px 0 64px;
+  }
+
+  .${frameClass} {
+    width: ${width}px;
+    height: ${height}px;
+    flex: 0 0 ${height}px;
+    position: relative;
+    overflow: hidden;
+    box-sizing: border-box;
+  }
+
+  .export-hide,
+  .nav-controls,
+  button[onclick*="Slide"],
+  button[onclick*="prevSlide"],
+  button[onclick*="nextSlide"],
+  [onclick*="moveSlide"],
+  .btn-prev,
+  .btn-next,
+  .btn-nav {
+    display: none !important;
+  }
+</style>
+<div class="main-wrapper">
+${wrappedFrames}
+</div>`;
         }
 
         function updateSizeLabels() {
@@ -1844,6 +2068,15 @@ ${buildScryerCaptureStyles(size.width, size.height, currentPreviewBackground || 
         }
 
         previewButton.addEventListener('click', renderPreview);
+        auditCodeButton.addEventListener('click', () => {
+            renderCompatibilityReport(analyzeCompatibility());
+        });
+        convertCodeButton.addEventListener('click', buildCompatibleCode);
+        useConvertedButton.addEventListener('click', () => {
+            if (!convertedCode.value.trim()) return;
+            htmlCode.value = convertedCode.value;
+            renderPreview();
+        });
         previewZoomButton.addEventListener('click', () => {
             previewZoomMode = previewZoomMode === 'fit' ? 'actual' : 'fit';
             updatePreviewScale();

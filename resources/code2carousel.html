@@ -1429,6 +1429,10 @@ video {
                                 <input id="freeze-animations" type="checkbox" class="accent-emerald-400" checked>
                                 <span>Freeze animations for export</span>
                             </label>
+                            <label class="flex items-center gap-2 rounded-lg border border-white/5 bg-black/20 px-3 py-2 font-mono-tech text-[10px] text-slate-200">
+                                <input id="hide-decorative-stars" type="checkbox" class="accent-emerald-400">
+                                <span>Hide decorative SVG stars</span>
+                            </label>
                         </div>
                         <div class="flex flex-col gap-2">
                             <label class="block font-mono-tech text-[10px] text-gray-500 uppercase tracking-widest">Converted Output</label>
@@ -1607,6 +1611,7 @@ video {
         const preserveSwipeHintInput = document.getElementById('preserve-swipe-hint');
         const hideArrowControlsInput = document.getElementById('hide-arrow-controls');
         const freezeAnimationsInput = document.getElementById('freeze-animations');
+        const hideDecorativeStarsInput = document.getElementById('hide-decorative-stars');
         const exportStatus = document.getElementById('export-status');
         const manifestStatus = document.getElementById('manifest-status');
         const manifestProgress = document.getElementById('manifest-progress');
@@ -1685,7 +1690,8 @@ video {
                 preserveSlideCounter: preserveSlideCounterInput.checked,
                 preserveSwipeHint: preserveSwipeHintInput.checked,
                 hideArrowControls: hideArrowControlsInput.checked,
-                freezeAnimations: freezeAnimationsInput.checked
+                freezeAnimations: freezeAnimationsInput.checked,
+                hideDecorativeStars: hideDecorativeStarsInput.checked
             };
         }
 
@@ -1804,6 +1810,51 @@ video {
             });
         }
 
+        function isDecorativeStarSvg(node) {
+            if (!(node instanceof Element)) return false;
+            const signature = `${node.tagName} ${node.id || ''} ${typeof node.className === 'string' ? node.className : ''}`;
+            if (/star-sparkle|rotating-medallion/i.test(signature)) return true;
+            if (node.tagName !== 'svg' && !node.closest('svg')) return false;
+            const svg = node.tagName === 'svg' ? node : node.closest('svg');
+            if (!svg) return false;
+            const svgSignature = `${svg.getAttribute('class') || ''} ${svg.outerHTML.slice(0, 600)}`;
+            if (/star-sparkle|rotating-medallion|sparkle|medallion/i.test(svgSignature)) return true;
+            return /M12\s+[02]L14\.5\s+9\.5|M50\s+0\s*L55\s+45|polygon[^>]+points=\"12,0 14\.5,9\.5|points=\"50,0 55,45/i.test(svg.outerHTML);
+        }
+
+        function collectDecorativeStarNodes(root) {
+            return Array.from(root.querySelectorAll('svg, .star-sparkle, .rotating-medallion')).filter((node) => isDecorativeStarSvg(node));
+        }
+
+        function buildChromeTemplates(doc, frames) {
+            const sharedChrome = collectSharedChromeCandidates(doc, frames);
+            const fallback = {
+                topBar: null,
+                navDots: null,
+                slideCounter: null,
+                swipeHint: null,
+                overlays: []
+            };
+
+            const firstMatch = (selector) => {
+                for (const frame of frames) {
+                    const match = frame.querySelector(selector);
+                    if (match) return match;
+                }
+                return null;
+            };
+
+            fallback.topBar = sharedChrome.topBar[0] || firstMatch('.ticker-scroll, .ticker, .top-bar, .topbar, .header-bar, .header, [class*="ticker"], [class*="top-bar"], [class*="topbar"], [class*="header-bar"]');
+            fallback.navDots = sharedChrome.navDots[0] || firstMatch('.nav-dots, #dots, [class*="nav-dots"]');
+            fallback.slideCounter = sharedChrome.slideCounter[0] || firstMatch('.slide-counter, #counter, [class*="slide-counter"], [class*="counter"]');
+            fallback.swipeHint = sharedChrome.swipeHint[0] || firstMatch('.swipe-hint, [class*="swipe-hint"]');
+            fallback.overlays = sharedChrome.overlays.length
+                ? sharedChrome.overlays
+                : frames.flatMap((frame) => Array.from(frame.querySelectorAll('.mystic-border, .corner-l, .corner-r, .corner-t, .corner-b, .grid-overlay, .border-frame, .frame-border, .mystic-frame, .mystic-corner')));
+
+            return { sharedChrome, chromeTemplates: fallback };
+        }
+
         function updateConversionStatus(message) {
             conversionStatus.textContent = message;
         }
@@ -1819,6 +1870,7 @@ video {
             const slideFrames = Array.from(doc.querySelectorAll('.slide'));
             const pageFrames = Array.from(doc.querySelectorAll('.page'));
             const exportFrames = slideFrames.length ? slideFrames : pageFrames;
+            const { sharedChrome, chromeTemplates } = buildChromeTemplates(doc, exportFrames);
             const slideCount = slideFrames.length;
             const pageCount = pageFrames.length;
             const matchedCount = mode === 'full'
@@ -1834,7 +1886,6 @@ video {
             const slidesContainer = doc.querySelector('.slides-container, #slides-container, .slides-wrapper');
             const carouselSlides = slidesContainer ? Array.from(slidesContainer.querySelectorAll('.slide, .page')) : [];
             const arrowControls = doc.querySelectorAll(COMPATIBLE_CONTROL_SELECTOR).length;
-            const sharedChrome = collectSharedChromeCandidates(doc, exportFrames);
             const sharedFrameElements = Object.values(sharedChrome).reduce((sum, nodes) => sum + nodes.length, 0);
             const hiddenSlides = Array.from(doc.querySelectorAll('.slide, .page')).filter((node) => {
                 const style = node.getAttribute('style') || '';
@@ -1857,6 +1908,7 @@ video {
                 const text = node.tagName === 'STYLE' ? node.textContent || '' : node.getAttribute('style') || '';
                 return count + (/animation|transition|@keyframes|ticker-scroll|rotating-medallion|star-sparkle/i.test(text) ? 1 : 0);
             }, 0);
+            const decorativeStars = collectDecorativeStarNodes(doc);
             const duplicateIds = listDuplicateIds(doc);
             const frameSelector = getFrameSelector(mode, { hasCarouselPattern, slideCount, pageCount, selector });
 
@@ -1872,6 +1924,7 @@ video {
                 frameSelector,
                 arrowControls,
                 sharedChrome,
+                chromeTemplates,
                 sharedFrameElements,
                 hiddenSlides,
                 externalAssets,
@@ -1883,6 +1936,7 @@ video {
                 hasCarouselPattern,
                 usesTranslateCarouselState,
                 animationCount,
+                decorativeStarCount: decorativeStars.length,
                 source,
                 doc,
                 carouselRootFound: !!carouselRoot,
@@ -1914,6 +1968,7 @@ video {
                 `Inline event handlers found: ${analysis.inlineHandlerCount}`,
                 `External textures/images found: ${analysis.externalAssets ? 'yes' : 'no'} (${analysis.externalTextureNodes.length})`,
                 `Inline SVG decorative/icon markup found: ${analysis.svgCount ? 'yes' : 'no'} (${analysis.svgCount})`,
+                `Decorative star SVGs detected: ${analysis.decorativeStarCount}`,
                 `Animations/transitions found: ${analysis.animationCount ? 'yes' : 'no'} (${analysis.animationCount})`,
                 `Carousel stack conversion candidate: ${analysis.hasCarouselPattern ? 'yes' : 'no'}`,
                 `JS carousel translateX state found: ${analysis.usesTranslateCarouselState ? 'yes' : 'no'}`
@@ -1938,6 +1993,11 @@ video {
 
             if (analysis.externalAssets) {
                 lines.push('Warning: External texture detected.');
+            }
+
+            if (analysis.decorativeStarCount) {
+                lines.push(`Warning: Decorative SVG stars detected (${analysis.decorativeStarCount}).`);
+                lines.push(`Decorative SVG stars hidden: ${analysis.options.hideDecorativeStars ? 'yes' : 'no'}`);
             }
 
             if (analysis.options.freezeAnimations && analysis.animationCount) {
@@ -2014,7 +2074,12 @@ video {
         }
 
         function updateCounterValues(root, index, total) {
-            root.querySelectorAll('.slide-counter, [id^="counter"], [class*="slide-counter"], [class*="counter"]').forEach((node) => {
+            const candidates = [];
+            if (root instanceof Element && root.matches('.slide-counter, [id^="counter"], [class*="slide-counter"], [class*="counter"], [data-export-chrome="slide-counter"]')) {
+                candidates.push(root);
+            }
+            candidates.push(...root.querySelectorAll('.slide-counter, [id^="counter"], [class*="slide-counter"], [class*="counter"], [data-export-chrome="slide-counter"]'));
+            candidates.forEach((node) => {
                 const current = node.querySelector('.current, .current-slide, [data-counter-current], [class*="current"]');
                 const totalNode = node.querySelector('.total, .total-slides, [data-counter-total], [class*="total"]');
                 if (current || totalNode) {
@@ -2032,11 +2097,20 @@ video {
         }
 
         function updateNavDots(root, index, total) {
-            root.querySelectorAll('.nav-dots, [id^="dots"], [class*="nav-dots"]').forEach((container) => {
+            const containers = [];
+            if (root instanceof Element && root.matches('.nav-dots, [id^="dots"], [class*="nav-dots"], [data-export-chrome="nav-dots"]')) {
+                containers.push(root);
+            }
+            containers.push(...root.querySelectorAll('.nav-dots, [id^="dots"], [class*="nav-dots"], [data-export-chrome="nav-dots"]'));
+            containers.forEach((container) => {
                 const dots = Array.from(container.children).filter((node) => node.nodeType === 1);
                 if (!dots.length) return;
+                while (dots.length > total) {
+                    dots.pop().remove();
+                }
                 while (dots.length < total) {
                     const template = dots[dots.length - 1].cloneNode(true);
+                    template.classList.add('dot');
                     template.classList.remove('active');
                     template.removeAttribute('aria-current');
                     template.removeAttribute('data-export-active');
@@ -2045,6 +2119,7 @@ video {
                 }
                 dots.forEach((dot, dotIndex) => {
                     const active = dotIndex === index;
+                    dot.classList.add('dot');
                     dot.classList.toggle('active', active);
                     dot.toggleAttribute('aria-current', active);
                     dot.setAttribute('data-export-active', active ? 'true' : 'false');
@@ -2063,31 +2138,137 @@ video {
             }
         }
 
-        function cloneSelectedChrome(frame, analysis, options, index, total) {
-            const work = [
-                { key: 'topBar', enabled: options.preserveTopBar, selector: SHARED_CHROME_SELECTORS.topBar },
-                { key: 'navDots', enabled: options.preserveBottomDots, selector: SHARED_CHROME_SELECTORS.navDots },
-                { key: 'slideCounter', enabled: options.preserveSlideCounter, selector: SHARED_CHROME_SELECTORS.slideCounter },
-                { key: 'swipeHint', enabled: options.preserveSwipeHint, selector: SHARED_CHROME_SELECTORS.swipeHint },
-                { key: 'overlays', enabled: true, selector: SHARED_CHROME_SELECTORS.overlays }
-            ];
+        function removeChromeTargets(frame) {
+            frame.querySelectorAll(
+                [
+                    SHARED_CHROME_SELECTORS.topBar,
+                    SHARED_CHROME_SELECTORS.navDots,
+                    SHARED_CHROME_SELECTORS.slideCounter,
+                    SHARED_CHROME_SELECTORS.swipeHint,
+                    SHARED_CHROME_SELECTORS.overlays,
+                    '[data-export-chrome]'
+                ].join(', ')
+            ).forEach((node) => node.remove());
+        }
 
-            work.forEach(({ key, enabled, selector }) => {
-                if (!enabled) return;
-                const existing = frame.querySelector(selector);
-                if (existing) {
-                    normalizeSharedChromeClone(existing, key);
-                    return;
-                }
-                analysis.sharedChrome[key].forEach((sourceNode) => {
-                    const clone = sourceNode.cloneNode(true);
-                    normalizeSharedChromeClone(clone, key);
-                    frame.appendChild(clone);
+        function assignExportChromeIdentity(node, type, index) {
+            const slideToken = `slide-${formatSlideNumber(index + 1)}`;
+            const ids = {
+                topBar: `top-bar-${slideToken}`,
+                navDots: `dots-${slideToken}`,
+                slideCounter: `counter-${slideToken}`,
+                swipeHint: `swipe-hint-${slideToken}`
+            };
+            const attrs = {
+                topBar: 'top-bar',
+                navDots: 'nav-dots',
+                slideCounter: 'slide-counter',
+                swipeHint: 'swipe-hint',
+                overlays: 'overlays'
+            };
+            node.setAttribute('data-export-chrome', attrs[type]);
+            if (type !== 'overlays') {
+                node.id = ids[type];
+            }
+        }
+
+        function applyExportChromeStyles(node, type) {
+            const styles = {
+                topBar: 'position:absolute;top:0;left:0;width:100%;z-index:110;overflow:hidden;',
+                navDots: 'position:absolute;left:50%;bottom:52px;transform:translateX(-50%);z-index:110;',
+                slideCounter: 'position:absolute;right:48px;bottom:48px;z-index:110;',
+                swipeHint: 'position:absolute;left:50%;bottom:18px;transform:translateX(-50%);z-index:110;',
+                overlays: 'position:absolute;inset:0;z-index:20;pointer-events:none;'
+            };
+            const styleText = node.getAttribute('style') || '';
+            node.setAttribute('style', `${styleText}${styleText && !styleText.trim().endsWith(';') ? ';' : ''}${styles[type]}`);
+        }
+
+        function createChromeClone(sourceNode, type, index) {
+            if (!sourceNode) return null;
+            const clone = sourceNode.cloneNode(true);
+            normalizeSharedChromeClone(clone, type);
+            assignExportChromeIdentity(clone, type, index);
+            applyExportChromeStyles(clone, type);
+            if (type === 'navDots') {
+                Array.from(clone.children).forEach((dot) => {
+                    dot.classList.add('dot');
                 });
-            });
+            }
+            return clone;
+        }
+
+        function insertChrome(frame, node, position) {
+            if (!node) return;
+            if (position === 'prepend') {
+                frame.insertBefore(node, frame.firstChild);
+                return;
+            }
+            frame.appendChild(node);
+        }
+
+        function cloneSelectedChrome(frame, analysis, options, index, total) {
+            removeChromeTargets(frame);
+
+            const overlayClones = analysis.chromeTemplates.overlays.map((sourceNode) => createChromeClone(sourceNode, 'overlays', index)).filter(Boolean);
+            overlayClones.reverse().forEach((overlay) => insertChrome(frame, overlay, 'prepend'));
+
+            if (options.preserveTopBar) {
+                insertChrome(frame, createChromeClone(analysis.chromeTemplates.topBar, 'topBar', index), 'prepend');
+            }
+            if (options.preserveBottomDots) {
+                insertChrome(frame, createChromeClone(analysis.chromeTemplates.navDots, 'navDots', index), 'append');
+            }
+            if (options.preserveSlideCounter) {
+                insertChrome(frame, createChromeClone(analysis.chromeTemplates.slideCounter, 'slideCounter', index), 'append');
+            }
+            if (options.preserveSwipeHint) {
+                insertChrome(frame, createChromeClone(analysis.chromeTemplates.swipeHint, 'swipeHint', index), 'append');
+            }
 
             updateCounterValues(frame, index, total);
             updateNavDots(frame, index, total);
+        }
+
+        function removeDecorativeStars(root) {
+            collectDecorativeStarNodes(root).forEach((node) => {
+                node.classList.add('export-hide');
+                node.remove();
+            });
+        }
+
+        function runConvertedSelfCheck(markup) {
+            const convertedDoc = new DOMParser().parseFromString(markup, 'text/html');
+            const slides = Array.from(convertedDoc.querySelectorAll('.slide, .page'));
+            const slideCount = slides.length;
+            const topBars = convertedDoc.querySelectorAll('[data-export-chrome="top-bar"]').length;
+            const navDots = convertedDoc.querySelectorAll('[data-export-chrome="nav-dots"]').length;
+            const counters = convertedDoc.querySelectorAll('[data-export-chrome="slide-counter"]').length;
+            const duplicateIds = listDuplicateIds(convertedDoc).length;
+            const slidesMissingTopBar = [];
+            const slidesMissingNavDots = [];
+            const slidesMissingCounter = [];
+            const activeDotFailures = [];
+
+            slides.forEach((slide, index) => {
+                if (!slide.querySelector('[data-export-chrome="top-bar"]')) slidesMissingTopBar.push(index + 1);
+                if (!slide.querySelector('[data-export-chrome="nav-dots"]')) slidesMissingNavDots.push(index + 1);
+                if (!slide.querySelector('[data-export-chrome="slide-counter"]')) slidesMissingCounter.push(index + 1);
+                const activeDots = slide.querySelectorAll('[data-export-chrome="nav-dots"] .dot.active').length;
+                if (activeDots !== 1) activeDotFailures.push(index + 1);
+            });
+
+            return {
+                slideCount,
+                topBars,
+                navDots,
+                counters,
+                duplicateIds,
+                slidesMissingTopBar,
+                slidesMissingNavDots,
+                slidesMissingCounter,
+                activeDotFailures
+            };
         }
 
         function buildCompatibleCode() {
@@ -2145,6 +2326,9 @@ video {
                 clone.style.overflow = 'hidden';
                 clone.style.transform = 'none';
                 cloneSelectedChrome(clone, analysis, options, index, totalFrames);
+                if (options.hideDecorativeStars) {
+                    removeDecorativeStars(clone);
+                }
                 rewriteIds(clone, `slide-${formatSlideNumber(index + 1)}`);
                 stripScriptsAndHandlers(clone);
                 if (options.hideArrowControls) {
@@ -2161,8 +2345,7 @@ video {
             if (analysis.sharedChrome.overlays.length) preservedOptions.push(SHARED_CHROME_LABELS.overlays);
 
             const wrappedFrames = exportFrames.join('\n\n');
-
-            convertedCode.value = `${linkTags}
+            const generatedMarkup = `${linkTags}
 ${styleTags}
 <style>
   html, body {
@@ -2218,7 +2401,25 @@ ${styleTags}
     max-width: 100%;
   }
 
+  [data-export-chrome="top-bar"] {
+    position: absolute !important;
+    top: 0 !important;
+    left: 0 !important;
+    width: 100% !important;
+    z-index: 110 !important;
+    overflow: hidden !important;
+  }
+
+  [data-export-chrome="nav-dots"] {
+    z-index: 110 !important;
+  }
+
+  [data-export-chrome="slide-counter"] {
+    z-index: 110 !important;
+  }
+
   .nav-dots .active,
+  .nav-dots .dot.active,
   .nav-dots [aria-current="true"],
   .nav-dots [data-export-active="true"] {
     opacity: 1 !important;
@@ -2261,13 +2462,54 @@ ${styleTags}
 ${wrappedFrames}
 </div>`;
 
+            const selfCheck = runConvertedSelfCheck(generatedMarkup);
+            const selfCheckLines = [
+                `${selfCheck.topBars === totalFrames || !options.preserveTopBar ? '✓' : '✗'} top bar on every slide`,
+                `${selfCheck.navDots === totalFrames || !options.preserveBottomDots ? '✓' : '✗'} nav dots on every slide`,
+                `${selfCheck.counters === totalFrames || !options.preserveSlideCounter ? '✓' : '✗'} counter on every slide`,
+                `${selfCheck.activeDotFailures.length === 0 || !options.preserveBottomDots ? '✓' : '✗'} one active dot per slide`,
+                `${selfCheck.duplicateIds === 0 ? '✓' : '✗'} duplicate IDs rewritten`
+            ];
+
+            convertedCode.value = generatedMarkup;
+
+            const auditLines = [
+                `Converted slide count: ${selfCheck.slideCount}`,
+                `Top bars inserted count: ${selfCheck.topBars}`,
+                `Nav dots inserted count: ${selfCheck.navDots}`,
+                `Counters inserted count: ${selfCheck.counters}`,
+                `Slides missing top bar: ${selfCheck.slidesMissingTopBar.length ? selfCheck.slidesMissingTopBar.join(', ') : 'none'}`,
+                `Slides missing nav dots: ${selfCheck.slidesMissingNavDots.length ? selfCheck.slidesMissingNavDots.join(', ') : 'none'}`,
+                `Slides missing counter: ${selfCheck.slidesMissingCounter.length ? selfCheck.slidesMissingCounter.join(', ') : 'none'}`,
+                `Decorative star SVGs detected count: ${analysis.decorativeStarCount}`,
+                `Decorative star SVGs hidden: ${options.hideDecorativeStars ? 'yes' : 'no'}`,
+                ...selfCheckLines
+            ];
+
+            compatibilityReport.textContent = `${compatibilityReport.textContent}\n${auditLines.join('\n')}`;
+
+            if (options.preserveTopBar && selfCheck.topBars !== totalFrames) {
+                compatibilityReport.textContent += '\nWarning: Top bar preservation failed on some slides.';
+            }
+            if (options.preserveBottomDots && selfCheck.navDots !== totalFrames) {
+                compatibilityReport.textContent += '\nWarning: Nav dots preservation failed on some slides.';
+            }
+            if (options.preserveSlideCounter && selfCheck.counters !== totalFrames) {
+                compatibilityReport.textContent += '\nWarning: Slide counter preservation failed on some slides.';
+            }
+            if (options.preserveBottomDots && selfCheck.activeDotFailures.length) {
+                compatibilityReport.textContent += `\nWarning: Active dot check failed on slides ${selfCheck.activeDotFailures.join(', ')}.`;
+            }
+
             updateConversionStatus([
                 '✓ Compatible export code generated',
                 `Slides: ${totalFrames}`,
                 `Dimensions: ${width} × ${height}`,
                 `Preserved chrome: ${preservedOptions.length ? preservedOptions.join(', ') : 'none'}`,
                 `Hide arrow controls: ${options.hideArrowControls ? 'on' : 'off'}`,
-                `Freeze animations: ${options.freezeAnimations ? 'on' : 'off'}`
+                `Freeze animations: ${options.freezeAnimations ? 'on' : 'off'}`,
+                `Hide decorative SVG stars: ${options.hideDecorativeStars ? 'on' : 'off'}`,
+                ...selfCheckLines
             ].join('\n'));
         }
 

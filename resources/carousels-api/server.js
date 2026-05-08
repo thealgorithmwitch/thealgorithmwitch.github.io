@@ -499,6 +499,14 @@ async function captureElements(page, selector, outputDir, payload) {
   for (let index = 0; index < count; index += 1) {
     const filename = `slide-${String(index + 1).padStart(2, "0")}.png`;
     const outputPath = path.join(outputDir, filename);
+    const exportPadding = payload.exportPadding;
+    const clipWidth = payload.width + exportPadding * 2;
+    const clipHeight = payload.height + exportPadding * 2;
+    await page.setViewport({
+      width: clipWidth,
+      height: clipHeight,
+      deviceScaleFactor: 1
+    });
     const targetBoundingBox = await page.evaluate(({ selector: selectorValue, index: itemIndex }) => {
       const target = Array.from(document.querySelectorAll(selectorValue))[itemIndex];
       if (!target) return null;
@@ -512,147 +520,25 @@ async function captureElements(page, selector, outputDir, payload) {
       screenshot: filename,
       targetBoundingBox
     });
-    const prepareLog = await page.evaluate(({ selector: selectorValue, index: itemIndex, width, height, emojiFallback }) => {
-      const nodes = Array.from(document.querySelectorAll(selectorValue));
+    const prepareLog = await page.evaluate(({ selector: selectorValue, index: itemIndex, width, height, autoCenter, safePadding, emojiFallback, exportPadding }) => {
+      const nodes = selectorValue === "body" ? [document.body] : Array.from(document.querySelectorAll(selectorValue));
       const original = nodes[itemIndex];
       if (!original) throw new Error(`Could not find slide ${itemIndex + 1}`);
-      window.__scryerBeginCaptureState?.();
-      const safePadding = 72;
-      window.__scryerRememberStyle?.(document.documentElement);
-      window.__scryerRememberStyle?.(document.body);
-      const background = window.__scryerResolveBackground ? window.__scryerResolveBackground(original) : "#ffffff";
-      const backgroundImage = window.getComputedStyle(original).backgroundImage || "none";
-      const colorMatch = background.match(/rgba?\(([^)]+)\)/);
-      let isPlainDark = false;
-      if (colorMatch) {
-        const [r, g, b] = colorMatch[1].split(",").slice(0, 3).map((value) => Number.parseFloat(value.trim()) || 0);
-        const luminance = (0.2126 * r + 0.7152 * g + 0.0722 * b) / 255;
-        isPlainDark = backgroundImage === "none" && luminance < 0.35;
-      }
-      document.documentElement.style.cssText += `
-        margin:0!important;
-        padding:0!important;
-        width:${width}px!important;
-        height:${height}px!important;
-        overflow:hidden!important;
-      `;
-      document.body.style.cssText += `
-        margin:0!important;
-        padding:0!important;
-        width:${width}px!important;
-        height:${height}px!important;
-        overflow:hidden!important;
-        background:${background}!important;
-      `;
-      window.__scryerHideControlsForCapture?.(document);
-      nodes.forEach((node) => {
-        if (node !== original) {
-          window.__scryerRememberStyle?.(node);
-          node.style.display = "none";
-        }
-      });
-
-      document.getElementById("__scryer_capture_root__")?.remove();
-
-      const root = document.createElement("div");
-      root.id = "__scryer_capture_root__";
-      root.style.setProperty("--scryer-bg", background);
-      root.style.position = "fixed";
-      root.style.inset = "0";
-      root.style.width = `${width}px`;
-      root.style.height = `${height}px`;
-      root.style.overflow = "hidden";
-      root.style.background = background;
-      root.style.isolation = "isolate";
-      root.style.display = "flex";
-      root.style.alignItems = "center";
-      root.style.justifyContent = "center";
-      root.style.zIndex = "2147483647";
-
-      if (isPlainDark) {
-        const grid = document.createElement("div");
-        grid.style.position = "absolute";
-        grid.style.inset = "0";
-        grid.style.pointerEvents = "none";
-        grid.style.opacity = "0.08";
-        grid.style.backgroundImage = "linear-gradient(rgba(255,255,255,0.18) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.18) 1px, transparent 1px)";
-        grid.style.backgroundSize = "48px 48px";
-        grid.style.zIndex = "0";
-        root.appendChild(grid);
-      }
-
-      const clone = original.cloneNode(true);
-      clone.style.width = `${width}px`;
-      clone.style.height = `${height}px`;
-      clone.style.minWidth = `${width}px`;
-      clone.style.minHeight = `${height}px`;
-      clone.style.maxWidth = `${width}px`;
-      clone.style.maxHeight = `${height}px`;
-      clone.style.flex = "0 0 auto";
-      clone.style.margin = "0";
-      clone.style.position = "relative";
-      clone.style.left = "auto";
-      clone.style.right = "auto";
-      clone.style.top = "auto";
-      clone.style.bottom = "auto";
-      clone.style.transform = "none";
-      clone.style.boxSizing = "border-box";
-      const cloneComputed = window.getComputedStyle(original);
-      const cloneHasOwnBackground = cloneComputed.backgroundImage !== "none" ||
-        (cloneComputed.backgroundColor && cloneComputed.backgroundColor !== "rgba(0, 0, 0, 0)" && cloneComputed.backgroundColor !== "transparent");
-      if (!cloneHasOwnBackground) {
-        clone.style.background = background;
-      }
-      const emojiState = window.__scryerPrepareEmojiClone?.(clone, { emojiFallback }) || {
-        twemojiApplied: false,
-        fallbackApplied: false
-      };
-      window.__scryerHideControlsForCapture?.(clone);
-      clone.style.zIndex = "1";
-      clone.style.flexShrink = "0";
-      console.log("HTML Scryer clone forced size", {
-        width,
-        height,
-        originalWidth: getComputedStyle(original).width,
-        cloneWidth: clone.style.width
-      });
-      root.appendChild(clone);
-      document.body.appendChild(root);
-      const safeWidth = width - safePadding * 2;
-      const safeHeight = height - safePadding * 2;
-      const graphics = Array.from(clone.querySelectorAll('svg, canvas, img, .chart, .graph, .diagram, .visual, .timeline, .network, .constellation, [data-scryer-scale="graphic"]'));
-      graphics.forEach((graphic) => {
-        const rect = graphic.getBoundingClientRect();
-        const scale = Math.min(1, safeWidth / Math.max(rect.width, 1), safeHeight / Math.max(rect.height, 1));
-        if (scale < 1) {
-          graphic.style.transformOrigin = "center center";
-          const existingTransform = window.getComputedStyle(graphic).transform;
-          graphic.style.transform = existingTransform && existingTransform !== "none"
-            ? `${existingTransform} scale(${scale})`
-            : `scale(${scale})`;
-        }
-      });
-      document.body.classList.add("__scryer_capturing__");
-      const visibleSlidesSelector = original.matches(".slide") ? ".slide" : selectorValue;
-      return {
-        index: itemIndex,
-        selector: selectorValue,
-        backgroundResolved: background,
-        twemojiApplied: !!emojiState.twemojiApplied,
-        textFallbackApplied: !!emojiState.fallbackApplied,
-        originalBodyChildrenHidden: window.__scryerOriginalBodyChildrenHidden ? window.__scryerOriginalBodyChildrenHidden() : false,
-        visibleCaptureRootsBeforeScreenshot: window.__scryerCountVisibleCaptureRoots ? window.__scryerCountVisibleCaptureRoots() : 0,
-        visibleMatchingSlidesBeforeScreenshot: window.__scryerCountVisibleMatches ? window.__scryerCountVisibleMatches(visibleSlidesSelector) : 0,
-        visualEffects: window.__scryerInspectVisualEffects ? window.__scryerInspectVisualEffects(clone) : null
-      };
+      return window.__scryerPrepareClone(original, width, height, { autoCenter, safePadding, emojiFallback, exportPadding, index: itemIndex });
     }, {
       selector,
       index,
       width: payload.width,
       height: payload.height,
-      emojiFallback: payload.emojiFallback
+      autoCenter: payload.autoCenter,
+      safePadding: payload.safePadding,
+      emojiFallback: payload.emojiFallback,
+      exportPadding
     });
     console.log("[scryer export] selector capture prepared", prepareLog);
+    if (prepareLog?.auditFailures?.length) {
+      throw new Error(`Export audit failed for slide ${index + 1}: ${prepareLog.auditFailures.join(", ")}`);
+    }
     await waitForAssets(page);
     await page.screenshot({
       path: outputPath,
@@ -660,8 +546,8 @@ async function captureElements(page, selector, outputDir, payload) {
       clip: {
         x: 0,
         y: 0,
-        width: payload.width,
-        height: payload.height
+        width: clipWidth,
+        height: clipHeight
       }
     });
     await page.evaluate(() => window.__scryerCleanupCapture && window.__scryerCleanupCapture());
@@ -896,6 +782,445 @@ async function installExportRuntime(page, payload) {
       const bottom = Math.max(...boxes.map((r) => r.bottom)) - slideRect.top;
       return { left, top, right, bottom, width: right - left, height: bottom - top };
     };
+    window.__scryerExportChromeSelectors = {
+      topBar: [
+        '[data-export-chrome="top-bar"]',
+        '.top-bar',
+        '.topbar',
+        '.ticker',
+        '.ticker-bar',
+        '.slide-ticker',
+        '.header-bar'
+      ],
+      footer: [
+        '[data-export-chrome="nav-dots"]',
+        '[data-export-chrome="slide-counter"]',
+        '[data-export-chrome="swipe-hint"]',
+        '.nav-dots',
+        '[id^="dots"]',
+        '[class*="nav-dots"]',
+        '.slide-counter',
+        '[id^="counter"]',
+        '[class*="slide-counter"]',
+        '.swipe-hint',
+        'footer',
+        '.footer',
+        '.slide-footer'
+      ],
+      pinned: [
+        '[data-export-pinned]',
+        '[data-export-pin]',
+        '[data-export-chrome]',
+        '.salary-badge',
+        '.salary-pill',
+        '.salary-chip',
+        '.job-salary',
+        '[class*="salary-badge"]',
+        '[class*="salary-pill"]',
+        '[class*="job-salary"]'
+      ]
+    };
+    window.__scryerExportTitleSelectors = [
+      '.job-title',
+      'h1',
+      '.hero-title',
+      '.slide-title',
+      '[data-export-title]'
+    ];
+    window.__scryerExportBodySelectors = [
+      '.job-description',
+      '.slide-body',
+      '.body-copy',
+      'p',
+      '[data-export-body]'
+    ];
+    window.__scryerExportComplexSelectors = [
+      'table',
+      'canvas',
+      'video',
+      'iframe',
+      'svg[data-chart]',
+      '.dashboard',
+      '.dashboard-grid',
+      '.analytics',
+      '.timeline',
+      '.timeline-track',
+      '.grid-layout',
+      '.grid',
+      '.card-grid',
+      '.cards',
+      '.multi-card',
+      '.metrics',
+      '.stats-grid',
+      '.comparison-grid',
+      '.visual-composition',
+      '[data-export-preserve-layout]'
+    ];
+    window.__scryerRelativeRect = function(el, rootRect) {
+      if (!el) return null;
+      const rect = el.getBoundingClientRect();
+      return {
+        left: rect.left - rootRect.left,
+        top: rect.top - rootRect.top,
+        right: rect.right - rootRect.left,
+        bottom: rect.bottom - rootRect.top,
+        width: rect.width,
+        height: rect.height
+      };
+    };
+    window.__scryerUnionRects = function(rects) {
+      const valid = rects.filter((rect) => rect && rect.width > 1 && rect.height > 1);
+      if (!valid.length) return null;
+      const left = Math.min(...valid.map((rect) => rect.left));
+      const top = Math.min(...valid.map((rect) => rect.top));
+      const right = Math.max(...valid.map((rect) => rect.right));
+      const bottom = Math.max(...valid.map((rect) => rect.bottom));
+      return {
+        left,
+        top,
+        right,
+        bottom,
+        width: right - left,
+        height: bottom - top
+      };
+    };
+    window.__scryerNormalizeTextAlign = function(value) {
+      if (!value) return "left";
+      const normalized = String(value).toLowerCase();
+      if (normalized === "center") return "center";
+      if (normalized === "right" || normalized === "end") return "right";
+      return "left";
+    };
+    window.__scryerScaleOriginForAlign = function(align) {
+      if (align === "center") return "center top";
+      if (align === "right") return "right top";
+      return "left top";
+    };
+    window.__scryerUniqueElements = function(elements) {
+      const seen = new Set();
+      return elements.filter((el) => {
+        if (!el || seen.has(el)) return false;
+        seen.add(el);
+        return true;
+      });
+    };
+    window.__scryerCompareDocumentOrder = function(a, b) {
+      if (a === b) return 0;
+      const position = a.compareDocumentPosition(b);
+      if (position & Node.DOCUMENT_POSITION_FOLLOWING) return -1;
+      if (position & Node.DOCUMENT_POSITION_PRECEDING) return 1;
+      return 0;
+    };
+    window.__scryerCollectChromeNodes = function(slide) {
+      const selector = [
+        ...window.__scryerExportChromeSelectors.topBar,
+        ...window.__scryerExportChromeSelectors.footer,
+        ...window.__scryerExportChromeSelectors.pinned
+      ].join(", ");
+      return window.__scryerUniqueElements(Array.from(slide.querySelectorAll(selector)));
+    };
+    window.__scryerIsPinnedChromeNode = function(node, slide) {
+      if (!node || !(node instanceof Element)) return false;
+      if (!slide || !slide.contains(node)) return false;
+      const selector = [
+        ...window.__scryerExportChromeSelectors.topBar,
+        ...window.__scryerExportChromeSelectors.footer,
+        ...window.__scryerExportChromeSelectors.pinned
+      ].join(", ");
+      return !!node.closest(selector);
+    };
+    window.__scryerFindFirstMatching = function(slide, selectors) {
+      for (const selector of selectors) {
+        const match = slide.querySelector(selector);
+        if (match && !window.__scryerIsPinnedChromeNode(match, slide)) return match;
+      }
+      return null;
+    };
+    window.__scryerCollectBodyNodes = function(slide, titleNode) {
+      const bodyNodes = [];
+      for (const selector of window.__scryerExportBodySelectors) {
+        slide.querySelectorAll(selector).forEach((node) => {
+          if (!(node instanceof Element)) return;
+          if (node === titleNode || node.contains(titleNode) || titleNode?.contains(node)) return;
+          if (window.__scryerIsPinnedChromeNode(node, slide)) return;
+          if (window.__scryerIsMeaningful(node, slide)) bodyNodes.push(node);
+        });
+      }
+      const ordered = window.__scryerUniqueElements(bodyNodes).sort(window.__scryerCompareDocumentOrder);
+      if (ordered.length) return ordered;
+
+      const fallback = [];
+      slide.querySelectorAll("*").forEach((node) => {
+        if (!(node instanceof Element)) return;
+        if (node === titleNode || node.contains(titleNode) || titleNode?.contains(node)) return;
+        if (window.__scryerIsPinnedChromeNode(node, slide)) return;
+        if (!window.__scryerIsMeaningful(node, slide)) return;
+        const text = (node.innerText || node.textContent || "").trim();
+        if (!text) return;
+        if (node.children.length && Array.from(node.children).some((child) => (child.innerText || child.textContent || "").trim())) return;
+        fallback.push(node);
+      });
+      return window.__scryerUniqueElements(fallback).sort(window.__scryerCompareDocumentOrder);
+    };
+    window.__scryerDetectTextSlideType = function(slide) {
+      const title = window.__scryerFindFirstMatching(slide, window.__scryerExportTitleSelectors);
+      const bodyNodes = window.__scryerCollectBodyNodes(slide, title);
+      const chromeNodes = window.__scryerCollectChromeNodes(slide);
+      const chromeSet = new Set(chromeNodes);
+      const meaningfulNodes = Array.from(slide.querySelectorAll("*")).filter((node) => {
+        if (!(node instanceof Element)) return false;
+        if (chromeSet.has(node)) return false;
+        if (window.__scryerIsPinnedChromeNode(node, slide)) return false;
+        return window.__scryerIsMeaningful(node, slide);
+      });
+      const complexSelector = window.__scryerExportComplexSelectors.join(", ");
+      const hasComplexSelector = !!slide.querySelector(complexSelector);
+      const mediaNodes = meaningfulNodes.filter((node) => ["IMG", "CANVAS", "VIDEO", "SVG"].includes(node.tagName));
+      const largeVisualNodes = meaningfulNodes.filter((node) => {
+        const text = (node.innerText || node.textContent || "").trim();
+        const isVisualTag = ["IMG", "CANVAS", "VIDEO", "SVG"].includes(node.tagName);
+        const looksVisual = isVisualTag || node.matches(".chart, .graph, .diagram, .visual, .timeline, .network, .constellation, .panel, .card, .stat");
+        if (!looksVisual && text) return false;
+        const rect = node.getBoundingClientRect();
+        return rect.width * rect.height > (slide.getBoundingClientRect().width * slide.getBoundingClientRect().height * 0.12);
+      });
+      const longNestedBlocks = meaningfulNodes.filter((node) => node.children.length >= 3).length;
+      const textLength = meaningfulNodes.reduce((sum, node) => sum + ((node.innerText || node.textContent || "").trim().length), 0);
+      const bodyTextLength = bodyNodes.reduce((sum, node) => sum + ((node.innerText || node.textContent || "").trim().length), 0);
+      const hasTitle = !!title;
+      const hasBody = bodyNodes.length > 0;
+      const reason = [];
+      let simple = true;
+      if (!hasTitle || !hasBody) {
+        simple = false;
+        reason.push("missing-title-or-body");
+      }
+      if (hasComplexSelector) {
+        simple = false;
+        reason.push("complex-selector");
+      }
+      if (mediaNodes.length > 2 || largeVisualNodes.length > 2) {
+        simple = false;
+        reason.push("heavy-visual-composition");
+      }
+      if (meaningfulNodes.length > 12 || longNestedBlocks > 5) {
+        simple = false;
+        reason.push("too-many-meaningful-blocks");
+      }
+      if (bodyNodes.length > 6 || textLength < 20 || bodyTextLength < 20) {
+        simple = false;
+        reason.push("insufficient-simple-text-shape");
+      }
+      return {
+        simple,
+        title,
+        bodyNodes,
+        chromeNodes,
+        meaningfulCount: meaningfulNodes.length,
+        mediaCount: mediaNodes.length,
+        largeVisualCount: largeVisualNodes.length,
+        bodyCount: bodyNodes.length,
+        reason: simple ? ["simple-text-slide"] : reason
+      };
+    };
+    window.__scryerMeasureNodeUnion = function(node, rootRect) {
+      if (!node) return null;
+      const elements = [node, ...Array.from(node.querySelectorAll("*"))];
+      return window.__scryerUnionRects(elements.map((el) => window.__scryerRelativeRect(el, rootRect)));
+    };
+    window.__scryerMeasureGroup = function(group, rootRect) {
+      if (!group || !group.shell || !group.inner) return null;
+      const rect = window.__scryerMeasureNodeUnion(group.inner, rootRect);
+      if (!rect) {
+        return {
+          width: 0,
+          height: 0,
+          left: 0,
+          top: 0,
+          right: 0,
+          bottom: 0
+        };
+      }
+      return rect;
+    };
+    window.__scryerApplyScaledGroup = function(group, scale, metrics) {
+      group.scale = Math.max(0.35, Math.min(scale || 1, 1));
+      group.inner.style.transformOrigin = window.__scryerScaleOriginForAlign(group.align);
+      group.inner.style.transform = `scale(${group.scale})`;
+      group.shell.style.height = `${Math.max(metrics.height * group.scale, 1)}px`;
+    };
+    window.__scryerCreateGroupShell = function(doc, role, align, maxWidth) {
+      const shell = doc.createElement("div");
+      shell.dataset.scryerReflowRole = role;
+      shell.style.position = "relative";
+      shell.style.width = "100%";
+      shell.style.maxWidth = `${maxWidth}px`;
+      shell.style.overflow = "visible";
+      shell.style.textAlign = align;
+      const inner = doc.createElement("div");
+      inner.dataset.scryerReflowInner = role;
+      inner.style.position = "relative";
+      inner.style.width = "100%";
+      inner.style.maxWidth = `${maxWidth}px`;
+      inner.style.margin = align === "center" ? "0 auto" : align === "right" ? "0 0 0 auto" : "0";
+      inner.style.transformOrigin = window.__scryerScaleOriginForAlign(align);
+      shell.appendChild(inner);
+      return { shell, inner, align, scale: 1 };
+    };
+    window.__scryerAuditExportSlide = function(slide, audit) {
+      const failures = [];
+      const slideRect = slide.getBoundingClientRect();
+      const topBars = slide.querySelectorAll('[data-export-chrome="top-bar"], .top-bar, .topbar, .ticker, .ticker-bar, .slide-ticker, .header-bar').length;
+      const navDots = slide.querySelectorAll('[data-export-chrome="nav-dots"], .nav-dots, [id^="dots"], [class*="nav-dots"]').length;
+      const counters = slide.querySelectorAll('[data-export-chrome="slide-counter"], .slide-counter, [id^="counter"], [class*="slide-counter"]').length;
+      if (topBars > 1) failures.push(`duplicate-top-bars:${topBars}`);
+      if (navDots > 1) failures.push(`duplicate-nav-dots:${navDots}`);
+      if (counters > 1) failures.push(`duplicate-counters:${counters}`);
+      if (audit.reflowApplied && audit.classification !== "simple") {
+        failures.push("preserved-layout-accidentally-reflowed");
+      }
+      if (audit.reflowApplied && audit.clusterRect) {
+        const safe = audit.safeZone;
+        if (audit.clusterRect.top < safe.top - 1 || audit.clusterRect.bottom > safe.bottom + 1) {
+          failures.push("content-cluster-outside-safe-zone");
+        }
+        if (audit.clusterRect.left < safe.left - 1 || audit.clusterRect.right > safe.right + 1) {
+          failures.push("content-cluster-outside-safe-width");
+        }
+        if (audit.chromeBounds?.top && audit.clusterRect.top < audit.chromeBounds.top.bottom - 1) {
+          failures.push("content-cluster-overlaps-top-chrome");
+        }
+        if (audit.chromeBounds?.bottom && audit.clusterRect.bottom > audit.chromeBounds.bottom.top + 1) {
+          failures.push("content-cluster-overlaps-footer-nav");
+        }
+        if (audit.titleRect && (audit.titleRect.top < 0 || audit.titleRect.bottom > slideRect.height)) {
+          failures.push("title-content-clipped");
+        }
+        if (audit.bodyRect && (audit.bodyRect.top < 0 || audit.bodyRect.bottom > slideRect.height)) {
+          failures.push("body-content-clipped");
+        }
+      }
+      return failures;
+    };
+    window.__scryerApplyContentAwareReflow = function(slide, inner, metrics) {
+      const analysis = window.__scryerDetectTextSlideType(slide);
+      const audit = {
+        classification: analysis.simple ? "simple" : "preserved",
+        reason: analysis.reason.join(","),
+        reflowApplied: false,
+        clusterRect: null,
+        titleRect: null,
+        bodyRect: null,
+        chromeBounds: null,
+        safeZone: {
+          left: metrics.safePadding,
+          right: metrics.width - metrics.safePadding,
+          top: metrics.safePadding,
+          bottom: metrics.height - metrics.safePadding
+        }
+      };
+      if (!analysis.simple) {
+        audit.failures = window.__scryerAuditExportSlide(slide, audit);
+        return audit;
+      }
+
+      const slideRect = slide.getBoundingClientRect();
+      const chromeRects = analysis.chromeNodes.map((node) => window.__scryerRelativeRect(node, slideRect)).filter(Boolean);
+      const topChromeRects = chromeRects.filter((rect) => rect.top < metrics.height * 0.35);
+      const bottomChromeRects = chromeRects.filter((rect) => rect.bottom > metrics.height * 0.6);
+      const topChromeBounds = window.__scryerUnionRects(topChromeRects);
+      const bottomChromeBounds = window.__scryerUnionRects(bottomChromeRects);
+      const safeTop = Math.max(metrics.safePadding, topChromeBounds ? topChromeBounds.bottom + 28 : metrics.safePadding);
+      const safeBottom = Math.min(metrics.height - metrics.safePadding, bottomChromeBounds ? bottomChromeBounds.top - 28 : metrics.height - metrics.safePadding);
+      const safeLeft = metrics.safePadding;
+      const safeRight = metrics.width - metrics.safePadding;
+      const safeWidth = Math.max(safeRight - safeLeft, 1);
+      const safeHeight = Math.max(safeBottom - safeTop, 1);
+      audit.chromeBounds = {
+        top: topChromeBounds,
+        bottom: bottomChromeBounds
+      };
+      audit.safeZone = {
+        left: safeLeft,
+        right: safeRight,
+        top: safeTop,
+        bottom: safeBottom
+      };
+
+      const titleAlign = window.__scryerNormalizeTextAlign(getComputedStyle(analysis.title).textAlign);
+      const bodyAlign = window.__scryerNormalizeTextAlign(getComputedStyle(analysis.bodyNodes[0]).textAlign || titleAlign);
+      const clusterAlign = titleAlign === bodyAlign ? titleAlign : titleAlign;
+      const cluster = document.createElement("div");
+      cluster.id = "__scryer_reflow_cluster__";
+      cluster.dataset.scryerExportMode = "content-aware-reflow";
+      cluster.style.position = "absolute";
+      cluster.style.left = `${safeLeft}px`;
+      cluster.style.width = `${safeWidth}px`;
+      cluster.style.maxWidth = `${safeWidth}px`;
+      cluster.style.display = "flex";
+      cluster.style.flexDirection = "column";
+      cluster.style.gap = `${Math.max(Math.round(metrics.height * 0.022), 18)}px`;
+      cluster.style.zIndex = "50";
+      cluster.style.pointerEvents = "none";
+      cluster.style.textAlign = clusterAlign;
+
+      const titleGroup = window.__scryerCreateGroupShell(document, "title", titleAlign, safeWidth);
+      const bodyGroup = window.__scryerCreateGroupShell(document, "body", bodyAlign, safeWidth);
+      cluster.appendChild(titleGroup.shell);
+      cluster.appendChild(bodyGroup.shell);
+      inner.appendChild(cluster);
+
+      titleGroup.inner.appendChild(analysis.title);
+      analysis.bodyNodes.forEach((node) => bodyGroup.inner.appendChild(node));
+
+      const titleMetrics = window.__scryerMeasureGroup(titleGroup, slideRect);
+      const bodyMetrics = window.__scryerMeasureGroup(bodyGroup, slideRect);
+      const widthScaleTitle = titleMetrics.width > 0 ? Math.min(1, safeWidth / titleMetrics.width) : 1;
+      const widthScaleBody = bodyMetrics.width > 0 ? Math.min(1, safeWidth / bodyMetrics.width) : 1;
+      let titleScale = widthScaleTitle;
+      let bodyScale = widthScaleBody;
+      const gap = Math.max(Math.round(metrics.height * 0.022), 18);
+      let clusterHeight = titleMetrics.height * titleScale + bodyMetrics.height * bodyScale + gap;
+      if (clusterHeight > safeHeight && bodyMetrics.height > 0) {
+        const remaining = Math.max(safeHeight - titleMetrics.height * titleScale - gap, safeHeight * 0.24);
+        bodyScale = Math.min(bodyScale, remaining / bodyMetrics.height);
+      }
+      clusterHeight = titleMetrics.height * titleScale + bodyMetrics.height * bodyScale + gap;
+      if (clusterHeight > safeHeight && titleMetrics.height > 0) {
+        const remaining = Math.max(safeHeight - bodyMetrics.height * bodyScale - gap, safeHeight * 0.22);
+        titleScale = Math.min(titleScale, remaining / titleMetrics.height);
+      }
+      clusterHeight = titleMetrics.height * titleScale + bodyMetrics.height * bodyScale + gap;
+      if (clusterHeight > safeHeight) {
+        const ratio = safeHeight / Math.max(clusterHeight, 1);
+        titleScale *= ratio;
+        bodyScale *= ratio;
+      }
+
+      window.__scryerApplyScaledGroup(titleGroup, titleScale, titleMetrics);
+      window.__scryerApplyScaledGroup(bodyGroup, bodyScale, bodyMetrics);
+
+      const measuredCluster = window.__scryerMeasureNodeUnion(cluster, slideRect);
+      const finalClusterHeight = measuredCluster?.height || Math.max(
+        titleMetrics.height * titleGroup.scale + bodyMetrics.height * bodyGroup.scale + gap,
+        1
+      );
+      const focusCenter = metrics.height * 0.485;
+      const desiredTop = focusCenter - finalClusterHeight / 2;
+      const clampedTop = Math.min(Math.max(desiredTop, safeTop), Math.max(safeTop, safeBottom - finalClusterHeight));
+      cluster.style.top = `${clampedTop}px`;
+      cluster.style.justifyItems = clusterAlign;
+
+      audit.reflowApplied = true;
+      audit.titleRect = window.__scryerMeasureNodeUnion(titleGroup.shell, slideRect);
+      audit.bodyRect = window.__scryerMeasureNodeUnion(bodyGroup.shell, slideRect);
+      audit.clusterRect = window.__scryerMeasureNodeUnion(cluster, slideRect);
+      audit.titleScale = Number(titleGroup.scale.toFixed(4));
+      audit.bodyScale = Number(bodyGroup.scale.toFixed(4));
+      audit.align = clusterAlign;
+      audit.failures = window.__scryerAuditExportSlide(slide, audit);
+      return audit;
+    };
     window.__scryerPrepareClone = function(original, width, height, options) {
       window.__scryerBeginCaptureState();
       document.getElementById("__scryer_capture_viewport__")?.remove();
@@ -981,7 +1306,12 @@ async function installExportRuntime(page, payload) {
       const safePadding = Number.isFinite(options.safePadding)
         ? options.safePadding
         : Math.min(Math.round(Math.min(width, height) * 0.09), height >= 1800 ? 120 : height > width ? 96 : 72);
-      if (options.autoCenter !== false) {
+      const reflowAudit = window.__scryerApplyContentAwareReflow(clone, inner, {
+        width,
+        height,
+        safePadding
+      });
+      if (!reflowAudit.reflowApplied && options.autoCenter !== false) {
         const bounds1 = window.__scryerMeaningfulBounds(clone);
         const safeW = Math.max(width - safePadding * 2, 1);
         const safeH = Math.max(height - safePadding * 2, 1);
@@ -1006,7 +1336,17 @@ async function installExportRuntime(page, payload) {
           inner.style.transform = `translate(${tx + adjustX}px, ${ty + adjustY}px) scale(${scale})`;
         }
       }
-      return { background: bg };
+      return {
+        background: bg,
+        mode: reflowAudit.reflowApplied ? "reflowed" : "preserved",
+        classification: reflowAudit.classification,
+        reason: reflowAudit.reason,
+        titleScale: reflowAudit.titleScale || null,
+        bodyScale: reflowAudit.bodyScale || null,
+        align: reflowAudit.align || null,
+        safeZone: reflowAudit.safeZone,
+        auditFailures: reflowAudit.failures || []
+      };
     };
     window.__scryerCleanupCapture = function() {
       document.getElementById("__scryer_capture_root__")?.remove();
@@ -1035,11 +1375,11 @@ async function captureOne(page, outputPath, payload, selector, index) {
     height: clipHeight,
     deviceScaleFactor: 1
   });
-  await page.evaluate(({ selector, index, width, height, autoCenter, safePadding, emojiFallback, exportPadding }) => {
+  const prepared = await page.evaluate(({ selector, index, width, height, autoCenter, safePadding, emojiFallback, exportPadding }) => {
     const nodes = selector === "body" ? [document.body] : Array.from(document.querySelectorAll(selector));
     const original = nodes[index];
     if (!original) throw new Error(`No capture target found for ${selector} at index ${index}.`);
-    window.__scryerPrepareClone(original, width, height, { autoCenter, safePadding, emojiFallback, exportPadding, index });
+    return window.__scryerPrepareClone(original, width, height, { autoCenter, safePadding, emojiFallback, exportPadding, index });
   }, {
     selector,
     index,
@@ -1050,6 +1390,21 @@ async function captureOne(page, outputPath, payload, selector, index) {
     emojiFallback: payload.emojiFallback,
     exportPadding
   });
+  console.log("[scryer export] clone capture prepared", {
+    slide: index + 1,
+    selector,
+    mode: prepared?.mode || "unknown",
+    classification: prepared?.classification || "unknown",
+    reason: prepared?.reason || "unknown",
+    titleScale: prepared?.titleScale,
+    bodyScale: prepared?.bodyScale,
+    align: prepared?.align,
+    safeZone: prepared?.safeZone,
+    auditFailures: prepared?.auditFailures || []
+  });
+  if (prepared?.auditFailures?.length) {
+    throw new Error(`Export audit failed for slide ${index + 1}: ${prepared.auditFailures.join(", ")}`);
+  }
   await page.evaluate(() => document.fonts && document.fonts.ready ? document.fonts.ready : Promise.resolve()).catch(() => {});
   await new Promise((resolve) => setTimeout(resolve, 900));
   await page.screenshot({

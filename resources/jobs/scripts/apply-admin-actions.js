@@ -1,4 +1,5 @@
 const path = require("path");
+const jobNormalizer = require("./job-normalizer");
 const {
   ADMIN_JOB_ACTIONS_SNAPSHOT_FILE,
   PENDING_SYNCED_FILE,
@@ -27,7 +28,7 @@ const {
   normalizeDescription,
   resetParserCleanupStats,
   stringifySafe
-} = require("./job-normalizer");
+} = jobNormalizer;
 const {
   loadBackendConfig,
   readAdminActionSnapshot,
@@ -43,6 +44,29 @@ const { buildPagesForSelectedJobs, buildPagesFromJobs } = require("./generate-jo
 const { buildPublicJobsFromRecords, syncPublicJobsFromRecords } = require("./public-jobs");
 const { getCanonicalSnippet, isJunkDescription } = require("./public-data-guard");
 const { buildValidationReport } = require("./validate-public-data");
+
+function assertSelectedPublishSanitizerHelpers() {
+  const requiredHelpers = {
+    buildDescriptionSnippet,
+    buildFallbackDescription,
+    hasMalformedDescriptionTemplate,
+    hasUsableDescription,
+    normalizeDescription,
+    stringifySafe
+  };
+
+  const missing = Object.entries(requiredHelpers)
+    .filter(([, value]) => typeof value !== "function")
+    .map(([name]) => name);
+
+  if (missing.length) {
+    throw new TypeError(
+      `Selected publish sanitizer helpers are unavailable: ${missing.join(", ")}. Check job-normalizer exports/imports.`
+    );
+  }
+}
+
+assertSelectedPublishSanitizerHelpers();
 
 function buildPublishedDisplay(job) {
   return {
@@ -1401,3 +1425,17 @@ if (require.main === module) {
     process.exitCode = 1;
   });
 }
+
+module.exports = {
+  main,
+  assertSelectedPublishSanitizerHelpers,
+  selectedPublishSanitizerHelpers: {
+    buildDescriptionSnippet,
+    buildFallbackDescription,
+    hasMalformedDescriptionTemplate,
+    hasUsableDescription,
+    normalizeDescription,
+    sanitizePublishSelectedJob,
+    stringifySafe
+  }
+};

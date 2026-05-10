@@ -1,11 +1,12 @@
 const fs = require("fs/promises");
 const path = require("path");
 const { buildPublicJobsFromRecords } = require("./public-jobs");
-const { CANONICAL_SPECIALIZATIONS, hasMalformedDescriptionTemplate, hasUsableDescription } = require("./job-normalizer");
+const { CANONICAL_SPECIALIZATIONS, hasUsableDescription } = require("./job-normalizer");
 const { buildJobPagePathMap, cleanVisibleText } = require("./job-page-paths");
 const { readJobs, readJson, readPendingSyncedJobs, readSources } = require("./job-utils");
 const { readJobRecords, TALENT_PROFILES_FILE, EMPLOYERS_FILE } = require("./public-records");
 const { readSourceHealthSnapshot } = require("./source-health-store");
+const { hasMalformedDescriptionTemplateSafe } = require("./malformed-description-helper");
 
 const ROOT = path.resolve(__dirname, "..");
 const PAGES_DIR = path.join(ROOT, "pages");
@@ -286,36 +287,50 @@ function countBy(items, keyFn) {
 }
 
 async function buildValidationReport(options = {}) {
-  const [records, jobs, pending, sources, pageFiles, sourceHealth, canonicalRenderFiles, talentProfiles, employers] = await Promise.all([
-    readJobRecords(),
-    readJobs(),
-    readPendingSyncedJobs(),
-    readSources(),
-    fs.readdir(PAGES_DIR).catch(() => []),
-    readSourceHealthSnapshot(),
-    Promise.all(
-      CANONICAL_RENDER_TARGETS.map(async (filePath) => ({
-        filePath,
-        contents: await fs.readFile(filePath, "utf8").catch(() => "")
-      }))
-    ),
-    readJson(TALENT_PROFILES_FILE, []),
-    readJson(EMPLOYERS_FILE, [])
+  const [
+    records,
+    jobs,
+    pending,
+    sources,
+    pageFiles,
+    sourceHealth,
+    canonicalRenderFiles,
+    talentProfiles,
+    employers
+  ] = await Promise.all([
+    options.records !== undefined ? options.records : readJobRecords(),
+    options.jobs !== undefined ? options.jobs : readJobs(),
+    options.pending !== undefined ? options.pending : readPendingSyncedJobs(),
+    options.sources !== undefined ? options.sources : readSources(),
+    options.pageFiles !== undefined ? options.pageFiles : fs.readdir(PAGES_DIR).catch(() => []),
+    options.sourceHealth !== undefined ? options.sourceHealth : readSourceHealthSnapshot(),
+    options.canonicalRenderFiles !== undefined
+      ? options.canonicalRenderFiles
+      : Promise.all(
+        CANONICAL_RENDER_TARGETS.map(async (filePath) => ({
+          filePath,
+          contents: await fs.readFile(filePath, "utf8").catch(() => "")
+        }))
+      ),
+    options.talentProfiles !== undefined ? options.talentProfiles : readJson(TALENT_PROFILES_FILE, []),
+    options.employers !== undefined ? options.employers : readJson(EMPLOYERS_FILE, [])
   ]);
   const publicJobs = buildPublicJobsFromRecords(records);
   const derivedJobs = jobs.map((job) => ({ ...job }));
   const { map, collisions } = buildJobPagePathMap(derivedJobs);
   const htmlPageFiles = pageFiles.filter((file) => file.endsWith(".html"));
   const pageFileSet = new Set(htmlPageFiles.map((file) => `./pages/${file}`));
-  const pageContentsByPath = new Map(
-    await Promise.all(
-      htmlPageFiles.map(async (file) => {
-        const pagePath = `./pages/${file}`;
-        const contents = await fs.readFile(path.join(PAGES_DIR, file), "utf8").catch(() => "");
-        return [pagePath, contents];
-      })
-    )
-  );
+  const pageContentsByPath = options.pageContentsByPath instanceof Map
+    ? options.pageContentsByPath
+    : new Map(
+      await Promise.all(
+        htmlPageFiles.map(async (file) => {
+          const pagePath = `./pages/${file}`;
+          const contents = await fs.readFile(path.join(PAGES_DIR, file), "utf8").catch(() => "");
+          return [pagePath, contents];
+        })
+      )
+    );
   const expectedById = new Map(publicJobs.map((job) => [String(job.id || ""), job]));
   const jobsById = new Map(jobs.map((job) => [String(job.id || ""), job]));
 
@@ -577,10 +592,10 @@ async function buildValidationReport(options = {}) {
       summary: job.summary
     });
     const malformedDescription =
-      hasMalformedDescriptionTemplate(canonicalDescription) ||
-      hasMalformedDescriptionTemplate(snippet) ||
-      hasMalformedDescriptionTemplate(String(job.summary || ""));
-    const malformedPageDescription = pageContents && hasMalformedDescriptionTemplate(pageContents);
+      hasMalformedDescriptionTemplateSafe(canonicalDescription) ||
+      hasMalformedDescriptionTemplateSafe(snippet) ||
+      hasMalformedDescriptionTemplateSafe(String(job.summary || ""));
+    const malformedPageDescription = pageContents && hasMalformedDescriptionTemplateSafe(pageContents);
     const lowercaseSentenceDescription =
       startsWithLowercaseSentenceFragment(canonicalDescription) ||
       startsWithLowercaseSentenceFragment(snippet) ||

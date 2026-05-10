@@ -1,5 +1,4 @@
 const path = require("path");
-const normalizer = require("./job-normalizer");
 const {
   buildDescriptionSnippet,
   buildFallbackDescription,
@@ -9,7 +8,7 @@ const {
   normalizeDescription,
   resetParserCleanupStats,
   stringifySafe
-} = normalizer;
+} = require("./job-normalizer");
 const {
   ADMIN_JOB_ACTIONS_SNAPSHOT_FILE,
   PENDING_SYNCED_FILE,
@@ -44,25 +43,17 @@ const { buildJobPagePathMap } = require("./job-page-paths");
 const { buildPublicJobsFromRecords, syncPublicJobsFromRecords } = require("./public-jobs");
 const { getCanonicalSnippet, isJunkDescription } = require("./public-data-guard");
 const {
+  hasMalformedDescriptionTemplateSafe,
+  importedHasMalformedDescriptionTemplate
+} = require("./malformed-description-helper");
+const {
   buildValidationReport,
   hasInvalidPublicTitle,
   isValidPayDisplay
 } = require("./validate-public-data");
 
-const importedHasMalformedDescriptionTemplate = normalizer.hasMalformedDescriptionTemplate;
-
-function fallbackHasMalformedDescriptionTemplate(text) {
-  const value = String(text || "");
-  return /\bThe\s+(will|is|are|,|\.)\b/i.test(value)
-    || /\bThe\s{2,}\w+/i.test(value)
-    || /\bThe\s*<\/[^>]+>\s*will\b/i.test(value);
-}
-
 function safeHasMalformedDescriptionTemplate(text) {
-  if (typeof importedHasMalformedDescriptionTemplate === "function") {
-    return importedHasMalformedDescriptionTemplate(text);
-  }
-  return fallbackHasMalformedDescriptionTemplate(text);
+  return hasMalformedDescriptionTemplateSafe(text);
 }
 
 console.log("[jobs:apply-admin-actions] malformed helper type=", typeof importedHasMalformedDescriptionTemplate);
@@ -71,7 +62,7 @@ function assertSelectedPublishSanitizerHelpers() {
   const requiredHelpers = {
     buildDescriptionSnippet,
     buildFallbackDescription,
-    hasMalformedDescriptionTemplate: importedHasMalformedDescriptionTemplate,
+    hasMalformedDescriptionTemplate: safeHasMalformedDescriptionTemplate,
     hasUsableDescription,
     normalizeDescription,
     stringifySafe
@@ -447,6 +438,19 @@ function removePendingByIds(pendingJobs, ids) {
   return pendingJobs.filter((job) => !idSet.has(String(job.id)));
 }
 
+function upsertPendingJob(pendingJobs, job) {
+  const id = String(job?.id || "").trim();
+  if (!id) return Array.isArray(pendingJobs) ? pendingJobs : [];
+  const list = Array.isArray(pendingJobs) ? [...pendingJobs] : [];
+  const index = list.findIndex((item) => String(item?.id || "") === id);
+  if (index >= 0) {
+    list[index] = job;
+  } else {
+    list.push(job);
+  }
+  return list;
+}
+
 function applyPendingJobMutations(pendingJobs, ids, mutator) {
   const idSet = new Set(ids.map(String));
   return pendingJobs.map((job) => (idSet.has(String(job.id)) ? mutator(job) : job));
@@ -761,12 +765,16 @@ function appendUniqueAdminNote(existing, additions = []) {
   return lines.join("\n");
 }
 
+function buildBlockedPublishWarning(reasons = []) {
+  return `Publish blocked during admin publish_selected: ${reasons.join(", ") || "description/snippet could not be trusted after repair"}`;
+}
+
 function markPendingJobBlocked(job = {}, reasons = []) {
   const blockedReasons = Array.from(new Set([]
     .concat(Array.isArray(job.review_flags) ? job.review_flags : [])
     .concat(["publish_blocked", "malformed_description", "needs_manual_cleanup"])
   ));
-  const warningText = `Publish blocked during admin publish_selected: ${reasons.join(", ") || "description/snippet could not be trusted after repair"}`;
+  const warningText = buildBlockedPublishWarning(reasons);
   return {
     ...job,
     review_flags: blockedReasons,
@@ -775,6 +783,78 @@ function markPendingJobBlocked(job = {}, reasons = []) {
     triage_bucket: "needs_cleanup",
     triage_reason: warningText
   };
+}
+
+function applyBlockedPublishOverride(overrides, jobId, reasons = []) {
+  const overrideKey = String(jobId || "");
+  if (!overrideKey) return;
+  const existing = overrides.jobs[overrideKey] || {};
+  const warningText = buildBlockedPublishWarning(reasons);
+  overrides.jobs[overrideKey] = {
+    ...existing,
+    review_flags: Array.from(new Set([]
+      .concat(Array.isArray(existing.review_flags) ? existing.review_flags : [])
+      .concat(["publish_blocked", "malformed_description", "needs_manual_cleanup"])
+    )),
+    parser_warning: appendUniqueAdminNote(existing.parser_warning, [warningText]),
+    admin_note: appendUniqueAdminNote(existing.admin_note, [warningText]),
+    triage_bucket: "needs_cleanup",
+    triage_reason: warningText
+  };
+}
+
+function updatePublishActionResult(action, source, stats, actionResults) {
+  const detailPublished = `published=${stats.publishedCount}`;
+  const detailBlocked = `blocked=${stats.blockedCount}`;
+  if (stats.publishedCount > 0 && stats.blockedCount > 0) {
+    actionResults[action.id] = buildActionResult("partially_applied", `${detailPublished};${detailBlocked}`);
+    logActionOutcome(action, source, "partially_applied", `${detailPublished};${detailBlocked}`);
+  } else if (stats.publishedCount > 0) {
+    actionResults[action.id] = buildActionResult("applied", detailPublished);
+    logActionOutcome(action, source, "applied", detailPublished);
+  } else if (stats.blockedCount > 0) {
+    actionResults[action.id] = buildActionResult("blocked", detailBlocked);
+    logActionOutcome(action, source, "blocked", detailBlocked);
+  } else if (stats.staleCount > 0) {
+    actionResults[action.id] = buildActionResult("skipped_stale", `stale=${stats.staleCount}`);
+    logActionOutcome(action, source, "skipped_stale", `newer archived decision exists stale=${stats.staleCount}`);
+  } else if (stats.alreadyPublishedCount > 0) {
+    actionResults[action.id] = buildActionResult("already_published", `already_published=${stats.alreadyPublishedCount}`);
+    logActionOutcome(action, source, "skipped_newer_decision", `already_published=${stats.alreadyPublishedCount}`);
+  } else if (stats.duplicateCount > 0) {
+    actionResults[action.id] = buildActionResult("ignored_duplicate", `duplicates=${stats.duplicateCount}`);
+    logActionOutcome(action, source, "skipped_stale", `duplicates=${stats.duplicateCount}`);
+  } else {
+    actionResults[action.id] = buildActionResult("ignored_duplicate", "no publishable jobs found");
+    logActionOutcome(action, source, "skipped_stale", "no publishable jobs found");
+  }
+}
+
+function collectRecoverableSelectedValidationReasons(validation = {}, publishedSelectedJobsById = new Map()) {
+  const reasonsById = new Map();
+  const collect = (items = [], reasonSelector) => {
+    (Array.isArray(items) ? items : []).forEach((item) => {
+      const id = String(item?.id || "").trim();
+      if (!id || !publishedSelectedJobsById.has(id)) return;
+      const reason = stringifySafe(typeof reasonSelector === "function" ? reasonSelector(item) : reasonSelector);
+      if (!reason) return;
+      if (!reasonsById.has(id)) reasonsById.set(id, new Set());
+      reasonsById.get(id).add(reason);
+    });
+  };
+
+  collect(validation?.samples?.malformed_description_templates, "malformed_description_template");
+  collect(validation?.samples?.lowercase_sentence_descriptions, "lowercase_sentence_description");
+  collect(validation?.samples?.invalid_snippet, "invalid_snippet");
+  collect(validation?.samples?.missing_canonical_description, "missing_canonical_description");
+  collect(validation?.samples?.invalid_title, "invalid_public_title");
+  collect(validation?.samples?.invalid_pay, "invalid_public_pay");
+  collect(validation?.samples?.hard_validation_failures, (item) => item?.reason || "hard_validation_failure");
+
+  return Array.from(reasonsById.entries()).map(([id, reasons]) => ({
+    id,
+    reasons: Array.from(reasons)
+  }));
 }
 
 function buildJobsById(jobs) {
@@ -1357,6 +1437,8 @@ async function main() {
       .map((record) => String(record.id))
   );
   const processedPublishJobIds = new Set();
+  const publishActionStatsById = new Map();
+  const publishedSelectedJobsById = new Map();
   const publicScopeIds = new Set();
   let shouldRunPublicSync = false;
   const latestDecisionByJobId = new Map();
@@ -1427,13 +1509,15 @@ async function main() {
       );
       const uniqueIds = [];
       const idsSeenInAction = new Set();
-      let publishedCount = 0;
-      let blockedCount = 0;
-      let duplicateCount = 0;
-      let alreadyPublishedCount = 0;
-      let staleCount = 0;
-      const publishedIds = [];
-      const blockedIds = [];
+      const publishActionStats = {
+        publishedCount: 0,
+        blockedCount: 0,
+        duplicateCount: 0,
+        alreadyPublishedCount: 0,
+        staleCount: 0,
+        publishedIds: [],
+        blockedIds: []
+      };
       const blockedJobs = [];
       const editedJobsById = new Map(
         (Array.isArray(action.payload.edited_jobs) ? action.payload.edited_jobs : [])
@@ -1443,7 +1527,7 @@ async function main() {
 
       for (const id of freshIds) {
         if (idsSeenInAction.has(id)) {
-          duplicateCount += 1;
+          publishActionStats.duplicateCount += 1;
           continue;
         }
         idsSeenInAction.add(id);
@@ -1459,28 +1543,28 @@ async function main() {
           /^(archived|rejected)$/i.test(String(existingRecord.status || "")) &&
           recordTimestamp > actionTimestamp
         ) {
-          staleCount += 1;
+          publishActionStats.staleCount += 1;
           continue;
         }
         if ((initiallyPublishedJobIds.has(id) || isPublishedRecord(existingRecord)) && !processedPublishJobIds.has(id)) {
-          alreadyPublishedCount += 1;
+          publishActionStats.alreadyPublishedCount += 1;
           processedPublishJobIds.add(String(id));
-          publishedIds.push(String(id));
+          publishActionStats.publishedIds.push(String(id));
           continue;
         }
         if (processedPublishJobIds.has(id)) {
-          duplicateCount += 1;
-          publishedIds.push(String(id));
+          publishActionStats.duplicateCount += 1;
+          publishActionStats.publishedIds.push(String(id));
           continue;
         }
         const job = nextPending.find((pendingJob) => String(pendingJob.id) === id) || payloadJobsById.get(String(id));
         if (!job) {
           if (existingRecord && (initiallyPublishedJobIds.has(id) || isPublishedRecord(existingRecord))) {
-            alreadyPublishedCount += 1;
+            publishActionStats.alreadyPublishedCount += 1;
             processedPublishJobIds.add(String(id));
-            publishedIds.push(String(id));
+            publishActionStats.publishedIds.push(String(id));
           } else {
-            duplicateCount += 1;
+            publishActionStats.duplicateCount += 1;
           }
           continue;
         }
@@ -1504,17 +1588,9 @@ async function main() {
           nextPending = nextPending.map((pendingJob) => (
             String(pendingJob.id) === String(job.id) ? markPendingJobBlocked(pendingJob, blockedReasons) : pendingJob
           ));
-          const overrideKey = String(job.id);
-          nextOverrides.jobs[overrideKey] = {
-            ...(nextOverrides.jobs[overrideKey] || {}),
-            review_flags: ["publish_blocked", "malformed_description", "needs_manual_cleanup"],
-            parser_warning: appendUniqueAdminNote(nextOverrides.jobs[overrideKey]?.parser_warning, [`Publish blocked during admin publish_selected: ${blockedReasons.join(", ")}`]),
-            admin_note: appendUniqueAdminNote(nextOverrides.jobs[overrideKey]?.admin_note, [`Publish blocked during admin publish_selected: ${blockedReasons.join(", ")}`]),
-            triage_bucket: "needs_cleanup",
-            triage_reason: `Publish blocked during admin publish_selected: ${blockedReasons.join(", ")}`
-          };
-          blockedCount += 1;
-          blockedIds.push(String(job.id));
+          applyBlockedPublishOverride(nextOverrides, job.id, blockedReasons);
+          publishActionStats.blockedCount += 1;
+          publishActionStats.blockedIds.push(String(job.id));
           blockedJobs.push({
             id: String(job.id),
             title: stringifySafe(job.title),
@@ -1544,47 +1620,33 @@ async function main() {
         processedPublishJobIds.add(String(job.id));
         publicScopeIds.add(String(job.id));
         shouldRunPublicSync = true;
-        publishedIds.push(String(job.id));
+        publishActionStats.publishedIds.push(String(job.id));
         report.recordsPublished += 1;
-        publishedCount += 1;
+        publishActionStats.publishedCount += 1;
+        publishedSelectedJobsById.set(String(job.id), {
+          actionId: String(action.id),
+          source: {
+            ...sanitized.job,
+            featured: typeof editedRecord.featured === "boolean" ? editedRecord.featured : Boolean(job.featured)
+          }
+        });
         if (Array.isArray(sanitized.dirtyReasons) && sanitized.dirtyReasons.length > 0) {
           report.fixedPublishCount += 1;
         }
       }
-      nextPending = removePendingByIds(nextPending, publishedIds);
-      report.publishableCount += publishedCount;
-      report.blockedPublishCount += blockedCount;
-      report.duplicatesSkipped += duplicateCount;
-      report.alreadyPublishedSkipped += alreadyPublishedCount;
-      report.staleSkipped += staleCount;
+      nextPending = removePendingByIds(nextPending, publishActionStats.publishedIds);
+      report.publishableCount += publishActionStats.publishedCount;
+      report.blockedPublishCount += publishActionStats.blockedCount;
+      report.duplicatesSkipped += publishActionStats.duplicateCount;
+      report.alreadyPublishedSkipped += publishActionStats.alreadyPublishedCount;
+      report.staleSkipped += publishActionStats.staleCount;
       const pendingAfter = nextPending.length;
       const activeAfter = countPublishedJobs(nextRecords);
-
-      if (publishedCount > 0 && blockedCount > 0) {
-        actionResults[action.id] = buildActionResult("partially_applied", `published=${publishedCount};blocked=${blockedCount}`);
-        logActionOutcome(action, actionSource, "partially_applied", `published=${publishedCount};blocked=${blockedCount}`);
-      } else if (publishedCount > 0) {
-        actionResults[action.id] = buildActionResult("applied", `published=${publishedCount}`);
-        logActionOutcome(action, actionSource, "applied", `published=${publishedCount}`);
-      } else if (blockedCount > 0) {
-        actionResults[action.id] = buildActionResult("blocked", `blocked=${blockedCount}`);
-        logActionOutcome(action, actionSource, "blocked", `blocked=${blockedCount}`);
-      } else if (staleCount > 0) {
-        actionResults[action.id] = buildActionResult("skipped_stale", `stale=${staleCount}`);
-        logActionOutcome(action, actionSource, "skipped_stale", `newer archived decision exists stale=${staleCount}`);
-      } else if (alreadyPublishedCount > 0) {
-        actionResults[action.id] = buildActionResult("already_published", `already_published=${alreadyPublishedCount}`);
-        logActionOutcome(action, actionSource, "skipped_newer_decision", `already_published=${alreadyPublishedCount}`);
-      } else if (duplicateCount > 0) {
-        actionResults[action.id] = buildActionResult("ignored_duplicate", `duplicates=${duplicateCount}`);
-        logActionOutcome(action, actionSource, "skipped_stale", `duplicates=${duplicateCount}`);
-      } else {
-        actionResults[action.id] = buildActionResult("ignored_duplicate", "no publishable jobs found");
-        logActionOutcome(action, actionSource, "skipped_stale", "no publishable jobs found");
-      }
+      publishActionStatsById.set(String(action.id), publishActionStats);
+      updatePublishActionResult(action, actionSource, publishActionStats, actionResults);
 
       console.log(
-        `[jobs:apply-admin-actions] operation=publish_selected action_id=${action.id} ids_count=${targetIds.length} jobs_count=${selectedJobs.length} queued_ids_count=${uniqueIds.length} matching_pending_ids_count=${matchingPendingIds.length} missing_pending_ids_count=${missingPendingIds.length} pending_after=${pendingAfter} active_after=${activeAfter} published_count=${publishedCount} blocked_count=${blockedCount} blocked_ids=${blockedIds.join(",")} skipped_stale_count=${staleCount} already_published_count=${alreadyPublishedCount} duplicates_skipped_count=${duplicateCount} removed_from_pending=${publishedIds.length}`
+        `[jobs:apply-admin-actions] operation=publish_selected action_id=${action.id} ids_count=${targetIds.length} jobs_count=${selectedJobs.length} queued_ids_count=${uniqueIds.length} matching_pending_ids_count=${matchingPendingIds.length} missing_pending_ids_count=${missingPendingIds.length} pending_after=${pendingAfter} active_after=${activeAfter} published_count=${publishActionStats.publishedCount} blocked_count=${publishActionStats.blockedCount} blocked_ids=${publishActionStats.blockedIds.join(",")} skipped_stale_count=${publishActionStats.staleCount} already_published_count=${publishActionStats.alreadyPublishedCount} duplicates_skipped_count=${publishActionStats.duplicateCount} removed_from_pending=${publishActionStats.publishedIds.length}`
       );
       blockedJobs.forEach((item) => {
         console.warn(
@@ -1860,11 +1922,12 @@ async function main() {
     }
   }
 
-  const expectedPublicJobsCount = buildPublicJobsFromRecords(nextRecords).length;
-  const scopedIds = publicScopeIds.size ? Array.from(publicScopeIds) : [];
+  let expectedPublicJobsCount = buildPublicJobsFromRecords(nextRecords).length;
+  let scopedIds = publicScopeIds.size ? Array.from(publicScopeIds) : [];
+  const currentJobsJson = await readJobs();
   let preflightPublicSync = {
-    publicJobs: await readJobs(),
-    jobsCountAfter: Array.isArray(await readJobs()) ? (await readJobs()).length : 0,
+    publicJobs: currentJobsJson,
+    jobsCountAfter: Array.isArray(currentJobsJson) ? currentJobsJson.length : 0,
     publishedCount: expectedPublicJobsCount,
     wrote: false,
     overwriteAudit: {
@@ -1890,18 +1953,108 @@ async function main() {
       }
     }
   };
+  let preflightValidation = null;
   if (shouldRunPublicSync) {
-    try {
-      preflightPublicSync = await syncPublicJobsFromRecords(nextRecords, {
-        label: "jobs:apply-admin-actions-preflight",
-        scopeIds: scopedIds,
-        dryRun: true
-      });
-    } catch (error) {
-      if (report.publishSelectedDiagnostics.length) {
-        logScopedPublishFailures(report.publishSelectedDiagnostics.filter((item) => Array.isArray(item.dirty_reasons) && item.dirty_reasons.length));
+    let preflightAttempt = 0;
+    while (true) {
+      expectedPublicJobsCount = buildPublicJobsFromRecords(nextRecords).length;
+      scopedIds = publicScopeIds.size ? Array.from(publicScopeIds) : [];
+      try {
+        preflightPublicSync = await syncPublicJobsFromRecords(nextRecords, {
+          label: "jobs:apply-admin-actions-preflight",
+          scopeIds: scopedIds,
+          dryRun: true
+        });
+      } catch (error) {
+        if (report.publishSelectedDiagnostics.length) {
+          logScopedPublishFailures(report.publishSelectedDiagnostics.filter((item) => Array.isArray(item.dirty_reasons) && item.dirty_reasons.length));
+        }
+        throw error;
       }
-      throw error;
+
+      preflightValidation = await buildValidationReport({
+        requirePages: false,
+        records: nextRecords,
+        jobs: preflightPublicSync.publicJobs,
+        pending: nextPending,
+        talentProfiles: nextTalentProfiles,
+        employers: nextEmployers
+      });
+
+      const recoverableSelectedFailures = collectRecoverableSelectedValidationReasons(preflightValidation, publishedSelectedJobsById);
+      if (!recoverableSelectedFailures.length) break;
+      if (preflightAttempt >= 10) {
+        throw new Error("selected publish preflight exceeded retry budget");
+      }
+
+      recoverableSelectedFailures.forEach(({ id, reasons }) => {
+        const publishedSelection = publishedSelectedJobsById.get(id);
+        if (!publishedSelection) return;
+        const blockedJob = markPendingJobBlocked(publishedSelection.source, reasons);
+        nextPending = upsertPendingJob(nextPending, blockedJob);
+        upsertJobRecord(nextRecords, blockedJob, "pending", { stale_reason: buildBlockedPublishWarning(reasons) });
+        applyBlockedPublishOverride(nextOverrides, id, reasons);
+        processedPublishJobIds.delete(id);
+        publicScopeIds.delete(id);
+        publishedSelectedJobsById.delete(id);
+
+        report.recordsPublished = Math.max(0, report.recordsPublished - 1);
+        report.publishableCount = Math.max(0, report.publishableCount - 1);
+        report.blockedPublishCount += 1;
+
+        const existingBlocked = report.blockedPublishJobs.find((item) => String(item.id) === id);
+        if (existingBlocked) {
+          existingBlocked.reasons = Array.from(new Set([].concat(existingBlocked.reasons || []).concat(reasons)));
+        } else {
+          report.blockedPublishJobs.push({
+            id,
+            title: stringifySafe(blockedJob.title),
+            organization: stringifySafe(blockedJob.organization),
+            reasons
+          });
+        }
+
+        const diagnostic = report.publishSelectedDiagnostics.find((item) => String(item.id) === id);
+        if (diagnostic) {
+          if (Array.isArray(diagnostic.dirty_reasons) && diagnostic.dirty_reasons.length > 0) {
+            report.fixedPublishCount = Math.max(0, report.fixedPublishCount - 1);
+          }
+          diagnostic.remaining_dirty_reasons = Array.from(new Set([].concat(diagnostic.remaining_dirty_reasons || []).concat(reasons)));
+        }
+
+        const publishStats = publishActionStatsById.get(publishedSelection.actionId);
+        if (publishStats) {
+          publishStats.publishedCount = Math.max(0, publishStats.publishedCount - 1);
+          publishStats.blockedCount += 1;
+          publishStats.publishedIds = publishStats.publishedIds.filter((item) => String(item) !== id);
+          if (!publishStats.blockedIds.includes(id)) publishStats.blockedIds.push(id);
+        }
+
+        const sourceAction = actions.find((item) => String(item.id) === String(publishedSelection.actionId));
+        if (sourceAction) {
+          updatePublishActionResult(sourceAction, fetched.source, publishActionStatsById.get(publishedSelection.actionId) || {
+            publishedCount: 0,
+            blockedCount: 0,
+            duplicateCount: 0,
+            alreadyPublishedCount: 0,
+            staleCount: 0
+          }, actionResults);
+        }
+
+        console.warn(
+          `[jobs:apply-admin-actions] selected_publish_reblocked id=${id} reasons=${JSON.stringify(reasons)}`
+        );
+      });
+
+      preflightAttempt += 1;
+    }
+
+    console.log(
+      `[jobs:apply-admin-actions] preflight_validation hard_validation_failure_count=${preflightValidation?.hard_validation_failure_count || 0} malformed_description_template_count=${preflightValidation?.malformed_description_template_count || 0} invalid_snippet_count=${preflightValidation?.invalid_snippet_count || 0}`
+    );
+
+    if (preflightValidation && preflightValidation.hard_validation_failure_count > 0) {
+      throw new Error(`preflight hard public validation failures detected: ${preflightValidation.hard_validation_failure_count}`);
     }
   }
 
@@ -1942,16 +2095,9 @@ async function main() {
     }
   }
 
-  await writePendingOverrides(nextOverrides);
-  await writeOrganizationRules(nextOrgRules);
-  await writeJson(PENDING_SYNCED_FILE, nextPending);
-  await writeJson(JOB_RECORDS_FILE, nextRecords);
-  await writeJson(TALENT_PROFILES_FILE, nextTalentProfiles);
-  await writeJson(EMPLOYERS_FILE, nextEmployers);
-
   let publicSync = {
-    publicJobs: await readJobs(),
-    jobsCountAfter: Array.isArray(await readJobs()) ? (await readJobs()).length : 0,
+    publicJobs: currentJobsJson,
+    jobsCountAfter: Array.isArray(currentJobsJson) ? currentJobsJson.length : 0,
     publishedCount: expectedPublicJobsCount,
     wrote: false,
     overwriteAudit: {
@@ -1967,8 +2113,18 @@ async function main() {
       }
     }
   };
+
+  await writePendingOverrides(nextOverrides);
+  await writeOrganizationRules(nextOrgRules);
+  await writeJson(PENDING_SYNCED_FILE, nextPending);
+  await writeJson(JOB_RECORDS_FILE, nextRecords);
+  await writeJson(TALENT_PROFILES_FILE, nextTalentProfiles);
+  await writeJson(EMPLOYERS_FILE, nextEmployers);
+
   let finalJobsJsonCount = Array.isArray(publicSync.publicJobs) ? publicSync.publicJobs.length : 0;
   if (shouldRunPublicSync) {
+    expectedPublicJobsCount = buildPublicJobsFromRecords(nextRecords).length;
+    scopedIds = publicScopeIds.size ? Array.from(publicScopeIds) : [];
     publicSync = await syncPublicJobsFromRecords(nextRecords, {
       label: "jobs:apply-admin-actions",
       scopeIds: scopedIds
@@ -2071,7 +2227,7 @@ module.exports = {
   selectedPublishSanitizerHelpers: {
     buildDescriptionSnippet,
     buildFallbackDescription,
-    hasMalformedDescriptionTemplate: importedHasMalformedDescriptionTemplate,
+    hasMalformedDescriptionTemplate: safeHasMalformedDescriptionTemplate,
     hasUsableDescription,
     normalizeDescription,
     sanitizePublishSelectedJob,

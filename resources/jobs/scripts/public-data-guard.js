@@ -1,5 +1,6 @@
 const { buildDescriptionSnippet, hasUsableDescription, normalizePayDisplay, normalizeWorkplaceType, stringifySafe } = require("./job-normalizer");
 const { cleanLocationText } = require("./job-normalizer");
+const { hasMalformedDescriptionTemplateSafe } = require("./malformed-description-helper");
 
 const JUNK_DESCRIPTION_PATTERNS = [
   /\bprevious\b/i,
@@ -57,7 +58,7 @@ function isSuspiciousPayDowngrade(currentValue, proposedValue) {
 function isJunkDescription(value) {
   const text = cleanText(value);
   if (!text) return false;
-  return JUNK_DESCRIPTION_PATTERNS.some((pattern) => pattern.test(text));
+  return hasMalformedDescriptionTemplateSafe(text) || JUNK_DESCRIPTION_PATTERNS.some((pattern) => pattern.test(text));
 }
 
 function getCanonicalDescription(job = {}) {
@@ -117,7 +118,7 @@ function evaluateJobsQuality(jobs = []) {
     if (isJunkDescription(description)) {
       junkDescriptionCount += 1;
     }
-    if (!snippet || isJunkDescription(snippet)) {
+    if (!snippet || isJunkDescription(snippet) || hasMalformedDescriptionTemplateSafe(snippet)) {
       invalidSnippetCount += 1;
     }
   }

@@ -1,15 +1,15 @@
 const path = require("path");
+const normalizer = require("./job-normalizer");
 const {
   buildDescriptionSnippet,
   buildFallbackDescription,
   getParserCleanupStats,
-  hasMalformedDescriptionTemplate,
   hasUsableDescription,
   normalizeJob,
   normalizeDescription,
   resetParserCleanupStats,
   stringifySafe
-} = require("./job-normalizer");
+} = normalizer;
 const {
   ADMIN_JOB_ACTIONS_SNAPSHOT_FILE,
   PENDING_SYNCED_FILE,
@@ -49,11 +49,29 @@ const {
   isValidPayDisplay
 } = require("./validate-public-data");
 
+const importedHasMalformedDescriptionTemplate = normalizer.hasMalformedDescriptionTemplate;
+
+function fallbackHasMalformedDescriptionTemplate(text) {
+  const value = String(text || "");
+  return /\bThe\s+(will|is|are|,|\.)\b/i.test(value)
+    || /\bThe\s{2,}\w+/i.test(value)
+    || /\bThe\s*<\/[^>]+>\s*will\b/i.test(value);
+}
+
+function safeHasMalformedDescriptionTemplate(text) {
+  if (typeof importedHasMalformedDescriptionTemplate === "function") {
+    return importedHasMalformedDescriptionTemplate(text);
+  }
+  return fallbackHasMalformedDescriptionTemplate(text);
+}
+
+console.log("[jobs:apply-admin-actions] malformed helper type=", typeof importedHasMalformedDescriptionTemplate);
+
 function assertSelectedPublishSanitizerHelpers() {
   const requiredHelpers = {
     buildDescriptionSnippet,
     buildFallbackDescription,
-    hasMalformedDescriptionTemplate,
+    hasMalformedDescriptionTemplate: importedHasMalformedDescriptionTemplate,
     hasUsableDescription,
     normalizeDescription,
     stringifySafe
@@ -165,7 +183,7 @@ function getSelectedJobJunkReasons(description, snippet, context = {}) {
 
   if (!descriptionText) reasons.push("missing_description");
   if (!snippetText) reasons.push("missing_snippet");
-  if (hasMalformedDescriptionTemplate(descriptionText)) reasons.push("malformed_template_text");
+  if (safeHasMalformedDescriptionTemplate(descriptionText)) reasons.push("malformed_template_text");
   if (isJunkDescription(descriptionText)) reasons.push("junk_description_pattern");
   if (!hasUsableDescription(descriptionText, { title, organization })) reasons.push("unusable_description");
   if (isJunkDescription(snippetText)) reasons.push("junk_snippet_pattern");
@@ -187,7 +205,7 @@ function sanitizePublishSelectedJob(job = {}) {
     organization
   }).description;
   let cleanDescription = normalizedDescription;
-  if (!cleanDescription || hasMalformedDescriptionTemplate(cleanDescription) || !hasUsableDescription(cleanDescription, { title, organization })) {
+  if (!cleanDescription || safeHasMalformedDescriptionTemplate(cleanDescription) || !hasUsableDescription(cleanDescription, { title, organization })) {
     cleanDescription = buildFallbackDescription({
       ...job,
       title,
@@ -195,7 +213,7 @@ function sanitizePublishSelectedJob(job = {}) {
     });
   }
   if (
-    (!cleanDescription || isJunkDescription(cleanDescription) || hasMalformedDescriptionTemplate(cleanDescription) || !hasUsableDescription(cleanDescription, { title, organization }))
+    (!cleanDescription || isJunkDescription(cleanDescription) || safeHasMalformedDescriptionTemplate(cleanDescription) || !hasUsableDescription(cleanDescription, { title, organization }))
     && hasEnoughContextForSafePlaceholder(job)
   ) {
     cleanDescription = buildFallbackDescription({
@@ -206,7 +224,7 @@ function sanitizePublishSelectedJob(job = {}) {
     }) || `This role supports ${organization ? `${organization}${organization.endsWith("s") ? "'" : "'s"}` : "the organization's"} work across ${stringifySafe(job.function || job.sector || "its focus areas")}.`;
   }
   let cleanSnippet = buildDescriptionSnippet(cleanDescription, 220, { title });
-  if (!cleanSnippet || isJunkDescription(cleanSnippet) || hasMalformedDescriptionTemplate(cleanSnippet)) {
+  if (!cleanSnippet || isJunkDescription(cleanSnippet) || safeHasMalformedDescriptionTemplate(cleanSnippet)) {
     cleanSnippet = cleanDescription;
   }
   const dirtyReasons = [];
@@ -214,14 +232,14 @@ function sanitizePublishSelectedJob(job = {}) {
     !beforeDescription ||
     !hasUsableDescription(beforeDescription, { title, organization }) ||
     isJunkDescription(beforeDescription) ||
-    hasMalformedDescriptionTemplate(beforeDescription);
+    safeHasMalformedDescriptionTemplate(beforeDescription);
   if (dirtyDescription) {
     dirtyReasons.push("junk_description");
   }
   if (
     !beforeSnippet ||
     isJunkDescription(beforeSnippet) ||
-    hasMalformedDescriptionTemplate(beforeSnippet) ||
+    safeHasMalformedDescriptionTemplate(beforeSnippet) ||
     !getCanonicalSnippet({ title, description: beforeDescription, description_snippet: beforeSnippet, summary: beforeSnippet }) ||
     (dirtyDescription && beforeSnippet !== cleanSnippet)
   ) {
@@ -230,7 +248,7 @@ function sanitizePublishSelectedJob(job = {}) {
   const remainingJunkReasons = getSelectedJobJunkReasons(cleanDescription, cleanSnippet, { title, organization });
   const trusted = remainingJunkReasons.length === 0
     && hasUsableDescription(cleanDescription, { title, organization })
-    && (!hasMalformedDescriptionTemplate(cleanDescription))
+    && (!safeHasMalformedDescriptionTemplate(cleanDescription))
     && (!isJunkDescription(cleanDescription))
     && (!isJunkDescription(cleanSnippet));
   return {
@@ -278,7 +296,7 @@ function validateSelectedJobDescription(job = {}) {
   const reasons = [];
 
   if (!description) reasons.push("missing_description");
-  if (hasMalformedDescriptionTemplate(description)) reasons.push("malformed_template_text");
+  if (safeHasMalformedDescriptionTemplate(description)) reasons.push("malformed_template_text");
   if (isJunkDescription(description)) reasons.push("junk_description_pattern");
   if (!hasUsableDescription(description, { title, organization })) reasons.push("unusable_description");
 
@@ -290,7 +308,7 @@ function validateSelectedJobSnippet(job = {}) {
   const reasons = [];
 
   if (!snippet) reasons.push("missing_snippet");
-  if (hasMalformedDescriptionTemplate(snippet)) reasons.push("malformed_template_text");
+  if (safeHasMalformedDescriptionTemplate(snippet)) reasons.push("malformed_template_text");
   if (isJunkDescription(snippet)) reasons.push("junk_snippet_pattern");
 
   return buildDiagnosticCheck(reasons.length === 0, reasons, { value: snippet });
@@ -2053,7 +2071,7 @@ module.exports = {
   selectedPublishSanitizerHelpers: {
     buildDescriptionSnippet,
     buildFallbackDescription,
-    hasMalformedDescriptionTemplate,
+    hasMalformedDescriptionTemplate: importedHasMalformedDescriptionTemplate,
     hasUsableDescription,
     normalizeDescription,
     sanitizePublishSelectedJob,

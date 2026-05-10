@@ -1,10 +1,10 @@
 const fs = require("fs/promises");
 const path = require("path");
 const { buildPublicJobsFromRecords } = require("./public-jobs");
-const { CANONICAL_SPECIALIZATIONS, hasUsableDescription } = require("./job-normalizer");
+const { CANONICAL_SPECIALIZATIONS, hasMalformedDescriptionTemplate, hasUsableDescription } = require("./job-normalizer");
 const { buildJobPagePathMap, cleanVisibleText } = require("./job-page-paths");
-const { readJobs, readPendingSyncedJobs, readSources } = require("./job-utils");
-const { readJobRecords } = require("./public-records");
+const { readJobs, readJson, readPendingSyncedJobs, readSources } = require("./job-utils");
+const { readJobRecords, TALENT_PROFILES_FILE, EMPLOYERS_FILE } = require("./public-records");
 const { readSourceHealthSnapshot } = require("./source-health-store");
 
 const ROOT = path.resolve(__dirname, "..");
@@ -50,6 +50,67 @@ const RAW_FIELD_USAGE_PATTERNS = [
   /\braw_description\b/,
   /\braw_salary\b/
 ];
+const PUBLIC_SOURCE_FILTER_PATTERNS = [
+  /<span class="mini-filter-label">\s*Source\s*<\/span>/i,
+  /id="filter-source"/i
+];
+const UNKNOWN_SECTOR_FILTER_PATTERNS = [
+  /activeJobs\.map\(\(job\)\s*=>\s*job\.sector\)/,
+  /state\.filters\.sector\.has\(job\.sector\)/,
+  /buildFilterOption\(groupKey,\s*["']Unknown["']\)/i
+];
+const COMMUNICATIONS_FILTER_SIGNAL_PATTERNS = [
+  /getSpecializationFilterValues/,
+  /values\.add\("Communications"\)/,
+  /social media/i,
+  /digital communications/i,
+  /media relations/i,
+  /public relations/i,
+  /content creator/i
+];
+
+function findCassandreTalentRecord(records = []) {
+  return records.find((record) => {
+    const id = String(record?.id || "").trim().toLowerCase();
+    const name = String(record?.name || "").trim().toLowerCase();
+    const email = String(record?.email || "").trim().toLowerCase();
+    return (
+      id === "cassandre-arkema" ||
+      name === "cassandre arkema" ||
+      email === "cassandre.arkema@gmail.com"
+    );
+  }) || null;
+}
+
+function collectStructuredLocalEditViolations(records = []) {
+  const violations = [];
+  for (const record of Array.isArray(records) ? records : []) {
+    const fieldMeta = record?.field_meta && typeof record.field_meta === "object" ? record.field_meta : {};
+    Object.entries(fieldMeta).forEach(([key, meta]) => {
+      if (!meta || typeof meta !== "object") return;
+      const lastValue = String(meta.last_value || "").trim();
+      if (!lastValue) return;
+      const currentValue = record?.[key];
+      if (isBlankStructuredValue(currentValue)) {
+        violations.push({
+          id: String(record?.id || ""),
+          key,
+          last_value: lastValue,
+          last_manual_edit_at: String(meta.last_manual_edit_at || "")
+        });
+      }
+    });
+  }
+  return violations;
+}
+
+function isBlankStructuredValue(value) {
+  if (value === null || value === undefined) return true;
+  if (typeof value === "string") return !value.trim();
+  if (Array.isArray(value)) return value.length === 0;
+  if (typeof value === "object") return Object.keys(value).length === 0;
+  return false;
+}
 
 function hasInvalidPublicTitle(value) {
   const text = String(value || "").trim();
@@ -76,12 +137,69 @@ function extractUrlCompanyHint(value) {
   const text = String(value || "").trim();
   if (!text) return "";
   const workableMatch = text.match(/apply\.workable\.com\/([^/]+)\//i);
-  if (!workableMatch) return "";
-  return workableMatch[1]
-    .split("-")
-    .filter(Boolean)
-    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
-    .join(" ");
+  if (workableMatch) {
+    return workableMatch[1]
+      .split("-")
+      .filter(Boolean)
+      .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+      .join(" ");
+  }
+  const greenhouseMatch = text.match(/boards\.greenhouse\.io\/([^/]+)\//i);
+  if (greenhouseMatch) {
+    return greenhouseMatch[1]
+      .split("-")
+      .filter(Boolean)
+      .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+      .join(" ");
+  }
+  return "";
+}
+
+function normalizeOrganizationIdentity(value) {
+  const text = String(value || "").trim().toLowerCase();
+  if (!text) return "";
+  if (["via", "via science", "via-science"].includes(text)) return "VIA";
+  if (text === "resource innovations") return "Resource Innovations";
+  if (text === "shifted energy") return "Shifted Energy";
+  if (text === "remix") return "Remix";
+  return String(value || "").trim();
+}
+
+function normalizeIdentityToken(value) {
+  return normalizeOrganizationIdentity(value)
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "");
+}
+
+function startsWithLowercaseSentenceFragment(value) {
+  const text = String(value || "").trim();
+  if (!text) return false;
+  if (!/^[a-z]/.test(text)) return false;
+  if (/^(e\.g\.|i\.e\.)/i.test(text)) return false;
+  return /^[a-z][^!?]{12,}/.test(text);
+}
+
+function descriptionIdentityConflict(organization, description) {
+  const normalizedOrganization = normalizeOrganizationIdentity(organization);
+  const text = String(description || "");
+  if (!normalizedOrganization || !text) return false;
+  if (normalizedOrganization === "VIA" && /\bremix\b/i.test(text)) return true;
+  if (normalizedOrganization === "Remix" && /\bvia\b/i.test(text)) return true;
+  if (normalizedOrganization === "Resource Innovations" && /\bshifted energy\b/i.test(text)) return true;
+  if (normalizedOrganization === "Shifted Energy" && /\bresource innovations\b/i.test(text)) return true;
+  return false;
+}
+
+function isViaRecord(job) {
+  return normalizeOrganizationIdentity(job.organization) === "VIA" || /\bvia(?:-science)?\b/i.test([job.apply_url, job.original_url, job.page_url].filter(Boolean).join(" "));
+}
+
+function isViaContextConflict(job, pageContents) {
+  if (!isViaRecord(job)) return false;
+  const normalizedOrganization = normalizeOrganizationIdentity(job.organization);
+  if (normalizedOrganization !== "VIA") return true;
+  const publicText = [job.organization, job.page_url, job.apply_url, job.original_url, job.description, job.description_snippet, job.summary, pageContents].filter(Boolean).join(" ");
+  return /\bremix\b/i.test(publicText);
 }
 
 function extractDisplayedCompanyFromPage(contents) {
@@ -168,7 +286,7 @@ function countBy(items, keyFn) {
 }
 
 async function buildValidationReport(options = {}) {
-  const [records, jobs, pending, sources, pageFiles, sourceHealth, canonicalRenderFiles] = await Promise.all([
+  const [records, jobs, pending, sources, pageFiles, sourceHealth, canonicalRenderFiles, talentProfiles, employers] = await Promise.all([
     readJobRecords(),
     readJobs(),
     readPendingSyncedJobs(),
@@ -180,7 +298,9 @@ async function buildValidationReport(options = {}) {
         filePath,
         contents: await fs.readFile(filePath, "utf8").catch(() => "")
       }))
-    )
+    ),
+    readJson(TALENT_PROFILES_FILE, []),
+    readJson(EMPLOYERS_FILE, [])
   ]);
   const publicJobs = buildPublicJobsFromRecords(records);
   const derivedJobs = jobs.map((job) => ({ ...job }));
@@ -228,6 +348,15 @@ async function buildValidationReport(options = {}) {
   const publicRecordOrganizationConflicts = [];
   const suspiciousPayDowngrades = [];
   const suspiciousTinyMonthlyPay = [];
+  const malformedDescriptionTemplates = [];
+  const lowercaseSentenceDescriptions = [];
+  const viaIdentityConflicts = [];
+  const publicSourceFilterViolations = [];
+  const unknownSectorFilterViolations = [];
+  const communicationsFilterViolations = [];
+  const talentContactProtectionViolations = [];
+  const employerLocalEditViolations = [];
+  const talentIconRenderViolations = [];
   const hardValidationFailures = [];
 
   for (const job of jobs) {
@@ -267,7 +396,7 @@ async function buildValidationReport(options = {}) {
       recordOrganization &&
       publicOrganization &&
       recordOrganization !== publicOrganization &&
-      ((applyUrlHint && applyUrlHint === publicOrganization) || (publicOrgSlug && publicPageSlug.includes(publicOrgSlug)))
+      ((applyUrlHint && normalizeIdentityToken(applyUrlHint) === normalizeIdentityToken(publicOrganization)) || (publicOrgSlug && publicPageSlug.includes(publicOrgSlug)))
     ) {
       publicRecordOrganizationConflicts.push({
         id: record.id,
@@ -300,7 +429,124 @@ async function buildValidationReport(options = {}) {
         });
       }
     });
+    if (path.basename(filePath) === "index.html") {
+      PUBLIC_SOURCE_FILTER_PATTERNS.forEach((pattern) => {
+        if (pattern.test(contents)) {
+          publicSourceFilterViolations.push({
+            file: path.relative(ROOT, filePath),
+            pattern: String(pattern)
+          });
+        }
+      });
+      UNKNOWN_SECTOR_FILTER_PATTERNS.forEach((pattern) => {
+        if (pattern.test(contents)) {
+          unknownSectorFilterViolations.push({
+            file: path.relative(ROOT, filePath),
+            pattern: String(pattern)
+          });
+        }
+      });
+      COMMUNICATIONS_FILTER_SIGNAL_PATTERNS.forEach((pattern) => {
+        if (!pattern.test(contents)) {
+          communicationsFilterViolations.push({
+            file: path.relative(ROOT, filePath),
+            pattern: String(pattern)
+          });
+        }
+      });
+      if (
+        !/iconClass:\s*"briefcase"/.test(contents) ||
+        !/iconSvg\("linkedin"\)/.test(contents) ||
+        !/iconClass:\s*"email"/.test(contents) ||
+        !/links\.publicContact\s*&&\s*links\.email/.test(contents) ||
+        !/clickType:\s*"email"/.test(contents)
+      ) {
+        talentIconRenderViolations.push({
+          file: path.relative(ROOT, filePath),
+          reason: "talent_contact_icons_missing"
+        });
+      }
+    }
   });
+
+  const cassandreTalent = findCassandreTalentRecord(talentProfiles);
+  if (!cassandreTalent) {
+    talentContactProtectionViolations.push({
+      id: "cassandre-arkema",
+      reason: "talent_record_missing"
+    });
+    hardValidationFailures.push({
+      id: "cassandre-arkema",
+      title: "Cassandre Arkema",
+      organization: "",
+      reason: "talent_record_missing"
+    });
+  } else {
+    const expectedContacts = {
+      portfolio_url: "https://thealgorithmwitch.com/grimoire",
+      linkedin_url: "https://linkedin.com/in/cassandrearkema",
+      email: "cassandre.arkema@gmail.com"
+    };
+    Object.entries(expectedContacts).forEach(([key, expectedValue]) => {
+      if (String(cassandreTalent[key] || "").trim() !== expectedValue) {
+        talentContactProtectionViolations.push({
+          id: String(cassandreTalent.id || "cassandre-arkema"),
+          key,
+          expected: expectedValue,
+          actual: String(cassandreTalent[key] || "")
+        });
+        hardValidationFailures.push({
+          id: String(cassandreTalent.id || "cassandre-arkema"),
+          title: String(cassandreTalent.name || "Cassandre Arkema"),
+          organization: "",
+          reason: `talent_contact_${key}_missing`
+        });
+      }
+    });
+    if (!cassandreTalent.public_contact) {
+      talentContactProtectionViolations.push({
+        id: String(cassandreTalent.id || "cassandre-arkema"),
+        key: "public_contact",
+        expected: true,
+        actual: Boolean(cassandreTalent.public_contact)
+      });
+      hardValidationFailures.push({
+        id: String(cassandreTalent.id || "cassandre-arkema"),
+        title: String(cassandreTalent.name || "Cassandre Arkema"),
+        organization: "",
+        reason: "talent_public_contact_disabled"
+      });
+    }
+  }
+
+  talentContactProtectionViolations.push(
+    ...collectStructuredLocalEditViolations(talentProfiles).map((item) => ({
+      ...item,
+      type: "talent"
+    }))
+  );
+  employerLocalEditViolations.push(
+    ...collectStructuredLocalEditViolations(employers).map((item) => ({
+      ...item,
+      type: "employer"
+    }))
+  );
+  if (talentContactProtectionViolations.some((item) => item.type === "talent")) {
+    hardValidationFailures.push({
+      id: "talent-local-edits",
+      title: "Talent local edits",
+      organization: "",
+      reason: "talent_local_edit_blank_detected"
+    });
+  }
+  if (employerLocalEditViolations.length) {
+    hardValidationFailures.push({
+      id: "employer-local-edits",
+      title: "Employer local edits",
+      organization: "",
+      reason: "employer_local_edit_blank_detected"
+    });
+  }
 
   for (const job of jobs) {
     const id = String(job.id || "");
@@ -330,6 +576,15 @@ async function buildValidationReport(options = {}) {
       description_snippet: job.description_snippet,
       summary: job.summary
     });
+    const malformedDescription =
+      hasMalformedDescriptionTemplate(canonicalDescription) ||
+      hasMalformedDescriptionTemplate(snippet) ||
+      hasMalformedDescriptionTemplate(String(job.summary || ""));
+    const malformedPageDescription = pageContents && hasMalformedDescriptionTemplate(pageContents);
+    const lowercaseSentenceDescription =
+      startsWithLowercaseSentenceFragment(canonicalDescription) ||
+      startsWithLowercaseSentenceFragment(snippet) ||
+      startsWithLowercaseSentenceFragment(String(job.summary || ""));
 
     if (!pageUrl) {
       missingPageUrl.push({ id, title: job.title, organization: job.organization });
@@ -352,7 +607,7 @@ async function buildValidationReport(options = {}) {
       }
     }
 
-    if (applyUrlHint && String(applyUrlHint).toLowerCase() !== String(job.organization || "").toLowerCase()) {
+    if (applyUrlHint && normalizeIdentityToken(applyUrlHint) !== normalizeIdentityToken(job.organization || "")) {
       organizationPageUrlConflicts.push({
         id,
         title: job.title,
@@ -450,7 +705,7 @@ async function buildValidationReport(options = {}) {
       }
       if (
         applyUrlHint &&
-        String(applyUrlHint).toLowerCase() !== String(job.organization || "").toLowerCase() &&
+        normalizeIdentityToken(applyUrlHint) !== normalizeIdentityToken(job.organization || "") &&
         /^(Resource Innovations|Shifted Energy)$/i.test(String(job.organization || "").trim())
       ) {
         hardValidationFailures.push({
@@ -477,7 +732,53 @@ async function buildValidationReport(options = {}) {
         });
       }
     }
-  if (!VALID_WORKPLACE_TYPES.has(workplaceType)) {
+    if (lowercaseSentenceDescription) {
+      lowercaseSentenceDescriptions.push({
+        id,
+        title: job.title,
+        organization: job.organization,
+        page_url: pageUrl,
+        description: canonicalDescription,
+        description_snippet: snippet
+      });
+      hardValidationFailures.push({
+        id,
+        title: job.title,
+        organization: job.organization,
+        reason: "lowercase_sentence_description"
+      });
+    }
+    if (descriptionIdentityConflict(job.organization, canonicalDescription) || descriptionIdentityConflict(job.organization, snippet)) {
+      viaIdentityConflicts.push({
+        id,
+        title: job.title,
+        organization: job.organization,
+        page_url: pageUrl,
+        apply_url: job.apply_url || job.original_url || job.source_url
+      });
+      hardValidationFailures.push({
+        id,
+        title: job.title,
+        organization: job.organization,
+        reason: "description_identity_conflict"
+      });
+    }
+    if (isViaContextConflict(job, pageContents)) {
+      viaIdentityConflicts.push({
+        id,
+        title: job.title,
+        organization: job.organization,
+        page_url: pageUrl,
+        apply_url: job.apply_url || job.original_url || job.source_url
+      });
+      hardValidationFailures.push({
+        id,
+        title: job.title,
+        organization: job.organization,
+        reason: "via_public_identity_conflict"
+      });
+    }
+    if (!VALID_WORKPLACE_TYPES.has(workplaceType)) {
       invalidWorkplace.push({ id, title: job.title, organization: job.organization, workplace_type: workplaceType });
     }
     if (hasBadLocation(location)) {
@@ -485,6 +786,22 @@ async function buildValidationReport(options = {}) {
     }
     if (((!snippet && hasUsableDescription(job.description || "", { title: job.title })) || hasBadSnippet(snippet))) {
       invalidSnippet.push({ id, title: job.title, organization: job.organization, description_snippet: snippet });
+    }
+    if (malformedDescription || malformedPageDescription) {
+      malformedDescriptionTemplates.push({
+        id,
+        title: job.title,
+        organization: job.organization,
+        page_url: pageUrl,
+        description: canonicalDescription,
+        description_snippet: snippet
+      });
+      hardValidationFailures.push({
+        id,
+        title: job.title,
+        organization: job.organization,
+        reason: "malformed_description_template"
+      });
     }
     if (!hasUsableDescription(canonicalDescription, { title: job.title })) {
       missingCanonicalDescription.push({ id, title: job.title, organization: job.organization });
@@ -559,16 +876,25 @@ async function buildValidationReport(options = {}) {
   if (brokenLinks.length) errors.push(`broken link count ${brokenLinks.length}`);
   if (invalidPay.length) errors.push(`invalid pay count ${invalidPay.length}`);
   if (invalidTitle.length) errors.push(`invalid title count ${invalidTitle.length}`);
+  if (malformedDescriptionTemplates.length) errors.push(`malformed description template count ${malformedDescriptionTemplates.length}`);
+  if (lowercaseSentenceDescriptions.length) errors.push(`lowercase sentence description count ${lowercaseSentenceDescriptions.length}`);
   if (invalidWorkplace.length) errors.push(`invalid workplace_type count ${invalidWorkplace.length}`);
   if (invalidLocation.length) errors.push(`invalid location count ${invalidLocation.length}`);
   if (invalidSnippet.length > BLANK_SNIPPET_THRESHOLD) errors.push(`invalid snippet count ${invalidSnippet.length}`);
   if (missingCanonicalDescription.length) errors.push(`missing canonical description count ${missingCanonicalDescription.length}`);
   if (redirectLoops.length) errors.push(`redirect loop count ${redirectLoops.length}`);
   if (canonicalFieldViolations.length) errors.push(`canonical field architecture violation count ${canonicalFieldViolations.length}`);
+  if (publicSourceFilterViolations.length) errors.push(`public source filter violation count ${publicSourceFilterViolations.length}`);
+  if (unknownSectorFilterViolations.length) errors.push(`unknown sector filter violation count ${unknownSectorFilterViolations.length}`);
+  if (communicationsFilterViolations.length) errors.push(`communications filter signal violation count ${communicationsFilterViolations.length}`);
   if (organizationPageUrlConflicts.length) errors.push(`organization/page_url mismatch count ${organizationPageUrlConflicts.length}`);
   if (publicRecordOrganizationConflicts.length) errors.push(`public-vs-record organization mismatch count ${publicRecordOrganizationConflicts.length}`);
+  if (viaIdentityConflicts.length) errors.push(`via identity conflict count ${viaIdentityConflicts.length}`);
   if (suspiciousPayDowngrades.length) errors.push(`suspicious pay downgrade count ${suspiciousPayDowngrades.length}`);
   if (suspiciousTinyMonthlyPay.length) errors.push(`suspicious tiny monthly pay count ${suspiciousTinyMonthlyPay.length}`);
+  if (talentContactProtectionViolations.length) errors.push(`talent contact protection violation count ${talentContactProtectionViolations.length}`);
+  if (employerLocalEditViolations.length) errors.push(`employer local edit violation count ${employerLocalEditViolations.length}`);
+  if (talentIconRenderViolations.length) errors.push(`talent icon render violation count ${talentIconRenderViolations.length}`);
   if (hardValidationFailures.length) errors.push(`hard validation failure count ${hardValidationFailures.length}`);
 
   return {
@@ -584,6 +910,8 @@ async function buildValidationReport(options = {}) {
     duplicate_canonical_id_count: duplicateIds.length,
     broken_link_count: brokenLinks.length,
     invalid_title_count: invalidTitle.length,
+    malformed_description_template_count: malformedDescriptionTemplates.length,
+    lowercase_sentence_description_count: lowercaseSentenceDescriptions.length,
     pending_public_overlap_count: pendingPublicOverlapCount,
     invalid_snippet_count: invalidSnippet.length,
     missing_canonical_description_count: missingCanonicalDescription.length,
@@ -598,10 +926,17 @@ async function buildValidationReport(options = {}) {
     video_specialization_detection_miss_count: videoSpecializationMisses.length,
     overwrite_conflict_count: overwriteConflicts.length,
     canonical_field_violation_count: canonicalFieldViolations.length,
+    public_source_filter_violation_count: publicSourceFilterViolations.length,
+    unknown_sector_filter_violation_count: unknownSectorFilterViolations.length,
+    communications_filter_violation_count: communicationsFilterViolations.length,
     organization_page_url_conflict_count: organizationPageUrlConflicts.length,
     public_record_organization_conflict_count: publicRecordOrganizationConflicts.length,
+    via_identity_conflict_count: viaIdentityConflicts.length,
     suspicious_pay_downgrade_count: suspiciousPayDowngrades.length,
     suspicious_tiny_monthly_pay_count: suspiciousTinyMonthlyPay.length,
+    talent_contact_protection_violation_count: talentContactProtectionViolations.length,
+    employer_local_edit_violation_count: employerLocalEditViolations.length,
+    talent_icon_render_violation_count: talentIconRenderViolations.length,
     hard_validation_failure_count: hardValidationFailures.length,
     climatechangejobs_source_enabled: Boolean(climateChangeJobsSource && climateChangeJobsSource.enabled !== false),
     climatechangejobs_source_custom_sync_enabled: Boolean(climateChangeJobsSource && climateChangeJobsSource.custom_sync_enabled !== false),
@@ -615,6 +950,8 @@ async function buildValidationReport(options = {}) {
       broken_link: brokenLinks.slice(0, 10),
       invalid_pay: invalidPay.slice(0, 10),
       invalid_title: invalidTitle.slice(0, 20),
+      malformed_description_templates: malformedDescriptionTemplates.slice(0, 20),
+      lowercase_sentence_descriptions: lowercaseSentenceDescriptions.slice(0, 20),
       invalid_workplace_type: invalidWorkplace.slice(0, 10),
       invalid_location: invalidLocation.slice(0, 10),
       invalid_snippet: invalidSnippet.slice(0, 10),
@@ -626,10 +963,17 @@ async function buildValidationReport(options = {}) {
       redirect_loops: redirectLoops.slice(0, 10),
       overwrite_conflicts: overwriteConflicts.slice(0, 20),
       canonical_field_violations: canonicalFieldViolations.slice(0, 20),
+      public_source_filter_violations: publicSourceFilterViolations.slice(0, 20),
+      unknown_sector_filter_violations: unknownSectorFilterViolations.slice(0, 20),
+      communications_filter_violations: communicationsFilterViolations.slice(0, 20),
       organization_page_url_conflicts: organizationPageUrlConflicts.slice(0, 20),
       public_record_organization_conflicts: publicRecordOrganizationConflicts.slice(0, 20),
+      via_identity_conflicts: viaIdentityConflicts.slice(0, 20),
       suspicious_pay_downgrades: suspiciousPayDowngrades.slice(0, 20),
       suspicious_tiny_monthly_pay: suspiciousTinyMonthlyPay.slice(0, 20),
+      talent_contact_protection_violations: talentContactProtectionViolations.slice(0, 20),
+      employer_local_edit_violations: employerLocalEditViolations.slice(0, 20),
+      talent_icon_render_violations: talentIconRenderViolations.slice(0, 20),
       hard_validation_failures: hardValidationFailures.slice(0, 20),
       suspicious_specialization: suspiciousSpecialization.slice(0, 20),
       low_confidence_specialization: lowConfidenceSpecializations.slice(0, 20),
@@ -720,5 +1064,7 @@ if (require.main === module) {
 
 module.exports = {
   buildValidationReport,
+  hasInvalidPublicTitle,
+  isValidPayDisplay,
   persistValidationSnapshot
 };

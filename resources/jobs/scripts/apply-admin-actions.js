@@ -40,9 +40,14 @@ const {
   writePendingOverrides
 } = require("./admin-actions-store");
 const { buildPagesForSelectedJobs, buildPagesFromJobs } = require("./generate-job-pages");
+const { buildJobPagePathMap } = require("./job-page-paths");
 const { buildPublicJobsFromRecords, syncPublicJobsFromRecords } = require("./public-jobs");
 const { getCanonicalSnippet, isJunkDescription } = require("./public-data-guard");
-const { buildValidationReport } = require("./validate-public-data");
+const {
+  buildValidationReport,
+  hasInvalidPublicTitle,
+  isValidPayDisplay
+} = require("./validate-public-data");
 
 function assertSelectedPublishSanitizerHelpers() {
   const requiredHelpers = {
@@ -66,6 +71,32 @@ function assertSelectedPublishSanitizerHelpers() {
 }
 
 assertSelectedPublishSanitizerHelpers();
+
+const DIAGNOSTIC_LABEL = "jobs:diagnose-admin-actions";
+const NON_JOB_ACTION_OPERATIONS = new Set([
+  "update_active_talent",
+  "archive_active_talent",
+  "unpublish_active_talent",
+  "feature_active_talent",
+  "update_active_employer",
+  "archive_active_employer",
+  "unpublish_active_employer",
+  "feature_active_employer"
+]);
+const SUPPORTED_ACTION_OPERATIONS = new Set([
+  "publish_selected",
+  "archive_selected",
+  "mark_needs_cleanup",
+  "mark_reviewed",
+  "feature_selected",
+  "hide_organization",
+  "reject_all_from_organization",
+  "update_active_job",
+  "archive_active_job",
+  "unpublish_active_job",
+  "feature_active_job",
+  ...NON_JOB_ACTION_OPERATIONS
+]);
 
 function buildPublishedDisplay(job) {
   return {
@@ -210,6 +241,119 @@ function sanitizePublishSelectedJob(job = {}) {
       snippet: cleanSnippet
     }
   };
+}
+
+function buildDiagnosticCheck(pass, reasons = [], details = {}) {
+  return {
+    pass,
+    reasons: Array.from(new Set((Array.isArray(reasons) ? reasons : []).filter(Boolean))),
+    ...details
+  };
+}
+
+function validateSelectedJobTitle(job = {}) {
+  const reasons = [];
+  const title = stringifySafe(job.title);
+  if (hasInvalidPublicTitle(title)) reasons.push("invalid_public_title");
+  if (String(job.title_confidence || "").trim().toLowerCase() === "low") reasons.push("low_title_confidence");
+  return buildDiagnosticCheck(reasons.length === 0, reasons, { value: title });
+}
+
+function validateSelectedJobDescription(job = {}) {
+  const title = stringifySafe(job.title);
+  const organization = stringifySafe(job.organization);
+  const description = stringifySafe(job.description);
+  const reasons = [];
+
+  if (!description) reasons.push("missing_description");
+  if (hasMalformedDescriptionTemplate(description)) reasons.push("malformed_template_text");
+  if (isJunkDescription(description)) reasons.push("junk_description_pattern");
+  if (!hasUsableDescription(description, { title, organization })) reasons.push("unusable_description");
+
+  return buildDiagnosticCheck(reasons.length === 0, reasons, { value: description });
+}
+
+function validateSelectedJobSnippet(job = {}) {
+  const snippet = stringifySafe(getCanonicalSnippet(job));
+  const reasons = [];
+
+  if (!snippet) reasons.push("missing_snippet");
+  if (hasMalformedDescriptionTemplate(snippet)) reasons.push("malformed_template_text");
+  if (isJunkDescription(snippet)) reasons.push("junk_snippet_pattern");
+
+  return buildDiagnosticCheck(reasons.length === 0, reasons, { value: snippet });
+}
+
+function validateSelectedJobPay(job = {}) {
+  const pay = stringifySafe(job.salary);
+  const reasons = [];
+
+  if (!isValidPayDisplay(pay)) reasons.push("invalid_public_pay");
+
+  return buildDiagnosticCheck(reasons.length === 0, reasons, { value: pay });
+}
+
+function validateSelectedJobPageUrl(jobId, publicJobsById, expectedPagePaths) {
+  const publicJob = publicJobsById.get(String(jobId));
+  const pageUrl = stringifySafe(publicJob?.page_url);
+  const expectedPath = stringifySafe(expectedPagePaths.get(String(jobId)) || "");
+  const reasons = [];
+
+  if (!publicJob) reasons.push("missing_public_job");
+  if (!pageUrl) reasons.push("missing_page_url");
+  if (expectedPath && pageUrl && pageUrl !== expectedPath) reasons.push("stale_page_url");
+
+  return buildDiagnosticCheck(reasons.length === 0, reasons, {
+    value: pageUrl,
+    expected: expectedPath
+  });
+}
+
+function summarizeSelectedJobChecks(checks = {}) {
+  return Object.values(checks)
+    .flatMap((check) => (check && Array.isArray(check.reasons) ? check.reasons : []))
+    .filter(Boolean);
+}
+
+function buildDiagnosticSummary(report = {}) {
+  const jobFailures = (report.publishSelectedJobs || [])
+    .filter((item) => item.safe_to_apply === false)
+    .map((item) => `${item.id}: ${item.failure_reasons.join(",")}`);
+  const malformedNonJob = (report.malformedNonJobActions || [])
+    .map((item) => `${item.id || "<missing-id>"}:${item.operation}:${item.reason}`);
+  const staleNonJob = (report.staleNonJobActions || [])
+    .map((item) => `${item.id}:${item.operation}:${item.reason}`);
+  const unsupported = (report.unsupportedActions || [])
+    .map((item) => `${item.id || "<missing-id>"}:${item.operation}:${item.reason}`);
+  const details = []
+    .concat(jobFailures)
+    .concat(malformedNonJob)
+    .concat(staleNonJob)
+    .concat(unsupported);
+  return details.length
+    ? `unsafe admin action queue: ${details.join(" | ")}`
+    : "unsafe admin action queue";
+}
+
+function logDiagnosticReport(report = {}, label = DIAGNOSTIC_LABEL) {
+  console.log(`[${label}] source=${report.source} actions_found=${report.actionsFound} publish_selected_actions=${report.publishSelectedActionCount} selected_jobs=${report.selectedJobsCount}`);
+  (report.publishSelectedJobs || []).forEach((item) => {
+    console.log(
+      `[${label}] selected_job id=${item.id} action_id=${item.action_id} title=${JSON.stringify(item.title)} organization=${JSON.stringify(item.organization)} safe=${item.safe_to_apply} title_check=${item.checks.title.pass} description_check=${item.checks.description.pass} snippet_check=${item.checks.snippet.pass} pay_check=${item.checks.pay.pass} page_url_check=${item.checks.page_url.pass} page_url=${JSON.stringify(item.checks.page_url.value || "")} reasons=${JSON.stringify(item.failure_reasons)}`
+    );
+  });
+  (report.malformedNonJobActions || []).forEach((item) => {
+    console.warn(`[${label}] malformed_non_job_action id=${item.id || "<missing-id>"} operation=${item.operation} reason=${item.reason}`);
+  });
+  (report.staleNonJobActions || []).forEach((item) => {
+    console.warn(`[${label}] stale_non_job_action id=${item.id} operation=${item.operation} reason=${item.reason}`);
+  });
+  (report.unsupportedActions || []).forEach((item) => {
+    console.warn(`[${label}] unsupported_action id=${item.id || "<missing-id>"} operation=${item.operation} reason=${item.reason}`);
+  });
+  console.log(
+    `[${label}] malformed_non_job_actions=${(report.malformedNonJobActions || []).length} stale_non_job_actions=${(report.staleNonJobActions || []).length} unsupported_actions=${(report.unsupportedActions || []).length} apply_safe=${report.safeToApply}`
+  );
 }
 
 function upsertJobRecord(records, pendingJob, status, options = {}) {
@@ -738,6 +882,315 @@ async function resolveLocalActions(resultsById, actions) {
   console.log(`[jobs:apply-admin-actions] resolve local ids=${ids.join(",")} statuses=${JSON.stringify(Object.fromEntries(ids.map((id) => [id, resultsById[id]?.status || "applied"])))}`);
 }
 
+function buildActionDecisionIndex(actions = []) {
+  const latestDecisionByJobId = new Map();
+  actions.forEach((action) => {
+    const timestamp = parseActionTimestamp(action);
+    const precedence = actionPrecedence(action.operation);
+    getActionTargetIds(action).forEach((id) => {
+      const key = String(id);
+      const existing = latestDecisionByJobId.get(key);
+      if (!existing || timestamp > existing.timestamp || (timestamp === existing.timestamp && precedence >= existing.precedence)) {
+        latestDecisionByJobId.set(key, {
+          actionId: String(action.id || ""),
+          timestamp,
+          precedence,
+          operation: String(action.operation || "")
+        });
+      }
+    });
+  });
+  return latestDecisionByJobId;
+}
+
+function getFreshIdsForAction(action, latestDecisionByJobId) {
+  const targetIds = getActionTargetIds(action);
+  return targetIds.filter((id) => {
+    const latest = latestDecisionByJobId.get(String(id));
+    if (!latest) return true;
+    return latest.actionId === String(action.id);
+  });
+}
+
+async function runAdminActionDiagnostics(options = {}) {
+  const pendingJobs = Array.isArray(options.pendingJobs) ? options.pendingJobs : await readPendingSyncedJobs();
+  const jobRecords = Array.isArray(options.jobRecords) ? options.jobRecords : await readJobRecords();
+  const fetched = options.fetched || await fetchAndSnapshotActions();
+  const actions = parseQueuedActions(fetched.actions);
+  const nextRecords = [...jobRecords];
+  const initiallyPublishedJobIds = new Set(
+    nextRecords
+      .filter(isPublishedRecord)
+      .map((record) => String(record.id))
+  );
+  const processedPublishJobIds = new Set();
+  const seenActionIds = new Set();
+  const latestDecisionByJobId = buildActionDecisionIndex(actions);
+  const report = {
+    source: fetched.source,
+    actionsFound: actions.length,
+    publishSelectedActionCount: 0,
+    selectedJobsCount: 0,
+    publishSelectedJobs: [],
+    malformedNonJobActions: [],
+    staleNonJobActions: [],
+    unsupportedActions: [],
+    safeToApply: true
+  };
+
+  if (!actions.length) {
+    return report;
+  }
+
+  for (const action of actions) {
+    const operation = String(action.operation || "");
+    const actionTimestamp = parseActionTimestamp(action);
+    const freshIds = getFreshIdsForAction(action, latestDecisionByJobId);
+    const selectedJobs = Array.isArray(action.payload?.jobs) ? action.payload.jobs : [];
+    const targetIds = getActionTargetIds(action);
+
+    if (!action.id) {
+      report.unsupportedActions.push({
+        id: "",
+        operation,
+        reason: "missing_action_id"
+      });
+      continue;
+    }
+
+    if (seenActionIds.has(action.id)) {
+      report.unsupportedActions.push({
+        id: String(action.id),
+        operation,
+        reason: "duplicate_action_id"
+      });
+      continue;
+    }
+    seenActionIds.add(action.id);
+
+    if (!SUPPORTED_ACTION_OPERATIONS.has(operation)) {
+      report.unsupportedActions.push({
+        id: String(action.id),
+        operation,
+        reason: "unsupported_operation"
+      });
+      continue;
+    }
+
+    if (NON_JOB_ACTION_OPERATIONS.has(operation)) {
+      const fallbackId = String(action.payload?.id || action.payload?.recordId || "").trim();
+      if (!targetIds.length && !fallbackId) {
+        report.malformedNonJobActions.push({
+          id: String(action.id),
+          operation,
+          reason: "missing_target_id"
+        });
+      } else if (targetIds.length && !freshIds.length) {
+        report.staleNonJobActions.push({
+          id: String(action.id),
+          operation,
+          reason: "newer_decision_exists"
+        });
+      }
+      continue;
+    }
+
+    if (operation !== "publish_selected") {
+      continue;
+    }
+
+    report.publishSelectedActionCount += 1;
+
+    if (!targetIds.length && !selectedJobs.length) {
+      report.unsupportedActions.push({
+        id: String(action.id),
+        operation,
+        reason: "publish_selected_missing_ids_and_jobs"
+      });
+      continue;
+    }
+
+    const payloadJobsById = buildJobsById(action.payload.jobs);
+    const editedJobsById = new Map(
+      (Array.isArray(action.payload?.edited_jobs) ? action.payload.edited_jobs : [])
+        .filter((item) => item && item.id)
+        .map((item) => [String(item.id), item.editedRecord || {}])
+    );
+    const idsSeenInAction = new Set();
+    const uniqueIds = [];
+
+    for (const id of freshIds) {
+      if (idsSeenInAction.has(id)) {
+        report.publishSelectedJobs.push({
+          action_id: String(action.id),
+          id: String(id),
+          title: "",
+          organization: "",
+          checks: {
+            title: buildDiagnosticCheck(false, ["duplicate_selected_id"]),
+            description: buildDiagnosticCheck(false, ["duplicate_selected_id"]),
+            snippet: buildDiagnosticCheck(false, ["duplicate_selected_id"]),
+            pay: buildDiagnosticCheck(false, ["duplicate_selected_id"]),
+            page_url: buildDiagnosticCheck(false, ["duplicate_selected_id"])
+          },
+          failure_reasons: ["duplicate_selected_id"],
+          safe_to_apply: false
+        });
+        continue;
+      }
+      idsSeenInAction.add(id);
+      uniqueIds.push(id);
+    }
+
+    for (const id of uniqueIds) {
+      report.selectedJobsCount += 1;
+      const existingRecord = findRecordById(nextRecords, id);
+      const recordTimestamp = Date.parse(String(existingRecord?.updated_at || existingRecord?.created_at || "")) || 0;
+      const diagnosticBase = {
+        action_id: String(action.id),
+        id: String(id),
+        title: stringifySafe(existingRecord?.title),
+        organization: stringifySafe(existingRecord?.organization)
+      };
+
+      if (
+        existingRecord &&
+        /^(archived|rejected)$/i.test(String(existingRecord.status || "")) &&
+        recordTimestamp > actionTimestamp
+      ) {
+        report.publishSelectedJobs.push({
+          ...diagnosticBase,
+          checks: {
+            title: buildDiagnosticCheck(false, ["newer_archived_decision_exists"]),
+            description: buildDiagnosticCheck(false, ["newer_archived_decision_exists"]),
+            snippet: buildDiagnosticCheck(false, ["newer_archived_decision_exists"]),
+            pay: buildDiagnosticCheck(false, ["newer_archived_decision_exists"]),
+            page_url: buildDiagnosticCheck(false, ["newer_archived_decision_exists"])
+          },
+          failure_reasons: ["newer_archived_decision_exists"],
+          safe_to_apply: false
+        });
+        continue;
+      }
+
+      if (initiallyPublishedJobIds.has(id) || isPublishedRecord(existingRecord)) {
+        report.publishSelectedJobs.push({
+          ...diagnosticBase,
+          checks: {
+            title: buildDiagnosticCheck(false, ["already_published_selected"]),
+            description: buildDiagnosticCheck(false, ["already_published_selected"]),
+            snippet: buildDiagnosticCheck(false, ["already_published_selected"]),
+            pay: buildDiagnosticCheck(false, ["already_published_selected"]),
+            page_url: buildDiagnosticCheck(false, ["already_published_selected"])
+          },
+          failure_reasons: ["already_published_selected"],
+          safe_to_apply: false
+        });
+        processedPublishJobIds.add(String(id));
+        continue;
+      }
+
+      if (processedPublishJobIds.has(id)) {
+        report.publishSelectedJobs.push({
+          ...diagnosticBase,
+          checks: {
+            title: buildDiagnosticCheck(false, ["duplicate_selected_id"]),
+            description: buildDiagnosticCheck(false, ["duplicate_selected_id"]),
+            snippet: buildDiagnosticCheck(false, ["duplicate_selected_id"]),
+            pay: buildDiagnosticCheck(false, ["duplicate_selected_id"]),
+            page_url: buildDiagnosticCheck(false, ["duplicate_selected_id"])
+          },
+          failure_reasons: ["duplicate_selected_id"],
+          safe_to_apply: false
+        });
+        continue;
+      }
+
+      const job = pendingJobs.find((pendingJob) => String(pendingJob.id) === id) || payloadJobsById.get(String(id));
+      if (!job) {
+        report.publishSelectedJobs.push({
+          ...diagnosticBase,
+          checks: {
+            title: buildDiagnosticCheck(false, ["missing_pending_job"]),
+            description: buildDiagnosticCheck(false, ["missing_pending_job"]),
+            snippet: buildDiagnosticCheck(false, ["missing_pending_job"]),
+            pay: buildDiagnosticCheck(false, ["missing_pending_job"]),
+            page_url: buildDiagnosticCheck(false, ["missing_pending_job"])
+          },
+          failure_reasons: ["missing_pending_job"],
+          safe_to_apply: false
+        });
+        continue;
+      }
+
+      const sanitized = sanitizePublishSelectedJob(job);
+      const editedRecord = editedJobsById.get(String(job.id)) || {};
+      const featured = typeof editedRecord.featured === "boolean" ? editedRecord.featured : Boolean(job.featured);
+
+      upsertJobRecord(
+        nextRecords,
+        { ...sanitized.job, featured },
+        "published",
+        { featured }
+      );
+      if (Object.keys(editedRecord).length) {
+        updateRecordListById(nextRecords, String(job.id), (record) => updateJobDisplayFromEditedRecord(record, editedRecord));
+      }
+
+      processedPublishJobIds.add(String(job.id));
+      report.publishSelectedJobs.push({
+        action_id: String(action.id),
+        id: String(job.id),
+        title: stringifySafe(sanitized.job.title),
+        organization: stringifySafe(sanitized.job.organization),
+        sanitized_job: sanitized.job,
+        before: sanitized.before,
+        dirty_reasons: sanitized.dirtyReasons,
+        remaining_dirty_reasons: sanitized.remainingJunkReasons
+      });
+    }
+  }
+
+  const simulatedPublicJobs = buildPublicJobsFromRecords(nextRecords);
+  const publicJobsById = new Map(simulatedPublicJobs.map((job) => [String(job.id || ""), job]));
+  const { map: expectedPagePaths } = buildJobPagePathMap(simulatedPublicJobs);
+
+  report.publishSelectedJobs = report.publishSelectedJobs.map((item) => {
+    if (!item.sanitized_job) return item;
+    const candidateJob = item.sanitized_job;
+    const checks = {
+      title: validateSelectedJobTitle(candidateJob),
+      description: validateSelectedJobDescription(candidateJob),
+      snippet: validateSelectedJobSnippet(candidateJob),
+      pay: validateSelectedJobPay(candidateJob),
+      page_url: validateSelectedJobPageUrl(item.id, publicJobsById, expectedPagePaths)
+    };
+    const failureReasons = summarizeSelectedJobChecks(checks)
+      .concat(item.remaining_dirty_reasons || [])
+      .filter(Boolean);
+    return {
+      action_id: item.action_id,
+      id: item.id,
+      title: item.title,
+      organization: item.organization,
+      checks,
+      failure_reasons: Array.from(new Set(failureReasons)),
+      safe_to_apply: failureReasons.length === 0,
+      before: item.before,
+      dirty_reasons: item.dirty_reasons || [],
+      remaining_dirty_reasons: item.remaining_dirty_reasons || []
+    };
+  });
+
+  report.safeToApply =
+    report.publishSelectedJobs.every((item) => item.safe_to_apply !== false) &&
+    report.malformedNonJobActions.length === 0 &&
+    report.staleNonJobActions.length === 0 &&
+    report.unsupportedActions.length === 0;
+
+  return report;
+}
+
 async function main() {
   resetParserCleanupStats();
   const [pendingJobs, jobRecords, orgRules, overrides, talentProfiles, employers] = await Promise.all([
@@ -761,6 +1214,16 @@ async function main() {
   if (!actions.length) {
     console.log("[jobs:apply-admin-actions] no actions found");
     return;
+  }
+
+  const diagnosticReport = await runAdminActionDiagnostics({
+    pendingJobs,
+    jobRecords,
+    fetched
+  });
+  if (!diagnosticReport.safeToApply) {
+    logDiagnosticReport(diagnosticReport, "jobs:apply-admin-actions-preflight");
+    throw new Error(buildDiagnosticSummary(diagnosticReport));
   }
 
   let nextPending = [...pendingJobs];
@@ -1418,16 +1881,30 @@ async function main() {
   );
 }
 
+async function diagnoseMain() {
+  resetParserCleanupStats();
+  const report = await runAdminActionDiagnostics();
+  logDiagnosticReport(report, DIAGNOSTIC_LABEL);
+  if (!report.safeToApply) {
+    throw new Error(buildDiagnosticSummary(report));
+  }
+}
+
 if (require.main === module) {
-  main().catch((error) => {
+  const runner = process.argv.includes("--diagnose") ? diagnoseMain : main;
+  runner().catch((error) => {
     console.error(`[jobs:apply-admin-actions] Failed: ${error.message}`);
     process.exitCode = 1;
   });
 }
 
 module.exports = {
+  diagnoseMain,
   main,
   assertSelectedPublishSanitizerHelpers,
+  buildDiagnosticSummary,
+  logDiagnosticReport,
+  runAdminActionDiagnostics,
   selectedPublishSanitizerHelpers: {
     buildDescriptionSnippet,
     buildFallbackDescription,

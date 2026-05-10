@@ -18,8 +18,13 @@ const {
   applyPublishLifecycle
 } = require("./lifecycle-utils");
 const {
+  buildDescriptionSnippet,
+  buildFallbackDescription,
   getParserCleanupStats,
+  hasMalformedDescriptionTemplate,
+  hasUsableDescription,
   normalizeJob,
+  normalizeDescription,
   resetParserCleanupStats,
   stringifySafe
 } = require("./job-normalizer");
@@ -34,8 +39,10 @@ const {
   writeOrganizationRules,
   writePendingOverrides
 } = require("./admin-actions-store");
-const { buildPagesFromJobs } = require("./generate-job-pages");
+const { buildPagesForSelectedJobs, buildPagesFromJobs } = require("./generate-job-pages");
 const { buildPublicJobsFromRecords, syncPublicJobsFromRecords } = require("./public-jobs");
+const { getCanonicalSnippet, isJunkDescription } = require("./public-data-guard");
+const { buildValidationReport } = require("./validate-public-data");
 
 function buildPublishedDisplay(job) {
   return {
@@ -62,6 +69,123 @@ function buildPublishedDisplay(job) {
     page_url_override: stringifySafe(job.page_url_override),
     published: true,
     featured: Boolean(job.featured)
+  };
+}
+
+function buildDescriptionCandidate(job = {}) {
+  return [
+    job.description,
+    job.raw_description,
+    job.descriptionPlain,
+    job.content,
+    job.summary
+  ].filter(Boolean).join(" ");
+}
+
+function excerptForLog(value, maxLength = 180) {
+  const text = stringifySafe(value).replace(/\s+/g, " ").trim();
+  if (!text) return "";
+  return text.length <= maxLength ? text : `${text.slice(0, maxLength - 1).trimEnd()}…`;
+}
+
+function getSelectedJobJunkReasons(description, snippet, context = {}) {
+  const reasons = [];
+  const descriptionText = stringifySafe(description);
+  const snippetText = stringifySafe(snippet);
+  const title = stringifySafe(context.title);
+  const organization = stringifySafe(context.organization);
+
+  const patternReasons = [
+    { pattern: /\bprevious\b/i, reason: "contains_previous_navigation" },
+    { pattern: /\bnext post\b/i, reason: "contains_next_post_navigation" },
+    { pattern: /\bviewBox\b/i, reason: "contains_svg_fragment" },
+    { pattern: /\b0\/svg\b/i, reason: "contains_svg_path_fragment" },
+    { pattern: /\bPOINT\s*\(/i, reason: "contains_point_metadata" },
+    { pattern: /\blocality\b/i, reason: "contains_locality_metadata" },
+    { pattern: /\b(?:taxonomy|valuation|headquarters|employee size|funding|revenue)\b/i, reason: "contains_metadata_blob" },
+    { pattern: /\bTitle Business(?: Platform Location Date)?\b/i, reason: "contains_table_header_junk" }
+  ];
+
+  if (!descriptionText) reasons.push("missing_description");
+  if (!snippetText) reasons.push("missing_snippet");
+  if (hasMalformedDescriptionTemplate(descriptionText)) reasons.push("malformed_template_text");
+  if (isJunkDescription(descriptionText)) reasons.push("junk_description_pattern");
+  if (!hasUsableDescription(descriptionText, { title, organization })) reasons.push("unusable_description");
+  if (isJunkDescription(snippetText)) reasons.push("junk_snippet_pattern");
+
+  patternReasons.forEach(({ pattern, reason }) => {
+    if (pattern.test(descriptionText) || pattern.test(snippetText)) reasons.push(reason);
+  });
+
+  return Array.from(new Set(reasons));
+}
+
+function sanitizePublishSelectedJob(job = {}) {
+  const title = stringifySafe(job.title);
+  const organization = stringifySafe(job.organization);
+  const beforeDescription = stringifySafe(job.description || job.raw_description);
+  const beforeSnippet = stringifySafe(job.description_snippet || job.summary);
+  const normalizedDescription = normalizeDescription(buildDescriptionCandidate(job), {
+    title,
+    organization
+  }).description;
+  let cleanDescription = normalizedDescription;
+  if (!cleanDescription || hasMalformedDescriptionTemplate(cleanDescription) || !hasUsableDescription(cleanDescription, { title, organization })) {
+    cleanDescription = buildFallbackDescription({
+      ...job,
+      title,
+      organization
+    });
+  }
+  if (!cleanDescription || isJunkDescription(cleanDescription) || hasMalformedDescriptionTemplate(cleanDescription) || !hasUsableDescription(cleanDescription, { title, organization })) {
+    cleanDescription = buildFallbackDescription({
+      ...job,
+      title,
+      organization,
+      function: stringifySafe(job.function || job.sector || "its work")
+    }) || `This role supports ${organization ? `${organization}${organization.endsWith("s") ? "'" : "'s"}` : "the organization's"} work across ${stringifySafe(job.function || job.sector || "its focus areas")}.`;
+  }
+  let cleanSnippet = buildDescriptionSnippet(cleanDescription, 220, { title });
+  if (!cleanSnippet || isJunkDescription(cleanSnippet) || hasMalformedDescriptionTemplate(cleanSnippet)) {
+    cleanSnippet = cleanDescription;
+  }
+  const dirtyReasons = [];
+  const dirtyDescription =
+    !beforeDescription ||
+    !hasUsableDescription(beforeDescription, { title, organization }) ||
+    isJunkDescription(beforeDescription) ||
+    hasMalformedDescriptionTemplate(beforeDescription);
+  if (dirtyDescription) {
+    dirtyReasons.push("junk_description");
+  }
+  if (
+    !beforeSnippet ||
+    isJunkDescription(beforeSnippet) ||
+    hasMalformedDescriptionTemplate(beforeSnippet) ||
+    !getCanonicalSnippet({ title, description: beforeDescription, description_snippet: beforeSnippet, summary: beforeSnippet }) ||
+    (dirtyDescription && beforeSnippet !== cleanSnippet)
+  ) {
+    dirtyReasons.push("invalid_snippet");
+  }
+  const remainingJunkReasons = getSelectedJobJunkReasons(cleanDescription, cleanSnippet, { title, organization });
+  return {
+    job: {
+      ...job,
+      description: cleanDescription,
+      raw_description: cleanDescription,
+      description_snippet: cleanSnippet,
+      summary: cleanSnippet
+    },
+    dirtyReasons,
+    remainingJunkReasons,
+    before: {
+      description: beforeDescription,
+      snippet: beforeSnippet
+    },
+    after: {
+      description: cleanDescription,
+      snippet: cleanSnippet
+    }
   };
 }
 
@@ -313,6 +437,89 @@ function updateStructuredRecord(record, editedRecord = {}) {
   return next;
 }
 
+function parseTimestampMs(value) {
+  const parsed = Date.parse(String(value || ""));
+  return Number.isFinite(parsed) ? parsed : 0;
+}
+
+function cloneStructuredValue(value) {
+  if (Array.isArray(value)) return value.map((item) => cloneStructuredValue(item));
+  if (value && typeof value === "object") return JSON.parse(JSON.stringify(value));
+  return value;
+}
+
+function isStructuredBlank(value) {
+  if (value === null || value === undefined) return true;
+  if (typeof value === "string") return !String(value).trim();
+  if (Array.isArray(value)) return value.length === 0;
+  if (typeof value === "object") return Object.keys(value).length === 0;
+  return false;
+}
+
+function structuredValuesEqual(left, right) {
+  return JSON.stringify(left ?? null) === JSON.stringify(right ?? null);
+}
+
+function serializeStructuredFieldValue(value) {
+  if (Array.isArray(value) || (value && typeof value === "object")) {
+    return JSON.stringify(value);
+  }
+  return stringifySafe(value);
+}
+
+function mergeStructuredRecord(record, editedRecord = {}, options = {}) {
+  const now = new Date().toISOString();
+  const actionTimestamp = parseTimestampMs(options.actionTimestamp || "");
+  const next = {
+    ...record,
+    updated_at: now
+  };
+  const fieldMeta = {
+    ...(record.field_meta && typeof record.field_meta === "object" ? record.field_meta : {})
+  };
+  const manualOverrides = new Set(
+    []
+      .concat(Array.isArray(record.manual_overrides) ? record.manual_overrides : [])
+      .concat(Array.isArray(record.protected_fields) ? record.protected_fields : [])
+  );
+
+  if (editedRecord.display_order !== undefined) {
+    const displayOrder = Number(editedRecord.display_order || 0);
+    next.display_order = Number.isFinite(displayOrder) ? displayOrder : 0;
+  }
+  if (typeof editedRecord.featured === "boolean") next.featured = editedRecord.featured;
+  if (typeof editedRecord.public_visibility === "boolean") next.public_visibility = editedRecord.public_visibility;
+  if (typeof editedRecord.published === "boolean") next.published = editedRecord.published;
+  if (editedRecord.status !== undefined && stringifySafe(editedRecord.status)) next.status = String(editedRecord.status);
+  if (editedRecord.admin_notes !== undefined) next.admin_notes = stringifySafe(editedRecord.admin_notes);
+
+  Object.entries(editedRecord || {}).forEach(([key, incomingValue]) => {
+    if (["display_order", "featured", "public_visibility", "published", "status", "admin_notes"].includes(key)) return;
+    const existingValue = record ? record[key] : undefined;
+    const existingMeta = fieldMeta[key] && typeof fieldMeta[key] === "object" ? fieldMeta[key] : {};
+    const existingManualAt = parseTimestampMs(existingMeta.last_manual_edit_at || record?.last_manual_edit_at);
+    const incomingBlank = isStructuredBlank(incomingValue);
+    const differs = !structuredValuesEqual(existingValue, incomingValue);
+
+    if (incomingBlank && !isStructuredBlank(existingValue)) return;
+    if (actionTimestamp > 0 && existingManualAt > actionTimestamp && differs) return;
+
+    next[key] = cloneStructuredValue(incomingValue);
+    manualOverrides.add(key);
+    fieldMeta[key] = {
+      ...existingMeta,
+      last_manual_edit_at: now,
+      last_value: serializeStructuredFieldValue(incomingValue),
+      conflict: false
+    };
+  });
+
+  next.manual_overrides = Array.from(manualOverrides);
+  next.field_meta = fieldMeta;
+  next.last_manual_edit_at = now;
+  return next;
+}
+
 function updateRecordListById(records, id, updater) {
   const index = records.findIndex((record) => String(record.id) === String(id));
   if (index < 0) return false;
@@ -325,6 +532,14 @@ function buildActionResult(status, detail) {
     status,
     detail: detail || ""
   };
+}
+
+function logScopedPublishFailures(diagnostics = []) {
+  diagnostics.forEach((item) => {
+    console.error(
+      `[jobs:apply-admin-actions] scoped_publish_dirty_job id=${String(item.id || "")} title=${JSON.stringify(stringifySafe(item.title))} company=${JSON.stringify(stringifySafe(item.organization))} junk_description_reason=${JSON.stringify((item.remaining_dirty_reasons || item.dirty_reasons || []).join(","))} before_description_excerpt=${JSON.stringify(excerptForLog(item.before?.description || ""))} before_snippet_excerpt=${JSON.stringify(excerptForLog(item.before?.snippet || ""))}`
+    );
+  });
 }
 
 function buildJobsById(jobs) {
@@ -545,8 +760,12 @@ async function main() {
     staleSkipped: 0,
     talentProfilesUpdated: 0,
     jobPagesRegenerated: 0,
+    redirectPagesRegenerated: 0,
     jobRecordsCount: 0,
-    jobsJsonCount: 0
+    jobsJsonCount: 0,
+    publishSelectedDiagnostics: [],
+    scopedPublishQualityReport: null,
+    staleSkippedResolvedActions: []
   };
 
   const actionResults = {};
@@ -557,6 +776,8 @@ async function main() {
       .map((record) => String(record.id))
   );
   const processedPublishJobIds = new Set();
+  const publicScopeIds = new Set();
+  let shouldRunPublicSync = false;
   const latestDecisionByJobId = new Map();
 
   actions.forEach((action) => {
@@ -679,10 +900,20 @@ async function main() {
           continue;
         }
 
+        const sanitized = sanitizePublishSelectedJob(job);
         const editedRecord = editedJobsById.get(String(job.id)) || {};
+        report.publishSelectedDiagnostics.push({
+          id: String(job.id),
+          title: stringifySafe(job.title),
+          organization: stringifySafe(job.organization),
+          dirty_reasons: sanitized.dirtyReasons,
+          remaining_dirty_reasons: sanitized.remainingJunkReasons,
+          before: sanitized.before,
+          after: sanitized.after
+        });
         upsertJobRecord(
           nextRecords,
-          { ...job, featured: Boolean(job.featured) },
+          { ...sanitized.job, featured: Boolean(job.featured) },
           "published",
           {
             featured: typeof editedRecord.featured === "boolean" ? editedRecord.featured : Boolean(job.featured)
@@ -693,6 +924,8 @@ async function main() {
         }
         delete nextOverrides.jobs[String(job.id)];
         processedPublishJobIds.add(String(job.id));
+        publicScopeIds.add(String(job.id));
+        shouldRunPublicSync = true;
         publishedIds.push(String(job.id));
         report.recordsPublished += 1;
         publishedCount += 1;
@@ -791,6 +1024,7 @@ async function main() {
         nextOrgRules.hidden_organizations.push(organization);
       }
       nextPending = nextPending.filter((job) => String(job.organization || "").trim() !== organization);
+      if (rejectedJobs.length) shouldRunPublicSync = true;
       actionResults[action.id] = buildActionResult("applied", `hidden_organization=${organization}`);
       logActionOutcome(action, actionSource, "applied", `hidden_organization=${organization}`);
       console.log(`[jobs:apply-admin-actions] hide_organization action=${action.id} organization=${organization}`);
@@ -823,6 +1057,8 @@ async function main() {
         changedFields = summarizeChangedFields(record, nextRecord, { editedRecord: action.payload.editedRecord || {} });
         return nextRecord;
       });
+      if (applied && id) publicScopeIds.add(id);
+      if (applied) shouldRunPublicSync = true;
       actionResults[action.id] = buildActionResult(applied ? "applied" : "ignored_duplicate", applied ? `updated_active_job=${id}` : `job_not_found=${id}`);
       logActionOutcome(action, actionSource, applied ? "applied" : "skipped_stale", applied ? `updated_active_job=${id}` : `job_not_found=${id}`);
       console.log(
@@ -841,7 +1077,11 @@ async function main() {
           verification_status: "removed",
           verification_method: "manual",
           updated_at: new Date().toISOString()
-        }))) count += 1;
+        }))) {
+          count += 1;
+          publicScopeIds.add(String(id));
+          shouldRunPublicSync = true;
+        }
       });
       report.recordsArchivedOrRejected += count;
       actionResults[action.id] = buildActionResult("applied", `archived_active_jobs=${count}`);
@@ -859,7 +1099,11 @@ async function main() {
           verification_status: "needs_review",
           verification_method: "manual",
           updated_at: new Date().toISOString()
-        }))) count += 1;
+        }))) {
+          count += 1;
+          publicScopeIds.add(String(id));
+          shouldRunPublicSync = true;
+        }
       });
       actionResults[action.id] = buildActionResult("applied", `unpublished_active_jobs=${count}`);
       logActionOutcome(action, actionSource, "applied", `unpublished_active_jobs=${count}`);
@@ -869,16 +1113,31 @@ async function main() {
       const featured = typeof action.payload.featured === "boolean" ? action.payload.featured : true;
       let count = 0;
       targetIds.forEach((id) => {
-        if (updateRecordListById(nextRecords, id, (record) => updateJobDisplayFromEditedRecord(record, { featured }))) count += 1;
+        if (updateRecordListById(nextRecords, id, (record) => updateJobDisplayFromEditedRecord(record, { featured }))) {
+          count += 1;
+          publicScopeIds.add(String(id));
+          shouldRunPublicSync = true;
+        }
       });
       actionResults[action.id] = buildActionResult("applied", `feature_active_jobs=${count}`);
       logActionOutcome(action, actionSource, "applied", `feature_active_jobs=${count}`);
       console.log(`[jobs:apply-admin-actions] feature_active_job action=${action.id} count=${count} featured=${featured}`);
     } else if (action.operation === "update_active_talent") {
       const id = String(action.payload.id || action.payload.recordId || freshIds[0] || "");
+      if (!id) {
+        actionResults[action.id] = buildActionResult("applied", "empty_talent_id_skipped");
+        report.staleSkippedResolvedActions.push({
+          action_id: action.id,
+          operation: action.operation,
+          detail: "empty_talent_id_skipped"
+        });
+        logActionOutcome(action, actionSource, "applied", "empty_talent_id_skipped");
+        console.log(`[jobs:apply-admin-actions] update_active_talent action_id=${action.id} skipped_empty_talent_id=true`);
+        continue;
+      }
       let changedFields = [];
       const applied = updateRecordListById(nextTalentProfiles, id, (record) => {
-        const nextRecord = updateStructuredRecord(record, action.payload.editedRecord || {});
+        const nextRecord = mergeStructuredRecord(record, action.payload.editedRecord || {}, { actionTimestamp });
         changedFields = summarizeChangedFields(record, nextRecord, { editedRecord: action.payload.editedRecord || {} });
         return nextRecord;
       });
@@ -915,10 +1174,26 @@ async function main() {
       logActionOutcome(action, actionSource, "applied", `feature_active_talent=${count}`);
     } else if (action.operation === "update_active_employer") {
       const id = String(action.payload.id || action.payload.recordId || freshIds[0] || "");
-      const applied = updateRecordListById(nextEmployers, id, (record) => updateStructuredRecord(record, action.payload.editedRecord || {}));
+      if (!id) {
+        actionResults[action.id] = buildActionResult("applied", "empty_employer_id_skipped");
+        report.staleSkippedResolvedActions.push({
+          action_id: action.id,
+          operation: action.operation,
+          detail: "empty_employer_id_skipped"
+        });
+        logActionOutcome(action, actionSource, "applied", "empty_employer_id_skipped");
+        console.log(`[jobs:apply-admin-actions] update_active_employer action_id=${action.id} skipped_empty_employer_id=true`);
+        continue;
+      }
+      let changedFields = [];
+      const applied = updateRecordListById(nextEmployers, id, (record) => {
+        const nextRecord = mergeStructuredRecord(record, action.payload.editedRecord || {}, { actionTimestamp });
+        changedFields = summarizeChangedFields(record, nextRecord, { editedRecord: action.payload.editedRecord || {} });
+        return nextRecord;
+      });
       actionResults[action.id] = buildActionResult(applied ? "applied" : "ignored_duplicate", applied ? `updated_active_employer=${id}` : `employer_not_found=${id}`);
       logActionOutcome(action, actionSource, applied ? "applied" : "skipped_stale", applied ? `updated_active_employer=${id}` : `employer_not_found=${id}`);
-      console.log(`[jobs:apply-admin-actions] update_active_employer action=${action.id} id=${id} applied=${applied}`);
+      console.log(`[jobs:apply-admin-actions] update_active_employer action=${action.id} id=${id} applied=${applied} fields_changed=${changedFields.join(",") || "none"}`);
     } else if (action.operation === "archive_active_employer") {
       const targetIds = freshIds.length ? freshIds : [String(action.payload.id || action.payload.recordId || "")].filter(Boolean);
       let count = 0;
@@ -951,6 +1226,81 @@ async function main() {
     }
   }
 
+  const expectedPublicJobsCount = buildPublicJobsFromRecords(nextRecords).length;
+  const scopedIds = publicScopeIds.size ? Array.from(publicScopeIds) : [];
+  let preflightPublicSync = {
+    publicJobs: await readJobs(),
+    jobsCountAfter: Array.isArray(await readJobs()) ? (await readJobs()).length : 0,
+    publishedCount: expectedPublicJobsCount,
+    wrote: false,
+    overwriteAudit: {
+      field_counts: {
+        jobs_changed: 0,
+        unrelated_jobs_changed: 0,
+        descriptions_replaced: 0,
+        snippets_replaced: 0,
+        pay_fields_replaced: 0,
+        locations_replaced: 0,
+        specializations_replaced: 0,
+        page_urls_changed: 0
+      },
+      current_scoped_quality: {
+        junk_description_count: 0,
+        invalid_snippet_count: 0,
+        missing_description_count: 0
+      },
+      proposed_scoped_quality: {
+        junk_description_count: 0,
+        invalid_snippet_count: 0,
+        missing_description_count: 0
+      }
+    }
+  };
+  if (shouldRunPublicSync) {
+    try {
+      preflightPublicSync = await syncPublicJobsFromRecords(nextRecords, {
+        label: "jobs:apply-admin-actions-preflight",
+        scopeIds: scopedIds,
+        dryRun: true
+      });
+    } catch (error) {
+      if (report.publishSelectedDiagnostics.length) {
+        logScopedPublishFailures(report.publishSelectedDiagnostics.filter((item) => Array.isArray(item.dirty_reasons) && item.dirty_reasons.length));
+      }
+      throw error;
+    }
+  }
+
+  if (scopedIds.length) {
+    const dirtySelected = report.publishSelectedDiagnostics.filter((item) => Array.isArray(item.dirty_reasons) && item.dirty_reasons.length > 0);
+    const remainingDirtySelected = report.publishSelectedDiagnostics.filter((item) => Array.isArray(item.remaining_dirty_reasons) && item.remaining_dirty_reasons.length > 0);
+    const fixedSelectedCount = Math.max(0, dirtySelected.length - remainingDirtySelected.length);
+    report.scopedPublishQualityReport = {
+      selected_ids_count: scopedIds.length,
+      dirty_selected_count: dirtySelected.length,
+      fixed_selected_count: fixedSelectedCount,
+      remaining_dirty_selected_count: remainingDirtySelected.length,
+      current_scoped_quality: preflightPublicSync.overwriteAudit.current_scoped_quality || null,
+      proposed_scoped_quality: preflightPublicSync.overwriteAudit.proposed_scoped_quality || null,
+      jobs: report.publishSelectedDiagnostics.map((item) => ({
+        id: item.id,
+        title: item.title,
+        organization: item.organization,
+        dirty_reasons: item.dirty_reasons || [],
+        remaining_dirty_reasons: item.remaining_dirty_reasons || [],
+        before_description: excerptForLog(item.before?.description || ""),
+        before_snippet: excerptForLog(item.before?.snippet || ""),
+        after_description: excerptForLog(item.after?.description || ""),
+        after_snippet: excerptForLog(item.after?.snippet || "")
+      }))
+    };
+    console.log(`[jobs:apply-admin-actions] scoped_publish_quality ${JSON.stringify(report.scopedPublishQualityReport)}`);
+    if (remainingDirtySelected.length) {
+      logScopedPublishFailures(remainingDirtySelected);
+      throw new Error(`publish_selected selected jobs remain dirty after sanitization: ${remainingDirtySelected.map((item) => item.id).join(",")}`);
+    }
+  }
+
   await writePendingOverrides(nextOverrides);
   await writeOrganizationRules(nextOrgRules);
   await writeJson(PENDING_SYNCED_FILE, nextPending);
@@ -958,22 +1308,71 @@ async function main() {
   await writeJson(TALENT_PROFILES_FILE, nextTalentProfiles);
   await writeJson(EMPLOYERS_FILE, nextEmployers);
 
-  const expectedPublicJobsCount = buildPublicJobsFromRecords(nextRecords).length;
-  const publicSync = await syncPublicJobsFromRecords(nextRecords, { label: "jobs:apply-admin-actions" });
-  const syncedJobs = await readJobs();
-  const finalJobsJsonCount = Array.isArray(syncedJobs) ? syncedJobs.length : 0;
-  const syncMismatch = finalJobsJsonCount !== expectedPublicJobsCount;
-  console.log(
-    `[jobs:apply-admin-actions] expected_public_jobs_count=${expectedPublicJobsCount} final_jobs_json_count=${finalJobsJsonCount} wrote_jobs_json=${publicSync.wrote} sync_mismatch=${syncMismatch}`
-  );
-  if (syncMismatch) {
-    throw new Error(`jobs.json sync mismatch: expected ${expectedPublicJobsCount} public jobs, found ${finalJobsJsonCount}`);
+  let publicSync = {
+    publicJobs: await readJobs(),
+    jobsCountAfter: Array.isArray(await readJobs()) ? (await readJobs()).length : 0,
+    publishedCount: expectedPublicJobsCount,
+    wrote: false,
+    overwriteAudit: {
+      field_counts: {
+        jobs_changed: 0,
+        unrelated_jobs_changed: 0,
+        descriptions_replaced: 0,
+        snippets_replaced: 0,
+        pay_fields_replaced: 0,
+        locations_replaced: 0,
+        specializations_replaced: 0,
+        page_urls_changed: 0
+      }
+    }
+  };
+  let finalJobsJsonCount = Array.isArray(publicSync.publicJobs) ? publicSync.publicJobs.length : 0;
+  if (shouldRunPublicSync) {
+    publicSync = await syncPublicJobsFromRecords(nextRecords, {
+      label: "jobs:apply-admin-actions",
+      scopeIds: scopedIds
+    });
+    const syncedJobs = await readJobs();
+    finalJobsJsonCount = Array.isArray(syncedJobs) ? syncedJobs.length : 0;
+    const syncMismatch = finalJobsJsonCount !== expectedPublicJobsCount;
+    console.log(
+      `[jobs:apply-admin-actions] expected_public_jobs_count=${expectedPublicJobsCount} final_jobs_json_count=${finalJobsJsonCount} wrote_jobs_json=${publicSync.wrote} sync_mismatch=${syncMismatch}`
+    );
+    if (syncMismatch) {
+      throw new Error(`jobs.json sync mismatch: expected ${expectedPublicJobsCount} public jobs, found ${finalJobsJsonCount}`);
+    }
+  } else {
+    console.log("[jobs:apply-admin-actions] no public job mutations detected; skipped jobs.json sync");
   }
   report.recordsLeftPending = nextPending.length;
   report.jobRecordsCount = nextRecords.length;
   report.jobsJsonCount = finalJobsJsonCount;
-  const pageBuildResult = await buildPagesFromJobs(publicSync.publicJobs);
+  console.log(
+    `[jobs:apply-admin-actions] selected_ids_count=${scopedIds.length} public_jobs_changed=${publicSync.overwriteAudit.field_counts.jobs_changed} unrelated_jobs_changed=${publicSync.overwriteAudit.field_counts.unrelated_jobs_changed}`
+  );
+  const pageBuildResult = shouldRunPublicSync
+    ? (scopedIds.length
+      ? await buildPagesForSelectedJobs(publicSync.publicJobs, { selectedIds: scopedIds })
+      : await buildPagesFromJobs(publicSync.publicJobs))
+    : { pagesWrittenCount: 0, redirectPagesWrittenCount: 0 };
   report.jobPagesRegenerated = pageBuildResult.pagesWrittenCount;
+  report.redirectPagesRegenerated = pageBuildResult.redirectPagesWrittenCount || 0;
+  const validation = shouldRunPublicSync
+    ? await buildValidationReport({ requirePages: true })
+    : await buildValidationReport({ requirePages: false });
+  report.validation = {
+    public_records_count: validation.public_records_count,
+    jobs_json_count: validation.jobs_json_count,
+    invalid_title_count: validation.invalid_title_count,
+    pending_public_overlap_count: validation.pending_public_overlap_count,
+    hard_validation_failure_count: validation.hard_validation_failure_count
+  };
+  console.log(
+    `[jobs:apply-admin-actions] validation public_records_count=${validation.public_records_count} jobs_json_count=${validation.jobs_json_count} invalid_title_count=${validation.invalid_title_count} pending_public_overlap_count=${validation.pending_public_overlap_count} hard_validation_failure_count=${validation.hard_validation_failure_count}`
+  );
+  if (validation.hard_validation_failure_count > 0) {
+    throw new Error(`hard public validation failures detected: ${validation.hard_validation_failure_count}`);
+  }
   const parserStats = getParserCleanupStats();
   console.log(
     `[jobs:apply-admin-actions] parser_cleaned_title_count=${parserStats.parser_cleaned_title_count} parser_cleaned_org_count=${parserStats.parser_cleaned_org_count} parser_cleaned_description_count=${parserStats.parser_cleaned_description_count} parser_location_defaulted_remote_count=${parserStats.parser_location_defaulted_remote_count} parser_location_cleaned_count=${parserStats.parser_location_cleaned_count} parser_hybrid_location_repaired_count=${parserStats.parser_hybrid_location_repaired_count} parser_elemental_metadata_stripped_count=${parserStats.parser_elemental_metadata_stripped_count} parser_custom_table_header_stripped_count=${parserStats.parser_custom_table_header_stripped_count} parser_html_fragment_stripped_count=${parserStats.parser_html_fragment_stripped_count} salary_invalid_removed_count=${parserStats.salary_invalid_removed_count} salary_display_built_from_range_count=${parserStats.salary_display_built_from_range_count} workplace_type_cleaned_count=${parserStats.workplace_type_cleaned_count} workplace_type_invalid_removed_count=${parserStats.workplace_type_invalid_removed_count} workplace_type_field_misplacement_repaired_count=${parserStats.workplace_type_field_misplacement_repaired_count} elemental_impact_routed_pending_count=${parserStats.elemental_impact_routed_pending_count}`

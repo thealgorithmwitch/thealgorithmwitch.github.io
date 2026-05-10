@@ -135,14 +135,29 @@ function buildJobsById(jobs = []) {
   return new Map((Array.isArray(jobs) ? jobs : []).map((job) => [cleanText(job.id), job]));
 }
 
-function compareJobsOutputs(currentJobs = [], proposedJobs = []) {
+function filterJobsByScope(jobs = [], scopeIds = []) {
+  const scopedIds = new Set((scopeIds || []).map((id) => cleanText(id)).filter(Boolean));
+  if (!scopedIds.size) return Array.isArray(jobs) ? jobs : [];
+  return (Array.isArray(jobs) ? jobs : []).filter((job) => scopedIds.has(cleanText(job.id)));
+}
+
+function compareJobsOutputs(currentJobs = [], proposedJobs = [], options = {}) {
+  const scopeIds = new Set((options.scopeIds || []).map((id) => cleanText(id)).filter(Boolean));
+  const scoped = scopeIds.size > 0;
   const currentQuality = evaluateJobsQuality(currentJobs);
   const proposedQuality = evaluateJobsQuality(proposedJobs);
+  const currentScopedQuality = scoped
+    ? evaluateJobsQuality(filterJobsByScope(currentJobs, Array.from(scopeIds)))
+    : currentQuality;
+  const proposedScopedQuality = scoped
+    ? evaluateJobsQuality(filterJobsByScope(proposedJobs, Array.from(scopeIds)))
+    : proposedQuality;
   const currentById = buildJobsById(currentJobs);
   const proposedById = buildJobsById(proposedJobs);
 
   const fieldCounts = {
     jobs_changed: 0,
+    unrelated_jobs_changed: 0,
     descriptions_replaced: 0,
     snippets_replaced: 0,
     pay_fields_replaced: 0,
@@ -153,35 +168,36 @@ function compareJobsOutputs(currentJobs = [], proposedJobs = []) {
   const riskyExamples = [];
 
   for (const [id, current] of currentById.entries()) {
+    const inScope = !scoped || scopeIds.has(id);
     const proposed = proposedById.get(id);
     if (!proposed) continue;
     let changed = false;
 
     const currentDescription = getCanonicalDescription(current);
     const proposedDescription = getCanonicalDescription(proposed);
-    if (currentDescription !== proposedDescription) {
+    if (inScope && currentDescription !== proposedDescription) {
       fieldCounts.descriptions_replaced += 1;
       changed = true;
     }
     const currentSnippet = getCanonicalSnippet(current);
     const proposedSnippet = getCanonicalSnippet(proposed);
-    if (currentSnippet !== proposedSnippet) {
+    if (inScope && currentSnippet !== proposedSnippet) {
       fieldCounts.snippets_replaced += 1;
       changed = true;
     }
-    if (getCanonicalPay(current) !== getCanonicalPay(proposed)) {
+    if (inScope && getCanonicalPay(current) !== getCanonicalPay(proposed)) {
       fieldCounts.pay_fields_replaced += 1;
       changed = true;
     }
-    if (getCanonicalLocation(current) !== getCanonicalLocation(proposed)) {
+    if (inScope && getCanonicalLocation(current) !== getCanonicalLocation(proposed)) {
       fieldCounts.locations_replaced += 1;
       changed = true;
     }
-    if (cleanText(current.specialization) !== cleanText(proposed.specialization)) {
+    if (inScope && cleanText(current.specialization) !== cleanText(proposed.specialization)) {
       fieldCounts.specializations_replaced += 1;
       changed = true;
     }
-    if (cleanText(current.page_url) !== cleanText(proposed.page_url)) {
+    if (inScope && cleanText(current.page_url) !== cleanText(proposed.page_url)) {
       fieldCounts.page_urls_changed += 1;
       changed = true;
     }
@@ -199,7 +215,7 @@ function compareJobsOutputs(currentJobs = [], proposedJobs = []) {
       (!getCanonicalLocation(proposed) && getCanonicalLocation(current)) ||
       (!proposedWorkplace && currentWorkplace);
 
-    if (proposedLooksWorse && riskyExamples.length < 20) {
+    if (inScope && proposedLooksWorse && riskyExamples.length < 20) {
       riskyExamples.push({
         id,
         title: cleanText(current.title || proposed.title),
@@ -216,21 +232,47 @@ function compareJobsOutputs(currentJobs = [], proposedJobs = []) {
     }
 
     if (changed) {
-      fieldCounts.jobs_changed += 1;
+      if (inScope) {
+        fieldCounts.jobs_changed += 1;
+      } else {
+        fieldCounts.unrelated_jobs_changed += 1;
+      }
+    }
+  }
+
+  if (scoped) {
+    for (const id of scopeIds) {
+      const current = currentById.get(id);
+      const proposed = proposedById.get(id);
+      if (!current && proposed) {
+        fieldCounts.jobs_changed += 1;
+      } else if (current && !proposed) {
+        fieldCounts.jobs_changed += 1;
+      }
     }
   }
 
   const worseReasons = [];
-  if (proposedQuality.invalid_snippet_count > currentQuality.invalid_snippet_count) worseReasons.push("invalid_snippet_count would increase");
-  if (proposedQuality.junk_description_count > currentQuality.junk_description_count) worseReasons.push("junk_description_count would increase");
-  if (proposedQuality.missing_description_count > currentQuality.missing_description_count) worseReasons.push("missing_description_count would increase");
-  if (proposedQuality.duplicate_canonical_id_count > currentQuality.duplicate_canonical_id_count) worseReasons.push("duplicate_canonical_id_count would increase");
-  if (proposedQuality.count < currentQuality.count) worseReasons.push("jobs_json_count would drop unexpectedly");
+  const baselineQuality = scoped ? currentScopedQuality : currentQuality;
+  const targetQuality = scoped ? proposedScopedQuality : proposedQuality;
+  if (!scoped) {
+    if (targetQuality.invalid_snippet_count > baselineQuality.invalid_snippet_count) worseReasons.push("invalid_snippet_count would increase");
+    if (targetQuality.junk_description_count > baselineQuality.junk_description_count) worseReasons.push("junk_description_count would increase");
+    if (targetQuality.missing_description_count > baselineQuality.missing_description_count) worseReasons.push("missing_description_count would increase");
+    if (targetQuality.duplicate_canonical_id_count > baselineQuality.duplicate_canonical_id_count) worseReasons.push("duplicate_canonical_id_count would increase");
+    if (targetQuality.count < baselineQuality.count) worseReasons.push("jobs_json_count would drop unexpectedly");
+  } else {
+    if (targetQuality.invalid_snippet_count > baselineQuality.invalid_snippet_count) worseReasons.push("scoped invalid_snippet_count would increase");
+    if (targetQuality.junk_description_count > baselineQuality.junk_description_count) worseReasons.push("scoped junk_description_count would increase");
+    if (targetQuality.missing_description_count > baselineQuality.missing_description_count) worseReasons.push("scoped missing_description_count would increase");
+  }
   if (riskyExamples.length) worseReasons.push("manual/frontend-cleaned fields would be replaced by worse values");
 
   return {
     current_quality: currentQuality,
     proposed_quality: proposedQuality,
+    current_scoped_quality: currentScopedQuality,
+    proposed_scoped_quality: proposedScopedQuality,
     field_counts: fieldCounts,
     risky_examples: riskyExamples,
     worse_reasons: worseReasons

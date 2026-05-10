@@ -1,5 +1,15 @@
 const path = require("path");
-const jobNormalizer = require("./job-normalizer");
+const {
+  buildDescriptionSnippet,
+  buildFallbackDescription,
+  getParserCleanupStats,
+  hasMalformedDescriptionTemplate,
+  hasUsableDescription,
+  normalizeJob,
+  normalizeDescription,
+  resetParserCleanupStats,
+  stringifySafe
+} = require("./job-normalizer");
 const {
   ADMIN_JOB_ACTIONS_SNAPSHOT_FILE,
   PENDING_SYNCED_FILE,
@@ -18,17 +28,6 @@ const {
 const {
   applyPublishLifecycle
 } = require("./lifecycle-utils");
-const {
-  buildDescriptionSnippet,
-  buildFallbackDescription,
-  getParserCleanupStats,
-  hasMalformedDescriptionTemplate,
-  hasUsableDescription,
-  normalizeJob,
-  normalizeDescription,
-  resetParserCleanupStats,
-  stringifySafe
-} = jobNormalizer;
 const {
   loadBackendConfig,
   readAdminActionSnapshot,

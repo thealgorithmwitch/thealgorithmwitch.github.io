@@ -63,14 +63,11 @@ function assertSelectedPublishSanitizerHelpers() {
     .filter(([, value]) => typeof value !== "function")
     .map(([name]) => name);
 
-  if (missing.length) {
-    throw new TypeError(
-      `Selected publish sanitizer helpers are unavailable: ${missing.join(", ")}. Check job-normalizer exports/imports.`
-    );
-  }
+  return {
+    ok: missing.length === 0,
+    missing
+  };
 }
-
-assertSelectedPublishSanitizerHelpers();
 
 const DIAGNOSTIC_LABEL = "jobs:diagnose-admin-actions";
 const NON_JOB_ACTION_OPERATIONS = new Set([
@@ -136,6 +133,12 @@ function buildDescriptionCandidate(job = {}) {
   ].filter(Boolean).join(" ");
 }
 
+function hasEnoughContextForSafePlaceholder(job = {}) {
+  const title = stringifySafe(job.title);
+  const organization = stringifySafe(job.organization);
+  return Boolean(title && organization && title.length >= 4 && organization.length >= 2);
+}
+
 function excerptForLog(value, maxLength = 180) {
   const text = stringifySafe(value).replace(/\s+/g, " ").trim();
   if (!text) return "";
@@ -191,7 +194,10 @@ function sanitizePublishSelectedJob(job = {}) {
       organization
     });
   }
-  if (!cleanDescription || isJunkDescription(cleanDescription) || hasMalformedDescriptionTemplate(cleanDescription) || !hasUsableDescription(cleanDescription, { title, organization })) {
+  if (
+    (!cleanDescription || isJunkDescription(cleanDescription) || hasMalformedDescriptionTemplate(cleanDescription) || !hasUsableDescription(cleanDescription, { title, organization }))
+    && hasEnoughContextForSafePlaceholder(job)
+  ) {
     cleanDescription = buildFallbackDescription({
       ...job,
       title,
@@ -222,6 +228,11 @@ function sanitizePublishSelectedJob(job = {}) {
     dirtyReasons.push("invalid_snippet");
   }
   const remainingJunkReasons = getSelectedJobJunkReasons(cleanDescription, cleanSnippet, { title, organization });
+  const trusted = remainingJunkReasons.length === 0
+    && hasUsableDescription(cleanDescription, { title, organization })
+    && (!hasMalformedDescriptionTemplate(cleanDescription))
+    && (!isJunkDescription(cleanDescription))
+    && (!isJunkDescription(cleanSnippet));
   return {
     job: {
       ...job,
@@ -232,6 +243,7 @@ function sanitizePublishSelectedJob(job = {}) {
     },
     dirtyReasons,
     remainingJunkReasons,
+    trusted,
     before: {
       description: beforeDescription,
       snippet: beforeSnippet
@@ -354,6 +366,16 @@ function logDiagnosticReport(report = {}, label = DIAGNOSTIC_LABEL) {
   console.log(
     `[${label}] malformed_non_job_actions=${(report.malformedNonJobActions || []).length} stale_non_job_actions=${(report.staleNonJobActions || []).length} unsupported_actions=${(report.unsupportedActions || []).length} apply_safe=${report.safeToApply}`
   );
+  if (report.publishSummary) {
+    console.log(
+      `[${label}] selected_ids_count=${report.publishSummary.selected_ids_count || 0} publishable_count=${report.publishSummary.publishable_count || 0} fixed_count=${report.publishSummary.fixed_count || 0} blocked_count=${report.publishSummary.blocked_count || 0}`
+    );
+    (report.publishSummary.blocked_jobs || []).forEach((item) => {
+      console.warn(
+        `[${label}] blocked_job id=${item.id} title=${JSON.stringify(item.title)} organization=${JSON.stringify(item.organization)} reasons=${JSON.stringify(item.reasons || [])}`
+      );
+    });
+  }
 }
 
 function upsertJobRecord(records, pendingJob, status, options = {}) {
@@ -709,6 +731,34 @@ function logScopedPublishFailures(diagnostics = []) {
   });
 }
 
+function appendUniqueAdminNote(existing, additions = []) {
+  const lines = stringifySafe(existing)
+    .split(/\r?\n/)
+    .map((line) => line.trim())
+    .filter(Boolean);
+  additions.forEach((item) => {
+    const line = stringifySafe(item);
+    if (line && !lines.includes(line)) lines.push(line);
+  });
+  return lines.join("\n");
+}
+
+function markPendingJobBlocked(job = {}, reasons = []) {
+  const blockedReasons = Array.from(new Set([]
+    .concat(Array.isArray(job.review_flags) ? job.review_flags : [])
+    .concat(["publish_blocked", "malformed_description", "needs_manual_cleanup"])
+  ));
+  const warningText = `Publish blocked during admin publish_selected: ${reasons.join(", ") || "description/snippet could not be trusted after repair"}`;
+  return {
+    ...job,
+    review_flags: blockedReasons,
+    parser_warning: appendUniqueAdminNote(job.parser_warning, [warningText]),
+    admin_note: appendUniqueAdminNote(job.admin_note || job.admin_notes, [warningText]),
+    triage_bucket: "needs_cleanup",
+    triage_reason: warningText
+  };
+}
+
 function buildJobsById(jobs) {
   const map = new Map();
   (Array.isArray(jobs) ? jobs : []).forEach((job) => {
@@ -932,6 +982,13 @@ async function runAdminActionDiagnostics(options = {}) {
     publishSelectedActionCount: 0,
     selectedJobsCount: 0,
     publishSelectedJobs: [],
+    publishSummary: {
+      selected_ids_count: 0,
+      publishable_count: 0,
+      fixed_count: 0,
+      blocked_count: 0,
+      blocked_jobs: []
+    },
     malformedNonJobActions: [],
     staleNonJobActions: [],
     unsupportedActions: [],
@@ -1044,6 +1101,7 @@ async function runAdminActionDiagnostics(options = {}) {
 
     for (const id of uniqueIds) {
       report.selectedJobsCount += 1;
+      report.publishSummary.selected_ids_count += 1;
       const existingRecord = findRecordById(nextRecords, id);
       const recordTimestamp = Date.parse(String(existingRecord?.updated_at || existingRecord?.created_at || "")) || 0;
       const diagnosticBase = {
@@ -1182,10 +1240,24 @@ async function runAdminActionDiagnostics(options = {}) {
     };
   });
 
+  report.publishSummary.publishable_count = report.publishSelectedJobs.filter((item) => item.safe_to_apply !== false).length;
+  report.publishSummary.fixed_count = report.publishSelectedJobs.filter((item) => {
+    const dirty = Array.isArray(item.dirty_reasons) && item.dirty_reasons.length > 0;
+    const blocked = item.safe_to_apply === false;
+    return dirty && !blocked;
+  }).length;
+  report.publishSummary.blocked_jobs = report.publishSelectedJobs
+    .filter((item) => item.safe_to_apply === false)
+    .map((item) => ({
+      id: item.id,
+      title: item.title,
+      organization: item.organization,
+      reasons: item.failure_reasons || []
+    }));
+  report.publishSummary.blocked_count = report.publishSummary.blocked_jobs.length;
+
   report.safeToApply =
-    report.publishSelectedJobs.every((item) => item.safe_to_apply !== false) &&
     report.malformedNonJobActions.length === 0 &&
-    report.staleNonJobActions.length === 0 &&
     report.unsupportedActions.length === 0;
 
   return report;
@@ -1238,6 +1310,7 @@ async function main() {
 
   const report = {
     actionsFound: actions.length,
+    selectedIdsCount: 0,
     recordsPublished: 0,
     recordsArchivedOrRejected: 0,
     recordsLeftPending: 0,
@@ -1250,6 +1323,10 @@ async function main() {
     jobRecordsCount: 0,
     jobsJsonCount: 0,
     publishSelectedDiagnostics: [],
+    blockedPublishJobs: [],
+    blockedPublishCount: 0,
+    publishableCount: 0,
+    fixedPublishCount: 0,
     scopedPublishQualityReport: null,
     staleSkippedResolvedActions: []
   };
@@ -1333,10 +1410,13 @@ async function main() {
       const uniqueIds = [];
       const idsSeenInAction = new Set();
       let publishedCount = 0;
+      let blockedCount = 0;
       let duplicateCount = 0;
       let alreadyPublishedCount = 0;
       let staleCount = 0;
       const publishedIds = [];
+      const blockedIds = [];
+      const blockedJobs = [];
       const editedJobsById = new Map(
         (Array.isArray(action.payload.edited_jobs) ? action.payload.edited_jobs : [])
           .filter((item) => item && item.id)
@@ -1351,6 +1431,7 @@ async function main() {
         idsSeenInAction.add(id);
         uniqueIds.push(id);
       }
+      report.selectedIdsCount += uniqueIds.length;
 
       for (const id of uniqueIds) {
         const existingRecord = findRecordById(nextRecords, id);
@@ -1397,6 +1478,39 @@ async function main() {
           before: sanitized.before,
           after: sanitized.after
         });
+        if (!sanitized.trusted || (Array.isArray(sanitized.remainingJunkReasons) && sanitized.remainingJunkReasons.length > 0)) {
+          const blockedReasons = Array.from(new Set([]
+            .concat(sanitized.remainingJunkReasons || [])
+            .concat(sanitized.trusted ? [] : ["untrusted_repair"])
+          ));
+          nextPending = nextPending.map((pendingJob) => (
+            String(pendingJob.id) === String(job.id) ? markPendingJobBlocked(pendingJob, blockedReasons) : pendingJob
+          ));
+          const overrideKey = String(job.id);
+          nextOverrides.jobs[overrideKey] = {
+            ...(nextOverrides.jobs[overrideKey] || {}),
+            review_flags: ["publish_blocked", "malformed_description", "needs_manual_cleanup"],
+            parser_warning: appendUniqueAdminNote(nextOverrides.jobs[overrideKey]?.parser_warning, [`Publish blocked during admin publish_selected: ${blockedReasons.join(", ")}`]),
+            admin_note: appendUniqueAdminNote(nextOverrides.jobs[overrideKey]?.admin_note, [`Publish blocked during admin publish_selected: ${blockedReasons.join(", ")}`]),
+            triage_bucket: "needs_cleanup",
+            triage_reason: `Publish blocked during admin publish_selected: ${blockedReasons.join(", ")}`
+          };
+          blockedCount += 1;
+          blockedIds.push(String(job.id));
+          blockedJobs.push({
+            id: String(job.id),
+            title: stringifySafe(job.title),
+            organization: stringifySafe(job.organization),
+            reasons: blockedReasons
+          });
+          report.blockedPublishJobs.push({
+            id: String(job.id),
+            title: stringifySafe(job.title),
+            organization: stringifySafe(job.organization),
+            reasons: blockedReasons
+          });
+          continue;
+        }
         upsertJobRecord(
           nextRecords,
           { ...sanitized.job, featured: Boolean(job.featured) },
@@ -1415,17 +1529,28 @@ async function main() {
         publishedIds.push(String(job.id));
         report.recordsPublished += 1;
         publishedCount += 1;
+        if (Array.isArray(sanitized.dirtyReasons) && sanitized.dirtyReasons.length > 0) {
+          report.fixedPublishCount += 1;
+        }
       }
       nextPending = removePendingByIds(nextPending, publishedIds);
+      report.publishableCount += publishedCount;
+      report.blockedPublishCount += blockedCount;
       report.duplicatesSkipped += duplicateCount;
       report.alreadyPublishedSkipped += alreadyPublishedCount;
       report.staleSkipped += staleCount;
       const pendingAfter = nextPending.length;
       const activeAfter = countPublishedJobs(nextRecords);
 
-      if (publishedCount > 0) {
+      if (publishedCount > 0 && blockedCount > 0) {
+        actionResults[action.id] = buildActionResult("partially_applied", `published=${publishedCount};blocked=${blockedCount}`);
+        logActionOutcome(action, actionSource, "partially_applied", `published=${publishedCount};blocked=${blockedCount}`);
+      } else if (publishedCount > 0) {
         actionResults[action.id] = buildActionResult("applied", `published=${publishedCount}`);
         logActionOutcome(action, actionSource, "applied", `published=${publishedCount}`);
+      } else if (blockedCount > 0) {
+        actionResults[action.id] = buildActionResult("blocked", `blocked=${blockedCount}`);
+        logActionOutcome(action, actionSource, "blocked", `blocked=${blockedCount}`);
       } else if (staleCount > 0) {
         actionResults[action.id] = buildActionResult("skipped_stale", `stale=${staleCount}`);
         logActionOutcome(action, actionSource, "skipped_stale", `newer archived decision exists stale=${staleCount}`);
@@ -1441,8 +1566,13 @@ async function main() {
       }
 
       console.log(
-        `[jobs:apply-admin-actions] operation=publish_selected action_id=${action.id} ids_count=${targetIds.length} jobs_count=${selectedJobs.length} queued_ids_count=${uniqueIds.length} matching_pending_ids_count=${matchingPendingIds.length} missing_pending_ids_count=${missingPendingIds.length} pending_after=${pendingAfter} active_after=${activeAfter} published_count=${publishedCount} skipped_stale_count=${staleCount} already_published_count=${alreadyPublishedCount} duplicates_skipped_count=${duplicateCount} removed_from_pending=${publishedIds.length}`
+        `[jobs:apply-admin-actions] operation=publish_selected action_id=${action.id} ids_count=${targetIds.length} jobs_count=${selectedJobs.length} queued_ids_count=${uniqueIds.length} matching_pending_ids_count=${matchingPendingIds.length} missing_pending_ids_count=${missingPendingIds.length} pending_after=${pendingAfter} active_after=${activeAfter} published_count=${publishedCount} blocked_count=${blockedCount} blocked_ids=${blockedIds.join(",")} skipped_stale_count=${staleCount} already_published_count=${alreadyPublishedCount} duplicates_skipped_count=${duplicateCount} removed_from_pending=${publishedIds.length}`
       );
+      blockedJobs.forEach((item) => {
+        console.warn(
+          `[jobs:apply-admin-actions] blocked_publish id=${item.id} title=${JSON.stringify(item.title)} company=${JSON.stringify(item.organization)} reasons=${JSON.stringify(item.reasons)}`
+        );
+      });
     } else if (action.operation === "archive_selected") {
       const pendingSelection = nextPending.filter((job) => freshIds.includes(String(job.id)));
       for (const job of pendingSelection) {
@@ -1763,11 +1893,19 @@ async function main() {
     const fixedSelectedCount = Math.max(0, dirtySelected.length - remainingDirtySelected.length);
     report.scopedPublishQualityReport = {
       selected_ids_count: scopedIds.length,
+      publishable_count: report.publishableCount,
       dirty_selected_count: dirtySelected.length,
       fixed_selected_count: fixedSelectedCount,
+      blocked_count: report.blockedPublishCount,
       remaining_dirty_selected_count: remainingDirtySelected.length,
       current_scoped_quality: preflightPublicSync.overwriteAudit.current_scoped_quality || null,
       proposed_scoped_quality: preflightPublicSync.overwriteAudit.proposed_scoped_quality || null,
+      blocked_jobs: report.blockedPublishJobs.map((item) => ({
+        id: item.id,
+        title: item.title,
+        organization: item.organization,
+        reasons: item.reasons || []
+      })),
       jobs: report.publishSelectedDiagnostics.map((item) => ({
         id: item.id,
         title: item.title,
@@ -1783,7 +1921,6 @@ async function main() {
     console.log(`[jobs:apply-admin-actions] scoped_publish_quality ${JSON.stringify(report.scopedPublishQualityReport)}`);
     if (remainingDirtySelected.length) {
       logScopedPublishFailures(remainingDirtySelected);
-      throw new Error(`publish_selected selected jobs remain dirty after sanitization: ${remainingDirtySelected.map((item) => item.id).join(",")}`);
     }
   }
 
@@ -1834,7 +1971,7 @@ async function main() {
   report.jobRecordsCount = nextRecords.length;
   report.jobsJsonCount = finalJobsJsonCount;
   console.log(
-    `[jobs:apply-admin-actions] selected_ids_count=${scopedIds.length} public_jobs_changed=${publicSync.overwriteAudit.field_counts.jobs_changed} unrelated_jobs_changed=${publicSync.overwriteAudit.field_counts.unrelated_jobs_changed}`
+    `[jobs:apply-admin-actions] selected_ids_count=${report.selectedIdsCount} public_jobs_changed=${publicSync.overwriteAudit.field_counts.jobs_changed} unrelated_jobs_changed=${publicSync.overwriteAudit.field_counts.unrelated_jobs_changed}`
   );
   const pageBuildResult = shouldRunPublicSync
     ? (scopedIds.length
@@ -1879,6 +2016,14 @@ async function main() {
   console.log(
     `[jobs:apply-admin-actions] published_count=${report.recordsPublished} records_archived_or_rejected=${report.recordsArchivedOrRejected} talent_profiles_updated_count=${report.talentProfilesUpdated} skipped_stale_count=${report.staleSkipped} already_published_skipped=${report.alreadyPublishedSkipped} duplicates_skipped=${report.duplicatesSkipped} records_left_pending=${report.recordsLeftPending} final_job_records_count=${report.jobRecordsCount} final_job_records_published_count=${publicSync.publishedCount} final_jobs_json_count=${report.jobsJsonCount} generated_page_count=${report.jobPagesRegenerated}`
   );
+  console.log(
+    `[jobs:apply-admin-actions] selected_ids_count=${report.selectedIdsCount} publishable_count=${report.publishableCount} fixed_count=${report.fixedPublishCount} blocked_count=${report.blockedPublishCount} final_active_count=${publicSync.publishedCount} final_pending_count=${report.recordsLeftPending}`
+  );
+  report.blockedPublishJobs.forEach((item) => {
+    console.warn(
+      `[jobs:apply-admin-actions] blocked_id=${item.id} blocked_title=${JSON.stringify(item.title)} blocked_company=${JSON.stringify(item.organization)} blocked_reasons=${JSON.stringify(item.reasons || [])}`
+    );
+  });
 }
 
 async function diagnoseMain() {

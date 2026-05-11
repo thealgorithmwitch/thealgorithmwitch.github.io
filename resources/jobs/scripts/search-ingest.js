@@ -43,6 +43,14 @@ function toArray(value) {
   return Array.isArray(value) ? value : [];
 }
 
+function loadSearchQueries(payload) {
+  if (Array.isArray(payload)) return payload;
+  if (payload && Array.isArray(payload.queries)) return payload.queries;
+  if (payload && Array.isArray(payload.sources)) return payload.sources;
+  if (payload && Array.isArray(payload.entries)) return payload.entries;
+  return [];
+}
+
 function stringify(value) {
   return String(value || "").trim();
 }
@@ -347,9 +355,8 @@ async function main() {
     readSourceHealthSnapshot()
   ]);
 
-  const queries = Array.isArray(searchConfig.queries)
-    ? searchConfig.queries.filter((query) => query && query.enabled !== false)
-    : [];
+  const allQueries = loadSearchQueries(searchConfig);
+  const queries = allQueries.filter((query) => query && query.enabled !== false);
 
   const reportEntries = [];
   const sourceHealthEntries = [];
@@ -502,16 +509,10 @@ async function main() {
   const pendingChanged = args.write
     ? await writeJsonIfChanged(PENDING_SYNCED_FILE, mergedPending)
     : false;
-  const nextHealthEntries = mergeSourceHealthEntries(previousHealth.sources, sourceHealthEntries);
-  if (args.write) {
-    await writeSourceHealthSnapshot({
-      generated_at: nowIso(),
-      sync_type: "search-ingest",
-      sources: nextHealthEntries
-    });
-  }
 
   const parserStats = getParserCleanupStats();
+  const meaningfulErrorCount = reportEntries.filter((entry) => entry.status === "fetch_failed" || entry.status === "missing_env_vars").length;
+  const shouldPersistArtifacts = Boolean(args.write && (pendingChanged || meaningfulErrorCount > 0));
   const report = {
     generated_at: nowIso(),
     mode: args.write ? "write" : "dry_run",
@@ -520,7 +521,7 @@ async function main() {
     pending_file: PENDING_SYNCED_FILE,
     source_health_file: args.write ? "resources/jobs/source-health-latest.json" : "",
     summary: {
-      queries_total: Array.isArray(searchConfig.queries) ? searchConfig.queries.length : 0,
+      queries_total: allQueries.length,
       queries_enabled: queries.length,
       sources_attempted: reportEntries.filter((entry) => entry.status !== "missing_env_vars").length,
       jobs_found: jobsFoundTotal,
@@ -529,20 +530,33 @@ async function main() {
       duplicates_skipped: duplicatesSkippedTotal,
       fetch_failed: reportEntries.filter((entry) => entry.status === "fetch_failed").length,
       missing_env_var_queries: reportEntries.filter((entry) => entry.status === "missing_env_vars").length,
-      pending_changed: pendingChanged
+      meaningful_error_count: meaningfulErrorCount,
+      pending_changed: pendingChanged,
+      should_persist_artifacts: shouldPersistArtifacts
     },
     parser_stats: parserStats,
     results: reportEntries
   };
 
-  await writeJson(REPORT_FILE, report);
+  if (!args.write || shouldPersistArtifacts) {
+    await writeJson(REPORT_FILE, report);
+  }
+  if (args.write && shouldPersistArtifacts) {
+    const nextHealthEntries = mergeSourceHealthEntries(previousHealth.sources, sourceHealthEntries);
+    await writeSourceHealthSnapshot({
+      generated_at: nowIso(),
+      sync_type: "search-ingest",
+      sources: nextHealthEntries
+    });
+  }
 
   console.log(
-    `[jobs:search-ingest] mode=${args.write ? "write" : "dry_run"} queries_enabled=${report.summary.queries_enabled} jobs_found=${jobsFoundTotal} jobs_normalized=${jobsNormalizedTotal} jobs_added_to_pending=${jobsAddedToPendingTotal} duplicates_skipped=${duplicatesSkippedTotal} fetch_failed=${report.summary.fetch_failed} missing_env_var_queries=${report.summary.missing_env_var_queries} duration_ms=${Date.now() - startedAt}`
+    `[jobs:search-ingest] mode=${args.write ? "write" : "dry_run"} queries_enabled=${report.summary.queries_enabled} jobs_found=${jobsFoundTotal} jobs_normalized=${jobsNormalizedTotal} jobs_added_to_pending=${jobsAddedToPendingTotal} duplicates_skipped=${duplicatesSkippedTotal} fetch_failed=${report.summary.fetch_failed} missing_env_var_queries=${report.summary.missing_env_var_queries} meaningful_error_count=${meaningfulErrorCount} duration_ms=${Date.now() - startedAt}`
   );
   console.log(`[jobs:search-ingest] report=${REPORT_FILE}`);
   if (args.write) {
     console.log(`[jobs:search-ingest] pending_written=${PENDING_SYNCED_FILE} changed=${pendingChanged}`);
+    console.log(`[jobs:search-ingest] artifacts_persisted=${shouldPersistArtifacts}`);
   }
 }
 

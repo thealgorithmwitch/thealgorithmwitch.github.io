@@ -1,26 +1,54 @@
 const fs = require("fs/promises");
 const path = require("path");
-const { JOBS_FILE, PENDING_SYNCED_FILE, writeJson } = require("./job-utils");
 const {
-  dedupeJobs,
+  JOBS_FILE,
+  PENDING_SYNCED_FILE,
+  readJson,
+  writeJson,
+  writeJsonIfChanged
+} = require("./job-utils");
+const {
   getParserCleanupStats,
   normalizeJob,
   resetParserCleanupStats,
   stableHash,
   todayIso
 } = require("./job-normalizer");
+const { readSourceHealthSnapshot, writeSourceHealthSnapshot } = require("./source-health-store");
 
 const ROOT = path.resolve(__dirname, "..");
 const SEARCH_SOURCES_FILE = path.join(ROOT, "search-sources.json");
+const REPORT_FILE = path.join(ROOT, "reports", "search-ingest-report.json");
 
-async function readJson(filePath, fallback) {
-  try {
-    const raw = await fs.readFile(filePath, "utf8");
-    return JSON.parse(raw);
-  } catch (error) {
-    if (error.code === "ENOENT") return fallback;
-    throw error;
+function parseArgs(argv) {
+  const args = {
+    write: false,
+    queriesFile: SEARCH_SOURCES_FILE
+  };
+  for (let index = 0; index < argv.length; index += 1) {
+    const token = argv[index];
+    if (token === "--write") {
+      args.write = true;
+      continue;
+    }
+    if (token === "--queries-file" && argv[index + 1]) {
+      args.queriesFile = path.resolve(argv[index + 1]);
+      index += 1;
+    }
   }
+  return args;
+}
+
+function toArray(value) {
+  return Array.isArray(value) ? value : [];
+}
+
+function stringify(value) {
+  return String(value || "").trim();
+}
+
+function nowIso() {
+  return new Date().toISOString();
 }
 
 function requiredEnvForProvider(provider) {
@@ -39,16 +67,12 @@ function requiredEnvForProvider(provider) {
   return [];
 }
 
-function validateProviderEnv(provider) {
-  const missing = requiredEnvForProvider(provider).filter((key) => !process.env[key]);
-  if (missing.length) {
-    throw new Error(`Missing env vars for ${provider}: ${missing.join(", ")}`);
-  }
+function getMissingEnvForProvider(provider) {
+  return requiredEnvForProvider(provider).filter((key) => !process.env[key]);
 }
 
 function buildSearchUrl(queryConfig) {
   if (queryConfig.provider === "google_custom_search") {
-    validateProviderEnv(queryConfig.provider);
     const params = new URLSearchParams({
       key: process.env.GOOGLE_CUSTOM_SEARCH_API_KEY,
       cx: process.env.GOOGLE_CUSTOM_SEARCH_ENGINE_ID,
@@ -58,7 +82,6 @@ function buildSearchUrl(queryConfig) {
   }
 
   if (queryConfig.provider === "serpapi_google_jobs") {
-    validateProviderEnv(queryConfig.provider);
     const params = new URLSearchParams({
       engine: "google_jobs",
       q: queryConfig.query,
@@ -68,7 +91,6 @@ function buildSearchUrl(queryConfig) {
   }
 
   if (queryConfig.provider === "apify_greenhouse_jobs") {
-    validateProviderEnv(queryConfig.provider);
     const params = new URLSearchParams({
       token: process.env.APIFY_TOKEN,
       q: queryConfig.query
@@ -77,7 +99,6 @@ function buildSearchUrl(queryConfig) {
   }
 
   if (queryConfig.provider === "apify_lever_jobs") {
-    validateProviderEnv(queryConfig.provider);
     const params = new URLSearchParams({
       token: process.env.APIFY_TOKEN,
       q: queryConfig.query
@@ -86,7 +107,6 @@ function buildSearchUrl(queryConfig) {
   }
 
   if (queryConfig.provider === "generic_job_data_api") {
-    validateProviderEnv(queryConfig.provider);
     const params = new URLSearchParams({
       q: queryConfig.query,
       api_key: process.env.GENERIC_JOB_DATA_API_KEY
@@ -220,16 +240,12 @@ function normalizeProviderLead(queryConfig, provider, lead) {
 
 function normalizeLead(queryConfig, lead) {
   const normalizedLead = normalizeProviderLead(queryConfig, queryConfig.provider, lead);
-  const applyUrl =
-    normalizedLead.apply_url ||
-    normalizedLead.source_url ||
-    "";
+  const applyUrl = normalizedLead.apply_url || normalizedLead.source_url || "";
   const title = normalizedLead.title || queryConfig.query;
   const organization = normalizedLead.organization || "Unknown organization";
   const description = normalizedLead.description || "";
-  const externalId =
-    normalizedLead.external_id ||
-    `wide-search_${queryConfig.id}_${stableHash(`${title}:${organization}:${applyUrl}`)}`;
+  const externalId = normalizedLead.external_id
+    || `wide-search_${queryConfig.id}_${stableHash(`${title}:${organization}:${applyUrl}`)}`;
 
   return normalizeJob({
     id: `wide-search-${queryConfig.id}-${stableHash(`${title}:${organization}:${applyUrl}`)}`,
@@ -242,7 +258,8 @@ function normalizeLead(queryConfig, lead) {
     salary: normalizedLead.salary || "",
     sector: queryConfig.sector || "General",
     function: queryConfig.function || "",
-    source: "Wide Search",
+    source: stringify(queryConfig.source_name || queryConfig.organization || "Wide Search"),
+    source_id: `search:${queryConfig.id}`,
     source_type: queryConfig.provider,
     source_url: normalizedLead.source_url || applyUrl,
     apply_url: applyUrl,
@@ -250,149 +267,282 @@ function normalizeLead(queryConfig, lead) {
     date_added: todayIso(),
     date_updated: todayIso(),
     description,
-    tags: [queryConfig.sector, queryConfig.function, queryConfig.provider].filter(Boolean),
+    tags: [
+      queryConfig.sector,
+      queryConfig.function,
+      queryConfig.provider,
+      ...toArray(queryConfig.mission_tags)
+    ].filter(Boolean),
     status: "pending",
     trusted: false,
     auto_publish: false,
-    review_reason: "Broad discovery source. Review before publishing.",
+    pending_only: queryConfig.pending_only !== false,
+    pending_only_sync: true,
+    review_reason: "Search discovery source. Review before publishing.",
     confidence: getConfidence({
       title,
       organization,
       apply_url: applyUrl
     }),
     shared_by: queryConfig.provider,
-    notes: `Lead collected from ${queryConfig.provider} query "${queryConfig.query}".`,
-    sync_origin: "wide-search"
+    notes: stringify(queryConfig.notes || `Lead collected from ${queryConfig.provider} query "${queryConfig.query}".`),
+    sync_origin: "wide-search",
+    search_query_id: stringify(queryConfig.id),
+    mission_tags: toArray(queryConfig.mission_tags)
   });
 }
 
-async function submitPendingLead(job) {
-  const backendUrl = String(process.env.JOBS_BACKEND_URL || "").trim();
-  if (!backendUrl) return { skipped: true };
-
-  const response = await fetch(backendUrl, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json"
-    },
-    body: JSON.stringify({
-      action: "submitJob",
-      payload: job
-    })
-  });
-
-  const payload = await response.json().catch(() => ({}));
-  if (!response.ok || !payload.ok) {
-    throw new Error(payload.error || `Backend submit failed with HTTP ${response.status}.`);
-  }
-  return payload;
+function buildDedupeKeys(job = {}) {
+  const normalized = normalizeJob(job);
+  if (!normalized) return [];
+  const title = stringify(normalized.title).toLowerCase();
+  const organization = stringify(normalized.organization).toLowerCase();
+  const applyUrl = stringify(normalized.apply_url || normalized.source_url || normalized.original_url).toLowerCase();
+  const externalId = stringify(normalized.external_id).toLowerCase();
+  const location = stringify(normalized.location).toLowerCase();
+  return [
+    externalId ? `external:${externalId}` : "",
+    applyUrl ? `apply:${applyUrl}` : "",
+    title && organization && applyUrl ? `title_org_apply:${title}::${organization}::${applyUrl}` : "",
+    title && organization && location ? `title_org_location:${title}::${organization}::${location}` : "",
+    title && organization ? `title_org:${title}::${organization}` : ""
+  ].filter(Boolean);
 }
 
-function buildLeadKey(job) {
-  if (job.external_id) return `external::${String(job.external_id).toLowerCase()}`;
-  if (job.apply_url) return `apply::${String(job.apply_url).toLowerCase()}`;
-  return `identity::${String(job.title).toLowerCase()}::${String(job.organization).toLowerCase()}::${String(job.location).toLowerCase()}`;
-}
-
-function likelyBroadDuplicate(existing, candidate) {
-  const titleMatch = String(existing.title || "").toLowerCase() === String(candidate.title || "").toLowerCase();
-  const orgMatch = String(existing.organization || "").toLowerCase() === String(candidate.organization || "").toLowerCase();
-  if (!titleMatch || !orgMatch) return false;
-  const existingDate = Date.parse(existing.date_added || existing.date_updated || existing.date_posted) || 0;
-  const candidateDate = Date.parse(candidate.date_added || candidate.date_updated || candidate.date_posted) || 0;
-  const days = Math.abs(candidateDate - existingDate) / (1000 * 60 * 60 * 24);
-  return days <= 7;
-}
-
-function mergeBroadPending(publicJobs, pendingJobs, newPendingLeads) {
-  const seen = new Map();
-  const add = (job) => {
-    const normalized = normalizeJob(job);
-    if (!normalized) return;
-    const key = buildLeadKey(normalized);
-    const existing = seen.get(key);
-
-    if (!existing) {
-      for (const prior of seen.values()) {
-        if (likelyBroadDuplicate(prior, normalized)) {
-          return;
-        }
-      }
-      seen.set(key, normalized);
-      return;
+function buildExistingKeySet(jobs) {
+  const keys = new Set();
+  for (const job of toArray(jobs)) {
+    for (const key of buildDedupeKeys(job)) {
+      keys.add(key);
     }
-
-    const existingTime = Date.parse(existing.date_updated || existing.date_added || existing.date_posted) || 0;
-    const nextTime = Date.parse(normalized.date_updated || normalized.date_added || normalized.date_posted) || 0;
-    const merged = {
-      ...existing,
-      ...normalized,
-      tags: Array.from(new Set([...(existing.tags || []), ...(normalized.tags || [])])).filter(Boolean)
-    };
-    seen.set(key, nextTime >= existingTime ? merged : { ...normalized, ...existing, tags: merged.tags });
-  };
-
-  [...publicJobs, ...pendingJobs, ...newPendingLeads].forEach(add);
-  return Array.from(seen.values()).filter((job) => String(job.status || "").toLowerCase() === "pending");
+  }
+  return keys;
 }
 
 async function fetchQueryResults(queryConfig) {
   const url = buildSearchUrl(queryConfig);
-  console.log(`[jobs:search-ingest] Fetching ${queryConfig.id} via ${queryConfig.provider}`);
+  console.log(`[jobs:search-ingest] query_id=${queryConfig.id} provider=${queryConfig.provider} mode=fetch`);
   const response = await fetch(url);
   if (!response.ok) {
     throw new Error(`HTTP ${response.status} for ${queryConfig.id}`);
   }
   const payload = await response.json();
-  const results = extractResults(queryConfig.provider, payload);
-  return results
-    .map((result) => normalizeLead(queryConfig, result))
-    .filter(Boolean);
+  return extractResults(queryConfig.provider, payload);
+}
+
+function mergeSourceHealthEntries(existingEntries, nextEntries) {
+  const keep = toArray(existingEntries).filter((entry) => !String(entry.source_id || "").startsWith("search:"));
+  return [...keep, ...nextEntries];
 }
 
 async function main() {
+  const args = parseArgs(process.argv.slice(2));
+  const startedAt = Date.now();
   resetParserCleanupStats();
-  const [searchConfig, publicJobs, pendingJobs] = await Promise.all([
-    readJson(SEARCH_SOURCES_FILE, { queries: [] }),
+
+  const [searchConfig, publicJobs, pendingJobs, previousHealth] = await Promise.all([
+    readJson(args.queriesFile, { queries: [] }),
     readJson(JOBS_FILE, []),
-    readJson(PENDING_SYNCED_FILE, [])
+    readJson(PENDING_SYNCED_FILE, []),
+    readSourceHealthSnapshot()
   ]);
 
-  const queries = Array.isArray(searchConfig.queries) ? searchConfig.queries.filter((query) => query.enabled) : [];
-  if (!queries.length) {
-    console.log("[jobs:search-ingest] No enabled search queries.");
-    return;
-  }
+  const queries = Array.isArray(searchConfig.queries)
+    ? searchConfig.queries.filter((query) => query && query.enabled !== false)
+    : [];
 
+  const reportEntries = [];
+  const sourceHealthEntries = [];
   const newPendingLeads = [];
-  let submittedCount = 0;
+  const existingKeySet = buildExistingKeySet([...toArray(publicJobs), ...toArray(pendingJobs)]);
+  const seenThisRun = new Set();
+  let jobsFoundTotal = 0;
+  let jobsNormalizedTotal = 0;
+  let jobsAddedToPendingTotal = 0;
+  let duplicatesSkippedTotal = 0;
 
   for (const queryConfig of queries) {
+    const queryStartedAt = Date.now();
+    const queryId = stringify(queryConfig.id);
+    const provider = stringify(queryConfig.provider);
+    const missingEnvVars = getMissingEnvForProvider(provider);
+    const maxResults = Math.max(Number(queryConfig.max_results || 25) || 25, 1);
+    const reportEntry = {
+      query_id: queryId,
+      source_id: `search:${queryId}`,
+      organization: stringify(queryConfig.organization),
+      source_name: stringify(queryConfig.source_name || queryConfig.organization || queryId),
+      provider,
+      query: stringify(queryConfig.query),
+      mission_tags: toArray(queryConfig.mission_tags),
+      pending_only: queryConfig.pending_only !== false,
+      max_results: maxResults,
+      status: "pending",
+      jobs_found: 0,
+      jobs_normalized: 0,
+      jobs_added_to_pending: 0,
+      duplicates_skipped: 0,
+      skipped_jobs: 0,
+      dedupe_reasons: {},
+      missing_env_vars: missingEnvVars,
+      provider_error: "",
+      detected_urls: [],
+      notes: stringify(queryConfig.notes)
+    };
+
+    if (missingEnvVars.length) {
+      reportEntry.status = "missing_env_vars";
+      reportEntry.provider_error = `Missing env vars: ${missingEnvVars.join(", ")}`;
+      reportEntries.push(reportEntry);
+      sourceHealthEntries.push({
+        source_id: `search:${queryId}`,
+        source_checked: false,
+        status: "missing_env_vars",
+        provider,
+        jobs_found: 0,
+        jobs_normalized: 0,
+        jobs_added_to_pending: 0,
+        duplicates_skipped: 0,
+        pending_count_delta: 0,
+        public_count_delta: 0,
+        skip_reasons: ["missing_env_vars"],
+        missing_env_vars: missingEnvVars,
+        sync_duration_ms: Date.now() - queryStartedAt,
+        failure_error_count: 1
+      });
+      console.log(`[jobs:search-ingest] query_id=${queryId} provider=${provider} status=missing_env_vars missing=${missingEnvVars.join(",")}`);
+      continue;
+    }
+
     try {
-      const leads = await fetchQueryResults(queryConfig);
-      newPendingLeads.push(...leads);
-      if (process.env.JOBS_BACKEND_URL) {
-        for (const lead of leads) {
-          await submitPendingLead(lead);
-          submittedCount += 1;
+      const rawResults = await fetchQueryResults(queryConfig);
+      const limitedResults = toArray(rawResults).slice(0, maxResults);
+      reportEntry.detected_urls = limitedResults
+        .map((item) => stringify(item.apply_link || item.job_link || item.link || item.url || item.absolute_url || item.hostedUrl))
+        .filter(Boolean)
+        .slice(0, 20);
+      reportEntry.jobs_found = limitedResults.length;
+      jobsFoundTotal += limitedResults.length;
+
+      for (const lead of limitedResults) {
+        const normalized = normalizeLead(queryConfig, lead);
+        if (!normalized) {
+          reportEntry.skipped_jobs += 1;
+          continue;
         }
+        reportEntry.jobs_normalized += 1;
+        jobsNormalizedTotal += 1;
+        const dedupeKeys = buildDedupeKeys(normalized);
+        const duplicate = dedupeKeys.some((key) => existingKeySet.has(key) || seenThisRun.has(key));
+        if (duplicate) {
+          reportEntry.duplicates_skipped += 1;
+          duplicatesSkippedTotal += 1;
+          reportEntry.dedupe_reasons.already_pending_or_public = Number(reportEntry.dedupe_reasons.already_pending_or_public || 0) + 1;
+          continue;
+        }
+        newPendingLeads.push(normalized);
+        jobsAddedToPendingTotal += 1;
+        reportEntry.jobs_added_to_pending += 1;
+        dedupeKeys.forEach((key) => seenThisRun.add(key));
       }
-      console.log(`[jobs:search-ingest] ${queryConfig.id}: collected ${leads.length} pending leads.`);
+
+      reportEntry.status = reportEntry.jobs_added_to_pending > 0
+        ? "pending_updated"
+        : reportEntry.jobs_found > 0
+          ? "no_pending_changes"
+          : "provider_returned_zero_jobs";
+
+      sourceHealthEntries.push({
+        source_id: `search:${queryId}`,
+        source_checked: true,
+        status: reportEntry.status,
+        provider,
+        jobs_found: reportEntry.jobs_found,
+        jobs_normalized: reportEntry.jobs_normalized,
+        jobs_added_to_pending: reportEntry.jobs_added_to_pending,
+        duplicates_skipped: reportEntry.duplicates_skipped,
+        pending_count_delta: reportEntry.jobs_added_to_pending,
+        public_count_delta: 0,
+        skip_reasons: Object.keys(reportEntry.dedupe_reasons),
+        missing_env_vars: [],
+        last_successful_sync: nowIso(),
+        sync_duration_ms: Date.now() - queryStartedAt,
+        failure_error_count: 0
+      });
+      reportEntries.push(reportEntry);
+      console.log(`[jobs:search-ingest] query_id=${queryId} provider=${provider} jobs_found=${reportEntry.jobs_found} jobs_normalized=${reportEntry.jobs_normalized} jobs_added_to_pending=${reportEntry.jobs_added_to_pending} duplicates_skipped=${reportEntry.duplicates_skipped}`);
     } catch (error) {
-      console.error(`[jobs:search-ingest] ${queryConfig.id} failed: ${error.message}`);
+      reportEntry.status = "fetch_failed";
+      reportEntry.provider_error = error.message;
+      reportEntries.push(reportEntry);
+      sourceHealthEntries.push({
+        source_id: `search:${queryId}`,
+        source_checked: true,
+        status: "fetch_failed",
+        provider,
+        jobs_found: reportEntry.jobs_found,
+        jobs_normalized: reportEntry.jobs_normalized,
+        jobs_added_to_pending: 0,
+        duplicates_skipped: reportEntry.duplicates_skipped,
+        pending_count_delta: 0,
+        public_count_delta: 0,
+        skip_reasons: ["fetch_failed"],
+        missing_env_vars: [],
+        sync_duration_ms: Date.now() - queryStartedAt,
+        failure_error_count: 1,
+        error: error.message
+      });
+      console.error(`[jobs:search-ingest] query_id=${queryId} provider=${provider} status=fetch_failed error=${error.message}`);
     }
   }
 
-  const mergedPending = mergeBroadPending(publicJobs, pendingJobs, newPendingLeads);
+  const mergedPending = newPendingLeads.length
+    ? [...toArray(pendingJobs), ...newPendingLeads]
+    : toArray(pendingJobs);
+  const pendingChanged = args.write
+    ? await writeJsonIfChanged(PENDING_SYNCED_FILE, mergedPending)
+    : false;
+  const nextHealthEntries = mergeSourceHealthEntries(previousHealth.sources, sourceHealthEntries);
+  if (args.write) {
+    await writeSourceHealthSnapshot({
+      generated_at: nowIso(),
+      sync_type: "search-ingest",
+      sources: nextHealthEntries
+    });
+  }
 
-  await writeJson(PENDING_SYNCED_FILE, mergedPending);
-  console.log(`[jobs:search-ingest] Wrote ${mergedPending.length} pending leads to ${PENDING_SYNCED_FILE}.`);
   const parserStats = getParserCleanupStats();
+  const report = {
+    generated_at: nowIso(),
+    mode: args.write ? "write" : "dry_run",
+    queries_file: args.queriesFile,
+    pending_only: true,
+    pending_file: PENDING_SYNCED_FILE,
+    source_health_file: args.write ? "resources/jobs/source-health-latest.json" : "",
+    summary: {
+      queries_total: Array.isArray(searchConfig.queries) ? searchConfig.queries.length : 0,
+      queries_enabled: queries.length,
+      sources_attempted: reportEntries.filter((entry) => entry.status !== "missing_env_vars").length,
+      jobs_found: jobsFoundTotal,
+      jobs_normalized: jobsNormalizedTotal,
+      jobs_added_to_pending: jobsAddedToPendingTotal,
+      duplicates_skipped: duplicatesSkippedTotal,
+      fetch_failed: reportEntries.filter((entry) => entry.status === "fetch_failed").length,
+      missing_env_var_queries: reportEntries.filter((entry) => entry.status === "missing_env_vars").length,
+      pending_changed: pendingChanged
+    },
+    parser_stats: parserStats,
+    results: reportEntries
+  };
+
+  await writeJson(REPORT_FILE, report);
+
   console.log(
-    `[jobs:search-ingest] parser_cleaned_title_count=${parserStats.parser_cleaned_title_count} parser_cleaned_org_count=${parserStats.parser_cleaned_org_count} parser_cleaned_description_count=${parserStats.parser_cleaned_description_count} parser_location_defaulted_remote_count=${parserStats.parser_location_defaulted_remote_count} parser_location_cleaned_count=${parserStats.parser_location_cleaned_count} parser_hybrid_location_repaired_count=${parserStats.parser_hybrid_location_repaired_count} parser_elemental_metadata_stripped_count=${parserStats.parser_elemental_metadata_stripped_count} parser_custom_table_header_stripped_count=${parserStats.parser_custom_table_header_stripped_count} parser_html_fragment_stripped_count=${parserStats.parser_html_fragment_stripped_count}`
+    `[jobs:search-ingest] mode=${args.write ? "write" : "dry_run"} queries_enabled=${report.summary.queries_enabled} jobs_found=${jobsFoundTotal} jobs_normalized=${jobsNormalizedTotal} jobs_added_to_pending=${jobsAddedToPendingTotal} duplicates_skipped=${duplicatesSkippedTotal} fetch_failed=${report.summary.fetch_failed} missing_env_var_queries=${report.summary.missing_env_var_queries} duration_ms=${Date.now() - startedAt}`
   );
-  if (process.env.JOBS_BACKEND_URL) {
-    console.log(`[jobs:search-ingest] Submitted ${submittedCount} pending leads to submitJob via JOBS_BACKEND_URL.`);
+  console.log(`[jobs:search-ingest] report=${REPORT_FILE}`);
+  if (args.write) {
+    console.log(`[jobs:search-ingest] pending_written=${PENDING_SYNCED_FILE} changed=${pendingChanged}`);
   }
 }
 
@@ -402,3 +552,8 @@ if (require.main === module) {
     process.exitCode = 1;
   });
 }
+
+module.exports = {
+  main,
+  parseArgs
+};

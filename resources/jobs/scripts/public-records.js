@@ -1,9 +1,12 @@
 const path = require("path");
 const { readJson, writeJsonIfChanged } = require("./job-utils");
 const { hasUsableDescription, normalizeJob, normalizePayDisplay, normalizeWorkplaceType, stableHash, stringifySafe, todayIso, truncateTextForStorage } = require("./job-normalizer");
+const { buildCanonicalPublishedDisplay, canonicalizeJobShape } = require("./canonical-job-shape");
 const { applyPublishLifecycle, resolveDisplayJobFromRecord } = require("./lifecycle-utils");
 
-const ROOT = path.resolve(__dirname, "..");
+const ROOT = process.env.JOBS_DATA_DIR
+  ? path.resolve(process.env.JOBS_DATA_DIR)
+  : path.resolve(__dirname, "..");
 const JOB_RECORDS_FILE = path.join(ROOT, "job-records.json");
 const TALENT_PROFILES_FILE = path.join(ROOT, "talent-profiles.json");
 const EMPLOYERS_FILE = path.join(ROOT, "employers.json");
@@ -158,41 +161,42 @@ function sanitizeRawSourceDataForStorage(rawSourceData = {}, meta = { changed: f
 }
 
 function sanitizeDisplayForStorage(display = {}, normalized = {}, meta = { changed: false, truncated: false }) {
+  const canonical = canonicalizeJobShape(normalized, { alreadyNormalized: true }) || normalized;
   const payDisplay = normalizePayDisplay({
-    payDisplay: display.pay_display || normalized.salary,
-    salaryMin: display.salary_min ?? normalized.salary_min,
-    salaryMax: display.salary_max ?? normalized.salary_max,
-    currency: normalized.salary_currency,
-    period: normalized.salary_period
+    payDisplay: display.pay_display || canonical.salary,
+    salaryMin: display.salary_min ?? canonical.salary_min,
+    salaryMax: display.salary_max ?? canonical.salary_max,
+    currency: canonical.salary_currency,
+    period: canonical.salary_period
   });
   return {
-    title: stringifySafe(display.title || normalized.title),
-    organization: stringifySafe(display.organization || normalized.organization),
-    location: stringifySafe(display.location || normalized.location),
-    location_type: normalizeWorkplaceType(display.location_type || normalized.workplace_type, ""),
+    title: stringifySafe(display.title || canonical.title),
+    organization: stringifySafe(display.organization || canonical.organization),
+    location: stringifySafe(display.location || canonical.location),
+    location_type: normalizeWorkplaceType(display.location_type || canonical.workplace_type, ""),
     pay_display: payDisplay,
-    salary_min: display.salary_min ?? normalized.salary_min ?? null,
-    salary_max: display.salary_max ?? normalized.salary_max ?? null,
-    role_type: stringifySafe(display.role_type || normalized.job_type),
-    experience_level: stringifySafe(display.experience_level || normalized.experience),
-    sector: stringifySafe(display.sector || normalized.sector),
-    function: stringifySafe(display.function || normalized.function),
-    specialization: stringifySafe(display.specialization || normalized.specialization),
-    specialization_confidence: stringifySafe(display.specialization_confidence || normalized.specialization_confidence || "low"),
+    salary_min: display.salary_min ?? canonical.salary_min ?? null,
+    salary_max: display.salary_max ?? canonical.salary_max ?? null,
+    role_type: stringifySafe(display.role_type || canonical.job_type),
+    experience_level: stringifySafe(display.experience_level || canonical.experience),
+    sector: stringifySafe(display.sector || canonical.sector),
+    function: stringifySafe(display.function || canonical.function),
+    specialization: stringifySafe(display.specialization || canonical.specialization),
+    specialization_confidence: stringifySafe(display.specialization_confidence || canonical.specialization_confidence || "low"),
     tags: Array.isArray(display.tags) && display.tags.length
       ? display.tags.map((tag) => stringifySafe(tag)).filter(Boolean)
-      : Array.isArray(normalized.tags)
-        ? normalized.tags.map((tag) => stringifySafe(tag)).filter(Boolean)
+      : Array.isArray(canonical.tags)
+        ? canonical.tags.map((tag) => stringifySafe(tag)).filter(Boolean)
         : [],
-    description: sanitizeStoredDescription(display.description || normalized.description || normalized.raw_description, meta),
-    source_name: stringifySafe(display.source_name || normalized.source),
-    source_url: stringifySafe(display.source_url || normalized.source_url),
-    original_url: stringifySafe(display.original_url || normalized.original_url || normalized.source_url),
-    date_collected: stringifySafe(display.date_collected || normalized.date_posted || todayIso()),
-    application_url: stringifySafe(display.application_url || normalized.apply_url),
-    page_url_override: stringifySafe(display.page_url_override || normalized.page_url_override),
-    published: typeof display.published === "boolean" ? display.published : Boolean(normalized.status === "active"),
-    featured: typeof display.featured === "boolean" ? display.featured : Boolean(normalized.featured)
+    description: sanitizeStoredDescription(display.description || canonical.description || canonical.raw_description, meta),
+    source_name: stringifySafe(display.source_name || canonical.source),
+    source_url: stringifySafe(display.source_url || canonical.source_url),
+    original_url: stringifySafe(display.original_url || canonical.original_url || canonical.source_url),
+    date_collected: stringifySafe(display.date_collected || canonical.date_posted || todayIso()),
+    application_url: stringifySafe(display.application_url || canonical.apply_url),
+    page_url_override: stringifySafe(display.page_url_override || canonical.page_url_override),
+    published: typeof display.published === "boolean" ? display.published : Boolean(canonical.status === "active"),
+    featured: typeof display.featured === "boolean" ? display.featured : Boolean(canonical.featured)
   };
 }
 

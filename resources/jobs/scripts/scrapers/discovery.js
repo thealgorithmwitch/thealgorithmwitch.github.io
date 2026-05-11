@@ -41,6 +41,29 @@ const ATS_PATTERNS = {
   comeet: [/comeet\.com/i]
 };
 
+const GENERIC_PARSER_SELECTORS_USED = [
+  "json-ld <script>",
+  "embedded JSON <script>",
+  "job card blocks <li|tr|article|section|div>",
+  "job links <a href>"
+];
+
+const DEFAULT_FETCH_TIMEOUT_MS = 15000;
+
+const SOURCE_FETCH_PROFILES = {
+  climatechangejobs: {
+    timeout_ms: 20000,
+    headers: {
+      "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36 FreshRolesBot/1.0",
+      "accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+      "accept-language": "en-US,en;q=0.9",
+      "cache-control": "no-cache",
+      "pragma": "no-cache",
+      "upgrade-insecure-requests": "1"
+    }
+  }
+};
+
 function detectAtsProvider(text) {
   const haystack = String(text || "");
   for (const [provider, patterns] of Object.entries(ATS_PATTERNS)) {
@@ -96,14 +119,91 @@ function browserFallbackRecommended(html, scripts, jobsFound) {
   );
 }
 
-async function fetchHtmlPage(url) {
-  const response = await fetch(url);
-  const html = await response.text();
-  return {
-    ok: response.ok,
-    status: response.status,
-    html
-  };
+function getSourceFetchProfile(source = {}) {
+  return SOURCE_FETCH_PROFILES[String(source.id || "").trim().toLowerCase()] || {};
+}
+
+function normalizeDiscoveryUrl(source = {}, value) {
+  const absolute = toAbsoluteUrl(source.source_url || value, value);
+  if (!absolute) return "";
+  try {
+    const url = new URL(absolute);
+    if (String(source.id || "").trim().toLowerCase() === "climatechangejobs" && /^\/jobs$/i.test(url.pathname)) {
+      url.pathname = "/jobs/";
+    }
+    return url.toString();
+  } catch (_error) {
+    return absolute;
+  }
+}
+
+function buildDiscoverySeedUrls(source = {}) {
+  const seed = normalizeDiscoveryUrl(source, source.source_url || "");
+  if (!seed) return [];
+  const urls = [seed];
+  if (String(source.id || "").trim().toLowerCase() === "climatechangejobs") {
+    try {
+      const parsed = new URL(seed);
+      if (/^\/jobs\/$/i.test(parsed.pathname)) {
+        const withoutSlash = new URL(parsed.toString());
+        withoutSlash.pathname = "/jobs";
+        urls.push(withoutSlash.toString());
+      }
+    } catch (_error) {
+      // Ignore malformed URL here; the primary seed will fail separately if needed.
+    }
+  }
+  return Array.from(new Set(urls.filter(Boolean)));
+}
+
+function isSourceTemporarilyUnavailableReport(report = {}) {
+  const pagesChecked = Array.isArray(report.pages_checked) ? report.pages_checked : [];
+  const hadAttempt = pagesChecked.length > 0;
+  const everyAttemptFailed = hadAttempt && pagesChecked.every((page) => page.status === "fetch-failed" || Number(page.status) >= 400);
+  const reason = String(report.reason_for_zero_results || "").toLowerCase();
+  return everyAttemptFailed || reason.includes("failed to fetch") || reason.includes("temporarily unavailable");
+}
+
+async function fetchHtmlPageForSource(url, source = {}, options = {}) {
+  const profile = getSourceFetchProfile(source);
+  const controller = new AbortController();
+  const timeoutMs = Number(profile.timeout_ms || options.timeout_ms || DEFAULT_FETCH_TIMEOUT_MS);
+  const timeoutId = setTimeout(() => controller.abort(new Error(`timeout after ${timeoutMs}ms`)), timeoutMs);
+  try {
+    const response = await (options.fetchImpl || fetch)(url, {
+      method: "GET",
+      redirect: "follow",
+      headers: {
+        ...profile.headers,
+        ...(options.headers || {})
+      },
+      signal: controller.signal
+    });
+    const html = await response.text();
+    return {
+      ok: response.ok,
+      status: response.status,
+      status_text: response.statusText || "",
+      html,
+      final_url: response.url || url,
+      redirected: Boolean(response.redirected)
+    };
+  } catch (error) {
+    const message = error?.name === "AbortError"
+      ? `timeout after ${timeoutMs}ms`
+      : String(error?.message || error || "unknown fetch error");
+    return {
+      ok: false,
+      status: "fetch-failed",
+      status_text: message,
+      html: "",
+      final_url: url,
+      redirected: false,
+      error: message
+    };
+  } finally {
+    clearTimeout(timeoutId);
+  }
 }
 
 function getDirectAtsSkipReason(provider, source, context = {}) {
@@ -129,18 +229,22 @@ function makeEmptyReport(source) {
     pages_checked: [],
     links_discovered: [],
     job_links_found: [],
+    parser_selectors_used: [],
     jobs_parsed: 0,
     reason_for_zero_results: "",
     browser_fallback_recommended: false,
+    source_temporarily_unavailable: false,
+    fallback_used: false,
+    fallback_reason: "",
     generated_at: new Date().toISOString(),
     errors: []
   };
 }
 
-async function scrapeSourceWithDiscovery(source) {
+async function scrapeSourceWithDiscovery(source, options = {}) {
   const report = makeEmptyReport(source);
   const normalizedProvider = normalizeProvider(source.provider);
-  const queue = [{ url: source.source_url, depth: 0 }];
+  const queue = buildDiscoverySeedUrls(source).map((url) => ({ url, depth: 0 }));
   const visited = new Set();
   const allJobs = [];
   const discoveredLinks = [];
@@ -155,26 +259,36 @@ async function scrapeSourceWithDiscovery(source) {
 
     let page;
     try {
-      page = await fetchHtmlPage(current.url);
+      page = await fetchHtmlPageForSource(current.url, source, options);
     } catch (error) {
-      report.pages_checked.push({
-        url: current.url,
-        depth: current.depth,
+      page = {
+        ok: false,
         status: "fetch-failed",
-        error: error.message
-      });
-      report.errors.push(`${current.url}: ${error.message}`);
-      continue;
+        status_text: String(error.message || error),
+        html: "",
+        final_url: current.url,
+        redirected: false,
+        error: String(error.message || error)
+      };
     }
 
     report.pages_checked.push({
       url: current.url,
       depth: current.depth,
-      status: page.status
+      status: page.status,
+      status_text: page.status_text || "",
+      final_url: page.final_url || current.url,
+      redirected: Boolean(page.redirected),
+      error: page.error || ""
     });
 
+    if (page.status === "fetch-failed") {
+      report.errors.push(`${current.url}: ${page.error || page.status_text || "fetch failed"}`);
+      continue;
+    }
+
     if (!page.ok) {
-      report.errors.push(`${current.url}: HTTP ${page.status}`);
+      report.errors.push(`${current.url}: HTTP ${page.status}${page.status_text ? ` ${page.status_text}` : ""}`);
       continue;
     }
 
@@ -208,6 +322,7 @@ async function scrapeSourceWithDiscovery(source) {
         if (atsJobs.length) {
           report.detected_ats_provider = atsDetection;
           report.parser_used = `ats:${atsDetection}`;
+          report.parser_selectors_used = [`provider:${atsDetection}`];
           report.jobs_parsed = atsJobs.length;
           report.job_links_found = atsJobs.map((job) => job.apply_url).filter(Boolean).slice(0, 100);
           return { jobs: atsJobs, report };
@@ -231,13 +346,15 @@ async function scrapeSourceWithDiscovery(source) {
     discoveredLinks.push(...candidateLinks);
     if (current.depth < Number(source.crawl_depth || 1)) {
       for (const link of candidateLinks) {
-        if (!visited.has(link.url)) {
-          queue.push({ url: link.url, depth: current.depth + 1 });
+        const normalizedLink = normalizeDiscoveryUrl(source, link.url);
+        if (normalizedLink && !visited.has(normalizedLink)) {
+          queue.push({ url: normalizedLink, depth: current.depth + 1 });
         }
       }
       for (const atsUrl of atsUrls) {
-        if (!visited.has(atsUrl)) {
-          queue.push({ url: atsUrl, depth: current.depth + 1 });
+        const normalizedAtsUrl = normalizeDiscoveryUrl(source, atsUrl);
+        if (normalizedAtsUrl && !visited.has(normalizedAtsUrl)) {
+          queue.push({ url: normalizedAtsUrl, depth: current.depth + 1 });
         }
       }
     }
@@ -261,6 +378,7 @@ async function scrapeSourceWithDiscovery(source) {
 
   report.detected_ats_provider = atsDetection;
   report.parser_used = dedupedJobs.length ? "generic:discovery" : atsDetection ? `generic-after-ats:${atsDetection}` : "generic:discovery";
+  report.parser_selectors_used = report.parser_used.startsWith("generic") ? GENERIC_PARSER_SELECTORS_USED.slice() : report.parser_selectors_used;
   report.links_discovered = Array.from(new Set(report.links_discovered)).slice(0, 200);
   report.job_links_found = Array.from(new Set(report.job_links_found)).slice(0, 200);
   report.jobs_parsed = dedupedJobs.length;
@@ -286,6 +404,8 @@ async function scrapeSourceWithDiscovery(source) {
     }
   }
 
+  report.source_temporarily_unavailable = isSourceTemporarilyUnavailableReport(report);
+
   return {
     jobs: dedupedJobs,
     report
@@ -294,5 +414,7 @@ async function scrapeSourceWithDiscovery(source) {
 
 module.exports = {
   detectAtsProvider,
+  fetchHtmlPageForSource,
+  isSourceTemporarilyUnavailableReport,
   scrapeSourceWithDiscovery
 };

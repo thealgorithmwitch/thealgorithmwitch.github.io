@@ -1,7 +1,9 @@
 const path = require("path");
 const { readJson, writeJson } = require("./job-utils");
 
-const ROOT = path.resolve(__dirname, "..");
+const ROOT = process.env.JOBS_DATA_DIR
+  ? path.resolve(process.env.JOBS_DATA_DIR)
+  : path.resolve(__dirname, "..");
 const SOURCE_HEALTH_FILE = path.join(ROOT, "source-health-latest.json");
 
 async function readSourceHealthSnapshot() {

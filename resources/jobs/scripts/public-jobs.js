@@ -1,34 +1,21 @@
-const { buildDescriptionSnippet, cleanLocationText, stringifySafe } = require("./job-normalizer");
+const { stringifySafe } = require("./job-normalizer");
 const { JOBS_FILE, readJobs, serializeForWrite, writeJson } = require("./job-utils");
+const { canonicalizeJobShape } = require("./canonical-job-shape");
 const { readJobRecords } = require("./public-records");
 const { buildJobPagePathMap, cleanVisibleText } = require("./job-page-paths");
 const { resolveDisplayJobFromRecord, shouldShowPublicRecord } = require("./lifecycle-utils");
 const { compareJobsOutputs } = require("./public-data-guard");
 
 function enrichPublicJob(job) {
-  const title = cleanVisibleText(stringifySafe(job?.title));
-  const organization = cleanVisibleText(stringifySafe(job?.organization));
-  const source = cleanVisibleText(stringifySafe(job?.source));
-  const workplaceType = stringifySafe(job?.workplace_type);
-  const location = cleanLocationText(job?.location, {
-    title,
-    organization,
-    workplaceType,
-    source,
-    source_type: stringifySafe(job?.source_type),
-    trackStats: false
-  });
-  const fullDescription = String(job?.description || job?.raw_description || "").trim();
-  const descriptionSnippet = buildDescriptionSnippet(fullDescription, 220, { title });
+  const canonical = canonicalizeJobShape(job, { alreadyNormalized: true }) || canonicalizeJobShape(job) || job;
+  const title = cleanVisibleText(stringifySafe(canonical?.title));
+  const organization = cleanVisibleText(stringifySafe(canonical?.organization));
+  const source = cleanVisibleText(stringifySafe(canonical?.source));
   return {
-    ...job,
-    title: title || stringifySafe(job?.title),
-    organization: organization || stringifySafe(job?.organization),
-    source: source || stringifySafe(job?.source),
-    location,
-    description: fullDescription,
-    description_snippet: descriptionSnippet,
-    summary: descriptionSnippet
+    ...canonical,
+    title: title || stringifySafe(canonical?.title),
+    organization: organization || stringifySafe(canonical?.organization),
+    source: source || stringifySafe(canonical?.source)
   };
 }
 
@@ -57,9 +44,11 @@ async function syncPublicJobsFromRecords(records, options = {}) {
   const logger = options.logger || console;
   const allowWorseOverwrite = options.allowWorseOverwrite === true;
   const dryRun = options.dryRun === true;
+  const scopeIds = new Set((options.scopeIds || []).map((id) => String(id || "").trim()).filter(Boolean));
+  const scoped = scopeIds.size > 0;
   const existingJobs = await readJobs();
   const existingById = new Map((Array.isArray(existingJobs) ? existingJobs : []).map((job) => [String(job.id || ""), job]));
-  const publicJobs = buildPublicJobsFromRecords(records).map((job) => {
+  const computedPublicJobs = buildPublicJobsFromRecords(records).map((job) => {
     const existing = existingById.get(String(job.id || "")) || {};
     const existingPageUrl = String(existing.page_url || "").trim();
     const redirectPaths = new Set(Array.isArray(existing.redirect_paths) ? existing.redirect_paths.map((item) => String(item || "").trim()).filter(Boolean) : []);
@@ -72,16 +61,44 @@ async function syncPublicJobsFromRecords(records, options = {}) {
       redirect_paths: Array.from(redirectPaths)
     };
   });
+  const publicJobs = scoped
+    ? (() => {
+        const scopedComputedById = new Map(computedPublicJobs
+          .filter((job) => scopeIds.has(String(job.id || "")))
+          .map((job) => [String(job.id || ""), job]));
+        const merged = [];
+        const appendedScopeIds = new Set();
+        for (const existingJob of Array.isArray(existingJobs) ? existingJobs : []) {
+          const id = String(existingJob.id || "");
+          if (!scopeIds.has(id)) {
+            merged.push(existingJob);
+            continue;
+          }
+          const scopedJob = scopedComputedById.get(id);
+          if (scopedJob) {
+            merged.push(scopedJob);
+            appendedScopeIds.add(id);
+          }
+        }
+        for (const [id, scopedJob] of scopedComputedById.entries()) {
+          if (appendedScopeIds.has(id)) continue;
+          merged.push(scopedJob);
+        }
+        return merged;
+      })()
+    : computedPublicJobs;
   const existingJobsJsonCount = Array.isArray(existingJobs) ? existingJobs.length : 0;
   const computedPublicJobsCount = publicJobs.length;
-  const overwriteAudit = compareJobsOutputs(existingJobs, publicJobs);
+  const overwriteAudit = compareJobsOutputs(existingJobs, publicJobs, {
+    scopeIds: scoped ? Array.from(scopeIds) : []
+  });
   const existingSerialized = serializeForWrite(JOBS_FILE, existingJobs);
   const nextSerialized = serializeForWrite(JOBS_FILE, publicJobs);
   const shouldWrite = existingJobsJsonCount !== computedPublicJobsCount || existingSerialized !== nextSerialized;
   let wrote = false;
 
   logger.log(
-    `[${label}] jobs_changed=${overwriteAudit.field_counts.jobs_changed} descriptions_replaced=${overwriteAudit.field_counts.descriptions_replaced} snippets_replaced=${overwriteAudit.field_counts.snippets_replaced} pay_fields_replaced=${overwriteAudit.field_counts.pay_fields_replaced} locations_replaced=${overwriteAudit.field_counts.locations_replaced} specializations_replaced=${overwriteAudit.field_counts.specializations_replaced} page_urls_changed=${overwriteAudit.field_counts.page_urls_changed}`
+    `[${label}] scoped=${scoped} selected_ids_count=${scopeIds.size} public_jobs_changed=${overwriteAudit.field_counts.jobs_changed} unrelated_jobs_changed=${overwriteAudit.field_counts.unrelated_jobs_changed} descriptions_replaced=${overwriteAudit.field_counts.descriptions_replaced} snippets_replaced=${overwriteAudit.field_counts.snippets_replaced} pay_fields_replaced=${overwriteAudit.field_counts.pay_fields_replaced} locations_replaced=${overwriteAudit.field_counts.locations_replaced} specializations_replaced=${overwriteAudit.field_counts.specializations_replaced} page_urls_changed=${overwriteAudit.field_counts.page_urls_changed}`
   );
   overwriteAudit.risky_examples.slice(0, 10).forEach((example) => {
     logger.log(

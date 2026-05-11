@@ -1,5 +1,18 @@
 const assert = require("assert");
-const { extractSalaryText, hasRoleSignal, hasUsableDescription, isClearlyNotJobTitle, normalizeDescription, normalizeJob, parseSalaryRange, stringifySafe } = require("./job-normalizer");
+const {
+  applyTitleToMalformedTemplate,
+  buildDescriptionSnippet,
+  buildFallbackDescription,
+  extractSalaryText,
+  hasMalformedDescriptionTemplate,
+  hasRoleSignal,
+  hasUsableDescription,
+  isClearlyNotJobTitle,
+  normalizeDescription,
+  normalizeJob,
+  parseSalaryRange,
+  stringifySafe
+} = require("./job-normalizer");
 
 const salaryCases = [
   { input: "$80,000 - $100,000", min: 80000, max: 100000, currency: "USD", period: "year", visible: true },
@@ -250,6 +263,34 @@ assert.strictEqual(hasUsableDescription(companyOnlyDescription, { title: "Senior
 
 const repeatedDateDescription = "Apr 29, 2026 Apr 29, 2026 Apr 29, 2026 Apr 29, 2026";
 assert.strictEqual(hasUsableDescription(repeatedDateDescription, { title: "Interconnection Analyst", organization: "EDP" }), false);
+
+const malformedTemplateDescription = normalizeDescription(
+  "The will focus on pre-production and production support across the organization.",
+  { title: "Video Production Fellow" }
+);
+assert.ok(/The Video Production Fellow will focus/i.test(malformedTemplateDescription.description));
+assert.strictEqual(hasMalformedDescriptionTemplate(malformedTemplateDescription.description), false);
+
+const directTemplateRepair = applyTitleToMalformedTemplate(
+  "In this position, the will work to advance campaign strategy.",
+  "Digital Advertising Associate"
+);
+assert.ok(/the Digital Advertising Associate will work/i.test(directTemplateRepair));
+
+const malformedSnippet = buildDescriptionSnippet(
+  "The will lead the development and implementation of key aspects of EDF's California-based work.",
+  220,
+  { title: "Senior Manager, California State Affairs" }
+);
+assert.ok(/will lead the development and implementation/i.test(malformedSnippet));
+assert.strictEqual(hasMalformedDescriptionTemplate(malformedSnippet), false);
+
+const neutralFallback = buildFallbackDescription({
+  organization: "Environmental Defense Fund",
+  sector: "Policy/Advocacy",
+  workplace_type: "Remote"
+});
+assert.ok(/This role supports Environmental Defense Fund's work across Policy\/Advocacy\./.test(neutralFallback));
 
 assert.strictEqual(stringifySafe({ value: "$60,000 - $70,000" }), "$60,000 - $70,000");
 assert.strictEqual(stringifySafe({ unexpected: "ignored" }), "");

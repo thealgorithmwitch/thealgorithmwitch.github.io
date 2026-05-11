@@ -1134,7 +1134,8 @@
 
     function loadLocalPendingFilters(jobs) {
       try {
-        const options = Array.from(new Set((Array.isArray(jobs) ? jobs : []).map((job) => jobProvider(job)).filter(Boolean))).sort((a, b) => a.localeCompare(b));
+        const visibleJobs = (Array.isArray(jobs) ? jobs : []).filter((job) => !isHiddenFromDefaultPendingReview(job));
+        const options = Array.from(new Set(visibleJobs.map((job) => jobProvider(job)).filter(Boolean))).sort((a, b) => a.localeCompare(b));
         localJobFilterEls.source.innerHTML = ['<option value="all">all</option>']
           .concat(options.map((value) => `<option value="${escapeHtml(value)}">${escapeHtml(value)}</option>`))
           .join("");
@@ -1353,6 +1354,7 @@
       const duplicateSuspects = getDuplicateSuspectIds(state.localJobs);
       const hiddenOrganizations = new Set(state.localJobReview.hiddenOrganizations);
       return state.localJobs.filter((job) => {
+        if (isHiddenFromDefaultPendingReview(job)) return false;
         if (hiddenOrganizations.has(String(job.organization || ""))) return false;
         if (state.localJobFilters.bucket !== "all" && String(job.triage_bucket || "") !== state.localJobFilters.bucket) return false;
         if (state.localJobFilters.pay === "has_pay" && !hasPay(job)) return false;
@@ -1381,6 +1383,28 @@
         }
         return new Date(b.date_posted || 0) - new Date(a.date_posted || 0);
       });
+    }
+
+    function pendingReviewFlags(job) {
+      if (Array.isArray(job?.review_flags)) {
+        return job.review_flags.map((flag) => String(flag || "").trim().toLowerCase()).filter(Boolean);
+      }
+      if (typeof job?.review_flags === "string") {
+        return parseCsv(job.review_flags).map((flag) => String(flag || "").trim().toLowerCase()).filter(Boolean);
+      }
+      return [];
+    }
+
+    function isHiddenFromDefaultPendingReview(job) {
+      const flags = new Set(pendingReviewFlags(job));
+      return parseBoolean(job?.hidden_from_review, false)
+        || parseBoolean(job?.hidden_from_review_default, false)
+        || parseBoolean(job?.archived_source, false)
+        || parseBoolean(job?.source_disabled, false)
+        || flags.has("hidden_from_review")
+        || flags.has("hidden_from_review_default")
+        || flags.has("archived_source")
+        || flags.has("source_disabled");
     }
 
     function buildJobEditFields(recordId, source) {

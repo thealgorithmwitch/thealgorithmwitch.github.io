@@ -22,6 +22,7 @@ const { upsertScrapeReports } = require("./scrape-report");
 const { isDirectAtsSource, normalizeSource } = require("./source-utils");
 const { triagePendingJobs } = require("./pending-triage");
 const { readSourceHealthSnapshot, writeSourceHealthSnapshot } = require("./source-health-store");
+const { applySourcePendingControls } = require("./source-sync-quality");
 
 const SUPPORTED_TYPES = new Set(["greenhouse", "lever", "ashby", "bamboohr", "recruitee", "smartrecruiters", "workable"]);
 
@@ -86,6 +87,7 @@ async function runSyncForTypes(types = []) {
 
   const activeSourceIds = new Set(enabledSources.map((source) => source.id));
   const preservedPublicJobs = existingJobs.filter((job) => !isManagedAtsJob(job, activeSourceIds));
+  const managedExistingPendingJobs = existingPending.filter((job) => isManagedAtsJob(job, activeSourceIds));
   const preservedPendingJobs = existingPending
     .filter((job) => !isManagedAtsJob(job, activeSourceIds))
     .map((job) => ({ ...job, __pending_preserved: true }));
@@ -167,18 +169,49 @@ async function runSyncForTypes(types = []) {
           counts[source.id].active += 1;
         } else {
           pendingJobs.push({ ...routed, __pending_new: true });
-          counts[source.id].pending += 1;
         }
       }
+      const sourcePendingJobs = pendingJobs.filter((job) => String(job.source_id || "") === String(source.id));
+      const preservedPendingJobsForOtherSources = pendingJobs.filter((job) => String(job.source_id || "") !== String(source.id));
+      const existingSourcePending = managedExistingPendingJobs.filter((job) => String(job.source_id || "") === String(source.id));
+      const controlledPending = applySourcePendingControls(source, {
+        incomingJobs: sourcePendingJobs,
+        existingPendingJobs: existingSourcePending,
+        nowIso: new Date().toISOString()
+      });
+      pendingJobs.length = 0;
+      preservedPendingJobsForOtherSources.forEach((job) => pendingJobs.push(job));
+      controlledPending.allJobs.forEach((job) => pendingJobs.push(job));
+      counts[source.id].pending = controlledPending.activeReviewJobs.length;
+      counts[source.id].relevance_matched = controlledPending.matchedCount;
+      counts[source.id].active_review_added = controlledPending.activeReviewAdded;
+      counts[source.id].backlog_added = controlledPending.backlogAdded;
+      counts[source.id].backlog_preserved = controlledPending.backlogPreserved;
+      counts[source.id].resurfaced_from_backlog = controlledPending.resurfacedFromBacklog;
+      counts[source.id].stale_backlog_archived = controlledPending.staleBacklogArchived;
+      counts[source.id].repeat_surface_prevented_count = controlledPending.repeatSurfacePreventedCount;
+      counts[source.id].capped_existing = controlledPending.cappedExisting;
+      counts[source.id].capped = controlledPending.cappedCount;
+      counts[source.id].skipped_low_relevance = controlledPending.skippedLowRelevanceCount;
       sourceHealthEntries.push({
         source_id: source.id,
         source_checked: true,
         jobs_found: rawJobs.length,
-        jobs_normalized: counts[source.id].active + counts[source.id].pending,
+        jobs_normalized: counts[source.id].active + sourcePendingJobs.length,
+        relevance_matched_count: counts[source.id].relevance_matched || counts[source.id].pending,
+        active_review_added: controlledPending.activeReviewAdded,
+        backlog_added: controlledPending.backlogAdded,
+        backlog_preserved: controlledPending.backlogPreserved,
+        resurfaced_from_backlog: controlledPending.resurfacedFromBacklog,
+        stale_backlog_archived: controlledPending.staleBacklogArchived,
+        repeat_surface_prevented_count: controlledPending.repeatSurfacePreventedCount,
+        capped_existing: controlledPending.cappedExisting,
         jobs_skipped: Math.max(0, rawJobs.length - (counts[source.id].active + counts[source.id].pending)),
         skip_reasons: [],
-        pending_count_delta: counts[source.id].pending,
+        pending_count_delta: controlledPending.activeReviewAdded + controlledPending.backlogAdded,
         public_count_delta: counts[source.id].active,
+        capped_count: counts[source.id].capped || 0,
+        skipped_low_relevance_count: counts[source.id].skipped_low_relevance || 0,
         last_successful_sync: new Date().toISOString(),
         sync_duration_ms: Date.now() - sourceStartedAt,
         failure_error_count: 0
@@ -267,9 +300,15 @@ async function runSyncForTypes(types = []) {
       healthEntry.duplicates = Number(triageSource.duplicates || 0);
       healthEntry.low_confidence_routed_to_pending = Number(triageSource.low_confidence_routed_to_pending || 0);
       healthEntry.skip_reason_counts = triageSource.rejected_reasons || {};
+      if (Number(count.skipped_low_relevance || 0) > 0) {
+        healthEntry.skip_reasons = Array.from(new Set([...(healthEntry.skip_reasons || []), "broad_source_low_relevance"]));
+      }
+      if (Number(count.capped || 0) > 0) {
+        healthEntry.skip_reasons = Array.from(new Set([...(healthEntry.skip_reasons || []), "broad_source_capped"]));
+      }
     }
     console.log(
-      `[jobs:sync-sources] source_id=${sourceId} fetched=${count.fetched} active=${count.active} pending=${count.pending} retained=${triageSource.retained || triageSource.kept || 0} rejected_by_relevance=${triageSource.rejected_by_relevance || 0} rejected_noise=${triageSource.rejected_noise || 0} dropped_by_source_cap=${triageSource.dropped_by_source_cap || triageSource.dropped_by_cap || 0}${count.route ? ` route=${count.route}` : ""}${count.reason ? ` reason=${count.reason}` : ""}${count.error ? ` error=${count.error}` : ""}${triageSource.top_retained_examples?.length ? ` top_retained=${triageSource.top_retained_examples.map((item) => `${item.title} @ ${item.organization} (${item.relevance_score})`).join(" | ")}` : ""}`
+      `[jobs:sync-sources] source_id=${sourceId} fetched=${count.fetched} active=${count.active} pending=${count.pending} relevance_matched=${count.relevance_matched || count.pending || 0} active_review_added=${count.active_review_added || 0} backlog_added=${count.backlog_added || 0} backlog_preserved=${count.backlog_preserved || 0} resurfaced_from_backlog=${count.resurfaced_from_backlog || 0} stale_backlog_archived=${count.stale_backlog_archived || 0} repeat_surface_prevented_count=${count.repeat_surface_prevented_count || 0} capped_existing=${count.capped_existing || 0} capped=${count.capped || 0} skipped_low_relevance=${count.skipped_low_relevance || 0} retained=${triageSource.retained || triageSource.kept || 0} rejected_by_relevance=${triageSource.rejected_by_relevance || 0} rejected_noise=${triageSource.rejected_noise || 0} dropped_by_source_cap=${triageSource.dropped_by_source_cap || triageSource.dropped_by_cap || 0}${count.route ? ` route=${count.route}` : ""}${count.reason ? ` reason=${count.reason}` : ""}${count.error ? ` error=${count.error}` : ""}${triageSource.top_retained_examples?.length ? ` top_retained=${triageSource.top_retained_examples.map((item) => `${item.title} @ ${item.organization} (${item.relevance_score})`).join(" | ")}` : ""}`
     );
   });
   console.log(

@@ -28,8 +28,7 @@ const BLOCKED_COMPANIES = [
   "Teramind",
   "Marcus & Millichap",
   "Dataiku",
-  "Spring Health",
-  "PLOS"
+  "Spring Health"
 ];
 
 const BLOCKED_SOURCE_IDS = [

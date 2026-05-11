@@ -1,16 +1,17 @@
 const {
-  JOBS_FILE,
   PENDING_SYNCED_FILE,
   PENDING_TRIAGE_SUMMARY_FILE,
   readJson,
-  safeWritePublicJobs,
   writeJson
 } = require("./job-utils");
 const { normalizeJob, stringifySafe, todayIso } = require("./job-normalizer");
+const { buildCanonicalPublishedDisplay } = require("./canonical-job-shape");
 const { triagePendingJobs } = require("./pending-triage");
 const { buildJobRecord, JOB_RECORDS_FILE } = require("./public-records");
 const { resolveDisplayJobFromRecord, shouldShowPublicRecord } = require("./lifecycle-utils");
-const { buildPagesFromRecords } = require("./generate-job-pages");
+const { syncPublicJobsFromRecords } = require("./public-jobs");
+const { buildPagesFromJobs } = require("./generate-job-pages");
+const { buildValidationReport } = require("./validate-public-data");
 
 const FORCE_REBUILD_DISPLAY = true;
 
@@ -74,25 +75,10 @@ function summarizeText(value, max = 180) {
 }
 
 function buildPublishedDisplay(normalized, existing = {}) {
+  const canonical = buildCanonicalPublishedDisplay(normalized) || {};
   return {
-    title: stringifySafe(normalized.title),
-    organization: stringifySafe(normalized.organization),
-    location: stringifySafe(normalized.location),
-    location_type: stringifySafe(normalized.workplace_type),
-    pay_display: stringifySafe(normalized.salary),
-    salary_min: normalized.salary_min ?? null,
-    salary_max: normalized.salary_max ?? null,
-    role_type: stringifySafe(normalized.job_type),
-    experience_level: stringifySafe(normalized.experience),
-    sector: stringifySafe(normalized.sector),
-    function: stringifySafe(normalized.function),
-    tags: toArray(normalized.tags),
-    description: stringifySafe(normalized.description),
-    source_name: stringifySafe(normalized.source),
-    source_url: stringifySafe(normalized.source_url),
-    original_url: stringifySafe(normalized.original_url) || stringifySafe(normalized.source_url),
-    date_collected: stringifySafe(normalized.date_posted) || todayIso(),
-    application_url: stringifySafe(normalized.apply_url),
+    ...canonical,
+    date_collected: stringifySafe(canonical.date_collected) || todayIso(),
     published: typeof existing.published === "boolean" ? existing.published : Boolean(existing.display?.published),
     featured: typeof existing.featured === "boolean" ? existing.featured : Boolean(existing.display?.featured)
   };
@@ -191,12 +177,24 @@ async function main() {
     writeJson(PENDING_SYNCED_FILE, triagedPending.adminPendingJobs),
     writeJson(PENDING_TRIAGE_SUMMARY_FILE, triagedPending.summary)
   ]);
-  await safeWritePublicJobs(nextPublicJobs, { label: "jobs:backfill-normalized" });
-  const pagesRegenerated = await buildPagesFromRecords(nextRecords);
+  const publicSync = await syncPublicJobsFromRecords(nextRecords, { label: "jobs:backfill-normalized" });
+  const pagesRegenerated = await buildPagesFromJobs(publicSync.publicJobs);
+  const validation = await buildValidationReport({ requirePages: true });
+  if (validation.hard_validation_failure_count > 0) {
+    throw new Error(`hard public validation failures detected: ${validation.hard_validation_failure_count}`);
+  }
 
   console.log(JSON.stringify({
     ...report,
+    jobs_json_after: publicSync.jobsCountAfter,
     pages_regenerated: pagesRegenerated,
+    validation: {
+      public_records_count: validation.public_records_count,
+      jobs_json_count: validation.jobs_json_count,
+      invalid_title_count: validation.invalid_title_count,
+      pending_public_overlap_count: validation.pending_public_overlap_count,
+      hard_validation_failure_count: validation.hard_validation_failure_count
+    },
     examples: report.examples.slice(0, 12)
   }, null, 2));
 }

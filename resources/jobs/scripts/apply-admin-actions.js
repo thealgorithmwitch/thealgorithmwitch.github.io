@@ -1,22 +1,25 @@
 const path = require("path");
 const {
   buildDescriptionSnippet,
-  buildFallbackDescription,
   getParserCleanupStats,
   hasUsableDescription,
   normalizeJob,
-  normalizeDescription,
   resetParserCleanupStats,
   stringifySafe
 } = require("./job-normalizer");
 const {
   ADMIN_JOB_ACTIONS_SNAPSHOT_FILE,
   PENDING_SYNCED_FILE,
+  canonicalizeJobShape,
   readJson,
   readJobs,
   readPendingSyncedJobs,
   writeJson
 } = require("./job-utils");
+const {
+  buildCanonicalPublishedDisplay,
+  repairCanonicalDescriptionShape
+} = require("./canonical-job-shape");
 const {
   buildJobRecord,
   readJobRecords,
@@ -61,10 +64,9 @@ console.log("[jobs:apply-admin-actions] malformed helper type=", typeof imported
 function assertSelectedPublishSanitizerHelpers() {
   const requiredHelpers = {
     buildDescriptionSnippet,
-    buildFallbackDescription,
     hasMalformedDescriptionTemplate: safeHasMalformedDescriptionTemplate,
     hasUsableDescription,
-    normalizeDescription,
+    repairCanonicalDescriptionShape,
     stringifySafe
   };
 
@@ -105,47 +107,7 @@ const SUPPORTED_ACTION_OPERATIONS = new Set([
 ]);
 
 function buildPublishedDisplay(job) {
-  return {
-    title: stringifySafe(job.title),
-    organization: stringifySafe(job.organization),
-    location: stringifySafe(job.location),
-    location_type: stringifySafe(job.workplace_type),
-    pay_display: stringifySafe(job.salary),
-    salary_min: job.salary_min ?? null,
-    salary_max: job.salary_max ?? null,
-    role_type: stringifySafe(job.job_type),
-    experience_level: stringifySafe(job.experience),
-    sector: stringifySafe(job.sector),
-    function: stringifySafe(job.function),
-    specialization: stringifySafe(job.specialization),
-    specialization_confidence: stringifySafe(job.specialization_confidence || "low"),
-    tags: Array.isArray(job.tags) ? job.tags : [],
-    description: stringifySafe(job.description),
-    source_name: stringifySafe(job.source),
-    source_url: stringifySafe(job.source_url),
-    original_url: stringifySafe(job.original_url),
-    date_collected: stringifySafe(job.date_posted),
-    application_url: stringifySafe(job.apply_url),
-    page_url_override: stringifySafe(job.page_url_override),
-    published: true,
-    featured: Boolean(job.featured)
-  };
-}
-
-function buildDescriptionCandidate(job = {}) {
-  return [
-    job.description,
-    job.raw_description,
-    job.descriptionPlain,
-    job.content,
-    job.summary
-  ].filter(Boolean).join(" ");
-}
-
-function hasEnoughContextForSafePlaceholder(job = {}) {
-  const title = stringifySafe(job.title);
-  const organization = stringifySafe(job.organization);
-  return Boolean(title && organization && title.length >= 4 && organization.length >= 2);
+  return buildCanonicalPublishedDisplay({ ...job, status: "published" });
 }
 
 function excerptForLog(value, maxLength = 180) {
@@ -191,33 +153,9 @@ function sanitizePublishSelectedJob(job = {}) {
   const organization = stringifySafe(job.organization);
   const beforeDescription = stringifySafe(job.description || job.raw_description);
   const beforeSnippet = stringifySafe(job.description_snippet || job.summary);
-  const normalizedDescription = normalizeDescription(buildDescriptionCandidate(job), {
-    title,
-    organization
-  }).description;
-  let cleanDescription = normalizedDescription;
-  if (!cleanDescription || safeHasMalformedDescriptionTemplate(cleanDescription) || !hasUsableDescription(cleanDescription, { title, organization })) {
-    cleanDescription = buildFallbackDescription({
-      ...job,
-      title,
-      organization
-    });
-  }
-  if (
-    (!cleanDescription || isJunkDescription(cleanDescription) || safeHasMalformedDescriptionTemplate(cleanDescription) || !hasUsableDescription(cleanDescription, { title, organization }))
-    && hasEnoughContextForSafePlaceholder(job)
-  ) {
-    cleanDescription = buildFallbackDescription({
-      ...job,
-      title,
-      organization,
-      function: stringifySafe(job.function || job.sector || "its work")
-    }) || `This role supports ${organization ? `${organization}${organization.endsWith("s") ? "'" : "'s"}` : "the organization's"} work across ${stringifySafe(job.function || job.sector || "its focus areas")}.`;
-  }
-  let cleanSnippet = buildDescriptionSnippet(cleanDescription, 220, { title });
-  if (!cleanSnippet || isJunkDescription(cleanSnippet) || safeHasMalformedDescriptionTemplate(cleanSnippet)) {
-    cleanSnippet = cleanDescription;
-  }
+  const repaired = repairCanonicalDescriptionShape(job, { title, organization });
+  const cleanDescription = stringifySafe(repaired.description);
+  const cleanSnippet = stringifySafe(repaired.snippet);
   const dirtyReasons = [];
   const dirtyDescription =
     !beforeDescription ||
@@ -237,19 +175,27 @@ function sanitizePublishSelectedJob(job = {}) {
     dirtyReasons.push("invalid_snippet");
   }
   const remainingJunkReasons = getSelectedJobJunkReasons(cleanDescription, cleanSnippet, { title, organization });
-  const trusted = remainingJunkReasons.length === 0
+  const trusted = repaired.trusted
+    && remainingJunkReasons.length === 0
     && hasUsableDescription(cleanDescription, { title, organization })
     && (!safeHasMalformedDescriptionTemplate(cleanDescription))
     && (!isJunkDescription(cleanDescription))
     && (!isJunkDescription(cleanSnippet));
+  const canonicalJob = canonicalizeJobShape({
+    ...job,
+    description: cleanDescription,
+    raw_description: cleanDescription,
+    description_snippet: cleanSnippet,
+    summary: cleanSnippet
+  }) || {
+    ...job,
+    description: cleanDescription,
+    raw_description: cleanDescription,
+    description_snippet: cleanSnippet,
+    summary: cleanSnippet
+  };
   return {
-    job: {
-      ...job,
-      description: cleanDescription,
-      raw_description: cleanDescription,
-      description_snippet: cleanSnippet,
-      summary: cleanSnippet
-    },
+    job: canonicalJob,
     dirtyReasons,
     remainingJunkReasons,
     trusted,
@@ -2479,10 +2425,9 @@ module.exports = {
   runAdminActionDiagnostics,
   selectedPublishSanitizerHelpers: {
     buildDescriptionSnippet,
-    buildFallbackDescription,
     hasMalformedDescriptionTemplate: safeHasMalformedDescriptionTemplate,
     hasUsableDescription,
-    normalizeDescription,
+    repairCanonicalDescriptionShape,
     sanitizePublishSelectedJob,
     stringifySafe
   }

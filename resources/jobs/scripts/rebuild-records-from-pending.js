@@ -1,17 +1,19 @@
 const {
   PENDING_SYNCED_FILE,
   readJson,
-  safeWritePublicJobs,
   writeJson
 } = require("./job-utils");
 const { hasRoleSignal, normalizeJob } = require("./job-normalizer");
+const { buildCanonicalPublishedDisplay } = require("./canonical-job-shape");
 const { buildJobRecord, JOB_RECORDS_FILE } = require("./public-records");
 const {
   applyPublishLifecycle,
   resolveDisplayJobFromRecord,
   shouldShowPublicRecord
 } = require("./lifecycle-utils");
-const { buildPagesFromRecords } = require("./generate-job-pages");
+const { syncPublicJobsFromRecords } = require("./public-jobs");
+const { buildPagesFromJobs } = require("./generate-job-pages");
+const { buildValidationReport } = require("./validate-public-data");
 
 const BAD_PUBLIC_TITLE_PATTERN = /\b(?:previous|next|life at|our impact|faq|portugal|power of all voices)\b/i;
 const ALLOWED_SINGLE_WORD_ROLE_TITLES = new Set([
@@ -71,28 +73,7 @@ function titleLooksPublicSafe(title) {
 }
 
 function buildPublishedDisplay(job) {
-  return {
-    title: String(job.title || ""),
-    organization: String(job.organization || ""),
-    location: String(job.location || ""),
-    location_type: String(job.workplace_type || ""),
-    pay_display: String(job.salary || ""),
-    salary_min: job.salary_min ?? null,
-    salary_max: job.salary_max ?? null,
-    role_type: String(job.job_type || ""),
-    experience_level: String(job.experience || ""),
-    sector: String(job.sector || ""),
-    function: String(job.function || ""),
-    tags: Array.isArray(job.tags) ? job.tags : [],
-    description: String(job.description || ""),
-    source_name: String(job.source || ""),
-    source_url: String(job.source_url || ""),
-    original_url: String(job.original_url || ""),
-    date_collected: String(job.date_posted || ""),
-    application_url: String(job.apply_url || ""),
-    published: true,
-    featured: Boolean(job.featured)
-  };
+  return buildCanonicalPublishedDisplay({ ...job, status: "published" }) || {};
 }
 
 function buildPublishedRecord(job) {
@@ -160,8 +141,12 @@ async function main() {
     .map((record) => resolveDisplayJobFromRecord(record));
 
   await writeJson(JOB_RECORDS_FILE, records);
-  await safeWritePublicJobs(publicJobs, { label: "jobs:rebuild-records" });
-  const generatedPages = await buildPagesFromRecords(records);
+  const publicSync = await syncPublicJobsFromRecords(records, { label: "jobs:rebuild-records" });
+  const generatedPages = await buildPagesFromJobs(publicSync.publicJobs);
+  const validation = await buildValidationReport({ requirePages: true });
+  if (validation.hard_validation_failure_count > 0) {
+    throw new Error(`hard public validation failures detected: ${validation.hard_validation_failure_count}`);
+  }
 
   console.log(JSON.stringify({
     pending_input: pendingInput.length,
@@ -169,8 +154,15 @@ async function main() {
     published_records_created: records.length,
     skipped_during_rebuild: skipped.length,
     skipped_reasons: skipped.slice(0, 20),
-    public_jobs_written: publicJobs.length,
-    generated_pages: generatedPages
+    public_jobs_written: publicSync.jobsCountAfter,
+    generated_pages: generatedPages,
+    validation: {
+      public_records_count: validation.public_records_count,
+      jobs_json_count: validation.jobs_json_count,
+      invalid_title_count: validation.invalid_title_count,
+      pending_public_overlap_count: validation.pending_public_overlap_count,
+      hard_validation_failure_count: validation.hard_validation_failure_count
+    }
   }, null, 2));
 }
 

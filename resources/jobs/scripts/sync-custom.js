@@ -15,12 +15,28 @@ const { upsertScrapeReports } = require("./scrape-report");
 const { shouldUseDiscoverySync } = require("./source-utils");
 const { triagePendingJobs } = require("./pending-triage");
 const { readSourceHealthSnapshot, writeSourceHealthSnapshot } = require("./source-health-store");
+const { isSourceTemporarilyUnavailableReport } = require("./scrapers/discovery");
+const { applySourcePendingControls } = require("./source-sync-quality");
 
 function isManagedCustomJob(job, managedSourceIds) {
   return job.sync_origin === "custom" && managedSourceIds.has(String(job.source_id || ""));
 }
 
-async function runCustomSync() {
+function countManagedPendingBySource(existingPending = []) {
+  const counts = new Map();
+  for (const job of Array.isArray(existingPending) ? existingPending : []) {
+    if (job.sync_origin !== "custom") continue;
+    const sourceId = String(job.source_id || "");
+    if (!sourceId) continue;
+    counts.set(sourceId, Number(counts.get(sourceId) || 0) + 1);
+  }
+  return counts;
+}
+
+async function runCustomSync(options = {}) {
+  const logger = options.logger || console;
+  const scrapeImpl = options.scrapeImpl || scrapeSourceWithDiscovery;
+  const syncJobRecords = options.syncJobRecords !== false;
   const syncStartedAt = Date.now();
   resetParserCleanupStats();
   const [existingJobs, existingPending, sources] = await Promise.all([
@@ -46,9 +62,12 @@ async function runCustomSync() {
   }
 
   const preservedPublicJobs = existingJobs.filter((job) => !isManagedCustomJob(job, managedCustomSourceIds));
+  const managedExistingPendingJobs = existingPending.filter((job) => isManagedCustomJob(job, managedCustomSourceIds));
   const preservedPendingJobs = existingPending
     .filter((job) => !isManagedCustomJob(job, managedCustomSourceIds))
     .map((job) => ({ ...job, __pending_preserved: true }));
+  const managedPendingCounts = countManagedPendingBySource(existingPending);
+  const unavailableSourceIds = new Set();
   const publicJobs = [];
   const pendingJobs = [];
   const counts = {};
@@ -58,13 +77,22 @@ async function runCustomSync() {
   for (const source of customSources) {
     const sourceStartedAt = Date.now();
     try {
-      const { jobs: rawJobs, report } = await scrapeSourceWithDiscovery(source);
+      const { jobs: rawJobs, report } = await scrapeImpl(source);
+      const sourceUnavailable = isSourceTemporarilyUnavailableReport(report);
+      const preservedPendingCount = Number(managedPendingCounts.get(String(source.id || "")) || 0);
+      if (sourceUnavailable) unavailableSourceIds.add(String(source.id || ""));
+      report.source_temporarily_unavailable = sourceUnavailable;
+      report.fallback_used = Boolean(sourceUnavailable && preservedPendingCount > 0);
+      report.fallback_reason = sourceUnavailable && preservedPendingCount > 0
+        ? `Preserved ${preservedPendingCount} existing pending jobs because upstream fetch failed.`
+        : "";
       counts[source.id] = {
         fetched: rawJobs.length,
         active: 0,
         pending: 0,
         route: report.parser_used,
-        reason: report.reason_for_zero_results
+        reason: report.reason_for_zero_results,
+        source_temporarily_unavailable: sourceUnavailable
       };
       scrapeReports.push(report);
       const normalizedJobs = rawJobs
@@ -73,6 +101,7 @@ async function runCustomSync() {
           sync_origin: "custom"
         }, source))
         .filter(Boolean);
+      const sourcePendingCandidates = [];
       for (const rawJob of rawJobs) {
         const routed = routeSyncedJob({
           ...rawJob,
@@ -83,25 +112,59 @@ async function runCustomSync() {
           publicJobs.push(routed);
           counts[source.id].active += 1;
         } else {
-          pendingJobs.push({ ...routed, __pending_new: true });
-          counts[source.id].pending += 1;
+          sourcePendingCandidates.push({ ...routed, __pending_new: true });
         }
       }
+      const existingSourcePending = managedExistingPendingJobs.filter((job) => String(job.source_id || "") === String(source.id));
+      const controlledPending = applySourcePendingControls(source, {
+        incomingJobs: sourcePendingCandidates,
+        existingPendingJobs: existingSourcePending,
+        nowIso: new Date().toISOString()
+      });
+      controlledPending.allJobs.forEach((job) => pendingJobs.push(job));
       counts[source.id].normalized = normalizedJobs.length;
+      counts[source.id].pending = controlledPending.activeReviewJobs.length;
+      counts[source.id].relevance_matched = controlledPending.matchedCount;
+      counts[source.id].active_review_added = controlledPending.activeReviewAdded;
+      counts[source.id].backlog_added = controlledPending.backlogAdded;
+      counts[source.id].backlog_preserved = controlledPending.backlogPreserved;
+      counts[source.id].resurfaced_from_backlog = controlledPending.resurfacedFromBacklog;
+      counts[source.id].stale_backlog_archived = controlledPending.staleBacklogArchived;
+      counts[source.id].repeat_surface_prevented_count = controlledPending.repeatSurfacePreventedCount;
+      counts[source.id].capped_existing = controlledPending.cappedExisting;
+      counts[source.id].capped = controlledPending.cappedCount;
+      counts[source.id].skipped_low_relevance = controlledPending.skippedLowRelevanceCount;
       sourceHealthEntries.push({
         source_id: source.id,
         source_checked: true,
         jobs_found: rawJobs.length,
         jobs_normalized: normalizedJobs.length,
+        relevance_matched_count: controlledPending.matchedCount,
+        active_review_added: controlledPending.activeReviewAdded,
+        backlog_added: controlledPending.backlogAdded,
+        backlog_preserved: controlledPending.backlogPreserved,
+        resurfaced_from_backlog: controlledPending.resurfacedFromBacklog,
+        stale_backlog_archived: controlledPending.staleBacklogArchived,
+        repeat_surface_prevented_count: controlledPending.repeatSurfacePreventedCount,
+        capped_existing: controlledPending.cappedExisting,
+        capped_count: controlledPending.cappedCount,
+        skipped_low_relevance_count: controlledPending.skippedLowRelevanceCount,
         jobs_skipped: Math.max(0, rawJobs.length - normalizedJobs.length),
-        skip_reasons: [],
-        pending_count_delta: counts[source.id].pending,
+        skip_reasons: report.reason_for_zero_results ? [report.reason_for_zero_results] : [],
+        pending_count_delta: controlledPending.activeReviewAdded + controlledPending.backlogAdded || (sourceUnavailable ? preservedPendingCount : 0),
         public_count_delta: counts[source.id].active,
-        last_successful_sync: new Date().toISOString(),
+        last_successful_sync: sourceUnavailable ? "" : new Date().toISOString(),
         sync_duration_ms: Date.now() - sourceStartedAt,
-        failure_error_count: 0
+        failure_error_count: sourceUnavailable ? 1 : 0,
+        source_temporarily_unavailable: sourceUnavailable,
+        fallback_used: Boolean(sourceUnavailable && preservedPendingCount > 0),
+        fallback_reason: sourceUnavailable
+          ? `Preserved ${preservedPendingCount} existing pending Climate Change Jobs records because upstream fetch failed.`
+          : ""
       });
     } catch (error) {
+      const preservedPendingCount = Number(managedPendingCounts.get(String(source.id || "")) || 0);
+      unavailableSourceIds.add(String(source.id || ""));
       counts[source.id] = { fetched: 0, active: 0, pending: 0, error: error.message };
       scrapeReports.push({
         source_id: source.id,
@@ -115,9 +178,14 @@ async function runCustomSync() {
         jobs_parsed: 0,
         reason_for_zero_results: error.message,
         browser_fallback_recommended: Boolean(source.requires_browser),
+        source_temporarily_unavailable: true,
+        fallback_used: preservedPendingCount > 0,
+        fallback_reason: preservedPendingCount > 0
+          ? `Preserved ${preservedPendingCount} existing pending jobs because the source failed during fetch.`
+          : "",
         errors: [error.message]
       });
-      console.error(`[jobs:sync-custom] source_id=${source.id} url=${source.source_url} failure=${error.message}`);
+      logger.error(`[jobs:sync-custom] source_id=${source.id} url=${source.source_url} failure=${error.message}`);
       sourceHealthEntries.push({
         source_id: source.id,
         source_checked: true,
@@ -125,12 +193,23 @@ async function runCustomSync() {
         jobs_normalized: 0,
         jobs_skipped: 0,
         skip_reasons: [error.message],
-        pending_count_delta: 0,
+        pending_count_delta: preservedPendingCount,
         public_count_delta: 0,
         last_successful_sync: "",
         sync_duration_ms: Date.now() - sourceStartedAt,
-        failure_error_count: 1
+        failure_error_count: 1,
+        source_temporarily_unavailable: true,
+        fallback_used: preservedPendingCount > 0,
+        fallback_reason: preservedPendingCount > 0
+          ? `Preserved ${preservedPendingCount} existing pending jobs because the source failed during fetch.`
+          : ""
       });
+    }
+  }
+
+  for (const job of managedExistingPendingJobs) {
+    if (unavailableSourceIds.has(String(job.source_id || ""))) {
+      pendingJobs.push({ ...job, __pending_preserved: true });
     }
   }
 
@@ -138,18 +217,22 @@ async function runCustomSync() {
   const mergedPendingJobs = dedupeJobs([...preservedPendingJobs, ...pendingJobs]);
 
   const publicWriteResult = await safeWritePublicJobs(mergedPublicJobs, {
-    logger: console,
+    logger,
     label: "jobs:sync-custom"
   });
-  await syncJobRecordStore(publicWriteResult.jobs, { logger: console, label: "jobs:sync-custom" });
+  if (syncJobRecords) {
+    await syncJobRecordStore(publicWriteResult.jobs, { logger, label: "jobs:sync-custom" });
+  }
   const scrapeReportPayload = await upsertScrapeReports(scrapeReports);
   const triaged = await triagePendingJobs(mergedPendingJobs, publicWriteResult.jobs, scrapeReportPayload);
   const finalPublicJobs = attachPublicJobPageUrls(dedupeJobs([...publicWriteResult.jobs, ...(triaged.autoPublishedJobs || [])]));
   const finalPublicWriteResult = await safeWritePublicJobs(finalPublicJobs, {
-    logger: console,
+    logger,
     label: "jobs:sync-custom"
   });
-  await syncJobRecordStore(finalPublicWriteResult.jobs, { logger: console, label: "jobs:sync-custom" });
+  if (syncJobRecords) {
+    await syncJobRecordStore(finalPublicWriteResult.jobs, { logger, label: "jobs:sync-custom" });
+  }
   await writeJson(PENDING_SYNCED_FILE, triaged.adminPendingJobs);
   await upsertScrapeReports(triaged.report.sources);
 
@@ -172,15 +255,15 @@ async function runCustomSync() {
       healthEntry.low_confidence_routed_to_pending = Number(triageSource.low_confidence_routed_to_pending || 0);
       healthEntry.skip_reason_counts = triageSource.rejected_reasons || {};
     }
-    console.log(
-      `[jobs:sync-custom] source_id=${sourceId} fetched=${count.fetched} normalized=${count.normalized || 0} active=${count.active} pending=${count.pending} retained=${triageSource.retained || triageSource.kept || 0} rejected_by_relevance=${triageSource.rejected_by_relevance || 0} rejected_noise=${triageSource.rejected_noise || 0} dropped_by_source_cap=${triageSource.dropped_by_source_cap || triageSource.dropped_by_cap || 0}${count.route ? ` route=${count.route}` : ""}${count.reason ? ` reason=${count.reason}` : ""}${count.error ? ` error=${count.error}` : ""}${triageSource.top_retained_examples?.length ? ` top_retained=${triageSource.top_retained_examples.map((item) => `${item.title} @ ${item.organization} (${item.relevance_score})`).join(" | ")}` : ""}${triageSource.rejected_examples?.length ? ` top_skipped=${triageSource.rejected_examples.map((item) => `${item.title} @ ${item.organization} [${item.reason}]`).join(" | ")}` : ""}`
+    logger.log(
+      `[jobs:sync-custom] source_id=${sourceId} fetched=${count.fetched} normalized=${count.normalized || 0} active=${count.active} pending=${count.pending} relevance_matched=${count.relevance_matched || 0} active_review_added=${count.active_review_added || 0} backlog_added=${count.backlog_added || 0} backlog_preserved=${count.backlog_preserved || 0} resurfaced_from_backlog=${count.resurfaced_from_backlog || 0} stale_backlog_archived=${count.stale_backlog_archived || 0} repeat_surface_prevented_count=${count.repeat_surface_prevented_count || 0} capped_existing=${count.capped_existing || 0} capped=${count.capped || 0} skipped_low_relevance=${count.skipped_low_relevance || 0} retained=${triageSource.retained || triageSource.kept || 0} rejected_by_relevance=${triageSource.rejected_by_relevance || 0} rejected_noise=${triageSource.rejected_noise || 0} dropped_by_source_cap=${triageSource.dropped_by_source_cap || triageSource.dropped_by_cap || 0}${count.route ? ` route=${count.route}` : ""}${count.reason ? ` reason=${count.reason}` : ""}${count.error ? ` error=${count.error}` : ""}${triageSource.top_retained_examples?.length ? ` top_retained=${triageSource.top_retained_examples.map((item) => `${item.title} @ ${item.organization} (${item.relevance_score})`).join(" | ")}` : ""}${triageSource.rejected_examples?.length ? ` top_skipped=${triageSource.rejected_examples.map((item) => `${item.title} @ ${item.organization} [${item.reason}]`).join(" | ")}` : ""}`
     );
   });
-  console.log(
+  logger.log(
     `[jobs:sync-custom] Wrote ${finalPublicWriteResult.jobs.length} public jobs to ${JOBS_FILE}, ${triaged.adminPendingJobs.length} admin-pending jobs to ${PENDING_SYNCED_FILE}, auto_published=${triaged.summary.auto_published || 0}, rejected ${triaged.summary.rejected_noise} as noise, dropped_by_cap=${triaged.summary.dropped_by_cap_total}, final_pending_size_mb=${triaged.summary.final_pending_file_size_mb}.`
   );
   const parserStats = getParserCleanupStats();
-  console.log(
+  logger.log(
     `[jobs:sync-custom] parser_cleaned_title_count=${parserStats.parser_cleaned_title_count} parser_cleaned_org_count=${parserStats.parser_cleaned_org_count} parser_cleaned_description_count=${parserStats.parser_cleaned_description_count} parser_location_defaulted_remote_count=${parserStats.parser_location_defaulted_remote_count} parser_location_cleaned_count=${parserStats.parser_location_cleaned_count} parser_hybrid_location_repaired_count=${parserStats.parser_hybrid_location_repaired_count} parser_elemental_metadata_stripped_count=${parserStats.parser_elemental_metadata_stripped_count} parser_custom_table_header_stripped_count=${parserStats.parser_custom_table_header_stripped_count} parser_html_fragment_stripped_count=${parserStats.parser_html_fragment_stripped_count} salary_invalid_removed_count=${parserStats.salary_invalid_removed_count} salary_display_built_from_range_count=${parserStats.salary_display_built_from_range_count} salary_parse_warning_count=${parserStats.salary_parse_warning_count} workplace_type_cleaned_count=${parserStats.workplace_type_cleaned_count} workplace_type_invalid_removed_count=${parserStats.workplace_type_invalid_removed_count} workplace_type_field_misplacement_repaired_count=${parserStats.workplace_type_field_misplacement_repaired_count} elemental_impact_routed_pending_count=${parserStats.elemental_impact_routed_pending_count} low_confidence_title_count=${parserStats.low_confidence_title_count}`
   );
   const previousHealth = await readSourceHealthSnapshot();
@@ -197,7 +280,7 @@ async function runCustomSync() {
     sync_type: "sync-custom",
     sources: nextHealthEntries
   });
-  console.log(`[jobs:sync-custom] source_health_written=true sources=${nextHealthEntries.length} sync_duration_ms=${Date.now() - syncStartedAt}`);
+  logger.log(`[jobs:sync-custom] source_health_written=true sources=${nextHealthEntries.length} sync_duration_ms=${Date.now() - syncStartedAt}`);
 
   return {
     publicJobs: finalPublicWriteResult.jobs,
@@ -215,5 +298,6 @@ if (require.main === module) {
 }
 
 module.exports = {
+  countManagedPendingBySource,
   runCustomSync
 };

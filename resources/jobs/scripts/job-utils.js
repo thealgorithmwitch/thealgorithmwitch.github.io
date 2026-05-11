@@ -1,10 +1,17 @@
 const fs = require("fs/promises");
 const path = require("path");
-const { buildDescriptionSnippet, dedupeJobs, normalizeJob, normalizePayDisplay, normalizeWorkplaceType, slugify, stringifySafe, todayIso } = require("./job-normalizer");
+const { dedupeJobs, normalizeJob, slugify, stringifySafe, todayIso } = require("./job-normalizer");
+const { canonicalizeJobShape } = require("./canonical-job-shape");
 const { buildJobPagePathMap } = require("./job-page-paths");
 const { normalizeSource } = require("./source-utils");
 
-const ROOT = path.resolve(__dirname, "..");
+function resolveDataRoot() {
+  return process.env.JOBS_DATA_DIR
+    ? path.resolve(process.env.JOBS_DATA_DIR)
+    : path.resolve(__dirname, "..");
+}
+
+const ROOT = resolveDataRoot();
 const JOBS_FILE = path.join(ROOT, "jobs.json");
 const SOURCES_FILE = path.join(ROOT, "sources.json");
 const PENDING_FILE = path.join(ROOT, "pending-jobs.json");
@@ -75,26 +82,11 @@ const PUBLIC_STRING_FIELDS = new Set([
 
 function sanitizePublicJob(job) {
   if (!job || typeof job !== "object") return job;
-  const canonicalTitle = stringifySafe(job.title);
-  const canonicalSalary = normalizePayDisplay({
-    payDisplay: job.salary,
-    salaryMin: job.salary_min,
-    salaryMax: job.salary_max,
-    currency: job.salary_currency,
-    period: job.salary_period
-  });
-  const canonicalDescription = stringifySafe(job.description || job.raw_description);
-  const canonicalSnippet =
-    stringifySafe(job.description_snippet || job.summary) ||
-    buildDescriptionSnippet(canonicalDescription, 220, { title: canonicalTitle });
+  const canonical = canonicalizeJobShape(job, { alreadyNormalized: true }) || canonicalizeJobShape(job);
+  if (!canonical) return job;
   return {
-    ...sanitizeRecursive(job),
-    salary: canonicalSalary,
-    workplace_type: normalizeWorkplaceType(job.workplace_type, ""),
-    description: canonicalDescription,
-    description_snippet: canonicalSnippet,
-    summary: canonicalSnippet,
-    page_url: stringifySafe(job.page_url),
+    ...sanitizeRecursive(canonical),
+    page_url: stringifySafe(job.page_url || canonical.page_url),
     redirect_paths: Array.isArray(job.redirect_paths) ? job.redirect_paths.map((item) => stringifySafe(item)).filter(Boolean) : []
   };
 }
@@ -236,6 +228,7 @@ module.exports = {
   serializeForWrite,
   slugify,
   todayIso,
+  canonicalizeJobShape,
   writeJson,
   writeJsonIfChanged
 };

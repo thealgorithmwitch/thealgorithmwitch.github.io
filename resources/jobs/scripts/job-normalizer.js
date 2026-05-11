@@ -173,6 +173,15 @@ const DESCRIPTION_JUNK_PATTERNS = [
   /\bCleantech\b/i,
   /\bOil\s*&\s*Gas\b/i
 ];
+const MALFORMED_DESCRIPTION_TEMPLATE_PATTERNS = [
+  /\bThe\s+will\b/i,
+  /\bThe\s+is\b/i,
+  /\bThe\s+are\b/i,
+  /\bThe\s*,/i,
+  /\bThe\s*\./i,
+  /\bThe&nbsp;will\b/i,
+  /\bThe\s*<\//i
+];
 const MONTH_NAME_PATTERN =
   /\b(?:Jan|January|Feb|February|Mar|March|Apr|April|May|Jun|June|Jul|July|Aug|August|Sep|Sept|September|Oct|October|Nov|November|Dec|December)\s+\d{1,2},\s+\d{4}\b/gi;
 const SOCIAL_SHARE_TEXT_PATTERNS = [
@@ -643,7 +652,7 @@ function assessTitleQuality(value, options = {}) {
 }
 
 function hasDescriptionVerbSignal(value) {
-  return /[a-z]{3,}\s+(?:is|are|will|can|should|must|plans|coordinates|executes|supports|manages|builds|seeks|works|develops|leads|drives|partners)\b/i.test(
+  return /[a-z]{3,}\s+(?:is|are|will|can|should|must|plans|coordinates|executes|supports|manages|builds|seeks|works|develops|leads|drives|partners|optimizes)\b/i.test(
     String(value || "")
   );
 }
@@ -1725,7 +1734,7 @@ function isArticleLikeDescription(text) {
   if (!normalized) return false;
   if (/^jobs search\b/i.test(normalized)) return true;
   if (looksLikeSchemaMetadata(normalized)) return true;
-  if (/(?:\b\d+[mhdy]\s+ago\b|•\s*remote\s*•)/i.test(normalized) && !/[a-z]{3,}\s+(?:is|are|will|can|should|must|plans|coordinates|executes|supports|manages|builds|seeks|works|develops|leads|drives|partners)/i.test(normalized)) {
+  if (/(?:\b\d+[mhdy]\s+ago\b|•\s*remote\s*•)/i.test(normalized) && !/[a-z]{3,}\s+(?:is|are|will|can|should|must|plans|coordinates|executes|supports|manages|builds|seeks|works|develops|leads|drives|partners|optimizes)/i.test(normalized)) {
     return true;
   }
   return false;
@@ -1860,11 +1869,43 @@ function collapseRepeatedPhrases(value) {
     .replace(/\b([A-Za-z][A-Za-z&,'/-]{2,})\b(?:\s+\1\b){1,}/gi, "$1");
 }
 
+function hasMalformedDescriptionTemplate(value) {
+  const text = String(value || "");
+  return MALFORMED_DESCRIPTION_TEMPLATE_PATTERNS.some((pattern) => pattern.test(text));
+}
+
+function applyTitleToMalformedTemplate(text, title) {
+  const normalizedText = String(text || "");
+  const normalizedTitle = normalizeWhitespace(title || "");
+  if (!normalizedText) return "";
+
+  let next = normalizedText
+    .replace(/The&nbsp;will/gi, "The will")
+    .replace(/\bThe\s{2,}/g, "The ");
+
+  if (!normalizedTitle) {
+    return normalizeWhitespace(next);
+  }
+
+  const escapedTitle = escapeRegExp(normalizedTitle);
+  next = next
+    .replace(/\bThe\s+will\b/g, `The ${normalizedTitle} will`)
+    .replace(/\bThe\s+is\b/g, `The ${normalizedTitle} is`)
+    .replace(/\bThe\s+are\b/g, `The ${normalizedTitle} are`)
+    .replace(/\bThe\s*,/g, `${normalizedTitle},`)
+    .replace(/\bThe\s*\./g, normalizedTitle)
+    .replace(/\bIn this position,\s+the\s+will\b/gi, `In this position, the ${normalizedTitle} will`)
+    .replace(/\bAs the\s*,/gi, `As the ${normalizedTitle},`);
+
+  next = next.replace(new RegExp(`\\bThe\\s+${escapedTitle}\\s+${escapedTitle}\\b`, "gi"), `The ${normalizedTitle}`);
+  return normalizeWhitespace(next);
+}
+
 function normalizeDescription(description, options = {}) {
   const title = normalizeWhitespace(options.title || "");
   const descriptionInput = normalizeWhitespace(stringifySafe(description) || cleanFlattenedText(description));
   const rawDescription = stripParserTemplateJunk(descriptionInput, "description");
-  const cleaned = collapseRepeatedPhrases(normalizeWhitespace(
+  const cleaned = applyTitleToMalformedTemplate(collapseRepeatedPhrases(normalizeWhitespace(
     stripSchemaMetadata(stripHtml(rawDescription))
       .replace(/[>›»]+/g, " ")
       .replace(/\s*=\s*/g, " ")
@@ -1895,7 +1936,7 @@ function normalizeDescription(description, options = {}) {
       .replace(/\b(?:about us|about the company|about the role|job summary|role overview|what you’ll do|what you will do|responsibilities|requirements|qualifications|preferred qualifications|benefits|details|context|scope|what you bring)\s*:?/gi, " ")
       .replace(/\b(?:job title|department|reports to|supervises|duration|location)\s*:/gi, " ")
       .replace(/\.\s*\./g, ". ")
-  ));
+  )), title);
   const numericCleaned = normalizeWhitespace(
     collapseRepeatedPipeSegments(
       stripLeadingMetadataBlob(
@@ -1922,7 +1963,7 @@ function normalizeDescription(description, options = {}) {
     .filter((sentence) => !title || normalizeComparableText(sentence) !== normalizeComparableText(title))
     .filter((sentence) => !/\b(?:webpage|readaction|privacy policy|terms of use|cookie policy|share this job|equal opportunity employer)\b/i.test(sentence))
     .filter((sentence) => !/\b(?:the\s*,\s*market|the,\s*market)\b/i.test(sentence))
-    .filter((sentence) => /[a-z]{3,}\s+(?:is|are|will|can|should|must|plans|coordinates|executes|supports|manages|builds|seeks|works|develops|leads|drives|partners)/i.test(sentence)));
+    .filter((sentence) => /[a-z]{3,}\s+(?:is|are|will|can|should|must|plans|coordinates|executes|supports|manages|builds|seeks|works|develops|leads|drives|partners|optimizes)/i.test(sentence)));
 
   const prioritySentences = sentences.filter((sentence) => {
     return /(role|position|responsible|support|manage|lead|coordinate|develop|partner|build|work with|candidate|team|mission|focus|scope)/i.test(sentence);
@@ -1936,13 +1977,16 @@ function normalizeDescription(description, options = {}) {
     if (selected.length === 5) break;
   }
 
-  const finalDescription = dedupeTitleMentions(collapseRepeatedPhrases(selected.join(" ").trim() || numericCleaned), title);
+  const finalDescription = applyTitleToMalformedTemplate(
+    dedupeTitleMentions(collapseRepeatedPhrases(selected.join(" ").trim() || numericCleaned), title),
+    title
+  );
   const metadataHeavyDescription = /\b(?:career_page|other \d+|ipo \d+|point\s*\(|locality\b|business\/productivity software|cleantech|oil\s*&\s*gas|renewable energy|revenue|valuation|headquarters|employee size)\b/i.test(finalDescription);
 
   const dominatedByNoise =
     selected.length === 0 &&
     DESCRIPTION_NOISE_PATTERNS.some((pattern) => pattern.test(rawDescription)) &&
-    !/[a-z]{3,}\s+(?:is|are|will|can|should|must|plans|coordinates|executes|supports|manages|builds|seeks|works|develops|leads|drives|partners)/i.test(
+    !/[a-z]{3,}\s+(?:is|are|will|can|should|must|plans|coordinates|executes|supports|manages|builds|seeks|works|develops|leads|drives|partners|optimizes)/i.test(
       numericCleaned
     );
   const dominatedBySchemaMetadata = looksLikeSchemaMetadata(rawDescription) && !selected.length;
@@ -2024,13 +2068,18 @@ function buildFallbackDescription(job = {}) {
   const organization = normalizeWhitespace(stringifySafe(job.organization));
   const location = normalizeWhitespace(stringifySafe(job.location));
   const workplaceType = normalizeWhitespace(stringifySafe(job.workplace_type));
-  if (!title && !organization) return "";
+  const functionName = normalizeWhitespace(stringifySafe(job.function));
+  const sector = normalizeWhitespace(stringifySafe(job.sector));
+  if (!title && !organization && !functionName && !sector) return "";
 
   const pieces = [];
-  const subject = [title, organization ? `at ${organization}` : ""].filter(Boolean).join(" ");
-  if (subject) {
-    pieces.push(`${subject} is a climate and sustainability role that should be reviewed through the original application listing for full responsibilities.`);
-  }
+  const scope = functionName || sector || "its climate and sustainability work";
+  const possessiveOrganization = organization ? `${organization}${organization.endsWith("s") ? "'" : "'s"}` : "";
+  pieces.push(
+    possessiveOrganization
+      ? `This role supports ${possessiveOrganization} work across ${scope}.`
+      : `This role supports work across ${scope}.`
+  );
   if (location || workplaceType) {
     pieces.push(
       `This position is listed${location ? ` in ${location}` : ""}${workplaceType ? `${location ? " and " : " as "}a ${workplaceType.toLowerCase()} role` : ""}.`
@@ -2048,9 +2097,11 @@ function isLikelyCorruptedDescription(value, options = {}) {
   if (isCompanyOnlyDescription(text, { title, organization })) return true;
   if (isRepeatedDateDescription(text)) return true;
   if (isMostlyMetadataDescription(text)) return true;
+  if (!title && hasMalformedDescriptionTemplate(text)) return true;
   if (!/[A-Za-z]{3,}/.test(text) || /^[>"'<\s|/\\-]+$/.test(text)) return true;
   const normalized = normalizeDescription(text, { title }).description;
   if (!normalized) return true;
+  if (hasMalformedDescriptionTemplate(normalized)) return true;
   if (DESCRIPTION_JUNK_PATTERNS.some((pattern) => pattern.test(normalized))) return true;
   if (isCompanyOnlyDescription(normalized, { title, organization })) return true;
   if (isRepeatedDateDescription(normalized)) return true;
@@ -2067,7 +2118,7 @@ function hasUsableDescription(value, options = {}) {
 
 function buildDescriptionSnippet(value, maxLength = 220, options = {}) {
   const title = normalizeWhitespace(options.title || "");
-  const normalizedDescription = normalizeDescription(value, { title }).description;
+  const normalizedDescription = applyTitleToMalformedTemplate(normalizeDescription(value, { title }).description, title);
   if (!normalizedDescription) return "";
   if (isLikelyCorruptedDescription(normalizedDescription, { title })) return "";
 
@@ -2430,6 +2481,7 @@ module.exports = {
   flattenTextValues,
   hasExplicitHybridSignal,
   hasExplicitRemoteSignal,
+  hasMalformedDescriptionTemplate,
   hasUsableDescription,
   isSocialShareUrl,
   isGenericRoleTitle,
@@ -2444,6 +2496,7 @@ module.exports = {
   isSingleFirstNameOnlyTitle,
   looksLikePhysicalLocation,
   normalizeDescription,
+  applyTitleToMalformedTemplate,
   normalizeEmploymentType,
   normalizeJob,
   buildDescriptionSnippet,

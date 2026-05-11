@@ -1,9 +1,11 @@
 const { JOBS_FILE, PENDING_SYNCED_FILE, readJson, writeJsonIfChanged } = require("./job-utils");
 const { JOB_RECORDS_FILE } = require("./public-records");
 const { syncPublicJobsFromRecords } = require("./public-jobs");
+const { buildPagesFromJobs } = require("./generate-job-pages");
+const { buildValidationReport } = require("./validate-public-data");
+const { canonicalizeJobShape, repairCanonicalDescriptionShape } = require("./canonical-job-shape");
 const {
   normalizeJob,
-  normalizeDescription,
   normalizeEmploymentType,
   normalizeWorkplaceType,
   stringifySafe,
@@ -148,21 +150,15 @@ function shouldReplaceDescription(currentValue, nextValue) {
   return descriptionQualityScore(candidate) >= descriptionQualityScore(current) + 2;
 }
 
-function buildDescriptionCandidate(job = {}) {
-  return [
-    job.description,
-    job.raw_description,
-    job.descriptionPlain,
-    job.content,
-    job.summary,
-    stringifySafe(job.raw_payload)
-  ].filter(Boolean).join(" ");
-}
-
 function normalizedDescriptionShape(job = {}, fallbackTitle = "") {
-  return normalizeDescription(buildDescriptionCandidate(job), {
+  const repaired = repairCanonicalDescriptionShape({
+    ...job,
     title: cleanText(job.title || fallbackTitle)
   });
+  return {
+    raw_description: cleanText(job.raw_description || job.description || ""),
+    description: cleanText(repaired.description)
+  };
 }
 
 function appendExample(stats, id, field, before, after) {
@@ -336,7 +332,11 @@ function maybeReplaceField(container, key, nextValue, stats, statKey, context, o
 function migratePendingJob(job, stats) {
   const next = { ...job };
   const descriptionShape = normalizedDescriptionShape(job, job.title);
-  let candidate = normalizeJob({
+  let candidate = canonicalizeJobShape({
+    ...job,
+    description: descriptionShape.description || job.description,
+    raw_description: descriptionShape.raw_description || job.raw_description
+  }) || normalizeJob({
     ...job,
     description: descriptionShape.description || job.description,
     raw_description: descriptionShape.raw_description || job.raw_description
@@ -424,7 +424,11 @@ function migrateJobRecord(record, stats) {
     raw_description: raw.raw_description || display.description || raw.description
   };
   const descriptionShape = normalizedDescriptionShape(normalizationSource, display.title || raw.title);
-  let candidate = normalizeJob({
+  let candidate = canonicalizeJobShape({
+    ...normalizationSource,
+    description: descriptionShape.description || normalizationSource.description,
+    raw_description: descriptionShape.raw_description || normalizationSource.raw_description
+  }) || normalizeJob({
     ...normalizationSource,
     description: descriptionShape.description || normalizationSource.description,
     raw_description: descriptionShape.raw_description || normalizationSource.raw_description
@@ -638,7 +642,16 @@ async function main() {
   if (WRITE) {
     await writeJsonIfChanged(JOB_RECORDS_FILE, nextRecords);
     await writeJsonIfChanged(PENDING_SYNCED_FILE, nextPending);
-    await syncPublicJobsFromRecords(nextRecords, { label: "jobs:migrate-existing" });
+    const publicSync = await syncPublicJobsFromRecords(nextRecords, { label: "jobs:migrate-existing" });
+    const pageBuildResult = await buildPagesFromJobs(publicSync.publicJobs);
+    const validation = await buildValidationReport({ requirePages: true });
+    console.log(`[jobs:migrate-existing] pages_written=${pageBuildResult.pagesWrittenCount} redirect_pages_written=${pageBuildResult.redirectPagesWrittenCount}`);
+    console.log(
+      `[jobs:migrate-existing] validation public_records_count=${validation.public_records_count} jobs_json_count=${validation.jobs_json_count} invalid_title_count=${validation.invalid_title_count} pending_public_overlap_count=${validation.pending_public_overlap_count} hard_validation_failure_count=${validation.hard_validation_failure_count}`
+    );
+    if (validation.hard_validation_failure_count > 0) {
+      throw new Error(`hard public validation failures detected: ${validation.hard_validation_failure_count}`);
+    }
   }
 
   console.log(`mode: ${WRITE ? "write" : "dry-run"}`);

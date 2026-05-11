@@ -2,6 +2,7 @@ const fs = require("fs/promises");
 const path = require("path");
 const crypto = require("crypto");
 const { readJobs } = require("./job-utils");
+const { canonicalizeJobShape } = require("./canonical-job-shape");
 const { readJobRecords } = require("./public-records");
 const { buildJobPagePathMap, cleanVisibleText } = require("./job-page-paths");
 const { normalizeEmploymentType, normalizeWorkplaceType } = require("./job-normalizer");
@@ -119,13 +120,14 @@ function buildPageInputHash(job, slug) {
 }
 
 function buildPage(job, slug, hash) {
-  const normalizedJobType = normalizeEmploymentType(job.job_type || "");
-  const normalizedWorkplaceType = normalizeWorkplaceType(job.workplace_type || "");
-  const title = `${cleanVisibleText(job.title)} at ${cleanVisibleText(job.organization)}`;
-  const fullDescription = cleanVisibleText(job.description || "");
-  const descriptionSnippet = truncate(job.description_snippet || job.summary || fullDescription || `${cleanVisibleText(job.title)} at ${cleanVisibleText(job.organization)} in climate, clean energy, sustainability, policy, and creative work.`);
-  const originalUrl = job.original_url || job.apply_url || job.source_url || "#";
-  const tags = Array.isArray(job.tags) ? job.tags.map((tag) => cleanVisibleText(tag)).filter(Boolean) : [];
+  const canonical = canonicalizeJobShape(job, { alreadyNormalized: true }) || canonicalizeJobShape(job) || job;
+  const normalizedJobType = normalizeEmploymentType(canonical.job_type || "");
+  const normalizedWorkplaceType = normalizeWorkplaceType(canonical.workplace_type || "");
+  const title = `${cleanVisibleText(canonical.title)} at ${cleanVisibleText(canonical.organization)}`;
+  const fullDescription = cleanVisibleText(canonical.description || "");
+  const descriptionSnippet = truncate(canonical.description_snippet || canonical.summary || fullDescription || `${cleanVisibleText(canonical.title)} at ${cleanVisibleText(canonical.organization)} in climate, clean energy, sustainability, policy, and creative work.`);
+  const originalUrl = canonical.original_url || canonical.apply_url || canonical.source_url || "#";
+  const tags = Array.isArray(canonical.tags) ? canonical.tags.map((tag) => cleanVisibleText(tag)).filter(Boolean) : [];
   const summary = fullDescription;
   const detailUrl = `https://example.com/jobs/pages/${slug}.html`;
 
@@ -183,18 +185,18 @@ ${buildJsonLd(job)}
     <main>
       <section class="hero">
         <div class="eyebrow">Job Detail</div>
-        <h2>${escapeHtml(job.title)}</h2>
-        <div style="font-size:1.05rem; color:var(--ink-secondary);">${escapeHtml(job.organization)}</div>
+        <h2>${escapeHtml(canonical.title)}</h2>
+        <div style="font-size:1.05rem; color:var(--ink-secondary);">${escapeHtml(canonical.organization)}</div>
         <div class="meta-list">
-          ${job.location ? `<div class="meta">${escapeHtml(job.location)}</div>` : ""}
+          ${canonical.location ? `<div class="meta">${escapeHtml(canonical.location)}</div>` : ""}
           ${normalizedWorkplaceType ? `<div class="meta">${escapeHtml(normalizedWorkplaceType)}</div>` : ""}
           ${normalizedJobType ? `<div class="meta">${escapeHtml(normalizedJobType)}</div>` : ""}
-          ${job.salary ? `<div class="meta">${escapeHtml(job.salary)}</div>` : ""}
-          ${job.source ? `<div class="meta">${escapeHtml(job.source)}</div>` : ""}
+          ${canonical.salary ? `<div class="meta">${escapeHtml(canonical.salary)}</div>` : ""}
+          ${canonical.source ? `<div class="meta">${escapeHtml(canonical.source)}</div>` : ""}
         </div>
         <div style="display:flex; gap:12px; flex-wrap:wrap;">
-          <a class="btn-primary" href="${escapeHtml(originalUrl)}" target="_blank" rel="noopener noreferrer" data-track-action="apply" data-job-id="${escapeHtml(job.id)}" data-title="${escapeHtml(job.title)}" data-organization="${escapeHtml(job.organization)}" data-source="${escapeHtml(job.source)}">Apply</a>
-          <a class="btn-secondary" href="${escapeHtml(originalUrl)}" target="_blank" rel="noopener noreferrer" data-track-action="view-original" data-job-id="${escapeHtml(job.id)}" data-title="${escapeHtml(job.title)}" data-organization="${escapeHtml(job.organization)}" data-source="${escapeHtml(job.source)}">View Original</a>
+          <a class="btn-primary" href="${escapeHtml(originalUrl)}" target="_blank" rel="noopener noreferrer" data-track-action="apply" data-job-id="${escapeHtml(canonical.id)}" data-title="${escapeHtml(canonical.title)}" data-organization="${escapeHtml(canonical.organization)}" data-source="${escapeHtml(canonical.source)}">Apply</a>
+          <a class="btn-secondary" href="${escapeHtml(originalUrl)}" target="_blank" rel="noopener noreferrer" data-track-action="view-original" data-job-id="${escapeHtml(canonical.id)}" data-title="${escapeHtml(canonical.title)}" data-organization="${escapeHtml(canonical.organization)}" data-source="${escapeHtml(canonical.source)}">View Original</a>
         </div>
       </section>
       <section class="card">

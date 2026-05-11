@@ -72,18 +72,28 @@ jobs:
         id: changes
         shell: bash
         run: |
-          CHANGED="$(git status --porcelain -- \
+          CORE_CHANGED="$(git status --porcelain -- \
             resources/jobs/sources.json \
             resources/jobs/source-discovery-candidates.json \
+            || true)"
+          REPORT_CHANGED="$(git status --porcelain -- \
             resources/jobs/reports/source-discovery-report.json \
             || true)"
-          if [ -n "$CHANGED" ]; then
+          if [ -n "$CORE_CHANGED" ]; then
             echo "changed=true" >> "$GITHUB_OUTPUT"
             echo "Detected discovery changes:"
-            echo "$CHANGED"
+            echo "$CORE_CHANGED"
+            if [ -n "$REPORT_CHANGED" ]; then
+              echo "$REPORT_CHANGED"
+            fi
           else
             echo "changed=false" >> "$GITHUB_OUTPUT"
-            echo "No discovery changes detected."
+            if [ -n "$REPORT_CHANGED" ]; then
+              echo "Report-only discovery changes detected; skipping commit."
+              echo "$REPORT_CHANGED"
+            else
+              echo "No discovery changes detected."
+            fi
           fi
 
       - name: Commit and push discovery changes

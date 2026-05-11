@@ -830,6 +830,206 @@ function updatePublishActionResult(action, source, stats, actionResults) {
   }
 }
 
+function mergeSelectedValidationReasonEntries(...groups) {
+  const reasonsById = new Map();
+  groups.flat().forEach((entry) => {
+    const id = String(entry?.id || "").trim();
+    if (!id) return;
+    const reasons = Array.isArray(entry?.reasons) ? entry.reasons : [];
+    if (!reasonsById.has(id)) reasonsById.set(id, new Set());
+    reasons.forEach((reason) => {
+      const normalizedReason = stringifySafe(reason);
+      if (normalizedReason) reasonsById.get(id).add(normalizedReason);
+    });
+  });
+  return Array.from(reasonsById.entries()).map(([id, reasons]) => ({
+    id,
+    reasons: Array.from(reasons)
+  }));
+}
+
+function buildValidationFailureSampleIndex(validation = {}) {
+  const index = new Map();
+  const register = (items = [], reasons, detailBuilder) => {
+    const reasonList = Array.isArray(reasons) ? reasons : [reasons];
+    (Array.isArray(items) ? items : []).forEach((item) => {
+      const id = String(item?.id || "").trim();
+      if (!id) return;
+      const details = typeof detailBuilder === "function" ? detailBuilder(item) : {};
+      reasonList.forEach((reason) => {
+        const normalizedReason = stringifySafe(reason);
+        if (!normalizedReason) return;
+        index.set(`${id}::${normalizedReason}`, {
+          title: stringifySafe(item?.title || details?.title),
+          organization: stringifySafe(item?.organization || item?.company || details?.organization),
+          field: stringifySafe(details?.field),
+          value: details?.value,
+          excerpt: stringifySafe(details?.excerpt)
+        });
+      });
+    });
+  };
+
+  register(validation?.samples?.invalid_title, "invalid_public_title", (item) => ({
+    field: "title",
+    value: stringifySafe(item?.title),
+    excerpt: stringifySafe(item?.title)
+  }));
+  register(validation?.samples?.invalid_pay, "malformed_public_pay", (item) => ({
+    field: "salary",
+    value: stringifySafe(item?.salary),
+    excerpt: stringifySafe(item?.salary)
+  }));
+  register(validation?.samples?.malformed_description_templates, "malformed_description_template", (item) => ({
+    field: item?.description ? "description" : "description_snippet",
+    value: stringifySafe(item?.description || item?.description_snippet),
+    excerpt: excerptForLog(item?.description || item?.description_snippet)
+  }));
+  register(validation?.samples?.lowercase_sentence_descriptions, "lowercase_sentence_description", (item) => ({
+    field: item?.description ? "description" : "description_snippet",
+    value: stringifySafe(item?.description || item?.description_snippet),
+    excerpt: excerptForLog(item?.description || item?.description_snippet)
+  }));
+  register(validation?.samples?.invalid_snippet, "invalid_snippet", (item) => ({
+    field: "description_snippet",
+    value: stringifySafe(item?.description_snippet),
+    excerpt: excerptForLog(item?.description_snippet)
+  }));
+  register(validation?.samples?.missing_canonical_description, "missing_canonical_description", () => ({
+    field: "description",
+    value: "",
+    excerpt: ""
+  }));
+  register(validation?.samples?.via_identity_conflicts, [
+    "description_identity_conflict",
+    "via_public_identity_conflict"
+  ], (item) => ({
+    field: item?.apply_url ? "apply_url" : "page_url",
+    value: stringifySafe(item?.apply_url || item?.page_url),
+    excerpt: excerptForLog(item?.apply_url || item?.page_url)
+  }));
+  register(validation?.samples?.organization_page_url_conflicts, [
+    "elemental_page_url_company_slug_conflict",
+    "elemental_apply_context_company_conflict",
+    "elemental_detail_page_company_mismatch"
+  ], (item) => ({
+    field: item?.apply_url ? "apply_url" : "page_url",
+    value: stringifySafe(item?.apply_url || item?.page_url),
+    excerpt: excerptForLog(item?.expected_company_from_url || item?.expected_org_slug || item?.page_url)
+  }));
+  register(validation?.samples?.talent_contact_protection_violations, [
+    "talent_record_missing",
+    "talent_public_contact_disabled"
+  ], (item) => ({
+    field: stringifySafe(item?.key || "talent_contact"),
+    value: stringifySafe(item?.actual ?? ""),
+    excerpt: excerptForLog(item?.expected || item?.actual || "")
+  }));
+  register(validation?.samples?.employer_local_edit_violations, "employer_local_edit_blank_detected", (item) => ({
+    field: "local_edit",
+    value: stringifySafe(item?.field || item?.path || ""),
+    excerpt: excerptForLog(item?.field || item?.path || "")
+  }));
+
+  return index;
+}
+
+function inferValidationFailureField(reason, details = {}, job = {}) {
+  if (details.field) return details;
+  const rule = stringifySafe(reason);
+  const descriptionText = stringifySafe(job.description);
+  const snippetText = stringifySafe(job.description_snippet || job.summary);
+  const pageUrl = stringifySafe(job.page_url);
+  const applyUrl = stringifySafe(job.apply_url || job.original_url || job.source_url);
+  const inferred = {
+    field: "",
+    value: "",
+    excerpt: ""
+  };
+
+  if (/title/.test(rule)) {
+    inferred.field = "title";
+    inferred.value = stringifySafe(job.title);
+    inferred.excerpt = excerptForLog(job.title);
+  } else if (/pay/.test(rule)) {
+    inferred.field = "salary";
+    inferred.value = stringifySafe(job.salary);
+    inferred.excerpt = excerptForLog(job.salary);
+  } else if (/snippet/.test(rule)) {
+    inferred.field = "description_snippet";
+    inferred.value = snippetText;
+    inferred.excerpt = excerptForLog(snippetText);
+  } else if (/page_url|detail_page/.test(rule)) {
+    inferred.field = "page_url";
+    inferred.value = pageUrl;
+    inferred.excerpt = excerptForLog(pageUrl);
+  } else if (/apply/.test(rule)) {
+    inferred.field = "apply_url";
+    inferred.value = applyUrl;
+    inferred.excerpt = excerptForLog(applyUrl);
+  } else if (/description|identity|cross_contamination|company/.test(rule)) {
+    inferred.field = "description";
+    inferred.value = descriptionText;
+    inferred.excerpt = excerptForLog(descriptionText || snippetText);
+  }
+
+  return inferred;
+}
+
+function buildHardValidationFailureDetails(validation = {}, publicJobs = [], selectedIds = new Set()) {
+  const publicJobsById = buildJobsById(publicJobs);
+  const sampleIndex = buildValidationFailureSampleIndex(validation);
+  const seen = new Set();
+
+  return (Array.isArray(validation?.samples?.hard_validation_failures) ? validation.samples.hard_validation_failures : [])
+    .map((failure) => {
+      const id = String(failure?.id || "").trim();
+      const rule = stringifySafe(failure?.reason || "hard_validation_failure");
+      if (!id || !rule) return null;
+      const key = `${id}::${rule}`;
+      if (seen.has(key)) return null;
+      seen.add(key);
+      const job = publicJobsById.get(id) || {};
+      const sampleDetails = sampleIndex.get(key) || {};
+      const inferredDetails = inferValidationFailureField(rule, sampleDetails, job);
+      return {
+        canonical_id: id,
+        title: stringifySafe(failure?.title || sampleDetails.title || job.title),
+        company: stringifySafe(failure?.organization || sampleDetails.organization || job.organization),
+        rule,
+        field: stringifySafe(sampleDetails.field || inferredDetails.field),
+        value: sampleDetails.value ?? inferredDetails.value ?? "",
+        excerpt: stringifySafe(sampleDetails.excerpt || inferredDetails.excerpt),
+        selected: selectedIds.has(id)
+      };
+    })
+    .filter(Boolean);
+}
+
+function logHardValidationFailures(label, failures = []) {
+  failures.forEach((failure) => {
+    console.warn(
+      `[jobs:apply-admin-actions] ${label}_hard_failure id=${failure.canonical_id} title=${JSON.stringify(failure.title)} company=${JSON.stringify(failure.company)} rule=${failure.rule} field=${failure.field || ""} selected=${failure.selected ? "true" : "false"} value=${JSON.stringify(stringifySafe(failure.value))} excerpt=${JSON.stringify(failure.excerpt)}`
+    );
+  });
+}
+
+function collectSelectedHardFailureReasons(failures = []) {
+  const reasonsById = new Map();
+  failures.forEach((failure) => {
+    if (!failure?.selected) return;
+    const id = String(failure.canonical_id || "").trim();
+    const reason = stringifySafe(failure.rule);
+    if (!id || !reason) return;
+    if (!reasonsById.has(id)) reasonsById.set(id, new Set());
+    reasonsById.get(id).add(reason);
+  });
+  return Array.from(reasonsById.entries()).map(([id, reasons]) => ({
+    id,
+    reasons: Array.from(reasons)
+  }));
+}
+
 function collectRecoverableSelectedValidationReasons(validation = {}, publishedSelectedJobsById = new Map()) {
   const reasonsById = new Map();
   const collect = (items = [], reasonSelector) => {
@@ -1425,6 +1625,7 @@ async function main() {
     blockedPublishCount: 0,
     publishableCount: 0,
     fixedPublishCount: 0,
+    unrelatedExistingValidationWarnings: [],
     scopedPublishQualityReport: null,
     staleSkippedResolvedActions: []
   };
@@ -1981,7 +2182,30 @@ async function main() {
         employers: nextEmployers
       });
 
-      const recoverableSelectedFailures = collectRecoverableSelectedValidationReasons(preflightValidation, publishedSelectedJobsById);
+      const preflightHardFailures = buildHardValidationFailureDetails(
+        preflightValidation,
+        preflightPublicSync.publicJobs,
+        new Set(publishedSelectedJobsById.keys())
+      );
+      logHardValidationFailures("preflight", preflightHardFailures);
+      report.unrelatedExistingValidationWarnings = preflightHardFailures.filter((item) => !item.selected);
+      if (report.unrelatedExistingValidationWarnings.length) {
+        console.warn(
+          `[jobs:apply-admin-actions] unrelated_existing_validation_warnings=${JSON.stringify(report.unrelatedExistingValidationWarnings.map((item) => ({
+            canonical_id: item.canonical_id,
+            title: item.title,
+            company: item.company,
+            rule: item.rule,
+            field: item.field,
+            excerpt: item.excerpt
+          })))}`
+        );
+      }
+
+      const recoverableSelectedFailures = mergeSelectedValidationReasonEntries(
+        collectRecoverableSelectedValidationReasons(preflightValidation, publishedSelectedJobsById),
+        collectSelectedHardFailureReasons(preflightHardFailures)
+      );
       if (!recoverableSelectedFailures.length) break;
       if (preflightAttempt >= 10) {
         throw new Error("selected publish preflight exceeded retry budget");
@@ -2052,9 +2276,15 @@ async function main() {
     console.log(
       `[jobs:apply-admin-actions] preflight_validation hard_validation_failure_count=${preflightValidation?.hard_validation_failure_count || 0} malformed_description_template_count=${preflightValidation?.malformed_description_template_count || 0} invalid_snippet_count=${preflightValidation?.invalid_snippet_count || 0}`
     );
-
-    if (preflightValidation && preflightValidation.hard_validation_failure_count > 0) {
-      throw new Error(`preflight hard public validation failures detected: ${preflightValidation.hard_validation_failure_count}`);
+    const remainingSelectedPreflightHardFailures = buildHardValidationFailureDetails(
+      preflightValidation,
+      preflightPublicSync.publicJobs,
+      new Set(publishedSelectedJobsById.keys())
+    ).filter((item) => item.selected);
+    if (remainingSelectedPreflightHardFailures.length > 0) {
+      throw new Error(
+        `preflight hard public validation failures detected for selected jobs: ${remainingSelectedPreflightHardFailures.map((item) => item.canonical_id).join(",")}`
+      );
     }
   }
 
@@ -2164,11 +2394,34 @@ async function main() {
     pending_public_overlap_count: validation.pending_public_overlap_count,
     hard_validation_failure_count: validation.hard_validation_failure_count
   };
+  const finalHardFailures = buildHardValidationFailureDetails(
+    validation,
+    shouldRunPublicSync ? publicSync.publicJobs : currentJobsJson,
+    new Set(publishedSelectedJobsById.keys())
+  );
+  logHardValidationFailures("final", finalHardFailures);
+  const unrelatedExistingFinalWarnings = finalHardFailures.filter((item) => !item.selected);
+  if (unrelatedExistingFinalWarnings.length) {
+    report.unrelatedExistingValidationWarnings = unrelatedExistingFinalWarnings;
+    console.warn(
+      `[jobs:apply-admin-actions] unrelated_existing_validation_warnings=${JSON.stringify(unrelatedExistingFinalWarnings.map((item) => ({
+        canonical_id: item.canonical_id,
+        title: item.title,
+        company: item.company,
+        rule: item.rule,
+        field: item.field,
+        excerpt: item.excerpt
+      })))}`
+    );
+  }
   console.log(
     `[jobs:apply-admin-actions] validation public_records_count=${validation.public_records_count} jobs_json_count=${validation.jobs_json_count} invalid_title_count=${validation.invalid_title_count} pending_public_overlap_count=${validation.pending_public_overlap_count} hard_validation_failure_count=${validation.hard_validation_failure_count}`
   );
-  if (validation.hard_validation_failure_count > 0) {
-    throw new Error(`hard public validation failures detected: ${validation.hard_validation_failure_count}`);
+  const remainingSelectedFinalHardFailures = finalHardFailures.filter((item) => item.selected);
+  if (remainingSelectedFinalHardFailures.length > 0) {
+    throw new Error(
+      `hard public validation failures detected for selected jobs: ${remainingSelectedFinalHardFailures.map((item) => item.canonical_id).join(",")}`
+    );
   }
   const parserStats = getParserCleanupStats();
   console.log(

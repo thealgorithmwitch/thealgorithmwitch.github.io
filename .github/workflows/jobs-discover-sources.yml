@@ -1,0 +1,108 @@
+name: Jobs Discover Sources
+
+on:
+  workflow_dispatch:
+    inputs:
+      write:
+        description: "Append eligible discovered sources to resources/jobs/sources.json?"
+        required: true
+        default: "false"
+        type: choice
+        options:
+          - "false"
+          - "true"
+      candidates_file:
+        description: "Path to the discovery candidate file (.json or .txt)."
+        required: true
+        default: "resources/jobs/source-discovery-candidates.json"
+        type: string
+  schedule:
+    - cron: "0 12 * * 1"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: jobs-discover-sources
+  cancel-in-progress: false
+
+jobs:
+  discover-sources:
+    runs-on: ubuntu-latest
+
+    env:
+      JOBS_DIR: resources/jobs
+      CANDIDATES_FILE: ${{ github.event.inputs.candidates_file || 'resources/jobs/source-discovery-candidates.json' }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+          cache: npm
+          cache-dependency-path: resources/jobs/package.json
+
+      - name: Install dependencies if needed
+        shell: bash
+        run: |
+          if [ -f "$JOBS_DIR/package-lock.json" ] || [ -f "$JOBS_DIR/npm-shrinkwrap.json" ]; then
+            npm --prefix "$JOBS_DIR" ci
+          elif node -e "const p=require('./resources/jobs/package.json'); const hasDeps=Object.keys(p.dependencies||{}).length > 0 || Object.keys(p.devDependencies||{}).length > 0; process.exit(hasDeps ? 0 : 1)"; then
+            npm --prefix "$JOBS_DIR" install
+          else
+            echo "No package dependencies declared. Skipping npm install."
+          fi
+
+      - name: Validate discovery script
+        run: node --check "$JOBS_DIR/scripts/discover-sources.js"
+
+      - name: Run discovery dry run
+        if: ${{ github.event_name == 'schedule' || inputs.write != 'true' }}
+        run: npm --prefix "$JOBS_DIR" run jobs:discover-sources -- --candidates-file "$CANDIDATES_FILE"
+
+      - name: Run discovery write
+        if: ${{ github.event_name != 'schedule' && inputs.write == 'true' }}
+        run: npm --prefix "$JOBS_DIR" run jobs:discover-sources-write -- --candidates-file "$CANDIDATES_FILE"
+
+      - name: Check for source onboarding changes
+        if: ${{ github.event_name != 'schedule' && inputs.write == 'true' }}
+        id: changes
+        shell: bash
+        run: |
+          CHANGED="$(git status --porcelain -- \
+            resources/jobs/sources.json \
+            resources/jobs/source-discovery-candidates.json \
+            resources/jobs/reports/source-discovery-report.json \
+            || true)"
+          if [ -n "$CHANGED" ]; then
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+            echo "Detected discovery changes:"
+            echo "$CHANGED"
+          else
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+            echo "No discovery changes detected."
+          fi
+
+      - name: Commit and push discovery changes
+        if: ${{ github.event_name != 'schedule' && inputs.write == 'true' && steps.changes.outputs.changed == 'true' }}
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add \
+            resources/jobs/sources.json \
+            resources/jobs/source-discovery-candidates.json \
+            resources/jobs/reports/source-discovery-report.json
+          if git diff --cached --quiet; then
+            echo "No staged changes to commit."
+            exit 0
+          fi
+          git commit -m "Discover mission-aligned job sources"
+          git push
+
+      - name: Report no-op
+        if: ${{ github.event_name != 'schedule' && inputs.write == 'true' && steps.changes.outputs.changed != 'true' }}
+        run: echo "No commit created."

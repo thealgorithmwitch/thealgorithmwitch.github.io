@@ -14,8 +14,9 @@ const { applySourcePendingControls, buildSourceControlKey } = require("./source-
 
 const ROOT = path.resolve(__dirname, "..");
 const REPORT_FILE = path.join(ROOT, "reports", "targeted-pending-source-sync.json");
-const ELIGIBLE_PROVIDERS = new Set(["greenhouse", "smartrecruiters"]);
-const STRUCTURED_ADAPTER_GAP_PROVIDERS = new Set(["paylocity", "workday", "rippling", "teamtailor", "pinpoint"]);
+const ELIGIBLE_PROVIDERS = new Set(["greenhouse", "smartrecruiters", "paylocity", "lever", "ashby", "bamboohr", "workable", "recruitee", "rippling"]);
+const STRUCTURED_ADAPTER_GAP_PROVIDERS = new Set(["workday", "teamtailor", "pinpoint"]);
+const REMOVED_PENDING_SOURCE_PATTERN = /climate change jobs|climatechangejobs|climate-change-jobs|articulate|empowerly|remofirst|recidiviz|cribl|found|canonicaljobs|canonical|cohere|chilipiper|beehiiv|posthog|automattic|superside|samsara|gusto/i;
 
 function toArray(value) {
   return Array.isArray(value) ? value : [];
@@ -27,6 +28,33 @@ function stringify(value) {
 
 function nowIso() {
   return new Date().toISOString();
+}
+
+function isDeprecatedPendingSourceJob(job = {}) {
+  const descriptor = [
+    stringify(job.source_id),
+    stringify(job.source_name),
+    stringify(job.source),
+    stringify(job.provider),
+    stringify(job.source_url),
+    stringify(job.apply_url)
+  ]
+    .filter(Boolean)
+    .join(" ");
+  return REMOVED_PENDING_SOURCE_PATTERN.test(descriptor);
+}
+
+function isDeprecatedSourceHealthEntry(entry = {}) {
+  return REMOVED_PENDING_SOURCE_PATTERN.test(
+    [
+      stringify(entry.source_id),
+      stringify(entry.provider),
+      stringify(entry.organization),
+      stringify(entry.source_name)
+    ]
+      .filter(Boolean)
+      .join(" ")
+  );
 }
 
 function buildDedupeCandidates(job = {}) {
@@ -71,19 +99,21 @@ function markPendingOnly(job, source) {
   });
 }
 
+function isStructuredSyncDisabled(source = {}) {
+  const provider = normalizeProvider(source.provider || source.type || "");
+  if (source.enabled === false) return true;
+  if (source.custom_sync_enabled !== false) return false;
+  return provider === "rippling" || STRUCTURED_ADAPTER_GAP_PROVIDERS.has(provider);
+}
+
 function selectTargetSources(sources, sourceHealth) {
-  const previousById = new Map(
-    toArray(sourceHealth.sources).map((entry) => [stringify(entry.source_id), stringify(entry.status)])
-  );
   return toArray(sources)
     .map((source) => normalizeSource(source))
     .filter((source) => {
       const provider = normalizeProvider(source.provider || source.type || "");
-      const previousStatus = previousById.get(stringify(source.id));
-      const alreadyCompleted = previousStatus === "pending_updated" || previousStatus === "no_pending_changes";
-      return source.enabled !== false
-        && ELIGIBLE_PROVIDERS.has(provider)
-        && !alreadyCompleted;
+      if (source.enabled === false || !ELIGIBLE_PROVIDERS.has(provider)) return false;
+      if (isStructuredSyncDisabled(source)) return false;
+      return true;
     })
     .sort((a, b) => stringify(a.id).localeCompare(stringify(b.id)));
 }
@@ -112,9 +142,36 @@ function selectAdapterMissingSources(sources) {
     .map((source) => normalizeSource(source))
     .filter((source) => {
       const provider = normalizeProvider(source.provider || source.type || "");
-      return source.enabled !== false && STRUCTURED_ADAPTER_GAP_PROVIDERS.has(provider);
+      return source.enabled !== false && !isStructuredSyncDisabled(source) && STRUCTURED_ADAPTER_GAP_PROVIDERS.has(provider);
     })
     .sort((a, b) => stringify(a.id).localeCompare(stringify(b.id)));
+}
+
+function selectSyncDisabledSources(sources) {
+  return toArray(sources)
+    .map((source) => normalizeSource(source))
+    .filter((source) => isStructuredSyncDisabled(source))
+    .sort((a, b) => stringify(a.id).localeCompare(stringify(b.id)));
+}
+
+function buildSyncDisabledEntry(source) {
+  return {
+    source_id: stringify(source.id),
+    source_checked: false,
+    status: "sync_disabled",
+    provider: normalizeProvider(source.provider || source.type || ""),
+    jobs_found: 0,
+    jobs_normalized: 0,
+    jobs_added_to_pending: 0,
+    duplicates_skipped: 0,
+    pending_count_delta: 0,
+    public_count_delta: 0,
+    skip_reasons: ["custom_sync_disabled"],
+    last_successful_sync: "",
+    sync_duration_ms: 0,
+    failure_error_count: 0,
+    active_failure: false
+  };
 }
 
 async function fetchForSource(source) {
@@ -134,13 +191,33 @@ async function main() {
     readSourceHealthSnapshot()
   ]);
 
-  const pendingKeySet = buildExistingKeySet(existingPending);
+  const cleanedExistingPending = existingPending.filter((job) => !isDeprecatedPendingSourceJob(job));
+  const removedDeprecatedPendingCount = existingPending.length - cleanedExistingPending.length;
+  const pendingKeySet = buildExistingKeySet(cleanedExistingPending);
   const publicKeySet = buildExistingKeySet(existingJobs);
   const targetSources = selectTargetSources(sources, previousHealth);
   const adapterMissingSources = selectAdapterMissingSources(sources);
+  const syncDisabledSources = selectSyncDisabledSources(sources);
   const sourceHealthEntries = [];
   const reportEntries = [];
   const nextPendingBySource = new Map();
+
+  for (const source of syncDisabledSources) {
+    const entry = buildSyncDisabledEntry(source);
+    sourceHealthEntries.push(entry);
+    reportEntries.push({
+      source_id: stringify(source.id),
+      organization: stringify(source.organization || source.name),
+      provider: entry.provider,
+      status: entry.status,
+      jobs_found: 0,
+      jobs_normalized: 0,
+      jobs_added_to_pending: 0,
+      duplicates_skipped: 0,
+      skip_reasons: entry.skip_reasons
+    });
+    console.log(`[jobs:sync-targeted-pending-sources] source_id=${source.id} status=sync_disabled provider=${entry.provider}`);
+  }
 
   for (const source of adapterMissingSources) {
     const entry = buildAdapterMissingEntry(source);
@@ -180,9 +257,9 @@ async function main() {
     try {
       const rawJobs = await fetchForSource(source);
       jobsFound = toArray(rawJobs).length;
-      const existingSourcePending = existingPending.filter((job) => stringify(job.source_id) === stringify(source.id));
+      const existingSourcePending = cleanedExistingPending.filter((job) => stringify(job.source_id) === stringify(source.id));
       const otherPendingKeys = buildExistingKeySet(
-        existingPending.filter((job) => stringify(job.source_id) !== stringify(source.id))
+        cleanedExistingPending.filter((job) => stringify(job.source_id) !== stringify(source.id))
       );
 
       const normalizedPendingJobs = [];
@@ -257,7 +334,8 @@ async function main() {
         skip_reasons: skipReasons,
         last_successful_sync: nowIso(),
         sync_duration_ms: Date.now() - sourceStartedAt,
-        failure_error_count: 0
+        failure_error_count: 0,
+        active_failure: false
       });
       reportEntries.push({
         source_id: stringify(source.id),
@@ -298,7 +376,8 @@ async function main() {
         skip_reasons: [stringify(error.message)],
         last_successful_sync: "",
         sync_duration_ms: Date.now() - sourceStartedAt,
-        failure_error_count: 1
+        failure_error_count: 1,
+        active_failure: true
       });
       reportEntries.push({
         source_id: stringify(source.id),
@@ -316,19 +395,25 @@ async function main() {
   }
 
   const nextPending = [
-    ...existingPending.filter((job) => !nextPendingBySource.has(stringify(job.source_id))),
+    ...cleanedExistingPending.filter((job) => !nextPendingBySource.has(stringify(job.source_id))),
     ...Array.from(nextPendingBySource.values()).flat()
   ];
   await writeJson(PENDING_SYNCED_FILE, nextPending);
 
-  const previousHealthById = new Map(toArray(previousHealth.sources).map((entry) => [stringify(entry.source_id), entry]));
+  const previousHealthById = new Map(
+    toArray(previousHealth.sources)
+      .filter((entry) => !isDeprecatedSourceHealthEntry(entry))
+      .map((entry) => [stringify(entry.source_id), entry])
+  );
   const nextHealthById = new Map(previousHealthById);
   for (const entry of sourceHealthEntries) {
     const previous = previousHealthById.get(stringify(entry.source_id)) || {};
     nextHealthById.set(stringify(entry.source_id), {
       ...previous,
       ...entry,
-      failure_error_count: Number(previous.failure_error_count || 0) + Number(entry.failure_error_count || 0)
+      failure_error_count: entry.status === "sync_disabled"
+        ? 0
+        : Number(previous.failure_error_count || 0) + Number(entry.failure_error_count || 0)
     });
   }
   await writeSourceHealthSnapshot({
@@ -338,7 +423,7 @@ async function main() {
   });
 
   const summary = reportEntries.reduce((acc, entry) => {
-    acc.sources_attempted += entry.status === "provider_adapter_missing" ? 0 : 1;
+    acc.sources_attempted += entry.status === "provider_adapter_missing" || entry.status === "sync_disabled" ? 0 : 1;
     acc.jobs_found += Number(entry.jobs_found || 0);
     acc.jobs_normalized += Number(entry.jobs_normalized || 0);
     acc.relevance_matched_count += Number(entry.relevance_matched_count || 0);
@@ -374,6 +459,7 @@ async function main() {
     capped_count: 0,
     skipped_low_relevance_count: 0,
     duplicates_skipped: 0,
+    deprecated_pending_entries_removed: removedDeprecatedPendingCount,
     skipped_reasons: {}
   });
 
@@ -383,6 +469,7 @@ async function main() {
     duration_ms: Date.now() - startedAt,
     pending_file: PENDING_SYNCED_FILE,
     source_health_written: true,
+    deprecated_pending_entries_removed: removedDeprecatedPendingCount,
     target_source_ids: targetSources.map((source) => stringify(source.id)),
     adapter_gap_source_ids: adapterMissingSources.map((source) => stringify(source.id)),
     summary,
@@ -390,7 +477,7 @@ async function main() {
   };
   await writeJson(REPORT_FILE, report);
 
-  console.log(`[jobs:sync-targeted-pending-sources] sources_attempted=${summary.sources_attempted} jobs_found=${summary.jobs_found} jobs_normalized=${summary.jobs_normalized} relevance_matched_count=${summary.relevance_matched_count} active_review_added=${summary.active_review_added} backlog_added=${summary.backlog_added} backlog_preserved=${summary.backlog_preserved} resurfaced_from_backlog=${summary.resurfaced_from_backlog} stale_backlog_archived=${summary.stale_backlog_archived} repeat_surface_prevented_count=${summary.repeat_surface_prevented_count} capped_existing=${summary.capped_existing} jobs_added_to_pending=${summary.jobs_added_to_pending} capped_count=${summary.capped_count} skipped_low_relevance_count=${summary.skipped_low_relevance_count} duplicates_skipped=${summary.duplicates_skipped} duration_ms=${Date.now() - startedAt}`);
+  console.log(`[jobs:sync-targeted-pending-sources] sources_attempted=${summary.sources_attempted} jobs_found=${summary.jobs_found} jobs_normalized=${summary.jobs_normalized} relevance_matched_count=${summary.relevance_matched_count} active_review_added=${summary.active_review_added} backlog_added=${summary.backlog_added} backlog_preserved=${summary.backlog_preserved} resurfaced_from_backlog=${summary.resurfaced_from_backlog} stale_backlog_archived=${summary.stale_backlog_archived} repeat_surface_prevented_count=${summary.repeat_surface_prevented_count} capped_existing=${summary.capped_existing} jobs_added_to_pending=${summary.jobs_added_to_pending} capped_count=${summary.capped_count} skipped_low_relevance_count=${summary.skipped_low_relevance_count} duplicates_skipped=${summary.duplicates_skipped} deprecated_pending_entries_removed=${removedDeprecatedPendingCount} duration_ms=${Date.now() - startedAt}`);
   Object.entries(summary.skipped_reasons).forEach(([reason, count]) => {
     console.log(`[jobs:sync-targeted-pending-sources] skipped_reason reason=${reason} count=${count}`);
   });

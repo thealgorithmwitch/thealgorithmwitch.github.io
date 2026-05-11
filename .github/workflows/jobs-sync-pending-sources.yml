@@ -1,0 +1,89 @@
+name: Jobs Sync Pending Sources
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "30 12 * * 2"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: jobs-sync-pending-sources
+  cancel-in-progress: false
+
+jobs:
+  sync-pending-sources:
+    runs-on: ubuntu-latest
+
+    env:
+      JOBS_DIR: resources/jobs
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+          cache: npm
+          cache-dependency-path: resources/jobs/package.json
+
+      - name: Install dependencies if needed
+        shell: bash
+        run: |
+          if [ -f "$JOBS_DIR/package-lock.json" ] || [ -f "$JOBS_DIR/npm-shrinkwrap.json" ]; then
+            npm --prefix "$JOBS_DIR" ci
+          elif node -e "const p=require('./resources/jobs/package.json'); const hasDeps=Object.keys(p.dependencies||{}).length > 0 || Object.keys(p.devDependencies||{}).length > 0; process.exit(hasDeps ? 0 : 1)"; then
+            npm --prefix "$JOBS_DIR" install
+          else
+            echo "No package dependencies declared. Skipping npm install."
+          fi
+
+      - name: Validate targeted pending sync script
+        run: node --check "$JOBS_DIR/scripts/sync-targeted-pending-sources.js"
+
+      - name: Run pending-only source sync
+        run: npm --prefix "$JOBS_DIR" run jobs:sync-targeted-pending-sources
+
+      - name: Check for pending/source-health changes
+        id: changes
+        shell: bash
+        run: |
+          CHANGED="$(git status --porcelain -- \
+            resources/jobs/pending-synced-jobs.json \
+            resources/jobs/source-health-latest.json \
+            resources/jobs/reports/targeted-pending-source-sync.json \
+            resources/jobs/reports/pending-source-state-audit.json \
+            || true)"
+          if [ -n "$CHANGED" ]; then
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+            echo "Detected pending/source-health changes:"
+            echo "$CHANGED"
+          else
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+            echo "No pending/source-health changes detected."
+          fi
+
+      - name: Commit and push pending/source-health changes
+        if: steps.changes.outputs.changed == 'true'
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add \
+            resources/jobs/pending-synced-jobs.json \
+            resources/jobs/source-health-latest.json \
+            resources/jobs/reports/targeted-pending-source-sync.json \
+            resources/jobs/reports/pending-source-state-audit.json
+          if git diff --cached --quiet; then
+            echo "No staged changes to commit."
+            exit 0
+          fi
+          git commit -m "Sync pending-only ATS sources"
+          git push
+
+      - name: Report no-op
+        if: steps.changes.outputs.changed != 'true'
+        run: echo "No commit created."

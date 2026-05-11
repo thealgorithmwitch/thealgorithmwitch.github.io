@@ -1,0 +1,138 @@
+name: Jobs Discovery and Search Ingest
+
+on:
+  workflow_dispatch:
+    inputs:
+      discover_write:
+        description: "Append eligible discovered ATS sources to resources/jobs/sources.json?"
+        required: true
+        default: "false"
+        type: choice
+        options:
+          - "false"
+          - "true"
+      search_write:
+        description: "Write search-ingested jobs to pending-synced-jobs.json?"
+        required: true
+        default: "true"
+        type: choice
+        options:
+          - "false"
+          - "true"
+      candidates_file:
+        description: "Path to the discovery candidate file (.json or .txt)."
+        required: true
+        default: "resources/jobs/source-discovery-candidates.json"
+        type: string
+      search_sources_file:
+        description: "Path to the search source config JSON."
+        required: true
+        default: "resources/jobs/search-sources.json"
+        type: string
+  schedule:
+    - cron: "15 13 * * 3"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: jobs-discovery-and-search-ingest
+  cancel-in-progress: false
+
+jobs:
+  discovery-and-search-ingest:
+    runs-on: ubuntu-latest
+
+    env:
+      JOBS_DIR: resources/jobs
+      CANDIDATES_FILE: ${{ github.event.inputs.candidates_file || 'resources/jobs/source-discovery-candidates.json' }}
+      SEARCH_SOURCES_FILE: ${{ github.event.inputs.search_sources_file || 'resources/jobs/search-sources.json' }}
+      GOOGLE_CUSTOM_SEARCH_API_KEY: ${{ secrets.GOOGLE_CUSTOM_SEARCH_API_KEY }}
+      GOOGLE_CUSTOM_SEARCH_ENGINE_ID: ${{ secrets.GOOGLE_CUSTOM_SEARCH_ENGINE_ID }}
+      SERPAPI_API_KEY: ${{ secrets.SERPAPI_API_KEY }}
+      APIFY_TOKEN: ${{ secrets.APIFY_TOKEN }}
+      GENERIC_JOB_DATA_API_KEY: ${{ secrets.GENERIC_JOB_DATA_API_KEY }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+          cache: npm
+          cache-dependency-path: resources/jobs/package.json
+
+      - name: Install dependencies if needed
+        shell: bash
+        run: |
+          if [ -f "$JOBS_DIR/package-lock.json" ] || [ -f "$JOBS_DIR/npm-shrinkwrap.json" ]; then
+            npm --prefix "$JOBS_DIR" ci
+          elif node -e "const p=require('./resources/jobs/package.json'); const hasDeps=Object.keys(p.dependencies||{}).length > 0 || Object.keys(p.devDependencies||{}).length > 0; process.exit(hasDeps ? 0 : 1)"; then
+            npm --prefix "$JOBS_DIR" install
+          else
+            echo "No package dependencies declared. Skipping npm install."
+          fi
+
+      - name: Validate discovery and search-ingest scripts
+        run: |
+          node --check "$JOBS_DIR/scripts/discover-sources.js"
+          node --check "$JOBS_DIR/scripts/search-ingest.js"
+
+      - name: Run source discovery dry run
+        if: ${{ github.event_name == 'schedule' || inputs.discover_write != 'true' }}
+        run: npm --prefix "$JOBS_DIR" run jobs:discover-sources -- --candidates-file "$CANDIDATES_FILE"
+
+      - name: Run source discovery write
+        if: ${{ github.event_name != 'schedule' && inputs.discover_write == 'true' }}
+        run: npm --prefix "$JOBS_DIR" run jobs:discover-sources-write -- --candidates-file "$CANDIDATES_FILE"
+
+      - name: Run search ingest dry run
+        if: ${{ github.event_name != 'schedule' && inputs.search_write != 'true' }}
+        run: npm --prefix "$JOBS_DIR" run jobs:search-ingest -- --queries-file "$SEARCH_SOURCES_FILE"
+
+      - name: Run search ingest write
+        if: ${{ github.event_name == 'schedule' || inputs.search_write == 'true' }}
+        run: npm --prefix "$JOBS_DIR" run jobs:search-ingest-write -- --queries-file "$SEARCH_SOURCES_FILE"
+
+      - name: Check for meaningful discovery/search changes
+        id: changes
+        shell: bash
+        run: |
+          CORE_CHANGED="$(git status --porcelain -- \
+            resources/jobs/sources.json \
+            resources/jobs/pending-synced-jobs.json \
+            resources/jobs/source-health-latest.json \
+            || true)"
+          if [ -n "$CORE_CHANGED" ]; then
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+            echo "Detected meaningful changes:"
+            echo "$CORE_CHANGED"
+          else
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+            echo "No meaningful source/pending/source-health changes detected."
+          fi
+
+      - name: Commit and push discovery/search changes
+        if: steps.changes.outputs.changed == 'true'
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add \
+            resources/jobs/sources.json \
+            resources/jobs/pending-synced-jobs.json \
+            resources/jobs/source-health-latest.json \
+            resources/jobs/reports/source-discovery-report.json \
+            resources/jobs/reports/search-ingest-report.json
+          if git diff --cached --quiet; then
+            echo "No staged changes to commit."
+            exit 0
+          fi
+          git commit -m "Run jobs discovery and search ingest"
+          git push
+
+      - name: Report no-op
+        if: steps.changes.outputs.changed != 'true'
+        run: echo "No commit created."

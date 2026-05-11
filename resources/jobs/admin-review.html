@@ -803,6 +803,17 @@
     const unlockButton = document.getElementById("unlock-button");
     const localEmergencyButton = document.getElementById("local-emergency-button");
     const logoutButton = document.getElementById("logout-button");
+    const REQUIRED_BACKEND_ACTIONS = [
+      "validateAdminToken",
+      "getLocalJobActions",
+      "resolveLocalJobActions",
+      "queueLocalJobAction",
+      "getPendingJobs",
+      "getPendingTalent",
+      "getPendingFeaturedEmployers",
+      "getPendingAdminApplications",
+      "getRejected"
+    ];
     const triageGeneratedAt = document.getElementById("triage-generated-at");
     const triageMetricEls = {
       publicJobs: document.getElementById("metric-public-jobs"),
@@ -1059,6 +1070,10 @@
             backendApprovedArchiveCount = String(Array.isArray(approvedResult.items) ? approvedResult.items.length : 0);
           } catch (error) {
             if (error.code === "AUTH_EXPIRED") return;
+            if (error.code === "BACKEND_CAPABILITY_MISMATCH") {
+              setStatus(error.message || "Backend capability mismatch while loading local job actions.", true);
+              triageGeneratedAt.textContent = "Backend queue unavailable: deployed Apps Script is missing local action APIs";
+            }
             console.error("[admin-review] failed to load backend queue", error);
             backendQueuedCount = 0;
             backendApprovedArchiveCount = "—";
@@ -1817,6 +1832,37 @@
       setAdminDebug({ finalMode: "backendOutdated" });
     }
 
+    function showBackendCapabilityMismatchState(missingActions = [], supportedActions = []) {
+      const backendUrl = JOBS_BACKEND_URL.trim() || "(missing backend URL)";
+      const missing = (Array.isArray(missingActions) ? missingActions : []).filter(Boolean);
+      const supported = (Array.isArray(supportedActions) ? supportedActions : []).filter(Boolean);
+      lockedTitle.textContent = "Backend capability mismatch.";
+      lockedBody.innerHTML = missing.length
+        ? `This console authenticated successfully, but the deployed Apps Script backend is missing required actions: <code>${escapeHtml(missing.join(", "))}</code>.`
+        : "This console authenticated successfully, but the deployed Apps Script backend does not support the required admin actions.";
+      lockedDetails.innerHTML = [
+        "Redeploy steps:",
+        "1. Open the Google Sheet bound to this backend.",
+        "2. Extensions -> Apps Script.",
+        "3. Confirm the project includes the current jobs/backend/apps-script/Code.gs source.",
+        "4. Deploy -> Manage deployments.",
+        "5. Update the existing Web App deployment or create a new Web App deployment.",
+        `6. Confirm this configured /exec URL is the redeployed backend: ${escapeHtml(backendUrl)}`,
+        supported.length ? `Supported actions reported by backend: ${escapeHtml(supported.join(", "))}` : "Supported actions reported by backend: unavailable"
+      ].join("<br>");
+      lockedDetails.style.display = "block";
+      lockedState.style.display = "block";
+      loginState.style.display = "none";
+      consoleShell.style.display = "none";
+      localEmergencyButton.style.display = isBackendConfigured() && hasToken() ? "inline-flex" : "none";
+      clearStatus();
+      showLoginMessage("");
+      setAdminDebug({
+        finalMode: "backendCapabilityMismatch",
+        backendResponse: missing.length ? `missing_actions=${missing.join(",")}` : "backend capability mismatch"
+      });
+    }
+
     function showLoginState(message) {
       lockedState.style.display = "none";
       loginState.style.display = "grid";
@@ -2006,10 +2052,11 @@
     
       if (!response.ok || !data.ok) {
         const responseErrorText = String(data && data.error ? data.error : responseText || "").trim();
+        const invalidActionResponse = /invalid action\.?/i.test(responseErrorText);
         const backendOutdated =
           action === "validateAdminToken" &&
           response.ok &&
-          /invalid action\.?/i.test(responseErrorText);
+          invalidActionResponse;
 
         if (backendOutdated) {
           const outdatedError = new Error("Backend deployment is outdated. Redeploy the Apps Script Web App with validateAdminToken.");
@@ -2024,6 +2071,29 @@
             finalMode: "backendOutdated"
           });
           throw outdatedError;
+        }
+
+        if (invalidActionResponse && action !== "validateAdminToken") {
+          const supportedActions = Array.isArray(data && (data.supported_actions || data.supports))
+            ? (data.supported_actions || data.supports)
+            : [];
+          const mismatchError = new Error(
+            supportedActions.length
+              ? `Backend capability mismatch: deployed Apps Script does not support ${action}. Supported actions: ${supportedActions.join(", ")}.`
+              : `Backend capability mismatch: deployed Apps Script does not support ${action}.`
+          );
+          mismatchError.code = "BACKEND_CAPABILITY_MISMATCH";
+          mismatchError.httpStatus = response.status || 200;
+          mismatchError.allowLocalFallback = false;
+          mismatchError.action = action;
+          mismatchError.supportedActions = supportedActions;
+          setAdminDebug({
+            validationAction: action,
+            httpStatus: mismatchError.httpStatus,
+            backendResponse: responseErrorText || "Invalid action.",
+            finalMode: "backendCapabilityMismatch"
+          });
+          throw mismatchError;
         }
 
         const isAuthFailure = response.status === 401 ||
@@ -2072,6 +2142,48 @@
         }
         localEmergencyButton.style.display = isBackendConfigured() ? "inline-flex" : "none";
         return false;
+      }
+    }
+
+    async function checkBackendCapabilities() {
+      if (!isBackendConfigured() || !hasToken()) {
+        return { ok: false, missingActions: REQUIRED_BACKEND_ACTIONS.slice(), supportedActions: [] };
+      }
+      try {
+        const result = await requestAdmin("listSupportedActions");
+        const supportedActions = Array.isArray(result && (result.supports || result.supported_actions))
+          ? (result.supports || result.supported_actions)
+          : [];
+        const supportedSet = new Set(supportedActions.map((item) => String(item || "").trim()));
+        const missingActions = REQUIRED_BACKEND_ACTIONS.filter((action) => !supportedSet.has(action));
+        if (missingActions.length) {
+          showBackendCapabilityMismatchState(missingActions, supportedActions);
+          return {
+            ok: false,
+            missingActions,
+            supportedActions
+          };
+        }
+        setAdminDebug({
+          validationAction: "listSupportedActions",
+          backendResponse: supportedActions.join(", "),
+          finalMode: "backend"
+        });
+        return {
+          ok: true,
+          missingActions: [],
+          supportedActions
+        };
+      } catch (error) {
+        if (error.code === "BACKEND_OUTDATED") {
+          showBackendOutdatedState();
+          return { ok: false, missingActions: REQUIRED_BACKEND_ACTIONS.slice(), supportedActions: [] };
+        }
+        if (error.code === "BACKEND_CAPABILITY_MISMATCH") {
+          showBackendCapabilityMismatchState([], error.supportedActions || []);
+          return { ok: false, missingActions: REQUIRED_BACKEND_ACTIONS.slice(), supportedActions: error.supportedActions || [] };
+        }
+        throw error;
       }
     }
 
@@ -2699,7 +2811,11 @@
           tab: tabKey,
           error: error.message || "unknown error"
         });
-        panel.innerHTML = `<div class="empty-state">${escapeHtml(error.message || "Unable to load this folder.")}</div>`;
+        if (error.code === "BACKEND_CAPABILITY_MISMATCH") {
+          panel.innerHTML = `<div class="empty-state">Backend capability mismatch. The deployed Apps Script does not support <code>${escapeHtml(config.fetchAction)}</code>. Redeploy the backend Web App.</div>`;
+        } else {
+          panel.innerHTML = `<div class="empty-state">${escapeHtml(error.message || "Unable to load this folder.")}</div>`;
+        }
         if (String(error.message || "").toLowerCase() !== "unauthorized.") {
           setStatus(error.message || "Unable to load admin folder.", true);
         }
@@ -2987,6 +3103,10 @@
         showLoginState("Backend admin session could not be validated. Check the debug panel below before using local emergency mode.");
         return;
       }
+      const capabilityCheck = await checkBackendCapabilities();
+      if (!capabilityCheck.ok) {
+        return;
+      }
       showConsoleState();
       loadTriageSummary();
       activateTab("jobs");
@@ -3031,6 +3151,10 @@
       const sessionIsValid = await validateAdminSession();
       if (!sessionIsValid) {
         showLoginState("Backend admin session could not be validated. Check the debug panel below before using local emergency mode.");
+        return;
+      }
+      const capabilityCheck = await checkBackendCapabilities();
+      if (!capabilityCheck.ok) {
         return;
       }
 

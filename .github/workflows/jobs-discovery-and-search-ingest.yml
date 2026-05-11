@@ -103,15 +103,33 @@ jobs:
           CORE_CHANGED="$(git status --porcelain -- \
             resources/jobs/sources.json \
             resources/jobs/pending-synced-jobs.json \
-            resources/jobs/source-health-latest.json \
             || true)"
-          if [ -n "$CORE_CHANGED" ]; then
+          ERROR_SIGNAL="$(node - <<'NODE'
+          const fs = require('fs');
+          function readJson(file) {
+            try {
+              return JSON.parse(fs.readFileSync(file, 'utf8'));
+            } catch (_) {
+              return null;
+            }
+          }
+          const searchReport = readJson('resources/jobs/reports/search-ingest-report.json');
+          const meaningfulSearchError = Number(searchReport?.summary?.meaningful_error_count || 0) > 0;
+          process.stdout.write(meaningfulSearchError ? 'true' : 'false');
+          NODE
+          )"
+          if [ -n "$CORE_CHANGED" ] || [ "$ERROR_SIGNAL" = "true" ]; then
             echo "changed=true" >> "$GITHUB_OUTPUT"
             echo "Detected meaningful changes:"
-            echo "$CORE_CHANGED"
+            if [ -n "$CORE_CHANGED" ]; then
+              echo "$CORE_CHANGED"
+            fi
+            if [ "$ERROR_SIGNAL" = "true" ]; then
+              echo "Meaningful search-ingest error report present."
+            fi
           else
             echo "changed=false" >> "$GITHUB_OUTPUT"
-            echo "No meaningful source/pending/source-health changes detected."
+            echo "No meaningful source or pending changes detected."
           fi
 
       - name: Commit and push discovery/search changes

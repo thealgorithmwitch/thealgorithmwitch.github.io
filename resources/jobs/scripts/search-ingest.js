@@ -19,11 +19,66 @@ const { readSourceHealthSnapshot, writeSourceHealthSnapshot } = require("./sourc
 const ROOT = path.resolve(__dirname, "..");
 const SEARCH_SOURCES_FILE = path.join(ROOT, "search-sources.json");
 const REPORT_FILE = path.join(ROOT, "reports", "search-ingest-report.json");
+const CWD = process.cwd();
+
+function detectRepoRoot(jobsRoot) {
+  const normalizedJobsRoot = path.resolve(jobsRoot);
+  const parentDir = path.dirname(normalizedJobsRoot);
+  if (path.basename(normalizedJobsRoot) === "jobs" && path.basename(parentDir) === "resources") {
+    return path.resolve(normalizedJobsRoot, "..", "..");
+  }
+  return path.resolve(normalizedJobsRoot, "..");
+}
+
+function fileExists(filePath) {
+  return fs.access(filePath).then(() => true).catch(() => false);
+}
+
+async function resolveQueriesFilePath(providedQueriesFile, jobsRoot = ROOT, cwd = CWD) {
+  const repoRoot = detectRepoRoot(jobsRoot);
+  if (!providedQueriesFile) {
+    return {
+      provided_queries_file: "",
+      resolved_queries_file: SEARCH_SOURCES_FILE,
+      jobs_root: jobsRoot,
+      repo_root: repoRoot,
+      cwd
+    };
+  }
+
+  const candidates = [];
+  if (path.isAbsolute(providedQueriesFile)) {
+    candidates.push(path.resolve(providedQueriesFile));
+  } else {
+    candidates.push(path.resolve(cwd, providedQueriesFile));
+    candidates.push(path.resolve(jobsRoot, providedQueriesFile));
+    if (path.basename(path.resolve(jobsRoot)) === "jobs" && path.basename(path.dirname(path.resolve(jobsRoot))) === "resources") {
+      candidates.push(path.resolve(repoRoot, providedQueriesFile));
+    }
+  }
+
+  for (const candidate of candidates) {
+    if (await fileExists(candidate)) {
+      return {
+        provided_queries_file: providedQueriesFile,
+        resolved_queries_file: candidate,
+        jobs_root: jobsRoot,
+        repo_root: repoRoot,
+        cwd
+      };
+    }
+  }
+
+  throw new Error(
+    `queries-file not found: provided="${providedQueriesFile}" cwd="${cwd}" jobsRoot="${jobsRoot}" repoRoot="${repoRoot}" candidates="${candidates.join('", "')}"` 
+  );
+}
 
 function parseArgs(argv) {
   const args = {
     write: false,
-    queriesFile: SEARCH_SOURCES_FILE
+    queriesFile: SEARCH_SOURCES_FILE,
+    queriesFileProvided: false
   };
   for (let index = 0; index < argv.length; index += 1) {
     const token = argv[index];
@@ -32,7 +87,8 @@ function parseArgs(argv) {
       continue;
     }
     if (token === "--queries-file" && argv[index + 1]) {
-      args.queriesFile = path.resolve(argv[index + 1]);
+      args.queriesFile = argv[index + 1];
+      args.queriesFileProvided = true;
       index += 1;
     }
   }
@@ -49,6 +105,37 @@ function loadSearchQueries(payload) {
   if (payload && Array.isArray(payload.sources)) return payload.sources;
   if (payload && Array.isArray(payload.entries)) return payload.entries;
   return [];
+}
+
+async function loadSearchConfigFromFile(filePath) {
+  let raw;
+  try {
+    raw = await fs.readFile(filePath, "utf8");
+  } catch (error) {
+    throw new Error(`unable to read queries-file "${filePath}": ${error.message}`);
+  }
+
+  let payload;
+  try {
+    payload = JSON.parse(raw);
+  } catch (error) {
+    throw new Error(`invalid JSON in queries-file "${filePath}": ${error.message}`);
+  }
+
+  if (!payload || !Array.isArray(payload.queries)) {
+    throw new Error(`queries-file "${filePath}" must contain a top-level "queries" array`);
+  }
+
+  return payload;
+}
+
+function buildProviderCounts(queries) {
+  const counts = {};
+  for (const query of toArray(queries)) {
+    const provider = stringify(query?.provider) || "unknown";
+    counts[provider] = Number(counts[provider] || 0) + 1;
+  }
+  return counts;
 }
 
 function stringify(value) {
@@ -348,15 +435,32 @@ async function main() {
   const startedAt = Date.now();
   resetParserCleanupStats();
 
+  const resolution = await resolveQueriesFilePath(args.queriesFile, ROOT, process.cwd());
+
   const [searchConfig, publicJobs, pendingJobs, previousHealth] = await Promise.all([
-    readJson(args.queriesFile, { queries: [] }),
+    loadSearchConfigFromFile(resolution.resolved_queries_file),
     readJson(JOBS_FILE, []),
     readJson(PENDING_SYNCED_FILE, []),
     readSourceHealthSnapshot()
   ]);
 
   const allQueries = loadSearchQueries(searchConfig);
+  if (!Array.isArray(allQueries)) {
+    throw new Error(`queries-file "${resolution.resolved_queries_file}" did not produce a queries array`);
+  }
   const queries = allQueries.filter((query) => query && query.enabled !== false);
+  const providerCountsAll = buildProviderCounts(allQueries);
+  const providerCountsEnabled = buildProviderCounts(queries);
+  const enabledQueryIds = queries
+    .map((query) => stringify(query.id))
+    .filter(Boolean);
+
+  console.log(
+    `[jobs:search-ingest] cwd=${resolution.cwd} jobsRoot=${resolution.jobs_root} provided_queries_file=${resolution.provided_queries_file || "(default)"} resolved_queries_file=${resolution.resolved_queries_file}`
+  );
+  console.log(
+    `[jobs:search-ingest] queries_total=${allQueries.length} queries_enabled=${queries.length} provider_counts_total=${JSON.stringify(providerCountsAll)} provider_counts_enabled=${JSON.stringify(providerCountsEnabled)} enabled_query_ids=${enabledQueryIds.join(",")}`
+  );
 
   const reportEntries = [];
   const sourceHealthEntries = [];
@@ -516,13 +620,19 @@ async function main() {
   const report = {
     generated_at: nowIso(),
     mode: args.write ? "write" : "dry_run",
-    queries_file: args.queriesFile,
+    cwd: resolution.cwd,
+    jobs_root: resolution.jobs_root,
+    provided_queries_file: resolution.provided_queries_file,
+    queries_file: resolution.resolved_queries_file,
     pending_only: true,
     pending_file: PENDING_SYNCED_FILE,
     source_health_file: args.write ? "resources/jobs/source-health-latest.json" : "",
     summary: {
       queries_total: allQueries.length,
       queries_enabled: queries.length,
+      provider_counts_total: providerCountsAll,
+      provider_counts_enabled: providerCountsEnabled,
+      enabled_query_ids: enabledQueryIds,
       sources_attempted: reportEntries.filter((entry) => entry.status !== "missing_env_vars").length,
       jobs_found: jobsFoundTotal,
       jobs_normalized: jobsNormalizedTotal,

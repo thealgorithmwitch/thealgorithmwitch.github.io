@@ -3,13 +3,13 @@ name: Jobs Sync Pending Sources
 on:
   workflow_dispatch:
   schedule:
-    - cron: "30 12 * * 2"
+    - cron: "0 15 * * 3"
 
 permissions:
   contents: write
 
 concurrency:
-  group: jobs-sync-pending-sources
+  group: jobs-board-state
   cancel-in-progress: false
 
 jobs:
@@ -41,11 +41,17 @@ jobs:
             echo "No package dependencies declared. Skipping npm install."
           fi
 
-      - name: Validate targeted pending sync script
-        run: node --check "$JOBS_DIR/scripts/sync-targeted-pending-sources.js"
+      - name: Validate pending source sync scripts
+        run: |
+          node --check "$JOBS_DIR/scripts/sync-targeted-pending-sources.js"
+          node --check "$JOBS_DIR/scripts/ats-clients.js"
+          node --check "$JOBS_DIR/scripts/source-discovery-helpers.js"
 
       - name: Run pending-only source sync
         run: npm --prefix "$JOBS_DIR" run jobs:sync-targeted-pending-sources
+
+      - name: Guard blocked sources
+        run: npm --prefix "$JOBS_DIR" run jobs:check-blocked-sources
 
       - name: Check for pending/source-health changes
         id: changes
@@ -75,6 +81,18 @@ jobs:
               echo "No pending/source-health changes detected."
             fi
           fi
+
+      - name: Upload pending sync artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: jobs-sync-pending-sources-${{ github.run_id }}
+          if-no-files-found: warn
+          path: |
+            resources/jobs/pending-synced-jobs.json
+            resources/jobs/source-health-latest.json
+            resources/jobs/reports/targeted-pending-source-sync.json
+            resources/jobs/reports/pending-source-state-audit.json
 
       - name: Commit and push pending/source-health changes
         if: steps.changes.outputs.changed == 'true'

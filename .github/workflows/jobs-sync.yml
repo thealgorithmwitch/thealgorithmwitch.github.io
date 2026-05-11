@@ -12,7 +12,7 @@ permissions:
   contents: write
 
 concurrency:
-  group: jobs-admin-action-sync
+  group: jobs-board-state
   cancel-in-progress: false
 
 jobs:
@@ -54,6 +54,12 @@ jobs:
           else
             echo "No package dependencies declared. Skipping npm install."
           fi
+
+      - name: Validate admin action scripts
+        run: |
+          JOBS_DIR="${{ steps.workspace.outputs.dir }}"
+          node --check "$JOBS_DIR/scripts/apply-admin-actions.js"
+          node --check "$JOBS_DIR/scripts/validate-public-data.js"
           
       - name: Snapshot queued admin actions
         run: npm --prefix resources/jobs run jobs:snapshot-admin-actions
@@ -63,6 +69,9 @@ jobs:
       
       - name: Apply queued admin actions
         run: npm --prefix resources/jobs run jobs:apply-admin-actions
+
+      - name: Guard blocked sources
+        run: npm --prefix resources/jobs run jobs:check-blocked-sources
 
       - name: Check for publish output changes
         id: changes
@@ -152,6 +161,24 @@ jobs:
           git commit -m "Apply queued admin job actions"
           git push
           echo "Commit created and pushed."
+
+      - name: Upload admin sync artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: jobs-admin-sync-${{ github.run_id }}
+          if-no-files-found: warn
+          path: |
+            resources/jobs/job-records.json
+            resources/jobs/jobs.json
+            resources/jobs/talent-profiles.json
+            resources/jobs/employers.json
+            resources/jobs/pending-synced-jobs.json
+            resources/jobs/admin-actions-local.json
+            resources/jobs/admin-pending-overrides.json
+            resources/jobs/admin-action-overrides.json
+            resources/jobs/admin-organization-rules.json
+            resources/jobs/pages
 
       - name: Report no-op
         if: steps.changes.outputs.changed != 'true'

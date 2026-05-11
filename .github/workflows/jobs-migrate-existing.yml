@@ -16,7 +16,7 @@ permissions:
   contents: write
 
 concurrency:
-  group: jobs-manual-parser-migration
+  group: jobs-board-state
   cancel-in-progress: false
 
 jobs:
@@ -51,6 +51,10 @@ jobs:
       - name: Validate migration script
         run: |
           node --check "$JOBS_DIR/scripts/migrate-existing-job-fields.js"
+          node --check "$JOBS_DIR/scripts/validate-public-data.js"
+
+      - name: Validate public data before migration
+        run: npm --prefix "$JOBS_DIR" run jobs:validate-public-data
 
       - name: Run migration dry run
         if: ${{ inputs.write == 'false' }}
@@ -91,6 +95,27 @@ jobs:
             echo "pending-synced-jobs.json exceeds 25MB. Refusing to commit."
             exit 1
           fi
+
+      - name: Validate public data after migration write
+        if: ${{ inputs.write == 'true' }}
+        run: npm --prefix "$JOBS_DIR" run jobs:validate-public-data
+
+      - name: Guard blocked sources
+        if: ${{ inputs.write == 'true' }}
+        run: npm --prefix "$JOBS_DIR" run jobs:check-blocked-sources
+
+      - name: Upload migration artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: jobs-manual-parser-migration-${{ github.run_id }}
+          if-no-files-found: warn
+          path: |
+            resources/jobs/job-records.json
+            resources/jobs/jobs.json
+            resources/jobs/pending-synced-jobs.json
+            resources/jobs/pages
+            resources/jobs/validation-snapshots/latest.json
 
       - name: Commit and push migration changes
         if: ${{ inputs.write == 'true' && steps.changes.outputs.changed == 'true' }}

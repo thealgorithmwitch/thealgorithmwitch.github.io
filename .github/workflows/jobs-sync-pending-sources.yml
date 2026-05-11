@@ -51,19 +51,29 @@ jobs:
         id: changes
         shell: bash
         run: |
-          CHANGED="$(git status --porcelain -- \
+          CORE_CHANGED="$(git status --porcelain -- \
             resources/jobs/pending-synced-jobs.json \
             resources/jobs/source-health-latest.json \
+            || true)"
+          REPORT_CHANGED="$(git status --porcelain -- \
             resources/jobs/reports/targeted-pending-source-sync.json \
             resources/jobs/reports/pending-source-state-audit.json \
             || true)"
-          if [ -n "$CHANGED" ]; then
+          if [ -n "$CORE_CHANGED" ]; then
             echo "changed=true" >> "$GITHUB_OUTPUT"
             echo "Detected pending/source-health changes:"
-            echo "$CHANGED"
+            echo "$CORE_CHANGED"
+            if [ -n "$REPORT_CHANGED" ]; then
+              echo "$REPORT_CHANGED"
+            fi
           else
             echo "changed=false" >> "$GITHUB_OUTPUT"
-            echo "No pending/source-health changes detected."
+            if [ -n "$REPORT_CHANGED" ]; then
+              echo "Report-only pending sync changes detected; skipping commit."
+              echo "$REPORT_CHANGED"
+            else
+              echo "No pending/source-health changes detected."
+            fi
           fi
 
       - name: Commit and push pending/source-health changes

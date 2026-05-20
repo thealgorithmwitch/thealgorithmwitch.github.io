@@ -3,6 +3,7 @@ const path = require("path");
 const { dedupeJobs, normalizeJob, slugify, stringifySafe, todayIso } = require("./job-normalizer");
 const { canonicalizeJobShape } = require("./canonical-job-shape");
 const { buildJobPagePathMap } = require("./job-page-paths");
+const { filterBlockedSourceEntries } = require("./blocked-source-utils");
 const { normalizeSource } = require("./source-utils");
 
 function resolveDataRoot() {
@@ -126,12 +127,25 @@ function sanitizeForWrite(filePath, data) {
   const basename = path.basename(filePath);
   if (basename === "jobs.json") {
     if (Array.isArray(data)) {
-      return attachDerivedPageUrls(data).map((job) => sanitizeRecursive(sanitizePublicJob(job)));
+      return attachDerivedPageUrls(filterBlockedSourceEntries(data)).map((job) => sanitizeRecursive(sanitizePublicJob(job)));
     }
   }
   if (basename === "pending-synced-jobs.json") {
     if (Array.isArray(data)) {
-      return data.map((job) => sanitizeRecursive(sanitizePublicJob(job)));
+      return filterBlockedSourceEntries(data).map((job) => sanitizeRecursive(sanitizePublicJob(job)));
+    }
+  }
+  if (basename === "job-records.json") {
+    if (Array.isArray(data)) {
+      return filterBlockedSourceEntries(data).map((record) => sanitizeRecursive(record));
+    }
+  }
+  if (basename === "sources.json") {
+    if (data && Array.isArray(data.sources)) {
+      return {
+        ...sanitizeRecursive(data),
+        sources: filterBlockedSourceEntries(data.sources).map((source) => sanitizeRecursive(source))
+      };
     }
   }
   return sanitizeRecursive(data);

@@ -8,6 +8,7 @@ const {
 } = require("./job-utils");
 const { fetchAtsJobsByProvider, fetchGreenhouseJobsForSource } = require("./ats-clients");
 const { normalizeJob } = require("./job-normalizer");
+const { filterBlockedSourceEntries, getBlockedSourceRuleForEntry } = require("./blocked-source-utils");
 const { normalizeProvider, normalizeSource } = require("./source-utils");
 const { readSourceHealthSnapshot, writeSourceHealthSnapshot } = require("./source-health-store");
 const { applySourcePendingControls, buildSourceControlKey } = require("./source-sync-quality");
@@ -113,6 +114,7 @@ function selectTargetSources(sources, sourceHealth) {
       const provider = normalizeProvider(source.provider || source.type || "");
       if (source.enabled === false || !ELIGIBLE_PROVIDERS.has(provider)) return false;
       if (isStructuredSyncDisabled(source)) return false;
+      if (getBlockedSourceRuleForEntry(source)) return false;
       return true;
     })
     .sort((a, b) => stringify(a.id).localeCompare(stringify(b.id)));
@@ -142,7 +144,10 @@ function selectAdapterMissingSources(sources) {
     .map((source) => normalizeSource(source))
     .filter((source) => {
       const provider = normalizeProvider(source.provider || source.type || "");
-      return source.enabled !== false && !isStructuredSyncDisabled(source) && STRUCTURED_ADAPTER_GAP_PROVIDERS.has(provider);
+      return source.enabled !== false
+        && !isStructuredSyncDisabled(source)
+        && STRUCTURED_ADAPTER_GAP_PROVIDERS.has(provider)
+        && !getBlockedSourceRuleForEntry(source);
     })
     .sort((a, b) => stringify(a.id).localeCompare(stringify(b.id)));
 }
@@ -150,7 +155,7 @@ function selectAdapterMissingSources(sources) {
 function selectSyncDisabledSources(sources) {
   return toArray(sources)
     .map((source) => normalizeSource(source))
-    .filter((source) => isStructuredSyncDisabled(source))
+    .filter((source) => isStructuredSyncDisabled(source) && !getBlockedSourceRuleForEntry(source))
     .sort((a, b) => stringify(a.id).localeCompare(stringify(b.id)));
 }
 
@@ -266,6 +271,10 @@ async function main() {
       for (const rawJob of toArray(rawJobs)) {
         const pendingJob = markPendingOnly(rawJob, source);
         if (!pendingJob) continue;
+        if (getBlockedSourceRuleForEntry(pendingJob)) {
+          duplicatesSkipped += 1;
+          continue;
+        }
         const dedupeKeys = buildDedupeCandidates(pendingJob);
         const duplicateElsewhere = dedupeKeys.some((key) => otherPendingKeys.has(key) || publicKeySet.has(key));
         if (duplicateElsewhere) {
@@ -398,7 +407,7 @@ async function main() {
     ...cleanedExistingPending.filter((job) => !nextPendingBySource.has(stringify(job.source_id))),
     ...Array.from(nextPendingBySource.values()).flat()
   ];
-  await writeJson(PENDING_SYNCED_FILE, nextPending);
+  await writeJson(PENDING_SYNCED_FILE, filterBlockedSourceEntries(nextPending));
 
   const previousHealthById = new Map(
     toArray(previousHealth.sources)

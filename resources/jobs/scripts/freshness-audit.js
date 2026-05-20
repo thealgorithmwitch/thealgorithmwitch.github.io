@@ -2,6 +2,7 @@ const path = require("path");
 const { readJobs, readPendingSyncedJobs, writeJsonIfChanged } = require("./job-utils");
 const { buildJobRecord, JOB_RECORDS_FILE, readJobRecords } = require("./public-records");
 const { syncPublicJobsFromRecords } = require("./public-jobs");
+const { filterBlockedSourceEntries, getBlockedSourceRuleForEntry } = require("./blocked-source-utils");
 const {
   assessPublicJobReadiness,
   hasUsableDescription,
@@ -302,15 +303,18 @@ async function main() {
     readJobRecords(),
     readPendingSyncedJobs()
   ]);
+  const filteredPublicJobs = filterBlockedSourceEntries(publicJobs);
+  const filteredExistingRecords = filterBlockedSourceEntries(existingRecords);
+  const filteredPendingJobs = filterBlockedSourceEntries(pendingJobs);
   const now = new Date();
-  const recordsById = new Map(existingRecords.map((record) => [cleanText(record.id), record]));
-  const stalePublicJobs = publicJobs.filter((job) => {
+  const recordsById = new Map(filteredExistingRecords.map((record) => [cleanText(record.id), record]));
+  const stalePublicJobs = filteredPublicJobs.filter((job) => {
     const record = recordsById.get(cleanText(job.id));
     return shouldShowPublicRecord(record) && isStalePublicJob(job, record, now);
   });
 
-  let nextRecords = existingRecords.slice();
-  let nextPending = pendingJobs.slice();
+  let nextRecords = filteredExistingRecords.slice();
+  let nextPending = filteredPendingJobs.slice();
   const changedJobs = [];
   const keptJobs = [];
   const flaggedJobs = [];
@@ -427,8 +431,8 @@ async function main() {
   await writeJsonIfChanged(REPORT_FILE, report);
 
   if (args.write) {
-    await writeJsonIfChanged(JOB_RECORDS_FILE, nextRecords);
-    await writeJsonIfChanged(PENDING_SYNCED_FILE, nextPending);
+    await writeJsonIfChanged(JOB_RECORDS_FILE, filterBlockedSourceEntries(nextRecords));
+    await writeJsonIfChanged(PENDING_SYNCED_FILE, filterBlockedSourceEntries(nextPending));
     await syncPublicJobsFromRecords(nextRecords, {
       label: "jobs:freshness-audit",
       allowWorseOverwrite: false,

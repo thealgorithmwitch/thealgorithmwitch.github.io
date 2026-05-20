@@ -19,6 +19,7 @@ const {
   stringify,
   toArray
 } = require("./source-discovery-helpers");
+const { filterBlockedSourceEntries, getBlockedSourceRuleForEntry } = require("./blocked-source-utils");
 
 const ROOT = path.resolve(__dirname, "..");
 const DEFAULT_CANDIDATES_FILE = path.join(ROOT, "source-discovery-candidates.json");
@@ -184,12 +185,27 @@ async function main() {
   const results = [];
 
   for (const candidate of combinedCandidates) {
+    const blockedCandidateRule = getBlockedSourceRuleForEntry(candidate);
     const organization = stringify(candidate.organization || candidate.source_name);
     const urls = toArray(candidate.candidate_urls)
       .concat(candidate.known_careers_url ? [candidate.known_careers_url] : [])
       .concat(candidate.url ? [candidate.url] : [])
       .map((url) => normalizeUrl(url))
       .filter(Boolean);
+    if (blockedCandidateRule) {
+      results.push({
+        organization,
+        discovery_provider: stringify(candidate.discovery_provider),
+        detected_provider: stringify(candidate.provider),
+        detected_job_url: urls[0] || "",
+        confidence_score: 0,
+        provider_supported: false,
+        onboarding_status: "skipped",
+        skip_reason: "blocked_source_removed",
+        recommended_sync_path: "blocked_source_removed"
+      });
+      continue;
+    }
     const existing = findExistingSource(existingSources, candidate);
 
     if (existing) {
@@ -241,6 +257,20 @@ async function main() {
     }
 
     const sourceRecord = buildSourceRecord(candidate, discovery);
+    if (getBlockedSourceRuleForEntry(sourceRecord)) {
+      results.push({
+        organization,
+        discovery_provider: stringify(candidate.discovery_provider),
+        detected_provider: discovery.detected_provider,
+        detected_job_url: discovery.detected_job_url,
+        confidence_score: discovery.confidence_score,
+        provider_supported: true,
+        onboarding_status: "skipped",
+        skip_reason: "blocked_source_removed",
+        recommended_sync_path: "blocked_source_removed"
+      });
+      continue;
+    }
     if (args.write) {
       nextSources.push(sourceRecord);
     }
@@ -262,7 +292,7 @@ async function main() {
       writeJson(SOURCES_FILE, { ...sourcesPayload, sources: nextSources }),
       writeJson(args.candidatesFile, {
         generated_at: new Date().toISOString(),
-        candidates: combinedCandidates
+        candidates: filterBlockedSourceEntries(combinedCandidates)
       })
     ]);
   }

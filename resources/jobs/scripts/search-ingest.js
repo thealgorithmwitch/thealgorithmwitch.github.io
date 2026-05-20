@@ -26,6 +26,7 @@ const {
   mergeCandidates,
   readCandidatePayload
 } = require("./source-discovery-helpers");
+const { filterBlockedSourceEntries, getBlockedSourceRuleForEntry } = require("./blocked-source-utils");
 
 const ROOT = path.resolve(__dirname, "..");
 const SEARCH_SOURCES_FILE = path.join(ROOT, "search-sources.json");
@@ -1101,6 +1102,12 @@ async function main() {
           }
           sourceCandidatesFoundTotal += 1;
           sourceCandidatesAddedTotal += 1;
+          const blockedCandidateRule = getBlockedSourceRuleForEntry(sourceRouting.candidate);
+          if (blockedCandidateRule) {
+            reportEntry.source_candidates_skipped += 1;
+            reportEntry.dedupe_reasons.blocked_source_removed = Number(reportEntry.dedupe_reasons.blocked_source_removed || 0) + 1;
+            continue;
+          }
           newSourceCandidates.push(sourceRouting.candidate);
           continue;
         }
@@ -1158,6 +1165,12 @@ async function main() {
         const normalized = normalizeLead(queryConfig, lead);
         if (!normalized) {
           reportEntry.skipped_jobs += 1;
+          continue;
+        }
+        const blockedLeadRule = getBlockedSourceRuleForEntry(normalized);
+        if (blockedLeadRule) {
+          reportEntry.skipped_jobs += 1;
+          reportEntry.dedupe_reasons.blocked_source_removed = Number(reportEntry.dedupe_reasons.blocked_source_removed || 0) + 1;
           continue;
         }
         reportEntry.jobs_normalized += 1;
@@ -1256,11 +1269,15 @@ async function main() {
     }
   }
 
-  const mergedPending = newPendingLeads.length
-    ? [...toArray(pendingJobs), ...newPendingLeads]
-    : toArray(pendingJobs);
+  const mergedPending = filterBlockedSourceEntries(
+    newPendingLeads.length
+      ? [...toArray(pendingJobs), ...newPendingLeads]
+      : toArray(pendingJobs)
+  );
   const existingSourceCandidates = await readSourceDiscoveryCandidates();
-  const mergedSourceCandidates = mergeCandidates(existingSourceCandidates, newSourceCandidates);
+  const mergedSourceCandidates = filterBlockedSourceEntries(
+    mergeCandidates(existingSourceCandidates, newSourceCandidates)
+  );
   const pendingChanged = args.write
     ? await writeJsonIfChanged(PENDING_SYNCED_FILE, mergedPending)
     : false;

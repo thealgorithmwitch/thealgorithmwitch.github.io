@@ -1,5 +1,6 @@
 const path = require("path");
 const { readJson } = require("./job-utils");
+const { BLOCKED_SOURCE_RULES } = require("./blocked-source-utils");
 
 const ROOT = path.resolve(__dirname, "..");
 
@@ -7,26 +8,9 @@ const FILES_TO_CHECK = [
   path.join(ROOT, "sources.json"),
   path.join(ROOT, "search-sources.json"),
   path.join(ROOT, "source-discovery-candidates.json"),
-  path.join(ROOT, "pending-synced-jobs.json")
-];
-
-const BLOCKED_SOURCE_RULES = [
-  { id: "articulate", pattern: /\barticulate\b/i },
-  { id: "empowerly", pattern: /\bempowerly\b/i },
-  { id: "remofirst", pattern: /\bremofirst\b/i },
-  { id: "recidiviz", pattern: /\brecidiviz\b/i },
-  { id: "cribl", pattern: /\bcribl\b/i },
-  { id: "found", pattern: /\bfound\b/i },
-  { id: "canonical", pattern: /\bcanonical(?:jobs)?\b/i },
-  { id: "cohere", pattern: /\bcohere\b/i },
-  { id: "chilipiper", pattern: /\bchilipiper\b/i },
-  { id: "beehiiv", pattern: /\bbeehiiv\b/i },
-  { id: "posthog", pattern: /\bposthog\b/i },
-  { id: "automattic", pattern: /\bautomattic\b/i },
-  { id: "superside", pattern: /\bsuperside\b/i },
-  { id: "samsara", pattern: /\bsamsara\b/i },
-  { id: "gusto", pattern: /\bgusto\b/i },
-  { id: "climatechangejobs", pattern: /\bclimate\s*change\s*jobs\b|\bclimatechangejobs\b|\bclimate-change-jobs\b/i }
+  path.join(ROOT, "pending-synced-jobs.json"),
+  path.join(ROOT, "jobs.json"),
+  path.join(ROOT, "job-records.json")
 ];
 
 const FIELD_HINTS = new Set([

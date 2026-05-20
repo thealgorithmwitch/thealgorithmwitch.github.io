@@ -1,4 +1,4 @@
-const { ensureArray, stableHash, stringifySafe, todayIso } = require("./job-normalizer");
+const { ensureArray, extractSalaryData, stableHash, stringifySafe, todayIso } = require("./job-normalizer");
 const { normalizeProvider } = require("./source-utils");
 
 function ensureDefault(values) {
@@ -604,6 +604,17 @@ function workableJobToSchema(source, job) {
   ].filter(Boolean);
   const humanApplyUrl = stringifySafe(job.human_apply_url || job.url || "").replace(/\.md(?:[?#].*)?$/i, "");
   const hasHumanApplyUrl = /^https?:\/\/(?:apply|jobs)\.workable\.com\/.+/i.test(humanApplyUrl) && !/\/jobs\.md(?:[?#].*)?$/i.test(humanApplyUrl);
+  const descriptionText = stringifySafe(job.description || job.detail_description || "");
+  const payExtraction = extractSalaryData({
+    salary: stringifySafe(job.salary || job.compensation),
+    compensation: stringifySafe(job.compensation || ""),
+    description: descriptionText,
+    raw_description: descriptionText,
+    raw_payload: {
+      description: descriptionText,
+      raw_description: descriptionText
+    }
+  });
 
   return {
     id: `${source.organization}-${job.id || job.shortcode || job.title}`,
@@ -617,18 +628,22 @@ function workableJobToSchema(source, job) {
     sector: source.sector,
     function: stringifySafe(job.department || job.team),
     workplace_type: job.workplace || job.remote ? "Remote" : "",
-    salary: stringifySafe(job.salary || job.compensation),
+    salary: stringifySafe(job.salary || job.compensation || payExtraction.text),
     source: "Workable",
     source_url: hasHumanApplyUrl ? humanApplyUrl : stringifySafe(source.source_url),
     apply_url: hasHumanApplyUrl ? humanApplyUrl : "",
     date_posted: job.created_at || todayIso(),
-    raw_description: stringifySafe(job.description || ""),
-    description: stringifySafe(job.description || ""),
+    raw_description: descriptionText,
+    description: descriptionText,
     tags: [source.sector, stringifySafe(job.department || job.team), "workable"].filter(Boolean),
     shared_by: "ATS Sync",
     notes: `Synced from Workable account ${source.company_slug}.${hasHumanApplyUrl ? "" : " Review required: no human-usable apply page found."}`,
     review_reason: hasHumanApplyUrl ? "" : "workable_no_human_apply_page",
-    raw_payload: job
+    raw_payload: {
+      ...job,
+      pay_parse_source: payExtraction.source,
+      pay_like_detected: Boolean(payExtraction.payLikeDetected)
+    }
   };
 }
 
@@ -675,14 +690,25 @@ function parseWorkableMarkdownJobs(markdown, source) {
 function parseWorkableDetailMarkdown(markdown) {
   const text = String(markdown || "");
   const salaryMatch = text.match(/\*\*Salary:\*\*\s*([^\n]+)/i);
+  const compensationMatch = text.match(/\*\*(?:Compensation|Pay Range|Salary Range|Compensation Range):\*\*\s*([^\n]+)/i);
   const workplaceMatch = text.match(/\*\*Workplace:\*\*\s*([^\n]+)/i);
   const departmentMatch = text.match(/\*\*Department:\*\*\s*([^\n]+)/i);
   const descriptionMatch = text.match(/## Description\s+([\s\S]*?)(?:\n## |\n---|\s*$)/i);
+  const finalParagraphs = text
+    .split(/\n{2,}/)
+    .map((part) => stringifySafe(part))
+    .filter(Boolean)
+    .slice(-4)
+    .join("\n\n");
+  const extractedTailPay = extractSalaryData({
+    description: finalParagraphs,
+    raw_description: text
+  });
   return {
-    salary: salaryMatch ? stringifySafe(salaryMatch[1]) : "",
+    salary: salaryMatch ? stringifySafe(salaryMatch[1]) : (compensationMatch ? stringifySafe(compensationMatch[1]) : extractedTailPay.text),
     workplace: workplaceMatch ? stringifySafe(workplaceMatch[1]) : "",
     department: departmentMatch ? stringifySafe(departmentMatch[1]) : "",
-    description: descriptionMatch ? stringifySafe(descriptionMatch[1]).trim() : ""
+    description: descriptionMatch ? stringifySafe(descriptionMatch[1]).trim() : stringifySafe(text).trim()
   };
 }
 

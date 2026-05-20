@@ -27,8 +27,10 @@ const { syncPublicJobsFromRecords } = require("./public-jobs");
 const ROOT = path.resolve(__dirname, "..");
 const REPORTS_DIR = path.join(ROOT, "reports");
 const REPORT_FILE = path.join(REPORTS_DIR, "public-promotion-latest.json");
+const APPROVED_COMPANIES_FILE = path.join(ROOT, "auto-publish-approved-companies.json");
 const VERY_HIGH_CONFIDENCE_THRESHOLD = 90;
 const DEFAULT_PROMOTION_CAP = 10;
+const DEFAULT_COMPANY_CAP = 5;
 
 function parseArgs(argv) {
   const parsed = {
@@ -259,6 +261,48 @@ async function verifyPromotedPages(publicJobs = [], promotedIds = []) {
   return checks;
 }
 
+async function loadApprovedCompaniesConfig() {
+  try {
+    const parsed = JSON.parse(await fs.readFile(APPROVED_COMPANIES_FILE, "utf8"));
+    return {
+      perCompanyCap: Math.max(1, Math.floor(Number(parsed?.per_company_cap) || DEFAULT_COMPANY_CAP)),
+      approvedCompanies: Array.isArray(parsed?.approved_companies)
+        ? parsed.approved_companies.map((item) => normalizeToken(item)).filter(Boolean)
+        : []
+    };
+  } catch (_error) {
+    return {
+      perCompanyCap: DEFAULT_COMPANY_CAP,
+      approvedCompanies: []
+    };
+  }
+}
+
+function evaluatePayState(job = {}) {
+  const salary = stringifySafe(job.salary);
+  const rawSalary = stringifySafe(job.raw_salary);
+  const warning = stringifySafe(job.pay_parse_warning);
+  const parseSource = stringifySafe(job.pay_parse_source || "none") || "none";
+  const payLikeDetected = Boolean(job.pay_like_detected) || Boolean(rawSalary) || Boolean(salary);
+
+  if (warning || (payLikeDetected && !salary)) {
+    return {
+      status: "uncertain_blocked",
+      source: parseSource === "none" ? "description_body" : parseSource
+    };
+  }
+  if (salary) {
+    return {
+      status: "clean",
+      source: parseSource === "none" ? "ats_field" : parseSource
+    };
+  }
+  return {
+    status: "absent_allowed",
+    source: "none"
+  };
+}
+
 function buildCandidateDecision(job, source, publicIndex, pendingIndex, options = {}) {
   const normalized = normalizeJob(job);
   if (!normalized) {
@@ -272,8 +316,11 @@ function buildCandidateDecision(job, source, publicIndex, pendingIndex, options 
   const duplicateKeys = buildDuplicateKeys(normalized);
   const sourceHighConfidence = hasHighSourceConfidence(source || {});
   const sourceTrusted = Boolean(source?.trusted);
+  const approvedCompanyMatch = options.approvedCompanies.has(normalizeToken(normalized.organization));
   const workplaceType = stringifySafe(normalized.workplace_type);
   const normalizedWorkplaceType = workplaceType ? normalizeWorkplaceType(workplaceType, "") : "";
+  const payState = evaluatePayState(normalized);
+  const workableHumanApplyConfirmed = !isWorkableWithoutHumanApply(normalized, source || {});
 
   if (isBlockedSourceEntry({ ...normalized, ...source })) reasons.push("blocked_source");
   if (parserConfidenceScore < VERY_HIGH_CONFIDENCE_THRESHOLD) reasons.push("parser_confidence_not_very_high");
@@ -285,11 +332,11 @@ function buildCandidateDecision(job, source, publicIndex, pendingIndex, options 
   if (workplaceType && !normalizedWorkplaceType) reasons.push("invalid_workplace_type");
   if (!readiness.description_usable) reasons.push("description_not_usable");
   if (isBadPublicContent(normalized.description) || isBadPublicContent(normalized.raw_description)) reasons.push("junk_content_detected");
-  if (stringifySafe(normalized.salary) && (!isValidPayDisplay(normalized.salary) || stringifySafe(normalized.pay_parse_warning))) {
+  if (payState.status === "uncertain_blocked") {
     reasons.push("pay_not_clean");
   }
-  if (!sourceTrusted && !sourceHighConfidence) reasons.push("source_not_trusted_or_high_confidence");
-  if (isWorkableWithoutHumanApply(normalized, source || {})) reasons.push("workable_no_human_apply_page");
+  if (!sourceTrusted && !sourceHighConfidence && !approvedCompanyMatch) reasons.push("source_not_trusted_or_high_confidence");
+  if (!workableHumanApplyConfirmed) reasons.push("workable_no_human_apply_page");
   if (manualReview.blocked) {
     manualReview.reasons.forEach((reason) => reasons.push(`manual_review_required:${reason}`));
   }
@@ -310,7 +357,11 @@ function buildCandidateDecision(job, source, publicIndex, pendingIndex, options 
     normalized,
     parserConfidenceScore,
     sourceTrusted,
-    sourceHighConfidence
+    sourceHighConfidence,
+    approvedCompanyMatch,
+    payStatus: payState.status,
+    payParseSource: payState.source,
+    workableHumanApplyConfirmed
   };
 }
 
@@ -324,6 +375,7 @@ async function runPromotion(options = {}) {
   };
   const startedAt = new Date().toISOString();
   await fs.mkdir(REPORTS_DIR, { recursive: true });
+  const approvedConfig = await loadApprovedCompaniesConfig();
 
   const [pendingJobs, publicJobsBefore, sources, existingRecords] = await Promise.all([
     readPendingSyncedJobs(),
@@ -339,31 +391,60 @@ async function runPromotion(options = {}) {
   const considered = [];
   const promoted = [];
   const rejected = [];
+  let payAbsentAllowedCount = 0;
+  let payUncertainBlockedCount = 0;
+  let workableConsidered = 0;
+  let workableEligible = 0;
 
   for (const candidate of candidates) {
     const source = resolveSourceForJob(candidate, sourceMap);
-    const decision = buildCandidateDecision(candidate, source, publicIndex, pendingIndex, args);
+    const decision = buildCandidateDecision(candidate, source, publicIndex, pendingIndex, {
+      ...args,
+      approvedCompanies: new Set(approvedConfig.approvedCompanies)
+    });
+    const companyToken = normalizeToken(candidate.organization);
+    const isWorkable = /workable/i.test(`${stringifySafe(source?.provider)} ${stringifySafe(candidate.source)} ${stringifySafe(candidate.apply_url)} ${stringifySafe(candidate.source_url)}`);
+    if (decision.payStatus === "absent_allowed") payAbsentAllowedCount += 1;
+    if (decision.payStatus === "uncertain_blocked") payUncertainBlockedCount += 1;
+    if (isWorkable) workableConsidered += 1;
     considered.push({
       id: stringifySafe(candidate.id),
       title: stringifySafe(candidate.title),
       organization: stringifySafe(candidate.organization),
       source: stringifySafe(candidate.source),
       source_id: stringifySafe(candidate.source_id),
+      company_token: companyToken,
       parser_confidence_score: decision.parserConfidenceScore ?? computeParserConfidenceScore(candidate),
+      pay_status: decision.payStatus,
+      pay_parse_source: decision.payParseSource,
+      company_auto_publish_count: 0,
+      company_auto_publish_cap: approvedConfig.perCompanyCap,
+      blocked_by_company_cap: false,
+      approved_company_match: decision.approvedCompanyMatch,
+      workable_human_apply_confirmed: decision.workableHumanApplyConfirmed,
       action: decision.action,
       reasons: decision.reasons
     });
     if (decision.action === "promote") {
+      if (isWorkable) workableEligible += 1;
       promoted.push({
         job: decision.normalized,
         source,
-        parser_confidence_score: decision.parserConfidenceScore
+        parser_confidence_score: decision.parserConfidenceScore,
+        approved_company_match: decision.approvedCompanyMatch,
+        pay_status: decision.payStatus,
+        pay_parse_source: decision.payParseSource,
+        workable_human_apply_confirmed: decision.workableHumanApplyConfirmed
       });
     } else {
       rejected.push({
         id: stringifySafe(candidate.id),
         title: stringifySafe(candidate.title),
         source: stringifySafe(candidate.source),
+        pay_status: decision.payStatus,
+        pay_parse_source: decision.payParseSource,
+        approved_company_match: decision.approvedCompanyMatch,
+        workable_human_apply_confirmed: decision.workableHumanApplyConfirmed,
         reasons: decision.reasons
       });
     }
@@ -371,17 +452,52 @@ async function runPromotion(options = {}) {
 
   const promotionCap = args.maxAutoPublishPerRun;
   const autoPublishEnabled = args.write && args.autoPublish && !args.dryRun;
-  const promotable = promoted.slice();
+  const promotable = [];
+  const blockedByCompanyCap = [];
+  const companyPromotionCounts = new Map();
+  promoted.forEach((entry) => {
+    const organization = normalizeToken(entry.job.organization);
+    const currentCount = companyPromotionCounts.get(organization) || 0;
+    const nextCount = currentCount + 1;
+    const consideredEntry = considered.find((item) => item.id === stringifySafe(entry.job.id));
+    if (consideredEntry) {
+      consideredEntry.company_auto_publish_count = nextCount;
+    }
+    if (currentCount >= approvedConfig.perCompanyCap) {
+      if (consideredEntry) consideredEntry.blocked_by_company_cap = true;
+      blockedByCompanyCap.push(entry);
+      return;
+    }
+    companyPromotionCounts.set(organization, nextCount);
+    promotable.push(entry);
+  });
   const eligiblePromotions = promotable.slice(0, promotionCap);
   const approvedPromotions = autoPublishEnabled ? eligiblePromotions : [];
+  const reportedPromotions = args.autoPublish ? eligiblePromotions : approvedPromotions;
   const capDeferred = promotable.slice(promotionCap);
 
   if (autoPublishEnabled) {
+    blockedByCompanyCap.forEach((entry) => {
+      rejected.push({
+        id: stringifySafe(entry.job.id),
+        title: stringifySafe(entry.job.title),
+        source: stringifySafe(entry.job.source),
+        pay_status: entry.pay_status,
+        pay_parse_source: entry.pay_parse_source,
+        approved_company_match: Boolean(entry.approved_company_match),
+        workable_human_apply_confirmed: Boolean(entry.workable_human_apply_confirmed),
+        reasons: ["company_auto_publish_cap_reached"]
+      });
+    });
     capDeferred.forEach((entry) => {
       rejected.push({
         id: stringifySafe(entry.job.id),
         title: stringifySafe(entry.job.title),
         source: stringifySafe(entry.job.source),
+        pay_status: entry.pay_status,
+        pay_parse_source: entry.pay_parse_source,
+        approved_company_match: Boolean(entry.approved_company_match),
+        workable_human_apply_confirmed: Boolean(entry.workable_human_apply_confirmed),
         reasons: ["promotion_cap_reached"]
       });
     });
@@ -432,9 +548,9 @@ async function runPromotion(options = {}) {
   const publicJobsAfter = !args.dryRun && autoPublishEnabled
     ? publicSyncResult.publicJobs
     : publicJobsBefore;
-  const promotedJobIds = approvedPromotions.map((entry) => stringifySafe(entry.job.id));
-  const promotedJobTitles = approvedPromotions.map((entry) => stringifySafe(entry.job.title));
-  const promotedJobSources = approvedPromotions.map((entry) => stringifySafe(entry.job.source));
+  const promotedJobIds = reportedPromotions.map((entry) => stringifySafe(entry.job.id));
+  const promotedJobTitles = reportedPromotions.map((entry) => stringifySafe(entry.job.title));
+  const promotedJobSources = reportedPromotions.map((entry) => stringifySafe(entry.job.source));
   const eligibleJobIds = eligiblePromotions.map((entry) => stringifySafe(entry.job.id));
   const eligibleJobTitles = eligiblePromotions.map((entry) => stringifySafe(entry.job.title));
   const eligibleJobSources = eligiblePromotions.map((entry) => stringifySafe(entry.job.source));
@@ -449,11 +565,17 @@ async function runPromotion(options = {}) {
     auto_publish_enabled: autoPublishEnabled,
     very_high_confidence_threshold: VERY_HIGH_CONFIDENCE_THRESHOLD,
     promotion_cap: promotionCap,
+    company_auto_publish_cap: approvedConfig.perCompanyCap,
     promotion_cap_hit: promotable.length > promotionCap,
+    blocked_by_company_cap: blockedByCompanyCap.length,
+    pay_absent_allowed_count: payAbsentAllowedCount,
+    pay_uncertain_blocked_count: payUncertainBlockedCount,
+    workable_considered: workableConsidered,
+    workable_auto_published: reportedPromotions.filter((entry) => /workable/i.test(`${stringifySafe(entry.source?.provider)} ${stringifySafe(entry.job.source)}`)).length,
     jobs_eligible_for_public: promotable.length,
     jobs_considered_for_public: considered.length,
-    jobs_auto_published: approvedPromotions.length,
-    jobs_left_pending: Math.max(0, considered.length - approvedPromotions.length),
+    jobs_auto_published: reportedPromotions.length,
+    jobs_left_pending: Math.max(0, considered.length - reportedPromotions.length),
     jobs_rejected_from_public: rejected.length,
     public_rejection_reasons: summarizeRejectionCounts(rejected),
     eligible_job_ids: eligibleJobIds,
@@ -472,6 +594,7 @@ async function runPromotion(options = {}) {
     },
     page_checks: pageChecks,
     considered_jobs: considered,
+    company_auto_publish_counts: Object.fromEntries(companyPromotionCounts.entries()),
     warnings: [],
     failures: []
   };

@@ -226,6 +226,11 @@ async function main() {
     jobs_left_pending: 0,
     jobs_rejected_from_public: 0,
     public_rejection_reasons: {},
+    pay_absent_allowed_count: 0,
+    pay_uncertain_blocked_count: 0,
+    blocked_by_company_cap_count: 0,
+    workable_considered: 0,
+    workable_auto_published: 0,
     promotion_cap_hit: false,
     promoted_job_ids: [],
     promoted_job_titles: [],
@@ -288,7 +293,7 @@ async function main() {
     const promotionArgs = [
       args.dryRun ? "--dry-run" : "--write",
       `--max-auto-publish-per-run=${args.maxAutoPublishPerRun}`,
-      ...(args.write && args.autoPublish && !args.dryRun ? ["--auto-publish"] : [])
+      ...(args.autoPublish ? ["--auto-publish"] : [])
     ].concat(candidateIds.map((id) => `--candidate-id=${id}`));
     runNodeScript("promote-public-ready.js", promotionArgs);
     lifecycle.steps.push({
@@ -303,6 +308,11 @@ async function main() {
     lifecycle.jobs_left_pending = Number(promotionReport.jobs_left_pending || 0);
     lifecycle.jobs_rejected_from_public = Number(promotionReport.jobs_rejected_from_public || 0);
     lifecycle.public_rejection_reasons = promotionReport.public_rejection_reasons || {};
+    lifecycle.pay_absent_allowed_count = Number(promotionReport.pay_absent_allowed_count || 0);
+    lifecycle.pay_uncertain_blocked_count = Number(promotionReport.pay_uncertain_blocked_count || 0);
+    lifecycle.blocked_by_company_cap_count = Number(promotionReport.blocked_by_company_cap || 0);
+    lifecycle.workable_considered = Number(promotionReport.workable_considered || 0);
+    lifecycle.workable_auto_published = Number(promotionReport.workable_auto_published || 0);
     lifecycle.promotion_cap_hit = Boolean(promotionReport.promotion_cap_hit);
     lifecycle.promoted_job_ids = Array.isArray(promotionReport.promoted_job_ids) ? promotionReport.promoted_job_ids : [];
     lifecycle.promoted_job_titles = Array.isArray(promotionReport.promoted_job_titles) ? promotionReport.promoted_job_titles : [];
@@ -383,6 +393,11 @@ async function main() {
     lifecycle.jobs_left_pending = Number(promotionReportAfter.jobs_left_pending || lifecycle.jobs_left_pending || 0);
     lifecycle.jobs_rejected_from_public = Number(promotionReportAfter.jobs_rejected_from_public || lifecycle.jobs_rejected_from_public || 0);
     lifecycle.public_rejection_reasons = promotionReportAfter.public_rejection_reasons || lifecycle.public_rejection_reasons;
+    lifecycle.pay_absent_allowed_count = Number(promotionReportAfter.pay_absent_allowed_count || lifecycle.pay_absent_allowed_count || 0);
+    lifecycle.pay_uncertain_blocked_count = Number(promotionReportAfter.pay_uncertain_blocked_count || lifecycle.pay_uncertain_blocked_count || 0);
+    lifecycle.blocked_by_company_cap_count = Number(promotionReportAfter.blocked_by_company_cap || lifecycle.blocked_by_company_cap_count || 0);
+    lifecycle.workable_considered = Number(promotionReportAfter.workable_considered || lifecycle.workable_considered || 0);
+    lifecycle.workable_auto_published = Number(promotionReportAfter.workable_auto_published || lifecycle.workable_auto_published || 0);
     lifecycle.promotion_cap_hit = Boolean(promotionReportAfter.promotion_cap_hit || lifecycle.promotion_cap_hit);
     lifecycle.promoted_job_ids = Array.isArray(promotionReportAfter.promoted_job_ids) ? promotionReportAfter.promoted_job_ids : lifecycle.promoted_job_ids;
     lifecycle.promoted_job_titles = Array.isArray(promotionReportAfter.promoted_job_titles) ? promotionReportAfter.promoted_job_titles : lifecycle.promoted_job_titles;

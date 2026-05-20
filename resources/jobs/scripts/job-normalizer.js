@@ -1493,8 +1493,36 @@ function salaryCandidateToText(value) {
   return normalizeWhitespace(`${currency} up to ${format(maxValue)} ${period}`.trim());
 }
 
-function findBestSalaryMatch(text) {
+const PAY_CONTEXT_PATTERN = /\b(?:salary|compensation|pay|pay range|salary range|comp range|base pay|base salary|annual|annually|yearly|hourly|per hour|per year|per month|base)\b/i;
+
+function hasPayContext(text) {
+  return PAY_CONTEXT_PATTERN.test(String(text || ""));
+}
+
+function normalizeParagraphs(value) {
+  return String(value || "")
+    .split(/\n{2,}|(?<=\.)\s+(?=[A-Z$])/)
+    .map((part) => normalizeWhitespace(stripHtml(part)))
+    .filter(Boolean);
+}
+
+function buildSalaryContextCandidates(text) {
   const cleaned = normalizeWhitespace(stripHtml(text));
+  if (!cleaned) return [];
+  const paragraphs = normalizeParagraphs(cleaned);
+  const tailFirst = paragraphs.slice(-4).reverse();
+  const body = paragraphs.filter((paragraph) => hasPayContext(paragraph));
+  return Array.from(new Set([
+    ...tailFirst.filter((paragraph) => hasPayContext(paragraph) || /[$€£]|\b(?:USD|CAD|EUR|GBP)\b/i.test(paragraph)),
+    ...body,
+    cleaned
+  ]));
+}
+
+function findBestSalaryMatch(text) {
+  const contexts = buildSalaryContextCandidates(text);
+  if (!contexts.length) return "";
+  for (const cleaned of contexts) {
   if (!cleaned) return "";
   if (detectMalformedPayText(cleaned)) return cleaned;
 
@@ -1503,6 +1531,10 @@ function findBestSalaryMatch(text) {
     /(?:starting at|up to)\s*(?:USD|CAD|EUR|GBP|US\$|CA\$|[$€£])\s*\d[\d,]*(?:\.\d+)?\s*[kKmM]?(?:\s*(?:hourly|daily|monthly|annual|annually|per hour|per day|per month|per year|\/hr|\/hour|\/day|\/month|\/mo|\/year|\/yr))?/i,
     /(?:USD|CAD|EUR|GBP|US\$|CA\$|[$€£])\s*\d[\d,]*(?:\.\d+)?\s*[kKmM]?\s*(?:-|–|—|to)\s*(?:USD|CAD|EUR|GBP|US\$|CA\$|[$€£])?\s*\d[\d,]*(?:\.\d+)?\s*[kKmM]?(?:\s*(?:hourly|daily|monthly|annual|annually|per hour|per day|per month|per year|\/hr|\/hour|\/day|\/month|\/mo|\/year|\/yr))?/i,
     /(?:USD|CAD|EUR|GBP|US\$|CA\$|[$€£])\s*\d[\d,]*(?:\.\d+)?\s*[kKmM]?(?:\s*(?:hourly|daily|monthly|annual|annually|per hour|per day|per month|per year|\/hr|\/hour|\/day|\/month|\/mo|\/year|\/yr))/i,
+    /(?:salary|compensation|pay|base)[^.]{0,120}?(?:USD|CAD|EUR|GBP|US\$|CA\$|[$€£])?\s*\d[\d,]*(?:\.\d+)?\s*[kKmM]?\s*(?:-|–|—|to)\s*(?:USD|CAD|EUR|GBP|US\$|CA\$|[$€£])?\s*\d[\d,]*(?:\.\d+)?\s*[kKmM]?(?:\s*(?:annual|annually|yearly|hourly|per hour|per year|per month|\/hr|\/hour|\/year|\/yr|\/month|\/mo))?/i,
+    /(?:salary|compensation|pay|base)[^.]{0,80}?(?:USD|CAD|EUR|GBP|US\$|CA\$|[$€£])\s*\d[\d,]*(?:\.\d+)?\s*[kKmM]?(?:\s*(?:annual|annually|yearly|hourly|per hour|per year|per month|\/hr|\/hour|\/year|\/yr|\/month|\/mo))?/i,
+    /(?:[$€£])\s*\d[\d,]*(?:\.\d+)?\s*(?:-|–|—|to)\s*(?:[$€£])?\s*\d[\d,]*(?:\.\d+)?\s*(?:per hour|hourly|annual|annually|yearly|per year|\/hr|\/hour|\/year|\/yr)?/i,
+    /(?:[$€£])\s*\d[\d,]*(?:\.\d+)?\s*(?:per hour|hourly|annual|annually|yearly|per year|\/hr|\/hour|\/year|\/yr)/i,
     /\b(?:competitive salary|competitive compensation|salary not listed|compensation not listed|pay not listed|salary unavailable|compensation unavailable|not disclosed|undisclosed)\b/i
   ];
 
@@ -1512,10 +1544,25 @@ function findBestSalaryMatch(text) {
       return normalizeWhitespace(match[0].replace(/\s+([.,!?;:])/g, "$1"));
     }
   }
+
+    if (hasPayContext(cleaned)) {
+      const noCurrencyNumericRange = cleaned.match(/\b\d{2,3}(?:,\d{3})+|\b\d{5,6}\b|\b\d{2,3}(?:\.\d+)?\s*[kK]\b/g);
+      if (noCurrencyNumericRange && noCurrencyNumericRange.length) {
+        const numericSpan = cleaned.match(/\b\d[\d,]*(?:\.\d+)?\s*[kKmM]?\s*(?:-|–|—|to)\s*\d[\d,]*(?:\.\d+)?\s*[kKmM]?(?:\s*(?:annual|annually|yearly|hourly|per hour|per year|per month|base))?/i);
+        if (numericSpan && numericSpan[0]) {
+          return normalizeWhitespace(numericSpan[0]);
+        }
+        const singleNumeric = cleaned.match(/\b(?:salary|compensation|pay|base)[^.]{0,80}?\b\d[\d,]*(?:\.\d+)?\s*[kKmM]?(?:\s*(?:annual|annually|yearly|hourly|per hour|per year|per month|base))?/i);
+        if (singleNumeric && singleNumeric[0]) {
+          return normalizeWhitespace(singleNumeric[0]);
+        }
+      }
+    }
+  }
   return "";
 }
 
-function extractSalaryText(job = {}) {
+function extractSalaryData(job = {}) {
   const explicitCandidates = [
     job.salary,
     job.compensation,
@@ -1540,7 +1587,36 @@ function extractSalaryText(job = {}) {
   for (const candidate of explicitCandidates) {
     const text = normalizeWhitespace(salaryCandidateToText(candidate) || stringifySafe(candidate) || cleanFlattenedText(candidate));
     if (!text) continue;
-    return findBestSalaryMatch(text) || text;
+    const matched = findBestSalaryMatch(text) || text;
+    return {
+      text: matched,
+      source: matched ? "ats_field" : "none",
+      payLikeDetected: hasPayContext(text) || /[$€£]|\b(?:USD|CAD|EUR|GBP)\b/i.test(text)
+    };
+  }
+
+  const finalParagraphCandidates = [
+    job.description,
+    job.raw_description,
+    job.descriptionPlain,
+    job.content,
+    job.raw_payload?.description,
+    job.raw_payload?.raw_description
+  ];
+
+  for (const candidate of finalParagraphCandidates) {
+    const paragraphs = normalizeParagraphs(candidate);
+    const tailParagraphs = paragraphs.slice(-4).reverse();
+    for (const paragraph of tailParagraphs) {
+      const matched = findBestSalaryMatch(paragraph);
+      if (matched) {
+        return {
+          text: matched,
+          source: "description_final_paragraph",
+          payLikeDetected: true
+        };
+      }
+    }
   }
 
   const secondaryCandidates = [
@@ -1558,10 +1634,35 @@ function extractSalaryText(job = {}) {
 
   for (const candidate of secondaryCandidates) {
     const matched = findBestSalaryMatch(candidate);
-    if (matched) return matched;
+    if (matched) {
+      return {
+        text: matched,
+        source: "description_body",
+        payLikeDetected: true
+      };
+    }
   }
 
-  return "";
+  const payLikeText = [
+    job.description,
+    job.raw_description,
+    job.descriptionPlain,
+    job.content,
+    stringifySafe(job.raw_payload?.description),
+    stringifySafe(job.raw_payload?.raw_description)
+  ]
+    .filter(Boolean)
+    .join(" ");
+
+  return {
+    text: "",
+    source: "none",
+    payLikeDetected: hasPayContext(payLikeText) || /[$€£]|\b(?:USD|CAD|EUR|GBP)\b/i.test(payLikeText)
+  };
+}
+
+function extractSalaryText(job = {}) {
+  return extractSalaryData(job).text;
 }
 
 function parseSalaryRange(salary, location) {
@@ -2327,7 +2428,8 @@ function normalizeJob(input = {}) {
   const sourceUrl = sanitizeRoleUrl(safeStringField(sourceAttribution?.sourceUrl || input.source_url || input.sourceUrl));
   const inferredWorkplaceType = normalizeWorkplaceType(input.workplace_type || input.workplaceType) || titleCleanup.workplaceType || resolveWorkplaceType(input);
   const location = normalizeLocationDisplay({ ...input, organization, location: titleCleanup.location || input.location }, inferredWorkplaceType);
-  const salaryText = extractSalaryText(input);
+  const salaryExtraction = extractSalaryData(input);
+  const salaryText = salaryExtraction.text;
   const salaryShape = parseSalaryRange(salaryText, location);
   const explicitCurrency = safeStringField(input.salary_currency || input.salaryCurrency);
   const explicitPeriod = safeStringField(input.salary_period || input.salaryPeriod);
@@ -2400,6 +2502,8 @@ function normalizeJob(input = {}) {
     salary_period: VALID_PERIODS.has(explicitPeriod) ? explicitPeriod : salaryShape.salary_period,
     salary_visible: resolvedSalaryVisible,
     pay_parse_warning: safeStringField(input.pay_parse_warning || input.payParseWarning || salaryShape.pay_parse_warning),
+    pay_parse_source: safeStringField(input.pay_parse_source || input.payParseSource || salaryExtraction.source),
+    pay_like_detected: typeof input.pay_like_detected === "boolean" ? input.pay_like_detected : Boolean(salaryExtraction.payLikeDetected),
     featured: Boolean(input.featured),
     sector: normalizeSector(input.sector || "general"),
     function: safeStringField(input.function || input.role_function),
@@ -2671,6 +2775,7 @@ module.exports = {
   buildDescriptionSnippet,
   buildFallbackDescription,
   computeParserConfidenceScore,
+  extractSalaryData,
   normalizeLocationDisplay,
   normalizeSpecialization,
   normalizeSpecializationDetailed,

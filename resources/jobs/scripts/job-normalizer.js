@@ -173,6 +173,34 @@ const DESCRIPTION_JUNK_PATTERNS = [
   /\bCleantech\b/i,
   /\bOil\s*&\s*Gas\b/i
 ];
+const BAD_PUBLIC_CONTENT_PATTERNS = [
+  /^\s*[\[{].*(?:"@context"|jobs?|items?|feed|rss|xml)/i,
+  /<\?xml\b/i,
+  /<rss\b/i,
+  /<feed\b/i,
+  /<svg\b/i,
+  /\bviewBox\b/i,
+  /\b0\/svg\b/i,
+  /\bprevious\b/i,
+  /\bnext post\b/i,
+  /\bsee current openings\b/i,
+  /\bTitle Business(?: Platform Location Date)?\b/i,
+  /\bPOINT\s*\(/i,
+  /\blocality\b/i,
+  /\bcareer_page\b/i,
+  /\bgeo(?:code)?\b/i
+];
+const INVALID_PUBLIC_LOCATION_PATTERNS = [
+  /\bTitle Business(?: Platform Location Date)?\b/i,
+  /\bPOINT\s*\(/i,
+  /\blocality\b/i,
+  /\bgeo(?:code)?\b/i,
+  /\b(?:Jan|January|Feb|February|Mar|March|Apr|April|May|Jun|June|Jul|July|Aug|August|Sep|Sept|September|Oct|October|Nov|November|Dec|December)\s+\d{1,2},\s+\d{4}\b/i
+];
+const WORKABLE_HUMAN_APPLY_PATTERNS = [
+  /^https?:\/\/apply\.workable\.com\/[^/]+\/(?:j|view)\//i,
+  /^https?:\/\/jobs\.workable\.com\/view\//i
+];
 const MALFORMED_DESCRIPTION_TEMPLATE_PATTERNS = [
   /\bThe\s+will\b/i,
   /\bThe\s+is\b/i,
@@ -2135,6 +2163,113 @@ function buildDescriptionSnippet(value, maxLength = 220, options = {}) {
   return `${finalSnippet.slice(0, maxLength - 1).trimEnd()}…`;
 }
 
+function isBadPublicContent(value) {
+  const text = normalizeWhitespace(String(value || ""));
+  if (!text) return false;
+  return BAD_PUBLIC_CONTENT_PATTERNS.some((pattern) => pattern.test(text));
+}
+
+function isPotentiallyHumanApplyUrl(value, options = {}) {
+  const url = normalizeWhitespace(String(value || ""));
+  if (!url) return false;
+  if (!/^https?:\/\//i.test(url)) return false;
+  if (/\.(?:json|xml|rss|atom|md)(?:[?#].*)?$/i.test(url)) return false;
+  if (/[?&](?:output|format)=(?:json|xml|rss|atom)\b/i.test(url)) return false;
+  if (/\/(?:api|feeds?|rss|atom)(?:\/|$)/i.test(url)) return false;
+  if (/\/jobs\.md(?:[?#].*)?$/i.test(url)) return false;
+  if (/jobs\.workable\.com\/search/i.test(url)) return false;
+  if (/apply\.workable\.com/i.test(url)) {
+    return WORKABLE_HUMAN_APPLY_PATTERNS.some((pattern) => pattern.test(url));
+  }
+  return true;
+}
+
+function isValidSourceUrl(value) {
+  const url = normalizeWhitespace(String(value || ""));
+  if (!url) return false;
+  if (!/^https?:\/\//i.test(url)) return false;
+  if (/\.(?:json|xml|rss|atom|md)(?:[?#].*)?$/i.test(url)) return false;
+  if (/\/(?:api|feeds?|rss|atom)(?:\/|$)/i.test(url)) return false;
+  return true;
+}
+
+function isValidPublicLocation(value) {
+  const text = normalizeWhitespace(String(value || ""));
+  if (!text) return false;
+  return !INVALID_PUBLIC_LOCATION_PATTERNS.some((pattern) => pattern.test(text));
+}
+
+function computeParserConfidenceScore(job = {}) {
+  let score = 0;
+  const titleConfidence = normalizeWhitespace(job.title_confidence || "").toLowerCase();
+  if (titleConfidence === "high") score += 25;
+  else if (titleConfidence === "medium") score += 16;
+  else if (titleConfidence === "low") score += 4;
+
+  if (hasUsableDescription(job.description, { title: job.title, organization: job.organization })) score += 20;
+  if (!isBadPublicContent(job.description) && !isBadPublicContent(job.raw_description)) score += 10;
+  if (isPotentiallyHumanApplyUrl(job.apply_url || job.original_url)) score += 15;
+  if (isValidSourceUrl(job.source_url || job.original_url || job.apply_url)) score += 8;
+  if (isValidPublicLocation(job.location || "")) score += 6;
+  if (normalizeWhitespace(job.workplace_type)) score += 4;
+  if (normalizeWhitespace(job.specialization)) score += 4;
+  if (normalizeWhitespace(job.specialization_confidence || "").toLowerCase() === "high") score += 4;
+
+  const payDisplay = normalizeWhitespace(job.salary || "");
+  if (payDisplay) {
+    if (!normalizeWhitespace(job.pay_parse_warning || "")) {
+      score += 8;
+    } else {
+      score -= 6;
+    }
+  }
+
+  if (isBadPublicContent(job.title) || isBadPublicContent(job.location)) score -= 20;
+  if (!normalizeWhitespace(job.title) || !normalizeWhitespace(job.organization)) score -= 20;
+
+  return Math.max(0, Math.min(100, score));
+}
+
+function assessPublicJobReadiness(job = {}, options = {}) {
+  const reasons = [];
+  const sourceName = normalizeWhitespace(`${job.source || ""} ${options.source?.provider || ""} ${options.source?.type || ""}`.toLowerCase());
+  const applyUrl = normalizeWhitespace(job.apply_url || job.original_url || "");
+  const sourceUrl = normalizeWhitespace(job.source_url || job.original_url || "");
+  const parserConfidenceScore = computeParserConfidenceScore(job);
+  const payWarning = normalizeWhitespace(job.pay_parse_warning || "");
+  const descriptionUsable = hasUsableDescription(job.description, {
+    title: job.title,
+    organization: job.organization
+  });
+
+  if (!normalizeWhitespace(job.title)) reasons.push("missing_title");
+  if (!normalizeWhitespace(job.organization)) reasons.push("missing_organization");
+  if (normalizeWhitespace(job.title_confidence || "").toLowerCase() === "low") reasons.push("low_title_confidence");
+  if (!descriptionUsable) reasons.push("description_not_usable");
+  if (isBadPublicContent(job.description) || isBadPublicContent(job.raw_description)) reasons.push("junk_content_detected");
+  if (!isValidPublicLocation(job.location || "")) reasons.push("invalid_location");
+  if (!isValidSourceUrl(sourceUrl)) reasons.push("invalid_source_url");
+  if (!isPotentiallyHumanApplyUrl(applyUrl, { source: options.source })) {
+    if (/workable/.test(sourceName) || /workable/i.test(`${applyUrl} ${sourceUrl}`)) {
+      reasons.push("workable_no_human_apply_page");
+    } else {
+      reasons.push("invalid_apply_url");
+    }
+  }
+  if (payWarning) reasons.push(`pay_uncertain:${payWarning}`);
+  if (parserConfidenceScore < 70) reasons.push("parser_confidence_below_public_threshold");
+
+  return {
+    ready: reasons.length === 0,
+    reasons,
+    parser_confidence_score: parserConfidenceScore,
+    parser_confidence: parserConfidenceScore >= 85 ? "high" : parserConfidenceScore >= 70 ? "medium" : "low",
+    apply_url_valid: isPotentiallyHumanApplyUrl(applyUrl, { source: options.source }),
+    source_url_valid: isValidSourceUrl(sourceUrl),
+    description_usable: descriptionUsable
+  };
+}
+
 function getJobExclusionReason(input = {}) {
   const organization = safeStringField(input.organization);
   const text = [
@@ -2458,11 +2593,26 @@ function routeSyncedJob(job, source) {
     return normalizeJob({ ...routed, trusted: false, auto_publish: false, status: "pending" });
   }
 
-  if (source.trusted === true && source.auto_publish === true) {
-    return normalizeJob({ ...routed, status: "active" });
+  const readiness = assessPublicJobReadiness(routed, { source });
+  const reviewReason = readiness.reasons.join("; ");
+
+  if (source.trusted === true && source.auto_publish === true && readiness.ready) {
+    return normalizeJob({
+      ...routed,
+      status: "active",
+      confidence: readiness.parser_confidence
+    });
   }
 
-  return normalizeJob({ ...routed, status: "pending" });
+  return normalizeJob({
+    ...routed,
+    trusted: false,
+    auto_publish: false,
+    status: "pending",
+    confidence: readiness.parser_confidence,
+    review_reason: routed.review_reason || reviewReason || "pending_review_required",
+    triage_reason: routed.triage_reason || reviewReason || "pending_review_required"
+  });
 }
 
 module.exports = {
@@ -2501,12 +2651,18 @@ module.exports = {
   normalizeJob,
   buildDescriptionSnippet,
   buildFallbackDescription,
+  computeParserConfidenceScore,
   normalizeLocationDisplay,
   normalizeSpecialization,
   normalizeSpecializationDetailed,
   normalizeWorkplaceType,
   resolveEmploymentType,
   resolveWorkplaceType,
+  assessPublicJobReadiness,
+  isBadPublicContent,
+  isPotentiallyHumanApplyUrl,
+  isValidPublicLocation,
+  isValidSourceUrl,
   normalizeSector,
   normalizeOrganization,
   normalizePayDisplay,

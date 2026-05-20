@@ -602,6 +602,8 @@ function workableJobToSchema(source, job) {
     stringifySafe(job.location?.region),
     stringifySafe(job.location?.country)
   ].filter(Boolean);
+  const humanApplyUrl = stringifySafe(job.human_apply_url || job.url || "").replace(/\.md(?:[?#].*)?$/i, "");
+  const hasHumanApplyUrl = /^https?:\/\/(?:apply|jobs)\.workable\.com\/.+/i.test(humanApplyUrl) && !/\/jobs\.md(?:[?#].*)?$/i.test(humanApplyUrl);
 
   return {
     id: `${source.organization}-${job.id || job.shortcode || job.title}`,
@@ -617,14 +619,15 @@ function workableJobToSchema(source, job) {
     workplace_type: job.workplace || job.remote ? "Remote" : "",
     salary: stringifySafe(job.salary || job.compensation),
     source: "Workable",
-    source_url: stringifySafe(job.url || source.source_url),
-    apply_url: stringifySafe(job.url || source.source_url),
+    source_url: hasHumanApplyUrl ? humanApplyUrl : stringifySafe(source.source_url),
+    apply_url: hasHumanApplyUrl ? humanApplyUrl : "",
     date_posted: job.created_at || todayIso(),
     raw_description: stringifySafe(job.description || ""),
     description: stringifySafe(job.description || ""),
     tags: [source.sector, stringifySafe(job.department || job.team), "workable"].filter(Boolean),
     shared_by: "ATS Sync",
-    notes: `Synced from Workable account ${source.company_slug}.`,
+    notes: `Synced from Workable account ${source.company_slug}.${hasHumanApplyUrl ? "" : " Review required: no human-usable apply page found."}`,
+    review_reason: hasHumanApplyUrl ? "" : "workable_no_human_apply_page",
     raw_payload: job
   };
 }
@@ -875,6 +878,7 @@ async function fetchWorkableJobsForSource(source) {
     normalizedJobs.push(
       workableJobToSchema(source, {
         ...job,
+        human_apply_url: job.url || (job.detail_markdown_url ? job.detail_markdown_url.replace(/\.md$/i, "") : ""),
         salary: detail.salary || job.salary,
         workplace: detail.workplace || job.workplace,
         department: detail.department || job.department,

@@ -148,12 +148,22 @@ async function discoverCandidatesFromSearch(queries) {
 
 function summarizeDiscovery(results) {
   const workableResults = results.filter((entry) => entry.discovery_provider === "workable_global_search");
+  const accepted = results.filter((entry) => ["appended_to_sources", "eligible_dry_run"].includes(entry.onboarding_status));
+  const duplicates = results.filter((entry) => entry.onboarding_status === "already_configured");
+  const pendingReview = results.filter((entry) =>
+    entry.onboarding_status === "skipped" && /manual_review|manual_research|adapter-required/i.test(String(entry.recommended_sync_path || ""))
+  );
+  const rejected = results.filter((entry) => entry.onboarding_status === "skipped" && !pendingReview.includes(entry));
   return {
     candidates_total: results.length,
     appended_to_sources: results.filter((entry) => entry.onboarding_status === "appended_to_sources").length,
     already_configured: results.filter((entry) => entry.onboarding_status === "already_configured").length,
     eligible_dry_run: results.filter((entry) => entry.onboarding_status === "eligible_dry_run").length,
     skipped: results.filter((entry) => entry.onboarding_status === "skipped").length,
+    accepted_sources: accepted.length,
+    duplicate_sources: duplicates.length,
+    pending_review_sources: pendingReview.length,
+    rejected_sources: rejected.length,
     workable_sources_added: workableResults.filter((entry) => entry.onboarding_status === "appended_to_sources").length,
     workable_employers_discovered: workableResults.length
   };
@@ -273,7 +283,15 @@ async function main() {
       ...summarizeDiscovery(results)
     },
     search_queries: queryReports,
-    results
+    results,
+    accepted_sources: results.filter((entry) => ["appended_to_sources", "eligible_dry_run"].includes(entry.onboarding_status)),
+    duplicate_sources: results.filter((entry) => entry.onboarding_status === "already_configured"),
+    pending_review_sources: results.filter((entry) =>
+      entry.onboarding_status === "skipped" && /manual_review|manual_research|adapter-required/i.test(String(entry.recommended_sync_path || ""))
+    ),
+    rejected_sources: results.filter((entry) =>
+      entry.onboarding_status === "skipped" && !/manual_review|manual_research|adapter-required/i.test(String(entry.recommended_sync_path || ""))
+    )
   };
 
   await writeJson(REPORT_FILE, report);

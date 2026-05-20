@@ -9,6 +9,8 @@ const {
   writeJsonIfChanged
 } = require("./job-utils");
 const {
+  assessPublicJobReadiness,
+  computeParserConfidenceScore,
   getParserCleanupStats,
   normalizeJob,
   resetParserCleanupStats,
@@ -584,7 +586,63 @@ function extractResults(provider, payload) {
 }
 
 function getConfidence(lead) {
-  return lead.title && lead.organization && lead.apply_url ? "medium" : "low";
+  const score = computeParserConfidenceScore(lead);
+  return score >= 85 ? "high" : score >= 65 ? "medium" : "low";
+}
+
+function buildParserFailurePendingLead(queryConfig, normalizedLead, reason, providerLead) {
+  const applyUrl = stringify(normalizedLead.apply_url || normalizedLead.source_url || "");
+  const title = stringify(normalizedLead.title || queryConfig.query || "Untitled role");
+  const organization = stringify(normalizedLead.organization || "Unknown organization");
+  const confidence = getConfidence({
+    ...normalizedLead,
+    title,
+    organization,
+    apply_url: applyUrl
+  });
+  return {
+    id: `wide-search-${queryConfig.id}-${stableHash(`${title}:${organization}:${applyUrl}:${reason}`)}`,
+    external_id: normalizedLead.external_id || `wide-search_parse_failed_${queryConfig.id}_${stableHash(`${title}:${organization}:${applyUrl}`)}`,
+    title,
+    organization,
+    location: stringify(normalizedLead.location || ""),
+    workplace_type: stringify(normalizedLead.workplace_type || queryConfig.workplace_type || ""),
+    job_type: stringify(normalizedLead.job_type || ""),
+    salary: stringify(normalizedLead.salary || ""),
+    sector: stringify(queryConfig.sector || "General"),
+    function: stringify(normalizedLead.function_hint || queryConfig.function || ""),
+    source: stringify(queryConfig.source_name || queryConfig.organization || "Wide Search"),
+    source_id: `search:${queryConfig.id}`,
+    source_type: stringify(queryConfig.provider),
+    source_url: stringify(normalizedLead.source_url || applyUrl),
+    apply_url: applyUrl,
+    original_url: applyUrl || stringify(normalizedLead.source_url || ""),
+    date_posted: todayIso(),
+    date_added: todayIso(),
+    date_updated: todayIso(),
+    status: "pending",
+    trusted: false,
+    auto_publish: false,
+    pending_only: true,
+    pending_only_sync: true,
+    confidence,
+    review_reason: `parser_failed_capture_pending:${reason}`,
+    triage_reason: `parser_failed_capture_pending:${reason}`,
+    shared_by: stringify(queryConfig.provider),
+    notes: stringify(queryConfig.notes || `Lead collected from ${queryConfig.provider} query "${queryConfig.query}".`),
+    sync_origin: "wide-search",
+    raw_description: stringify(normalizedLead.raw_description || normalizedLead.description || ""),
+    description: stringify(normalizedLead.description || normalizedLead.raw_description || ""),
+    tags: [
+      queryConfig.sector,
+      queryConfig.function,
+      queryConfig.provider,
+      "parser_failed_capture_pending",
+      ...toArray(normalizedLead.tags),
+      ...toArray(queryConfig.mission_tags)
+    ].filter(Boolean),
+    raw_payload: providerLead && typeof providerLead === "object" ? providerLead : undefined
+  };
 }
 
 function normalizeProviderLead(queryConfig, provider, lead) {
@@ -723,7 +781,7 @@ function normalizeLead(queryConfig, lead) {
   const externalId = normalizedLead.external_id
     || `wide-search_${queryConfig.id}_${stableHash(`${title}:${organization}:${applyUrl}`)}`;
 
-  return normalizeJob({
+  const normalized = normalizeJob({
     id: `wide-search-${queryConfig.id}-${stableHash(`${title}:${organization}:${applyUrl}`)}`,
     external_id: externalId,
     title,
@@ -767,6 +825,23 @@ function normalizeLead(queryConfig, lead) {
     search_query_id: stringify(queryConfig.id),
     mission_tags: toArray(queryConfig.mission_tags)
   });
+  if (!normalized) {
+    return buildParserFailurePendingLead(queryConfig, normalizedLead, "normalize_job_returned_null", lead);
+  }
+
+  const readiness = assessPublicJobReadiness(normalized, {
+    source: { provider: queryConfig.provider, source_url: normalized.source_url }
+  });
+  return {
+    ...normalized,
+    confidence: readiness.parser_confidence,
+    review_reason: readiness.ready
+      ? "search_capture_pending_review"
+      : `search_capture_pending_review:${readiness.reasons.join(";")}`,
+    triage_reason: readiness.ready
+      ? "search_capture_pending_review"
+      : readiness.reasons.join(";")
+  };
 }
 
 function buildDedupeKeys(job = {}) {

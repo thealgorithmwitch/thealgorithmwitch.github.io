@@ -24,6 +24,14 @@ on:
         required: true
         default: "10"
         type: string
+      promote_existing_pending:
+        description: "Also consider already-safe existing pending jobs for promotion?"
+        required: true
+        default: "false"
+        type: choice
+        options:
+          - "true"
+          - "false"
   schedule:
     - cron: "45 13 * * 2,5"
 
@@ -93,6 +101,9 @@ jobs:
           fi
           if [ "${{ github.event_name }}" != "schedule" ] && [ "${{ inputs.auto_publish }}" = "true" ]; then
             ARGS+=(--auto-publish)
+          fi
+          if [ "${{ github.event_name }}" != "schedule" ] && [ "${{ inputs.promote_existing_pending }}" = "true" ]; then
+            ARGS+=(--promote-existing-pending)
           fi
           if [ "${{ github.event_name }}" = "schedule" ]; then
             ARGS+=(--max-auto-publish-per-run=10)

@@ -3,26 +3,23 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Instant Pot — Vertical Proposal Deck</title>
+  <title>Instant Pot — Strategy Proposal</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <style>
     :root {
-      --deck-w: 1080px;
-      --deck-h: 1920px;
-      --deck-scale: 1;
       --paper: #fffaf3;
-      --cream: #f2e9dc;
+      --cream: #f3eadf;
       --ink: #241b18;
-      --muted: rgba(36, 27, 24, 0.66);
+      --muted: rgba(36, 27, 24, 0.68);
       --line: rgba(56, 41, 33, 0.14);
       --brand: #d71920;
       --sage: #c7cfbe;
       --moss: #68785d;
       --gold: #caa666;
-      --dark: #171112;
-      --shadow: 0 26px 70px rgba(31, 20, 17, 0.14);
+      --shadow: 0 26px 70px rgba(31, 20, 17, 0.12);
+      --page-w: 1280px;
     }
 
     * {
@@ -31,13 +28,15 @@
 
     html,
     body {
-      width: 100%;
-      height: 100%;
       margin: 0;
-      overflow: hidden;
-      background: radial-gradient(circle at top, #2c211e 0%, #0e0d0d 68%);
+      min-height: 100%;
+      background:
+        radial-gradient(circle at top, rgba(215, 25, 32, 0.06), transparent 26%),
+        radial-gradient(circle at 78% 10%, rgba(202, 166, 102, 0.08), transparent 22%),
+        linear-gradient(180deg, #fffaf3 0%, #f4ecdf 100%);
       color: var(--ink);
       font-family: "Inter", sans-serif;
+      overflow-x: hidden;
     }
 
     body::before {
@@ -45,9 +44,9 @@
       position: fixed;
       inset: 0;
       background:
-        radial-gradient(circle at 14% 18%, rgba(215, 25, 32, 0.08), transparent 20%),
-        radial-gradient(circle at 84% 18%, rgba(202, 166, 102, 0.1), transparent 24%),
-        radial-gradient(circle at 70% 78%, rgba(103, 119, 92, 0.08), transparent 22%);
+        radial-gradient(circle at 14% 18%, rgba(215, 25, 32, 0.06), transparent 20%),
+        radial-gradient(circle at 84% 18%, rgba(202, 166, 102, 0.08), transparent 24%),
+        radial-gradient(circle at 70% 78%, rgba(103, 119, 92, 0.06), transparent 22%);
       pointer-events: none;
     }
 
@@ -55,125 +54,52 @@
       font-family: "Cormorant Garamond", serif;
     }
 
-    .deck-stage {
-      position: fixed;
-      inset: 0;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      overflow: hidden;
-      padding: 24px;
+    .page {
+      position: relative;
+      z-index: 1;
+      width: min(var(--page-w), calc(100% - 48px));
+      margin: 0 auto;
+      padding: 56px 0 96px;
     }
 
-    .deck {
-      width: var(--deck-w);
-      height: var(--deck-h);
+    .eyebrow {
+      font-size: 16px;
+      line-height: 1.2;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.28em;
+      color: rgba(36, 27, 24, 0.54);
+    }
+
+    .hero,
+    .section {
       position: relative;
-      overflow: hidden;
-      transform: scale(var(--deck-scale));
-      transform-origin: center center;
+      border: 1px solid var(--line);
       border-radius: 36px;
-      box-shadow: 0 44px 130px rgba(0, 0, 0, 0.46);
-      background: var(--paper);
-    }
-
-    .slide {
-      position: absolute;
-      inset: 0;
-      display: flex;
-      flex-direction: column;
-      opacity: 0;
-      visibility: hidden;
-      transform: translateX(36px) scale(0.987);
-      transition: opacity 0.45s ease, transform 0.45s ease, visibility 0s linear 0.45s;
-      pointer-events: none;
-      z-index: 0;
+      background: rgba(255, 255, 255, 0.74);
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(12px);
       overflow: hidden;
     }
 
-    .slide.active {
-      opacity: 1;
-      visibility: visible;
-      transform: translateX(0) scale(1);
-      transition: opacity 0.45s ease, transform 0.45s ease, visibility 0s linear 0s;
-      pointer-events: auto;
-      z-index: 2;
+    .hero {
+      padding: 44px 44px 40px;
+      min-height: 840px;
+      margin-bottom: 32px;
     }
 
-    .slide.light {
-      background:
-        radial-gradient(circle at top left, rgba(215, 25, 32, 0.06), transparent 28%),
-        radial-gradient(circle at bottom right, rgba(199, 207, 190, 0.2), transparent 30%),
-        linear-gradient(180deg, #fffaf3 0%, #f3eadf 100%);
+    .section {
+      padding: 42px 40px;
+      margin-bottom: 28px;
     }
 
-    .slide.dark {
-      background:
-        radial-gradient(circle at top right, rgba(215, 25, 32, 0.16), transparent 28%),
-        linear-gradient(180deg, #231916 0%, #131011 100%);
-      color: #f8f0e8;
-    }
-
-    .safe-zone {
-      position: relative;
-      height: 100%;
-      padding: 140px 90px 220px;
+    .logo-row {
       display: flex;
-      flex-direction: column;
-      z-index: 2;
-    }
-
-    .theme-mark {
-      position: absolute;
-      right: 82px;
-      top: 210px;
-      width: 10px;
-      height: 10px;
-      border-radius: 999px;
-      background: rgba(202, 166, 102, 0.82);
-      box-shadow:
-        -150px 82px 0 rgba(215, 25, 32, 0.28),
-        -300px 142px 0 rgba(103, 119, 92, 0.26),
-        -110px 560px 0 rgba(202, 166, 102, 0.2);
-      pointer-events: none;
-    }
-
-    .theme-mark::before,
-    .theme-mark::after {
-      content: "";
-      position: absolute;
-      border-radius: 50%;
-      border: 1px dashed rgba(202, 166, 102, 0.18);
-    }
-
-    .theme-mark::before {
-      top: 120px;
-      left: -320px;
-      width: 200px;
-      height: 200px;
-    }
-
-    .theme-mark::after {
-      top: 410px;
-      left: -180px;
-      width: 120px;
-      height: 120px;
-      border-color: rgba(215, 25, 32, 0.16);
-    }
-
-    .logo-bar {
-      display: flex;
-      justify-content: space-between;
       align-items: center;
-      margin-bottom: 42px;
-      padding-bottom: 22px;
+      justify-content: space-between;
+      padding-bottom: 20px;
+      margin-bottom: 28px;
       border-bottom: 1px solid var(--line);
-      position: relative;
-      z-index: 3;
-    }
-
-    .slide.dark .logo-bar {
-      border-color: rgba(255, 255, 255, 0.12);
     }
 
     .logo-img {
@@ -182,76 +108,44 @@
       height: auto;
     }
 
-    .logo-img.logo-light {
-      content: url("redlogo.png");
+    .hero-grid {
+      display: grid;
+      grid-template-columns: 0.95fr 1.05fr;
+      gap: 28px;
+      min-height: 680px;
     }
 
-    .logo-img.logo-dark {
-      content: url("whitelogo.png");
-    }
-
-    .eyebrow,
-    .slide-number {
-      font-size: 22px;
-      line-height: 1.2;
-      font-weight: 700;
-      text-transform: uppercase;
-      letter-spacing: 0.3em;
-      color: rgba(36, 27, 24, 0.56);
-    }
-
-    .slide.dark .eyebrow,
-    .slide.dark .slide-number,
-    .slide.dark .body-copy,
-    .slide.dark .footer-note,
-    .slide.dark .caption {
-      color: rgba(248, 240, 232, 0.78);
+    .hero-copy {
+      position: relative;
+      z-index: 3;
+      max-width: 520px;
     }
 
     .hero-title {
-      margin: 0;
-      max-width: 620px;
+      margin: 18px 0 0;
       font-family: "Cormorant Garamond", serif;
-      font-size: 116px;
+      font-size: clamp(72px, 8vw, 108px);
       line-height: 0.88;
       letter-spacing: -0.045em;
-      position: relative;
-      z-index: 4;
     }
 
     .hero-subtitle {
-      margin: 26px 0 0;
-      max-width: 560px;
-      font-size: 35px;
-      line-height: 1.34;
+      margin: 24px 0 0;
+      font-size: 28px;
+      line-height: 1.38;
       color: var(--muted);
+    }
+
+    .hero-stage {
       position: relative;
-      z-index: 4;
-    }
-
-    .slide.dark .hero-subtitle {
-      color: rgba(248, 240, 232, 0.84);
-    }
-
-    .body-copy {
-      margin: 0;
-      font-size: 30px;
-      line-height: 1.4;
-      color: rgba(36, 27, 24, 0.74);
-    }
-
-    .cover-zone {
-      flex: 1;
-      position: relative;
-      min-height: 0;
+      min-height: 680px;
     }
 
     .cover-orbit {
       position: absolute;
-      inset: 120px -10px 80px 360px;
+      inset: 26px 0 50px 80px;
       border-radius: 48% 52% 54% 46% / 50% 44% 56% 50%;
       border: 1px dashed rgba(215, 25, 32, 0.18);
-      z-index: 1;
     }
 
     .cover-orbit::before,
@@ -263,205 +157,183 @@
     }
 
     .cover-orbit::before {
-      inset: 120px 110px;
+      inset: 90px 90px;
     }
 
     .cover-orbit::after {
-      inset: 260px 200px;
+      inset: 190px 160px;
       border-color: rgba(103, 119, 92, 0.2);
     }
 
     .cover-pot {
       position: absolute;
       object-fit: contain;
-      filter: drop-shadow(0 24px 36px rgba(0, 0, 0, 0.22));
-      z-index: 3;
+      filter: drop-shadow(0 24px 36px rgba(0, 0, 0, 0.2));
     }
 
     .cover-pot.frog {
-      width: 320px;
-      top: 70px;
-      right: 44px;
+      width: 250px;
+      top: 0;
+      right: 42px;
       transform: rotate(10deg);
     }
 
     .cover-pot.emoji {
-      width: 360px;
-      top: 430px;
-      left: 250px;
+      width: 280px;
+      top: 210px;
+      left: 34px;
       transform: rotate(-10deg);
     }
 
     .cover-pot.classic {
-      width: 390px;
-      right: -10px;
-      bottom: 140px;
+      width: 320px;
+      right: 0;
+      bottom: 10px;
       transform: rotate(8deg);
     }
 
     .cover-pot.modern {
-      width: 370px;
-      left: 430px;
-      bottom: 330px;
+      width: 300px;
+      left: 180px;
+      bottom: 120px;
       transform: rotate(-12deg);
     }
 
-    .cover-note {
+    .hero-note {
       position: absolute;
       left: 0;
-      bottom: 80px;
-      width: 390px;
-      padding: 26px 28px;
-      border-radius: 28px;
+      bottom: 0;
+      width: 360px;
+      padding: 24px 24px 22px;
+      border-radius: 26px;
       border: 1px solid var(--line);
-      background: rgba(255, 255, 255, 0.76);
+      background: rgba(255, 255, 255, 0.82);
       box-shadow: var(--shadow);
       z-index: 4;
     }
 
-    .cover-note strong {
+    .hero-note strong {
       display: block;
-      margin-bottom: 12px;
-      font-size: 20px;
+      margin-bottom: 10px;
+      font-size: 16px;
       text-transform: uppercase;
       letter-spacing: 0.22em;
       color: var(--brand);
     }
 
-    .cover-note p {
+    .hero-note p,
+    .lede,
+    .card p,
+    .card li,
+    .proposal-quote p,
+    .metric-copy,
+    .timeline-card li,
+    .timeline-card p,
+    .platform-copy,
+    .caption,
+    .closing-copy p {
       margin: 0;
-      font-size: 25px;
-      line-height: 1.34;
+      font-size: 23px;
+      line-height: 1.38;
     }
 
-    .cover-footer {
+    .hero-footer {
       display: flex;
       justify-content: space-between;
       align-items: flex-end;
-      margin-top: auto;
-      position: relative;
-      z-index: 4;
+      margin-top: 28px;
+      gap: 20px;
     }
 
     .footer-note {
       font-family: "Cormorant Garamond", serif;
-      font-size: 35px;
+      font-size: 30px;
       font-style: italic;
       color: rgba(36, 27, 24, 0.7);
     }
 
-    .proposal-grid,
-    .split-grid,
-    .platform-grid,
-    .creator-grid,
-    .timeline-grid,
-    .closing-grid {
-      flex: 1;
-      display: grid;
-      gap: 24px;
-      min-height: 0;
+    .section-title {
+      margin: 12px 0 10px;
+      font-family: "Cormorant Garamond", serif;
+      font-size: clamp(42px, 4.4vw, 64px);
+      line-height: 0.94;
+      letter-spacing: -0.03em;
     }
 
-    .proposal-grid,
-    .platform-grid,
-    .creator-grid,
-    .closing-grid {
+    .section-grid {
+      display: grid;
+      gap: 22px;
+    }
+
+    .two-col {
       grid-template-columns: 1fr 1fr;
     }
 
-    .timeline-grid {
+    .three-col {
       grid-template-columns: repeat(3, 1fr);
     }
 
-    .proposal-box,
-    .matrix-box,
-    .metric-box,
-    .timeline-box,
-    .board-box,
-    .social-box {
+    .card,
+    .proposal-quote,
+    .timeline-card,
+    .platform-card,
+    .social-card,
+    .metric-panel {
       border: 1px solid var(--line);
       border-radius: 28px;
       background: rgba(255, 255, 255, 0.8);
       box-shadow: var(--shadow);
-      padding: 28px 30px;
-      backdrop-filter: blur(12px);
+      padding: 28px 28px 30px;
     }
 
-    .slide.dark .proposal-box,
-    .slide.dark .matrix-box,
-    .slide.dark .metric-box,
-    .slide.dark .timeline-box,
-    .slide.dark .board-box,
-    .slide.dark .social-box {
-      border-color: rgba(255, 255, 255, 0.12);
-      background: rgba(255, 255, 255, 0.045);
-      box-shadow: none;
-    }
-
-    .proposal-box h3,
-    .matrix-box h3,
-    .metric-box h3,
-    .timeline-box h3,
-    .board-box h3,
-    .social-box h3 {
+    .card h3,
+    .proposal-quote h3,
+    .timeline-card h3,
+    .platform-card h3,
+    .social-card h3,
+    .metric-panel h3 {
       margin: 0 0 14px;
-      font-size: 20px;
+      font-size: 18px;
       letter-spacing: 0.24em;
       text-transform: uppercase;
       color: var(--brand);
-    }
-
-    .proposal-box p,
-    .proposal-box li,
-    .matrix-copy,
-    .metric-box p,
-    .metric-box li,
-    .timeline-box p,
-    .timeline-box li,
-    .board-box p,
-    .social-box p {
-      margin: 0;
-      font-size: 24px;
-      line-height: 1.34;
     }
 
     .proposal-quote {
       display: flex;
       flex-direction: column;
       justify-content: space-between;
+      min-height: 360px;
     }
 
     .proposal-quote blockquote {
-      margin: 0;
+      margin: 0 0 18px;
       font-family: "Cormorant Garamond", serif;
-      font-size: 66px;
-      line-height: 0.95;
+      font-size: clamp(42px, 4vw, 62px);
+      line-height: 0.96;
       letter-spacing: -0.04em;
     }
 
-    .proposal-list,
-    .board-list {
+    .list {
       list-style: none;
-      margin: 0;
       padding: 0;
+      margin: 0;
       display: grid;
-      gap: 14px;
+      gap: 12px;
     }
 
-    .proposal-list li,
-    .board-list li {
+    .list li {
       display: grid;
-      grid-template-columns: 18px 1fr;
-      gap: 14px;
+      grid-template-columns: 16px 1fr;
+      gap: 12px;
       align-items: start;
     }
 
-    .proposal-list li::before,
-    .board-list li::before {
+    .list li::before {
       content: "";
       width: 10px;
       height: 10px;
-      margin-top: 11px;
+      margin-top: 10px;
       border-radius: 999px;
       background: var(--brand);
       box-shadow: 0 0 0 7px rgba(215, 25, 32, 0.1);
@@ -469,78 +341,72 @@
 
     .future-list li::before {
       background: var(--moss);
-      box-shadow: 0 0 0 7px rgba(103, 119, 92, 0.11);
+      box-shadow: 0 0 0 7px rgba(103, 119, 92, 0.12);
     }
 
     .board-title {
       margin: 0 0 16px;
       font-family: "Cormorant Garamond", serif;
-      font-size: 56px;
-      line-height: 0.94;
+      font-size: 50px;
+      line-height: 0.95;
     }
 
-    .matrix-stack,
-    .metric-stack {
+    .platform-layout {
       display: grid;
-      gap: 16px;
+      grid-template-columns: 1.08fr 0.92fr;
+      gap: 22px;
     }
 
-    .matrix-box {
+    .platform-stack,
+    .social-stack {
+      display: grid;
+      gap: 14px;
+    }
+
+    .platform-card {
       display: grid;
       grid-template-columns: 150px 1fr;
       gap: 16px;
       align-items: start;
     }
 
-    .matrix-label {
-      font-size: 20px;
+    .platform-label {
+      font-size: 18px;
       font-weight: 800;
       letter-spacing: 0.2em;
       text-transform: uppercase;
       color: var(--gold);
     }
 
-    .matrix-copy {
-      font-size: 23px;
-    }
-
-    .social-box {
-      display: grid;
-      gap: 14px;
-      align-content: start;
-    }
-
-    .ui-chip,
-    .ui-thread {
+    .social-ui {
       border-radius: 18px;
-      background: rgba(255, 255, 255, 0.08);
-      border: 1px solid rgba(255, 255, 255, 0.08);
+      background: rgba(36, 27, 24, 0.04);
+      border: 1px solid rgba(36, 27, 24, 0.08);
       padding: 16px 18px;
       font-size: 20px;
-      line-height: 1.28;
+      line-height: 1.3;
     }
 
-    .ui-thread strong {
+    .social-ui strong {
       display: block;
       margin-bottom: 8px;
-      font-size: 15px;
-      letter-spacing: 0.14em;
+      font-size: 14px;
       text-transform: uppercase;
-      color: var(--gold);
+      letter-spacing: 0.14em;
+      color: var(--brand);
     }
 
-    .caption {
-      margin-top: 14px;
-      font-size: 23px;
-      color: rgba(36, 27, 24, 0.62);
+    .creator-layout {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 22px;
+      align-items: start;
     }
 
     .media-placeholder,
     .media-placeholder-landscape,
     .media-placeholder-vertical,
-    .media-placeholder-four-five,
-    .video-frame,
-    .image-frame {
+    .media-placeholder-four-five {
       display: flex;
       align-items: center;
       justify-content: center;
@@ -553,8 +419,6 @@
       box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
     }
 
-    .video-frame.reel,
-    .video-frame.tiktok,
     .media-placeholder-vertical {
       width: 360px;
       height: 640px;
@@ -562,7 +426,6 @@
       overflow: hidden;
     }
 
-    .image-frame.square,
     .media-placeholder-four-five {
       width: 450px;
       height: 562px;
@@ -570,21 +433,7 @@
       overflow: hidden;
     }
 
-    .image-frame.square {
-      width: 540px;
-      height: 540px;
-      border-radius: 32px;
-      overflow: hidden;
-    }
-
-    .image-frame.landscape,
-    .media-placeholder-landscape {
-      width: 720px;
-      height: 576px;
-      border-radius: 32px;
-      overflow: hidden;
-    }
-
+    .media-placeholder-landscape,
     .media-placeholder {
       width: 720px;
       height: 405px;
@@ -600,13 +449,24 @@
       text-transform: uppercase;
     }
 
+    .placeholder-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 18px;
+      align-items: start;
+    }
+
+    .placeholder-stack {
+      display: grid;
+      gap: 18px;
+    }
+
     .kpi-pyramid {
-      flex: 1;
       display: flex;
       flex-direction: column;
       align-items: center;
-      justify-content: center;
       gap: 16px;
+      padding: 14px 0 6px;
     }
 
     .kpi-cap,
@@ -616,15 +476,16 @@
       align-items: center;
       justify-content: center;
       text-align: center;
-      padding: 26px 36px 18px;
-      border: 1px solid rgba(255, 255, 255, 0.14);
-      background: rgba(255, 255, 255, 0.06);
+      padding: 24px 34px 18px;
+      border: 1px solid rgba(36, 27, 24, 0.1);
+      background: rgba(255, 255, 255, 0.76);
+      box-shadow: var(--shadow);
     }
 
     .kpi-cap {
-      width: 240px;
-      height: 110px;
-      font-size: 18px;
+      width: 220px;
+      height: 100px;
+      font-size: 17px;
       letter-spacing: 0.18em;
       text-transform: uppercase;
       color: var(--gold);
@@ -641,493 +502,403 @@
     }
 
     .kpi-tier.visibility {
-      width: 820px;
+      width: 840px;
       height: 250px;
     }
 
     .kpi-tier-inner {
-      max-width: 70%;
+      max-width: 72%;
       display: grid;
       gap: 8px;
     }
 
     .kpi-tier-label {
       font-family: "Cormorant Garamond", serif;
-      font-size: 44px;
+      font-size: 42px;
       line-height: 0.94;
     }
 
     .kpi-tier-copy {
       font-size: 18px;
       line-height: 1.28;
-      letter-spacing: 0.04em;
     }
 
-    .metric-box {
+    .timeline-grid {
       display: grid;
-      grid-template-columns: 190px 1fr;
+      grid-template-columns: repeat(3, 1fr);
       gap: 20px;
-      align-items: start;
     }
 
-    .metric-name {
-      font-family: "Cormorant Garamond", serif;
-      font-size: 54px;
-      line-height: 0.94;
-    }
-
-    .timeline-box {
+    .timeline-card {
       display: flex;
       flex-direction: column;
       gap: 18px;
-      position: relative;
-      overflow: hidden;
-    }
-
-    .timeline-box::after {
-      content: "";
-      position: absolute;
-      right: -40px;
-      bottom: -40px;
-      width: 130px;
-      height: 130px;
-      border-radius: 50%;
-      background: radial-gradient(circle, rgba(215, 25, 32, 0.12), transparent 70%);
+      min-height: 100%;
     }
 
     .timeline-label {
-      font-size: 22px;
+      font-size: 18px;
       font-weight: 700;
-      letter-spacing: 0.24em;
       text-transform: uppercase;
+      letter-spacing: 0.24em;
       color: var(--brand);
     }
 
     .timeline-title {
       margin: 0;
       font-family: "Cormorant Garamond", serif;
-      font-size: 58px;
-      line-height: 0.92;
+      font-size: 48px;
+      line-height: 0.94;
+    }
+
+    .closing-layout {
+      display: grid;
+      grid-template-columns: 1.02fr 0.98fr;
+      gap: 22px;
+      align-items: stretch;
+    }
+
+    .closing-copy {
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+    }
+
+    .closing-copy h2 {
+      margin: 0;
+      font-family: "Cormorant Garamond", serif;
+      font-size: clamp(54px, 5vw, 82px);
+      line-height: 0.9;
+      letter-spacing: -0.04em;
     }
 
     .instapot-inline {
       width: 100%;
-      max-width: 340px;
+      max-width: 320px;
       display: block;
-      margin: 22px auto 0;
-      filter: drop-shadow(0 26px 38px rgba(0, 0, 0, 0.22));
+      margin: 20px auto 0;
+      filter: drop-shadow(0 24px 34px rgba(0, 0, 0, 0.2));
     }
 
-    .nav-arrow {
-      position: fixed;
-      top: 50%;
-      transform: translateY(-50%);
-      z-index: 999;
-      width: 72px;
-      height: 72px;
-      border-radius: 999px;
-      border: 0;
-      font-size: 42px;
-      cursor: pointer;
-      background: rgba(255, 255, 255, 0.88);
-      color: #111;
-      box-shadow: 0 12px 40px rgba(0, 0, 0, 0.25);
-    }
+    @media (max-width: 1100px) {
+      .page {
+        width: min(var(--page-w), calc(100% - 24px));
+        padding-top: 20px;
+      }
 
-    .nav-arrow.prev { left: 28px; }
-    .nav-arrow.next { right: 28px; }
+      .hero,
+      .section {
+        padding: 28px 22px;
+        border-radius: 28px;
+      }
 
-    .progress-wrap {
-      position: fixed;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      height: 10px;
-      background: rgba(255, 255, 255, 0.2);
-      z-index: 999;
-    }
+      .hero-grid,
+      .platform-layout,
+      .creator-layout,
+      .closing-layout,
+      .section-grid.two-col,
+      .section-grid.three-col,
+      .timeline-grid,
+      .placeholder-grid {
+        grid-template-columns: 1fr;
+      }
 
-    .progress-bar {
-      height: 100%;
-      width: 0%;
-      background: var(--brand);
-      transition: width 0.25s ease;
-    }
+      .hero-stage {
+        min-height: 560px;
+      }
 
-    .slide-counter {
-      position: fixed;
-      right: 36px;
-      bottom: 28px;
-      z-index: 999;
-      font: 600 22px/1.2 system-ui, sans-serif;
-      color: rgba(255, 255, 255, 0.85);
+      .cover-pot.frog {
+        width: 200px;
+      }
+
+      .cover-pot.emoji {
+        width: 220px;
+        left: 20px;
+      }
+
+      .cover-pot.classic {
+        width: 250px;
+      }
+
+      .cover-pot.modern {
+        width: 230px;
+        left: 150px;
+      }
+
+      .hero-note {
+        position: relative;
+        width: auto;
+        margin-top: 360px;
+      }
+
+      .media-placeholder-vertical,
+      .media-placeholder-four-five,
+      .media-placeholder-landscape,
+      .media-placeholder {
+        width: 100%;
+        max-width: 100%;
+      }
+
+      .media-placeholder-landscape,
+      .media-placeholder {
+        aspect-ratio: 16 / 9;
+        height: auto;
+      }
+
+      .media-placeholder-four-five {
+        aspect-ratio: 5 / 4;
+        height: auto;
+      }
+
+      .media-placeholder-vertical {
+        aspect-ratio: 9 / 16;
+        height: auto;
+      }
+
+      .kpi-tier.visibility,
+      .kpi-tier.resonance,
+      .kpi-tier.participation {
+        width: 100%;
+      }
+
+      .kpi-tier-inner {
+        max-width: 82%;
+      }
     }
   </style>
 </head>
 <body>
-  <div class="deck-stage">
-    <main class="deck" aria-label="Instant Pot proposal presentation">
-      <section class="slide light active" id="slide-1">
-        <div class="theme-mark" aria-hidden="true"></div>
-        <div class="safe-zone">
-          <div class="logo-bar">
-            <img class="logo-img logo-light" src="redlogo.png" alt="Instant Pot logo">
-            <div class="slide-number">Slide 01 / Proposal Cover</div>
-          </div>
-          <div class="cover-zone">
-            <div class="eyebrow">Executive Proposal — Series 10.0</div>
-            <h1 class="hero-title">Practical Magic for Real-Life Kitchen Participation</h1>
-            <p class="hero-subtitle">A vertical-first proposal for modernizing how Instant Pot earns attention, trust, creator participation, and retention across the ecosystem.</p>
-            <div class="cover-orbit" aria-hidden="true"></div>
-            <img class="cover-pot frog" src="frogpot.png" alt="Instant Pot frog edition illustration">
-            <img class="cover-pot emoji" src="emojipot.png" alt="Instant Pot emoji edition illustration">
-            <img class="cover-pot classic" src="classicpot.png" alt="Classic Instant Pot illustration">
-            <img class="cover-pot modern" src="modernpot.png" alt="Modern Instant Pot illustration">
-            <div class="cover-note">
-              <strong>Proposal Lens</strong>
-              <p>Cleaner, calmer, more boardroom-ready. The structure is built for decision-making, prioritization, and KPI accountability.</p>
-            </div>
-          </div>
-          <div class="cover-footer">
-            <div class="eyebrow">90-Day Digital Ecosystem Modernization</div>
-            <div class="footer-note">From aspiration to participation.</div>
+  <main class="page">
+    <section class="hero">
+      <div class="logo-row">
+        <img class="logo-img" src="redlogo.png" alt="Instant Pot logo">
+        <div class="eyebrow">Executive Proposal — Series 10.0</div>
+      </div>
+      <div class="hero-grid">
+        <div class="hero-copy">
+          <div class="eyebrow">Strategy Proposal</div>
+          <h1 class="hero-title">Practical Magic for Real-Life Kitchen Participation</h1>
+          <p class="hero-subtitle">A boardroom-ready strategy proposal for modernizing how Instant Pot earns attention, trust, creator participation, and retention across its digital ecosystem.</p>
+        </div>
+        <div class="hero-stage">
+          <div class="cover-orbit" aria-hidden="true"></div>
+          <img class="cover-pot frog" src="frogpot.png" alt="Instant Pot frog edition illustration">
+          <img class="cover-pot emoji" src="emojipot.png" alt="Instant Pot emoji edition illustration">
+          <img class="cover-pot classic" src="classicpot.png" alt="Classic Instant Pot illustration">
+          <img class="cover-pot modern" src="modernpot.png" alt="Modern Instant Pot illustration">
+          <div class="hero-note">
+            <strong>Proposal Lens</strong>
+            <p>Cleaner, calmer, more boardroom-ready. The structure is built for decision-making, prioritization, and KPI accountability.</p>
           </div>
         </div>
-      </section>
+      </div>
+      <div class="hero-footer">
+        <div class="eyebrow">90-Day Digital Ecosystem Modernization</div>
+        <div class="footer-note">From aspiration to participation.</div>
+      </div>
+    </section>
 
-      <section class="slide light" id="slide-2" aria-hidden="true">
-        <div class="theme-mark" aria-hidden="true"></div>
-        <div class="safe-zone">
-          <div class="logo-bar">
-            <img class="logo-img logo-light" src="redlogo.png" alt="Instant Pot logo">
-            <div class="slide-number">Slide 02 / Executive Summary</div>
+    <section class="section">
+      <div class="eyebrow">Executive Summary</div>
+      <h2 class="section-title">Instant Pot should behave like everyday infrastructure, not distant aspiration.</h2>
+      <div class="section-grid two-col">
+        <div class="proposal-quote">
+          <div>
+            <h3>Strategic Thesis</h3>
+            <blockquote>Instant Pot already owns household legitimacy. The proposal is to modernize how that legitimacy becomes participation, retention, and creator-native growth.</blockquote>
           </div>
-          <div class="proposal-grid">
-            <div class="proposal-box proposal-quote">
-              <div>
-                <h3>Strategic Thesis</h3>
-                <blockquote>Instant Pot already owns household legitimacy. The proposal is to modernize how that legitimacy becomes participation, retention, and creator-native growth.</blockquote>
-              </div>
-              <p class="body-copy">The strongest framing from the executive source deck is clear: the brand should behave like everyday infrastructure, not distant aspiration.</p>
-            </div>
-            <div style="display:grid; gap:18px;">
-              <div class="proposal-box">
-                <h3>Everyday Infrastructure</h3>
-                <p>Anchor the brand in practical utility, accessibility, and routine-led value that people recognize in their own kitchens.</p>
-              </div>
-              <div class="proposal-box">
-                <h3>From Aspiration to Participation</h3>
-                <p>Shift toward comments, saves, collabs, creator systems, and social proof that reward real use over polished distance.</p>
-              </div>
-              <div class="proposal-box">
-                <h3>Retention and Ecosystems</h3>
-                <p>Connect content to creator ecosystems, onboarding flows, lifecycle retention, and repeat usage rather than isolated campaign bursts.</p>
-              </div>
-            </div>
+          <p>The strongest framing from the executive source deck is clear: the brand should behave like everyday infrastructure, not distant aspiration.</p>
+        </div>
+        <div class="section-grid">
+          <div class="card">
+            <h3>Everyday Infrastructure</h3>
+            <p>Anchor the brand in practical utility, accessibility, and routine-led value that people recognize in their own kitchens.</p>
+          </div>
+          <div class="card">
+            <h3>From Aspiration to Participation</h3>
+            <p>Shift toward comments, saves, collabs, creator systems, and social proof that reward real use over polished distance.</p>
+          </div>
+          <div class="card">
+            <h3>Retention and Ecosystems</h3>
+            <p>Connect content to creator ecosystems, onboarding flows, lifecycle retention, and repeat usage rather than isolated campaign bursts.</p>
           </div>
         </div>
-      </section>
+      </div>
+    </section>
 
-      <section class="slide light" id="slide-3" aria-hidden="true">
-        <div class="theme-mark" aria-hidden="true"></div>
-        <div class="safe-zone">
-          <div class="logo-bar">
-            <img class="logo-img logo-light" src="redlogo.png" alt="Instant Pot logo">
-            <div class="slide-number">Slide 03 / What’s Working / What’s Not</div>
+    <section class="section">
+      <div class="eyebrow">Current vs Future</div>
+      <h2 class="section-title">What’s working is real. What’s missing is a better participation system.</h2>
+      <div class="section-grid two-col">
+        <div class="card">
+          <h3>What’s Working</h3>
+          <div class="board-title">Strong recognition and strong utility.</div>
+          <ul class="list">
+            <li>Clear brand recognition and category familiarity.</li>
+            <li>Real product utility that supports education and search.</li>
+            <li>Pinterest fit for recipes, planning, and saves.</li>
+            <li>Broad creator potential because the product belongs in real homes.</li>
+          </ul>
+        </div>
+        <div class="card">
+          <h3>What’s Not</h3>
+          <div class="board-title">Weak participation systems are holding growth back.</div>
+          <ul class="list future-list">
+            <li>TikTok is weak relative to brand size.</li>
+            <li>Instagram remains too aspirational and detached from real kitchen use.</li>
+            <li>Scripted influencer content and bland presentation flatten the opportunity.</li>
+            <li>Weak sizing, weak continuity, and low UGC or comment participation reduce momentum.</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="eyebrow">Platform Direction</div>
+      <h2 class="section-title">Each platform needs a distinct role, but all roads should lead back to trust and retention.</h2>
+      <div class="platform-layout">
+        <div class="platform-stack">
+          <div class="platform-card"><div class="platform-label">TikTok</div><div class="platform-copy">Rebuild with creator-native UGC, comments, collabs, stitches, and duets.</div></div>
+          <div class="platform-card"><div class="platform-label">Instagram</div><div class="platform-copy">Use Reels for awareness, carousels for saves, and creator collabs for continuity.</div></div>
+          <div class="platform-card"><div class="platform-label">Reddit</div><div class="platform-copy">Top priority for listening, troubleshooting, trust, and language capture.</div></div>
+          <div class="platform-card"><div class="platform-label">Pinterest</div><div class="platform-copy">Top-tier fit but underused. Lean into recipe search, planning, and save behavior.</div></div>
+          <div class="platform-card"><div class="platform-label">Facebook</div><div class="platform-copy">Redistribute short-form content and support groups plus creator collaboration.</div></div>
+          <div class="platform-card"><div class="platform-label">YouTube / LinkedIn / X / Lifecycle</div><div class="platform-copy">YouTube for explanation, LinkedIn for team and employee advocacy, X for monitoring, Email/SMS for retention.</div></div>
+        </div>
+        <div class="social-stack">
+          <div class="social-card">
+            <h3>Operating System View</h3>
+            <div class="social-ui"><strong>Current</strong>Overly polished publishing logic with weak link-in-bio and weak participation continuity.</div>
+            <div class="social-ui"><strong>Future</strong>Each platform has a distinct role, but all roads lead back to search, trust, onboarding, and repeated use.</div>
           </div>
-          <div class="split-grid" style="grid-template-columns: 1fr 1fr;">
-            <div class="board-box">
-              <h3>What’s Working</h3>
-              <h2 class="board-title">Strong recognition and strong utility.</h2>
-              <ul class="board-list">
-                <li>Clear brand recognition and category familiarity.</li>
-                <li>Real product utility that supports education and search.</li>
-                <li>Pinterest fit for recipes, planning, and saves.</li>
-                <li>Broad creator potential because the product belongs in real homes.</li>
-              </ul>
-            </div>
-            <div class="board-box">
-              <h3>What’s Not</h3>
-              <h2 class="board-title">Weak participation systems are holding growth back.</h2>
-              <ul class="board-list future-list">
-                <li>TikTok is weak relative to brand size.</li>
-                <li>Instagram remains too aspirational and detached from real kitchen use.</li>
-                <li>Scripted influencer content and bland presentation flatten the opportunity.</li>
-                <li>Weak sizing, weak continuity, and low UGC or comment participation reduce momentum.</li>
-              </ul>
-            </div>
+          <div class="social-card">
+            <h3>Social UI Reference</h3>
+            <div class="social-ui"><strong>Reddit Thread UI</strong>“How do I stop getting a burn warning?” becomes product education, FAQ language, and creator content.</div>
+            <div class="social-ui" style="margin-top:12px;"><strong>Pinterest Pin UI</strong>“5 dump-and-go dinners for low-energy weeknights” becomes a save loop, not a one-off post.</div>
           </div>
         </div>
-      </section>
+      </div>
+      <p class="caption" style="margin-top:18px;">This platform matrix should function like a proposal operating system, not a loose content wishlist.</p>
+    </section>
 
-      <section class="slide dark" id="slide-4" aria-hidden="true">
-        <div class="theme-mark" aria-hidden="true"></div>
-        <div class="safe-zone">
-          <div class="logo-bar">
-            <img class="logo-img logo-dark" src="whitelogo.png" alt="Instant Pot logo">
-            <div class="slide-number">Slide 04 / Platform Direction</div>
-          </div>
-          <div class="platform-grid">
-            <div class="matrix-stack">
-              <div class="matrix-box"><div class="matrix-label">TikTok</div><div class="matrix-copy">Rebuild with creator-native UGC, comments, collabs, stitches, and duets.</div></div>
-              <div class="matrix-box"><div class="matrix-label">Instagram</div><div class="matrix-copy">Use Reels for awareness, carousels for saves, and creator collabs for continuity.</div></div>
-              <div class="matrix-box"><div class="matrix-label">Reddit</div><div class="matrix-copy">Top priority for listening, troubleshooting, trust, and language capture.</div></div>
-              <div class="matrix-box"><div class="matrix-label">Pinterest</div><div class="matrix-copy">Top-tier fit but underused. Lean into recipe search, planning, and save behavior.</div></div>
-              <div class="matrix-box"><div class="matrix-label">Facebook</div><div class="matrix-copy">Redistribute short-form content and support groups plus creator collaboration.</div></div>
-              <div class="matrix-box"><div class="matrix-label">YouTube / LinkedIn / X / Lifecycle</div><div class="matrix-copy">YouTube for explanation, LinkedIn for team and employee advocacy, X for monitoring, Email/SMS for retention.</div></div>
-            </div>
-            <div class="social-box">
-              <h3>Operating System View</h3>
-              <div class="ui-chip">Current: overly polished publishing logic with weak link-in-bio and weak participation continuity.</div>
-              <div class="ui-chip">Future: each platform has a distinct role, but all roads lead back to search, trust, onboarding, and repeated use.</div>
-              <div class="ui-thread"><strong>Reddit Thread UI</strong>“How do I stop getting a burn warning?” becomes product education, FAQ language, and creator content.</div>
-              <div class="ui-thread"><strong>Pinterest Pin UI</strong>“5 dump-and-go dinners for low-energy weeknights” becomes a save loop, not a one-off post.</div>
-            </div>
-          </div>
-          <p class="caption">This platform matrix should function like a proposal operating system, not a loose content wishlist.</p>
+    <section class="section">
+      <div class="eyebrow">Creator / UGC / Employee Advocacy</div>
+      <h2 class="section-title">Move away from scripted reads and toward a cohort-based participation engine.</h2>
+      <div class="creator-layout">
+        <div class="card">
+          <h3>Current</h3>
+          <div class="board-title">Too many reads. Not enough real people.</div>
+          <ul class="list">
+            <li>Move away from scripted influencer reads.</li>
+            <li>Stop treating brand-owned publishing as the only credibility layer.</li>
+            <li>Reduce distance between product utility and creator voice.</li>
+          </ul>
         </div>
-      </section>
-
-      <section class="slide light" id="slide-5" aria-hidden="true">
-        <div class="theme-mark" aria-hidden="true"></div>
-        <div class="safe-zone">
-          <div class="logo-bar">
-            <img class="logo-img logo-light" src="redlogo.png" alt="Instant Pot logo">
-            <div class="slide-number">Slide 05 / Creator / UGC / Employee Advocacy</div>
-          </div>
-          <div class="creator-grid">
-            <div class="board-box">
-              <h3>Current</h3>
-              <h2 class="board-title">Too many reads. Not enough real people.</h2>
-              <ul class="board-list">
-                <li>Move away from scripted influencer reads.</li>
-                <li>Stop treating brand-owned publishing as the only credibility layer.</li>
-                <li>Reduce distance between product utility and creator voice.</li>
-              </ul>
-            </div>
-            <div class="board-box">
-              <h3>Future</h3>
-              <h2 class="board-title">Build a cohort-based participation system.</h2>
-              <ul class="board-list future-list">
-                <li>Use creator-native prompts and collab posts on creator pages.</li>
-                <li>Amplify UGC with response behavior and recurring creator cohorts.</li>
-                <li>Develop employee recipe creators and Mila-style employee advocacy where appropriate.</li>
-              </ul>
-            </div>
-          </div>
-          <div style="display:grid; grid-template-columns: 1.02fr 0.98fr; gap:24px; margin-top:24px;">
-            <div class="proposal-box">
-              <h3>Future Media Frames</h3>
-              <p class="body-copy">Reusable placeholders for Reels, TikToks, square stills, and landscape explainers keep future production modular.</p>
-            </div>
-          <div class="proposal-box" style="display:grid; grid-template-columns: 1fr 1fr; gap:18px; align-items:start;">
-              <div class="media-placeholder-vertical"><div class="placeholder-copy">1080 × 1920 vertical video placeholder</div></div>
-              <div style="display:grid; gap:18px;">
-                <div class="media-placeholder-four-five"><div class="placeholder-copy">1350 × 1080 image placeholder</div></div>
-                <div class="media-placeholder-landscape"><div class="placeholder-copy">1920 × 1080 embed placeholder</div></div>
-              </div>
-            </div>
+        <div class="card">
+          <h3>Future</h3>
+          <div class="board-title">Build a cohort-based participation system.</div>
+          <ul class="list future-list">
+            <li>Use creator-native prompts and collab posts on creator pages.</li>
+            <li>Amplify UGC with response behavior and recurring creator cohorts.</li>
+            <li>Develop employee recipe creators and Mila-style employee advocacy where appropriate.</li>
+          </ul>
+        </div>
+      </div>
+      <div class="section-grid two-col" style="margin-top:22px;">
+        <div class="card">
+          <h3>Future Media Frames</h3>
+          <p>Reusable placeholders for Reels, TikToks, square stills, and landscape explainers keep future production modular.</p>
+        </div>
+        <div class="card placeholder-grid">
+          <div class="media-placeholder-vertical"><div class="placeholder-copy">1080 × 1920 vertical video placeholder</div></div>
+          <div class="placeholder-stack">
+            <div class="media-placeholder-four-five"><div class="placeholder-copy">1350 × 1080 image placeholder</div></div>
+            <div class="media-placeholder-landscape"><div class="placeholder-copy">1920 × 1080 embed placeholder</div></div>
           </div>
         </div>
-      </section>
+      </div>
+    </section>
 
-      <section class="slide dark" id="slide-6" aria-hidden="true">
-        <div class="theme-mark" aria-hidden="true"></div>
-        <div class="safe-zone">
-          <div class="logo-bar">
-            <img class="logo-img logo-dark" src="whitelogo.png" alt="Instant Pot logo">
-            <div class="slide-number">Slide 06 / KPI Layers</div>
-          </div>
-          <div class="kpi-pyramid">
-            <div class="kpi-cap">Signal Accumulation</div>
-            <div class="kpi-tier participation">
-              <div class="kpi-tier-inner">
-                <div class="kpi-tier-label">Participation</div>
-                <div class="kpi-tier-copy">Creator cohort retention, UGC participation, affiliate revenue, email and SMS retention, onboarding completion.</div>
-              </div>
-            </div>
-            <div class="kpi-tier resonance">
-              <div class="kpi-tier-inner">
-                <div class="kpi-tier-label">Resonance</div>
-                <div class="kpi-tier-copy">Saves, shares, watch retention, repeat viewers, and comment depth show whether the content becomes worth returning to.</div>
-              </div>
-            </div>
-            <div class="kpi-tier visibility">
-              <div class="kpi-tier-inner">
-                <div class="kpi-tier-label">Visibility</div>
-                <div class="kpi-tier-copy">ROAS, CTR, reach quality, and CPM efficiency tell us whether spend and attention are landing with the right audiences.</div>
-              </div>
-            </div>
+    <section class="section">
+      <div class="eyebrow">KPI Layers</div>
+      <h2 class="section-title">Measure the ecosystem as a pyramid, not a flat list.</h2>
+      <div class="kpi-pyramid">
+        <div class="kpi-cap">Signal Accumulation</div>
+        <div class="kpi-tier participation">
+          <div class="kpi-tier-inner">
+            <div class="kpi-tier-label">Participation</div>
+            <div class="kpi-tier-copy">Creator cohort retention, UGC participation, affiliate revenue, email and SMS retention, onboarding completion.</div>
           </div>
         </div>
-      </section>
-
-      <section class="slide light" id="slide-7" aria-hidden="true">
-        <div class="theme-mark" aria-hidden="true"></div>
-        <div class="safe-zone">
-          <div class="logo-bar">
-            <img class="logo-img logo-light" src="redlogo.png" alt="Instant Pot logo">
-            <div class="slide-number">Slide 07 / Month 1</div>
-          </div>
-          <div class="timeline-grid">
-            <div class="timeline-box" style="grid-column: span 2;">
-              <div class="timeline-label">Month 1</div>
-              <h2 class="timeline-title">Audit &amp; Map</h2>
-              <ul class="board-list">
-                <li>Audit all platforms and current content behavior.</li>
-                <li>Review creative sizing and establish KPI baselines.</li>
-                <li>Audit link-in-bio and conversion pathways.</li>
-                <li>Run social listening and creator ecosystem review.</li>
-                <li>Identify quick wins with the clearest retention upside.</li>
-              </ul>
-            </div>
-            <div class="proposal-box">
-              <h3>Deliverable</h3>
-              <p>Executive map of what to fix first, what to preserve, and what to rebuild for vertical-native performance.</p>
-            </div>
+        <div class="kpi-tier resonance">
+          <div class="kpi-tier-inner">
+            <div class="kpi-tier-label">Resonance</div>
+            <div class="kpi-tier-copy">Saves, shares, watch retention, repeat viewers, and comment depth show whether the content becomes worth returning to.</div>
           </div>
         </div>
-      </section>
-
-      <section class="slide light" id="slide-8" aria-hidden="true">
-        <div class="theme-mark" aria-hidden="true"></div>
-        <div class="safe-zone">
-          <div class="logo-bar">
-            <img class="logo-img logo-light" src="redlogo.png" alt="Instant Pot logo">
-            <div class="slide-number">Slide 08 / Month 2</div>
-          </div>
-          <div class="timeline-grid">
-            <div class="proposal-box">
-              <h3>Build Logic</h3>
-              <p>Messaging architecture, creator cohort system, employee advocacy framework, UGC strategy, and content taxonomy.</p>
-            </div>
-            <div class="timeline-box">
-              <div class="timeline-label">Month 2</div>
-              <h2 class="timeline-title">Build &amp; Modernize</h2>
-              <ul class="board-list">
-                <li>Create the visual direction system and content taxonomy.</li>
-                <li>Define the Living Grimoire and search structure.</li>
-                <li>Turn strategy into repeatable creator-native formats.</li>
-              </ul>
-            </div>
-            <div class="proposal-box">
-              <h3>Operating System</h3>
-              <p>The output should be a framework leadership can fund, track, and scale rather than a set of disconnected ideas.</p>
-            </div>
+        <div class="kpi-tier visibility">
+          <div class="kpi-tier-inner">
+            <div class="kpi-tier-label">Visibility</div>
+            <div class="kpi-tier-copy">ROAS, CTR, reach quality, and CPM efficiency tell us whether spend and attention are landing with the right audiences.</div>
           </div>
         </div>
-      </section>
+      </div>
+    </section>
 
-      <section class="slide dark" id="slide-9" aria-hidden="true">
-        <div class="theme-mark" aria-hidden="true"></div>
-        <div class="safe-zone">
-          <div class="logo-bar">
-            <img class="logo-img logo-dark" src="whitelogo.png" alt="Instant Pot logo">
-            <div class="slide-number">Slide 09 / Month 3</div>
-          </div>
-          <div class="closing-grid">
-            <div class="board-box" style="display:flex; flex-direction:column; justify-content:space-between;">
-              <div>
-                <div class="eyebrow" style="color: var(--brand); margin-bottom: 18px;">Optimize &amp; Scale</div>
-                <h2 class="board-title" style="font-size:86px;">Turn modernized utility into a long-term creator and retention engine.</h2>
-              </div>
-              <ul class="board-list future-list">
-                <li>Build an experimentation system across hooks, creators, formats, and conversion paths.</li>
-                <li>Optimize creator partnerships and lifecycle retention with executive reporting built in.</li>
-                <li>Extend into a 6–12 month roadmap, including refurbished, reuse, or nonprofit exploration if strategically useful.</li>
-              </ul>
-            </div>
-            <div class="proposal-box" style="display:flex; flex-direction:column; justify-content:space-between;">
-              <div>
-                <h3>Final Proposal Note</h3>
-                <p class="body-copy">The best version of Instant Pot content is warm, tactile, strategic, and practical enough to earn repeated use. That is the infrastructure story this proposal is designed to unlock.</p>
-              </div>
-              <img class="instapot-inline" src="instapot.png" alt="Instant Pot product image">
-              <div class="footer-note">Whimsical enough to charm. Useful enough to keep.</div>
-            </div>
-          </div>
+    <section class="section">
+      <div class="eyebrow">90-Day Plan</div>
+      <h2 class="section-title">Audit first, modernize second, then scale with reporting discipline.</h2>
+      <div class="timeline-grid">
+        <div class="timeline-card">
+          <div class="timeline-label">Month 1</div>
+          <h3 class="timeline-title">Audit &amp; Map</h3>
+          <ul class="list">
+            <li>Audit all platforms and current content behavior.</li>
+            <li>Review creative sizing and establish KPI baselines.</li>
+            <li>Audit link-in-bio and conversion pathways.</li>
+            <li>Run social listening and creator ecosystem review.</li>
+            <li>Identify quick wins with the clearest retention upside.</li>
+          </ul>
         </div>
-      </section>
-    </main>
-  </div>
+        <div class="timeline-card">
+          <div class="timeline-label">Month 2</div>
+          <h3 class="timeline-title">Build &amp; Modernize</h3>
+          <ul class="list">
+            <li>Create the visual direction system and content taxonomy.</li>
+            <li>Define the Living Grimoire and search structure.</li>
+            <li>Turn strategy into repeatable creator-native formats.</li>
+            <li>Build creator cohort, employee advocacy, and UGC frameworks.</li>
+          </ul>
+        </div>
+        <div class="timeline-card">
+          <div class="timeline-label">Month 3</div>
+          <h3 class="timeline-title">Optimize &amp; Scale</h3>
+          <ul class="list future-list">
+            <li>Build an experimentation system across hooks, creators, formats, and conversion paths.</li>
+            <li>Optimize creator partnerships and lifecycle retention with executive reporting built in.</li>
+            <li>Extend into a 6–12 month roadmap, including refurbished, reuse, or nonprofit exploration if strategically useful.</li>
+          </ul>
+        </div>
+      </div>
+    </section>
 
-  <button class="nav-arrow prev" type="button" aria-label="Previous slide">‹</button>
-  <button class="nav-arrow next" type="button" aria-label="Next slide">›</button>
-  <div class="progress-wrap" aria-hidden="true">
-    <div class="progress-bar"></div>
-  </div>
-  <div class="slide-counter"></div>
-
-  <script>
-    (function () {
-      const root = document.documentElement;
-      const deckWidth = 1080;
-      const deckHeight = 1920;
-
-      function resizeDeck() {
-        const scale = Math.min(window.innerWidth / deckWidth, window.innerHeight / deckHeight);
-        root.style.setProperty('--deck-scale', Math.max(scale, 0.1).toFixed(4));
-      }
-
-      const slides = Array.from(document.querySelectorAll('.slide'));
-      const prev = document.querySelector('.nav-arrow.prev');
-      const next = document.querySelector('.nav-arrow.next');
-      const progress = document.querySelector('.progress-bar');
-      const counter = document.querySelector('.slide-counter');
-      let index = Math.max(0, slides.findIndex((slide) => slide.classList.contains('active')));
-      if (index < 0) index = 0;
-
-      function showSlide(nextIndex) {
-        index = Math.max(0, Math.min(slides.length - 1, nextIndex));
-        slides.forEach((slide, i) => {
-          slide.classList.toggle('active', i === index);
-          slide.setAttribute('aria-hidden', i === index ? 'false' : 'true');
-        });
-        if (progress) {
-          const pct = slides.length <= 1 ? 100 : ((index + 1) / slides.length) * 100;
-          progress.style.width = pct + '%';
-        }
-        if (counter) {
-          counter.textContent = `${index + 1} / ${slides.length}`;
-        }
-      }
-
-      function goNext() {
-        showSlide(index + 1);
-      }
-
-      function goPrev() {
-        showSlide(index - 1);
-      }
-
-      if (next) next.addEventListener('click', goNext);
-      if (prev) prev.addEventListener('click', goPrev);
-
-      document.addEventListener('keydown', (event) => {
-        if (event.key === 'ArrowRight') goNext();
-        if (event.key === 'ArrowLeft') goPrev();
-      });
-
-      let startX = null;
-      document.addEventListener('touchstart', (event) => {
-        startX = event.changedTouches[0].clientX;
-      }, { passive: true });
-
-      document.addEventListener('touchend', (event) => {
-        if (startX === null) return;
-        const endX = event.changedTouches[0].clientX;
-        const delta = endX - startX;
-        if (Math.abs(delta) > 60) {
-          if (delta < 0) goNext();
-          else goPrev();
-        }
-        startX = null;
-      }, { passive: true });
-
-      window.addEventListener('resize', resizeDeck);
-      resizeDeck();
-      showSlide(index);
-    })();
-  </script>
+    <section class="section">
+      <div class="closing-layout">
+        <div class="closing-copy">
+          <div class="eyebrow">Final Proposal Note</div>
+          <h2>Turn modernized utility into a long-term creator and retention engine.</h2>
+          <p>The best version of Instant Pot content is warm, tactile, strategic, and practical enough to earn repeated use. That is the infrastructure story this proposal is designed to unlock.</p>
+          <div class="footer-note">Whimsical enough to charm. Useful enough to keep.</div>
+        </div>
+        <div class="card" style="display:flex; flex-direction:column; justify-content:space-between;">
+          <div>
+            <h3>Boardroom Summary</h3>
+            <p class="lede">Keep the warmth. Keep the utility. Modernize the publishing system so discovery, trust, retention, and participation reinforce one another instead of operating in isolation.</p>
+          </div>
+          <img class="instapot-inline" src="instapot.png" alt="Instant Pot product image">
+        </div>
+      </div>
+    </section>
+  </main>
 </body>
 </html>

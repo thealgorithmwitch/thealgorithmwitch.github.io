@@ -874,8 +874,6 @@ async function buildValidationReport(options = {}) {
   const generatedPageCount = Array.from(canonicalPageSet).filter((pageUrl) => pageUrl && pageFileSet.has(pageUrl)).length;
   const indexCardCount = jobs.length;
   const pendingPublicOverlapCount = pending.filter((job) => expectedById.has(String(job.id || ""))).length;
-  const climateChangeJobsSource = sources.find((source) => String(source.id || "") === "climatechangejobs") || null;
-  const climateChangeJobsPending = pending.filter((job) => /climatechangejobs/i.test([job.source_id, job.source, job.source_url].filter(Boolean).join(" ")));
   const specializationCounts = countBy(
     jobs.map((job) => String(job.specialization || "").trim() || "(blank)"),
     (value) => value
@@ -953,9 +951,6 @@ async function buildValidationReport(options = {}) {
     employer_local_edit_violation_count: employerLocalEditViolations.length,
     talent_icon_render_violation_count: talentIconRenderViolations.length,
     hard_validation_failure_count: hardValidationFailures.length,
-    climatechangejobs_source_enabled: Boolean(climateChangeJobsSource && climateChangeJobsSource.enabled !== false),
-    climatechangejobs_source_custom_sync_enabled: Boolean(climateChangeJobsSource && climateChangeJobsSource.custom_sync_enabled !== false),
-    climatechangejobs_pending_count: climateChangeJobsPending.length,
     source_health: sourceHealth,
     errors,
     samples: {
@@ -993,15 +988,7 @@ async function buildValidationReport(options = {}) {
       suspicious_specialization: suspiciousSpecialization.slice(0, 20),
       low_confidence_specialization: lowConfidenceSpecializations.slice(0, 20),
       suspicious_generic_specialization: suspiciousGenericSpecializations.slice(0, 20),
-      video_specialization_miss: videoSpecializationMisses.slice(0, 20),
-      climatechangejobs_pending: climateChangeJobsPending.slice(0, 10).map((job) => ({
-        id: job.id,
-        title: job.title,
-        organization: job.organization,
-        source_id: job.source_id,
-        triage_bucket: job.triage_bucket,
-        triage_reason: job.triage_reason
-      }))
+      video_specialization_miss: videoSpecializationMisses.slice(0, 20)
     }
   };
 }

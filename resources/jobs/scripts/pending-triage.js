@@ -10,7 +10,6 @@ const MAX_PENDING_BYTES = 25 * 1024 * 1024;
 const MAX_DESCRIPTION_LENGTH = 900;
 const MAX_RAW_DESCRIPTION_LENGTH = 1500;
 const BROAD_SOURCE_PATTERNS = [
-  /climatechangejobs/i,
   /greenjobsearch/i,
   /idealist/i,
   /goodcitizen/i,
@@ -18,7 +17,6 @@ const BROAD_SOURCE_PATTERNS = [
 ];
 const HIGH_VOLUME_SOURCE_PATTERNS = [
   /octopus-energy/i,
-  /climatechangejobs/i,
   /greenjobsearch/i,
   /\brwe\b/i,
   /sunrun/i,
@@ -463,7 +461,7 @@ function isBroadSourceJob(job) {
 
 function isLenientBoardPendingSource(job) {
   const descriptor = getSourceDescriptor(job);
-  return /climatechangejobs|greenjobsearch|elemental\s*impact/i.test(descriptor);
+  return /greenjobsearch|elemental\s*impact/i.test(descriptor);
 }
 
 function isHighVolumeSourceJob(job) {

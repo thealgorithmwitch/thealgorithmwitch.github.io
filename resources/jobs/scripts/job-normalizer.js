@@ -52,9 +52,9 @@ const CANONICAL_SPECIALIZATIONS = [
 const SPECIALIZATION_RULES = [
   { label: "PR / Press", pattern: /\b(?:pr|public relations|press|press secretary|media relations|press officer|press manager|press lead)\b/i },
   { label: "Policy", pattern: /\b(?:policy|public affairs|government affairs|external affairs|regulatory affairs|advocacy)\b/i },
-  { label: "Social Media", pattern: /\b(?:social media|social strategy|community manager|community lead|tiktok|instagram|linkedin content)\b/i },
   { label: "Communications", pattern: /\b(?:communications|communication|comms|internal communications|external communications)\b/i },
-  { label: "Video", pattern: /\b(?:video|videographer|video editor|video producer|multimedia producer|motion designer|motion graphics|youtube|documentary|short-form video|short form video|digital video|social video|creative producer|content producer|film producer)\b/i },
+  { label: "Video", pattern: /\b(?:video|videographer|video editor|video producer|multimedia producer|motion designer|motion graphics|youtube|documentary|short-form video|short form video|digital video|social video|creative producer|content producer|film producer|creator lead|creator network|vertical video|digital producer)\b/i },
+  { label: "Social Media", pattern: /\b(?:social media|social strategy|community manager|community lead|tiktok|instagram|linkedin content|bluesky|rapid response clips)\b/i },
   { label: "Content", pattern: /\b(?:content|editorial|copywriter|copywriting|storytelling|writer|newsletter|content design)\b/i },
   { label: "Art / Creative", pattern: /\b(?:creative|art director|artistic|illustration|visual storytelling|brand studio)\b/i },
   { label: "Design", pattern: /\b(?:design|designer|graphic design|visual design|product design|ux|ui)\b/i },
@@ -2468,11 +2468,30 @@ function normalizeSpecialization(value, job = {}) {
 
 function normalizeSpecializationDetailed(value, job = {}) {
   const explicit = normalizeWhitespace(stringifySafe(value));
+  const roleContext = normalizeWhitespace([
+    job.title,
+    job.function,
+    Array.isArray(job.tags) ? job.tags.join(" ") : job.tags,
+    job.description,
+    job.raw_description,
+    job.notes
+  ].filter(Boolean).join(" "));
+  const videoFirstProducerSignal =
+    /\b(?:creator lead|creator|producer|multimedia producer|video producer|content producer|digital producer|creative producer)\b/i.test(roleContext)
+    && /\b(?:video|vertical video|short-form video|short form video|social video|youtube|tiktok|instagram reels|distribution of .*video|video editing|capcut|descript)\b/i.test(roleContext);
+
   if (explicit) {
+    if (normalizeWhitespace(explicit).toLowerCase() === "data" && videoFirstProducerSignal) {
+      return { specialization: "Video", confidence: "high" };
+    }
     const matchedExplicit = SPECIALIZATION_RULES.find((rule) => rule.pattern.test(explicit));
     if (matchedExplicit) return { specialization: matchedExplicit.label, confidence: "high" };
     if (CANONICAL_SPECIALIZATIONS.includes(explicit)) return { specialization: explicit, confidence: "high" };
     return { specialization: explicit, confidence: "medium" };
+  }
+
+  if (videoFirstProducerSignal) {
+    return { specialization: "Video", confidence: "high" };
   }
 
   const sources = [

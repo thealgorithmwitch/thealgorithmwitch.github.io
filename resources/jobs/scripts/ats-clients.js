@@ -639,10 +639,12 @@ function workableJobToSchema(source, job) {
     shared_by: "ATS Sync",
     notes: `Synced from Workable account ${source.company_slug}.${hasHumanApplyUrl ? "" : " Review required: no human-usable apply page found."}`,
     review_reason: hasHumanApplyUrl ? "" : "workable_no_human_apply_page",
+    pay_parse_failed_snippet: payExtraction.failedSnippet || "",
     raw_payload: {
       ...job,
       pay_parse_source: payExtraction.source,
-      pay_like_detected: Boolean(payExtraction.payLikeDetected)
+      pay_like_detected: Boolean(payExtraction.payLikeDetected),
+      pay_parse_failed_snippet: payExtraction.failedSnippet || ""
     }
   };
 }

@@ -36,6 +36,7 @@ function parseArgs(argv) {
     dryRun: argv.includes("--dry-run") || !argv.includes("--write"),
     write: argv.includes("--write"),
     autoPublish: argv.includes("--auto-publish"),
+    promoteExistingPending: argv.includes("--promote-existing-pending"),
     maxAutoPublishPerRun: 10
   };
 
@@ -136,8 +137,8 @@ function countBlockedEntries(entries = []) {
   }).length;
 }
 
-function collectCandidateIds(pendingBefore, pendingAfter, dryRun) {
-  if (dryRun) {
+function collectCandidateIds(pendingBefore, pendingAfter, dryRun, promoteExistingPending) {
+  if (dryRun || promoteExistingPending) {
     return pendingAfter.map((job) => String(job && job.id || "")).filter(Boolean);
   }
 
@@ -199,6 +200,7 @@ async function main() {
     finished_at: "",
     mode: args.write ? "write" : "dry_run",
     auto_publish_enabled: args.write && args.autoPublish && !args.dryRun,
+    promote_existing_pending: Boolean(args.promoteExistingPending),
     promotion_cap: args.maxAutoPublishPerRun,
     source_counts: {
       before: sourcesBefore.length,
@@ -289,11 +291,12 @@ async function main() {
     }
 
     const pendingAfterRouting = await readPendingSyncedJobs();
-    const candidateIds = collectCandidateIds(pendingBefore, pendingAfterRouting, args.dryRun);
+    const candidateIds = collectCandidateIds(pendingBefore, pendingAfterRouting, args.dryRun, args.promoteExistingPending);
     const promotionArgs = [
       args.dryRun ? "--dry-run" : "--write",
       `--max-auto-publish-per-run=${args.maxAutoPublishPerRun}`,
-      ...(args.autoPublish ? ["--auto-publish"] : [])
+      ...(args.autoPublish ? ["--auto-publish"] : []),
+      ...(args.promoteExistingPending ? ["--promote-existing-pending"] : [])
     ].concat(candidateIds.map((id) => `--candidate-id=${id}`));
     runNodeScript("promote-public-ready.js", promotionArgs);
     lifecycle.steps.push({

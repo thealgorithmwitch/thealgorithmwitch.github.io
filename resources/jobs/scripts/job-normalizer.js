@@ -198,7 +198,7 @@ const INVALID_PUBLIC_LOCATION_PATTERNS = [
   /\b(?:Jan|January|Feb|February|Mar|March|Apr|April|May|Jun|June|Jul|July|Aug|August|Sep|Sept|September|Oct|October|Nov|November|Dec|December)\s+\d{1,2},\s+\d{4}\b/i
 ];
 const WORKABLE_HUMAN_APPLY_PATTERNS = [
-  /^https?:\/\/apply\.workable\.com\/[^/]+\/(?:j|view)\//i,
+  /^https?:\/\/apply\.workable\.com\/[^/]+\/(?:j|jobs\/view|view)\//i,
   /^https?:\/\/jobs\.workable\.com\/view\//i
 ];
 const MALFORMED_DESCRIPTION_TEMPLATE_PATTERNS = [
@@ -1562,6 +1562,24 @@ function findBestSalaryMatch(text) {
   return "";
 }
 
+function findPayLikeSnippet(value) {
+  const text = stringifySafe(value) || cleanFlattenedText(value);
+  if (!text) return "";
+  const paragraphs = normalizeParagraphs(text);
+  for (const paragraph of paragraphs) {
+    const cleaned = normalizeWhitespace(paragraph);
+    if (!cleaned) continue;
+    if (hasPayContext(cleaned) || /[$€£]|\b(?:USD|CAD|EUR|GBP)\b/i.test(cleaned)) {
+      return cleaned.slice(0, 280);
+    }
+  }
+  const normalized = normalizeWhitespace(text);
+  if (hasPayContext(normalized) || /[$€£]|\b(?:USD|CAD|EUR|GBP)\b/i.test(normalized)) {
+    return normalized.slice(0, 280);
+  }
+  return "";
+}
+
 function extractSalaryData(job = {}) {
   const explicitCandidates = [
     job.salary,
@@ -1591,7 +1609,8 @@ function extractSalaryData(job = {}) {
     return {
       text: matched,
       source: matched ? "ats_field" : "none",
-      payLikeDetected: hasPayContext(text) || /[$€£]|\b(?:USD|CAD|EUR|GBP)\b/i.test(text)
+      payLikeDetected: hasPayContext(text) || /[$€£]|\b(?:USD|CAD|EUR|GBP)\b/i.test(text),
+      failedSnippet: matched ? "" : findPayLikeSnippet(text)
     };
   }
 
@@ -1613,7 +1632,8 @@ function extractSalaryData(job = {}) {
         return {
           text: matched,
           source: "description_final_paragraph",
-          payLikeDetected: true
+          payLikeDetected: true,
+          failedSnippet: ""
         };
       }
     }
@@ -1638,7 +1658,8 @@ function extractSalaryData(job = {}) {
       return {
         text: matched,
         source: "description_body",
-        payLikeDetected: true
+        payLikeDetected: true,
+        failedSnippet: ""
       };
     }
   }
@@ -1657,7 +1678,8 @@ function extractSalaryData(job = {}) {
   return {
     text: "",
     source: "none",
-    payLikeDetected: hasPayContext(payLikeText) || /[$€£]|\b(?:USD|CAD|EUR|GBP)\b/i.test(payLikeText)
+    payLikeDetected: hasPayContext(payLikeText) || /[$€£]|\b(?:USD|CAD|EUR|GBP)\b/i.test(payLikeText),
+    failedSnippet: findPayLikeSnippet(payLikeText)
   };
 }
 
@@ -2504,6 +2526,7 @@ function normalizeJob(input = {}) {
     pay_parse_warning: safeStringField(input.pay_parse_warning || input.payParseWarning || salaryShape.pay_parse_warning),
     pay_parse_source: safeStringField(input.pay_parse_source || input.payParseSource || salaryExtraction.source),
     pay_like_detected: typeof input.pay_like_detected === "boolean" ? input.pay_like_detected : Boolean(salaryExtraction.payLikeDetected),
+    pay_parse_failed_snippet: safeStringField(input.pay_parse_failed_snippet || input.payParseFailedSnippet || salaryExtraction.failedSnippet),
     featured: Boolean(input.featured),
     sector: normalizeSector(input.sector || "general"),
     function: safeStringField(input.function || input.role_function),

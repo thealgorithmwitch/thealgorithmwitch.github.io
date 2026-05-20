@@ -1,904 +1,1547 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Instant Pot — Strategy Proposal</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <style>
-    :root {
-      --paper: #fffaf3;
-      --cream: #f3eadf;
-      --ink: #241b18;
-      --muted: rgba(36, 27, 24, 0.68);
-      --line: rgba(56, 41, 33, 0.14);
-      --brand: #d71920;
-      --sage: #c7cfbe;
-      --moss: #68785d;
-      --gold: #caa666;
-      --shadow: 0 26px 70px rgba(31, 20, 17, 0.12);
-      --page-w: 1280px;
-    }
-
-    * {
-      box-sizing: border-box;
-    }
-
-    html,
-    body {
-      margin: 0;
-      min-height: 100%;
-      background:
-        radial-gradient(circle at top, rgba(215, 25, 32, 0.06), transparent 26%),
-        radial-gradient(circle at 78% 10%, rgba(202, 166, 102, 0.08), transparent 22%),
-        linear-gradient(180deg, #fffaf3 0%, #f4ecdf 100%);
-      color: var(--ink);
-      font-family: "Inter", sans-serif;
-      overflow-x: hidden;
-    }
-
-    body::before {
-      content: "";
-      position: fixed;
-      inset: 0;
-      background:
-        radial-gradient(circle at 14% 18%, rgba(215, 25, 32, 0.06), transparent 20%),
-        radial-gradient(circle at 84% 18%, rgba(202, 166, 102, 0.08), transparent 24%),
-        radial-gradient(circle at 70% 78%, rgba(103, 119, 92, 0.06), transparent 22%);
-      pointer-events: none;
-    }
-
-    .serif {
-      font-family: "Cormorant Garamond", serif;
-    }
-
-    .page {
-      position: relative;
-      z-index: 1;
-      width: min(var(--page-w), calc(100% - 48px));
-      margin: 0 auto;
-      padding: 56px 0 96px;
-    }
-
-    .eyebrow {
-      font-size: 16px;
-      line-height: 1.2;
-      font-weight: 700;
-      text-transform: uppercase;
-      letter-spacing: 0.28em;
-      color: rgba(36, 27, 24, 0.54);
-    }
-
-    .hero,
-    .section {
-      position: relative;
-      border: 1px solid var(--line);
-      border-radius: 36px;
-      background: rgba(255, 255, 255, 0.74);
-      box-shadow: var(--shadow);
-      backdrop-filter: blur(12px);
-      overflow: hidden;
-    }
-
-    .hero {
-      padding: 44px 44px 40px;
-      min-height: 840px;
-      margin-bottom: 32px;
-    }
-
-    .section {
-      padding: 42px 40px;
-      margin-bottom: 28px;
-    }
-
-    .logo-row {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding-bottom: 20px;
-      margin-bottom: 28px;
-      border-bottom: 1px solid var(--line);
-    }
-
-    .logo-img {
-      display: block;
-      max-width: 280px;
-      height: auto;
-    }
-
-    .hero-grid {
-      display: grid;
-      grid-template-columns: 0.95fr 1.05fr;
-      gap: 28px;
-      min-height: 680px;
-    }
-
-    .hero-copy {
-      position: relative;
-      z-index: 3;
-      max-width: 520px;
-    }
-
-    .hero-title {
-      margin: 18px 0 0;
-      font-family: "Cormorant Garamond", serif;
-      font-size: clamp(72px, 8vw, 108px);
-      line-height: 0.88;
-      letter-spacing: -0.045em;
-    }
-
-    .hero-subtitle {
-      margin: 24px 0 0;
-      font-size: 28px;
-      line-height: 1.38;
-      color: var(--muted);
-    }
-
-    .hero-stage {
-      position: relative;
-      min-height: 680px;
-    }
-
-    .cover-orbit {
-      position: absolute;
-      inset: 26px 0 50px 80px;
-      border-radius: 48% 52% 54% 46% / 50% 44% 56% 50%;
-      border: 1px dashed rgba(215, 25, 32, 0.18);
-    }
-
-    .cover-orbit::before,
-    .cover-orbit::after {
-      content: "";
-      position: absolute;
-      border-radius: 50%;
-      border: 1px dashed rgba(36, 27, 24, 0.12);
-    }
-
-    .cover-orbit::before {
-      inset: 90px 90px;
-    }
-
-    .cover-orbit::after {
-      inset: 190px 160px;
-      border-color: rgba(103, 119, 92, 0.2);
-    }
-
-    .cover-pot {
-      position: absolute;
-      object-fit: contain;
-      filter: drop-shadow(0 24px 36px rgba(0, 0, 0, 0.2));
-    }
-
-    .cover-pot.frog {
-      width: 250px;
-      top: 0;
-      right: 42px;
-      transform: rotate(10deg);
-    }
-
-    .cover-pot.emoji {
-      width: 280px;
-      top: 210px;
-      left: 34px;
-      transform: rotate(-10deg);
-    }
-
-    .cover-pot.classic {
-      width: 320px;
-      right: 0;
-      bottom: 10px;
-      transform: rotate(8deg);
-    }
-
-    .cover-pot.modern {
-      width: 300px;
-      left: 180px;
-      bottom: 120px;
-      transform: rotate(-12deg);
-    }
-
-    .hero-note {
-      position: absolute;
-      left: 0;
-      bottom: 0;
-      width: 360px;
-      padding: 24px 24px 22px;
-      border-radius: 26px;
-      border: 1px solid var(--line);
-      background: rgba(255, 255, 255, 0.82);
-      box-shadow: var(--shadow);
-      z-index: 4;
-    }
-
-    .hero-note strong {
-      display: block;
-      margin-bottom: 10px;
-      font-size: 16px;
-      text-transform: uppercase;
-      letter-spacing: 0.22em;
-      color: var(--brand);
-    }
-
-    .hero-note p,
-    .lede,
-    .card p,
-    .card li,
-    .proposal-quote p,
-    .metric-copy,
-    .timeline-card li,
-    .timeline-card p,
-    .platform-copy,
-    .caption,
-    .closing-copy p {
-      margin: 0;
-      font-size: 23px;
-      line-height: 1.38;
-    }
-
-    .hero-footer {
-      display: flex;
-      justify-content: space-between;
-      align-items: flex-end;
-      margin-top: 28px;
-      gap: 20px;
-    }
-
-    .footer-note {
-      font-family: "Cormorant Garamond", serif;
-      font-size: 30px;
-      font-style: italic;
-      color: rgba(36, 27, 24, 0.7);
-    }
-
-    .section-title {
-      margin: 12px 0 10px;
-      font-family: "Cormorant Garamond", serif;
-      font-size: clamp(42px, 4.4vw, 64px);
-      line-height: 0.94;
-      letter-spacing: -0.03em;
-    }
-
-    .section-grid {
-      display: grid;
-      gap: 22px;
-    }
-
-    .two-col {
-      grid-template-columns: 1fr 1fr;
-    }
-
-    .three-col {
-      grid-template-columns: repeat(3, 1fr);
-    }
-
-    .card,
-    .proposal-quote,
-    .timeline-card,
-    .platform-card,
-    .social-card,
-    .metric-panel {
-      border: 1px solid var(--line);
-      border-radius: 28px;
-      background: rgba(255, 255, 255, 0.8);
-      box-shadow: var(--shadow);
-      padding: 28px 28px 30px;
-    }
-
-    .card h3,
-    .proposal-quote h3,
-    .timeline-card h3,
-    .platform-card h3,
-    .social-card h3,
-    .metric-panel h3 {
-      margin: 0 0 14px;
-      font-size: 18px;
-      letter-spacing: 0.24em;
-      text-transform: uppercase;
-      color: var(--brand);
-    }
-
-    .proposal-quote {
-      display: flex;
-      flex-direction: column;
-      justify-content: space-between;
-      min-height: 360px;
-    }
-
-    .proposal-quote blockquote {
-      margin: 0 0 18px;
-      font-family: "Cormorant Garamond", serif;
-      font-size: clamp(42px, 4vw, 62px);
-      line-height: 0.96;
-      letter-spacing: -0.04em;
-    }
-
-    .list {
-      list-style: none;
-      padding: 0;
-      margin: 0;
-      display: grid;
-      gap: 12px;
-    }
-
-    .list li {
-      display: grid;
-      grid-template-columns: 16px 1fr;
-      gap: 12px;
-      align-items: start;
-    }
-
-    .list li::before {
-      content: "";
-      width: 10px;
-      height: 10px;
-      margin-top: 10px;
-      border-radius: 999px;
-      background: var(--brand);
-      box-shadow: 0 0 0 7px rgba(215, 25, 32, 0.1);
-    }
-
-    .future-list li::before {
-      background: var(--moss);
-      box-shadow: 0 0 0 7px rgba(103, 119, 92, 0.12);
-    }
-
-    .board-title {
-      margin: 0 0 16px;
-      font-family: "Cormorant Garamond", serif;
-      font-size: 50px;
-      line-height: 0.95;
-    }
-
-    .platform-layout {
-      display: grid;
-      grid-template-columns: 1.08fr 0.92fr;
-      gap: 22px;
-    }
-
-    .platform-stack,
-    .social-stack {
-      display: grid;
-      gap: 14px;
-    }
-
-    .platform-card {
-      display: grid;
-      grid-template-columns: 150px 1fr;
-      gap: 16px;
-      align-items: start;
-    }
-
-    .platform-label {
-      font-size: 18px;
-      font-weight: 800;
-      letter-spacing: 0.2em;
-      text-transform: uppercase;
-      color: var(--gold);
-    }
-
-    .social-ui {
-      border-radius: 18px;
-      background: rgba(36, 27, 24, 0.04);
-      border: 1px solid rgba(36, 27, 24, 0.08);
-      padding: 16px 18px;
-      font-size: 20px;
-      line-height: 1.3;
-    }
-
-    .social-ui strong {
-      display: block;
-      margin-bottom: 8px;
-      font-size: 14px;
-      text-transform: uppercase;
-      letter-spacing: 0.14em;
-      color: var(--brand);
-    }
-
-    .creator-layout {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 22px;
-      align-items: start;
-    }
-
-    .media-placeholder,
-    .media-placeholder-landscape,
-    .media-placeholder-vertical,
-    .media-placeholder-four-five {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      text-align: center;
-      color: rgba(248, 240, 232, 0.88);
-      background:
-        linear-gradient(145deg, rgba(215, 25, 32, 0.32), rgba(23, 18, 18, 0.96)),
-        linear-gradient(180deg, #3d302b 0%, #171313 100%);
-      border: 1px solid rgba(255, 255, 255, 0.12);
-      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
-    }
-
-    .media-placeholder-vertical {
-      width: 360px;
-      height: 640px;
-      border-radius: 36px;
-      overflow: hidden;
-    }
-
-    .media-placeholder-four-five {
-      width: 450px;
-      height: 562px;
-      border-radius: 32px;
-      overflow: hidden;
-    }
-
-    .media-placeholder-landscape,
-    .media-placeholder {
-      width: 720px;
-      height: 405px;
-      border-radius: 32px;
-      overflow: hidden;
-    }
-
-    .placeholder-copy {
-      padding: 32px;
-      font-size: 24px;
-      line-height: 1.36;
-      letter-spacing: 0.06em;
-      text-transform: uppercase;
-    }
-
-    .placeholder-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 18px;
-      align-items: start;
-    }
-
-    .placeholder-stack {
-      display: grid;
-      gap: 18px;
-    }
-
-    .kpi-pyramid {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 16px;
-      padding: 14px 0 6px;
-    }
-
-    .kpi-cap,
-    .kpi-tier {
-      clip-path: polygon(50% 0%, 100% 100%, 0% 100%);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      text-align: center;
-      padding: 24px 34px 18px;
-      border: 1px solid rgba(36, 27, 24, 0.1);
-      background: rgba(255, 255, 255, 0.76);
-      box-shadow: var(--shadow);
-    }
-
-    .kpi-cap {
-      width: 220px;
-      height: 100px;
-      font-size: 17px;
-      letter-spacing: 0.18em;
-      text-transform: uppercase;
-      color: var(--gold);
-    }
-
-    .kpi-tier.participation {
-      width: 420px;
-      height: 180px;
-    }
-
-    .kpi-tier.resonance {
-      width: 620px;
-      height: 210px;
-    }
-
-    .kpi-tier.visibility {
-      width: 840px;
-      height: 250px;
-    }
-
-    .kpi-tier-inner {
-      max-width: 72%;
-      display: grid;
-      gap: 8px;
-    }
-
-    .kpi-tier-label {
-      font-family: "Cormorant Garamond", serif;
-      font-size: 42px;
-      line-height: 0.94;
-    }
-
-    .kpi-tier-copy {
-      font-size: 18px;
-      line-height: 1.28;
-    }
-
-    .timeline-grid {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 20px;
-    }
-
-    .timeline-card {
-      display: flex;
-      flex-direction: column;
-      gap: 18px;
-      min-height: 100%;
-    }
-
-    .timeline-label {
-      font-size: 18px;
-      font-weight: 700;
-      text-transform: uppercase;
-      letter-spacing: 0.24em;
-      color: var(--brand);
-    }
-
-    .timeline-title {
-      margin: 0;
-      font-family: "Cormorant Garamond", serif;
-      font-size: 48px;
-      line-height: 0.94;
-    }
-
-    .closing-layout {
-      display: grid;
-      grid-template-columns: 1.02fr 0.98fr;
-      gap: 22px;
-      align-items: stretch;
-    }
-
-    .closing-copy {
-      display: flex;
-      flex-direction: column;
-      gap: 18px;
-    }
-
-    .closing-copy h2 {
-      margin: 0;
-      font-family: "Cormorant Garamond", serif;
-      font-size: clamp(54px, 5vw, 82px);
-      line-height: 0.9;
-      letter-spacing: -0.04em;
-    }
-
-    .instapot-inline {
-      width: 100%;
-      max-width: 320px;
-      display: block;
-      margin: 20px auto 0;
-      filter: drop-shadow(0 24px 34px rgba(0, 0, 0, 0.2));
-    }
 
-    @media (max-width: 1100px) {
-      .page {
-        width: min(var(--page-w), calc(100% - 24px));
-        padding-top: 20px;
-      }
-
-      .hero,
-      .section {
-        padding: 28px 22px;
-        border-radius: 28px;
-      }
-
-      .hero-grid,
-      .platform-layout,
-      .creator-layout,
-      .closing-layout,
-      .section-grid.two-col,
-      .section-grid.three-col,
-      .timeline-grid,
-      .placeholder-grid {
-        grid-template-columns: 1fr;
-      }
-
-      .hero-stage {
-        min-height: 560px;
-      }
-
-      .cover-pot.frog {
-        width: 200px;
-      }
-
-      .cover-pot.emoji {
-        width: 220px;
-        left: 20px;
-      }
-
-      .cover-pot.classic {
-        width: 250px;
-      }
-
-      .cover-pot.modern {
-        width: 230px;
-        left: 150px;
-      }
-
-      .hero-note {
-        position: relative;
-        width: auto;
-        margin-top: 360px;
-      }
-
-      .media-placeholder-vertical,
-      .media-placeholder-four-five,
-      .media-placeholder-landscape,
-      .media-placeholder {
-        width: 100%;
-        max-width: 100%;
-      }
-
-      .media-placeholder-landscape,
-      .media-placeholder {
-        aspect-ratio: 16 / 9;
-        height: auto;
-      }
-
-      .media-placeholder-four-five {
-        aspect-ratio: 5 / 4;
-        height: auto;
-      }
-
-      .media-placeholder-vertical {
-        aspect-ratio: 9 / 16;
-        height: auto;
-      }
-
-      .kpi-tier.visibility,
-      .kpi-tier.resonance,
-      .kpi-tier.participation {
-        width: 100%;
-      }
-
-      .kpi-tier-inner {
-        max-width: 82%;
-      }
+<html lang="en" vid="0"><head vid="1">
+    <meta charset="UTF-8" vid="2">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" vid="3">
+    <title vid="4">INSTANT POT — 90-DAY BRAND MODERNIZATION PLAN</title>
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com" vid="6">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="" vid="7">
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400;1,600&amp;family=Inter:wght@300;400;500;600&amp;family=Playfair+Display:ital,wght@0,400;0,700;1,400&amp;display=swap" rel="stylesheet" vid="8">
+    <style vid="9">
+        :root {
+            --bg: #F7F5F0;
+            --text: #2A2A2A;
+            --red: #D13027;
+            --border: #D8D4CC;
+            --surface: #FFFFFF;
+        }
+
+        body {
+            background-color: var(--bg);
+            color: var(--text);
+            font-family: 'Inter', sans-serif;
+            line-height: 1.5;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        .serif {
+            font-family: 'Cormorant Garamond', serif;
+        }
+
+        .micro-text {
+            font-size: 9px;
+            text-transform: uppercase;
+            letter-spacing: 0.2em;
+            font-weight: 600;
+        }
+
+        .border-subtle {
+            border: 0.5px solid var(--border);
+        }
+
+        .lily-pad {
+            clip-path: url(#lilyMask);
+        }
+
+        .marquee {
+            overflow: hidden;
+            white-space: nowrap;
+            width: 100%;
+        }
+
+        .marquee-content {
+            display: inline-block;
+            animation: marquee 30s linear infinite;
+        }
+
+        @keyframes marquee {
+            0% { transform: translateX(0); }
+            100% { transform: translateX(-50%); }
+        }
+
+        .pyramid-visibility { height: 100px; width: 100%; background: #eee; clip-path: polygon(50% 0%, 100% 100%, 0% 100%); }
+        .pyramid-resonance { height: 100px; width: 80%; background: #ddd; clip-path: polygon(10% 0%, 90% 0%, 100% 100%, 0% 100%); }
+        .pyramid-participation { height: 100px; width: 60%; background: var(--red); clip-path: polygon(10% 0%, 90% 0%, 100% 100%, 0% 100%); color: white; }
+
+        .sticky-nav {
+            position: sticky;
+            top: 0;
+            background: rgba(247, 245, 240, 0.9);
+            backdrop-filter: blur(8px);
+            z-index: 100;
+        }
+    </style>
+
+  <style type="text/css">
+*, ::before, ::after {
+  --tw-border-spacing-x: 0;
+  --tw-border-spacing-y: 0;
+  --tw-translate-x: 0;
+  --tw-translate-y: 0;
+  --tw-rotate: 0;
+  --tw-skew-x: 0;
+  --tw-skew-y: 0;
+  --tw-scale-x: 1;
+  --tw-scale-y: 1;
+  --tw-pan-x:  ;
+  --tw-pan-y:  ;
+  --tw-pinch-zoom:  ;
+  --tw-scroll-snap-strictness: proximity;
+  --tw-gradient-from-position:  ;
+  --tw-gradient-via-position:  ;
+  --tw-gradient-to-position:  ;
+  --tw-ordinal:  ;
+  --tw-slashed-zero:  ;
+  --tw-numeric-figure:  ;
+  --tw-numeric-spacing:  ;
+  --tw-numeric-fraction:  ;
+  --tw-ring-inset:  ;
+  --tw-ring-offset-width: 0px;
+  --tw-ring-offset-color: #fff;
+  --tw-ring-color: rgb(59 130 246 / 0.5);
+  --tw-ring-offset-shadow: 0 0 #0000;
+  --tw-ring-shadow: 0 0 #0000;
+  --tw-shadow: 0 0 #0000;
+  --tw-shadow-colored: 0 0 #0000;
+  --tw-blur:  ;
+  --tw-brightness:  ;
+  --tw-contrast:  ;
+  --tw-grayscale:  ;
+  --tw-hue-rotate:  ;
+  --tw-invert:  ;
+  --tw-saturate:  ;
+  --tw-sepia:  ;
+  --tw-drop-shadow:  ;
+  --tw-backdrop-blur:  ;
+  --tw-backdrop-brightness:  ;
+  --tw-backdrop-contrast:  ;
+  --tw-backdrop-grayscale:  ;
+  --tw-backdrop-hue-rotate:  ;
+  --tw-backdrop-invert:  ;
+  --tw-backdrop-opacity:  ;
+  --tw-backdrop-saturate:  ;
+  --tw-backdrop-sepia:  ;
+  --tw-contain-size:  ;
+  --tw-contain-layout:  ;
+  --tw-contain-paint:  ;
+  --tw-contain-style:  ;
+}
+
+::backdrop {
+  --tw-border-spacing-x: 0;
+  --tw-border-spacing-y: 0;
+  --tw-translate-x: 0;
+  --tw-translate-y: 0;
+  --tw-rotate: 0;
+  --tw-skew-x: 0;
+  --tw-skew-y: 0;
+  --tw-scale-x: 1;
+  --tw-scale-y: 1;
+  --tw-pan-x:  ;
+  --tw-pan-y:  ;
+  --tw-pinch-zoom:  ;
+  --tw-scroll-snap-strictness: proximity;
+  --tw-gradient-from-position:  ;
+  --tw-gradient-via-position:  ;
+  --tw-gradient-to-position:  ;
+  --tw-ordinal:  ;
+  --tw-slashed-zero:  ;
+  --tw-numeric-figure:  ;
+  --tw-numeric-spacing:  ;
+  --tw-numeric-fraction:  ;
+  --tw-ring-inset:  ;
+  --tw-ring-offset-width: 0px;
+  --tw-ring-offset-color: #fff;
+  --tw-ring-color: rgb(59 130 246 / 0.5);
+  --tw-ring-offset-shadow: 0 0 #0000;
+  --tw-ring-shadow: 0 0 #0000;
+  --tw-shadow: 0 0 #0000;
+  --tw-shadow-colored: 0 0 #0000;
+  --tw-blur:  ;
+  --tw-brightness:  ;
+  --tw-contrast:  ;
+  --tw-grayscale:  ;
+  --tw-hue-rotate:  ;
+  --tw-invert:  ;
+  --tw-saturate:  ;
+  --tw-sepia:  ;
+  --tw-drop-shadow:  ;
+  --tw-backdrop-blur:  ;
+  --tw-backdrop-brightness:  ;
+  --tw-backdrop-contrast:  ;
+  --tw-backdrop-grayscale:  ;
+  --tw-backdrop-hue-rotate:  ;
+  --tw-backdrop-invert:  ;
+  --tw-backdrop-opacity:  ;
+  --tw-backdrop-saturate:  ;
+  --tw-backdrop-sepia:  ;
+  --tw-contain-size:  ;
+  --tw-contain-layout:  ;
+  --tw-contain-paint:  ;
+  --tw-contain-style:  ;
+}/*
+! tailwindcss v3.4.17 | MIT License | https://tailwindcss.com
+*//*
+1. Prevent padding and border from affecting element width. (https://github.com/mozdevs/cssremedy/issues/4)
+2. Allow adding a border to an element by just adding a border-width. (https://github.com/tailwindcss/tailwindcss/pull/116)
+*/
+
+*,
+::before,
+::after {
+  box-sizing: border-box; /* 1 */
+  border-width: 0; /* 2 */
+  border-style: solid; /* 2 */
+  border-color: #e5e7eb; /* 2 */
+}
+
+::before,
+::after {
+  --tw-content: '';
+}
+
+/*
+1. Use a consistent sensible line-height in all browsers.
+2. Prevent adjustments of font size after orientation changes in iOS.
+3. Use a more readable tab size.
+4. Use the user's configured `sans` font-family by default.
+5. Use the user's configured `sans` font-feature-settings by default.
+6. Use the user's configured `sans` font-variation-settings by default.
+7. Disable tap highlights on iOS
+*/
+
+html,
+:host {
+  line-height: 1.5; /* 1 */
+  -webkit-text-size-adjust: 100%; /* 2 */
+  -moz-tab-size: 4; /* 3 */
+  tab-size: 4; /* 3 */
+  font-family: ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji"; /* 4 */
+  font-feature-settings: normal; /* 5 */
+  font-variation-settings: normal; /* 6 */
+  -webkit-tap-highlight-color: transparent; /* 7 */
+}
+
+/*
+1. Remove the margin in all browsers.
+2. Inherit line-height from `html` so users can set them as a class directly on the `html` element.
+*/
+
+body {
+  margin: 0; /* 1 */
+  line-height: inherit; /* 2 */
+}
+
+/*
+1. Add the correct height in Firefox.
+2. Correct the inheritance of border color in Firefox. (https://bugzilla.mozilla.org/show_bug.cgi?id=190655)
+3. Ensure horizontal rules are visible by default.
+*/
+
+hr {
+  height: 0; /* 1 */
+  color: inherit; /* 2 */
+  border-top-width: 1px; /* 3 */
+}
+
+/*
+Add the correct text decoration in Chrome, Edge, and Safari.
+*/
+
+abbr:where([title]) {
+  text-decoration: underline dotted;
+}
+
+/*
+Remove the default font size and weight for headings.
+*/
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  font-size: inherit;
+  font-weight: inherit;
+}
+
+/*
+Reset links to optimize for opt-in styling instead of opt-out.
+*/
+
+a {
+  color: inherit;
+  text-decoration: inherit;
+}
+
+/*
+Add the correct font weight in Edge and Safari.
+*/
+
+b,
+strong {
+  font-weight: bolder;
+}
+
+/*
+1. Use the user's configured `mono` font-family by default.
+2. Use the user's configured `mono` font-feature-settings by default.
+3. Use the user's configured `mono` font-variation-settings by default.
+4. Correct the odd `em` font sizing in all browsers.
+*/
+
+code,
+kbd,
+samp,
+pre {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; /* 1 */
+  font-feature-settings: normal; /* 2 */
+  font-variation-settings: normal; /* 3 */
+  font-size: 1em; /* 4 */
+}
+
+/*
+Add the correct font size in all browsers.
+*/
+
+small {
+  font-size: 80%;
+}
+
+/*
+Prevent `sub` and `sup` elements from affecting the line height in all browsers.
+*/
+
+sub,
+sup {
+  font-size: 75%;
+  line-height: 0;
+  position: relative;
+  vertical-align: baseline;
+}
+
+sub {
+  bottom: -0.25em;
+}
+
+sup {
+  top: -0.5em;
+}
+
+/*
+1. Remove text indentation from table contents in Chrome and Safari. (https://bugs.chromium.org/p/chromium/issues/detail?id=999088, https://bugs.webkit.org/show_bug.cgi?id=201297)
+2. Correct table border color inheritance in all Chrome and Safari. (https://bugs.chromium.org/p/chromium/issues/detail?id=935729, https://bugs.webkit.org/show_bug.cgi?id=195016)
+3. Remove gaps between table borders by default.
+*/
+
+table {
+  text-indent: 0; /* 1 */
+  border-color: inherit; /* 2 */
+  border-collapse: collapse; /* 3 */
+}
+
+/*
+1. Change the font styles in all browsers.
+2. Remove the margin in Firefox and Safari.
+3. Remove default padding in all browsers.
+*/
+
+button,
+input,
+optgroup,
+select,
+textarea {
+  font-family: inherit; /* 1 */
+  font-feature-settings: inherit; /* 1 */
+  font-variation-settings: inherit; /* 1 */
+  font-size: 100%; /* 1 */
+  font-weight: inherit; /* 1 */
+  line-height: inherit; /* 1 */
+  letter-spacing: inherit; /* 1 */
+  color: inherit; /* 1 */
+  margin: 0; /* 2 */
+  padding: 0; /* 3 */
+}
+
+/*
+Remove the inheritance of text transform in Edge and Firefox.
+*/
+
+button,
+select {
+  text-transform: none;
+}
+
+/*
+1. Correct the inability to style clickable types in iOS and Safari.
+2. Remove default button styles.
+*/
+
+button,
+input:where([type='button']),
+input:where([type='reset']),
+input:where([type='submit']) {
+  -webkit-appearance: button; /* 1 */
+  background-color: transparent; /* 2 */
+  background-image: none; /* 2 */
+}
+
+/*
+Use the modern Firefox focus style for all focusable elements.
+*/
+
+:-moz-focusring {
+  outline: auto;
+}
+
+/*
+Remove the additional `:invalid` styles in Firefox. (https://github.com/mozilla/gecko-dev/blob/2f9eacd9d3d995c937b4251a5557d95d494c9be1/layout/style/res/forms.css#L728-L737)
+*/
+
+:-moz-ui-invalid {
+  box-shadow: none;
+}
+
+/*
+Add the correct vertical alignment in Chrome and Firefox.
+*/
+
+progress {
+  vertical-align: baseline;
+}
+
+/*
+Correct the cursor style of increment and decrement buttons in Safari.
+*/
+
+::-webkit-inner-spin-button,
+::-webkit-outer-spin-button {
+  height: auto;
+}
+
+/*
+1. Correct the odd appearance in Chrome and Safari.
+2. Correct the outline style in Safari.
+*/
+
+[type='search'] {
+  -webkit-appearance: textfield; /* 1 */
+  outline-offset: -2px; /* 2 */
+}
+
+/*
+Remove the inner padding in Chrome and Safari on macOS.
+*/
+
+::-webkit-search-decoration {
+  -webkit-appearance: none;
+}
+
+/*
+1. Correct the inability to style clickable types in iOS and Safari.
+2. Change font properties to `inherit` in Safari.
+*/
+
+::-webkit-file-upload-button {
+  -webkit-appearance: button; /* 1 */
+  font: inherit; /* 2 */
+}
+
+/*
+Add the correct display in Chrome and Safari.
+*/
+
+summary {
+  display: list-item;
+}
+
+/*
+Removes the default spacing and border for appropriate elements.
+*/
+
+blockquote,
+dl,
+dd,
+h1,
+h2,
+h3,
+h4,
+h5,
+h6,
+hr,
+figure,
+p,
+pre {
+  margin: 0;
+}
+
+fieldset {
+  margin: 0;
+  padding: 0;
+}
+
+legend {
+  padding: 0;
+}
+
+ol,
+ul,
+menu {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+/*
+Reset default styling for dialogs.
+*/
+dialog {
+  padding: 0;
+}
+
+/*
+Prevent resizing textareas horizontally by default.
+*/
+
+textarea {
+  resize: vertical;
+}
+
+/*
+1. Reset the default placeholder opacity in Firefox. (https://github.com/tailwindlabs/tailwindcss/issues/3300)
+2. Set the default placeholder color to the user's configured gray 400 color.
+*/
+
+input::placeholder,
+textarea::placeholder {
+  opacity: 1; /* 1 */
+  color: #9ca3af; /* 2 */
+}
+
+/*
+Set the default cursor for buttons.
+*/
+
+button,
+[role="button"] {
+  cursor: pointer;
+}
+
+/*
+Make sure disabled buttons don't get the pointer cursor.
+*/
+:disabled {
+  cursor: default;
+}
+
+/*
+1. Make replaced elements `display: block` by default. (https://github.com/mozdevs/cssremedy/issues/14)
+2. Add `vertical-align: middle` to align replaced elements more sensibly by default. (https://github.com/jensimmons/cssremedy/issues/14#issuecomment-634934210)
+   This can trigger a poorly considered lint error in some tools but is included by design.
+*/
+
+img,
+svg,
+video,
+canvas,
+audio,
+iframe,
+embed,
+object {
+  display: block; /* 1 */
+  vertical-align: middle; /* 2 */
+}
+
+/*
+Constrain images and videos to the parent width and preserve their intrinsic aspect ratio. (https://github.com/mozdevs/cssremedy/issues/14)
+*/
+
+img,
+video {
+  max-width: 100%;
+  height: auto;
+}
+
+/* Make elements with the HTML hidden attribute stay hidden by default */
+[hidden]:where(:not([hidden="until-found"])) {
+  display: none;
+}
+.sticky {
+  position: sticky;
+}
+.col-span-3 {
+  grid-column: span 3 / span 3;
+}
+.col-span-4 {
+  grid-column: span 4 / span 4;
+}
+.col-span-5 {
+  grid-column: span 5 / span 5;
+}
+.col-span-7 {
+  grid-column: span 7 / span 7;
+}
+.col-span-8 {
+  grid-column: span 8 / span 8;
+}
+.col-span-9 {
+  grid-column: span 9 / span 9;
+}
+.mb-10 {
+  margin-bottom: 2.5rem;
+}
+.mb-12 {
+  margin-bottom: 3rem;
+}
+.mb-16 {
+  margin-bottom: 4rem;
+}
+.mb-2 {
+  margin-bottom: 0.5rem;
+}
+.mb-20 {
+  margin-bottom: 5rem;
+}
+.mb-4 {
+  margin-bottom: 1rem;
+}
+.mb-6 {
+  margin-bottom: 1.5rem;
+}
+.mb-8 {
+  margin-bottom: 2rem;
+}
+.mt-10 {
+  margin-top: 2.5rem;
+}
+.mt-2 {
+  margin-top: 0.5rem;
+}
+.mt-20 {
+  margin-top: 5rem;
+}
+.mt-4 {
+  margin-top: 1rem;
+}
+.flex {
+  display: flex;
+}
+.grid {
+  display: grid;
+}
+.hidden {
+  display: none;
+}
+.aspect-\[4\/5\] {
+  aspect-ratio: 4/5;
+}
+.aspect-square {
+  aspect-ratio: 1 / 1;
+}
+.aspect-video {
+  aspect-ratio: 16 / 9;
+}
+.h-4 {
+  height: 1rem;
+}
+.h-full {
+  height: 100%;
+}
+.min-h-screen {
+  min-height: 100vh;
+}
+.w-32 {
+  width: 8rem;
+}
+.w-4 {
+  width: 1rem;
+}
+.w-full {
+  width: 100%;
+}
+.max-w-2xl {
+  max-width: 42rem;
+}
+.max-w-5xl {
+  max-width: 64rem;
+}
+.max-w-sm {
+  max-width: 24rem;
+}
+.max-w-xs {
+  max-width: 20rem;
+}
+.flex-1 {
+  flex: 1 1 0%;
+}
+.transform {
+  transform: translate(var(--tw-translate-x), var(--tw-translate-y)) rotate(var(--tw-rotate)) skewX(var(--tw-skew-x)) skewY(var(--tw-skew-y)) scaleX(var(--tw-scale-x)) scaleY(var(--tw-scale-y));
+}
+.cursor-pointer {
+  cursor: pointer;
+}
+.grid-cols-12 {
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+}
+.grid-cols-2 {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+.grid-cols-3 {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+.grid-cols-4 {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+.flex-col {
+  flex-direction: column;
+}
+.flex-wrap {
+  flex-wrap: wrap;
+}
+.items-end {
+  align-items: flex-end;
+}
+.items-center {
+  align-items: center;
+}
+.justify-end {
+  justify-content: flex-end;
+}
+.justify-center {
+  justify-content: center;
+}
+.justify-between {
+  justify-content: space-between;
+}
+.gap-10 {
+  gap: 2.5rem;
+}
+.gap-2 {
+  gap: 0.5rem;
+}
+.gap-20 {
+  gap: 5rem;
+}
+.gap-4 {
+  gap: 1rem;
+}
+.gap-6 {
+  gap: 1.5rem;
+}
+.gap-8 {
+  gap: 2rem;
+}
+.space-y-4 > :not([hidden]) ~ :not([hidden]) {
+  --tw-space-y-reverse: 0;
+  margin-top: calc(1rem * calc(1 - var(--tw-space-y-reverse)));
+  margin-bottom: calc(1rem * var(--tw-space-y-reverse));
+}
+.space-y-6 > :not([hidden]) ~ :not([hidden]) {
+  --tw-space-y-reverse: 0;
+  margin-top: calc(1.5rem * calc(1 - var(--tw-space-y-reverse)));
+  margin-bottom: calc(1.5rem * var(--tw-space-y-reverse));
+}
+.space-y-8 > :not([hidden]) ~ :not([hidden]) {
+  --tw-space-y-reverse: 0;
+  margin-top: calc(2rem * calc(1 - var(--tw-space-y-reverse)));
+  margin-bottom: calc(2rem * var(--tw-space-y-reverse));
+}
+.overflow-hidden {
+  overflow: hidden;
+}
+.rounded-full {
+  border-radius: 9999px;
+}
+.border {
+  border-width: 1px;
+}
+.border-b {
+  border-bottom-width: 1px;
+}
+.border-l {
+  border-left-width: 1px;
+}
+.border-l-2 {
+  border-left-width: 2px;
+}
+.border-r {
+  border-right-width: 1px;
+}
+.border-t {
+  border-top-width: 1px;
+}
+.border-\[\#D13027\] {
+  --tw-border-opacity: 1;
+  border-color: rgb(209 48 39 / var(--tw-border-opacity, 1));
+}
+.border-\[\#D8D4CC\] {
+  --tw-border-opacity: 1;
+  border-color: rgb(216 212 204 / var(--tw-border-opacity, 1));
+}
+.border-white\/10 {
+  border-color: rgb(255 255 255 / 0.1);
+}
+.bg-\[\#2A2A2A\] {
+  --tw-bg-opacity: 1;
+  background-color: rgb(42 42 42 / var(--tw-bg-opacity, 1));
+}
+.bg-\[\#AAB7A8\] {
+  --tw-bg-opacity: 1;
+  background-color: rgb(170 183 168 / var(--tw-bg-opacity, 1));
+}
+.bg-\[\#D13027\] {
+  --tw-bg-opacity: 1;
+  background-color: rgb(209 48 39 / var(--tw-bg-opacity, 1));
+}
+.bg-\[\#D8D4CC\] {
+  --tw-bg-opacity: 1;
+  background-color: rgb(216 212 204 / var(--tw-bg-opacity, 1));
+}
+.bg-\[\#E5E1D8\] {
+  --tw-bg-opacity: 1;
+  background-color: rgb(229 225 216 / var(--tw-bg-opacity, 1));
+}
+.bg-\[\#F7F5F0\] {
+  --tw-bg-opacity: 1;
+  background-color: rgb(247 245 240 / var(--tw-bg-opacity, 1));
+}
+.bg-\[\#eee\] {
+  --tw-bg-opacity: 1;
+  background-color: rgb(238 238 238 / var(--tw-bg-opacity, 1));
+}
+.bg-gray-50 {
+  --tw-bg-opacity: 1;
+  background-color: rgb(249 250 251 / var(--tw-bg-opacity, 1));
+}
+.bg-white {
+  --tw-bg-opacity: 1;
+  background-color: rgb(255 255 255 / var(--tw-bg-opacity, 1));
+}
+.p-10 {
+  padding: 2.5rem;
+}
+.p-12 {
+  padding: 3rem;
+}
+.p-20 {
+  padding: 5rem;
+}
+.p-4 {
+  padding: 1rem;
+}
+.p-6 {
+  padding: 1.5rem;
+}
+.p-8 {
+  padding: 2rem;
+}
+.px-10 {
+  padding-left: 2.5rem;
+  padding-right: 2.5rem;
+}
+.px-3 {
+  padding-left: 0.75rem;
+  padding-right: 0.75rem;
+}
+.py-1 {
+  padding-top: 0.25rem;
+  padding-bottom: 0.25rem;
+}
+.py-4 {
+  padding-top: 1rem;
+  padding-bottom: 1rem;
+}
+.py-6 {
+  padding-top: 1.5rem;
+  padding-bottom: 1.5rem;
+}
+.pb-2 {
+  padding-bottom: 0.5rem;
+}
+.pb-4 {
+  padding-bottom: 1rem;
+}
+.pb-40 {
+  padding-bottom: 10rem;
+}
+.pl-6 {
+  padding-left: 1.5rem;
+}
+.pt-10 {
+  padding-top: 2.5rem;
+}
+.pt-20 {
+  padding-top: 5rem;
+}
+.text-center {
+  text-align: center;
+}
+.text-right {
+  text-align: right;
+}
+.text-2xl {
+  font-size: 1.5rem;
+  line-height: 2rem;
+}
+.text-3xl {
+  font-size: 1.875rem;
+  line-height: 2.25rem;
+}
+.text-4xl {
+  font-size: 2.25rem;
+  line-height: 2.5rem;
+}
+.text-5xl {
+  font-size: 3rem;
+  line-height: 1;
+}
+.text-6xl {
+  font-size: 3.75rem;
+  line-height: 1;
+}
+.text-\[10px\] {
+  font-size: 10px;
+}
+.text-\[110px\] {
+  font-size: 110px;
+}
+.text-\[80px\] {
+  font-size: 80px;
+}
+.text-\[9px\] {
+  font-size: 9px;
+}
+.text-lg {
+  font-size: 1.125rem;
+  line-height: 1.75rem;
+}
+.text-sm {
+  font-size: 0.875rem;
+  line-height: 1.25rem;
+}
+.text-xl {
+  font-size: 1.25rem;
+  line-height: 1.75rem;
+}
+.text-xs {
+  font-size: 0.75rem;
+  line-height: 1rem;
+}
+.font-bold {
+  font-weight: 700;
+}
+.font-light {
+  font-weight: 300;
+}
+.font-medium {
+  font-weight: 500;
+}
+.font-semibold {
+  font-weight: 600;
+}
+.uppercase {
+  text-transform: uppercase;
+}
+.italic {
+  font-style: italic;
+}
+.leading-\[0\.9\] {
+  line-height: 0.9;
+}
+.leading-none {
+  line-height: 1;
+}
+.leading-relaxed {
+  line-height: 1.625;
+}
+.leading-tight {
+  line-height: 1.25;
+}
+.tracking-tight {
+  letter-spacing: -0.025em;
+}
+.tracking-widest {
+  letter-spacing: 0.1em;
+}
+.text-\[\#D13027\] {
+  --tw-text-opacity: 1;
+  color: rgb(209 48 39 / var(--tw-text-opacity, 1));
+}
+.text-\[\#F7F5F0\] {
+  --tw-text-opacity: 1;
+  color: rgb(247 245 240 / var(--tw-text-opacity, 1));
+}
+.text-gray-400 {
+  --tw-text-opacity: 1;
+  color: rgb(156 163 175 / var(--tw-text-opacity, 1));
+}
+.text-gray-500 {
+  --tw-text-opacity: 1;
+  color: rgb(107 114 128 / var(--tw-text-opacity, 1));
+}
+.text-gray-600 {
+  --tw-text-opacity: 1;
+  color: rgb(75 85 99 / var(--tw-text-opacity, 1));
+}
+.text-white {
+  --tw-text-opacity: 1;
+  color: rgb(255 255 255 / var(--tw-text-opacity, 1));
+}
+.antialiased {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+.opacity-40 {
+  opacity: 0.4;
+}
+.opacity-50 {
+  opacity: 0.5;
+}
+.opacity-60 {
+  opacity: 0.6;
+}
+.blur {
+  --tw-blur: blur(8px);
+  filter: var(--tw-blur) var(--tw-brightness) var(--tw-contrast) var(--tw-grayscale) var(--tw-hue-rotate) var(--tw-invert) var(--tw-saturate) var(--tw-sepia) var(--tw-drop-shadow);
+}
+.backdrop-filter {
+  -webkit-backdrop-filter: var(--tw-backdrop-blur) var(--tw-backdrop-brightness) var(--tw-backdrop-contrast) var(--tw-backdrop-grayscale) var(--tw-backdrop-hue-rotate) var(--tw-backdrop-invert) var(--tw-backdrop-opacity) var(--tw-backdrop-saturate) var(--tw-backdrop-sepia);
+  backdrop-filter: var(--tw-backdrop-blur) var(--tw-backdrop-brightness) var(--tw-backdrop-contrast) var(--tw-backdrop-grayscale) var(--tw-backdrop-hue-rotate) var(--tw-backdrop-invert) var(--tw-backdrop-opacity) var(--tw-backdrop-saturate) var(--tw-backdrop-sepia);
+}* {
+      -ms-overflow-style: none !important;
+      scrollbar-width: none !important;
+    }
+
+    *::-webkit-scrollbar {
+      display: none !important;
+      width: 0 !important;
+      height: 0 !important;
     }
   </style>
-</head>
-<body>
-  <main class="page">
-    <section class="hero">
-      <div class="logo-row">
-        <img class="logo-img" src="redlogo.png" alt="Instant Pot logo">
-        <div class="eyebrow">Executive Proposal — Series 10.0</div>
-      </div>
-      <div class="hero-grid">
-        <div class="hero-copy">
-          <div class="eyebrow">Strategy Proposal</div>
-          <h1 class="hero-title">Practical Magic for Real-Life Kitchen Participation</h1>
-          <p class="hero-subtitle">A boardroom-ready strategy proposal for modernizing how Instant Pot earns attention, trust, creator participation, and retention across its digital ecosystem.</p>
+  <style>
+    .proposal-logo-img { display:block; width:180px; height:auto; }
+    .proposal-pot-collage { display:grid; grid-template-columns:repeat(4, 1fr); gap:18px; margin-top:28px; }
+    .proposal-pot-card { aspect-ratio:4 / 5; background:rgba(255,255,255,0.72); border:0.5px solid #D8D4CC; display:flex; align-items:center; justify-content:center; padding:18px; }
+    .proposal-pot-card img { width:100%; height:100%; object-fit:contain; display:block; }
+    .micro-text { font-size:10px; }
+    .text-xs { font-size:0.82rem !important; line-height:1.5 !important; }
+    .text-sm { font-size:0.98rem !important; line-height:1.58 !important; }
+    .text-xl { font-size:1.35rem !important; line-height:1.45 !important; }
+  </style></head>
+<body vid="10">
+
+    <svg width="0" height="0" style="position:absolute" vid="11">
+        <defs vid="12">
+            <clipPath id="lilyMask" clipPathUnits="objectBoundingBox" vid="13">
+                <path d="M0.5,0 C0.8,0,1,0.2,1,0.5 C1,0.8,0.8,1,0.5,1 C0.2,1,0,0.8,0,0.5 C0,0.2,0.2,0,0.5,0 M0.5,0.1 C0.5,0.1,0.3,0.3,0.3,0.5 C0.3,0.7,0.5,0.9,0.5,0.9 C0.5,0.9,0.7,0.7,0.7,0.5 C0.7,0.3,0.5,0.1,0.5,0.1" vid="14"></path>
+            </clipPath>
+        </defs>
+    </svg>
+
+    
+    <nav class="sticky-nav border-b border-[#D8D4CC] px-10 py-6 flex justify-between items-center" vid="15">
+        <img class="proposal-logo-img" src="redlogo.png" alt="Instant Pot logo">
+        <div class="flex gap-10" vid="18">
+            <span class="micro-text cursor-pointer" vid="19">Strategy</span>
+            <span class="micro-text cursor-pointer" vid="20">Audit</span>
+            <span class="micro-text cursor-pointer" vid="21">Execution</span>
+            <span class="micro-text cursor-pointer" vid="22">90-Day Plan</span>
         </div>
-        <div class="hero-stage">
-          <div class="cover-orbit" aria-hidden="true"></div>
-          <img class="cover-pot frog" src="frogpot.png" alt="Instant Pot frog edition illustration">
-          <img class="cover-pot emoji" src="emojipot.png" alt="Instant Pot emoji edition illustration">
-          <img class="cover-pot classic" src="classicpot.png" alt="Classic Instant Pot illustration">
-          <img class="cover-pot modern" src="modernpot.png" alt="Modern Instant Pot illustration">
-          <div class="hero-note">
-            <strong>Proposal Lens</strong>
-            <p>Cleaner, calmer, more boardroom-ready. The structure is built for decision-making, prioritization, and KPI accountability.</p>
-          </div>
+        <div class="micro-text font-bold" vid="23">Confidential — 2024</div>
+    </nav>
+
+    
+    <header class="min-h-screen flex flex-col justify-center px-10 pt-20 pb-40 border-b border-[#D8D4CC]" vid="24">
+        <div class="max-w-5xl" vid="25">
+            <div class="micro-text text-[#D13027] mb-8" vid="26">Executive Proposal — Series 10.0</div>
+            <h1 class="serif italic text-[110px] leading-[0.9] mb-12" vid="27">
+                10 Instant Pot Brands — <br vid="28"> 90-Day Digital Ecosystem, <br vid="29"> <span class="text-[#D13027]" vid="30">Modernization</span> &amp; Participation.
+            </h1>
+            <div class="grid grid-cols-2 gap-20" vid="31">
+                <p class="text-xl font-light text-gray-600 leading-relaxed" vid="32">
+                    Instant Pot already has awareness, retail familiarity, and category legitimacy. The opportunity is to modernize how the brand earns attention, trust, retention, and participation across platforms.
+                </p>
+                <div class="flex flex-col justify-end pb-2" vid="33">
+                    <div class="micro-text mb-4" vid="34">Strategic Thesis</div>
+                    <div class="serif text-3xl italic" vid="35">Moving from "aspirational kitchen appliance" to practical magic for real life.</div>
+                </div>
+            </div>
+            <div class="proposal-pot-collage">
+                <div class="proposal-pot-card"><img src="frogpot.png" alt="Frogpot illustration"></div>
+                <div class="proposal-pot-card"><img src="emojipot.png" alt="Emojipot illustration"></div>
+                <div class="proposal-pot-card"><img src="classicpot.png" alt="Classicpot illustration"></div>
+                <div class="proposal-pot-card"><img src="modernpot.png" alt="Modernpot illustration"></div>
+            </div>
         </div>
-      </div>
-      <div class="hero-footer">
-        <div class="eyebrow">90-Day Digital Ecosystem Modernization</div>
-        <div class="footer-note">From aspiration to participation.</div>
-      </div>
+    </header>
+
+    
+    <section class="grid grid-cols-12 border-b border-[#D8D4CC]" vid="36">
+        <div class="col-span-4 p-10 border-r border-[#D8D4CC]" vid="37">
+            <div class="micro-text mb-10" vid="38">01 / Strategic Reframing</div>
+            <h2 class="serif text-5xl italic leading-tight mb-8" vid="39">From Aspiration to Participation</h2>
+            <p class="text-sm text-gray-500 mb-10" vid="40">Audiences increasingly trust content that feels useful, achievable, and repeatable rather than polished luxury.</p>
+            <div class="aspect-square bg-[#E5E1D8] lily-pad flex items-center justify-center p-12" vid="41">
+                <div class="text-center" vid="42">
+                    <div class="micro-text mb-2" vid="43">Visual Concept</div>
+                    <div class="serif italic text-lg" vid="44">"The Living Kitchen"</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-span-8" vid="45">
+            <div class="grid grid-cols-2 border-b border-[#D8D4CC]" vid="46">
+                <div class="p-10 border-r border-[#D8D4CC] bg-white" vid="47">
+                    <div class="micro-text mb-6" vid="48">The Old Frame</div>
+                    <ul class="space-y-4 serif text-2xl italic" vid="49">
+                        <li vid="50">Aspirational Kitchens</li>
+                        <li vid="51">Paid Influencer Polish</li>
+                        <li vid="52">Product-First Features</li>
+                        <li vid="53">Visibility as Goal</li>
+                    </ul>
+                </div>
+                <div class="p-10 bg-white" vid="54">
+                    <div class="micro-text mb-6 text-[#D13027]" vid="55">The New Frame</div>
+                    <ul class="space-y-4 serif text-2xl italic" vid="56">
+                        <li vid="57">Practical Utility</li>
+                        <li vid="58">Real Kitchens &amp; Rituals</li>
+                        <li vid="59">Creator Trust &amp; Routines</li>
+                        <li vid="60">Signal Accumulation</li>
+                    </ul>
+                </div>
+            </div>
+            <div class="p-10 h-full" vid="61">
+                <div class="flex justify-between items-center mb-8" vid="62">
+                    <span class="micro-text" vid="63">Audit Grid: Aspiration vs Practical</span>
+                </div>
+                <div class="grid grid-cols-2 gap-8" vid="64">
+                    <div class="border-subtle p-6 aspect-video bg-[#eee] flex items-center justify-center text-xs text-gray-400 uppercase tracking-widest" vid="65">Staged Luxury (Passive)</div>
+                    <div class="border-subtle p-6 aspect-video bg-[#AAB7A8] flex items-center justify-center text-xs text-white uppercase tracking-widest" vid="66">Real Kitchen Loop (Active)</div>
+                </div>
+            </div>
+        </div>
     </section>
 
-    <section class="section">
-      <div class="eyebrow">Executive Summary</div>
-      <h2 class="section-title">Instant Pot should behave like everyday infrastructure, not distant aspiration.</h2>
-      <div class="section-grid two-col">
-        <div class="proposal-quote">
-          <div>
-            <h3>Strategic Thesis</h3>
-            <blockquote>Instant Pot already owns household legitimacy. The proposal is to modernize how that legitimacy becomes participation, retention, and creator-native growth.</blockquote>
-          </div>
-          <p>The strongest framing from the executive source deck is clear: the brand should behave like everyday infrastructure, not distant aspiration.</p>
+    
+    <div class="marquee border-b border-[#D8D4CC] py-4 bg-white" vid="67">
+        <div class="marquee-content serif italic text-2xl" vid="68">
+            PRACTICAL MAGIC — REAL KITCHENS — CREATOR TRUST — PARTICIPATION — THE MODERN POT — PRACTICAL MAGIC — REAL KITCHENS — CREATOR TRUST — PARTICIPATION — THE MODERN POT —
         </div>
-        <div class="section-grid">
-          <div class="card">
-            <h3>Everyday Infrastructure</h3>
-            <p>Anchor the brand in practical utility, accessibility, and routine-led value that people recognize in their own kitchens.</p>
-          </div>
-          <div class="card">
-            <h3>From Aspiration to Participation</h3>
-            <p>Shift toward comments, saves, collabs, creator systems, and social proof that reward real use over polished distance.</p>
-          </div>
-          <div class="card">
-            <h3>Retention and Ecosystems</h3>
-            <p>Connect content to creator ecosystems, onboarding flows, lifecycle retention, and repeat usage rather than isolated campaign bursts.</p>
-          </div>
+    </div>
+
+    
+    <section class="p-10 border-b border-[#D8D4CC]" vid="69">
+        <div class="micro-text mb-12" vid="70">02 / Current State Diagnostic</div>
+        <div class="grid grid-cols-2 gap-20" vid="71">
+            <div vid="72">
+                <h3 class="serif text-4xl italic mb-8" vid="73">What's Working</h3>
+                <div class="space-y-6" vid="74">
+                    <div class="border-subtle p-6 bg-white" vid="75">
+                        <div class="font-semibold mb-2" vid="76">Category Legitimacy</div>
+                        <p class="text-sm text-gray-600" vid="77">Strong name recognition; inherent product utility for one-pot meals and batch cooking.</p>
+                    </div>
+                    <div class="border-subtle p-6 bg-white" vid="78">
+                        <div class="font-semibold mb-2" vid="79">Pinterest Alignment</div>
+                        <p class="text-sm text-gray-600" vid="80">Highly effective for recipe discovery and long-tail search behavior.</p>
+                    </div>
+                    <div class="border-subtle p-6 bg-white" vid="81">
+                        <div class="font-semibold mb-2" vid="82">Educational Potential</div>
+                        <p class="text-sm text-gray-600" vid="83">Massive space for onboarding, troubleshooting, and creator-led recipe systems.</p>
+                    </div>
+                </div>
+            </div>
+            <div vid="84">
+                <h3 class="serif text-4xl italic mb-8 text-[#D13027]" vid="85">What's Not Working</h3>
+                <div class="space-y-4" vid="86">
+                    <div class="flex justify-between border-b border-[#D8D4CC] py-4" vid="87">
+                        <span class="micro-text w-32" vid="88">The Problem</span>
+                        <span class="font-medium flex-1" vid="89">Unrealistic Kitchens</span>
+                        <span class="text-xs text-gray-400 w-32 text-right" vid="90">Fix: Real Spaces</span>
+                    </div>
+                    <div class="flex justify-between border-b border-[#D8D4CC] py-4" vid="91">
+                        <span class="micro-text w-32" vid="92">The Problem</span>
+                        <span class="font-medium flex-1" vid="93">Scripted Influencers</span>
+                        <span class="text-xs text-gray-400 w-32 text-right" vid="94">Fix: Native Prompts</span>
+                    </div>
+                    <div class="flex justify-between border-b border-[#D8D4CC] py-4" vid="95">
+                        <span class="micro-text w-32" vid="96">The Problem</span>
+                        <span class="font-medium flex-1" vid="97">Weak TikTok Reach</span>
+                        <span class="text-xs text-gray-400 w-32 text-right" vid="98">Fix: UGC/Remix</span>
+                    </div>
+                    <div class="flex justify-between border-b border-[#D8D4CC] py-4" vid="99">
+                        <span class="micro-text w-32" vid="100">The Problem</span>
+                        <span class="font-medium flex-1" vid="101">Link Mismatch</span>
+                        <span class="text-xs text-gray-400 w-32 text-right" vid="102">Fix: Pathway Audit</span>
+                    </div>
+                </div>
+            </div>
         </div>
-      </div>
     </section>
 
-    <section class="section">
-      <div class="eyebrow">Current vs Future</div>
-      <h2 class="section-title">What’s working is real. What’s missing is a better participation system.</h2>
-      <div class="section-grid two-col">
-        <div class="card">
-          <h3>What’s Working</h3>
-          <div class="board-title">Strong recognition and strong utility.</div>
-          <ul class="list">
-            <li>Clear brand recognition and category familiarity.</li>
-            <li>Real product utility that supports education and search.</li>
-            <li>Pinterest fit for recipes, planning, and saves.</li>
-            <li>Broad creator potential because the product belongs in real homes.</li>
-          </ul>
+    
+    <section class="border-b border-[#D8D4CC]" vid="103">
+        <div class="grid grid-cols-3" vid="104">
+            
+            <div class="p-10 border-r border-b border-[#D8D4CC]" vid="105">
+                <div class="flex justify-between mb-6" vid="106">
+                    <span class="micro-text" vid="107">TikTok</span>
+                    <span class="micro-text text-[#D13027]" vid="108">Priority: High</span>
+                </div>
+                <div class="serif italic text-2xl mb-4" vid="109">The Cultural Heart</div>
+                <p class="text-xs text-gray-500 mb-6" vid="110">Current: Under-optimized corporate content. Direction: Creator-native, UGC, duets, stitches.</p>
+                <div class="text-[9px] font-bold uppercase tracking-widest text-gray-400" vid="111">Discovery Engine</div>
+            </div>
+            
+            <div class="p-10 border-r border-b border-[#D8D4CC]" vid="112">
+                <div class="flex justify-between mb-6" vid="113">
+                    <span class="micro-text" vid="114">Instagram</span>
+                    <span class="micro-text text-[#D13027]" vid="115">Priority: High</span>
+                </div>
+                <div class="serif italic text-2xl mb-4" vid="116">Visual Retention</div>
+                <p class="text-xs text-gray-500 mb-6" vid="117">Current: Overly aspirational. Direction: Practical whimsy, colabs, Reels, carousel saves.</p>
+                <div class="text-[9px] font-bold uppercase tracking-widest text-gray-400" vid="118">Community Gallery</div>
+            </div>
+            
+            <div class="p-10 border-b border-[#D8D4CC]" vid="119">
+                <div class="flex justify-between mb-6" vid="120">
+                    <span class="micro-text" vid="121">Reddit</span>
+                    <span class="micro-text text-[#D13027]" vid="122">Priority: Highest</span>
+                </div>
+                <div class="serif italic text-2xl mb-4" vid="123">Trust Intelligence</div>
+                <p class="text-xs text-gray-500 mb-6" vid="124">Current: Unused. Direction: First-person listening, honest participation, technical help.</p>
+                <div class="text-[9px] font-bold uppercase tracking-widest text-gray-400" vid="125">Insight Priority</div>
+            </div>
+            
+            <div class="p-10 border-r border-b border-[#D8D4CC]" vid="126">
+                <div class="flex justify-between mb-6" vid="127">
+                    <span class="micro-text" vid="128">Pinterest</span>
+                    <span class="micro-text" vid="129">Priority: High</span>
+                </div>
+                <div class="serif italic text-2xl mb-4" vid="130">Search Retrieval</div>
+                <p class="text-xs text-gray-500 mb-6" vid="131">Direction: Recipe SEO, meal planning boards, seasonal cooking collections.</p>
+                <div class="text-[9px] font-bold uppercase tracking-widest text-gray-400" vid="132">Planning Role</div>
+            </div>
+            
+            <div class="p-10 border-r border-b border-[#D8D4CC]" vid="133">
+                <div class="flex justify-between mb-6" vid="134">
+                    <span class="micro-text" vid="135">YouTube</span>
+                    <span class="micro-text" vid="136">Priority: High</span>
+                </div>
+                <div class="serif italic text-2xl mb-4" vid="137">Searchable Authority</div>
+                <p class="text-xs text-gray-500 mb-6" vid="138">Direction: Long-form explainers, feature education, creator troubleshooting.</p>
+                <div class="text-[9px] font-bold uppercase tracking-widest text-gray-400" vid="139">Educational Hub</div>
+            </div>
+            
+            <div class="p-10 border-b border-[#D8D4CC]" vid="140">
+                <div class="flex justify-between mb-6" vid="141">
+                    <span class="micro-text" vid="142">Email/SMS</span>
+                    <span class="micro-text" vid="143">Priority: High</span>
+                </div>
+                <div class="serif italic text-2xl mb-4" vid="144">Lifecycle Retention</div>
+                <p class="text-xs text-gray-500 mb-6" vid="145">Direction: Onboarding journeys, "First 30 Meals", seasonal retention loops.</p>
+                <div class="text-[9px] font-bold uppercase tracking-widest text-gray-400" vid="146">Conversion Core</div>
+            </div>
         </div>
-        <div class="card">
-          <h3>What’s Not</h3>
-          <div class="board-title">Weak participation systems are holding growth back.</div>
-          <ul class="list future-list">
-            <li>TikTok is weak relative to brand size.</li>
-            <li>Instagram remains too aspirational and detached from real kitchen use.</li>
-            <li>Scripted influencer content and bland presentation flatten the opportunity.</li>
-            <li>Weak sizing, weak continuity, and low UGC or comment participation reduce momentum.</li>
-          </ul>
-        </div>
-      </div>
     </section>
 
-    <section class="section">
-      <div class="eyebrow">Platform Direction</div>
-      <h2 class="section-title">Each platform needs a distinct role, but all roads should lead back to trust and retention.</h2>
-      <div class="platform-layout">
-        <div class="platform-stack">
-          <div class="platform-card"><div class="platform-label">TikTok</div><div class="platform-copy">Rebuild with creator-native UGC, comments, collabs, stitches, and duets.</div></div>
-          <div class="platform-card"><div class="platform-label">Instagram</div><div class="platform-copy">Use Reels for awareness, carousels for saves, and creator collabs for continuity.</div></div>
-          <div class="platform-card"><div class="platform-label">Reddit</div><div class="platform-copy">Top priority for listening, troubleshooting, trust, and language capture.</div></div>
-          <div class="platform-card"><div class="platform-label">Pinterest</div><div class="platform-copy">Top-tier fit but underused. Lean into recipe search, planning, and save behavior.</div></div>
-          <div class="platform-card"><div class="platform-label">Facebook</div><div class="platform-copy">Redistribute short-form content and support groups plus creator collaboration.</div></div>
-          <div class="platform-card"><div class="platform-label">YouTube / LinkedIn / X / Lifecycle</div><div class="platform-copy">YouTube for explanation, LinkedIn for team and employee advocacy, X for monitoring, Email/SMS for retention.</div></div>
+    
+    <section class="p-20 border-b border-[#D8D4CC] bg-white flex flex-col items-center" vid="147">
+        <div class="micro-text mb-16" vid="148">04 / Measurement Infrastructure</div>
+        <h3 class="serif text-6xl italic mb-20" vid="149">KPI Pyramid for Scale</h3>
+        
+        <div class="w-full max-w-2xl flex flex-col items-center gap-2" vid="150">
+            <div class="pyramid-participation flex items-center justify-center text-center p-4" vid="151">
+                <div vid="152">
+                    <div class="micro-text" vid="153">Participation (Top)</div>
+                    <div class="font-semibold text-sm" vid="154">UGC, Affiliates, LTV</div>
+                </div>
+            </div>
+            <div class="pyramid-resonance flex items-center justify-center text-center p-4" vid="155">
+                <div vid="156">
+                    <div class="micro-text text-gray-600" vid="157">Resonance (Middle)</div>
+                    <div class="font-semibold text-sm" vid="158">Saves, Shares, Retention</div>
+                </div>
+            </div>
+            <div class="pyramid-visibility flex items-center justify-center text-center p-4" vid="159">
+                <div vid="160">
+                    <div class="micro-text text-gray-400" vid="161">Visibility (Base)</div>
+                    <div class="font-semibold text-sm" vid="162">ROAS, CAC, CTR, Reach</div>
+                </div>
+            </div>
         </div>
-        <div class="social-stack">
-          <div class="social-card">
-            <h3>Operating System View</h3>
-            <div class="social-ui"><strong>Current</strong>Overly polished publishing logic with weak link-in-bio and weak participation continuity.</div>
-            <div class="social-ui"><strong>Future</strong>Each platform has a distinct role, but all roads lead back to search, trust, onboarding, and repeated use.</div>
-          </div>
-          <div class="social-card">
-            <h3>Social UI Reference</h3>
-            <div class="social-ui"><strong>Reddit Thread UI</strong>“How do I stop getting a burn warning?” becomes product education, FAQ language, and creator content.</div>
-            <div class="social-ui" style="margin-top:12px;"><strong>Pinterest Pin UI</strong>“5 dump-and-go dinners for low-energy weeknights” becomes a save loop, not a one-off post.</div>
-          </div>
+        
+        <div class="grid grid-cols-3 gap-20 mt-20 w-full text-center" vid="163">
+            <div vid="164">
+                <div class="text-3xl serif italic" vid="165">+15%</div>
+                <div class="micro-text text-gray-400" vid="166">ROAS Target (90d)</div>
+            </div>
+            <div vid="167">
+                <div class="text-3xl serif italic" vid="168">+20%</div>
+                <div class="micro-text text-gray-400" vid="169">Save/Share Ratio</div>
+            </div>
+            <div vid="170">
+                <div class="text-3xl serif italic" vid="171">3:1+</div>
+                <div class="micro-text text-gray-400" vid="172">CAC Efficiency</div>
+            </div>
         </div>
-      </div>
-      <p class="caption" style="margin-top:18px;">This platform matrix should function like a proposal operating system, not a loose content wishlist.</p>
     </section>
 
-    <section class="section">
-      <div class="eyebrow">Creator / UGC / Employee Advocacy</div>
-      <h2 class="section-title">Move away from scripted reads and toward a cohort-based participation engine.</h2>
-      <div class="creator-layout">
-        <div class="card">
-          <h3>Current</h3>
-          <div class="board-title">Too many reads. Not enough real people.</div>
-          <ul class="list">
-            <li>Move away from scripted influencer reads.</li>
-            <li>Stop treating brand-owned publishing as the only credibility layer.</li>
-            <li>Reduce distance between product utility and creator voice.</li>
-          </ul>
+    
+    <section class="grid grid-cols-12 border-b border-[#D8D4CC]" vid="173">
+        <div class="col-span-5 p-10 border-r border-[#D8D4CC]" vid="174">
+            <div class="micro-text mb-10 text-[#D13027]" vid="175">05 / Brand Vision</div>
+            <h2 class="serif text-5xl italic mb-8" vid="176">Practical Magic <br vid="177">for Real Life</h2>
+            <p class="text-sm text-gray-600 leading-relaxed mb-12" vid="178">Help people cook more consistently, confidently, affordably, and sustainably in the kitchens they actually have.</p>
+            
+            <div class="space-y-4" vid="179">
+                <div class="micro-text text-gray-400" vid="180">Audience Ecosystems</div>
+                <div class="flex flex-wrap gap-2" vid="181">
+                    <span class="px-3 py-1 border-subtle text-[10px] rounded-full uppercase" vid="182">Apartment Cooks</span>
+                    <span class="px-3 py-1 border-subtle text-[10px] rounded-full uppercase" vid="183">First-Kitchen Adults</span>
+                    <span class="px-3 py-1 border-subtle text-[10px] rounded-full uppercase" vid="184">ADHD Meal Prep</span>
+                    <span class="px-3 py-1 border-subtle text-[10px] rounded-full uppercase" vid="185">Budget Households</span>
+                    <span class="px-3 py-1 border-subtle text-[10px] rounded-full uppercase" vid="186">Busy Families</span>
+                </div>
+            </div>
         </div>
-        <div class="card">
-          <h3>Future</h3>
-          <div class="board-title">Build a cohort-based participation system.</div>
-          <ul class="list future-list">
-            <li>Use creator-native prompts and collab posts on creator pages.</li>
-            <li>Amplify UGC with response behavior and recurring creator cohorts.</li>
-            <li>Develop employee recipe creators and Mila-style employee advocacy where appropriate.</li>
-          </ul>
+        <div class="col-span-7 p-10 bg-white" vid="187">
+            <div class="micro-text mb-6" vid="188">Witchy Brand System</div>
+            <div class="grid grid-cols-2 border-t border-l border-[#D8D4CC]" vid="189">
+                <div class="p-6 border-r border-b border-[#D8D4CC]" vid="190">
+                    <div class="serif text-xl italic text-[#D13027]" vid="191">Hearthcraft</div>
+                    <div class="text-xs text-gray-500" vid="192">Practical warmth &amp; home utility</div>
+                </div>
+                <div class="p-6 border-r border-b border-[#D8D4CC]" vid="193">
+                    <div class="serif text-xl italic text-[#D13027]" vid="194">Signalcasting</div>
+                    <div class="text-xs text-gray-500" vid="195">Consistent platform identity</div>
+                </div>
+                <div class="p-6 border-r border-b border-[#D8D4CC]" vid="196">
+                    <div class="serif text-xl italic text-[#D13027]" vid="197">Ritual Design</div>
+                    <div class="text-xs text-gray-500" vid="198">Repeatable cooking routines</div>
+                </div>
+                <div class="p-6 border-r border-b border-[#D8D4CC]" vid="199">
+                    <div class="serif text-xl italic text-[#D13027]" vid="200">Living Grimoire</div>
+                    <div class="text-xs text-gray-500" vid="201">Searchable educational hub</div>
+                </div>
+                <div class="p-6 border-r border-b border-[#D8D4CC]" vid="202">
+                    <div class="serif text-xl italic text-[#D13027]" vid="203">Everyday Alchemy</div>
+                    <div class="text-xs text-gray-500" vid="204">Ordinary into extraordinary</div>
+                </div>
+                <div class="p-6 border-r border-b border-[#D8D4CC]" vid="205">
+                    <div class="serif text-xl italic text-[#D13027]" vid="206">Gathering Magic</div>
+                    <div class="text-xs text-gray-500" vid="207">Community participation</div>
+                </div>
+            </div>
         </div>
-      </div>
-      <div class="section-grid two-col" style="margin-top:22px;">
-        <div class="card">
-          <h3>Future Media Frames</h3>
-          <p>Reusable placeholders for Reels, TikToks, square stills, and landscape explainers keep future production modular.</p>
-        </div>
-        <div class="card placeholder-grid">
-          <div class="media-placeholder-vertical"><div class="placeholder-copy">1080 × 1920 vertical video placeholder</div></div>
-          <div class="placeholder-stack">
-            <div class="media-placeholder-four-five"><div class="placeholder-copy">1350 × 1080 image placeholder</div></div>
-            <div class="media-placeholder-landscape"><div class="placeholder-copy">1920 × 1080 embed placeholder</div></div>
-          </div>
-        </div>
-      </div>
     </section>
 
-    <section class="section">
-      <div class="eyebrow">KPI Layers</div>
-      <h2 class="section-title">Measure the ecosystem as a pyramid, not a flat list.</h2>
-      <div class="kpi-pyramid">
-        <div class="kpi-cap">Signal Accumulation</div>
-        <div class="kpi-tier participation">
-          <div class="kpi-tier-inner">
-            <div class="kpi-tier-label">Participation</div>
-            <div class="kpi-tier-copy">Creator cohort retention, UGC participation, affiliate revenue, email and SMS retention, onboarding completion.</div>
-          </div>
+    
+    <section class="p-10 border-b border-[#D8D4CC]" vid="208">
+        <div class="micro-text mb-10" vid="209">06 / Visual Direction</div>
+        <div class="grid grid-cols-4 gap-6" vid="210">
+            <div class="aspect-[4/5] bg-[#E5E1D8] lily-pad flex items-center justify-center p-8 text-center" vid="211">
+                <div class="micro-text opacity-40" vid="212">Real Kitchens</div>
+            </div>
+            <div class="aspect-[4/5] bg-[#D8D4CC] lily-pad flex items-center justify-center p-8 text-center" vid="213">
+                <div class="micro-text opacity-40" vid="214">Whimsical Details</div>
+            </div>
+            <div class="aspect-[4/5] bg-[#AAB7A8] lily-pad flex items-center justify-center p-8 text-center" vid="215">
+                <div class="micro-text opacity-40" vid="216">Practical Recipes</div>
+            </div>
+            <div class="aspect-[4/5] bg-[#2A2A2A] lily-pad flex items-center justify-center p-8 text-center" vid="217">
+                <div class="micro-text opacity-40 text-white" vid="218">Creator Native</div>
+            </div>
         </div>
-        <div class="kpi-tier resonance">
-          <div class="kpi-tier-inner">
-            <div class="kpi-tier-label">Resonance</div>
-            <div class="kpi-tier-copy">Saves, shares, watch retention, repeat viewers, and comment depth show whether the content becomes worth returning to.</div>
-          </div>
+        <div class="mt-10 flex justify-between" vid="219">
+            <div class="text-xs max-w-sm text-gray-500" vid="220">Whimsical practicality: useful, warm, tactile, and internet-native without feeling fake or childish.</div>
+            <div class="flex gap-4" vid="221">
+                <div class="w-4 h-4 bg-[#F7F5F0] border border-[#D8D4CC]" vid="222"></div>
+                <div class="w-4 h-4 bg-[#2A2A2A]" vid="223"></div>
+                <div class="w-4 h-4 bg-[#D13027]" vid="224"></div>
+                <div class="w-4 h-4 bg-[#AAB7A8]" vid="225"></div>
+            </div>
         </div>
-        <div class="kpi-tier visibility">
-          <div class="kpi-tier-inner">
-            <div class="kpi-tier-label">Visibility</div>
-            <div class="kpi-tier-copy">ROAS, CTR, reach quality, and CPM efficiency tell us whether spend and attention are landing with the right audiences.</div>
-          </div>
-        </div>
-      </div>
     </section>
 
-    <section class="section">
-      <div class="eyebrow">90-Day Plan</div>
-      <h2 class="section-title">Audit first, modernize second, then scale with reporting discipline.</h2>
-      <div class="timeline-grid">
-        <div class="timeline-card">
-          <div class="timeline-label">Month 1</div>
-          <h3 class="timeline-title">Audit &amp; Map</h3>
-          <ul class="list">
-            <li>Audit all platforms and current content behavior.</li>
-            <li>Review creative sizing and establish KPI baselines.</li>
-            <li>Audit link-in-bio and conversion pathways.</li>
-            <li>Run social listening and creator ecosystem review.</li>
-            <li>Identify quick wins with the clearest retention upside.</li>
-          </ul>
+    
+    <section class="p-10 border-b border-[#D8D4CC] bg-white" vid="226">
+        <div class="micro-text mb-10" vid="227">09 / Creator Infrastructure</div>
+        <div class="grid grid-cols-2 gap-20" vid="228">
+            <div vid="229">
+                <h3 class="serif text-4xl italic mb-6" vid="230">The Prompt Shift</h3>
+                <p class="text-sm text-gray-500 mb-10" vid="231">Moving from one-off sponsorships to long-term trust ecosystems.</p>
+                <div class="border-subtle overflow-hidden" vid="232">
+                    <div class="grid grid-cols-2 bg-gray-50 border-b border-[#D8D4CC]" vid="233">
+                        <div class="p-4 micro-text opacity-50" vid="234">Instead of:</div>
+                        <div class="p-4 micro-text text-[#D13027]" vid="235">Use:</div>
+                    </div>
+                    <div class="grid grid-cols-2 border-b border-[#D8D4CC]" vid="236">
+                        <div class="p-6 text-xs text-gray-500" vid="237">"Mention the 7-in-1 features"</div>
+                        <div class="p-6 text-xs italic" vid="238">"What meal became easier once you used this?"</div>
+                    </div>
+                    <div class="grid grid-cols-2 border-b border-[#D8D4CC]" vid="239">
+                        <div class="p-6 text-xs text-gray-500" vid="240">"Talk about pressure technology"</div>
+                        <div class="p-6 text-xs italic" vid="241">"What do you cook when you have no energy?"</div>
+                    </div>
+                    <div class="grid grid-cols-2" vid="242">
+                        <div class="p-6 text-xs text-gray-500" vid="243">"Tell people to buy in bio"</div>
+                        <div class="p-6 text-xs italic" vid="244">"Show the routine this product changed"</div>
+                    </div>
+                </div>
+            </div>
+            <div class="flex flex-col justify-center items-center p-10 border-subtle rounded-full aspect-square text-center" vid="245">
+                <div class="micro-text text-[#D13027] mb-4" vid="246">Case Study Model</div>
+                <div class="serif text-3xl italic mb-4" vid="247">"The Mila Framework"</div>
+                <p class="text-xs text-gray-500 max-w-xs" vid="248">Recurring employee personalities built on real expertise, not corporate scripts.</p>
+            </div>
         </div>
-        <div class="timeline-card">
-          <div class="timeline-label">Month 2</div>
-          <h3 class="timeline-title">Build &amp; Modernize</h3>
-          <ul class="list">
-            <li>Create the visual direction system and content taxonomy.</li>
-            <li>Define the Living Grimoire and search structure.</li>
-            <li>Turn strategy into repeatable creator-native formats.</li>
-            <li>Build creator cohort, employee advocacy, and UGC frameworks.</li>
-          </ul>
-        </div>
-        <div class="timeline-card">
-          <div class="timeline-label">Month 3</div>
-          <h3 class="timeline-title">Optimize &amp; Scale</h3>
-          <ul class="list future-list">
-            <li>Build an experimentation system across hooks, creators, formats, and conversion paths.</li>
-            <li>Optimize creator partnerships and lifecycle retention with executive reporting built in.</li>
-            <li>Extend into a 6–12 month roadmap, including refurbished, reuse, or nonprofit exploration if strategically useful.</li>
-          </ul>
-        </div>
-      </div>
     </section>
 
-    <section class="section">
-      <div class="closing-layout">
-        <div class="closing-copy">
-          <div class="eyebrow">Final Proposal Note</div>
-          <h2>Turn modernized utility into a long-term creator and retention engine.</h2>
-          <p>The best version of Instant Pot content is warm, tactile, strategic, and practical enough to earn repeated use. That is the infrastructure story this proposal is designed to unlock.</p>
-          <div class="footer-note">Whimsical enough to charm. Useful enough to keep.</div>
+    
+    <section class="p-10 border-b border-[#D8D4CC]" vid="249">
+        <div class="micro-text mb-16 text-[#D13027]" vid="250">15 / Execution Timeline</div>
+        <h2 class="serif text-[80px] leading-none mb-20 italic" vid="251">The Main Event:<br vid="252">A 90-Day Blueprint.</h2>
+
+        
+        <div class="grid grid-cols-12 mb-20 border-t border-[#D8D4CC] pt-10" vid="253">
+            <div class="col-span-3" vid="254">
+                <div class="micro-text text-[#D13027]" vid="255">Phase I</div>
+                <div class="serif text-3xl italic mt-2" vid="256">Diagnose, Audit <br vid="257">&amp; Map</div>
+                <div class="text-xs text-gray-400 mt-4" vid="258">Weeks 1 — 4</div>
+            </div>
+            <div class="col-span-9 grid grid-cols-2 gap-10" vid="259">
+                <div class="space-y-8" vid="260">
+                    <div class="border-l-2 border-[#D13027] pl-6" vid="261">
+                        <div class="font-semibold text-sm" vid="262">W1: Digital Ecosystem Audit</div>
+                        <p class="text-xs text-gray-500 mt-2" vid="263">Establish KPI baselines, review link-in-bio paths, identify quick wins across TikTok/Reddit.</p>
+                    </div>
+                    <div class="border-l-2 border-[#D13027] pl-6" vid="264">
+                        <div class="font-semibold text-sm" vid="265">W2: Brand Signal &amp; Aesthetic</div>
+                        <p class="text-xs text-gray-500 mt-2" vid="266">Audit aspirational vs practical content. Build current vs future visual comparison.</p>
+                    </div>
+                </div>
+                <div class="space-y-8" vid="267">
+                    <div class="border-l-2 border-[#D13027] pl-6" vid="268">
+                        <div class="font-semibold text-sm" vid="269">W3: Social Listening</div>
+                        <p class="text-xs text-gray-500 mt-2" vid="270">Mine comments and Reddit. Map audience behavior taxonomy and pain points.</p>
+                    </div>
+                    <div class="border-l-2 border-[#D13027] pl-6" vid="271">
+                        <div class="font-semibold text-sm" vid="272">W4: KPI &amp; Attribution</div>
+                        <p class="text-xs text-gray-500 mt-2" vid="273">Review UTM hygiene. Establish creator ROI framework and reporting cadence.</p>
+                    </div>
+                </div>
+            </div>
         </div>
-        <div class="card" style="display:flex; flex-direction:column; justify-content:space-between;">
-          <div>
-            <h3>Boardroom Summary</h3>
-            <p class="lede">Keep the warmth. Keep the utility. Modernize the publishing system so discovery, trust, retention, and participation reinforce one another instead of operating in isolation.</p>
-          </div>
-          <img class="instapot-inline" src="instapot.png" alt="Instant Pot product image">
+
+        
+        <div class="grid grid-cols-12 mb-20 border-t border-[#D8D4CC] pt-10" vid="274">
+            <div class="col-span-3" vid="275">
+                <div class="micro-text text-[#D13027]" vid="276">Phase II</div>
+                <div class="serif text-3xl italic mt-2" vid="277">Build, Align <br vid="278">&amp; Modernize</div>
+                <div class="text-xs text-gray-400 mt-4" vid="279">Weeks 5 — 8</div>
+            </div>
+            <div class="col-span-9 grid grid-cols-2 gap-10" vid="280">
+                <div class="space-y-8" vid="281">
+                    <div class="border-l-2 border-[#D13027] pl-6" vid="282">
+                        <div class="font-semibold text-sm" vid="283">W5: Vision &amp; Messaging</div>
+                        <p class="text-xs text-gray-500 mt-2" vid="284">Define "Practical Magic". Build platform voice matrix and visual direction.</p>
+                    </div>
+                    <div class="border-l-2 border-[#D13027] pl-6" vid="285">
+                        <div class="font-semibold text-sm" vid="286">W6: Creator Ecosystem</div>
+                        <p class="text-xs text-gray-500 mt-2" vid="287">Build cohorts, design advocacy framework, and launch creator prompt system.</p>
+                    </div>
+                </div>
+                <div class="space-y-8" vid="288">
+                    <div class="border-l-2 border-[#D13027] pl-6" vid="289">
+                        <div class="font-semibold text-sm" vid="290">W7: Video Taxonomy</div>
+                        <p class="text-xs text-gray-500 mt-2" vid="291">Define short vs long form roles. Build "Living Grimoire" architecture.</p>
+                    </div>
+                    <div class="border-l-2 border-[#D13027] pl-6" vid="292">
+                        <div class="font-semibold text-sm" vid="293">W8: Participation Rituals</div>
+                        <p class="text-xs text-gray-500 mt-2" vid="294">Launch UGC prompts and plan Reddit participation workflow.</p>
+                    </div>
+                </div>
+            </div>
         </div>
-      </div>
+
+        
+        <div class="grid grid-cols-12 border-t border-[#D8D4CC] pt-10" vid="295">
+            <div class="col-span-3" vid="296">
+                <div class="micro-text text-[#D13027]" vid="297">Phase III</div>
+                <div class="serif text-3xl italic mt-2" vid="298">Optimize, Scale <br vid="299">&amp; Operationalize</div>
+                <div class="text-xs text-gray-400 mt-4" vid="300">Weeks 9 — 12</div>
+            </div>
+            <div class="col-span-9 grid grid-cols-2 gap-10" vid="301">
+                <div class="space-y-8" vid="302">
+                    <div class="border-l-2 border-[#D13027] pl-6" vid="303">
+                        <div class="font-semibold text-sm" vid="304">W9: Experimentation</div>
+                        <p class="text-xs text-gray-500 mt-2" vid="305">Launch test matrix for formats. Track saves, retention, and conversion.</p>
+                    </div>
+                    <div class="border-l-2 border-[#D13027] pl-6" vid="306">
+                        <div class="font-semibold text-sm" vid="307">W10: Lifecycle &amp; Access</div>
+                        <p class="text-xs text-gray-500 mt-2" vid="308">Build "First 30 Meals" journey and explore refurbished program concepts.</p>
+                    </div>
+                </div>
+                <div class="space-y-8" vid="309">
+                    <div class="border-l-2 border-[#D13027] pl-6" vid="310">
+                        <div class="font-semibold text-sm" vid="311">W11: Executive Alignment</div>
+                        <p class="text-xs text-gray-500 mt-2" vid="312">Present KPI movement and align cross-functional workflows.</p>
+                    </div>
+                    <div class="border-l-2 border-[#D13027] pl-6" vid="313">
+                        <div class="font-semibold text-sm" vid="314">W12: 12-Month Roadmap</div>
+                        <p class="text-xs text-gray-500 mt-2" vid="315">Present final 90-day findings and prioritize long-term expansion.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
     </section>
-  </main>
-</body>
-</html>
+
+    
+    <section class="p-20 bg-[#2A2A2A] text-[#F7F5F0]" vid="316">
+        <div class="grid grid-cols-2 gap-20" vid="317">
+            <div vid="318">
+                <div class="micro-text opacity-40 mb-10 text-white" vid="319">16 / Future Horizons</div>
+                <h2 class="serif text-6xl italic leading-tight mb-10" vid="320">The Road Ahead.</h2>
+                <div class="serif text-xl italic opacity-60" vid="321">Building infrastructure for a multi-decade participation ecosystem.</div>
+            </div>
+            <div class="space-y-6" vid="322">
+                <ul class="space-y-4" vid="323">
+                    <li class="flex items-center gap-4 border-b border-white/10 pb-4" vid="324">
+                        <span class="text-[#D13027] text-xl" vid="325">→</span>
+                        <span vid="326">AI-Search Optimization &amp; Living FAQ Hubs</span>
+                    </li>
+                    <li class="flex items-center gap-4 border-b border-white/10 pb-4" vid="327">
+                        <span class="text-[#D13027] text-xl" vid="328">→</span>
+                        <span vid="329">Certified Refurbished &amp; Reuse Programs</span>
+                    </li>
+                    <li class="flex items-center gap-4 border-b border-white/10 pb-4" vid="330">
+                        <span class="text-[#D13027] text-xl" vid="331">→</span>
+                        <span vid="332">First-Apartment Cooking Bundles</span>
+                    </li>
+                    <li class="flex items-center gap-4 border-b border-white/10 pb-4" vid="333">
+                        <span class="text-[#D13027] text-xl" vid="334">→</span>
+                        <span vid="335">Reddit Community Intelligence Function</span>
+                    </li>
+                    <li class="flex items-center gap-4 border-b border-white/10 pb-4" vid="336">
+                        <span class="text-[#D13027] text-xl" vid="337">→</span>
+                        <span vid="338">Predictive Lifecycle Segmentation</span>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </section>
+
+    
+    <footer class="p-10 border-t border-[#D8D4CC] flex justify-between items-end" vid="339">
+        <div vid="340">
+            <div class="serif italic text-3xl font-semibold mb-4" vid="341">Instant Pot<span class="text-[#D13027]" vid="342">®</span></div>
+            <div class="micro-text" vid="343">© 2024 Instant Brands. Brand Modernization Strategy.</div>
+        </div>
+        <div class="text-right" vid="344">
+            <div class="micro-text mb-2" vid="345">Prepared by:</div>
+            <div class="serif italic text-lg" vid="346">Digital Ecosystems Team</div>
+        </div>
+    </footer>
+
+
+</body></html>

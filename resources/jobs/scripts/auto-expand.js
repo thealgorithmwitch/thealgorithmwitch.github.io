@@ -12,7 +12,7 @@ const DISCOVERY_REPORT_FILE = path.join(REPORTS_DIR, "source-discovery-report.js
 const SEARCH_REPORT_FILE = path.join(REPORTS_DIR, "search-ingest-report.json");
 const TARGETED_PENDING_REPORT_FILE = path.join(REPORTS_DIR, "targeted-pending-source-sync.json");
 const SOURCE_EXPANSION_VALIDATION_REPORT_FILE = path.join(REPORTS_DIR, "source-expansion-validation-latest.json");
-const VALIDATION_LATEST_FILE = path.join(ROOT, "validation-snapshots", "latest.json");
+const PUBLIC_PROMOTION_REPORT_FILE = path.join(REPORTS_DIR, "public-promotion-latest.json");
 
 const MANAGED_FILES = [
   "sources.json",
@@ -26,15 +26,31 @@ const MANAGED_FILES = [
   "reports/search-ingest-report.json",
   "reports/targeted-pending-source-sync.json",
   "reports/source-expansion-validation-latest.json",
+  "reports/public-promotion-latest.json",
   "reports/auto-expand-lifecycle-latest.json",
   "validation-snapshots/latest.json"
 ];
 
 function parseArgs(argv) {
-  return {
+  const parsed = {
     dryRun: argv.includes("--dry-run") || !argv.includes("--write"),
-    write: argv.includes("--write")
+    write: argv.includes("--write"),
+    autoPublish: argv.includes("--auto-publish"),
+    maxAutoPublishPerRun: 10
   };
+
+  argv.forEach((arg, index) => {
+    if (arg === "--max-auto-publish-per-run" && argv[index + 1]) {
+      parsed.maxAutoPublishPerRun = Number(argv[index + 1]) || 10;
+      return;
+    }
+    if (arg.startsWith("--max-auto-publish-per-run=")) {
+      parsed.maxAutoPublishPerRun = Number(arg.split("=").slice(1).join("=")) || 10;
+    }
+  });
+
+  parsed.maxAutoPublishPerRun = Math.max(0, Math.floor(parsed.maxAutoPublishPerRun || 10));
+  return parsed;
 }
 
 async function readJson(filePath, fallback = null) {
@@ -43,6 +59,10 @@ async function readJson(filePath, fallback = null) {
   } catch (_error) {
     return fallback;
   }
+}
+
+function hashValue(value) {
+  return crypto.createHash("sha256").update(JSON.stringify(value ?? null)).digest("hex");
 }
 
 async function snapshotManagedFiles() {
@@ -84,6 +104,21 @@ function runNodeScript(scriptName, args = []) {
   }
 }
 
+function runNpmScript(scriptName, args = []) {
+  const npmExecutable = process.platform === "win32" ? "npm.cmd" : "npm";
+  const result = spawnSync(npmExecutable, ["run", scriptName, "--", ...args], {
+    cwd: ROOT,
+    env: process.env,
+    encoding: "utf8",
+    stdio: "pipe"
+  });
+  if (result.stdout) process.stdout.write(result.stdout);
+  if (result.stderr) process.stderr.write(result.stderr);
+  if (result.status !== 0) {
+    throw new Error(`npm script ${scriptName} exited with status ${result.status}`);
+  }
+}
+
 function summarizeSourceEntries(entries = []) {
   return (Array.isArray(entries) ? entries : []).map((entry) => ({
     organization: entry.organization || "",
@@ -92,6 +127,59 @@ function summarizeSourceEntries(entries = []) {
     reason: entry.skip_reason || "",
     status: entry.onboarding_status || ""
   }));
+}
+
+function countBlockedEntries(entries = []) {
+  return (Array.isArray(entries) ? entries : []).filter((entry) => {
+    const descriptor = JSON.stringify(entry || "");
+    return /\b(?:articulate|empowerly|remofirst|recidiviz|cribl|found|canonicaljobs|canonical|cohere|chilipiper|beehiiv|posthog|automattic|superside|samsara|gusto|climatechangejobs|climate change jobs)\b/i.test(descriptor);
+  }).length;
+}
+
+function collectCandidateIds(pendingBefore, pendingAfter, dryRun) {
+  if (dryRun) {
+    return pendingAfter.map((job) => String(job && job.id || "")).filter(Boolean);
+  }
+
+  const beforeHash = new Map(
+    pendingBefore.map((job) => [String(job && job.id || ""), hashValue(job)])
+  );
+
+  return pendingAfter
+    .filter((job) => {
+      const id = String(job && job.id || "");
+      if (!id) return false;
+      return beforeHash.get(id) !== hashValue(job);
+    })
+    .map((job) => String(job && job.id || ""))
+    .filter(Boolean);
+}
+
+async function verifyPromotedPages(promotedIds, publicJobs = []) {
+  const publicById = new Map((Array.isArray(publicJobs) ? publicJobs : []).map((job) => [String(job && job.id || ""), job]));
+  const checks = [];
+
+  for (const id of promotedIds) {
+    const publicJob = publicById.get(String(id || ""));
+    const pageUrl = String(publicJob?.page_url || "").trim();
+    const pagePath = pageUrl ? path.join(ROOT, pageUrl.replace(/^\.\//, "")) : "";
+    let pageExists = false;
+    if (pagePath) {
+      try {
+        await fs.access(pagePath);
+        pageExists = true;
+      } catch (_error) {
+        pageExists = false;
+      }
+    }
+    checks.push({
+      id: String(id || ""),
+      page_url: pageUrl,
+      page_exists: pageExists
+    });
+  }
+
+  return checks;
 }
 
 async function main() {
@@ -110,6 +198,8 @@ async function main() {
     started_at: startedAt,
     finished_at: "",
     mode: args.write ? "write" : "dry_run",
+    auto_publish_enabled: args.write && args.autoPublish && !args.dryRun,
+    promotion_cap: args.maxAutoPublishPerRun,
     source_counts: {
       before: sourcesBefore.length,
       after: sourcesBefore.length
@@ -131,6 +221,15 @@ async function main() {
     jobs_routed_public: 0,
     jobs_routed_pending: 0,
     jobs_rejected: 0,
+    jobs_considered_for_public: 0,
+    jobs_auto_published: 0,
+    jobs_left_pending: 0,
+    jobs_rejected_from_public: 0,
+    public_rejection_reasons: {},
+    promotion_cap_hit: false,
+    promoted_job_ids: [],
+    promoted_job_titles: [],
+    promoted_job_sources: [],
     blocked_source_removals: 0,
     validation_status: {
       blocked_source_preflight: "pending",
@@ -141,6 +240,7 @@ async function main() {
     historical_blocked_mentions_warned: 0,
     files_changed: [],
     expected_managed_files: MANAGED_FILES.map((item) => `resources/jobs/${item}`),
+    expected_page_outputs: [],
     warnings: [],
     failures: [],
     steps: []
@@ -154,9 +254,7 @@ async function main() {
       0
     );
     if (preflight.historicalWarnings.length) {
-      lifecycle.warnings.push(
-        `historical_blocked_mentions_warned=${lifecycle.historical_blocked_mentions_warned}`
-      );
+      lifecycle.warnings.push(`historical_blocked_mentions_warned=${lifecycle.historical_blocked_mentions_warned}`);
     }
     if (preflight.violations.length) {
       lifecycle.failures.push(`blocked_source_preflight_failed:${preflight.violations.length}`);
@@ -167,8 +265,6 @@ async function main() {
     if (args.dryRun) {
       runNodeScript("validate-source-expansion.js", ["--phase", "dry_run_preflight", "--before-source-count", String(sourcesBefore.length)]);
       lifecycle.validation_status.source_expansion_validation = "passed";
-      runNodeScript("validate-public-data.js");
-      lifecycle.validation_status.public_data_validation = "passed";
     } else {
       runNodeScript("discover-sources.js", ["--write"]);
       lifecycle.steps.push({ step: "discover-sources", status: "passed", mode: "write" });
@@ -185,11 +281,49 @@ async function main() {
 
       runNodeScript("validate-source-expansion.js", ["--phase", "post_routing", "--before-source-count", String(sourcesBefore.length)]);
       lifecycle.validation_status.source_expansion_validation = "passed";
-
-      runNodeScript("validate-public-data.js");
-      lifecycle.validation_status.public_data_validation = "passed";
-      lifecycle.steps.push({ step: "validate-public-data", status: "passed", mode: "write" });
     }
+
+    const pendingAfterRouting = await readPendingSyncedJobs();
+    const candidateIds = collectCandidateIds(pendingBefore, pendingAfterRouting, args.dryRun);
+    const promotionArgs = [
+      args.dryRun ? "--dry-run" : "--write",
+      `--max-auto-publish-per-run=${args.maxAutoPublishPerRun}`,
+      ...(args.write && args.autoPublish && !args.dryRun ? ["--auto-publish"] : [])
+    ].concat(candidateIds.map((id) => `--candidate-id=${id}`));
+    runNodeScript("promote-public-ready.js", promotionArgs);
+    lifecycle.steps.push({
+      step: "promote_public_ready",
+      status: "passed",
+      mode: args.write ? (args.autoPublish ? "write_auto_publish" : "write_evaluate_only") : "dry_run"
+    });
+
+    const promotionReport = await readJson(PUBLIC_PROMOTION_REPORT_FILE, {});
+    lifecycle.jobs_considered_for_public = Number(promotionReport.jobs_considered_for_public || 0);
+    lifecycle.jobs_auto_published = Number(promotionReport.jobs_auto_published || 0);
+    lifecycle.jobs_left_pending = Number(promotionReport.jobs_left_pending || 0);
+    lifecycle.jobs_rejected_from_public = Number(promotionReport.jobs_rejected_from_public || 0);
+    lifecycle.public_rejection_reasons = promotionReport.public_rejection_reasons || {};
+    lifecycle.promotion_cap_hit = Boolean(promotionReport.promotion_cap_hit);
+    lifecycle.promoted_job_ids = Array.isArray(promotionReport.promoted_job_ids) ? promotionReport.promoted_job_ids : [];
+    lifecycle.promoted_job_titles = Array.isArray(promotionReport.promoted_job_titles) ? promotionReport.promoted_job_titles : [];
+    lifecycle.promoted_job_sources = Array.isArray(promotionReport.promoted_job_sources) ? promotionReport.promoted_job_sources : [];
+    lifecycle.expected_page_outputs = Array.isArray(promotionReport.page_checks)
+      ? promotionReport.page_checks.map((entry) => entry.page_url).filter(Boolean)
+      : [];
+    if (Array.isArray(promotionReport.warnings) && promotionReport.warnings.length) {
+      lifecycle.warnings.push(...promotionReport.warnings);
+    }
+
+    if (!args.dryRun && lifecycle.jobs_auto_published > 0) {
+      runNpmScript("jobs:build-pages");
+      lifecycle.steps.push({ step: "build-public-pages", status: "passed", mode: "write" });
+    }
+
+    runNpmScript("jobs:validate");
+    lifecycle.validation_status.public_data_validation = "passed";
+    lifecycle.steps.push({ step: "validate-public-data", status: "passed", mode: args.write ? "write" : "dry_run" });
+
+    runNpmScript("jobs:check-blocked-sources");
 
     const postflight = await checkBlockedSources();
     lifecycle.validation_status.blocked_source_postflight = postflight.violations.length ? "failed" : "passed";
@@ -203,14 +337,15 @@ async function main() {
     }
     lifecycle.steps.push({ step: "blocked-source-guard", status: "passed", mode: "postflight" });
 
-    const [sourcesAfter, jobsAfter, pendingAfter, discoveryReport, searchReport, pendingReport, expansionValidationReport] = await Promise.all([
+    const [sourcesAfter, jobsAfter, pendingAfter, discoveryReport, searchReport, pendingReport, expansionValidationReport, promotionReportAfter] = await Promise.all([
       readSources(),
       readJobs(),
       readPendingSyncedJobs(),
       readJson(DISCOVERY_REPORT_FILE, {}),
       readJson(SEARCH_REPORT_FILE, {}),
       readJson(TARGETED_PENDING_REPORT_FILE, {}),
-      readJson(SOURCE_EXPANSION_VALIDATION_REPORT_FILE, {})
+      readJson(SOURCE_EXPANSION_VALIDATION_REPORT_FILE, {}),
+      readJson(PUBLIC_PROMOTION_REPORT_FILE, {})
     ]);
 
     lifecycle.source_counts.after = sourcesAfter.length;
@@ -234,7 +369,7 @@ async function main() {
       (discoveryReport.results || []).filter((entry) => entry.skip_reason === "blocked_source_removed")
     );
     lifecycle.search_leads_captured = Number(searchReport.summary?.jobs_added_to_pending || 0);
-    lifecycle.jobs_routed_public = 0;
+    lifecycle.jobs_routed_public = Number(promotionReportAfter.jobs_auto_published || lifecycle.jobs_auto_published || 0);
     lifecycle.jobs_routed_pending =
       Number(searchReport.summary?.jobs_added_to_pending || 0) +
       Number(pendingReport.summary?.jobs_added_to_pending || 0);
@@ -243,6 +378,19 @@ async function main() {
       Number(searchReport.summary?.aggregators_skipped || 0) +
       Number(searchReport.summary?.duplicates_skipped || 0) +
       lifecycle.blocked_sources.length;
+    lifecycle.jobs_considered_for_public = Number(promotionReportAfter.jobs_considered_for_public || lifecycle.jobs_considered_for_public || 0);
+    lifecycle.jobs_auto_published = Number(promotionReportAfter.jobs_auto_published || lifecycle.jobs_auto_published || 0);
+    lifecycle.jobs_left_pending = Number(promotionReportAfter.jobs_left_pending || lifecycle.jobs_left_pending || 0);
+    lifecycle.jobs_rejected_from_public = Number(promotionReportAfter.jobs_rejected_from_public || lifecycle.jobs_rejected_from_public || 0);
+    lifecycle.public_rejection_reasons = promotionReportAfter.public_rejection_reasons || lifecycle.public_rejection_reasons;
+    lifecycle.promotion_cap_hit = Boolean(promotionReportAfter.promotion_cap_hit || lifecycle.promotion_cap_hit);
+    lifecycle.promoted_job_ids = Array.isArray(promotionReportAfter.promoted_job_ids) ? promotionReportAfter.promoted_job_ids : lifecycle.promoted_job_ids;
+    lifecycle.promoted_job_titles = Array.isArray(promotionReportAfter.promoted_job_titles) ? promotionReportAfter.promoted_job_titles : lifecycle.promoted_job_titles;
+    lifecycle.promoted_job_sources = Array.isArray(promotionReportAfter.promoted_job_sources) ? promotionReportAfter.promoted_job_sources : lifecycle.promoted_job_sources;
+    const actualPageChecks = !args.dryRun && lifecycle.promoted_job_ids.length
+      ? await verifyPromotedPages(lifecycle.promoted_job_ids, jobsAfter)
+      : (Array.isArray(promotionReportAfter.page_checks) ? promotionReportAfter.page_checks : []);
+    lifecycle.expected_page_outputs = actualPageChecks.map((entry) => entry.page_url).filter(Boolean);
     lifecycle.blocked_source_removals =
       Math.max(0, countBlockedEntries(sourcesBefore) - countBlockedEntries(sourcesAfter)) +
       Math.max(0, countBlockedEntries(jobsBefore) - countBlockedEntries(jobsAfter)) +
@@ -254,6 +402,14 @@ async function main() {
     }
     if (Array.isArray(expansionValidationReport.warnings) && expansionValidationReport.warnings.length) {
       lifecycle.warnings.push(...expansionValidationReport.warnings);
+    }
+
+    if (!args.dryRun && lifecycle.jobs_auto_published > 0) {
+      const missingPages = actualPageChecks.filter((entry) => !entry.page_exists);
+      if (missingPages.length) {
+        lifecycle.failures.push(`promoted_jobs_missing_pages:${missingPages.length}`);
+        throw new Error("Promoted jobs missing generated pages");
+      }
     }
   } catch (error) {
     lifecycle.failures.push(error.message);
@@ -268,13 +424,6 @@ async function main() {
   if (lifecycle.failures.length) {
     process.exitCode = 1;
   }
-}
-
-function countBlockedEntries(entries = []) {
-  return (Array.isArray(entries) ? entries : []).filter((entry) => {
-    const descriptor = JSON.stringify(entry || "");
-    return /\b(?:articulate|empowerly|remofirst|recidiviz|cribl|found|canonicaljobs|canonical|cohere|chilipiper|beehiiv|posthog|automattic|superside|samsara|gusto|climatechangejobs|climate change jobs)\b/i.test(descriptor);
-  }).length;
 }
 
 if (require.main === module) {

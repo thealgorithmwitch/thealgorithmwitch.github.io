@@ -3,14 +3,27 @@ name: Jobs Auto Expand
 on:
   workflow_dispatch:
     inputs:
-      write:
-        description: "Run the orchestrated expansion lifecycle in write mode?"
+      dry_run:
+        description: "Run the lifecycle in dry-run mode?"
         required: true
         default: "true"
         type: choice
         options:
           - "true"
           - "false"
+      auto_publish:
+        description: "Allow capped public auto-publish for very-high-confidence jobs?"
+        required: true
+        default: "false"
+        type: choice
+        options:
+          - "true"
+          - "false"
+      max_auto_publish_per_run:
+        description: "Maximum number of jobs to auto-publish in one run"
+        required: true
+        default: "10"
+        type: string
   schedule:
     - cron: "45 13 * * 2,5"
 
@@ -64,16 +77,30 @@ jobs:
           node --check "$JOBS_DIR/scripts/sync-targeted-pending-sources.js"
           node --check "$JOBS_DIR/scripts/freshness-audit.js"
           node --check "$JOBS_DIR/scripts/validate-source-expansion.js"
+          node --check "$JOBS_DIR/scripts/promote-public-ready.js"
           node --check "$JOBS_DIR/scripts/auto-expand.js"
 
       - name: Run orchestrated auto-expand lifecycle
         shell: bash
         run: |
-          if [ "${{ github.event_name }}" = "schedule" ] || [ "${{ inputs.write }}" = "true" ]; then
-            npm --prefix "$JOBS_DIR" run jobs:auto-expand -- --write
+          ARGS=()
+          if [ "${{ github.event_name }}" = "schedule" ]; then
+            ARGS+=(--write)
+          elif [ "${{ inputs.dry_run }}" = "true" ]; then
+            ARGS+=(--dry-run)
           else
-            npm --prefix "$JOBS_DIR" run jobs:auto-expand -- --dry-run
+            ARGS+=(--write)
           fi
+          if [ "${{ github.event_name }}" != "schedule" ] && [ "${{ inputs.auto_publish }}" = "true" ]; then
+            ARGS+=(--auto-publish)
+          fi
+          if [ "${{ github.event_name }}" = "schedule" ]; then
+            ARGS+=(--max-auto-publish-per-run=10)
+          else
+            ARGS+=(--max-auto-publish-per-run=${{ inputs.max_auto_publish_per_run }})
+          fi
+          printf 'Running jobs:auto-expand with args: %s\n' "${ARGS[*]}"
+          npm --prefix "$JOBS_DIR" run jobs:auto-expand -- "${ARGS[@]}"
 
       - name: Detect relevant lifecycle changes
         id: changes
@@ -87,10 +114,12 @@ jobs:
             resources/jobs/jobs.json \
             resources/jobs/job-records.json \
             resources/jobs/source-health-latest.json \
+            resources/jobs/pages \
             resources/jobs/reports/source-discovery-report.json \
             resources/jobs/reports/search-ingest-report.json \
             resources/jobs/reports/targeted-pending-source-sync.json \
             resources/jobs/reports/source-expansion-validation-latest.json \
+            resources/jobs/reports/public-promotion-latest.json \
             resources/jobs/reports/auto-expand-lifecycle-latest.json \
             resources/jobs/validation-snapshots/latest.json \
             || true)"
@@ -117,17 +146,23 @@ jobs:
             resources/jobs/jobs.json
             resources/jobs/job-records.json
             resources/jobs/source-health-latest.json
+            resources/jobs/pages
             resources/jobs/reports/source-discovery-report.json
             resources/jobs/reports/search-ingest-report.json
             resources/jobs/reports/targeted-pending-source-sync.json
             resources/jobs/reports/source-expansion-validation-latest.json
+            resources/jobs/reports/public-promotion-latest.json
             resources/jobs/reports/auto-expand-lifecycle-latest.json
             resources/jobs/validation-snapshots/latest.json
 
       - name: Commit and push auto-expand changes
-        if: ${{ (github.event_name == 'schedule' || inputs.write == 'true') && steps.changes.outputs.changed == 'true' }}
+        if: ${{ github.event_name == 'schedule' || inputs.dry_run != 'true' }}
         shell: bash
         run: |
+          if [ "${{ steps.changes.outputs.changed }}" != "true" ]; then
+            echo "No staged lifecycle changes to commit."
+            exit 0
+          fi
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add \
@@ -138,10 +173,12 @@ jobs:
             resources/jobs/jobs.json \
             resources/jobs/job-records.json \
             resources/jobs/source-health-latest.json \
+            resources/jobs/pages \
             resources/jobs/reports/source-discovery-report.json \
             resources/jobs/reports/search-ingest-report.json \
             resources/jobs/reports/targeted-pending-source-sync.json \
             resources/jobs/reports/source-expansion-validation-latest.json \
+            resources/jobs/reports/public-promotion-latest.json \
             resources/jobs/reports/auto-expand-lifecycle-latest.json \
             resources/jobs/validation-snapshots/latest.json
           if git diff --cached --quiet; then

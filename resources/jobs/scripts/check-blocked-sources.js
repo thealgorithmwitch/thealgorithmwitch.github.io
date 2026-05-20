@@ -1,8 +1,10 @@
 const path = require("path");
+const fs = require("fs/promises");
 const { readJson } = require("./job-utils");
 const { BLOCKED_SOURCE_RULES } = require("./blocked-source-utils");
 
 const ROOT = path.resolve(__dirname, "..");
+const REPORTS_DIR = path.join(ROOT, "reports");
 
 const FILES_TO_CHECK = [
   path.join(ROOT, "sources.json"),
@@ -64,7 +66,39 @@ function collectValues(value, parts = [], output = []) {
   return output;
 }
 
-async function main() {
+async function collectHistoricalReportWarnings() {
+  let entries = [];
+  try {
+    entries = await fs.readdir(REPORTS_DIR, { withFileTypes: true });
+  } catch (_error) {
+    return [];
+  }
+  const warnings = [];
+  for (const entry of entries) {
+    if (!entry.isFile()) continue;
+    const ext = path.extname(entry.name).toLowerCase();
+    if (![".json", ".md", ".txt"].includes(ext)) continue;
+    const filePath = path.join(REPORTS_DIR, entry.name);
+    let contents = "";
+    try {
+      contents = await fs.readFile(filePath, "utf8");
+    } catch (_error) {
+      continue;
+    }
+    for (const rule of BLOCKED_SOURCE_RULES) {
+      const matches = contents.match(new RegExp(rule.pattern.source, rule.pattern.flags.includes("g") ? rule.pattern.flags : `${rule.pattern.flags}g`));
+      if (!matches || !matches.length) continue;
+      warnings.push({
+        file: path.relative(ROOT, filePath),
+        blocked_source: rule.id,
+        mention_count: matches.length
+      });
+    }
+  }
+  return warnings;
+}
+
+async function checkBlockedSources() {
   const violations = [];
 
   for (const filePath of FILES_TO_CHECK) {
@@ -85,6 +119,16 @@ async function main() {
     }
   }
 
+  const historicalWarnings = await collectHistoricalReportWarnings();
+  return {
+    violations,
+    historicalWarnings
+  };
+}
+
+async function main() {
+  const { violations, historicalWarnings } = await checkBlockedSources();
+
   if (violations.length) {
     console.error("[jobs:check-blocked-sources] Blocked source references found:");
     for (const violation of violations) {
@@ -96,7 +140,13 @@ async function main() {
     return;
   }
 
-  console.log("[jobs:check-blocked-sources] No blocked source references found in active config or pending files.");
+  console.log("[jobs:check-blocked-sources] No blocked source references found in active config or data files.");
+  if (historicalWarnings.length) {
+    const totalMentions = historicalWarnings.reduce((sum, item) => sum + Number(item.mention_count || 0), 0);
+    console.warn(
+      `[jobs:check-blocked-sources] historical_blocked_mentions_warned=${totalMentions} historical_files=${historicalWarnings.length} (warning-only)`
+    );
+  }
 }
 
 if (require.main === module) {
@@ -105,3 +155,9 @@ if (require.main === module) {
     process.exitCode = 1;
   });
 }
+
+module.exports = {
+  FILES_TO_CHECK,
+  checkBlockedSources,
+  collectHistoricalReportWarnings
+};

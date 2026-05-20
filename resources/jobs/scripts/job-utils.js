@@ -148,6 +148,22 @@ function sanitizeForWrite(filePath, data) {
       };
     }
   }
+  if (basename === "search-sources.json") {
+    if (data && Array.isArray(data.queries)) {
+      return {
+        ...sanitizeRecursive(data),
+        queries: filterBlockedSourceEntries(data.queries).map((query) => sanitizeRecursive(query))
+      };
+    }
+  }
+  if (basename === "source-discovery-candidates.json") {
+    if (data && Array.isArray(data.candidates)) {
+      return {
+        ...sanitizeRecursive(data),
+        candidates: filterBlockedSourceEntries(data.candidates).map((candidate) => sanitizeRecursive(candidate))
+      };
+    }
+  }
   return sanitizeRecursive(data);
 }
 

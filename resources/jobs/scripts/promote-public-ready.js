@@ -2,6 +2,7 @@ const fs = require("fs/promises");
 const path = require("path");
 const {
   assessPublicJobReadiness,
+  normalizeWorkableUrl,
   computeParserConfidenceScore,
   isBadPublicContent,
   isPotentiallyHumanApplyUrl,
@@ -31,6 +32,9 @@ const APPROVED_COMPANIES_FILE = path.join(ROOT, "auto-publish-approved-companies
 const VERY_HIGH_CONFIDENCE_THRESHOLD = 90;
 const DEFAULT_PROMOTION_CAP = 10;
 const DEFAULT_COMPANY_CAP = 5;
+const NON_BLOCKING_MANUAL_REVIEW_REASONS = new Set([
+  "meets review-ready threshold"
+]);
 
 function parseArgs(argv) {
   const parsed = {
@@ -68,7 +72,7 @@ function parseArgs(argv) {
 function getWorkableApplyValidationReason(job = {}, source = {}) {
   const haystack = `${stringifySafe(source.provider)} ${stringifySafe(job.source)} ${stringifySafe(job.apply_url)} ${stringifySafe(job.source_url)}`.toLowerCase();
   if (!/workable/.test(haystack)) return "";
-  const applyUrl = stringifySafe(job.apply_url || job.original_url);
+  const applyUrl = normalizeWorkableUrl(job.apply_url || job.original_url).url || stringifySafe(job.apply_url || job.original_url);
   if (!applyUrl) return "missing_apply_url";
   if (!isPotentiallyHumanApplyUrl(applyUrl, { source })) return "workable_apply_url_not_human_usable";
   return "human_apply_url_confirmed";
@@ -166,15 +170,23 @@ function hasCleanOrganization(job = {}) {
   return true;
 }
 
+function isPowerlinesWorkableJob(job = {}, source = {}) {
+  const organization = stringifySafe(job.organization).toLowerCase();
+  const haystack = `${stringifySafe(source.provider)} ${stringifySafe(job.source)} ${stringifySafe(job.apply_url)} ${stringifySafe(job.source_url)}`.toLowerCase();
+  return organization.includes("powerlines") && haystack.includes("workable");
+}
+
 function hasManualReviewSignal(job = {}) {
   const reasons = [
     stringifySafe(job.review_reason),
     stringifySafe(job.triage_reason),
     stringifySafe(job.parse_warning)
   ].filter(Boolean);
+  const blockingReasons = reasons.filter((reason) => !NON_BLOCKING_MANUAL_REVIEW_REASONS.has(String(reason).trim().toLowerCase()));
   return {
-    blocked: reasons.length > 0,
-    reasons
+    blocked: blockingReasons.length > 0,
+    reasons: blockingReasons,
+    allReasons: reasons
   };
 }
 
@@ -275,17 +287,47 @@ async function loadApprovedCompaniesConfig() {
   try {
     const parsed = JSON.parse(await fs.readFile(APPROVED_COMPANIES_FILE, "utf8"));
     return {
-      perCompanyCap: Math.max(1, Math.floor(Number(parsed?.per_company_cap) || DEFAULT_COMPANY_CAP)),
+      perCompanyCap: Math.max(1, Math.floor(Number(parsed?.default_per_company_cap || parsed?.per_company_cap) || DEFAULT_COMPANY_CAP)),
       approvedCompanies: Array.isArray(parsed?.approved_companies)
         ? parsed.approved_companies.map((item) => normalizeToken(item)).filter(Boolean)
-        : []
+        : [],
+      approvedSources: Array.isArray(parsed?.approved_sources)
+        ? parsed.approved_sources.map((item) => normalizeToken(item)).filter(Boolean)
+        : [],
+      perCompanyCaps: parsed?.per_company_caps && typeof parsed.per_company_caps === "object"
+        ? Object.fromEntries(Object.entries(parsed.per_company_caps).map(([key, value]) => [normalizeToken(key), Math.max(1, Math.floor(Number(value) || DEFAULT_COMPANY_CAP))]))
+        : {},
+      perSourceCaps: parsed?.per_source_caps && typeof parsed.per_source_caps === "object"
+        ? Object.fromEntries(Object.entries(parsed.per_source_caps).map(([key, value]) => [normalizeToken(key), Math.max(1, Math.floor(Number(value) || DEFAULT_COMPANY_CAP))]))
+        : {}
     };
   } catch (_error) {
     return {
       perCompanyCap: DEFAULT_COMPANY_CAP,
-      approvedCompanies: []
+      approvedCompanies: [],
+      approvedSources: [],
+      perCompanyCaps: {},
+      perSourceCaps: {}
     };
   }
+}
+
+function inferApplyUrlType(job = {}) {
+  const applyUrl = normalizeWorkableUrl(job.apply_url || job.original_url).url || stringifySafe(job.apply_url || job.original_url);
+  const sourceUrl = normalizeWorkableUrl(job.source_url || job.original_url).url || stringifySafe(job.source_url || job.original_url);
+  if (/\/Recruiting\/Jobs\/Apply\//i.test(applyUrl) || /apply\.workable\.com/i.test(applyUrl)) return "ats_apply_page";
+  if (applyUrl && sourceUrl && applyUrl !== sourceUrl) return "direct_application_page";
+  return "job_description_page";
+}
+
+function resolveDescriptionSourceUrl(job = {}) {
+  return normalizeWorkableUrl(job.description_source_url || job.raw_payload?.description_source_url || job.source_url || job.original_url).url
+    || stringifySafe(job.description_source_url || job.raw_payload?.description_source_url || job.source_url || job.original_url);
+}
+
+function resolvePaySourceUrl(job = {}) {
+  return normalizeWorkableUrl(job.pay_source_url || job.raw_payload?.pay_source_url || job.source_url || job.original_url).url
+    || stringifySafe(job.pay_source_url || job.raw_payload?.pay_source_url || job.source_url || job.original_url);
 }
 
 function evaluatePayState(job = {}) {
@@ -298,19 +340,51 @@ function evaluatePayState(job = {}) {
   if (warning || (payLikeDetected && !salary)) {
     return {
       status: "uncertain_blocked",
-      source: parseSource === "none" ? "description_body" : parseSource
+      source: parseSource === "none" ? "description_body" : parseSource,
+      confidence: stringifySafe(job.pay_parse_confidence || "low") || "low",
+      rejectionReason: stringifySafe(job.pay_rejection_reason || warning || "pay_like_detected_but_not_parsed"),
+      candidateSnippets: Array.isArray(job.pay_candidate_snippets) ? job.pay_candidate_snippets : [],
+      rejectedSnippets: Array.isArray(job.pay_rejected_snippets) ? job.pay_rejected_snippets : []
     };
   }
   if (salary) {
     return {
       status: "clean",
-      source: parseSource === "none" ? "ats_field" : parseSource
+      source: parseSource === "none" ? "ats_field" : parseSource,
+      confidence: stringifySafe(job.pay_parse_confidence || "high") || "high",
+      rejectionReason: "",
+      candidateSnippets: Array.isArray(job.pay_candidate_snippets) ? job.pay_candidate_snippets : [],
+      rejectedSnippets: Array.isArray(job.pay_rejected_snippets) ? job.pay_rejected_snippets : []
     };
   }
   return {
     status: "absent_allowed",
-    source: "none"
+    source: "none",
+    confidence: "none",
+    rejectionReason: "",
+    candidateSnippets: Array.isArray(job.pay_candidate_snippets) ? job.pay_candidate_snippets : [],
+    rejectedSnippets: Array.isArray(job.pay_rejected_snippets) ? job.pay_rejected_snippets : []
   };
+}
+
+function isApprovedSource(source = {}, normalized = {}, approvedSources = new Set()) {
+  const candidates = [
+    source.provider,
+    source.id,
+    source.organization,
+    normalized.source,
+    normalized.source_id
+  ].map((value) => normalizeToken(value)).filter(Boolean);
+  return candidates.some((candidate) => approvedSources.has(candidate));
+}
+
+function resolveCompanyCap(job = {}, source = {}, approvedConfig = {}) {
+  const organizationToken = normalizeToken(job.organization);
+  const providerToken = normalizeToken(source?.provider || job.source);
+  return approvedConfig.perCompanyCaps?.[organizationToken]
+    || approvedConfig.perSourceCaps?.[providerToken]
+    || approvedConfig.perCompanyCap
+    || DEFAULT_COMPANY_CAP;
 }
 
 function buildCandidateDecision(job, source, publicIndex, pendingIndex, options = {}) {
@@ -327,11 +401,13 @@ function buildCandidateDecision(job, source, publicIndex, pendingIndex, options 
   const sourceHighConfidence = hasHighSourceConfidence(source || {});
   const sourceTrusted = Boolean(source?.trusted);
   const approvedCompanyMatch = options.approvedCompanies.has(normalizeToken(normalized.organization));
+  const approvedSourceMatch = isApprovedSource(source || {}, normalized, options.approvedSources || new Set());
   const workplaceType = stringifySafe(normalized.workplace_type);
   const normalizedWorkplaceType = workplaceType ? normalizeWorkplaceType(workplaceType, "") : "";
   const payState = evaluatePayState(normalized);
   const workableHumanApplyConfirmed = !isWorkableWithoutHumanApply(normalized, source || {});
   const workableApplyValidationReason = getWorkableApplyValidationReason(normalized, source || {});
+  const companyCap = resolveCompanyCap(normalized, source, options.approvedConfig || {});
 
   if (isBlockedSourceEntry({ ...normalized, ...source })) reasons.push("blocked_source");
   if (parserConfidenceScore < VERY_HIGH_CONFIDENCE_THRESHOLD) reasons.push("parser_confidence_not_very_high");
@@ -346,7 +422,10 @@ function buildCandidateDecision(job, source, publicIndex, pendingIndex, options 
   if (payState.status === "uncertain_blocked") {
     reasons.push("pay_not_clean");
   }
-  if (!sourceTrusted && !sourceHighConfidence && !approvedCompanyMatch) reasons.push("source_not_trusted_or_high_confidence");
+  if (isPowerlinesWorkableJob(normalized, source || {}) && payState.status !== "clean") {
+    reasons.push("powerlines_requires_clean_pay_signal");
+  }
+  if (!sourceTrusted && !sourceHighConfidence && !approvedCompanyMatch && !approvedSourceMatch) reasons.push("source_not_trusted_or_high_confidence");
   if (!workableHumanApplyConfirmed) reasons.push("workable_no_human_apply_page");
   if (manualReview.blocked) {
     manualReview.reasons.forEach((reason) => reasons.push(`manual_review_required:${reason}`));
@@ -370,10 +449,16 @@ function buildCandidateDecision(job, source, publicIndex, pendingIndex, options 
     sourceTrusted,
     sourceHighConfidence,
     approvedCompanyMatch,
+    approvedSourceMatch,
     payStatus: payState.status,
     payParseSource: payState.source,
+    payParseConfidence: payState.confidence,
+    payCandidateSnippets: payState.candidateSnippets,
+    payRejectedSnippets: payState.rejectedSnippets,
+    payRejectionReason: payState.rejectionReason,
     workableHumanApplyConfirmed,
-    workableApplyValidationReason
+    workableApplyValidationReason,
+    companyCap
   };
 }
 
@@ -412,10 +497,13 @@ async function runPromotion(options = {}) {
     const source = resolveSourceForJob(candidate, sourceMap);
     const decision = buildCandidateDecision(candidate, source, publicIndex, pendingIndex, {
       ...args,
-      approvedCompanies: new Set(approvedConfig.approvedCompanies)
+      approvedCompanies: new Set(approvedConfig.approvedCompanies),
+      approvedSources: new Set(approvedConfig.approvedSources),
+      approvedConfig
     });
     const companyToken = normalizeToken(candidate.organization);
     const isWorkable = /workable/i.test(`${stringifySafe(source?.provider)} ${stringifySafe(candidate.source)} ${stringifySafe(candidate.apply_url)} ${stringifySafe(candidate.source_url)}`);
+    const workableDiagnostic = normalizeWorkableUrl(decision.normalized?.apply_url || candidate.apply_url || candidate.original_url || candidate.source_url);
     if (decision.payStatus === "absent_allowed") payAbsentAllowedCount += 1;
     if (decision.payStatus === "uncertain_blocked") payUncertainBlockedCount += 1;
     if (isWorkable) workableConsidered += 1;
@@ -427,21 +515,42 @@ async function runPromotion(options = {}) {
       source_id: stringifySafe(candidate.source_id),
       source_url: stringifySafe(decision.normalized?.source_url || candidate.source_url),
       apply_url: stringifySafe(decision.normalized?.apply_url || candidate.apply_url || candidate.original_url),
+      apply_url_type: inferApplyUrlType(decision.normalized || candidate),
+      description_source_url: resolveDescriptionSourceUrl(decision.normalized || candidate),
+      pay_source_url: resolvePaySourceUrl(decision.normalized || candidate),
       company_token: companyToken,
       parser_confidence_score: decision.parserConfidenceScore ?? computeParserConfidenceScore(candidate),
       pay_status: decision.payStatus,
       pay_parse_source: decision.payParseSource,
+      pay_parse_confidence: decision.payParseConfidence,
+      pay_candidate_snippets: decision.payCandidateSnippets,
+      pay_rejected_snippets: decision.payRejectedSnippets,
+      pay_rejection_reason: decision.payRejectionReason,
+      final_salary: stringifySafe(decision.normalized?.salary),
+      salary_min: decision.normalized?.salary_min ?? null,
+      salary_max: decision.normalized?.salary_max ?? null,
+      salary_currency: stringifySafe(decision.normalized?.salary_currency),
+      salary_period: stringifySafe(decision.normalized?.salary_period),
       pay_like_detected: Boolean(decision.normalized?.pay_like_detected),
       pay_parse_failed_snippet: stringifySafe(decision.normalized?.pay_parse_failed_snippet),
       parse_warning: stringifySafe(decision.normalized?.parse_warning),
       review_reason: stringifySafe(decision.normalized?.review_reason),
       triage_reason: stringifySafe(decision.normalized?.triage_reason),
       company_auto_publish_count: 0,
-      company_auto_publish_cap: approvedConfig.perCompanyCap,
+      company_auto_publish_cap: decision.companyCap,
       blocked_by_company_cap: false,
       approved_company_match: decision.approvedCompanyMatch,
+      approved_source_match: decision.approvedSourceMatch,
       workable_human_apply_confirmed: decision.workableHumanApplyConfirmed,
       workable_apply_validation_reason: decision.workableApplyValidationReason,
+      workable_url_normalized: Boolean(decision.normalized?.workable_url_normalized ?? workableDiagnostic.normalized),
+      original_workable_url: stringifySafe(decision.normalized?.original_workable_url || workableDiagnostic.original_url),
+      canonical_workable_url: stringifySafe(decision.normalized?.canonical_workable_url || workableDiagnostic.canonical_url),
+      description_cleaning_applied: Boolean(decision.normalized?.description_cleaning_applied),
+      description_leading_fragment_removed: Boolean(decision.normalized?.description_leading_fragment_removed),
+      description_auto_capitalized: Boolean(decision.normalized?.description_auto_capitalized),
+      description_fallback_sentence_used: Boolean(decision.normalized?.description_fallback_sentence_used),
+      snippet_fallback_used: Boolean(decision.normalized?.snippet_fallback_used),
       action: decision.action,
       reasons: decision.reasons,
       public_rejection_reason: decision.reasons.join("; ")
@@ -453,10 +562,16 @@ async function runPromotion(options = {}) {
         source,
         parser_confidence_score: decision.parserConfidenceScore,
         approved_company_match: decision.approvedCompanyMatch,
+        approved_source_match: decision.approvedSourceMatch,
         pay_status: decision.payStatus,
         pay_parse_source: decision.payParseSource,
+        pay_parse_confidence: decision.payParseConfidence,
         workable_human_apply_confirmed: decision.workableHumanApplyConfirmed,
-        workable_apply_validation_reason: decision.workableApplyValidationReason
+        workable_apply_validation_reason: decision.workableApplyValidationReason,
+        workable_url_normalized: Boolean(decision.normalized?.workable_url_normalized ?? workableDiagnostic.normalized),
+        original_workable_url: stringifySafe(decision.normalized?.original_workable_url || workableDiagnostic.original_url),
+        canonical_workable_url: stringifySafe(decision.normalized?.canonical_workable_url || workableDiagnostic.canonical_url),
+        company_cap: decision.companyCap
       });
     } else {
       rejected.push({
@@ -465,9 +580,17 @@ async function runPromotion(options = {}) {
         source: stringifySafe(candidate.source),
         pay_status: decision.payStatus,
         pay_parse_source: decision.payParseSource,
+        pay_parse_confidence: decision.payParseConfidence,
+        pay_candidate_snippets: decision.payCandidateSnippets,
+        pay_rejected_snippets: decision.payRejectedSnippets,
+        pay_rejection_reason: decision.payRejectionReason,
         approved_company_match: decision.approvedCompanyMatch,
+        approved_source_match: decision.approvedSourceMatch,
         workable_human_apply_confirmed: decision.workableHumanApplyConfirmed,
         workable_apply_validation_reason: decision.workableApplyValidationReason,
+        workable_url_normalized: Boolean(decision.normalized?.workable_url_normalized ?? workableDiagnostic.normalized),
+        original_workable_url: stringifySafe(decision.normalized?.original_workable_url || workableDiagnostic.original_url),
+        canonical_workable_url: stringifySafe(decision.normalized?.canonical_workable_url || workableDiagnostic.canonical_url),
         pay_parse_failed_snippet: stringifySafe(decision.normalized?.pay_parse_failed_snippet),
         reasons: decision.reasons
       });
@@ -487,7 +610,11 @@ async function runPromotion(options = {}) {
     if (consideredEntry) {
       consideredEntry.company_auto_publish_count = nextCount;
     }
-    if (currentCount >= approvedConfig.perCompanyCap) {
+    const companyCap = entry.company_cap || approvedConfig.perCompanyCap;
+    if (consideredEntry) {
+      consideredEntry.company_auto_publish_cap = companyCap;
+    }
+    if (currentCount >= companyCap) {
       if (consideredEntry) consideredEntry.blocked_by_company_cap = true;
       blockedByCompanyCap.push(entry);
       return;
@@ -599,6 +726,7 @@ async function runPromotion(options = {}) {
     pay_absent_allowed_count: payAbsentAllowedCount,
     pay_uncertain_blocked_count: payUncertainBlockedCount,
     workable_considered: workableConsidered,
+    workable_url_normalized_count: considered.filter((item) => item.workable_url_normalized).length,
     workable_auto_published: reportedPromotions.filter((entry) => /workable/i.test(`${stringifySafe(entry.source?.provider)} ${stringifySafe(entry.job.source)}`)).length,
     jobs_eligible_for_public: promotable.length,
     jobs_considered_for_public: considered.length,

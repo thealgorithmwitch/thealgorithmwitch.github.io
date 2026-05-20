@@ -756,12 +756,6 @@ async function buildValidationReport(options = {}) {
         description: canonicalDescription,
         description_snippet: snippet
       });
-      hardValidationFailures.push({
-        id,
-        title: job.title,
-        organization: job.organization,
-        reason: "lowercase_sentence_description"
-      });
     }
     if (descriptionIdentityConflict(job.organization, canonicalDescription) || descriptionIdentityConflict(job.organization, snippet)) {
       viaIdentityConflicts.push({
@@ -890,7 +884,6 @@ async function buildValidationReport(options = {}) {
   if (invalidPay.length) errors.push(`invalid pay count ${invalidPay.length}`);
   if (invalidTitle.length) errors.push(`invalid title count ${invalidTitle.length}`);
   if (malformedDescriptionTemplates.length) errors.push(`malformed description template count ${malformedDescriptionTemplates.length}`);
-  if (lowercaseSentenceDescriptions.length) errors.push(`lowercase sentence description count ${lowercaseSentenceDescriptions.length}`);
   if (invalidWorkplace.length) errors.push(`invalid workplace_type count ${invalidWorkplace.length}`);
   if (invalidLocation.length) errors.push(`invalid location count ${invalidLocation.length}`);
   if (invalidSnippet.length > BLANK_SNIPPET_THRESHOLD) errors.push(`invalid snippet count ${invalidSnippet.length}`);

@@ -1,4 +1,4 @@
-const { ensureArray, extractSalaryData, stableHash, stringifySafe, todayIso } = require("./job-normalizer");
+const { ensureArray, extractSalaryData, normalizeWorkableUrl, stableHash, stringifySafe, todayIso } = require("./job-normalizer");
 const { normalizeProvider } = require("./source-utils");
 
 function ensureDefault(values) {
@@ -145,6 +145,9 @@ function paylocityJobToSchema(source, boardData, job, detail = {}) {
     tags: [source.sector, stringifySafe(job.HiringDepartment), "paylocity"].filter(Boolean),
     shared_by: "ATS Sync",
     notes: `Synced from Paylocity employer careers board ${resolvePaylocityUrl(boardData?.boardUrl || source.source_url)}.`,
+    description_source_url: sourceUrl,
+    pay_source_url: sourceUrl,
+    apply_url_type: /\/Recruiting\/Jobs\/Apply\//i.test(applyUrl) ? "ats_apply_page" : "job_description_page",
     raw_payload: {
       job_id: job.JobId || null,
       title: stringifySafe(job.JobTitle),
@@ -153,7 +156,10 @@ function paylocityJobToSchema(source, boardData, job, detail = {}) {
       published_date: stringifySafe(job.PublishedDate),
       apply_url: applyUrl,
       source_url: sourceUrl,
-      job_type: stringifySafe(detail.jobType)
+      job_type: stringifySafe(detail.jobType),
+      description_source_url: sourceUrl,
+      pay_source_url: sourceUrl,
+      apply_url_type: /\/Recruiting\/Jobs\/Apply\//i.test(applyUrl) ? "ats_apply_page" : "job_description_page"
     }
   };
 }
@@ -602,7 +608,9 @@ function workableJobToSchema(source, job) {
     stringifySafe(job.location?.region),
     stringifySafe(job.location?.country)
   ].filter(Boolean);
-  const humanApplyUrl = stringifySafe(job.human_apply_url || job.url || "").replace(/\.md(?:[?#].*)?$/i, "");
+  const rawHumanApplyUrl = stringifySafe(job.human_apply_url || job.url || "").replace(/\.md(?:[?#].*)?$/i, "");
+  const workableUrlDiagnostic = normalizeWorkableUrl(rawHumanApplyUrl);
+  const humanApplyUrl = workableUrlDiagnostic.url || rawHumanApplyUrl;
   const hasHumanApplyUrl = /^https?:\/\/(?:apply|jobs)\.workable\.com\/.+/i.test(humanApplyUrl) && !/\/jobs\.md(?:[?#].*)?$/i.test(humanApplyUrl);
   const descriptionText = stringifySafe(job.description || job.detail_description || "");
   const payExtraction = extractSalaryData({
@@ -639,12 +647,32 @@ function workableJobToSchema(source, job) {
     shared_by: "ATS Sync",
     notes: `Synced from Workable account ${source.company_slug}.${hasHumanApplyUrl ? "" : " Review required: no human-usable apply page found."}`,
     review_reason: hasHumanApplyUrl ? "" : "workable_no_human_apply_page",
+    workable_url_normalized: workableUrlDiagnostic.normalized,
+    original_workable_url: workableUrlDiagnostic.original_url,
+    canonical_workable_url: workableUrlDiagnostic.canonical_url,
+    workable_human_apply_confirmed: hasHumanApplyUrl,
+    workable_apply_validation_reason: hasHumanApplyUrl ? "human_apply_url_confirmed" : "workable_apply_url_not_human_usable",
     pay_parse_failed_snippet: payExtraction.failedSnippet || "",
+    description_source_url: hasHumanApplyUrl ? humanApplyUrl : stringifySafe(source.source_url),
+    pay_source_url: hasHumanApplyUrl ? humanApplyUrl : stringifySafe(source.source_url),
+    apply_url_type: hasHumanApplyUrl ? "ats_apply_page" : "job_description_page",
     raw_payload: {
       ...job,
       pay_parse_source: payExtraction.source,
       pay_like_detected: Boolean(payExtraction.payLikeDetected),
-      pay_parse_failed_snippet: payExtraction.failedSnippet || ""
+      pay_parse_failed_snippet: payExtraction.failedSnippet || "",
+      pay_parse_confidence: payExtraction.confidence || "low",
+      pay_candidate_snippets: payExtraction.candidateSnippets || [],
+      pay_rejected_snippets: payExtraction.rejectedSnippets || [],
+      pay_rejection_reason: payExtraction.rejectionReason || "",
+      workable_url_normalized: workableUrlDiagnostic.normalized,
+      original_workable_url: workableUrlDiagnostic.original_url,
+      canonical_workable_url: workableUrlDiagnostic.canonical_url,
+      workable_human_apply_confirmed: hasHumanApplyUrl,
+      workable_apply_validation_reason: hasHumanApplyUrl ? "human_apply_url_confirmed" : "workable_apply_url_not_human_usable",
+      description_source_url: hasHumanApplyUrl ? humanApplyUrl : stringifySafe(source.source_url),
+      pay_source_url: hasHumanApplyUrl ? humanApplyUrl : stringifySafe(source.source_url),
+      apply_url_type: hasHumanApplyUrl ? "ats_apply_page" : "job_description_page"
     }
   };
 }
@@ -668,6 +696,7 @@ function parseWorkableMarkdownJobs(markdown, source) {
       .map((cell) => normalizeWorkableMarkdownCell(cell));
     if (columns.length < 7 || /^title$/i.test(columns[0])) continue;
     const detailsMatch = columns[6].match(/\[View\]\((https?:\/\/apply\.workable\.com\/[^)\s]+)\)/i);
+    const detailUrl = normalizeWorkableUrl(detailsMatch ? detailsMatch[1].replace(/\.md$/i, "") : "");
     rows.push({
       title: columns[0],
       department: columns[1],
@@ -675,7 +704,7 @@ function parseWorkableMarkdownJobs(markdown, source) {
       employment_type: columns[3],
       salary: columns[4] === "—" ? "" : columns[4],
       created_at: columns[5],
-      url: detailsMatch ? detailsMatch[1].replace(/\.md$/i, "") : "",
+      url: detailUrl.url || "",
       detail_markdown_url: detailsMatch ? detailsMatch[1] : "",
       workplace: /\bremote\b/i.test(columns[2]) ? "remote" : ""
     });

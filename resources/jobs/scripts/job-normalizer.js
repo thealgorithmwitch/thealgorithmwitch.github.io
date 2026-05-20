@@ -5,7 +5,7 @@ const {
 } = require("./source-rules");
 
 const VALID_CURRENCIES = new Set(["USD", "CAD", "EUR", "GBP", "Unknown"]);
-const VALID_PERIODS = new Set(["hour", "day", "month", "year", "Unknown"]);
+const VALID_PERIODS = new Set(["hour", "day", "week", "month", "year", "Unknown"]);
 const COMMON_ENTITY_MAP = {
   nbsp: " ",
   amp: "&",
@@ -198,7 +198,7 @@ const INVALID_PUBLIC_LOCATION_PATTERNS = [
   /\b(?:Jan|January|Feb|February|Mar|March|Apr|April|May|Jun|June|Jul|July|Aug|August|Sep|Sept|September|Oct|October|Nov|November|Dec|December)\s+\d{1,2},\s+\d{4}\b/i
 ];
 const WORKABLE_HUMAN_APPLY_PATTERNS = [
-  /^https?:\/\/apply\.workable\.com\/[^/]+\/(?:j|jobs\/view|view)\//i,
+  /^https?:\/\/apply\.workable\.com\/[^/]+\/j\/[A-Z0-9]+\/?(?:[?#].*)?$/i,
   /^https?:\/\/jobs\.workable\.com\/view\//i
 ];
 const MALFORMED_DESCRIPTION_TEMPLATE_PATTERNS = [
@@ -391,6 +391,38 @@ function sanitizeRoleUrl(value) {
   const text = normalizeWhitespace(String(value || ""));
   if (!text || isSocialShareUrl(text)) return "";
   return text;
+}
+
+function normalizeWorkableUrl(value) {
+  const original = normalizeWhitespace(String(value || ""));
+  if (!original) {
+    return {
+      url: "",
+      normalized: false,
+      original_url: "",
+      canonical_url: ""
+    };
+  }
+
+  const brokenMatch = original.match(
+    /^https?:\/\/apply\.workable\.com\/([^/]+)\/jobs\/view\/([A-Z0-9]+)\/?(?:[?#].*)?$/i
+  );
+  if (!brokenMatch) {
+    return {
+      url: original,
+      normalized: false,
+      original_url: "",
+      canonical_url: ""
+    };
+  }
+
+  const canonical = `https://apply.workable.com/${brokenMatch[1]}/j/${brokenMatch[2]}/`;
+  return {
+    url: canonical,
+    normalized: canonical !== original,
+    original_url: original,
+    canonical_url: canonical
+  };
 }
 
 function normalizeLooseToken(value) {
@@ -1332,6 +1364,7 @@ function detectSalaryPeriod(salary) {
   if (!text) return "Unknown";
   if (/(per hour|\/\s*hour|\/\s*hr|\bhr\b|\bhourly\b)/i.test(text)) return "hour";
   if (/(per day|\/\s*day|\bdaily\b)/i.test(text)) return "day";
+  if (/(per week|\/\s*week|\bweekly\b)/i.test(text)) return "week";
   if (/(per month|\/\s*month|\/\s*mo\b|\bmonthly\b|\bmo\b)/i.test(text)) return "month";
   if (/(per year|\/\s*year|\/\s*yr|\bannual\b|\byearly\b|\ba year\b|annually|per annum)/i.test(text)) return "year";
   return "Unknown";
@@ -1351,6 +1384,7 @@ function normalizeSalaryPeriodToken(value) {
   if (!text) return "";
   if (/(hour|hourly|hr)/i.test(text)) return "per hour";
   if (/(day|daily)/i.test(text)) return "per day";
+  if (/(week|weekly)/i.test(text)) return "per week";
   if (/(month|monthly|mo)/i.test(text)) return "per month";
   if (/(year|yearly|annual|annually|yr)/i.test(text)) return "per year";
   return "";
@@ -1432,7 +1466,7 @@ function normalizePayDisplay(options = {}) {
   const effectivePeriod = period !== "Unknown" ? period : (rangeAmounts.some((value) => value >= 1000) ? "year" : "Unknown");
 
   if (!rangeAmounts.length) return "";
-  if (effectivePeriod !== "hour" && effectivePeriod !== "day" && rangeAmounts.some((value) => value < 1000)) {
+  if (effectivePeriod !== "hour" && effectivePeriod !== "day" && effectivePeriod !== "week" && rangeAmounts.some((value) => value < 1000)) {
     incrementParserCleanupStat("salary_invalid_removed");
     return "";
   }
@@ -1494,9 +1528,11 @@ function salaryCandidateToText(value) {
 }
 
 const PAY_CONTEXT_PATTERN = /\b(?:salary|compensation|pay|pay range|salary range|comp range|base pay|base salary|annual|annually|yearly|hourly|per hour|per year|per month|base)\b/i;
+const PAY_FALSE_POSITIVE_PATTERN = /\b(?:people|customers?|residents?|households?)\s+pay\b|\bpay\s+for\s+(?:utility|utilities|bills?|electricity|energy|rent)\b|\butility\s+bills?\b/i;
 
 function hasPayContext(text) {
-  return PAY_CONTEXT_PATTERN.test(String(text || ""));
+  const value = String(text || "");
+  return PAY_CONTEXT_PATTERN.test(value) && !PAY_FALSE_POSITIVE_PATTERN.test(value);
 }
 
 function normalizeParagraphs(value) {
@@ -1519,6 +1555,16 @@ function buildSalaryContextCandidates(text) {
   ]));
 }
 
+function detectPayParseConfidence(text, source, warning = "") {
+  if (warning) return "low";
+  const normalized = normalizeWhitespace(String(text || ""));
+  if (!normalized) return "low";
+  if (/(?:USD|CAD|EUR|GBP|US\$|CA\$|[$€£]).*\d.*(?:-|–|—|to).*\d/i.test(normalized)) return "high";
+  if (/(?:USD|CAD|EUR|GBP|US\$|CA\$|[$€£]).*(?:per hour|hourly|per day|daily|per week|weekly|per month|monthly|per year|yearly|annual|annually|stipend)/i.test(normalized)) return "high";
+  if (hasPayContext(normalized) && /\b\d[\d,]*(?:\.\d+)?\s*[kKmM]?\b/.test(normalized)) return source === "ats_field" ? "high" : "medium";
+  return "low";
+}
+
 function findBestSalaryMatch(text) {
   const contexts = buildSalaryContextCandidates(text);
   if (!contexts.length) return "";
@@ -1527,14 +1573,15 @@ function findBestSalaryMatch(text) {
   if (detectMalformedPayText(cleaned)) return cleaned;
 
   const matchers = [
-    /(?:annual salary range is|salary range(?: for this position)? is|salary for this position is|compensation range:?|pay range:?|salary:?|compensation:?|pay:?|wage:?|rate:?)[^.]{0,160}(?:USD|CAD|EUR|GBP|US\$|CA\$|[$€£])\s*\d[\d,]*(?:\.\d+)?\s*[kKmM]?(?:\s*(?:-|–|—|to)\s*(?:USD|CAD|EUR|GBP|US\$|CA\$|[$€£])?\s*\d[\d,]*(?:\.\d+)?\s*[kKmM]?)?(?:\s*(?:hourly|daily|monthly|annual|annually|per hour|per day|per month|per year|\/hr|\/hour|\/day|\/month|\/mo|\/year|\/yr))?/i,
-    /(?:starting at|up to)\s*(?:USD|CAD|EUR|GBP|US\$|CA\$|[$€£])\s*\d[\d,]*(?:\.\d+)?\s*[kKmM]?(?:\s*(?:hourly|daily|monthly|annual|annually|per hour|per day|per month|per year|\/hr|\/hour|\/day|\/month|\/mo|\/year|\/yr))?/i,
-    /(?:USD|CAD|EUR|GBP|US\$|CA\$|[$€£])\s*\d[\d,]*(?:\.\d+)?\s*[kKmM]?\s*(?:-|–|—|to)\s*(?:USD|CAD|EUR|GBP|US\$|CA\$|[$€£])?\s*\d[\d,]*(?:\.\d+)?\s*[kKmM]?(?:\s*(?:hourly|daily|monthly|annual|annually|per hour|per day|per month|per year|\/hr|\/hour|\/day|\/month|\/mo|\/year|\/yr))?/i,
-    /(?:USD|CAD|EUR|GBP|US\$|CA\$|[$€£])\s*\d[\d,]*(?:\.\d+)?\s*[kKmM]?(?:\s*(?:hourly|daily|monthly|annual|annually|per hour|per day|per month|per year|\/hr|\/hour|\/day|\/month|\/mo|\/year|\/yr))/i,
-    /(?:salary|compensation|pay|base)[^.]{0,120}?(?:USD|CAD|EUR|GBP|US\$|CA\$|[$€£])?\s*\d[\d,]*(?:\.\d+)?\s*[kKmM]?\s*(?:-|–|—|to)\s*(?:USD|CAD|EUR|GBP|US\$|CA\$|[$€£])?\s*\d[\d,]*(?:\.\d+)?\s*[kKmM]?(?:\s*(?:annual|annually|yearly|hourly|per hour|per year|per month|\/hr|\/hour|\/year|\/yr|\/month|\/mo))?/i,
-    /(?:salary|compensation|pay|base)[^.]{0,80}?(?:USD|CAD|EUR|GBP|US\$|CA\$|[$€£])\s*\d[\d,]*(?:\.\d+)?\s*[kKmM]?(?:\s*(?:annual|annually|yearly|hourly|per hour|per year|per month|\/hr|\/hour|\/year|\/yr|\/month|\/mo))?/i,
-    /(?:[$€£])\s*\d[\d,]*(?:\.\d+)?\s*(?:-|–|—|to)\s*(?:[$€£])?\s*\d[\d,]*(?:\.\d+)?\s*(?:per hour|hourly|annual|annually|yearly|per year|\/hr|\/hour|\/year|\/yr)?/i,
-    /(?:[$€£])\s*\d[\d,]*(?:\.\d+)?\s*(?:per hour|hourly|annual|annually|yearly|per year|\/hr|\/hour|\/year|\/yr)/i,
+    /(?:annual salary range is|salary range(?: for this position)? is|salary for this position is|compensation for this position is|this role pays|compensation range:?|pay range:?|salary:?|compensation:?|pay:?|wage:?|rate:?|stipend:?|base salary:?)[^.]{0,180}(?:USD|CAD|EUR|GBP|US\$|CA\$|[$€£])\s*\d[\d,]*(?:\.\d+)?\s*[kKmM]?(?:\s*(?:-|–|—|to)\s*(?:USD|CAD|EUR|GBP|US\$|CA\$|[$€£])?\s*\d[\d,]*(?:\.\d+)?\s*[kKmM]?)?(?:\s*(?:hourly|daily|weekly|monthly|annual|annually|per hour|per day|per week|per month|per year|\/hr|\/hour|\/day|\/week|\/month|\/mo|\/year|\/yr))?/i,
+    /(?:starting at|up to)\s*(?:USD|CAD|EUR|GBP|US\$|CA\$|[$€£])\s*\d[\d,]*(?:\.\d+)?\s*[kKmM]?(?:\s*(?:hourly|daily|weekly|monthly|annual|annually|per hour|per day|per week|per month|per year|\/hr|\/hour|\/day|\/week|\/month|\/mo|\/year|\/yr))?/i,
+    /(?:USD|CAD|EUR|GBP|US\$|CA\$|[$€£])\s*\d[\d,]*(?:\.\d+)?\s*[kKmM]?\s*(?:-|–|—|to)\s*(?:USD|CAD|EUR|GBP|US\$|CA\$|[$€£])?\s*\d[\d,]*(?:\.\d+)?\s*[kKmM]?(?:\s*(?:hourly|daily|weekly|monthly|annual|annually|per hour|per day|per week|per month|per year|\/hr|\/hour|\/day|\/week|\/month|\/mo|\/year|\/yr))?/i,
+    /(?:USD|CAD|EUR|GBP|US\$|CA\$|[$€£])\s*\d[\d,]*(?:\.\d+)?\s*[kKmM]?(?:\s*(?:hourly|daily|weekly|monthly|annual|annually|per hour|per day|per week|per month|per year|\/hr|\/hour|\/day|\/week|\/month|\/mo|\/year|\/yr))/i,
+    /\b\d{2,3}(?:,\d{3})+|\b\d{5,6}\b|\b\d{2,3}(?:\.\d+)?\s*[kK]\b.*(?:-|–|—|to).*\b\d{2,3}(?:,\d{3})+|\b\d{5,6}\b|\b\d{2,3}(?:\.\d+)?\s*[kK]\b(?:\s*(?:hourly|daily|weekly|monthly|annual|annually|per hour|per day|per week|per month|per year|\/hr|\/hour|\/day|\/week|\/month|\/mo|\/year|\/yr))?/i,
+    /(?:salary|compensation|pay|base|stipend)[^.]{0,120}?(?:USD|CAD|EUR|GBP|US\$|CA\$|[$€£])?\s*\d[\d,]*(?:\.\d+)?\s*[kKmM]?\s*(?:-|–|—|to)\s*(?:USD|CAD|EUR|GBP|US\$|CA\$|[$€£])?\s*\d[\d,]*(?:\.\d+)?\s*[kKmM]?(?:\s*(?:annual|annually|yearly|hourly|weekly|per hour|per week|per year|per month|\/hr|\/hour|\/week|\/year|\/yr|\/month|\/mo))?/i,
+    /(?:salary|compensation|pay|base|stipend)[^.]{0,80}?(?:USD|CAD|EUR|GBP|US\$|CA\$|[$€£])\s*\d[\d,]*(?:\.\d+)?\s*[kKmM]?(?:\s*(?:annual|annually|yearly|hourly|weekly|per hour|per week|per year|per month|\/hr|\/hour|\/week|\/year|\/yr|\/month|\/mo))?/i,
+    /(?:[$€£])\s*\d[\d,]*(?:\.\d+)?\s*(?:-|–|—|to)\s*(?:[$€£])?\s*\d[\d,]*(?:\.\d+)?\s*(?:per hour|hourly|weekly|per week|annual|annually|yearly|per year|\/hr|\/hour|\/week|\/year|\/yr)?/i,
+    /(?:[$€£])\s*\d[\d,]*(?:\.\d+)?\s*(?:per hour|hourly|weekly|per week|annual|annually|yearly|per year|\/hr|\/hour|\/week|\/year|\/yr)/i,
     /\b(?:competitive salary|competitive compensation|salary not listed|compensation not listed|pay not listed|salary unavailable|compensation unavailable|not disclosed|undisclosed)\b/i
   ];
 
@@ -1569,34 +1616,47 @@ function findPayLikeSnippet(value) {
   for (const paragraph of paragraphs) {
     const cleaned = normalizeWhitespace(paragraph);
     if (!cleaned) continue;
-    if (hasPayContext(cleaned) || /[$€£]|\b(?:USD|CAD|EUR|GBP)\b/i.test(cleaned)) {
+    if ((hasPayContext(cleaned) || /[$€£]|\b(?:USD|CAD|EUR|GBP)\b/i.test(cleaned)) && !PAY_FALSE_POSITIVE_PATTERN.test(cleaned)) {
       return cleaned.slice(0, 280);
     }
   }
   const normalized = normalizeWhitespace(text);
-  if (hasPayContext(normalized) || /[$€£]|\b(?:USD|CAD|EUR|GBP)\b/i.test(normalized)) {
+  if ((hasPayContext(normalized) || /[$€£]|\b(?:USD|CAD|EUR|GBP)\b/i.test(normalized)) && !PAY_FALSE_POSITIVE_PATTERN.test(normalized)) {
     return normalized.slice(0, 280);
   }
   return "";
 }
 
 function extractSalaryData(job = {}) {
+  const candidateSnippets = [];
+  const rejectedSnippets = [];
   const explicitCandidates = [
     job.salary,
+    job.raw_salary,
     job.compensation,
     job.pay,
     job.pay_range,
+    job.salary_range,
     job.wage,
     job.rate,
+    job.base_salary,
+    job.baseSalary,
+    job.stipend,
+    job.salary_min && job.salary_max ? `${job.salary_min} - ${job.salary_max}` : "",
     job.salaryRange,
     job.salaryDescription,
     job.salaryDescriptionPlain,
     job.raw_payload?.salary,
+    job.raw_payload?.raw_salary,
     job.raw_payload?.compensation,
     job.raw_payload?.pay,
     job.raw_payload?.pay_range,
+    job.raw_payload?.salary_range,
     job.raw_payload?.wage,
     job.raw_payload?.rate,
+    job.raw_payload?.base_salary,
+    job.raw_payload?.baseSalary,
+    job.raw_payload?.stipend,
     job.raw_payload?.salaryRange,
     job.raw_payload?.salaryDescription,
     job.raw_payload?.salaryDescriptionPlain
@@ -1605,12 +1665,18 @@ function extractSalaryData(job = {}) {
   for (const candidate of explicitCandidates) {
     const text = normalizeWhitespace(salaryCandidateToText(candidate) || stringifySafe(candidate) || cleanFlattenedText(candidate));
     if (!text) continue;
+    candidateSnippets.push(text.slice(0, 280));
     const matched = findBestSalaryMatch(text) || text;
+    const confidence = detectPayParseConfidence(matched, matched ? "ats_field" : "none");
     return {
       text: matched,
       source: matched ? "ats_field" : "none",
       payLikeDetected: hasPayContext(text) || /[$€£]|\b(?:USD|CAD|EUR|GBP)\b/i.test(text),
-      failedSnippet: matched ? "" : findPayLikeSnippet(text)
+      failedSnippet: matched ? "" : findPayLikeSnippet(text),
+      confidence,
+      candidateSnippets,
+      rejectedSnippets,
+      rejectionReason: matched ? "" : (findPayLikeSnippet(text) ? "pay_like_detected_but_not_parsed" : "")
     };
   }
 
@@ -1627,14 +1693,22 @@ function extractSalaryData(job = {}) {
     const paragraphs = normalizeParagraphs(candidate);
     const tailParagraphs = paragraphs.slice(-4).reverse();
     for (const paragraph of tailParagraphs) {
+      if (paragraph) candidateSnippets.push(paragraph.slice(0, 280));
       const matched = findBestSalaryMatch(paragraph);
       if (matched) {
         return {
           text: matched,
           source: "description_final_paragraph",
           payLikeDetected: true,
-          failedSnippet: ""
+          failedSnippet: "",
+          confidence: detectPayParseConfidence(matched, "description_final_paragraph"),
+          candidateSnippets,
+          rejectedSnippets,
+          rejectionReason: ""
         };
+      }
+      if ((hasPayContext(paragraph) || /[$€£]|\b(?:USD|CAD|EUR|GBP)\b/i.test(paragraph)) && !PAY_FALSE_POSITIVE_PATTERN.test(paragraph)) {
+        rejectedSnippets.push(paragraph.slice(0, 280));
       }
     }
   }
@@ -1653,15 +1727,23 @@ function extractSalaryData(job = {}) {
   ];
 
   for (const candidate of secondaryCandidates) {
+    const flattened = normalizeWhitespace(stringifySafe(candidate) || cleanFlattenedText(candidate));
+    if (flattened) candidateSnippets.push(flattened.slice(0, 280));
     const matched = findBestSalaryMatch(candidate);
     if (matched) {
       return {
         text: matched,
         source: "description_body",
         payLikeDetected: true,
-        failedSnippet: ""
+        failedSnippet: "",
+        confidence: detectPayParseConfidence(matched, "description_body"),
+        candidateSnippets,
+        rejectedSnippets,
+        rejectionReason: ""
       };
     }
+    const snippet = findPayLikeSnippet(candidate);
+    if (snippet) rejectedSnippets.push(snippet);
   }
 
   const payLikeText = [
@@ -1679,7 +1761,11 @@ function extractSalaryData(job = {}) {
     text: "",
     source: "none",
     payLikeDetected: hasPayContext(payLikeText) || /[$€£]|\b(?:USD|CAD|EUR|GBP)\b/i.test(payLikeText),
-    failedSnippet: findPayLikeSnippet(payLikeText)
+    failedSnippet: findPayLikeSnippet(payLikeText),
+    confidence: "low",
+    candidateSnippets: Array.from(new Set(candidateSnippets.filter(Boolean))),
+    rejectedSnippets: Array.from(new Set(rejectedSnippets.filter(Boolean))),
+    rejectionReason: findPayLikeSnippet(payLikeText) ? "pay_like_detected_but_not_parsed" : ""
   };
 }
 
@@ -2020,6 +2106,59 @@ function collapseRepeatedPhrases(value) {
     .replace(/\b([A-Za-z][A-Za-z&,'/-]{2,})\b(?:\s+\1\b){1,}/gi, "$1");
 }
 
+function stripLeadingDescriptionFragments(value, title = "") {
+  let next = String(value || "");
+  const normalizedTitle = normalizeWhitespace(title || "");
+  const rolePrefix = normalizedTitle ? `The ${normalizedTitle}` : "This role";
+  next = next
+    .replace(/^(?:[\s>*•%\-–—]+)+/g, "")
+    .replace(/^(?:[A-Z][A-Z\s/&-]{2,20}:)\s*/g, "")
+    .replace(/^(?:salary|compensation|pay)\s*[:\-]\s*(?:[$€£]?\s*\d[\d,]*(?:\.\d+)?\s*[kKmM]?(?:\s*(?:-|–|—|to)\s*[$€£]?\s*\d[\d,]*(?:\.\d+)?\s*[kKmM]?)?)\s*/i, "")
+    .replace(/^(?:remote eligible|hybrid eligible|on-site|onsite|remote|hybrid)\b[:\-\s]*/i, (match) => `${rolePrefix} is ${normalizeWhitespace(match)} `)
+    .replace(/^(?:will|would|can)\s+/i, (match) => `${rolePrefix} ${normalizeWhitespace(match)} `)
+    .replace(/^(?:[a-z]{1,3}\b\s*){1,4}(?=[A-Z][a-z]{2,}\s+[a-z]{3,})/g, "");
+  const lines = next
+    .split(/\n+/)
+    .map((line) => normalizeWhitespace(line))
+    .filter(Boolean);
+  while (lines.length) {
+    const line = lines[0];
+    if (line.length < 18 && !/[.?!]$/.test(line)) {
+      lines.shift();
+      continue;
+    }
+    if (/^(?:job id|req(?:uisition)? id|department|location|reports to|supervises|duration|posted|updated|team)\b[:\-]/i.test(line)) {
+      lines.shift();
+      continue;
+    }
+    if (/^(?:[*•%\-–—]|[A-Z\s/&-]{3,20}:?$)/.test(line)) {
+      lines.shift();
+      continue;
+    }
+    break;
+  }
+  return lines.join(" ");
+}
+
+function capitalizeDescriptionOpening(value) {
+  const text = normalizeWhitespace(String(value || ""));
+  if (!text) return { text: "", changed: false };
+  const match = text.match(/[a-zA-Z]/);
+  if (!match) return { text, changed: false };
+  const index = match.index;
+  const first = text[index];
+  if (first === first.toUpperCase()) return { text, changed: false };
+  return {
+    text: `${text.slice(0, index)}${first.toUpperCase()}${text.slice(index + 1)}`,
+    changed: true
+  };
+}
+
+function looksLikeWeakSnippetStart(sentence) {
+  return /^(?:this role|the role will|will oversee|we grow|remote eligible|hybrid eligible)\b/i.test(sentence)
+    || /^[*•%\-–—]/.test(sentence);
+}
+
 function hasMalformedDescriptionTemplate(value) {
   const text = String(value || "");
   return MALFORMED_DESCRIPTION_TEMPLATE_PATTERNS.some((pattern) => pattern.test(text));
@@ -2054,6 +2193,7 @@ function applyTitleToMalformedTemplate(text, title) {
 
 function normalizeDescription(description, options = {}) {
   const title = normalizeWhitespace(options.title || "");
+  const organization = normalizeWhitespace(options.organization || "");
   const descriptionInput = normalizeWhitespace(stringifySafe(description) || cleanFlattenedText(description));
   const rawDescription = stripParserTemplateJunk(descriptionInput, "description");
   const cleaned = applyTitleToMalformedTemplate(collapseRepeatedPhrases(normalizeWhitespace(
@@ -2088,10 +2228,11 @@ function normalizeDescription(description, options = {}) {
       .replace(/\b(?:job title|department|reports to|supervises|duration|location)\s*:/gi, " ")
       .replace(/\.\s*\./g, ". ")
   )), title);
+  const strippedLeading = stripLeadingDescriptionFragments(cleaned, title);
   const numericCleaned = normalizeWhitespace(
     collapseRepeatedPipeSegments(
       stripLeadingMetadataBlob(
-        stripStandaloneMetadataNumbers(cleaned)
+        stripStandaloneMetadataNumbers(strippedLeading)
       )
     )
   );
@@ -2099,7 +2240,14 @@ function normalizeDescription(description, options = {}) {
   if (!numericCleaned || !/[A-Za-z]{3,}/.test(numericCleaned) || /^[>"'<\s|/\\-]+$/.test(numericCleaned)) {
     return {
       raw_description: rawDescription,
-      description: ""
+      description: "",
+      diagnostics: {
+        description_cleaning_applied: strippedLeading !== cleaned,
+        description_leading_fragment_removed: strippedLeading !== cleaned,
+        description_auto_capitalized: false,
+        description_fallback_sentence_used: false,
+        snippet_fallback_used: false
+      }
     };
   }
 
@@ -2132,6 +2280,19 @@ function normalizeDescription(description, options = {}) {
     dedupeTitleMentions(collapseRepeatedPhrases(selected.join(" ").trim() || numericCleaned), title),
     title
   );
+  let chosenDescription = finalDescription;
+  let fallbackSentenceUsed = false;
+  const fallbackSentence = sentences.find((sentence) => (
+    !looksLikeWeakSnippetStart(sentence)
+    && sentence.length >= 35
+    && !DESCRIPTION_JUNK_PATTERNS.some((pattern) => pattern.test(sentence))
+    && /[a-z]{3,}\s+(?:is|are|will|can|should|must|plans|coordinates|executes|supports|manages|builds|seeks|works|develops|leads|drives|partners|optimizes)/i.test(sentence)
+  ));
+  if ((!selected.length || looksLikeWeakSnippetStart(chosenDescription)) && fallbackSentence) {
+    chosenDescription = fallbackSentence;
+    fallbackSentenceUsed = true;
+  }
+  const capitalized = capitalizeDescriptionOpening(chosenDescription);
   const metadataHeavyDescription = /\b(?:career_page|other \d+|ipo \d+|point\s*\(|locality\b|business\/productivity software|cleantech|oil\s*&\s*gas|renewable energy|revenue|valuation|headquarters|employee size)\b/i.test(finalDescription);
 
   const dominatedByNoise =
@@ -2144,7 +2305,14 @@ function normalizeDescription(description, options = {}) {
 
   return {
     raw_description: rawDescription,
-    description: dominatedByNoise || dominatedBySchemaMetadata || isArticleLikeDescription(finalDescription) || (metadataHeavyDescription && selected.length === 0) ? "" : finalDescription
+    description: dominatedByNoise || dominatedBySchemaMetadata || isArticleLikeDescription(capitalized.text) || (metadataHeavyDescription && selected.length === 0) ? "" : capitalized.text,
+    diagnostics: {
+      description_cleaning_applied: strippedLeading !== cleaned || capitalized.changed,
+      description_leading_fragment_removed: strippedLeading !== cleaned,
+      description_auto_capitalized: capitalized.changed,
+      description_fallback_sentence_used: fallbackSentenceUsed,
+      snippet_fallback_used: false
+    }
   };
 }
 
@@ -2269,9 +2437,11 @@ function hasUsableDescription(value, options = {}) {
 
 function buildDescriptionSnippet(value, maxLength = 220, options = {}) {
   const title = normalizeWhitespace(options.title || "");
-  const normalizedDescription = applyTitleToMalformedTemplate(normalizeDescription(value, { title }).description, title);
+  const organization = normalizeWhitespace(options.organization || "");
+  const normalizedShape = normalizeDescription(value, { title, organization });
+  const normalizedDescription = applyTitleToMalformedTemplate(normalizedShape.description, title);
   if (!normalizedDescription) return "";
-  if (isLikelyCorruptedDescription(normalizedDescription, { title })) return "";
+  if (isLikelyCorruptedDescription(normalizedDescription, { title, organization })) return "";
 
   const sentences = splitIntoSentences(normalizedDescription)
     .map((sentence) => normalizeWhitespace(sentence))
@@ -2280,8 +2450,9 @@ function buildDescriptionSnippet(value, maxLength = 220, options = {}) {
     .filter((sentence) => !DESCRIPTION_JUNK_PATTERNS.some((pattern) => pattern.test(sentence)))
     .filter((sentence) => !/^(?:milan,\s*italy|southampton,\s*uk|greer,\s*sc|madison,\s*wi|date operations)/i.test(sentence));
 
-  const finalSnippet = sentences[0] || normalizeWhitespace(normalizedDescription);
-  if (!finalSnippet || isLikelyCorruptedDescription(finalSnippet, { title })) return "";
+  const preferredSentence = sentences.find((sentence) => !looksLikeWeakSnippetStart(sentence)) || sentences[0];
+  const finalSnippet = preferredSentence || normalizeWhitespace(normalizedDescription);
+  if (!finalSnippet || isLikelyCorruptedDescription(finalSnippet, { title, organization })) return "";
   if (finalSnippet.length <= maxLength) return finalSnippet;
   return `${finalSnippet.slice(0, maxLength - 1).trimEnd()}…`;
 }
@@ -2293,7 +2464,7 @@ function isBadPublicContent(value) {
 }
 
 function isPotentiallyHumanApplyUrl(value, options = {}) {
-  const url = normalizeWhitespace(String(value || ""));
+  const url = normalizeWorkableUrl(value).url || normalizeWhitespace(String(value || ""));
   if (!url) return false;
   if (!/^https?:\/\//i.test(url)) return false;
   if (/\.(?:json|xml|rss|atom|md)(?:[?#].*)?$/i.test(url)) return false;
@@ -2445,9 +2616,15 @@ function normalizeJob(input = {}) {
   const attributedTitle = safeStringField(sourceAttribution?.title);
   const titleCleanup = stripWorkplaceLocationSuffixFromTitle(attributedTitle || input.title);
   const title = normalizeTitle(titleCleanup.title || attributedTitle || input.title, organization, { ...parserOptions, organization });
-  const applyUrl = sanitizeRoleUrl(safeStringField(sourceAttribution?.applyUrl || input.apply_url || input.applyUrl));
-  const originalUrl = sanitizeRoleUrl(safeStringField(sourceAttribution?.originalUrl || input.original_url || input.originalUrl || applyUrl || input.source_url || input.sourceUrl));
-  const sourceUrl = sanitizeRoleUrl(safeStringField(sourceAttribution?.sourceUrl || input.source_url || input.sourceUrl));
+  const rawApplyUrl = sanitizeRoleUrl(safeStringField(sourceAttribution?.applyUrl || input.apply_url || input.applyUrl));
+  const rawOriginalUrl = sanitizeRoleUrl(safeStringField(sourceAttribution?.originalUrl || input.original_url || input.originalUrl || rawApplyUrl || input.source_url || input.sourceUrl));
+  const rawSourceUrl = sanitizeRoleUrl(safeStringField(sourceAttribution?.sourceUrl || input.source_url || input.sourceUrl));
+  const workableApplyDiagnostic = normalizeWorkableUrl(rawApplyUrl);
+  const workableSourceDiagnostic = normalizeWorkableUrl(rawSourceUrl);
+  const workableOriginalDiagnostic = normalizeWorkableUrl(rawOriginalUrl);
+  const applyUrl = workableApplyDiagnostic.url || rawApplyUrl;
+  const originalUrl = workableOriginalDiagnostic.url || rawOriginalUrl;
+  const sourceUrl = workableSourceDiagnostic.url || rawSourceUrl;
   const inferredWorkplaceType = normalizeWorkplaceType(input.workplace_type || input.workplaceType) || titleCleanup.workplaceType || resolveWorkplaceType(input);
   const location = normalizeLocationDisplay({ ...input, organization, location: titleCleanup.location || input.location }, inferredWorkplaceType);
   const salaryExtraction = extractSalaryData(input);
@@ -2456,7 +2633,7 @@ function normalizeJob(input = {}) {
   const explicitCurrency = safeStringField(input.salary_currency || input.salaryCurrency);
   const explicitPeriod = safeStringField(input.salary_period || input.salaryPeriod);
   const descriptionCandidate = extractDescriptionText(input);
-  const descriptionShape = normalizeDescription(descriptionCandidate, { title });
+  const descriptionShape = normalizeDescription(descriptionCandidate, { title, organization });
   if (descriptionCandidate && (
     descriptionShape.raw_description !== normalizeWhitespace(stringifySafe(descriptionCandidate) || cleanFlattenedText(descriptionCandidate)) ||
     (descriptionShape.description && descriptionShape.description !== descriptionShape.raw_description)
@@ -2505,6 +2682,29 @@ function normalizeJob(input = {}) {
   const specializationShape = normalizeSpecializationDetailed(input.specialization || input.display?.specialization, input);
   if (titleQuality.confidence === "low") incrementParserCleanupStat("low_confidence_title");
 
+  const workableNormalization = workableApplyDiagnostic.normalized || workableSourceDiagnostic.normalized || workableOriginalDiagnostic.normalized;
+  const originalWorkableUrl =
+    workableApplyDiagnostic.original_url ||
+    workableSourceDiagnostic.original_url ||
+    workableOriginalDiagnostic.original_url ||
+    "";
+  const canonicalWorkableUrl =
+    workableApplyDiagnostic.canonical_url ||
+    workableSourceDiagnostic.canonical_url ||
+    workableOriginalDiagnostic.canonical_url ||
+    "";
+  const descriptionSourceUrl = safeStringField(
+    normalizeWorkableUrl(input.description_source_url || input.descriptionSourceUrl || input.raw_payload?.description_source_url || sourceUrl || originalUrl).url
+  );
+  const paySourceUrl = safeStringField(
+    normalizeWorkableUrl(input.pay_source_url || input.paySourceUrl || input.raw_payload?.pay_source_url || sourceUrl || originalUrl).url
+  );
+  const applyUrlType = safeStringField(input.apply_url_type || input.applyUrlType)
+    || (/\/Recruiting\/Jobs\/Apply\//i.test(applyUrl) || /apply\.workable\.com/i.test(applyUrl) ? "ats_apply_page" : (applyUrl && sourceUrl && applyUrl !== sourceUrl ? "direct_application_page" : "job_description_page"));
+  const workableApplyValidationReason = /workable/i.test(`${input.source || ""} ${input.source_type || ""} ${applyUrl} ${sourceUrl}`)
+    ? (isPotentiallyHumanApplyUrl(applyUrl, { source: { provider: input.source_type || input.source } }) ? "human_apply_url_confirmed" : "workable_apply_url_not_human_usable")
+    : "";
+
   return {
     id,
     ref: safeStringField(input.ref),
@@ -2520,13 +2720,22 @@ function normalizeJob(input = {}) {
     raw_salary: salaryShape.raw_salary,
     salary_min: resolveNumericField(input.salary_min) ?? salaryShape.salary_min,
     salary_max: resolveNumericField(input.salary_max) ?? salaryShape.salary_max,
-    salary_currency: VALID_CURRENCIES.has(explicitCurrency) ? explicitCurrency : salaryShape.salary_currency,
-    salary_period: VALID_PERIODS.has(explicitPeriod) ? explicitPeriod : salaryShape.salary_period,
+    salary_currency: VALID_CURRENCIES.has(explicitCurrency) && explicitCurrency !== "Unknown" ? explicitCurrency : salaryShape.salary_currency,
+    salary_period: VALID_PERIODS.has(explicitPeriod) && explicitPeriod !== "Unknown" ? explicitPeriod : salaryShape.salary_period,
     salary_visible: resolvedSalaryVisible,
     pay_parse_warning: safeStringField(input.pay_parse_warning || input.payParseWarning || salaryShape.pay_parse_warning),
     pay_parse_source: safeStringField(input.pay_parse_source || input.payParseSource || salaryExtraction.source),
+    pay_parse_confidence: safeStringField(input.pay_parse_confidence || input.payParseConfidence || salaryExtraction.confidence),
+    pay_candidate_snippets: Array.isArray(input.pay_candidate_snippets) ? input.pay_candidate_snippets : salaryExtraction.candidateSnippets,
+    pay_rejected_snippets: Array.isArray(input.pay_rejected_snippets) ? input.pay_rejected_snippets : salaryExtraction.rejectedSnippets,
+    pay_rejection_reason: safeStringField(input.pay_rejection_reason || input.payRejectionReason || salaryExtraction.rejectionReason),
     pay_like_detected: typeof input.pay_like_detected === "boolean" ? input.pay_like_detected : Boolean(salaryExtraction.payLikeDetected),
     pay_parse_failed_snippet: safeStringField(input.pay_parse_failed_snippet || input.payParseFailedSnippet || salaryExtraction.failedSnippet),
+    description_cleaning_applied: Boolean(input.description_cleaning_applied ?? descriptionShape.diagnostics?.description_cleaning_applied),
+    description_leading_fragment_removed: Boolean(input.description_leading_fragment_removed ?? descriptionShape.diagnostics?.description_leading_fragment_removed),
+    description_auto_capitalized: Boolean(input.description_auto_capitalized ?? descriptionShape.diagnostics?.description_auto_capitalized),
+    description_fallback_sentence_used: Boolean(input.description_fallback_sentence_used ?? descriptionShape.diagnostics?.description_fallback_sentence_used),
+    snippet_fallback_used: Boolean(input.snippet_fallback_used ?? descriptionShape.diagnostics?.snippet_fallback_used),
     featured: Boolean(input.featured),
     sector: normalizeSector(input.sector || "general"),
     function: safeStringField(input.function || input.role_function),
@@ -2537,6 +2746,14 @@ function normalizeJob(input = {}) {
     source_url: sourceUrl,
     apply_url: applyUrl,
     original_url: originalUrl,
+    apply_url_type: applyUrlType,
+    description_source_url: descriptionSourceUrl,
+    pay_source_url: paySourceUrl,
+    workable_url_normalized: workableNormalization,
+    original_workable_url: originalWorkableUrl,
+    canonical_workable_url: canonicalWorkableUrl,
+    workable_human_apply_confirmed: workableApplyValidationReason === "human_apply_url_confirmed",
+    workable_apply_validation_reason: workableApplyValidationReason,
     date_posted: isValidDate(datePosted) ? new Date(datePosted).toISOString().slice(0, 10) : todayIso(),
     date_added: isValidDate(dateAdded) ? new Date(dateAdded).toISOString().slice(0, 10) : todayIso(),
     date_updated: isValidDate(dateUpdated) ? new Date(dateUpdated).toISOString().slice(0, 10) : todayIso(),
@@ -2792,6 +3009,7 @@ module.exports = {
   isSingleFirstNameOnlyTitle,
   looksLikePhysicalLocation,
   normalizeDescription,
+  normalizeWorkableUrl,
   applyTitleToMalformedTemplate,
   normalizeEmploymentType,
   normalizeJob,

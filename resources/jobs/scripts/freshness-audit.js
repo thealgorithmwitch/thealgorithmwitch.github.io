@@ -6,6 +6,7 @@ const { filterBlockedSourceEntries, getBlockedSourceRuleForEntry } = require("./
 const {
   assessPublicJobReadiness,
   hasUsableDescription,
+  normalizeWorkableUrl,
   normalizeJob,
   normalizePayDisplay,
   stringifySafe
@@ -321,12 +322,16 @@ async function main() {
 
   for (const publicJob of stalePublicJobs) {
     const record = recordsById.get(cleanText(publicJob.id));
-    const sourceUrl = cleanText(publicJob.apply_url || publicJob.original_url || publicJob.source_url);
+    const workableDiagnostic = normalizeWorkableUrl(publicJob.apply_url || publicJob.original_url || publicJob.source_url);
+    const sourceUrl = cleanText(workableDiagnostic.url || publicJob.apply_url || publicJob.original_url || publicJob.source_url);
     const reportEntry = {
       id: publicJob.id,
       title: publicJob.title,
       organization: publicJob.organization,
       source_url: sourceUrl,
+      workable_url_normalized: workableDiagnostic.normalized,
+      original_workable_url: workableDiagnostic.original_url,
+      canonical_workable_url: workableDiagnostic.canonical_url,
       previous_status: "published",
       action: "unchanged",
       reasons: [],

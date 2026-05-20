@@ -1,0 +1,120 @@
+name: Jobs Freshness Audit
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "30 12 * * *"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: jobs-board-state
+  cancel-in-progress: false
+
+jobs:
+  freshness-audit:
+    runs-on: ubuntu-latest
+
+    env:
+      JOBS_DIR: resources/jobs
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+          cache: npm
+          cache-dependency-path: resources/jobs/package.json
+
+      - name: Install dependencies if needed
+        shell: bash
+        run: |
+          if [ -f "$JOBS_DIR/package-lock.json" ] || [ -f "$JOBS_DIR/npm-shrinkwrap.json" ]; then
+            npm --prefix "$JOBS_DIR" ci
+          elif node -e "const p=require('./resources/jobs/package.json'); const hasDeps=Object.keys(p.dependencies||{}).length > 0 || Object.keys(p.devDependencies||{}).length > 0; process.exit(hasDeps ? 0 : 1)"; then
+            npm --prefix "$JOBS_DIR" install
+          else
+            echo "No package dependencies declared. Skipping npm install."
+          fi
+
+      - name: Validate freshness audit scripts
+        run: |
+          node --check "$JOBS_DIR/scripts/freshness-audit.js"
+          node --check "$JOBS_DIR/scripts/job-normalizer.js"
+          node --check "$JOBS_DIR/scripts/public-records.js"
+          node --check "$JOBS_DIR/scripts/public-jobs.js"
+
+      - name: Validate public data before audit
+        run: npm --prefix "$JOBS_DIR" run jobs:validate
+
+      - name: Run freshness audit dry run
+        run: npm --prefix resources/jobs run jobs:freshness-audit -- --dry-run
+
+      - name: Run freshness audit write
+        run: npm --prefix resources/jobs run jobs:freshness-audit -- --write
+
+      - name: Validate public data after audit
+        run: npm --prefix "$JOBS_DIR" run jobs:validate
+
+      - name: Guard blocked sources
+        run: npm --prefix "$JOBS_DIR" run jobs:check-blocked-sources
+
+      - name: Check for freshness audit changes
+        id: changes
+        shell: bash
+        run: |
+          CHANGED="$(git status --porcelain -- \
+            resources/jobs/job-records.json \
+            resources/jobs/jobs.json \
+            resources/jobs/pending-synced-jobs.json \
+            resources/jobs/reports/freshness-audit-latest.json \
+            resources/jobs/validation-snapshots/latest.json \
+            || true)"
+          if [ -n "$CHANGED" ]; then
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+            echo "Detected freshness audit changes:"
+            echo "$CHANGED"
+          else
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+            echo "No freshness audit changes detected."
+          fi
+
+      - name: Upload freshness audit artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: jobs-freshness-audit-${{ github.run_id }}
+          if-no-files-found: warn
+          path: |
+            resources/jobs/job-records.json
+            resources/jobs/jobs.json
+            resources/jobs/pending-synced-jobs.json
+            resources/jobs/reports/freshness-audit-latest.json
+            resources/jobs/validation-snapshots/latest.json
+
+      - name: Commit and push freshness audit changes
+        if: steps.changes.outputs.changed == 'true'
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add \
+            resources/jobs/job-records.json \
+            resources/jobs/jobs.json \
+            resources/jobs/pending-synced-jobs.json \
+            resources/jobs/reports/freshness-audit-latest.json \
+            resources/jobs/validation-snapshots/latest.json
+          if git diff --cached --quiet; then
+            echo "No staged changes to commit."
+            exit 0
+          fi
+          git commit -m "Run jobs freshness audit"
+          git push
+
+      - name: Report no-op
+        if: steps.changes.outputs.changed != 'true'
+        run: echo "No commit created."

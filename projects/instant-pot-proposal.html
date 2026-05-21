@@ -6,7 +6,7 @@
     
     <link rel="preconnect" href="https://fonts.googleapis.com" vid="6">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="" vid="7">
-    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400;1,600&amp;family=Inter:wght@300;400;500;600&amp;family=Playfair+Display:ital,wght@0,400;0,700;1,400&amp;display=swap" rel="stylesheet" vid="8">
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400;1,600&amp;family=Inter:wght@300;400;500;600&amp;family=Raleway:wght@300;400;500;600;700;800&amp;display=swap" rel="stylesheet" vid="8">
     <script src="https://unpkg.com/@phosphor-icons/web"></script>
     <style vid="9">
         :root {
@@ -30,15 +30,43 @@
             scroll-behavior: smooth;
         }
 
+        .brand-display {
+            font-family: 'Raleway', sans-serif;
+            font-weight: 700;
+            letter-spacing: -0.04em;
+        }
+
         .serif {
-            font-family: 'Cormorant Garamond', serif;
+            font-family: 'Raleway', sans-serif;
+            font-style: normal !important;
+            letter-spacing: -0.035em;
+        }
+
+        h1.serif,
+        h2.serif,
+        h3.serif {
+            font-family: 'Raleway', sans-serif;
+            font-weight: 700;
+            font-style: normal !important;
+            letter-spacing: -0.045em;
         }
 
         .micro-text {
+            font-family: 'Raleway', sans-serif;
             font-size: 9px;
             text-transform: uppercase;
             letter-spacing: 0.2em;
-            font-weight: 600;
+            font-weight: 700;
+        }
+
+        section {
+            position: relative;
+            padding-top: clamp(72px, 7vw, 128px);
+            padding-bottom: clamp(88px, 8vw, 148px);
+        }
+
+        section > .micro-text {
+            margin-bottom: 32px !important;
         }
 
         .border-subtle {
@@ -191,9 +219,106 @@
 
         .body-note {
             font-size: 16px;
-            line-height: 1.72;
+            line-height: 1.75;
             color: #6b7280;
             max-width: 66ch;
+        }
+
+        .section-intro {
+            line-height: 1.75;
+        }
+
+        .curved-section {
+            position: relative;
+            border-bottom: 0 !important;
+            margin-bottom: clamp(28px, 4vw, 52px);
+        }
+
+        .curved-section > * {
+            position: relative;
+            z-index: 2;
+        }
+
+        .curve-divider {
+            position: absolute;
+            left: -5%;
+            right: -5%;
+            bottom: -1px;
+            height: 96px;
+            pointer-events: none;
+            z-index: 1;
+        }
+
+        .curved-section::after {
+            content: "";
+            position: absolute;
+            left: -5%;
+            right: -5%;
+            bottom: -1px;
+            height: 96px;
+            background: var(--curve-fill, var(--bg));
+            clip-path: ellipse(62% 78% at 50% 100%);
+            pointer-events: none;
+            z-index: 1;
+        }
+
+        .curved-section.curve-red {
+            --curve-fill: #D13027;
+        }
+
+        .curved-section.curve-cream {
+            --curve-fill: #F7F5F0;
+        }
+
+        .curved-section.curve-white {
+            --curve-fill: #FFFFFF;
+        }
+
+        .red-band {
+            background: #D13027 !important;
+            color: #F7F5F0;
+        }
+
+        .red-band .body-note,
+        .red-band .text-gray-500,
+        .red-band .text-gray-600,
+        .red-band .text-gray-400 {
+            color: rgba(247,245,240,.82) !important;
+        }
+
+        .red-band .micro-text {
+            color: rgba(247,245,240,.74);
+        }
+
+        .red-band .border-subtle,
+        .red-band [class*="border-"] {
+            border-color: rgba(247,245,240,.28);
+        }
+
+        .red-band .proposal-placeholder {
+            border-color: rgba(247,245,240,.42);
+            color: rgba(247,245,240,.82);
+            background: rgba(255,255,255,.08);
+            box-shadow: inset 0 0 0 1px rgba(255,255,255,0.12);
+        }
+
+        .red-band .bg-white {
+            color: var(--text);
+        }
+
+        .red-band .bg-white .body-note,
+        .red-band .bg-white .text-gray-500,
+        .red-band .bg-white .text-gray-600,
+        .red-band .bg-white .text-gray-400 {
+            color: #6b7280 !important;
+        }
+
+        .red-band .bg-white .micro-text {
+            color: #7a766d !important;
+        }
+
+        .red-band .bg-white .text-white {
+            color: var(--text) !important;
         }
 
         .platform-audit-table {
@@ -287,13 +412,13 @@
 
         .visual-block-grid {
             display: grid;
-            grid-template-columns: repeat(4, minmax(0, 1fr));
+            grid-template-columns: repeat(12, minmax(0, 1fr));
             gap: 18px;
             align-items: stretch;
         }
 
         .visual-block {
-            min-height: 132px;
+            height: clamp(240px, 18vw, 280px);
             border: 0.5px solid var(--border);
             border-radius: 18px;
             padding: 20px;
@@ -304,6 +429,19 @@
             letter-spacing: 0.12em;
             text-transform: uppercase;
         }
+
+        .visual-block:nth-child(1) { grid-column: span 4; }
+        .visual-block:nth-child(2) { grid-column: span 3; }
+        .visual-block:nth-child(3) { grid-column: span 5; }
+        .visual-block:nth-child(4) { grid-column: span 5; }
+        .visual-block:nth-child(5) { grid-column: span 3; }
+        .visual-block:nth-child(6) { grid-column: span 4; }
+        .visual-block:nth-child(7) { grid-column: span 2; }
+        .visual-block:nth-child(8) { grid-column: span 4; }
+        .visual-block:nth-child(9) { grid-column: span 3; }
+        .visual-block:nth-child(10) { grid-column: span 3; }
+        .visual-block:nth-child(11) { grid-column: span 6; }
+        .visual-block:nth-child(12) { grid-column: span 6; }
 
         .visual-block-red { background:#D13027; color:#F7F5F0; }
         .visual-block-sage { background:#AAB7A8; color:#2A2A2A; }
@@ -770,8 +908,21 @@
             }
 
             .visual-block-grid {
-                grid-template-columns: repeat(4, minmax(0, 1fr));
+                grid-template-columns: repeat(8, minmax(0, 1fr));
             }
+
+            .visual-block:nth-child(1) { grid-column: span 4; }
+            .visual-block:nth-child(2) { grid-column: span 4; }
+            .visual-block:nth-child(3) { grid-column: span 4; }
+            .visual-block:nth-child(4) { grid-column: span 4; }
+            .visual-block:nth-child(5) { grid-column: span 3; }
+            .visual-block:nth-child(6) { grid-column: span 5; }
+            .visual-block:nth-child(7) { grid-column: span 3; }
+            .visual-block:nth-child(8) { grid-column: span 5; }
+            .visual-block:nth-child(9) { grid-column: span 4; }
+            .visual-block:nth-child(10) { grid-column: span 4; }
+            .visual-block:nth-child(11) { grid-column: span 8; }
+            .visual-block:nth-child(12) { grid-column: span 8; }
         }
 
         @media (max-width: 1100px) {
@@ -865,10 +1016,6 @@
             .kpi-top { width: 54%; }
             .kpi-mid { width: 76%; }
 
-            .visual-block-grid {
-                grid-template-columns: repeat(3, minmax(0, 1fr));
-            }
-
             .proposal-hero-grid {
                 grid-template-columns: 1fr;
             }
@@ -891,9 +1038,25 @@
             .appendix-card-grid {
                 grid-template-columns: 1fr;
             }
+
+            .visual-block-grid {
+                grid-template-columns: repeat(3, minmax(0, 1fr));
+            }
+
+            .visual-block {
+                height: 220px;
+            }
+
+            .visual-block:nth-child(n) {
+                grid-column: span 1;
+            }
         }
 
         @media (max-width: 900px) {
+            .curved-section::after {
+                height: 72px;
+            }
+
             .proposal-pot-collage {
                 width: min(100%, 460px);
                 margin-right: 0;
@@ -919,6 +1082,14 @@
             .video-mini-grid {
                 grid-template-columns: repeat(2, minmax(0, 1fr));
             }
+
+            .visual-block-grid {
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+            }
+
+            .visual-block {
+                height: 200px;
+            }
         }
 
         @media (max-width: 768px) {
@@ -943,7 +1114,12 @@
             }
 
             .visual-block-grid {
-                grid-template-columns: repeat(2, minmax(0, 1fr));
+                grid-template-columns: 1fr;
+            }
+
+            .visual-block {
+                height: auto;
+                min-height: 180px;
             }
 
             .body-note {
@@ -1960,8 +2136,8 @@ video {
                 </div>
                 <div class="proposal-hero-media">
                     <div class="proposal-pot-collage">
-                        <div class="proposal-pot-card"><img src="frogpot.png" alt="Frogpot illustration"></div>
-                        <div class="proposal-pot-card"><img src="emojipot.png" alt="Emojipot illustration"></div>
+                        <div class="proposal-pot-card"><img src="fryer.png" alt="Fryer illustration"></div>
+                        <div class="proposal-pot-card"><img src="icecream.png" alt="Ice cream illustration"></div>
                         <div class="proposal-pot-card"><img src="classicpot.png" alt="Classicpot illustration"></div>
                         <div class="proposal-pot-card"><img src="modernpot.png" alt="Modernpot illustration"></div>
                     </div>
@@ -1971,7 +2147,7 @@ video {
     </header>
 
     
-    <section id="executive-summary" class="grid grid-cols-12 border-b border-[#D8D4CC]" vid="36">
+    <section id="executive-summary" class="curved-section curve-cream red-band grid grid-cols-12 border-b border-[#D8D4CC]" vid="36">
         <div class="col-span-4 p-10 border-r border-[#D8D4CC]" vid="37">
             <div class="micro-text mb-10" vid="38">01 / Strategic Reframing</div>
             <h2 class="serif text-5xl italic leading-tight mb-8" vid="39">From Aspiration to Participation</h2>
@@ -2034,7 +2210,7 @@ video {
     </div>
 
     
-    <section id="audit" class="p-10 border-b border-[#D8D4CC]" vid="69">
+    <section id="audit" class="curved-section curve-white p-10 border-b border-[#D8D4CC]" vid="69">
         <div class="micro-text mb-12" vid="70">02 / Current State Diagnostic</div>
         <div class="micro-text mb-4 text-[#D13027]">A / Current State Diagnostics</div>
         <h2 class="serif text-5xl italic mb-8">Current State Diagnostics</h2>
@@ -2138,8 +2314,8 @@ video {
     </section>
 
     
-    <section class="border-b border-[#D8D4CC]" vid="103">
-        <div class="p-10 border-b border-[#D8D4CC] bg-white">
+    <section id="platform-audit" class="curved-section curve-cream border-b border-[#D8D4CC]" vid="103">
+        <div class="p-10 bg-white">
             <div class="micro-text mb-6">C / Platform Audit Evidence</div>
             <h3 class="serif text-4xl italic mb-6">Platform Audit &amp; Strategic Direction</h3>
             <p class="body-note max-w-5xl mb-10">This section works as a larger audit. It shows where platform-native discovery breaks down and where trust is built. It also identifies which content systems can compound into recommendation-aware branding and lifecycle retention.</p>
@@ -2220,7 +2396,7 @@ video {
     </section>
 
     
-    <section id="measurement" class="p-20 border-b border-[#D8D4CC] bg-white" vid="147">
+    <section id="measurement" class="curved-section curve-cream p-20 border-b border-[#D8D4CC] bg-white" vid="147">
         <div class="micro-text mb-16" vid="148">04 / Measurement Infrastructure</div>
         <h3 class="serif text-6xl italic mb-10" vid="149">KPI Pyramid for Scale</h3>
         <p class="body-note max-w-5xl mb-10">This measurement framework treats digital ecosystems as a connected creator operating system. It measures visibility. It measures trust. It measures participation. It measures creator continuity. It measures search retrieval strength. It measures onboarding completion. It measures long-term lifecycle value.</p>
@@ -2293,7 +2469,7 @@ video {
                 <div class="font-semibold mb-4">90-Day KPI Priorities</div>
                 <div class="grid grid-cols-3 gap-10 mt-6">
                     <div>
-                        <div class="micro-text mb-3 text-[#D13027]">Visibility Goals</div>
+                        <div class="micro-text mb-3">Visibility Goals</div>
                         <ul class="arrow-list text-sm text-gray-600">
                             <li>improve creator-native reach efficiency</li>
                             <li>improve paid/organic alignment</li>
@@ -2305,7 +2481,7 @@ video {
                         </ul>
                     </div>
                     <div>
-                        <div class="micro-text mb-3 text-[#D13027]">Resonance Goals</div>
+                        <div class="micro-text mb-3">Resonance Goals</div>
                         <ul class="arrow-list text-sm text-gray-600">
                             <li>increase saves and shares</li>
                             <li>improve watch retention</li>
@@ -2317,7 +2493,7 @@ video {
                         </ul>
                     </div>
                     <div>
-                        <div class="micro-text mb-3 text-[#D13027]">Participation Goals</div>
+                        <div class="micro-text mb-3">Participation Goals</div>
                         <ul class="arrow-list text-sm text-gray-600">
                             <li>increase onboarding completion</li>
                             <li>improve repeat cooking behavior</li>
@@ -2368,7 +2544,7 @@ video {
             </div>
         </div>
 
-        <div class="border-subtle p-8 bg-[#F7F5F0] mt-20 w-full mb-10">
+        <div class="border-subtle p-8 bg-[#F7F5F0] mt-20 w-full mb-10 red-band">
             <div class="font-semibold mb-4">Signal Accumulation Framework</div>
             <p class="body-note mb-4 signal-framework-note">Modern platforms reward familiarity and repeat recognition. Signal accumulation happens when recurring visual systems reinforce trust. Recognizable creator formats reinforce retrieval. Semantic consistency reinforces memory. Repeat audience behavior and participation loops reinforce one another across platforms over time.</p>
             <ul class="arrow-list text-sm text-gray-600 grid grid-cols-2 gap-x-8">
@@ -2385,7 +2561,7 @@ video {
     </section>
 
     
-    <section class="grid grid-cols-12 border-b border-[#D8D4CC]" vid="173">
+    <section id="brand-vision" class="curved-section curve-white grid grid-cols-12 border-b border-[#D8D4CC]" vid="173">
         <div class="col-span-5 p-10 border-r border-[#D8D4CC]" vid="174">
             <div class="micro-text mb-10 text-[#D13027]" vid="175">05 / Brand Vision</div>
             <h2 class="serif text-5xl italic mb-8" vid="176">Practical Cooking Systems <br vid="177">for Real Life</h2>
@@ -2437,7 +2613,7 @@ video {
     </section>
 
     
-    <section id="visual-direction" class="p-10 border-b border-[#D8D4CC]" vid="208">
+    <section id="visual-direction" class="curved-section curve-white p-10 border-b border-[#D8D4CC]" vid="208">
         <div class="micro-text mb-10" vid="209">06 / Visual Direction</div>
         <p class="body-note max-w-4xl mb-10">The visual opportunity is warm, useful, tactile, internet-native, and recognizable without becoming sterile or overly polished. Instant Pot can feel like practical cooking systems for real kitchens. The visual system should prioritize cozy realism, tactile food, creator-native tutorials, practical kitchens, and editorial restraint.</p>
         <div class="visual-block-grid" vid="210">
@@ -2466,7 +2642,7 @@ video {
     </section>
 
     
-    <section id="execution" class="p-10 border-b border-[#D8D4CC] bg-white" vid="226">
+    <section id="execution" class="curved-section curve-red p-10 border-b border-[#D8D4CC] bg-white" vid="226">
         <div class="micro-text mb-10" vid="227">09 / Creator Infrastructure</div>
         <div class="grid grid-cols-2 gap-20" vid="228">
             <div vid="229">
@@ -2511,8 +2687,8 @@ video {
         </div>
     </section>
 
-    <section class="p-10 border-b border-[#D8D4CC]">
-        <div class="micro-text mb-10 text-[#D13027]">10 / Creator, Influencer &amp; Employee Advocacy Infrastructure</div>
+    <section id="creator-advocacy" class="curved-section curve-white red-band p-10 border-b border-[#D8D4CC]">
+        <div class="micro-text mb-10">10 / Creator, Influencer &amp; Employee Advocacy Infrastructure</div>
         <div class="grid grid-cols-2 gap-16">
             <div>
                 <h3 class="serif text-4xl italic mb-6">Employee Advocacy Infrastructure</h3>
@@ -2535,7 +2711,7 @@ video {
         </div>
     </section>
 
-    <section id="video-taxonomy" class="p-10 border-b border-[#D8D4CC] bg-white">
+    <section id="video-taxonomy" class="curved-section curve-cream p-10 border-b border-[#D8D4CC] bg-white">
         <div class="micro-text mb-10">11 / Instant Pot Video Taxonomy System</div>
         <h3 class="serif text-4xl italic mb-4">Patterns build recognition. Recognition builds reach.</h3>
         <p class="body-note max-w-4xl mb-8">The proposal should treat recurring formats as infrastructure. Recommendation systems reward semantic consistency, recognizable lanes, and clear repeat behavior.</p>
@@ -2577,7 +2753,7 @@ video {
         </div>
     </section>
 
-    <section id="search-retention" class="p-10 border-b border-[#D8D4CC]">
+    <section id="search-retention" class="curved-section curve-white p-10 border-b border-[#D8D4CC]">
         <div class="micro-text mb-10">12 / Search, Retention &amp; Participation Systems</div>
         <p class="body-note w-full max-w-none mb-8">The Living Recipe Library should function as a searchable education ecosystem. It connects recipe SEO, troubleshooting, product onboarding, YouTube playlists, FAQ pages, creator tutorials, and lifecycle email flows into one retrievable knowledge system.</p>
         <div class="grid grid-cols-2 gap-10">
@@ -2590,13 +2766,13 @@ video {
                 <p class="body-note">First 30 Meals onboarding, seasonal participation loops, UGC recipe submissions, and lifecycle email/SMS flows should create repeat return behavior and confidence after purchase.</p>
             </div>
         </div>
-        <div class="border-subtle p-6 bg-[#F7F5F0] mt-10 w-full">
+        <div class="border-subtle p-6 bg-[#F7F5F0] mt-10 w-full red-band">
             <div class="font-semibold mb-3">Participation Rituals</div>
             <p class="body-note">Participation systems give audiences simple ways to contribute and return. Strong formats include seasonal cooking challenges, community recipe submissions, creator-led prompts, first-apartment cooking journeys, small-space meal prep, and recurring customer stories.</p>
         </div>
     </section>
 
-    <section id="accessibility-infrastructure" class="p-10 border-b border-[#D8D4CC] bg-white">
+    <section id="accessibility-infrastructure" class="curved-section curve-cream p-10 border-b border-[#D8D4CC] bg-white">
         <div class="micro-text mb-10">13 / Accessibility, Sustainability &amp; Circular Infrastructure</div>
         <p class="body-note w-full max-w-none mb-8">Circular infrastructure should connect sustainability to practical affordability. Refurbished products, trade-in concepts, reuse partnerships, nonprofit or community kitchen programs, and student or first-apartment cooking initiatives can position Instant Pot as durable everyday infrastructure with long-term utility.</p>
         <div class="grid grid-cols-2 gap-10">
@@ -2622,7 +2798,7 @@ video {
         </div>
     </section>
 
-    <section id="operations" class="p-10 border-b border-[#D8D4CC]">
+    <section id="operations" class="curved-section curve-white p-10 border-b border-[#D8D4CC]">
         <div class="micro-text mb-10">14 / Cross-Functional Operational Systems</div>
         <p class="body-note w-full max-w-none mb-8">This role should operate as a connective layer across ecommerce, analytics, lifecycle marketing, creative, customer support, retail partnerships, and creator operations. The goal is to reduce fragmentation by aligning campaign language, product-page content, creator briefs, email flows, tracking links, reporting definitions, and customer feedback loops.</p>
         <div class="grid grid-cols-2 gap-10">
@@ -2641,7 +2817,7 @@ video {
         </div>
     </section>
 
-    <section class="p-10 border-b border-[#D8D4CC] bg-white">
+    <section id="retail-ecosystem" class="curved-section curve-cream p-10 border-b border-[#D8D4CC] bg-white">
         <div class="micro-text mb-10">14A / Retail Ecosystem Strategy</div>
         <div class="retail-pair-grid">
             <p class="body-note">Retail strategy should connect the physical shelf to the same education system customers see online. QR onboarding, retailer-specific creator content, product-page recipe modules, localized creator campaigns, in-store education, and retail media content should all reinforce the same practical magic positioning.</p>
@@ -2649,20 +2825,20 @@ video {
         </div>
     </section>
 
-    <section id="content-intelligence" class="p-10 border-b border-[#D8D4CC]">
+    <section id="content-intelligence" class="curved-section curve-red p-10 border-b border-[#D8D4CC]">
         <div class="micro-text mb-10">14B / Content Intelligence &amp; Measurement Infrastructure</div>
         <p class="body-note w-full max-w-none">Content intelligence should track watch duration, saves, repeat viewers, creator overlap, search traffic, retention patterns, topic clusters, and recurring audience questions. The executive reporting layer should translate these signals into retention value, creator ROI, participation health, lifecycle impact, and operational efficiency.</p>
     </section>
 
     
-    <section id="blueprint" class="p-10 border-b border-[#D8D4CC]" vid="249">
-        <div class="micro-text mb-16 text-[#D13027]" vid="250">15 / Execution Timeline</div>
+    <section id="blueprint" class="curved-section curve-cream red-band p-10 border-b border-[#D8D4CC]" vid="249">
+        <div class="micro-text mb-16" vid="250">15 / Execution Timeline</div>
         <h2 class="serif text-[80px] leading-none mb-20 italic" vid="251">The Main Event:<br vid="252">A 90-Day Blueprint.</h2>
 
         
         <div class="grid grid-cols-12 mb-20 border-t border-[#D8D4CC] pt-10" vid="253">
             <div class="col-span-3" vid="254">
-                <div class="micro-text text-[#D13027]" vid="255">Phase I</div>
+                <div class="micro-text" vid="255">Phase I</div>
                 <div class="serif text-3xl italic mt-2" vid="256">Diagnose, Audit <br vid="257">&amp; Map</div>
                 <div class="text-xs text-gray-400 mt-4" vid="258">Weeks 1 — 4</div>
             </div>
@@ -2693,7 +2869,7 @@ video {
         
         <div class="grid grid-cols-12 mb-20 border-t border-[#D8D4CC] pt-10" vid="274">
             <div class="col-span-3" vid="275">
-                <div class="micro-text text-[#D13027]" vid="276">Phase II</div>
+                <div class="micro-text" vid="276">Phase II</div>
                 <div class="serif text-3xl italic mt-2" vid="277">Build, Align <br vid="278">&amp; Modernize</div>
                 <div class="text-xs text-gray-400 mt-4" vid="279">Weeks 5 — 8</div>
             </div>
@@ -2724,7 +2900,7 @@ video {
         
         <div class="grid grid-cols-12 border-t border-[#D8D4CC] pt-10" vid="295">
             <div class="col-span-3" vid="296">
-                <div class="micro-text text-[#D13027]" vid="297">Phase III</div>
+                <div class="micro-text" vid="297">Phase III</div>
                 <div class="serif text-3xl italic mt-2" vid="298">Optimize, Scale <br vid="299">&amp; Operationalize</div>
                 <div class="text-xs text-gray-400 mt-4" vid="300">Weeks 9 — 12</div>
             </div>
@@ -2754,7 +2930,7 @@ video {
     </section>
 
     
-    <section id="future-horizons" class="p-20 bg-[#2A2A2A] text-[#F7F5F0]" vid="316">
+    <section id="future-horizons" class="curved-section curve-white red-band p-20 bg-[#2A2A2A] text-[#F7F5F0]" vid="316">
         <div class="grid grid-cols-2 gap-20" vid="317">
             <div vid="318">
                 <div class="micro-text opacity-40 mb-10 text-white" vid="319">16 / Future Horizons</div>

@@ -81,6 +81,15 @@
             overflow: hidden;
             white-space: nowrap;
             width: 100%;
+            background: #FFFFFF !important;
+            color: #2A2A2A !important;
+            position: relative;
+            z-index: 3;
+        }
+
+        .marquee::before,
+        .marquee::after {
+            display: none !important;
         }
 
         .marquee-content {
@@ -210,12 +219,27 @@
             display: grid;
             grid-template-columns: minmax(0, 0.95fr) minmax(0, 1.05fr);
             gap: 28px;
-            align-items: stretch;
+            align-items: center !important;
         }
 
         .evidence-copy-card,
         .evidence-media-card {
             min-height: 100%;
+        }
+
+        .evidence-copy-card {
+            align-self: center !important;
+            min-height: 0 !important;
+            height: auto !important;
+            display: block;
+        }
+
+        .evidence-media-card {
+            align-self: center !important;
+        }
+
+        .evidence-copy-card .body-note {
+            margin-bottom: 0;
         }
 
         .evidence-media-card .proposal-placeholder {
@@ -323,105 +347,138 @@
             position: relative;
             overflow: hidden;
             border-bottom: 0 !important;
+            padding-bottom: clamp(150px, 12vw, 240px) !important;
+            margin-bottom: 0 !important;
         }
 
+        .curved-section > *:not(.section-wave) {
+            position: relative;
+            z-index: 2;
+        }
+
+        .theme-cream,
         .section-bg-cream {
-            background: #F7F5F0;
+            background: #F7F5F0 !important;
             color: #2A2A2A;
         }
 
+        .theme-white,
         .section-bg-white {
-            background: #FFFFFF;
+            background: #FFFFFF !important;
             color: #2A2A2A;
         }
 
-        .section-bg-red {
-            background: #D13027;
-            color: #F7F5F0;
-        }
-
-        .section-wave {
-            display: block;
-            line-height: 0;
-            width: 100%;
-            margin-top: clamp(28px, 4vw, 48px);
-            pointer-events: none;
-        }
-
-        .section-wave svg {
-            display: block;
-            width: 100%;
-            height: clamp(96px, 8vw, 140px);
-        }
-
-        .section-wave path {
-            fill: var(--wave-fill);
-        }
-
-        .section-wave-cream {
-            --wave-fill: #F7F5F0;
-        }
-
-        .section-wave-white {
-            --wave-fill: #FFFFFF;
-        }
-
-        .section-wave-red {
-            --wave-fill: #D13027;
-        }
-
+        .theme-red,
+        .section-bg-red,
         .red-band {
             background: #D13027 !important;
             color: #F7F5F0;
         }
 
-        .red-band .body-note,
-        .red-band .text-gray-500,
-        .red-band .text-gray-600,
-        .red-band .text-gray-400 {
-            color: rgba(247,245,240,.82) !important;
+        .theme-dark {
+            background: #2A2A2A !important;
+            color: #F7F5F0;
         }
 
-        .red-band .micro-text {
+        .section-wave {
+            position: absolute;
+            left: 0;
+            right: 0;
+            bottom: -1px;
+            height: clamp(90px, 8vw, 150px);
+            z-index: 1;
+            pointer-events: none;
+            line-height: 0;
+        }
+
+        .section-wave svg {
+            width: 100%;
+            height: 100%;
+            display: block;
+        }
+
+        .section-wave path {
+            fill: currentColor;
+        }
+
+        .section-wave-cream {
+            color: #F7F5F0;
+        }
+
+        .section-wave-white {
+            color: #FFFFFF;
+        }
+
+        .section-wave-red {
+            color: #D13027;
+        }
+
+        .section-wave-dark {
+            color: #2A2A2A;
+        }
+
+        .theme-red > .micro-text,
+        .theme-red > h1,
+        .theme-red > h2,
+        .theme-red > h3,
+        .theme-red > p,
+        .theme-red > div:not(.section-wave):not(.bg-white):not(.platform-audit-table):not(.metric-editorial-card):not(.kpi-band-grid) {
+            color: inherit;
+        }
+
+        .theme-red .body-note {
+            color: rgba(247,245,240,.86);
+        }
+
+        .theme-red .micro-text {
             color: rgba(247,245,240,.74);
         }
 
-        .red-band .border-subtle,
-        .red-band [class*="border-"] {
-            border-color: rgba(247,245,240,.28);
+        .theme-red .text-gray-500,
+        .theme-red .text-gray-600,
+        .theme-red .text-gray-400 {
+            color: rgba(247,245,240,.82) !important;
         }
 
-        .red-band .proposal-placeholder {
-            border-color: rgba(247,245,240,.42);
-            color: rgba(247,245,240,.82);
-            background: rgba(255,255,255,.08);
-            box-shadow: inset 0 0 0 1px rgba(255,255,255,0.12);
-        }
-
-        .red-band .bg-white {
-            color: var(--text);
-        }
-
-        .red-band .bg-white .body-note,
-        .red-band .bg-white .text-gray-500,
-        .red-band .bg-white .text-gray-600,
-        .red-band .bg-white .text-gray-400 {
+        .theme-red .bg-white .text-gray-500,
+        .theme-red .bg-white .text-gray-600,
+        .theme-red .bg-white .text-gray-400 {
             color: #6b7280 !important;
         }
 
-        .red-band .bg-white .micro-text {
+        .theme-red .bg-white .micro-text {
             color: #7a766d !important;
         }
 
-        .red-band .bg-white .text-white {
-            color: var(--text) !important;
+        .theme-red .bg-white,
+        .theme-red .platform-audit-table,
+        .theme-red .metric-editorial-card,
+        .theme-red .kpi-card,
+        .theme-red .appendix-card,
+        .theme-red .border-subtle.bg-white,
+        .theme-red .signal-framework-card {
+            background: #FFFFFF !important;
+            color: #2A2A2A !important;
+        }
+
+        .theme-red .bg-white .body-note,
+        .theme-red .platform-audit-table *,
+        .theme-red .metric-editorial-card *,
+        .theme-red .kpi-card *,
+        .theme-red .appendix-card * {
+            color: inherit;
         }
 
         .platform-audit-table {
             display: grid;
             border-top: 0.5px solid var(--border);
             border-left: 0.5px solid var(--border);
-            background: rgba(255,255,255,0.78);
+            background: #FFFFFF !important;
+            color: #2A2A2A !important;
+        }
+
+        .platform-audit-table * {
+            color: #2A2A2A !important;
         }
 
         .platform-audit-row {
@@ -443,9 +500,9 @@
             font-size: 10px;
             text-transform: uppercase;
             letter-spacing: 0.18em;
-            color: #6b7280;
+            color: #6b7280 !important;
             font-weight: 700;
-            background: rgba(255,255,255,0.75);
+            background: rgba(247,245,240,0.85) !important;
         }
 
         #measurement .kpi-rect .micro-text {
@@ -493,12 +550,27 @@
         .kpi-mid {
             width: 76%;
             background: #ece7df;
+            color: #2A2A2A !important;
+        }
+
+        .kpi-mid *,
+        .kpi-mid p {
+            color: #2A2A2A !important;
+        }
+
+        .kpi-mid .micro-text {
+            color: #6b7280 !important;
         }
 
         .kpi-base {
             width: 100%;
             background: #9daf9b;
             color: white;
+        }
+
+        .kpi-top *,
+        .kpi-base * {
+            color: inherit;
         }
 
         .kpi-cap {
@@ -550,12 +622,51 @@
             grid-template-columns: minmax(300px, 460px) minmax(320px, 500px) minmax(220px, 300px);
             gap: 28px;
             align-items: center;
-            justify-content: start;
+            justify-content: center;
+            justify-items: center;
             margin-top: 64px;
         }
 
         .brand-recognition-grid .proposal-placeholder {
             max-width: 560px;
+        }
+
+        .brand-recognition-copy {
+            align-self: center;
+        }
+
+        #brand-recognition-problem .brand-recognition-grid {
+            justify-content: center;
+            align-items: center;
+            justify-items: center;
+        }
+
+        #brand-recognition-problem .brand-recognition-grid > * {
+            width: 100%;
+        }
+
+        #brand-recognition-problem .brand-recognition-copy,
+        #brand-recognition-problem .brand-recognition-embed,
+        #brand-recognition-problem .instapot-callout {
+            align-self: center;
+        }
+
+        .subsection-block {
+            margin-top: clamp(72px, 7vw, 120px);
+            margin-bottom: 36px;
+        }
+
+        .subsection-block .micro-text {
+            margin-bottom: 18px !important;
+        }
+
+        .subsection-block h3,
+        .subsection-block h4 {
+            margin-bottom: 24px;
+        }
+
+        .subsection-header + .subsection-block {
+            margin-top: 24px;
         }
 
         .instapot-callout {
@@ -577,7 +688,7 @@
             width: 100%;
             border: 0.5px solid var(--border);
             border-radius: 22px;
-            background: rgba(255,255,255,0.82);
+            background: #FFFFFF;
             padding: 18px;
             box-shadow: 0 14px 34px rgba(42, 42, 42, 0.04);
         }
@@ -628,12 +739,40 @@
             max-width: 220px;
         }
 
+        .retail-tiktok-embed,
+        .retail-instagram-embed {
+            align-self: center;
+        }
+
+        .signal-framework-card {
+            background: #F7F5F0 !important;
+            color: #2A2A2A !important;
+        }
+
+        .signal-framework-card .body-note,
+        .signal-framework-card .text-gray-600 {
+            color: #6b7280 !important;
+        }
+
+        #executive-summary.curved-section {
+            padding-bottom: clamp(130px, 9vw, 190px) !important;
+        }
+
+        #audit.curved-section {
+            padding-top: clamp(88px, 7vw, 128px) !important;
+        }
+
         .retail-pair-grid {
             display: grid;
             grid-template-columns: minmax(320px, 520px) minmax(320px, 520px);
             gap: 28px;
             align-items: center;
-            justify-content: start;
+            justify-content: center;
+            justify-items: center;
+        }
+
+        .retail-pair-grid > * {
+            width: 100%;
         }
 
         .kpi-pyramid-note {
@@ -957,6 +1096,28 @@
             text-align: center;
             padding: 8px 6px;
             box-shadow: 0 12px 20px rgba(42, 42, 42, 0.05);
+        }
+
+        .mini-embed-shell {
+            width: 100%;
+            height: 100%;
+            border-radius: 12px;
+            border: 1px dashed rgba(209,48,39,0.38);
+            background: rgba(255,255,255,0.82);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            padding: 8px;
+        }
+
+        .mini-embed-label {
+            font-size: 7px;
+            line-height: 1.4;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            font-weight: 700;
+            color: #D13027;
         }
 
         .mila-mini-placeholder.a { top: 10%; left: 22%; transform: rotate(-7deg); }
@@ -2253,7 +2414,7 @@ video {
     </nav>
 
     
-    <header id="strategy" class="curved-section section-bg-cream px-10 pt-10 pb-16" vid="24">
+    <header id="strategy" class="curved-section theme-cream px-10 pt-10 pb-16" vid="24">
         <div class="max-w-7xl w-full" vid="25">
             <div class="proposal-hero-grid">
                 <div class="proposal-hero-copy">
@@ -2286,7 +2447,7 @@ video {
     </header>
 
     
-    <section id="executive-summary" class="curved-section section-bg-red red-band grid grid-cols-12" vid="36">
+    <section id="executive-summary" class="curved-section theme-red red-band grid grid-cols-12" vid="36">
         <div class="col-span-4 p-10 border-r border-[#D8D4CC]" vid="37">
             <div class="micro-text mb-10" vid="38">01 / Strategic Reframing</div>
             <h2 class="serif text-5xl italic leading-tight mb-8" vid="39">From Aspiration to Participation</h2>
@@ -2366,7 +2527,7 @@ video {
     </div>
 
     
-    <section id="audit" class="curved-section section-bg-white p-10" vid="69">
+    <section id="audit" class="curved-section theme-white p-10" vid="69">
         <div class="micro-text mb-12" vid="70">02 / Current State Diagnostic</div>
         <div class="micro-text mb-4 text-[#D13027]">A / Current State Diagnostics</div>
         <h2 class="serif text-5xl italic mb-8">Current State Diagnostics</h2>
@@ -2443,7 +2604,9 @@ video {
             </div>
         </div>
         <div class="mt-[96px] evidence-pair-section">
-            <div class="micro-text mb-6">B / What’s Working / What Needs Rebuilding</div>
+            <div class="subsection-block">
+                <div class="micro-text mb-6">B / What’s Working / What Needs Rebuilding</div>
+            </div>
             <div class="evidence-pair-grid">
                 <div class="border-subtle p-6 bg-white evidence-copy-card">
                 <div class="font-semibold mb-3">Existing strengths</div>
@@ -2477,7 +2640,7 @@ video {
     </section>
 
     
-    <section id="platform-audit" class="curved-section section-bg-cream" vid="103">
+    <section id="platform-audit" class="curved-section theme-cream" vid="103">
         <div class="p-10 bg-white">
             <div class="micro-text mb-6">C / Platform Audit Evidence</div>
             <h3 class="serif text-4xl italic mb-6">Platform Audit &amp; Strategic Direction</h3>
@@ -2500,9 +2663,8 @@ video {
                 <div class="platform-audit-row"><div><strong>LinkedIn</strong></div><div>Employer brand and internal culture channel likely underused for employee advocacy.</div><div>Employee creator program, corporate narrative, internal expertise, recruiting relevance.</div><div>Employee voices, culture stories, product team expertise, thought leadership.</div><div>Replies, profile follows, reposts, employee participation.</div></div>
                 <div class="platform-audit-row"><div><strong>Email/SMS</strong></div><div>Owned lifecycle system should connect onboarding, recipes, retention, and repeat purchase.</div><div>Lifecycle retention, post-purchase confidence, repeat usage, affiliate/offer testing.</div><div>Onboarding flows, segmentation, repeat purchase, product activation, recipe journey completion.</div><div>Open rate, click rate, repeat purchase, LTV, retention revenue.</div></div>
             </div>
-            <div class="mt-16 mb-6">
-                <div class="micro-text text-[#D13027] mb-3">Platform Evidence Examples</div>
-                <p class="body-note">These slots are for compact screenshots and embedded examples that support the audit without turning the section into a gallery.</p>
+            <div class="subsection-block platform-evidence-header">
+                <div class="micro-text text-[#D13027]">Platform Evidence Examples</div>
             </div>
             <div class="placeholder-row-contained platform-evidence-row mb-10">
                 <div class="placeholder-example">
@@ -2542,10 +2704,10 @@ video {
                     </div>
                 </div>
             </div>
-            <div class="mt-10" id="brand-recognition-problem">
+            <div class="mt-10 subsection-block" id="brand-recognition-problem">
                 <div class="micro-text mb-4">D / Brand Recognition Problem</div>
                 <div class="brand-recognition-grid">
-                    <div class="embed-code-card brand-recognition-embed">
+                    <div class="embed-code-card brand-recognition-copy">
                         <div class="embed-code-placeholder">
                             <blockquote class="reddit-embed-bq" style="height:316px" data-embed-height="316"> <a href="https://www.reddit.com/r/MandelaEffect/comments/91dete/instapot_or_instant_pot/">Insta-pot or Instant pot.</a><br> by <a href="https://www.reddit.com/user/brii444/">u/brii444</a> in <a href="https://www.reddit.com/r/MandelaEffect/">MandelaEffect</a> </blockquote><script async="" src="https://embed.reddit.com/widgets.js" charset="UTF-8"></script>
                             <div class="embed-placeholder-label">3D EMBED PLACEHOLDER</div>
@@ -2570,7 +2732,7 @@ video {
     </section>
 
     
-    <section id="measurement" class="curved-section section-bg-red red-band p-20" vid="147">
+    <section id="measurement" class="curved-section theme-red red-band p-20" vid="147">
         <div class="micro-text mb-16" vid="148">04 / Measurement Infrastructure</div>
         <h3 class="serif text-6xl italic mb-10" vid="149">KPI Pyramid for Scale</h3>
         <p class="body-note max-w-5xl mb-10">This measurement framework treats digital ecosystems as a connected creator operating system. Visibility tracks exposure. Resonance tracks usefulness. Participation tracks repeat behavior and business value.</p>
@@ -2718,7 +2880,7 @@ video {
             </div>
         </div>
 
-        <div class="border-subtle p-8 bg-white mt-20 w-full mb-10 red-band">
+        <div class="border-subtle p-8 bg-[#F7F5F0] mt-20 w-full mb-10 signal-framework-card">
             <div class="font-semibold mb-4">Signal Accumulation Framework</div>
             <p class="body-note mb-4 signal-framework-note">Modern platforms reward familiarity and repeat recognition. Signal accumulation happens when recurring visual systems reinforce trust. Recognizable creator formats reinforce retrieval. Semantic consistency reinforces memory. Repeat audience behavior and participation loops reinforce one another across platforms over time.</p>
             <ul class="arrow-list text-sm text-gray-600 grid grid-cols-2 gap-x-8">
@@ -2740,7 +2902,7 @@ video {
     </section>
 
     
-    <section id="brand-vision" class="curved-section section-bg-white grid grid-cols-12" vid="173">
+    <section id="brand-vision" class="curved-section theme-white grid grid-cols-12" vid="173">
         <div class="col-span-5 p-10 border-r border-[#D8D4CC]" vid="174">
             <div class="micro-text mb-10 text-[#D13027]" vid="175">05 / Brand Vision</div>
             <h2 class="serif text-5xl italic mb-8" vid="176">Practical Cooking Systems <br vid="177">for Real Life</h2>
@@ -2797,7 +2959,7 @@ video {
     </section>
 
     
-    <section id="visual-direction" class="curved-section section-bg-cream p-10" vid="208">
+    <section id="visual-direction" class="curved-section theme-cream p-10" vid="208">
         <div class="micro-text mb-10" vid="209">06 / Visual Direction</div>
         <p class="body-note max-w-4xl mb-10">The visual opportunity is warm, useful, tactile, internet-native, and recognizable without becoming sterile or overly polished. Instant Pot can feel like practical cooking systems for real kitchens. The visual system should prioritize cozy realism, tactile food, creator-native tutorials, practical kitchens, and editorial restraint.</p>
         <div class="visual-block-grid" vid="210">
@@ -2831,7 +2993,7 @@ video {
     </section>
 
     
-    <section id="execution" class="curved-section section-bg-red red-band p-10" vid="226">
+    <section id="execution" class="curved-section theme-red red-band p-10" vid="226">
         <div class="micro-text mb-10" vid="227">09 / Creator Infrastructure</div>
         <div class="grid grid-cols-2 gap-20" vid="228">
             <div vid="229">
@@ -2866,12 +3028,42 @@ video {
                     <div class="serif text-3xl italic mb-4" vid="247">"The Mila Framework"</div>
                     <p class="text-xs text-gray-500 max-w-xs mb-0" vid="248">The Mila Framework shows how a real person, recurring recipe lane, and specific product use can create human context. For Instant Pot, the opportunity is to support recognizable personalities with repeatable formats and lightweight creative structure.</p>
                 </div>
-                <div class="mila-mini-placeholder a">1080 x 1920 short-form video placeholder — Employee creator example</div>
-                <div class="mila-mini-placeholder b">1080 x 1920 short-form video placeholder — Recurring recipe / personality format</div>
-                <div class="mila-mini-placeholder c">1080 x 1920 short-form video placeholder — Creator trust accumulation example</div>
-                <div class="mila-mini-placeholder d">1080 x 1920 short-form video placeholder — Creator remix example</div>
-                <div class="mila-mini-placeholder e">1080 x 1920 short-form video placeholder — Onboarding routine example</div>
-                <div class="mila-mini-placeholder f">1080 x 1920 short-form video placeholder — Participation prompt example</div>
+                <div class="mila-mini-placeholder a">
+                    <div class="mini-embed-shell">
+                        <!-- <blockquote class="tiktok-embed" cite="https://www.tiktok.com/@eat.mila/video/7564537163711286583" data-video-id="7564537163711286583" style="max-width: 605px;min-width: 325px;" > <section> <a target="_blank" title="@eat.mila" href="https://www.tiktok.com/@eat.mila?refer=embed">@eat.mila</a> 10&#47;10 would not recommend these activities but would recommend our chili crunch 😎  <a title="spillthesauce" target="_blank" href="https://www.tiktok.com/tag/spillthesauce?refer=embed">#spillthesauce</a> <a title="streetinterview" target="_blank" href="https://www.tiktok.com/tag/streetinterview?refer=embed">#streetinterview</a> <a title="confessions" target="_blank" href="https://www.tiktok.com/tag/confessions?refer=embed">#confessions</a> <a title="secrets" target="_blank" href="https://www.tiktok.com/tag/secrets?refer=embed">#secrets</a> <a title="soupdumplings" target="_blank" href="https://www.tiktok.com/tag/soupdumplings?refer=embed">#soupdumplings</a> <a title="chilioil" target="_blank" href="https://www.tiktok.com/tag/chilioil?refer=embed">#chilioil</a> <a target="_blank" title="♬ original sound  - eat.mila" href="https://www.tiktok.com/music/original-sound-eatmila-7564537147198294797?refer=embed">♬ original sound  - eat.mila</a> </section> </blockquote> <script async src="https://www.tiktok.com/embed.js"></script> -->
+                        <div class="mini-embed-label">EMPLOYEE CREATOR</div>
+                    </div>
+                </div>
+                <div class="mila-mini-placeholder b">
+                    <div class="mini-embed-shell">
+                        <!-- <blockquote class="tiktok-embed" cite="https://www.tiktok.com/@eat.mila/video/7520135692802985230" data-video-id="7520135692802985230" style="max-width: 605px;min-width: 325px;" > <section> <a target="_blank" title="@eat.mila" href="https://www.tiktok.com/@eat.mila?refer=embed">@eat.mila</a> A bit late to the trend but thought we&#39;d address the elephant in the room 🫣🐘 <a title="mila" target="_blank" href="https://www.tiktok.com/tag/mila?refer=embed">#MiLa</a> <a title="narratortrend" target="_blank" href="https://www.tiktok.com/tag/narratortrend?refer=embed">#narratortrend</a> <a title="dumplings" target="_blank" href="https://www.tiktok.com/tag/dumplings?refer=embed">#dumplings</a> <a title="soupdumplings" target="_blank" href="https://www.tiktok.com/tag/soupdumplings?refer=embed">#soupdumplings</a> <a title="foodie" target="_blank" href="https://www.tiktok.com/tag/foodie?refer=embed">#foodie</a> <a title="trend" target="_blank" href="https://www.tiktok.com/tag/trend?refer=embed">#trend</a> <a title="funny" target="_blank" href="https://www.tiktok.com/tag/funny?refer=embed">#funny</a> <a title="prank" target="_blank" href="https://www.tiktok.com/tag/prank?refer=embed">#prank</a> <a title="relatable" target="_blank" href="https://www.tiktok.com/tag/relatable?refer=embed">#relatable</a> <a title="fyp" target="_blank" href="https://www.tiktok.com/tag/fyp?refer=embed">#fyp</a> <a title="socialmediamanager" target="_blank" href="https://www.tiktok.com/tag/socialmediamanager?refer=embed">#socialmediamanager</a> <a title="sarcasm" target="_blank" href="https://www.tiktok.com/tag/sarcasm?refer=embed">#sarcasm</a> <a title="justkidding" target="_blank" href="https://www.tiktok.com/tag/justkidding?refer=embed">#justkidding</a> <a title="joke" target="_blank" href="https://www.tiktok.com/tag/joke?refer=embed">#joke</a> <a target="_blank" title="♬ original sound  - MìLà (蜜辣)" href="https://www.tiktok.com/music/original-sound-MìLà-蜜辣-7520135857005693709?refer=embed">♬ original sound  - MìLà (蜜辣)</a> </section> </blockquote> <script async src="https://www.tiktok.com/embed.js"></script> -->
+                        <div class="mini-embed-label">EMPLOYEE CREATOR</div>
+                    </div>
+                </div>
+                <div class="mila-mini-placeholder c">
+                    <div class="mini-embed-shell">
+                        <!-- <blockquote class="tiktok-embed" cite="https://www.tiktok.com/@eat.mila/video/7560134557241052471" data-video-id="7560134557241052471" style="max-width: 605px;min-width: 325px;" > <section> <a target="_blank" title="@eat.mila" href="https://www.tiktok.com/@eat.mila?refer=embed">@eat.mila</a> Testing Our Founder | pt. 1 - Spot The Difference! 👀 What other tests would you guys want to see? Let us know in the comments 🥟 <a title="mila" target="_blank" href="https://www.tiktok.com/tag/mila?refer=embed">#mila</a> <a title="soupdumplings" target="_blank" href="https://www.tiktok.com/tag/soupdumplings?refer=embed">#soupdumplings</a> <a title="dumplings" target="_blank" href="https://www.tiktok.com/tag/dumplings?refer=embed">#dumplings</a> <a title="founder" target="_blank" href="https://www.tiktok.com/tag/founder?refer=embed">#founder</a> <a title="blind" target="_blank" href="https://www.tiktok.com/tag/blind?refer=embed">#blind</a> <a title="test" target="_blank" href="https://www.tiktok.com/tag/test?refer=embed">#test</a> <a title="spotthedifference" target="_blank" href="https://www.tiktok.com/tag/spotthedifference?refer=embed">#spotthedifference</a> <a target="_blank" title="♬ Hip Hop Background(814204) - Pavel" href="https://www.tiktok.com/music/Hip-Hop-Background-814204-6860551076676896769?refer=embed">♬ Hip Hop Background(814204) - Pavel</a> </section> </blockquote> <script async src="https://www.tiktok.com/embed.js"></script> -->
+                        <div class="mini-embed-label">EMPLOYEE CREATOR</div>
+                    </div>
+                </div>
+                <div class="mila-mini-placeholder d">
+                    <div class="mini-embed-shell">
+                        <!-- <blockquote class="tiktok-embed" cite="https://www.tiktok.com/@eat.mila/video/7556386815360388366" data-video-id="7556386815360388366" style="max-width: 605px;min-width: 325px;" > <section> <a target="_blank" title="@eat.mila" href="https://www.tiktok.com/@eat.mila?refer=embed">@eat.mila</a> Seeing how long it takes to overcook your soup dumplings! 🫣 This was an interesting one.. Would you want see a part two? <a title="tipsandtricks" target="_blank" href="https://www.tiktok.com/tag/tipsandtricks?refer=embed">#tipsandtricks</a> <a title="soupdumplings" target="_blank" href="https://www.tiktok.com/tag/soupdumplings?refer=embed">#soupdumplings</a> <a title="dumplings" target="_blank" href="https://www.tiktok.com/tag/dumplings?refer=embed">#dumplings</a> <a title="cookinghacks" target="_blank" href="https://www.tiktok.com/tag/cookinghacks?refer=embed">#cookinghacks</a> <a target="_blank" title="♬ original sound  - eat.mila" href="https://www.tiktok.com/music/original-sound-eatmila-7556386925033114382?refer=embed">♬ original sound  - eat.mila</a> </section> </blockquote> <script async src="https://www.tiktok.com/embed.js"></script> -->
+                        <div class="mini-embed-label">EMPLOYEE CREATOR</div>
+                    </div>
+                </div>
+                <div class="mila-mini-placeholder e">
+                    <div class="mini-embed-shell">
+                        <!-- <blockquote class="tiktok-embed" cite="https://www.tiktok.com/@eat.mila/video/7550955354050415903" data-video-id="7550955354050415903" style="max-width: 605px;min-width: 325px;" > <section> <a target="_blank" title="@eat.mila" href="https://www.tiktok.com/@eat.mila?refer=embed">@eat.mila</a> Spicy Russian Roulette 💀 would you agree to play this?  <a title="soupdumplings" target="_blank" href="https://www.tiktok.com/tag/soupdumplings?refer=embed">#soupdumplings</a> <a title="hotones" target="_blank" href="https://www.tiktok.com/tag/hotones?refer=embed">#hotones</a> <a target="_blank" title="♬ original sound  - eat.mila" href="https://www.tiktok.com/music/original-sound-eatmila-7550955442781129503?refer=embed">♬ original sound  - eat.mila</a> </section> </blockquote> <script async src="https://www.tiktok.com/embed.js"></script> -->
+                        <div class="mini-embed-label">EMPLOYEE CREATOR</div>
+                    </div>
+                </div>
+                <div class="mila-mini-placeholder f">
+                    <div class="mini-embed-shell">
+                        <!-- <blockquote class="tiktok-embed" cite="https://www.tiktok.com/@eat.mila/video/7546000927237590285" data-video-id="7546000927237590285" style="max-width: 605px;min-width: 325px;" > <section> <a target="_blank" title="@eat.mila" href="https://www.tiktok.com/@eat.mila?refer=embed">@eat.mila</a> Why are we just finding out about this now? 😭 not you grabbing a pen and chopsticks rn 😳 <a title="relatable" target="_blank" href="https://www.tiktok.com/tag/relatable?refer=embed">#relatable</a> <a title="myth" target="_blank" href="https://www.tiktok.com/tag/myth?refer=embed">#myth</a> <a title="experiment" target="_blank" href="https://www.tiktok.com/tag/experiment?refer=embed">#experiment</a> <a target="_blank" title="♬ original sound  - eat.mila" href="https://www.tiktok.com/music/original-sound-eatmila-7546000997332634381?refer=embed">♬ original sound  - eat.mila</a> </section> </blockquote> <script async src="https://www.tiktok.com/embed.js"></script> -->
+                        <div class="mini-embed-label">EMPLOYEE CREATOR</div>
+                    </div>
+                </div>
             </div>
         </div>
         <div class="section-wave section-wave-red" aria-hidden="true">
@@ -2881,7 +3073,7 @@ video {
         </div>
     </section>
 
-    <section id="creator-advocacy" class="curved-section section-bg-white p-10">
+    <section id="creator-advocacy" class="curved-section theme-white p-10">
         <div class="micro-text mb-10">10 / Creator, Influencer &amp; Employee Advocacy Infrastructure</div>
         <div class="grid grid-cols-2 gap-16">
             <div>
@@ -2910,7 +3102,7 @@ video {
         </div>
     </section>
 
-    <section id="video-taxonomy" class="curved-section section-bg-cream p-10">
+    <section id="video-taxonomy" class="curved-section theme-cream p-10">
         <div class="micro-text mb-10">11 / Instant Pot Video Taxonomy System</div>
         <h3 class="serif text-4xl italic mb-4">Patterns build recognition. Recognition builds reach.</h3>
         <p class="body-note max-w-4xl mb-8">The proposal should treat recurring formats as infrastructure. Recommendation systems reward semantic consistency, recognizable lanes, and clear repeat behavior.</p>
@@ -2957,8 +3149,10 @@ video {
         </div>
     </section>
 
-    <section id="search-retention" class="curved-section section-bg-red red-band p-10">
-        <div class="micro-text mb-10">12 / Search, Retention &amp; Participation Systems</div>
+    <section id="search-retention" class="curved-section theme-red red-band p-10">
+        <div class="subsection-block">
+            <div class="micro-text mb-10">12 / Search, Retention &amp; Participation Systems</div>
+        </div>
         <p class="body-note w-full max-w-none mb-8">The Living Recipe Library should function as a searchable education ecosystem. It connects recipe SEO, troubleshooting, product onboarding, YouTube playlists, FAQ pages, creator tutorials, and lifecycle email flows into one retrievable knowledge system.</p>
         <div class="grid grid-cols-2 gap-10">
             <div class="border-subtle p-6 bg-white">
@@ -2970,7 +3164,7 @@ video {
                 <p class="body-note">First 30 Meals onboarding, seasonal participation loops, UGC recipe submissions, and lifecycle email/SMS flows should create repeat return behavior and confidence after purchase.</p>
             </div>
         </div>
-        <div class="border-subtle p-6 bg-white mt-10 w-full red-band">
+        <div class="border-subtle p-6 bg-white mt-10 w-full">
             <div class="font-semibold mb-3">Participation Rituals</div>
             <p class="body-note">Participation systems give audiences simple ways to contribute and return. Strong formats include seasonal cooking challenges, community recipe submissions, creator-led prompts, first-apartment cooking journeys, small-space meal prep, and recurring customer stories.</p>
         </div>
@@ -2981,7 +3175,7 @@ video {
         </div>
     </section>
 
-    <section id="accessibility-infrastructure" class="curved-section section-bg-white p-10">
+    <section id="accessibility-infrastructure" class="curved-section theme-white p-10">
         <div class="micro-text mb-10">13 / Accessibility, Sustainability &amp; Circular Infrastructure</div>
         <p class="body-note w-full max-w-none mb-8">Circular infrastructure should connect sustainability to practical affordability. Refurbished products, trade-in concepts, reuse partnerships, nonprofit or community kitchen programs, and student or first-apartment cooking initiatives can position Instant Pot as durable everyday infrastructure with long-term utility.</p>
         <div class="grid grid-cols-2 gap-10">
@@ -3012,7 +3206,7 @@ video {
         </div>
     </section>
 
-    <section id="operations" class="curved-section section-bg-cream p-10">
+    <section id="operations" class="curved-section theme-cream p-10">
         <div class="micro-text mb-10">14 / Cross-Functional Operational Systems</div>
         <p class="body-note w-full max-w-none mb-8">This role should operate as a connective layer across ecommerce, analytics, lifecycle marketing, creative, customer support, retail partnerships, and creator operations. The goal is to reduce fragmentation by aligning campaign language, product-page content, creator briefs, email flows, tracking links, reporting definitions, and customer feedback loops.</p>
         <div class="grid grid-cols-2 gap-10">
@@ -3036,11 +3230,15 @@ video {
         </div>
     </section>
 
-    <section id="retail-ecosystem" class="curved-section section-bg-red red-band p-10">
-        <div class="micro-text mb-10">14A / Retail Ecosystem Strategy</div>
+    <section id="retail-ecosystem" class="curved-section theme-red red-band p-10">
+        <div class="subsection-block">
+            <div class="micro-text mb-10">14A / Retail Ecosystem Strategy</div>
+        </div>
         <div class="retail-pair-grid">
             <p class="body-note">Retail strategy should connect the physical shelf to the same education system customers see online. QR onboarding, retailer-specific creator content, product-page recipe modules, localized creator campaigns, in-store education, and retail media content should all reinforce the same practical magic positioning.</p>
-            <div class="proposal-placeholder placeholder-16x9 placeholder-card-wide">1920 x 1080 audit screenshot placeholder — retail onboarding / QR ecosystem</div>
+            <div class="embed-code-card retail-tiktok-embed">
+                <blockquote class="tiktok-embed" cite="https://www.tiktok.com/@instantpotofficial/video/7606424584581106975" data-video-id="7606424584581106975" style="max-width: 605px;min-width: 325px;" > <section> <a target="_blank" title="@instantpotofficial" href="https://www.tiktok.com/@instantpotofficial?refer=embed">@instantpotofficial</a> POV: you go to Target for a few Valentine’s things and leave with candy, slippers, a candle, and a Truffle 4-Slice InstantHeat™ Air Fryer Toaster Oven. We may have gotten a little carried away... but self love comes in many forms. This one makes snacks 60% faster than a traditional oven. <a title="instantpotofficial" target="_blank" href="https://www.tiktok.com/tag/instantpotofficial?refer=embed">#instantpotofficial</a> <a title="valentinesday" target="_blank" href="https://www.tiktok.com/tag/valentinesday?refer=embed">#valentinesday</a> <a title="boobasket" target="_blank" href="https://www.tiktok.com/tag/boobasket?refer=embed">#boobasket</a> <a title="instantheat" target="_blank" href="https://www.tiktok.com/tag/instantheat?refer=embed">#instantheat</a> <a title="targetfinds" target="_blank" href="https://www.tiktok.com/tag/targetfinds?refer=embed">#targetfinds</a> <a target="_blank" title="♬ suara asli  - Pikzz" href="https://www.tiktok.com/music/suara-asli-Pikzz-7515727769365105464?refer=embed">♬ suara asli  - Pikzz</a> </section> </blockquote> <script async src="https://www.tiktok.com/embed.js"></script>
+            </div>
         </div>
         <div class="section-wave section-wave-red" aria-hidden="true">
             <svg viewBox="0 0 1440 140" preserveAspectRatio="none">
@@ -3049,7 +3247,7 @@ video {
         </div>
     </section>
 
-    <section id="content-intelligence" class="curved-section section-bg-white p-10">
+    <section id="content-intelligence" class="curved-section theme-white p-10">
         <div class="micro-text mb-10">14B / Content Intelligence &amp; Measurement Infrastructure</div>
         <p class="body-note w-full max-w-none">Content intelligence should track watch duration, saves, repeat viewers, creator overlap, search traffic, retention patterns, topic clusters, and recurring audience questions. The executive reporting layer should translate these signals into retention value, creator ROI, participation health, lifecycle impact, and operational efficiency.</p>
         <div class="section-wave section-wave-white" aria-hidden="true">
@@ -3060,7 +3258,7 @@ video {
     </section>
 
     
-    <section id="blueprint" class="curved-section section-bg-cream p-10" vid="249">
+    <section id="blueprint" class="curved-section theme-cream p-10" vid="249">
         <div class="micro-text mb-16" vid="250">15 / Execution Timeline</div>
         <h2 class="serif text-[80px] leading-none mb-20 italic" vid="251">The Main Event:<br vid="252">A 90-Day Blueprint.</h2>
 
@@ -3164,7 +3362,7 @@ video {
     </section>
 
     
-    <section id="future-horizons" class="curved-section section-bg-red red-band p-20" vid="316">
+    <section id="future-horizons" class="curved-section theme-red red-band p-20" vid="316">
         <div class="grid grid-cols-2 gap-20" vid="317">
             <div vid="318">
                 <div class="micro-text opacity-40 mb-10 text-white" vid="319">16 / Future Horizons</div>
@@ -3191,7 +3389,7 @@ video {
         </div>
     </section>
 
-    <section class="curved-section section-bg-white p-10">
+    <section class="curved-section theme-white p-10">
         <div class="micro-text mb-10">17 / Appendix &amp; Reference Materials</div>
         <div class="appendix-card-grid">
             <a class="appendix-link appendix-card" href="#audit"><div class="font-semibold mb-3">Platform Audit Examples</div><p>Examples of platform-native posts, creator formats, and audit screenshots that clarify current strengths, weaknesses, and format gaps.</p></a>

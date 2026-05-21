@@ -213,6 +213,12 @@
             text-align: center;
             margin-left: auto;
             margin-right: auto;
+            max-width: 34ch;
+        }
+
+        .platform-evidence-header {
+            margin-top: clamp(72px, 7vw, 110px);
+            margin-bottom: 32px;
         }
 
         .evidence-pair-grid {
@@ -222,9 +228,17 @@
             align-items: center !important;
         }
 
-        .evidence-copy-card,
-        .evidence-media-card {
-            min-height: 100%;
+        .evidence-two-column-flow {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 32px;
+            align-items: start;
+        }
+
+        .evidence-flow-column {
+            display: flex;
+            flex-direction: column;
+            gap: 22px;
         }
 
         .evidence-copy-card {
@@ -238,8 +252,24 @@
             align-self: center !important;
         }
 
+        .evidence-copy-card,
+        .evidence-media-card {
+            min-height: 0;
+        }
+
         .evidence-copy-card .body-note {
             margin-bottom: 0;
+        }
+
+        .evidence-tight-media {
+            width: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .evidence-tight-media > * {
+            max-width: 100%;
         }
 
         .evidence-media-card .proposal-placeholder {
@@ -347,7 +377,8 @@
             position: relative;
             overflow: hidden;
             border-bottom: 0 !important;
-            padding-bottom: clamp(150px, 12vw, 240px) !important;
+            margin-bottom: 0 !important;
+            padding-bottom: clamp(120px, 9vw, 180px) !important;
             margin-bottom: 0 !important;
         }
 
@@ -385,7 +416,7 @@
             left: 0;
             right: 0;
             bottom: -1px;
-            height: clamp(90px, 8vw, 150px);
+            height: clamp(110px, 9vw, 180px);
             z-index: 1;
             pointer-events: none;
             line-height: 0;
@@ -448,6 +479,56 @@
 
         .theme-red .bg-white .micro-text {
             color: #7a766d !important;
+        }
+
+        #measurement .kpi-band-grid .bg-\[\#F7F5F0\],
+        #measurement .kpi-band-grid .bg-white {
+            color: #2A2A2A !important;
+        }
+
+        #measurement .kpi-band-grid .bg-\[\#F7F5F0\] .micro-text,
+        #measurement .kpi-band-grid .bg-white .micro-text {
+            color: #D13027 !important;
+        }
+
+        #measurement .kpi-band-grid .bg-\[\#F7F5F0\] .text-gray-600,
+        #measurement .kpi-band-grid .bg-white .text-gray-600,
+        #measurement .kpi-band-grid .bg-\[\#F7F5F0\] li,
+        #measurement .kpi-band-grid .bg-white li {
+            color: #4b5563 !important;
+        }
+
+        #executive-summary.curved-section {
+            padding-bottom: clamp(64px, 5vw, 96px) !important;
+        }
+
+        #executive-summary .section-wave {
+            bottom: -1px;
+        }
+
+        #executive-summary .col-span-8 > .p-10 {
+            padding-bottom: 24px !important;
+        }
+
+        #executive-summary .border-r {
+            border-right: 0 !important;
+        }
+
+        #executive-summary .col-span-8 .grid.grid-cols-2.border-b {
+            border-bottom: 0 !important;
+        }
+
+        #executive-summary .col-span-8 .mt-8.grid.grid-cols-2.gap-8 {
+            margin-top: 24px !important;
+        }
+
+        #executive-summary .col-span-8 .mt-8.grid.grid-cols-2.gap-8 > .col-span-2 {
+            padding-bottom: 12px;
+        }
+
+        .section-one-embed + .section-one-embed,
+        #executive-summary .embed-code-card + .embed-code-card {
+            margin-top: 18px;
         }
 
         .theme-red .bg-white,
@@ -1101,14 +1182,16 @@
         .mini-embed-shell {
             width: 100%;
             height: 100%;
+            min-height: 100%;
             border-radius: 12px;
             border: 1px dashed rgba(209,48,39,0.38);
-            background: rgba(255,255,255,0.82);
+            background: rgba(255,255,255,0.92);
             display: flex;
             align-items: center;
             justify-content: center;
             text-align: center;
             padding: 8px;
+            overflow: hidden;
         }
 
         .mini-embed-label {
@@ -1116,7 +1199,7 @@
             line-height: 1.4;
             letter-spacing: 0.08em;
             text-transform: uppercase;
-            font-weight: 700;
+            font-weight: 800;
             color: #D13027;
         }
 
@@ -1126,6 +1209,10 @@
         .mila-mini-placeholder.d { top: 38%; right: 10%; transform: rotate(4deg); opacity: 0.84; }
         .mila-mini-placeholder.e { bottom: 14%; left: 24%; transform: rotate(5deg); opacity: 0.88; }
         .mila-mini-placeholder.f { bottom: 12%; right: 22%; transform: rotate(-6deg); opacity: 0.8; }
+
+        .mila-mini-placeholder .mini-embed-label {
+            max-width: 12ch;
+        }
 
         .video-mini-grid {
             display: grid;
@@ -2448,18 +2535,18 @@ video {
 
     
     <section id="executive-summary" class="curved-section theme-red red-band grid grid-cols-12" vid="36">
-        <div class="col-span-4 p-10 border-r border-[#D8D4CC]" vid="37">
+        <div class="col-span-4 p-10" vid="37">
             <div class="micro-text mb-10" vid="38">01 / Strategic Reframing</div>
             <h2 class="serif text-5xl italic leading-tight mb-8" vid="39">From Aspiration to Participation</h2>
             <p class="text-sm text-gray-500 mb-10" vid="40">Audiences increasingly trust content that feels useful, achievable, and repeatable. The strategic opportunity is recommendation-aware branding built around creator trust, signal accumulation, and everyday infrastructure.</p>
-            <div class="placeholder-example evidence-media-card mb-6" vid="41">
+            <div class="placeholder-example evidence-media-card section-one-embed mb-6" vid="41">
                 <div class="embed-card embed-card-instagram">
                     <blockquote class="instagram-media" data-instgrm-permalink="https://www.instagram.com/reel/DJruxpsA-kO/?utm_source=ig_embed&amp;utm_campaign=loading" data-instgrm-version="14">
                         <a href="https://www.instagram.com/reel/DJruxpsA-kO/?utm_source=ig_embed&amp;utm_campaign=loading" target="_blank">View this post on Instagram</a>
                     </blockquote>
                 </div>
             </div>
-            <div class="placeholder-example evidence-media-card" vid="42">
+            <div class="placeholder-example evidence-media-card section-one-embed" vid="42">
                 <div class="embed-card embed-card-instagram">
                     <blockquote class="instagram-media" data-instgrm-permalink="https://www.instagram.com/reel/DPongekjT1N/?utm_source=ig_embed&amp;utm_campaign=loading" data-instgrm-version="14">
                         <a href="https://www.instagram.com/reel/DPongekjT1N/?utm_source=ig_embed&amp;utm_campaign=loading" target="_blank">View this post on Instagram</a>
@@ -2468,8 +2555,8 @@ video {
             </div>
         </div>
         <div class="col-span-8" vid="45">
-            <div class="grid grid-cols-2 border-b border-[#D8D4CC]" vid="46">
-                <div class="p-10 border-r border-[#D8D4CC] bg-white" vid="47">
+            <div class="grid grid-cols-2" vid="46">
+                <div class="p-10 bg-white" vid="47">
                     <div class="micro-text mb-6" vid="48">Current posture</div>
                     <ul class="space-y-4 serif text-2xl italic" vid="49">
                         <li vid="50">Aspirational Kitchens</li>
@@ -2520,7 +2607,7 @@ video {
     </section>
 
     
-    <div class="marquee border-b border-[#D8D4CC] py-4 bg-white" vid="67">
+    <div class="marquee py-4 bg-white" vid="67">
         <div class="marquee-content serif italic text-2xl" vid="68">
             PRACTICAL MAGIC — REAL KITCHENS — CREATOR TRUST — PARTICIPATION — THE MODERN POT — PRACTICAL MAGIC — REAL KITCHENS — CREATOR TRUST — PARTICIPATION — THE MODERN POT — PRACTICAL MAGIC — REAL KITCHENS — CREATOR TRUST — PARTICIPATION — THE MODERN POT — PRACTICAL MAGIC — REAL KITCHENS — CREATOR TRUST — PARTICIPATION — THE MODERN POT —
         </div>
@@ -2558,73 +2645,56 @@ video {
                 <p class="body-note">Does the post-purchase experience help people learn, use, repeat, and advocate?</p>
             </div>
         </div>
-        <div class="grid grid-cols-2 gap-20" vid="71">
-            <div vid="72">
-                <h3 class="serif text-4xl italic mb-8" vid="73">What's Working</h3>
-                <p class="body-note mb-8">Instant Pot’s strongest assets are category legitimacy, broad household familiarity, strong retail presence, and real product utility. The product already solves everyday constraints around time, space, budget, confidence, and cooking consistency. That makes the brand unusually well positioned to shift from appliance promotion into everyday cooking infrastructure.</p>
-                <div class="space-y-6" vid="74">
-                    <div class="border-subtle p-6 bg-white" vid="75">
-                        <div class="font-semibold mb-2" vid="76">Category Legitimacy</div>
-                        <p class="text-sm text-gray-600" vid="77">Strong name recognition; inherent product utility for one-pot meals and batch cooking.</p>
-                    </div>
-                    <div class="border-subtle p-6 bg-white" vid="78">
-                        <div class="font-semibold mb-2" vid="79">Pinterest Alignment</div>
-                        <p class="text-sm text-gray-600" vid="80">Highly effective for recipe discovery and long-tail search behavior.</p>
-                    </div>
-                    <div class="border-subtle p-6 bg-white" vid="81">
-                        <div class="font-semibold mb-2" vid="82">Educational Potential</div>
-                        <p class="text-sm text-gray-600" vid="83">Massive space for onboarding, troubleshooting, and creator-led recipe systems.</p>
-                    </div>
-                </div>
-            </div>
-            <div vid="84">
-                <h3 class="serif text-4xl italic mb-8 text-[#D13027]" vid="85">What's Not Working</h3>
-                <div class="space-y-4" vid="86">
-                    <div class="flex justify-between border-b border-[#D8D4CC] py-4" vid="87">
-                        <span class="micro-text w-32" vid="88">The Problem</span>
-                        <span class="font-medium flex-1" vid="89">Unrealistic Kitchens</span>
-                        <span class="text-xs text-gray-400 w-32 text-right" vid="90">Fix: Real Spaces</span>
-                    </div>
-                    <div class="flex justify-between border-b border-[#D8D4CC] py-4" vid="91">
-                        <span class="micro-text w-32" vid="92">The Problem</span>
-                        <span class="font-medium flex-1" vid="93">Scripted Influencers</span>
-                        <span class="text-xs text-gray-400 w-32 text-right" vid="94">Fix: Native Prompts</span>
-                    </div>
-                    <div class="flex justify-between border-b border-[#D8D4CC] py-4" vid="95">
-                        <span class="micro-text w-32" vid="96">The Problem</span>
-                        <span class="font-medium flex-1" vid="97">Weak TikTok Reach</span>
-                        <span class="text-xs text-gray-400 w-32 text-right" vid="98">Fix: UGC/Remix</span>
-                    </div>
-                    <div class="flex justify-between border-b border-[#D8D4CC] py-4" vid="99">
-                        <span class="micro-text w-32" vid="100">The Problem</span>
-                        <span class="font-medium flex-1" vid="101">Link Mismatch</span>
-                        <span class="text-xs text-gray-400 w-32 text-right" vid="102">Fix: Pathway Audit</span>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <div class="mt-[96px] evidence-pair-section">
+        <div class="mt-[72px] evidence-pair-section">
             <div class="subsection-block">
                 <div class="micro-text mb-6">B / What’s Working / What Needs Rebuilding</div>
             </div>
-            <div class="evidence-pair-grid">
-                <div class="border-subtle p-6 bg-white evidence-copy-card">
-                <div class="font-semibold mb-3">Existing strengths</div>
-                <p class="body-note">Instant Pot’s strongest assets are category legitimacy, broad household familiarity, strong retail presence, and real product utility. The product already solves everyday constraints around time, space, budget, confidence, and cooking consistency. That makes the brand unusually well positioned to shift from appliance promotion into everyday cooking infrastructure.</p>
-            </div>
-                <div class="placeholder-example evidence-media-card">
-                    <div class="embed-card embed-card-pinterest">
-                        <iframe src="https://assets.pinterest.com/ext/embed.html?id=337770040829686452" height="520" width="236" frameborder="0" scrolling="no"></iframe>
+            <div class="evidence-two-column-flow">
+                <div class="evidence-flow-column">
+                    <div class="micro-text text-[#D13027]">What’s Working</div>
+                    <div class="border-subtle p-6 bg-white evidence-copy-card">
+                        <div class="font-semibold mb-3">Existing strengths</div>
+                        <p class="body-note">Instant Pot’s strongest assets are category legitimacy, broad household familiarity, strong retail presence, and real product utility. The product already solves everyday constraints around time, space, budget, confidence, and cooking consistency. That makes the brand unusually well positioned to shift from appliance promotion into everyday cooking infrastructure.</p>
+                    </div>
+                    <div class="evidence-tight-media">
+                        <div class="embed-card embed-card-tiktok">
+                            <blockquote class="tiktok-embed" cite="https://www.tiktok.com/@instantpotofficial/video/7489917525761740037" data-video-id="7489917525761740037" style="max-width: 605px;min-width: 325px;"> <section> <a target="_blank" title="@instantpotofficial" href="https://www.tiktok.com/@instantpotofficial?refer=embed">@instantpotofficial</a> Kimchi Jjigae in just ONE pot? Yup! 🤩🤗Your dreams are coming true, thanks to @Mckenna Richelhoff and the Instant Pot RIO Wide. Check out the recipe at the link in our bio. <a title="instantpot" target="_blank" href="https://www.tiktok.com/tag/instantpot?refer=embed">#instantpot</a> <a title="instantpotifficial" target="_blank" href="https://www.tiktok.com/tag/instantpotifficial?refer=embed">#instantpotifficial</a> <a title="kennacooks" target="_blank" href="https://www.tiktok.com/tag/kennacooks?refer=embed">#kennacooks</a> <a title="influencerrecipe" target="_blank" href="https://www.tiktok.com/tag/influencerrecipe?refer=embed">#influencerrecipe</a> <a title="lunch" target="_blank" href="https://www.tiktok.com/tag/lunch?refer=embed">#lunch</a> <a title="dinner" target="_blank" href="https://www.tiktok.com/tag/dinner?refer=embed">#dinner</a> <a title="pork" target="_blank" href="https://www.tiktok.com/tag/pork?refer=embed">#pork</a> <a target="_blank" title="♬ original sound - Instant Pot US" href="https://www.tiktok.com/music/original-sound-7489917523096242949?refer=embed">♬ original sound - Instant Pot US</a> </section> </blockquote>
+                        </div>
                     </div>
                 </div>
-                <div class="placeholder-example evidence-media-card">
-                    <div class="embed-card embed-card-tiktok">
-                        <blockquote class="tiktok-embed" cite="https://www.tiktok.com/@instantpotofficial/video/7489917525761740037" data-video-id="7489917525761740037" style="max-width: 605px;min-width: 325px;"> <section> <a target="_blank" title="@instantpotofficial" href="https://www.tiktok.com/@instantpotofficial?refer=embed">@instantpotofficial</a> Kimchi Jjigae in just ONE pot? Yup! 🤩🤗Your dreams are coming true, thanks to @Mckenna Richelhoff and the Instant Pot RIO Wide. Check out the recipe at the link in our bio. <a title="instantpot" target="_blank" href="https://www.tiktok.com/tag/instantpot?refer=embed">#instantpot</a> <a title="instantpotifficial" target="_blank" href="https://www.tiktok.com/tag/instantpotifficial?refer=embed">#instantpotifficial</a> <a title="kennacooks" target="_blank" href="https://www.tiktok.com/tag/kennacooks?refer=embed">#kennacooks</a> <a title="influencerrecipe" target="_blank" href="https://www.tiktok.com/tag/influencerrecipe?refer=embed">#influencerrecipe</a> <a title="lunch" target="_blank" href="https://www.tiktok.com/tag/lunch?refer=embed">#lunch</a> <a title="dinner" target="_blank" href="https://www.tiktok.com/tag/dinner?refer=embed">#dinner</a> <a title="pork" target="_blank" href="https://www.tiktok.com/tag/pork?refer=embed">#pork</a> <a target="_blank" title="♬ original sound - Instant Pot US" href="https://www.tiktok.com/music/original-sound-7489917523096242949?refer=embed">♬ original sound - Instant Pot US</a> </section> </blockquote>
+                <div class="evidence-flow-column">
+                    <div class="micro-text text-[#D13027]">What’s Not Working</div>
+                    <div class="space-y-4">
+                        <div class="flex justify-between border-b border-[#D8D4CC] py-4">
+                            <span class="micro-text w-32">The Problem</span>
+                            <span class="font-medium flex-1">Unrealistic Kitchens</span>
+                            <span class="text-xs text-gray-400 w-32 text-right">Fix: Real Spaces</span>
+                        </div>
+                        <div class="flex justify-between border-b border-[#D8D4CC] py-4">
+                            <span class="micro-text w-32">The Problem</span>
+                            <span class="font-medium flex-1">Scripted Influencers</span>
+                            <span class="text-xs text-gray-400 w-32 text-right">Fix: Native Prompts</span>
+                        </div>
+                        <div class="flex justify-between border-b border-[#D8D4CC] py-4">
+                            <span class="micro-text w-32">The Problem</span>
+                            <span class="font-medium flex-1">Weak TikTok Reach</span>
+                            <span class="text-xs text-gray-400 w-32 text-right">Fix: UGC/Remix</span>
+                        </div>
+                        <div class="flex justify-between border-b border-[#D8D4CC] py-4">
+                            <span class="micro-text w-32">The Problem</span>
+                            <span class="font-medium flex-1">Link Mismatch</span>
+                            <span class="text-xs text-gray-400 w-32 text-right">Fix: Pathway Audit</span>
+                        </div>
                     </div>
-                </div>
-                <div class="border-subtle p-6 bg-white evidence-copy-card">
-                    <div class="font-semibold mb-3">What needs rebuilding</div>
-                    <p class="body-note">The rebuild opportunity centers on stronger platform-native formatting, clearer creator execution, richer product presentation, higher participation density, and stronger connections between discovery, ecommerce, onboarding, and lifecycle retention.</p>
+                    <div class="evidence-tight-media">
+                        <div class="embed-card embed-card-pinterest">
+                            <iframe src="https://assets.pinterest.com/ext/embed.html?id=337770040829686452" height="520" width="236" frameborder="0" scrolling="no"></iframe>
+                        </div>
+                    </div>
+                    <div class="border-subtle p-6 bg-white evidence-copy-card">
+                        <div class="font-semibold mb-3">What needs rebuilding</div>
+                        <p class="body-note">The rebuild opportunity centers on stronger platform-native formatting, clearer creator execution, richer product presentation, higher participation density, and stronger connections between discovery, ecommerce, onboarding, and lifecycle retention.</p>
+                    </div>
                 </div>
             </div>
             <div class="border-subtle p-6 bg-white w-full mt-10">
@@ -2675,11 +2745,13 @@ video {
                             <a href="https://www.reddit.com/r/instantpot/">instantpot</a>
                         </blockquote>
                     </div>
+                    <div class="placeholder-caption">recurring community language, product questions, social listening signals</div>
                 </div>
                 <div class="placeholder-example">
                     <div class="embed-card embed-card-pinterest">
                         <iframe src="https://assets.pinterest.com/ext/embed.html?id=337770040824552945" height="714" width="345" frameborder="0" scrolling="no"></iframe>
                     </div>
+                    <div class="placeholder-caption">search-oriented recipe behavior vs current account presentation</div>
                 </div>
             </div>
             <div class="placeholder-row-contained platform-evidence-row mb-10">
@@ -2687,24 +2759,28 @@ video {
                     <div class="embed-card embed-card-tiktok">
                         <blockquote class="tiktok-embed" cite="https://www.tiktok.com/@instantpotofficial/video/7496917204106022150" data-video-id="7496917204106022150" style="max-width: 605px;min-width: 325px;"> <section> <a target="_blank" title="@instantpotofficial" href="https://www.tiktok.com/@instantpotofficial?refer=embed">@instantpotofficial</a> @thespicyjuju has done it again! 🔥 Crispy, savory Chicken Katsu with more crunch and less oil, made easy in the Vortex Air Fryer. 💪 Watch it crisp to perfection with the ClearCook window, then grab the recipe at the link in our bio! <a title="instantpot" target="_blank" href="https://www.tiktok.com/tag/instantpot?refer=embed">#instantpot</a> <a title="instantpotofficial" target="_blank" href="https://www.tiktok.com/tag/instantpotofficial?refer=embed">#instantpotofficial</a> <a title="influencerrecipe" target="_blank" href="https://www.tiktok.com/tag/influencerrecipe?refer=embed">#influencerrecipe</a> <a title="thespicyjuju" target="_blank" href="https://www.tiktok.com/tag/thespicyjuju?refer=embed">#thespicyjuju</a> <a title="dinner" target="_blank" href="https://www.tiktok.com/tag/dinner?refer=embed">#dinner</a> <a title="lunch" target="_blank" href="https://www.tiktok.com/tag/lunch?refer=embed">#lunch</a> <a title="chicken" target="_blank" href="https://www.tiktok.com/tag/chicken?refer=embed">#chicken</a> <a title="airfry" target="_blank" href="https://www.tiktok.com/tag/airfry?refer=embed">#airfry</a> <a target="_blank" title="♬ original sound - Instant Pot US" href="https://www.tiktok.com/music/original-sound-7496917187250064183?refer=embed">♬ original sound - Instant Pot US</a> </section> </blockquote>
                     </div>
+                    <div class="placeholder-caption">creator-native hooks and fast pattern recognition</div>
                 </div>
                 <div class="placeholder-example">
                     <div class="embed-card embed-card-tiktok">
                         <blockquote class="tiktok-embed" cite="https://www.tiktok.com/@instantpotofficial/video/7535143680399756560" data-video-id="7535143680399756560" style="max-width: 605px;min-width: 325px;"> <section> <a target="_blank" title="@instantpotofficial" href="https://www.tiktok.com/@instantpotofficial?refer=embed">@instantpotofficial</a> <p>Whatever you’re drooling over, the Instant Pot Vortex Air Fryer can get it on your plate in no time.</p> <a target="_blank" title="♬ original sound - Instant Pot - Instant Pot US" href="https://www.tiktok.com/music/original-sound-Instant-Pot-7535147763827329808?refer=embed">♬ original sound - Instant Pot - Instant Pot US</a> </section> </blockquote>
                     </div>
+                    <div class="placeholder-caption">saves, shares, repeat viewing</div>
                 </div>
                 <div class="placeholder-example">
                     <div class="embed-card embed-card-instagram">
                         <blockquote class="instagram-media" data-instgrm-permalink="https://www.instagram.com/reel/DYeASXkuiFM/?utm_source=ig_embed&amp;utm_campaign=loading" data-instgrm-version="14" style=" background:#FFF; border:0; border-radius:3px; box-shadow:0 0 1px 0 rgba(0,0,0,0.5),0 1px 10px 0 rgba(0,0,0,0.15); margin: 1px; max-width:540px; min-width:326px; padding:0; width:99.375%; width:-webkit-calc(100% - 2px); width:calc(100% - 2px);"><div style="padding:16px;"> <a href="https://www.instagram.com/reel/DYeASXkuiFM/?utm_source=ig_embed&amp;utm_campaign=loading" style=" background:#FFFFFF; line-height:0; padding:0 0; text-align:center; text-decoration:none; width:100%;" target="_blank">View this post on Instagram</a></div></blockquote>
                     </div>
+                    <div class="placeholder-caption">customer remix, recipe submission, participation prompt</div>
                 </div>
                 <div class="placeholder-example">
                     <div class="embed-card embed-card-tiktok">
                         <blockquote class="tiktok-embed" cite="https://www.tiktok.com/@instantpotofficial/video/7582709932168908052" data-video-id="7582709932168908052" style="max-width: 605px;min-width: 325px;"> <section> <a target="_blank" title="@instantpotofficial" href="https://www.tiktok.com/@instantpotofficial?refer=embed">@instantpotofficial</a> My pink Bentleys make dinner for me every single night. That&#39;s hot. @ParisHilton 💗 <a title="instantpotofficial" target="_blank" href="https://www.tiktok.com/tag/instantpotofficial?refer=embed">#instantpotofficial</a> <a title="miniline" target="_blank" href="https://www.tiktok.com/tag/miniline?refer=embed">#miniline</a> <a title="alliwantforchristmas" target="_blank" href="https://www.tiktok.com/tag/alliwantforchristmas?refer=embed">#alliwantforchristmas</a> <a title="parishilton" target="_blank" href="https://www.tiktok.com/tag/parishilton?refer=embed">#parishilton</a> <a target="_blank" title="♬ original sound - Media A La Carte NYC" href="https://www.tiktok.com/music/original-sound-7580381139563563806?refer=embed">♬ original sound - Media A La Carte NYC</a> </section> </blockquote>
                     </div>
+                    <div class="placeholder-caption">employee-led cooking lane or recurring personality</div>
                 </div>
             </div>
-            <div class="mt-10 subsection-block" id="brand-recognition-problem">
+            <div class="mt-6 subsection-block" id="brand-recognition-problem">
                 <div class="micro-text mb-4">D / Brand Recognition Problem</div>
                 <div class="brand-recognition-grid">
                     <div class="embed-code-card brand-recognition-copy">
@@ -3085,31 +3161,31 @@ video {
                 <div class="mila-mini-placeholder b">
                     <div class="mini-embed-shell">
                         <!-- <blockquote class="tiktok-embed" cite="https://www.tiktok.com/@eat.mila/video/7520135692802985230" data-video-id="7520135692802985230" style="max-width: 605px;min-width: 325px;" > <section> <a target="_blank" title="@eat.mila" href="https://www.tiktok.com/@eat.mila?refer=embed">@eat.mila</a> A bit late to the trend but thought we&#39;d address the elephant in the room 🫣🐘 <a title="mila" target="_blank" href="https://www.tiktok.com/tag/mila?refer=embed">#MiLa</a> <a title="narratortrend" target="_blank" href="https://www.tiktok.com/tag/narratortrend?refer=embed">#narratortrend</a> <a title="dumplings" target="_blank" href="https://www.tiktok.com/tag/dumplings?refer=embed">#dumplings</a> <a title="soupdumplings" target="_blank" href="https://www.tiktok.com/tag/soupdumplings?refer=embed">#soupdumplings</a> <a title="foodie" target="_blank" href="https://www.tiktok.com/tag/foodie?refer=embed">#foodie</a> <a title="trend" target="_blank" href="https://www.tiktok.com/tag/trend?refer=embed">#trend</a> <a title="funny" target="_blank" href="https://www.tiktok.com/tag/funny?refer=embed">#funny</a> <a title="prank" target="_blank" href="https://www.tiktok.com/tag/prank?refer=embed">#prank</a> <a title="relatable" target="_blank" href="https://www.tiktok.com/tag/relatable?refer=embed">#relatable</a> <a title="fyp" target="_blank" href="https://www.tiktok.com/tag/fyp?refer=embed">#fyp</a> <a title="socialmediamanager" target="_blank" href="https://www.tiktok.com/tag/socialmediamanager?refer=embed">#socialmediamanager</a> <a title="sarcasm" target="_blank" href="https://www.tiktok.com/tag/sarcasm?refer=embed">#sarcasm</a> <a title="justkidding" target="_blank" href="https://www.tiktok.com/tag/justkidding?refer=embed">#justkidding</a> <a title="joke" target="_blank" href="https://www.tiktok.com/tag/joke?refer=embed">#joke</a> <a target="_blank" title="♬ original sound  - MìLà (蜜辣)" href="https://www.tiktok.com/music/original-sound-MìLà-蜜辣-7520135857005693709?refer=embed">♬ original sound  - MìLà (蜜辣)</a> </section> </blockquote> <script async src="https://www.tiktok.com/embed.js"></script> -->
-                        <div class="mini-embed-label">EMPLOYEE CREATOR</div>
+                        <div class="mini-embed-label">RECURRING RECIPE FORMAT</div>
                     </div>
                 </div>
                 <div class="mila-mini-placeholder c">
                     <div class="mini-embed-shell">
                         <!-- <blockquote class="tiktok-embed" cite="https://www.tiktok.com/@eat.mila/video/7560134557241052471" data-video-id="7560134557241052471" style="max-width: 605px;min-width: 325px;" > <section> <a target="_blank" title="@eat.mila" href="https://www.tiktok.com/@eat.mila?refer=embed">@eat.mila</a> Testing Our Founder | pt. 1 - Spot The Difference! 👀 What other tests would you guys want to see? Let us know in the comments 🥟 <a title="mila" target="_blank" href="https://www.tiktok.com/tag/mila?refer=embed">#mila</a> <a title="soupdumplings" target="_blank" href="https://www.tiktok.com/tag/soupdumplings?refer=embed">#soupdumplings</a> <a title="dumplings" target="_blank" href="https://www.tiktok.com/tag/dumplings?refer=embed">#dumplings</a> <a title="founder" target="_blank" href="https://www.tiktok.com/tag/founder?refer=embed">#founder</a> <a title="blind" target="_blank" href="https://www.tiktok.com/tag/blind?refer=embed">#blind</a> <a title="test" target="_blank" href="https://www.tiktok.com/tag/test?refer=embed">#test</a> <a title="spotthedifference" target="_blank" href="https://www.tiktok.com/tag/spotthedifference?refer=embed">#spotthedifference</a> <a target="_blank" title="♬ Hip Hop Background(814204) - Pavel" href="https://www.tiktok.com/music/Hip-Hop-Background-814204-6860551076676896769?refer=embed">♬ Hip Hop Background(814204) - Pavel</a> </section> </blockquote> <script async src="https://www.tiktok.com/embed.js"></script> -->
-                        <div class="mini-embed-label">EMPLOYEE CREATOR</div>
+                        <div class="mini-embed-label">CREATOR TRUST EXAMPLE</div>
                     </div>
                 </div>
                 <div class="mila-mini-placeholder d">
                     <div class="mini-embed-shell">
                         <!-- <blockquote class="tiktok-embed" cite="https://www.tiktok.com/@eat.mila/video/7556386815360388366" data-video-id="7556386815360388366" style="max-width: 605px;min-width: 325px;" > <section> <a target="_blank" title="@eat.mila" href="https://www.tiktok.com/@eat.mila?refer=embed">@eat.mila</a> Seeing how long it takes to overcook your soup dumplings! 🫣 This was an interesting one.. Would you want see a part two? <a title="tipsandtricks" target="_blank" href="https://www.tiktok.com/tag/tipsandtricks?refer=embed">#tipsandtricks</a> <a title="soupdumplings" target="_blank" href="https://www.tiktok.com/tag/soupdumplings?refer=embed">#soupdumplings</a> <a title="dumplings" target="_blank" href="https://www.tiktok.com/tag/dumplings?refer=embed">#dumplings</a> <a title="cookinghacks" target="_blank" href="https://www.tiktok.com/tag/cookinghacks?refer=embed">#cookinghacks</a> <a target="_blank" title="♬ original sound  - eat.mila" href="https://www.tiktok.com/music/original-sound-eatmila-7556386925033114382?refer=embed">♬ original sound  - eat.mila</a> </section> </blockquote> <script async src="https://www.tiktok.com/embed.js"></script> -->
-                        <div class="mini-embed-label">EMPLOYEE CREATOR</div>
+                        <div class="mini-embed-label">CREATOR REMIX EXAMPLE</div>
                     </div>
                 </div>
                 <div class="mila-mini-placeholder e">
                     <div class="mini-embed-shell">
                         <!-- <blockquote class="tiktok-embed" cite="https://www.tiktok.com/@eat.mila/video/7550955354050415903" data-video-id="7550955354050415903" style="max-width: 605px;min-width: 325px;" > <section> <a target="_blank" title="@eat.mila" href="https://www.tiktok.com/@eat.mila?refer=embed">@eat.mila</a> Spicy Russian Roulette 💀 would you agree to play this?  <a title="soupdumplings" target="_blank" href="https://www.tiktok.com/tag/soupdumplings?refer=embed">#soupdumplings</a> <a title="hotones" target="_blank" href="https://www.tiktok.com/tag/hotones?refer=embed">#hotones</a> <a target="_blank" title="♬ original sound  - eat.mila" href="https://www.tiktok.com/music/original-sound-eatmila-7550955442781129503?refer=embed">♬ original sound  - eat.mila</a> </section> </blockquote> <script async src="https://www.tiktok.com/embed.js"></script> -->
-                        <div class="mini-embed-label">EMPLOYEE CREATOR</div>
+                        <div class="mini-embed-label">ONBOARDING ROUTINE</div>
                     </div>
                 </div>
                 <div class="mila-mini-placeholder f">
                     <div class="mini-embed-shell">
                         <!-- <blockquote class="tiktok-embed" cite="https://www.tiktok.com/@eat.mila/video/7546000927237590285" data-video-id="7546000927237590285" style="max-width: 605px;min-width: 325px;" > <section> <a target="_blank" title="@eat.mila" href="https://www.tiktok.com/@eat.mila?refer=embed">@eat.mila</a> Why are we just finding out about this now? 😭 not you grabbing a pen and chopsticks rn 😳 <a title="relatable" target="_blank" href="https://www.tiktok.com/tag/relatable?refer=embed">#relatable</a> <a title="myth" target="_blank" href="https://www.tiktok.com/tag/myth?refer=embed">#myth</a> <a title="experiment" target="_blank" href="https://www.tiktok.com/tag/experiment?refer=embed">#experiment</a> <a target="_blank" title="♬ original sound  - eat.mila" href="https://www.tiktok.com/music/original-sound-eatmila-7546000997332634381?refer=embed">♬ original sound  - eat.mila</a> </section> </blockquote> <script async src="https://www.tiktok.com/embed.js"></script> -->
-                        <div class="mini-embed-label">EMPLOYEE CREATOR</div>
+                        <div class="mini-embed-label">PARTICIPATION PROMPT</div>
                     </div>
                 </div>
             </div>

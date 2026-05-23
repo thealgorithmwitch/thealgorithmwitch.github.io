@@ -4,7 +4,118 @@ const { canonicalizeJobShape } = require("./canonical-job-shape");
 const { readJobRecords } = require("./public-records");
 const { buildJobPagePathMap, cleanVisibleText } = require("./job-page-paths");
 const { resolveDisplayJobFromRecord, shouldShowPublicRecord } = require("./lifecycle-utils");
-const { compareJobsOutputs } = require("./public-data-guard");
+const {
+  compareJobsOutputs,
+  getCanonicalDescription,
+  getCanonicalLocation,
+  getCanonicalPay,
+  getCanonicalSnippet,
+  getCanonicalWorkplaceType,
+  isJunkDescription,
+  isSuspiciousPayDowngrade
+} = require("./public-data-guard");
+
+const PAY_FIELDS = [
+  "salary",
+  "raw_salary",
+  "salary_min",
+  "salary_max",
+  "salary_currency",
+  "salary_period",
+  "salary_visible",
+  "pay_display"
+];
+
+function isBlankText(value) {
+  return !String(value ?? "").trim();
+}
+
+function mergeSafePublicJob(current = {}, proposed = {}) {
+  const next = { ...proposed };
+  const currentDescription = getCanonicalDescription(current);
+  const proposedDescription = getCanonicalDescription(proposed);
+  if (currentDescription && (!proposedDescription || isJunkDescription(proposedDescription))) {
+    next.description = current.description;
+  }
+
+  const currentSnippet = getCanonicalSnippet(current);
+  const proposedSnippet = getCanonicalSnippet(proposed);
+  if (currentSnippet && (!proposedSnippet || isJunkDescription(proposedSnippet))) {
+    if (!isBlankText(current.description_snippet)) next.description_snippet = current.description_snippet;
+    if (!isBlankText(current.summary)) next.summary = current.summary;
+  }
+
+  const currentPay = getCanonicalPay(current);
+  const proposedPay = getCanonicalPay(proposed);
+  if (currentPay && (!proposedPay || isSuspiciousPayDowngrade(currentPay, proposedPay))) {
+    for (const field of PAY_FIELDS) {
+      if (Object.prototype.hasOwnProperty.call(current, field) && !isBlankText(current[field])) {
+        next[field] = current[field];
+      }
+    }
+    if (current.display && typeof current.display === "object") {
+      const nextDisplay = next.display && typeof next.display === "object" ? { ...next.display } : {};
+      for (const field of ["pay_display", "salary_min", "salary_max", "salary_currency", "salary_period", "salary_visible"]) {
+        if (Object.prototype.hasOwnProperty.call(current.display, field) && !isBlankText(current.display[field])) {
+          nextDisplay[field] = current.display[field];
+        }
+      }
+      next.display = nextDisplay;
+    }
+  }
+
+  const currentLocation = getCanonicalLocation(current);
+  const proposedLocation = getCanonicalLocation(proposed);
+  if (currentLocation && !proposedLocation) {
+    next.location = current.location;
+  }
+
+  const currentWorkplaceType = getCanonicalWorkplaceType(current);
+  const proposedWorkplaceType = getCanonicalWorkplaceType(proposed);
+  if (currentWorkplaceType && !proposedWorkplaceType) {
+    next.workplace_type = current.workplace_type;
+  }
+
+  if (!isBlankText(current.specialization) && isBlankText(proposed.specialization)) {
+    next.specialization = current.specialization;
+  }
+
+  if (!isBlankText(current.page_url) && isBlankText(proposed.page_url)) {
+    next.page_url = current.page_url;
+  }
+
+  return next;
+}
+
+function mergeSafePublicJobs(existingJobs = [], proposedJobs = []) {
+  const currentById = new Map((Array.isArray(existingJobs) ? existingJobs : []).map((job) => [String(job && job.id || ""), job]));
+  return (Array.isArray(proposedJobs) ? proposedJobs : []).map((job) => {
+    const current = currentById.get(String(job && job.id || ""));
+    if (!current) return job;
+    return mergeSafePublicJob(current, job);
+  });
+}
+
+function attachRedirectPaths(existingJobs = [], proposedJobs = []) {
+  const existingById = new Map((Array.isArray(existingJobs) ? existingJobs : []).map((job) => [String(job && job.id || ""), job]));
+  return (Array.isArray(proposedJobs) ? proposedJobs : []).map((job) => {
+    const current = existingById.get(String(job && job.id || "")) || {};
+    const existingPageUrl = String(current.page_url || "").trim();
+    const redirectPaths = new Set(
+      Array.isArray(job.redirect_paths)
+        ? job.redirect_paths.map((item) => String(item || "").trim()).filter(Boolean)
+        : []
+    );
+    if (existingPageUrl && existingPageUrl !== job.page_url) {
+      redirectPaths.add(existingPageUrl);
+    }
+    redirectPaths.delete(job.page_url);
+    return {
+      ...job,
+      redirect_paths: Array.from(redirectPaths)
+    };
+  });
+}
 
 function enrichPublicJob(job) {
   const canonical = canonicalizeJobShape(job, { alreadyNormalized: true }) || canonicalizeJobShape(job) || job;
@@ -48,19 +159,7 @@ async function syncPublicJobsFromRecords(records, options = {}) {
   const scoped = scopeIds.size > 0;
   const existingJobs = await readJobs();
   const existingById = new Map((Array.isArray(existingJobs) ? existingJobs : []).map((job) => [String(job.id || ""), job]));
-  const computedPublicJobs = buildPublicJobsFromRecords(records).map((job) => {
-    const existing = existingById.get(String(job.id || "")) || {};
-    const existingPageUrl = String(existing.page_url || "").trim();
-    const redirectPaths = new Set(Array.isArray(existing.redirect_paths) ? existing.redirect_paths.map((item) => String(item || "").trim()).filter(Boolean) : []);
-    if (existingPageUrl && existingPageUrl !== job.page_url) {
-      redirectPaths.add(existingPageUrl);
-    }
-    redirectPaths.delete(job.page_url);
-    return {
-      ...job,
-      redirect_paths: Array.from(redirectPaths)
-    };
-  });
+  const computedPublicJobs = buildPublicJobsFromRecords(records);
   const publicJobs = scoped
     ? (() => {
         const scopedComputedById = new Map(computedPublicJobs
@@ -87,13 +186,17 @@ async function syncPublicJobsFromRecords(records, options = {}) {
         return merged;
       })()
     : computedPublicJobs;
+  const safePublicJobs = mergeSafePublicJobs(existingJobs, publicJobs);
   const existingJobsJsonCount = Array.isArray(existingJobs) ? existingJobs.length : 0;
-  const computedPublicJobsCount = publicJobs.length;
+  const computedPublicJobsCount = safePublicJobs.length;
   const overwriteAudit = compareJobsOutputs(existingJobs, publicJobs, {
     scopeIds: scoped ? Array.from(scopeIds) : []
   });
+  const safeOverwriteAudit = compareJobsOutputs(existingJobs, safePublicJobs, {
+    scopeIds: scoped ? Array.from(scopeIds) : []
+  });
   const existingSerialized = serializeForWrite(JOBS_FILE, existingJobs);
-  const nextSerialized = serializeForWrite(JOBS_FILE, publicJobs);
+  const nextSerialized = serializeForWrite(JOBS_FILE, attachRedirectPaths(existingJobs, safePublicJobs));
   const shouldWrite = existingJobsJsonCount !== computedPublicJobsCount || existingSerialized !== nextSerialized;
   let wrote = false;
 
@@ -107,19 +210,21 @@ async function syncPublicJobsFromRecords(records, options = {}) {
   });
 
   if (overwriteAudit.worse_reasons.length && !allowWorseOverwrite) {
-    throw new Error(`Refusing to overwrite jobs.json: ${overwriteAudit.worse_reasons.join("; ")}`);
+    logger.warn(
+      `[${label}] jobs_json_sync_skipped_risky_changes=${overwriteAudit.risky_examples.length}`
+    );
   }
 
   if (shouldWrite && !dryRun) {
-    await writeJson(JOBS_FILE, publicJobs);
+    await writeJson(JOBS_FILE, attachRedirectPaths(existingJobs, safePublicJobs));
     wrote = true;
   }
 
   const finalJobs = dryRun ? existingJobs : await readJobs();
   const finalJobsJsonCount = dryRun ? existingJobsJsonCount : (Array.isArray(finalJobs) ? finalJobs.length : 0);
   const syncMismatch = dryRun ? false : finalJobsJsonCount !== computedPublicJobsCount;
-  const descriptionSnippetGeneratedCount = publicJobs.filter((job) => String(job.description_snippet || "").trim()).length;
-  const descriptionCleanedCount = publicJobs.filter((job) => {
+  const descriptionSnippetGeneratedCount = safePublicJobs.filter((job) => String(job.description_snippet || "").trim()).length;
+  const descriptionCleanedCount = safePublicJobs.filter((job) => {
     const description = String(job.description || "").trim();
     const rawDescription = String(job.raw_description || "").trim();
     return Boolean(description) && description !== rawDescription;
@@ -143,7 +248,7 @@ async function syncPublicJobsFromRecords(records, options = {}) {
     jobsCountAfter: dryRun ? computedPublicJobsCount : finalJobsJsonCount,
     publishedCount: computedPublicJobsCount,
     wrote,
-    overwriteAudit
+    overwriteAudit: safeOverwriteAudit
   };
 }
 

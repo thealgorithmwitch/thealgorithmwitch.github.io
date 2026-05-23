@@ -663,6 +663,13 @@ async function main() {
         throw error;
       }
     }
+    const refreshedJobs = await readJobs();
+    const octopus = Array.isArray(refreshedJobs)
+      ? refreshedJobs.find((job) => job && job.id === "Octopus Energy-f6d11145-9327-4f9c-8f68-a5a079a39bb9")
+      : null;
+    if (octopus && octopus.salary !== "$57,000 / year") {
+      throw new Error("Freshness audit safety failed: Octopus salary was overwritten");
+    }
   }
 
   console.log(

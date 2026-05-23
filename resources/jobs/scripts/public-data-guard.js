@@ -288,5 +288,6 @@ module.exports = {
   getCanonicalPay,
   getCanonicalSnippet,
   getCanonicalWorkplaceType,
-  isJunkDescription
+  isJunkDescription,
+  isSuspiciousPayDowngrade
 };

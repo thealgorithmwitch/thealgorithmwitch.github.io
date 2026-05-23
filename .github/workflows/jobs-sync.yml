@@ -60,6 +60,9 @@ jobs:
           JOBS_DIR="${{ steps.workspace.outputs.dir }}"
           node --check "$JOBS_DIR/scripts/apply-admin-actions.js"
           node --check "$JOBS_DIR/scripts/validate-public-data.js"
+
+      - name: Validate public data before admin sync
+        run: npm --prefix resources/jobs run jobs:validate
           
       - name: Snapshot queued admin actions
         run: npm --prefix resources/jobs run jobs:snapshot-admin-actions
@@ -73,6 +76,9 @@ jobs:
       - name: Guard blocked sources
         run: npm --prefix resources/jobs run jobs:check-blocked-sources
 
+      - name: Validate public data after admin sync
+        run: npm --prefix resources/jobs run jobs:validate
+
       - name: Check for publish output changes
         id: changes
         shell: bash
@@ -85,12 +91,15 @@ jobs:
               "job-records.json"
               "jobs.json"
               "talent-profiles.json"
+              "pending-talent.json"
+              "pending-talent-profiles.json"
               "employers.json"
               "pending-synced-jobs.json"
               "admin-actions-local.json"
               "admin-pending-overrides.json"
               "admin-action-overrides.json"
               "admin-organization-rules.json"
+              "validation-snapshots/latest.json"
               "pages"
             )
           else
@@ -98,12 +107,15 @@ jobs:
               "$JOBS_DIR/job-records.json"
               "$JOBS_DIR/jobs.json"
               "$JOBS_DIR/talent-profiles.json"
+              "$JOBS_DIR/pending-talent.json"
+              "$JOBS_DIR/pending-talent-profiles.json"
               "$JOBS_DIR/employers.json"
               "$JOBS_DIR/pending-synced-jobs.json"
               "$JOBS_DIR/admin-actions-local.json"
               "$JOBS_DIR/admin-pending-overrides.json"
               "$JOBS_DIR/admin-action-overrides.json"
               "$JOBS_DIR/admin-organization-rules.json"
+              "$JOBS_DIR/validation-snapshots/latest.json"
               "$JOBS_DIR/pages"
             )
           fi
@@ -126,30 +138,46 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           if [ "$JOBS_DIR" = "." ]; then
-            git add \
+            for item in \
               job-records.json \
               jobs.json \
               talent-profiles.json \
+              pending-talent.json \
+              pending-talent-profiles.json \
               employers.json \
               pending-synced-jobs.json \
               admin-actions-local.json \
               admin-pending-overrides.json \
               admin-organization-rules.json \
-              pages
+              validation-snapshots/latest.json
+            do
+              if [ -e "$item" ]; then git add "$item"; fi
+            done
+            if [ -e pages ]; then
+              git add pages
+            fi
             if [ -f admin-action-overrides.json ]; then
               git add admin-action-overrides.json
             fi
           else
-            git add \
+            for item in \
               "$JOBS_DIR/job-records.json" \
               "$JOBS_DIR/jobs.json" \
               "$JOBS_DIR/talent-profiles.json" \
+              "$JOBS_DIR/pending-talent.json" \
+              "$JOBS_DIR/pending-talent-profiles.json" \
               "$JOBS_DIR/employers.json" \
               "$JOBS_DIR/pending-synced-jobs.json" \
               "$JOBS_DIR/admin-actions-local.json" \
               "$JOBS_DIR/admin-pending-overrides.json" \
               "$JOBS_DIR/admin-organization-rules.json" \
-              "$JOBS_DIR/pages"
+              "$JOBS_DIR/validation-snapshots/latest.json"
+            do
+              if [ -e "$item" ]; then git add "$item"; fi
+            done
+            if [ -e "$JOBS_DIR/pages" ]; then
+              git add "$JOBS_DIR/pages"
+            fi
             if [ -f "$JOBS_DIR/admin-action-overrides.json" ]; then
               git add "$JOBS_DIR/admin-action-overrides.json"
             fi
@@ -172,12 +200,15 @@ jobs:
             resources/jobs/job-records.json
             resources/jobs/jobs.json
             resources/jobs/talent-profiles.json
+            resources/jobs/pending-talent.json
+            resources/jobs/pending-talent-profiles.json
             resources/jobs/employers.json
             resources/jobs/pending-synced-jobs.json
             resources/jobs/admin-actions-local.json
             resources/jobs/admin-pending-overrides.json
             resources/jobs/admin-action-overrides.json
             resources/jobs/admin-organization-rules.json
+            resources/jobs/validation-snapshots/latest.json
             resources/jobs/pages
 
       - name: Report no-op

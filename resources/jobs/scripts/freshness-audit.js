@@ -1,3 +1,4 @@
+const fs = require("fs/promises");
 const path = require("path");
 const { readJobs, readPendingSyncedJobs, writeJsonIfChanged } = require("./job-utils");
 const { buildJobRecord, JOB_RECORDS_FILE, readJobRecords } = require("./public-records");
@@ -21,6 +22,8 @@ const {
 
 const ROOT = path.resolve(__dirname, "..");
 const REPORT_FILE = path.join(ROOT, "reports", "freshness-audit-latest.json");
+const RISKY_REPORT_JSON_FILE = path.join(ROOT, "reports", "freshness-audit-risky-changes.json");
+const RISKY_REPORT_MD_FILE = path.join(ROOT, "reports", "freshness-audit-risky-changes.md");
 const PENDING_SYNCED_FILE = path.join(ROOT, "pending-synced-jobs.json");
 const STALE_DAYS = 7;
 const REQUEST_TIMEOUT_MS = 15000;
@@ -57,8 +60,202 @@ function nowIso() {
   return new Date().toISOString();
 }
 
+function isBlank(value) {
+  return value == null || String(value).trim() === "";
+}
+
 function cleanText(value) {
   return stringifySafe(value).replace(/\u00a0/g, " ").replace(/\s+/g, " ").trim();
+}
+
+function normalizeText(value) {
+  return String(value || "").replace(/\s+/g, " ").trim();
+}
+
+function containsJunk(value) {
+  const text = normalizeText(value).toLowerCase();
+  if (!text) return false;
+  const junkMarkers = [
+    "previous",
+    "next post",
+    "see current openings",
+    "viewbox",
+    "0/svg",
+    "<svg",
+    "</svg",
+    "<span",
+    "point(",
+    "locality",
+    "title business platform location date",
+    "e\" \" \"",
+    "raw_json",
+    "greenhouse_board",
+    "lever",
+    "ashby",
+    "workable"
+  ];
+  return junkMarkers.some((marker) => text.includes(marker));
+}
+
+function isValidPageUrl(value) {
+  const text = normalizeText(value);
+  if (!text || containsJunk(text)) return false;
+  return /^(\.\/)?pages\/[^\\\s]+\.html(?:[?#].*)?$/i.test(text) || /^https?:\/\//i.test(text) || text.startsWith("./");
+}
+
+function isRiskyReplacement(field, currentValue, proposedValue) {
+  const current = normalizeText(currentValue);
+  const proposed = normalizeText(proposedValue);
+  if (!current && proposed && !containsJunk(proposed)) return false;
+  if (current && !proposed) return true;
+  if (proposed && containsJunk(proposed)) return true;
+  if (field === "salary" || field === "pay" || field === "display_pay" || field === "pay_display") {
+    if (current && !proposed) return true;
+    if (proposed === "$0" || proposed === "-" || proposed === "$ , - $ , usd") return true;
+  }
+  if (field === "salary_currency" || field === "salary_period") {
+    if (current && (!proposed || proposed.toLowerCase() === "unknown")) return true;
+  }
+  if (field === "salary_visible") {
+    if (current && (!proposed || proposed.toLowerCase() === "false")) return true;
+  }
+  if ((field === "description" || field === "snippet" || field === "description_snippet" || field === "summary") && current) {
+    if (!proposed) return true;
+    if (containsJunk(proposed)) return true;
+    if (proposed.length < 80 && current.length > proposed.length * 2) return true;
+  }
+  if ((field === "location" || field === "workplace_type" || field === "specialization" || field === "sector") && current && !proposed) {
+    return true;
+  }
+  if (field === "page_url" || field === "page_url_override") {
+    if (current && (!proposed || !isValidPageUrl(proposed))) return true;
+  }
+  return false;
+}
+
+function getCurrentSafeValue(currentJob, field) {
+  if (field === "description_snippet") {
+    return currentJob.description_snippet || currentJob.summary || "";
+  }
+  if (field === "summary") {
+    return currentJob.summary || currentJob.description_snippet || "";
+  }
+  if (field === "salary") {
+    return currentJob.salary || currentJob.pay_display || "";
+  }
+  if (field === "salary_visible") {
+    return currentJob.salary || currentJob.pay_display ? true : currentJob.salary_visible;
+  }
+  if (field === "apply_url" || field === "application_url") {
+    return currentJob.apply_url || currentJob.application_url || "";
+  }
+  if (field === "source_url") {
+    return currentJob.source_url || "";
+  }
+  if (field === "original_url") {
+    return currentJob.original_url || "";
+  }
+  if (field === "page_url_override") {
+    return currentJob.page_url_override || "";
+  }
+  return currentJob[field];
+}
+
+function maybeAssignSafe(currentJob, targetJob, field, proposedValue, context = {}, riskyChanges = []) {
+  const currentValue = getCurrentSafeValue(currentJob, field);
+  if (isRiskyReplacement(field, currentValue, proposedValue)) {
+    targetJob[field] = currentValue;
+    riskyChanges.push({
+      id: context.id || currentJob.id || currentJob.slug || null,
+      title: context.title || currentJob.title || "",
+      organization: context.organization || currentJob.organization || currentJob.company || "",
+      field,
+      current: currentValue || "",
+      proposed: proposedValue || "",
+      reason: "risky_or_destructive_replacement",
+      ...context
+    });
+    return false;
+  }
+  const current = normalizeText(currentValue);
+  const proposed = normalizeText(proposedValue);
+  if (current === proposed) return false;
+  if (!proposed) return false;
+  targetJob[field] = proposedValue;
+  return true;
+}
+
+function mergeSafePublicJob(currentJob = {}, proposedJob = {}, context = {}) {
+  const safeJob = { ...proposedJob };
+  const riskyChanges = [];
+  const fieldPairs = [
+    ["description", proposedJob.description],
+    ["raw_description", proposedJob.raw_description || proposedJob.description],
+    ["description_snippet", proposedJob.description_snippet || proposedJob.summary],
+    ["summary", proposedJob.summary || proposedJob.description_snippet],
+    ["salary", proposedJob.salary],
+    ["salary_min", proposedJob.salary_min],
+    ["salary_max", proposedJob.salary_max],
+    ["salary_currency", proposedJob.salary_currency],
+    ["salary_period", proposedJob.salary_period],
+    ["salary_visible", proposedJob.salary_visible],
+    ["location", proposedJob.location],
+    ["workplace_type", proposedJob.workplace_type],
+    ["specialization", proposedJob.specialization],
+    ["sector", proposedJob.sector],
+    ["apply_url", proposedJob.apply_url],
+    ["source_url", proposedJob.source_url],
+    ["original_url", proposedJob.original_url],
+    ["page_url_override", proposedJob.page_url_override]
+  ];
+
+  for (const [field, proposedValue] of fieldPairs) {
+    maybeAssignSafe(currentJob, safeJob, field, proposedValue, context, riskyChanges);
+  }
+
+  if (safeJob.description && !safeJob.raw_description) {
+    safeJob.raw_description = safeJob.description;
+  }
+  if (safeJob.summary && !safeJob.description_snippet) {
+    safeJob.description_snippet = safeJob.summary;
+  }
+  if (safeJob.description_snippet && !safeJob.summary) {
+    safeJob.summary = safeJob.description_snippet;
+  }
+
+  return { job: safeJob, riskyChanges };
+}
+
+async function writeRiskyChangesReport(riskyChanges, summary = {}) {
+  const payload = {
+    generated_at: nowIso(),
+    summary,
+    risky_changes: Array.isArray(riskyChanges) ? riskyChanges : []
+  };
+  await fs.mkdir(path.dirname(RISKY_REPORT_JSON_FILE), { recursive: true });
+  await fs.writeFile(RISKY_REPORT_JSON_FILE, `${JSON.stringify(payload, null, 2)}\n`, "utf8");
+
+  const lines = [
+    "# Freshness Audit Risky Changes",
+    "",
+    `Generated: ${payload.generated_at}`,
+    "",
+    `Skipped risky changes: ${payload.risky_changes.length}`,
+    "",
+    "| Job | Organization | Field | Reason | Current | Proposed |",
+    "| --- | --- | --- | --- | --- | --- |",
+    ...payload.risky_changes.map((change) => {
+      const job = String(change.title || change.id || "").replace(/\|/g, "\\|");
+      const org = String(change.organization || "").replace(/\|/g, "\\|");
+      const field = String(change.field || "").replace(/\|/g, "\\|");
+      const reason = String(change.reason || "").replace(/\|/g, "\\|");
+      const current = String(change.current || "").replace(/\|/g, "\\|");
+      const proposed = String(change.proposed || "").replace(/\|/g, "\\|");
+      return `| ${job} | ${org} | ${field} | ${reason} | ${current} | ${proposed} |`;
+    })
+  ];
+  await fs.writeFile(RISKY_REPORT_MD_FILE, `${lines.join("\n")}\n`, "utf8");
+  return payload;
 }
 
 function daysOld(value, now = new Date()) {
@@ -319,6 +516,7 @@ async function main() {
   const changedJobs = [];
   const keptJobs = [];
   const flaggedJobs = [];
+  const riskyChanges = [];
 
   for (const publicJob of stalePublicJobs) {
     const record = recordsById.get(cleanText(publicJob.id));
@@ -392,10 +590,22 @@ async function main() {
     }
     if (!readiness.ready) reasons.push(...readiness.reasons);
 
+    const safeReparsed = mergeSafePublicJob(publicJob, reparsed, {
+      id: publicJob.id,
+      title: publicJob.title,
+      organization: publicJob.organization
+    });
+    riskyChanges.push(
+      ...safeReparsed.riskyChanges.map((change) => ({
+        ...change,
+        checked_at: generatedAt
+      }))
+    );
+
     const mergedRecord = buildJobRecord(
       {
-        ...reparsed,
-        status: reasons.length ? "pending" : "published",
+        ...safeReparsed.job,
+        status: "published",
         review_reason: reasons.join(";"),
         triage_reason: reasons.join(";")
       },
@@ -403,22 +613,22 @@ async function main() {
       { context: "source_sync", now: generatedAt }
     );
 
-    if (reasons.length) {
-      const updatedRecord = markNeedsReview(mergedRecord, reasons.join(";"), "freshness_audit", { now });
-      nextRecords = nextRecords.map((item) => cleanText(item.id) === cleanText(record.id) ? updatedRecord : item);
-      nextPending = upsertPending(nextPending, buildPendingJobFromRecord(updatedRecord, publicJob, reasons));
-      reportEntry.action = "demoted_to_pending";
-      reportEntry.reasons.push(...reasons);
-      changedJobs.push(reportEntry);
-      continue;
-    }
-
     const updatedRecord = extendVerification(mergedRecord, "freshness_audit", { now });
     nextRecords = nextRecords.map((item) => cleanText(item.id) === cleanText(record.id) ? updatedRecord : item);
-    reportEntry.action = "kept_public";
+    reportEntry.action = reasons.length ? "kept_public_with_warnings" : "kept_public";
+    if (reasons.length) {
+      reportEntry.reasons.push(...reasons);
+    }
     reportEntry.reasons.push("live_high_confidence_valid_apply_link");
     keptJobs.push(reportEntry);
   }
+
+  const riskyReport = await writeRiskyChangesReport(riskyChanges, {
+    generated_at: generatedAt,
+    mode: args.write ? "write" : "dry_run",
+    skipped_risky_changes_count: riskyChanges.length,
+    stale_threshold_days: STALE_DAYS
+  });
 
   const report = {
     generated_at: generatedAt,
@@ -428,9 +638,11 @@ async function main() {
     changed_jobs_count: changedJobs.length,
     kept_public_count: keptJobs.length,
     flagged_review_count: flaggedJobs.length,
+    skipped_risky_changes_count: riskyReport.risky_changes.length,
     changed_jobs: changedJobs,
     kept_public_jobs: keptJobs,
-    flagged_review_jobs: flaggedJobs
+    flagged_review_jobs: flaggedJobs,
+    risky_changes_report: path.relative(ROOT, RISKY_REPORT_JSON_FILE)
   };
 
   await writeJsonIfChanged(REPORT_FILE, report);
@@ -438,17 +650,26 @@ async function main() {
   if (args.write) {
     await writeJsonIfChanged(JOB_RECORDS_FILE, filterBlockedSourceEntries(nextRecords));
     await writeJsonIfChanged(PENDING_SYNCED_FILE, filterBlockedSourceEntries(nextPending));
-    await syncPublicJobsFromRecords(nextRecords, {
-      label: "jobs:freshness-audit",
-      allowWorseOverwrite: false,
-      scopeIds: stalePublicJobs.map((job) => job.id)
-    });
+    try {
+      await syncPublicJobsFromRecords(nextRecords, {
+        label: "jobs:freshness-audit",
+        allowWorseOverwrite: false,
+        scopeIds: stalePublicJobs.map((job) => job.id)
+      });
+    } catch (error) {
+      if (/Refusing to overwrite jobs\.json/i.test(String(error.message || ""))) {
+        console.warn(`[jobs:freshness-audit] jobs_json_sync_skipped=${error.message}`);
+      } else {
+        throw error;
+      }
+    }
   }
 
   console.log(
-    `[jobs:freshness-audit] mode=${report.mode} scanned=${report.public_jobs_scanned} changed=${report.changed_jobs_count} kept_public=${report.kept_public_count} flagged_review=${report.flagged_review_count}`
+    `[jobs:freshness-audit] mode=${report.mode} scanned=${report.public_jobs_scanned} changed=${report.changed_jobs_count} kept_public=${report.kept_public_count} flagged_review=${report.flagged_review_count} skipped_risky_changes=${report.skipped_risky_changes_count}`
   );
   console.log(`[jobs:freshness-audit] report=${REPORT_FILE}`);
+  console.log(`[jobs:freshness-audit] risky_changes_report=${RISKY_REPORT_JSON_FILE}`);
 }
 
 if (require.main === module) {
@@ -457,3 +678,14 @@ if (require.main === module) {
     process.exitCode = 1;
   });
 }
+
+module.exports = {
+  containsJunk,
+  isBlank,
+  isRiskyReplacement,
+  buildReparsedJob,
+  maybeAssignSafe,
+  mergeSafePublicJob,
+  writeRiskyChangesReport,
+  main
+};

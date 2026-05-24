@@ -1,4 +1,4 @@
-const { ensureArray, extractSalaryData, normalizeWorkableUrl, stableHash, stringifySafe, todayIso } = require("./job-normalizer");
+const { ensureArray, extractSalaryData, normalizePaylocityUrl, normalizeWorkableUrl, stableHash, stringifySafe, todayIso } = require("./job-normalizer");
 const { normalizeProvider } = require("./source-utils");
 
 function ensureDefault(values) {
@@ -110,8 +110,10 @@ function paylocityJobToSchema(source, boardData, job, detail = {}) {
       .join(" - ")
     : "";
   const salaryUnit = stringifySafe(salaryValue.unitText);
-  const applyUrl = resolvePaylocityUrl(detail.applyPath || `/Recruiting/Jobs/Apply/${job.JobId}`);
-  const sourceUrl = resolvePaylocityUrl(detail.detailUrl || `/Recruiting/Jobs/Details/${job.JobId}`);
+  const applyUrl = normalizePaylocityUrl(resolvePaylocityUrl(detail.applyPath || `/Recruiting/Jobs/Apply/${job.JobId}`)).url
+    || resolvePaylocityUrl(detail.applyPath || `/Recruiting/Jobs/Apply/${job.JobId}`);
+  const sourceUrl = normalizePaylocityUrl(resolvePaylocityUrl(detail.detailUrl || `/Recruiting/Jobs/Details/${job.JobId}`)).url
+    || resolvePaylocityUrl(detail.detailUrl || `/Recruiting/Jobs/Details/${job.JobId}`);
   const location = [
     stringifySafe(job.JobLocation?.City || job.JobLocation?.Name || job.LocationName),
     stringifySafe(job.JobLocation?.State)
@@ -147,7 +149,7 @@ function paylocityJobToSchema(source, boardData, job, detail = {}) {
     notes: `Synced from Paylocity employer careers board ${resolvePaylocityUrl(boardData?.boardUrl || source.source_url)}.`,
     description_source_url: sourceUrl,
     pay_source_url: sourceUrl,
-    apply_url_type: /\/Recruiting\/Jobs\/Apply\//i.test(applyUrl) ? "ats_apply_page" : "job_description_page",
+    apply_url_type: "job_description_page",
     raw_payload: {
       job_id: job.JobId || null,
       title: stringifySafe(job.JobTitle),
@@ -159,7 +161,7 @@ function paylocityJobToSchema(source, boardData, job, detail = {}) {
       job_type: stringifySafe(detail.jobType),
       description_source_url: sourceUrl,
       pay_source_url: sourceUrl,
-      apply_url_type: /\/Recruiting\/Jobs\/Apply\//i.test(applyUrl) ? "ats_apply_page" : "job_description_page"
+      apply_url_type: "job_description_page"
     }
   };
 }

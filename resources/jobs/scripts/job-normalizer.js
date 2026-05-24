@@ -406,6 +406,52 @@ function sanitizeRoleUrl(value) {
   return text;
 }
 
+function normalizePaylocityUrl(value) {
+  const original = normalizeWhitespace(String(value || ""));
+  if (!original) {
+    return {
+      url: "",
+      normalized: false,
+      original_url: "",
+      canonical_url: ""
+    };
+  }
+  let parsed;
+  try {
+    parsed = new URL(original);
+  } catch (_error) {
+    return {
+      url: original,
+      normalized: false,
+      original_url: "",
+      canonical_url: ""
+    };
+  }
+  const isPaylocity = /(^|\.)recruiting\.paylocity\.com$/i.test(parsed.hostname);
+  const applyMatch = parsed.pathname.match(/^\/Recruiting\/Jobs\/Apply\/(\d+)(?:\/)?$/i);
+  if (!isPaylocity || !applyMatch) {
+    return {
+      url: original,
+      normalized: false,
+      original_url: "",
+      canonical_url: ""
+    };
+  }
+  parsed.pathname = `/Recruiting/Jobs/Details/${applyMatch[1]}`;
+  for (const key of Array.from(parsed.searchParams.keys())) {
+    if (!["lang", "locale"].includes(String(key || "").toLowerCase())) {
+      parsed.searchParams.delete(key);
+    }
+  }
+  const canonical = parsed.toString();
+  return {
+    url: canonical,
+    normalized: canonical !== original,
+    original_url: original,
+    canonical_url: canonical
+  };
+}
+
 function normalizeWorkableUrl(value) {
   const original = normalizeWhitespace(String(value || ""));
   if (!original) {
@@ -2777,9 +2823,12 @@ function normalizeJob(input = {}) {
   const workableApplyDiagnostic = normalizeWorkableUrl(rawApplyUrl);
   const workableSourceDiagnostic = normalizeWorkableUrl(rawSourceUrl);
   const workableOriginalDiagnostic = normalizeWorkableUrl(rawOriginalUrl);
-  const applyUrl = workableApplyDiagnostic.url || rawApplyUrl;
-  const originalUrl = workableOriginalDiagnostic.url || rawOriginalUrl;
-  const sourceUrl = workableSourceDiagnostic.url || rawSourceUrl;
+  const paylocityApplyDiagnostic = normalizePaylocityUrl(workableApplyDiagnostic.url || rawApplyUrl);
+  const paylocitySourceDiagnostic = normalizePaylocityUrl(workableSourceDiagnostic.url || rawSourceUrl);
+  const paylocityOriginalDiagnostic = normalizePaylocityUrl(workableOriginalDiagnostic.url || rawOriginalUrl);
+  const applyUrl = paylocityApplyDiagnostic.url || workableApplyDiagnostic.url || rawApplyUrl;
+  const originalUrl = paylocityOriginalDiagnostic.url || workableOriginalDiagnostic.url || rawOriginalUrl;
+  const sourceUrl = paylocitySourceDiagnostic.url || workableSourceDiagnostic.url || rawSourceUrl;
   const inferredWorkplaceType = normalizeWorkplaceType(input.workplace_type || input.workplaceType) || titleCleanup.workplaceType || resolveWorkplaceType(input);
   const location = normalizeLocationDisplay({ ...input, organization, location: titleCleanup.location || input.location }, inferredWorkplaceType);
   const salaryExtraction = extractSalaryData(input);
@@ -2848,14 +2897,24 @@ function normalizeJob(input = {}) {
     workableSourceDiagnostic.canonical_url ||
     workableOriginalDiagnostic.canonical_url ||
     "";
-  const descriptionSourceUrl = safeStringField(
-    normalizeWorkableUrl(input.description_source_url || input.descriptionSourceUrl || input.raw_payload?.description_source_url || sourceUrl || originalUrl).url
+  const normalizedDescriptionSourceUrl = safeStringField(
+    normalizePaylocityUrl(
+      normalizeWorkableUrl(input.description_source_url || input.descriptionSourceUrl || input.raw_payload?.description_source_url || sourceUrl || originalUrl).url
+    ).url
   );
-  const paySourceUrl = safeStringField(
-    normalizeWorkableUrl(input.pay_source_url || input.paySourceUrl || input.raw_payload?.pay_source_url || sourceUrl || originalUrl).url
+  const normalizedPaySourceUrl = safeStringField(
+    normalizePaylocityUrl(
+      normalizeWorkableUrl(input.pay_source_url || input.paySourceUrl || input.raw_payload?.pay_source_url || sourceUrl || originalUrl).url
+    ).url
+  );
+  const descriptionSourceUrl = safeStringField(
+    normalizePaylocityUrl(normalizedDescriptionSourceUrl || sourceUrl || originalUrl).url || normalizedDescriptionSourceUrl
+  );
+  const canonicalPaySourceUrl = safeStringField(
+    normalizePaylocityUrl(normalizedPaySourceUrl || sourceUrl || originalUrl).url || normalizedPaySourceUrl
   );
   const applyUrlType = safeStringField(input.apply_url_type || input.applyUrlType)
-    || (/\/Recruiting\/Jobs\/Apply\//i.test(applyUrl) || /apply\.workable\.com/i.test(applyUrl) ? "ats_apply_page" : (applyUrl && sourceUrl && applyUrl !== sourceUrl ? "direct_application_page" : "job_description_page"));
+    || (/apply\.workable\.com/i.test(applyUrl) ? "ats_apply_page" : (applyUrl && sourceUrl && applyUrl !== sourceUrl ? "direct_application_page" : "job_description_page"));
   const workableApplyValidationReason = /workable/i.test(`${input.source || ""} ${input.source_type || ""} ${applyUrl} ${sourceUrl}`)
     ? (isPotentiallyHumanApplyUrl(applyUrl, { source: { provider: input.source_type || input.source } }) ? "human_apply_url_confirmed" : "workable_apply_url_not_human_usable")
     : "";
@@ -2919,7 +2978,7 @@ function normalizeJob(input = {}) {
     original_url: originalUrl,
     apply_url_type: applyUrlType,
     description_source_url: descriptionSourceUrl,
-    pay_source_url: paySourceUrl,
+    pay_source_url: canonicalPaySourceUrl,
     workable_url_normalized: workableNormalization,
     original_workable_url: originalWorkableUrl,
     canonical_workable_url: canonicalWorkableUrl,
@@ -3219,6 +3278,7 @@ module.exports = {
   isSingleFirstNameOnlyTitle,
   looksLikePhysicalLocation,
   normalizeDescription,
+  normalizePaylocityUrl,
   normalizeWorkableUrl,
   applyTitleToMalformedTemplate,
   normalizeEmploymentType,

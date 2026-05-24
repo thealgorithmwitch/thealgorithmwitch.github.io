@@ -14,9 +14,25 @@ const { syncJobRecordStore } = require("./public-records");
 const { upsertScrapeReports } = require("./scrape-report");
 const { shouldUseDiscoverySync } = require("./source-utils");
 const { triagePendingJobs } = require("./pending-triage");
-const { readSourceHealthSnapshot, writeSourceHealthSnapshot } = require("./source-health-store");
+const { mergeSourceHealthSnapshots, readSourceHealthSnapshot, writeSourceHealthSnapshot } = require("./source-health-store");
 const { isSourceTemporarilyUnavailableReport } = require("./scrapers/discovery");
 const { applySourcePendingControls } = require("./source-sync-quality");
+
+function computeSourceStatus(entry = {}) {
+  if (Number(entry.failed_sync_count || entry.failure_error_count || 0) > 0) return "sync_error";
+  if (entry.source_temporarily_unavailable) return "sync_error";
+  if (Number(entry.jobs_found || 0) > 0 || Number(entry.jobs_normalized || 0) > 0) return "live";
+  if (Number(entry.pending_count_delta || 0) > 0 || entry.fallback_used) return "needs_review";
+  return "stale";
+}
+
+function computeSourceFreshnessScore(entry = {}) {
+  let score = 100;
+  score -= Math.min(45, Number(entry.failed_sync_count || entry.failure_error_count || 0) * 20);
+  if (entry.source_temporarily_unavailable) score -= 10;
+  if (Number(entry.jobs_found || 0) === 0 && !entry.fallback_used) score -= 20;
+  return Math.max(0, Math.min(100, Math.round(score)));
+}
 
 function isManagedCustomJob(job, managedSourceIds) {
   return job.sync_origin === "custom" && managedSourceIds.has(String(job.source_id || ""));
@@ -277,17 +293,24 @@ async function runCustomSync(options = {}) {
     `[jobs:sync-custom] parser_cleaned_title_count=${parserStats.parser_cleaned_title_count} parser_cleaned_org_count=${parserStats.parser_cleaned_org_count} parser_cleaned_description_count=${parserStats.parser_cleaned_description_count} parser_location_defaulted_remote_count=${parserStats.parser_location_defaulted_remote_count} parser_location_cleaned_count=${parserStats.parser_location_cleaned_count} parser_hybrid_location_repaired_count=${parserStats.parser_hybrid_location_repaired_count} parser_elemental_metadata_stripped_count=${parserStats.parser_elemental_metadata_stripped_count} parser_custom_table_header_stripped_count=${parserStats.parser_custom_table_header_stripped_count} parser_html_fragment_stripped_count=${parserStats.parser_html_fragment_stripped_count} salary_invalid_removed_count=${parserStats.salary_invalid_removed_count} salary_display_built_from_range_count=${parserStats.salary_display_built_from_range_count} salary_parse_warning_count=${parserStats.salary_parse_warning_count} workplace_type_cleaned_count=${parserStats.workplace_type_cleaned_count} workplace_type_invalid_removed_count=${parserStats.workplace_type_invalid_removed_count} workplace_type_field_misplacement_repaired_count=${parserStats.workplace_type_field_misplacement_repaired_count} elemental_impact_routed_pending_count=${parserStats.elemental_impact_routed_pending_count} low_confidence_title_count=${parserStats.low_confidence_title_count}`
   );
   const previousHealth = await readSourceHealthSnapshot();
-  const previousBySource = new Map((previousHealth.sources || []).map((item) => [String(item.source_id || ""), item]));
-  const nextHealthEntries = sourceHealthEntries.map((entry) => {
-    const previous = previousBySource.get(String(entry.source_id || "")) || {};
-    return {
+  const mergedHealth = mergeSourceHealthSnapshots(previousHealth, sourceHealthEntries, {
+    generated_at: new Date().toISOString(),
+    sync_type: "sync-custom"
+  });
+  const nextHealthEntries = mergedHealth.sources.map((entry) => {
+    const enriched = {
       ...entry,
-      failure_error_count: Number(previous.failure_error_count || 0) + Number(entry.failure_error_count || 0)
+      source_status: computeSourceStatus(entry)
+    };
+    return {
+      ...enriched,
+      stale_score: 100 - computeSourceFreshnessScore(enriched),
+      source_freshness_score: computeSourceFreshnessScore(enriched)
     };
   });
   await writeSourceHealthSnapshot({
-    generated_at: new Date().toISOString(),
-    sync_type: "sync-custom",
+    generated_at: mergedHealth.generated_at,
+    sync_type: mergedHealth.sync_type,
     sources: nextHealthEntries
   });
   logger.log(`[jobs:sync-custom] source_health_written=true sources=${nextHealthEntries.length} sync_duration_ms=${Date.now() - syncStartedAt}`);

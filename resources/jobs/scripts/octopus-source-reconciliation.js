@@ -99,11 +99,13 @@ function buildLatestSnapshot(pending = [], sourceHealth = {}) {
   const octopusPending = (Array.isArray(pending) ? pending : []).filter(isOctopusEntity);
   const healthEntry = (Array.isArray(sourceHealth?.sources) ? sourceHealth.sources : [])
     .find((item) => normalizeLoose(item.source_id) === OCTOPUS_SOURCE_ID);
-  const hasSuccessfulHealth = Boolean(
+  const hasAuthoritativeHealth = Boolean(
     healthEntry &&
     healthEntry.source_checked === true &&
-    Number(healthEntry.failure_error_count || 0) === 0 &&
-    text(healthEntry.last_successful_sync)
+    Number(healthEntry.failed_sync_count || healthEntry.failure_error_count || 0) === 0 &&
+    text(healthEntry.last_successful_sync) &&
+    normalizeLoose(healthEntry.source_status) !== "sync_error" &&
+    normalizeLoose(healthEntry.source_status) !== "stale"
   );
   const keys = {
     canonical_url: new Set(),
@@ -122,7 +124,7 @@ function buildLatestSnapshot(pending = [], sourceHealth = {}) {
     jobs: octopusPending,
     job_ids: new Set(octopusPending.map((job) => text(job.id)).filter(Boolean)),
     keys,
-    authoritative: octopusPending.length > 0 || hasSuccessfulHealth,
+    authoritative: hasAuthoritativeHealth,
     health_entry: healthEntry || null
   };
 }

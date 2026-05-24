@@ -1,7 +1,7 @@
 const fs = require("fs/promises");
 const path = require("path");
 const { buildPublicJobsFromRecords } = require("./public-jobs");
-const { CANONICAL_SPECIALIZATIONS, hasUsableDescription } = require("./job-normalizer");
+const { CANONICAL_SPECIALIZATIONS, hasUsableDescription, normalizePaylocityUrl } = require("./job-normalizer");
 const { buildJobPagePathMap, cleanVisibleText } = require("./job-page-paths");
 const { readJobs, readJson, readPendingSyncedJobs, readSources } = require("./job-utils");
 const { readJobRecords, TALENT_PROFILES_FILE, EMPLOYERS_FILE } = require("./public-records");
@@ -73,6 +73,9 @@ const COMMUNICATIONS_FILTER_SIGNAL_PATTERNS = [
   /public relations/i,
   /content creator/i
 ];
+const URL_COMPANY_ALIASES = new Map([
+  ["thegoodfoodinstitute80", "The Good Food Institute"]
+]);
 
 function findCassandreTalentRecord(records = []) {
   return records.find((record) => {
@@ -141,23 +144,31 @@ function slugify(value) {
 function extractUrlCompanyHint(value) {
   const text = String(value || "").trim();
   if (!text) return "";
+  const resolveAlias = (token) => {
+    const normalizedToken = String(token || "").trim().toLowerCase();
+    if (!normalizedToken) return "";
+    return URL_COMPANY_ALIASES.get(normalizedToken) || normalizedToken
+      .split("-")
+      .filter(Boolean)
+      .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+      .join(" ");
+  };
   const workableMatch = text.match(/apply\.workable\.com\/([^/]+)\//i);
   if (workableMatch) {
-    return workableMatch[1]
-      .split("-")
-      .filter(Boolean)
-      .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
-      .join(" ");
+    return resolveAlias(workableMatch[1]);
   }
-  const greenhouseMatch = text.match(/boards\.greenhouse\.io\/([^/]+)\//i);
+  const greenhouseMatch = text.match(/(?:job-boards(?:\.eu)?|boards)\.greenhouse\.io\/([^/?#]+)/i);
   if (greenhouseMatch) {
-    return greenhouseMatch[1]
-      .split("-")
-      .filter(Boolean)
-      .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
-      .join(" ");
+    return resolveAlias(greenhouseMatch[1]);
   }
   return "";
+}
+
+function isNonCanonicalPaylocityApplyUrl(value) {
+  const text = String(value || "").trim();
+  if (!/recruiting\.paylocity\.com/i.test(text) || !/\/Recruiting\/Jobs\/Apply\/\d+/i.test(text)) return false;
+  const normalized = normalizePaylocityUrl(text);
+  return Boolean(normalized.normalized && normalized.url);
 }
 
 function normalizeOrganizationIdentity(value) {
@@ -634,6 +645,22 @@ async function buildValidationReport(options = {}) {
         organization: job.organization,
         apply_url: job.apply_url || job.original_url || job.source_url,
         expected_company_from_url: applyUrlHint
+      });
+    }
+    if (isNonCanonicalPaylocityApplyUrl(job.apply_url || job.original_url || job.source_url)) {
+      organizationPageUrlConflicts.push({
+        id,
+        title: job.title,
+        organization: job.organization,
+        apply_url: job.apply_url || job.original_url || job.source_url,
+        expected_canonical_url: normalizePaylocityUrl(job.apply_url || job.original_url || job.source_url).url,
+        reason: "paylocity_apply_url_not_canonical"
+      });
+      hardValidationFailures.push({
+        id,
+        title: job.title,
+        organization: job.organization,
+        reason: "paylocity_apply_url_not_canonical"
       });
     }
 

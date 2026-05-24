@@ -21,7 +21,7 @@ const { syncJobRecordStore } = require("./public-records");
 const { upsertScrapeReports } = require("./scrape-report");
 const { isDirectAtsSource, normalizeSource } = require("./source-utils");
 const { triagePendingJobs } = require("./pending-triage");
-const { readSourceHealthSnapshot, writeSourceHealthSnapshot } = require("./source-health-store");
+const { mergeSourceHealthSnapshots, readSourceHealthSnapshot, writeSourceHealthSnapshot } = require("./source-health-store");
 const { applySourcePendingControls } = require("./source-sync-quality");
 
 const SUPPORTED_TYPES = new Set(["greenhouse", "lever", "ashby", "bamboohr", "recruitee", "smartrecruiters", "workable"]);
@@ -372,32 +372,24 @@ async function runSyncForTypes(types = []) {
     `[jobs:sync-sources] parser_cleaned_title_count=${parserStats.parser_cleaned_title_count} parser_cleaned_org_count=${parserStats.parser_cleaned_org_count} parser_cleaned_description_count=${parserStats.parser_cleaned_description_count} parser_location_defaulted_remote_count=${parserStats.parser_location_defaulted_remote_count} parser_location_cleaned_count=${parserStats.parser_location_cleaned_count} parser_hybrid_location_repaired_count=${parserStats.parser_hybrid_location_repaired_count} parser_elemental_metadata_stripped_count=${parserStats.parser_elemental_metadata_stripped_count} parser_custom_table_header_stripped_count=${parserStats.parser_custom_table_header_stripped_count} parser_html_fragment_stripped_count=${parserStats.parser_html_fragment_stripped_count} salary_invalid_removed_count=${parserStats.salary_invalid_removed_count} salary_display_built_from_range_count=${parserStats.salary_display_built_from_range_count} salary_parse_warning_count=${parserStats.salary_parse_warning_count} workplace_type_cleaned_count=${parserStats.workplace_type_cleaned_count} workplace_type_invalid_removed_count=${parserStats.workplace_type_invalid_removed_count} workplace_type_field_misplacement_repaired_count=${parserStats.workplace_type_field_misplacement_repaired_count} elemental_impact_routed_pending_count=${parserStats.elemental_impact_routed_pending_count} low_confidence_title_count=${parserStats.low_confidence_title_count}`
   );
   const previousHealth = await readSourceHealthSnapshot();
-  const previousBySource = new Map((previousHealth.sources || []).map((item) => [String(item.source_id || ""), item]));
-  const nextHealthEntries = sourceHealthEntries.map((entry) => {
-    const previous = previousBySource.get(String(entry.source_id || "")) || {};
-    const failedSyncCount = Number(previous.failed_sync_count || previous.failure_error_count || 0) + Number(entry.failed_sync_count || entry.failure_error_count || 0);
-    const merged = {
-      ...previous,
+  const mergedHealth = mergeSourceHealthSnapshots(previousHealth, sourceHealthEntries, {
+    generated_at: new Date().toISOString(),
+    sync_type: "sync-sources"
+  });
+  const nextHealthEntries = mergedHealth.sources.map((entry) => {
+    const enriched = {
       ...entry,
-      failure_error_count: failedSyncCount,
-      failed_sync_count: failedSyncCount,
-      last_checked_at: entry.last_checked_at || new Date().toISOString(),
-      last_seen_at: entry.last_seen_at || previous.last_seen_at || "",
-      source_status: computeSourceStatus({
-        ...previous,
-        ...entry,
-        failed_sync_count: failedSyncCount
-      })
+      source_status: computeSourceStatus(entry)
     };
     return {
-      ...merged,
-      stale_score: 100 - computeSourceFreshnessScore(merged),
-      source_freshness_score: computeSourceFreshnessScore(merged)
+      ...enriched,
+      stale_score: 100 - computeSourceFreshnessScore(enriched),
+      source_freshness_score: computeSourceFreshnessScore(enriched)
     };
   });
   await writeSourceHealthSnapshot({
-    generated_at: new Date().toISOString(),
-    sync_type: "sync-sources",
+    generated_at: mergedHealth.generated_at,
+    sync_type: mergedHealth.sync_type,
     sources: nextHealthEntries
   });
   console.log(`[jobs:sync-sources] source_health_written=true sources=${nextHealthEntries.length} sync_duration_ms=${Date.now() - syncStartedAt}`);

@@ -1,8 +1,10 @@
 const assert = require("assert");
 const {
-  mergeTalentProfile,
+  assertApprovedTalentWritten,
+  ensureRenderableTalentShape,
   normalizeApprovedTalentProfile
 } = require("./fetch-approved-talent");
+const { mergePreservingClean } = require("./approved-export-utils");
 
 function main() {
   const current = {
@@ -12,37 +14,45 @@ function main() {
     public_contact: "hello@example.com",
     public_visibility: true,
     featured: true,
-    published: true
+    published: true,
+    status: "published"
   };
 
   const approvedRecord = normalizeApprovedTalentProfile({
-    id: "cassandre-arkema",
     name: "Cassandre Arkema",
-    status: "approved",
+    email: "cassandre.arkema@gmail.com",
+    current_role: "Founder",
+    location: "Chicago, IL",
+    status: "active",
+    public_visibility: "",
+    featured: "",
     raw_json: JSON.stringify({
-      id: "cassandre-arkema",
-      name: "Cassandre Arkema",
       short_bio: "",
       public_contact: "",
       approved_by: "Admin Review"
     })
   });
 
-  const merged = mergeTalentProfile(current, approvedRecord);
+  assert.strictEqual(approvedRecord.name, "Cassandre Arkema");
+  assert.strictEqual(approvedRecord.id, "cassandre.arkema@gmail.com");
+  assert.strictEqual(approvedRecord.public_visibility, true);
+  assert.strictEqual(approvedRecord.featured, true);
+  assert.strictEqual(approvedRecord.status, "active");
+
+  const merged = mergePreservingClean(current, ensureRenderableTalentShape(approvedRecord));
 
   assert.strictEqual(merged.short_bio, "Climate jobs builder and editor", "clean existing bio should be preserved");
   assert.strictEqual(merged.public_contact, "hello@example.com", "existing contact should be preserved");
-  assert.strictEqual(merged.public_visibility, true, "existing public visibility should be preserved");
-  assert.strictEqual(merged.featured, true, "existing featured flag should be preserved");
-  assert.strictEqual(merged.approved_by, "Admin Review", "approved metadata should be merged");
-  assert.strictEqual(merged.status, "published", "approved profiles must export as published");
-  assert.strictEqual(merged.public_visibility, true, "approved profiles must remain public");
-  assert.strictEqual(merged.published, true, "profile should remain published");
+  assert.strictEqual(merged.public_visibility, true, "profile should remain visible");
+  assert.strictEqual(merged.featured, true, "featured should default to true");
+  assert.strictEqual(merged.status, "active", "approved profiles should export as active");
+  assert.strictEqual(merged.published, true, "profile should remain renderable");
 
-  console.log(JSON.stringify({
-    ok: true,
-    merged
-  }, null, 2));
+  assert.doesNotThrow(() => {
+    assertApprovedTalentWritten([approvedRecord], [merged]);
+  });
+
+  console.log(JSON.stringify({ ok: true, merged }, null, 2));
 }
 
 main();

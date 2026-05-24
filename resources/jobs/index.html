@@ -1804,15 +1804,43 @@
       return job.date_updated || job.date_added || job.date_posted || "";
     }
 
-    function isPublishedRecord(record) {
+    function isExplicitFalse(value) {
+      return value === false ||
+        value === 0 ||
+        String(value || "").trim().toLowerCase() === "false" ||
+        String(value || "").trim().toLowerCase() === "no" ||
+        String(value || "").trim().toLowerCase() === "hidden";
+    }
+
+    function isExplicitHiddenStatus(value) {
+      return ["hidden", "rejected", "archived", "inactive", "draft"].includes(String(value || "").trim().toLowerCase());
+    }
+
+    function isVisiblePublicRecord(record, options = {}) {
       const verificationStatus = String(record && record.verification_status || "").toLowerCase();
-      return Boolean(
-        record &&
-        record.published &&
-        record.public_visibility &&
-        String(record.status || "").toLowerCase() === "published" &&
-        !["expired", "removed"].includes(verificationStatus)
-      );
+      const requiredField = String(options.requiredField || "name");
+      const requiredValue = cleanVisibleText(options.requiredValue || (record && record[requiredField]) || "");
+      if (!record || !requiredValue) {
+        return { visible: false, reason: `missing_${requiredField}` };
+      }
+      if (isExplicitHiddenStatus(record.status)) {
+        return { visible: false, reason: "hidden_status" };
+      }
+      if (isExplicitFalse(record.public_visibility)) {
+        return { visible: false, reason: "public_visibility_false" };
+      }
+      if (["expired", "removed"].includes(verificationStatus)) {
+        return { visible: false, reason: "verification_hidden" };
+      }
+      return { visible: true, reason: "visible" };
+    }
+
+    function getEmployerDisplayName(record) {
+      return cleanVisibleText(record && (record.organization_name || record.organization || record.company || record.name) || "");
+    }
+
+    function isPublishedRecord(record) {
+      return isVisiblePublicRecord(record).visible;
     }
 
     function isNewThisWeek(job) {
@@ -1939,8 +1967,25 @@
     }
 
     function renderProfiles() {
-      const profiles = state.profiles
-        .filter(isPublishedRecord)
+      const visibleProfiles = [];
+      const skippedProfiles = [];
+      state.profiles.forEach((profile) => {
+        const result = isVisiblePublicRecord(profile, { requiredField: "name" });
+        if (result.visible) {
+          visibleProfiles.push(profile);
+        } else {
+          skippedProfiles.push({
+            id: profile && profile.id || "",
+            name: profile && profile.name || "",
+            reason: result.reason
+          });
+        }
+      });
+      console.log("[jobs:index] loaded_talent_profiles_count=%s", Array.isArray(state.profiles) ? state.profiles.length : 0);
+      console.log("[jobs:index] visible_talent_profiles_count=%s", visibleProfiles.length);
+      console.log("[jobs:index] skipped_talent_profiles=%o", skippedProfiles);
+
+      const profiles = visibleProfiles
         .sort((a, b) => Number(a.display_order || 0) - Number(b.display_order || 0));
 
       if (!profiles.length) {
@@ -1996,8 +2041,28 @@
     }
 
     function renderEmployers() {
-      const employers = state.employers
-        .filter(isPublishedRecord)
+      const visibleEmployers = [];
+      const skippedEmployers = [];
+      state.employers.forEach((employer) => {
+        const result = isVisiblePublicRecord(employer, {
+          requiredField: "organization_name",
+          requiredValue: getEmployerDisplayName(employer)
+        });
+        if (result.visible) {
+          visibleEmployers.push(employer);
+        } else {
+          skippedEmployers.push({
+            id: employer && employer.id || "",
+            organization_name: employer && employer.organization_name || "",
+            reason: result.reason
+          });
+        }
+      });
+      console.log("[jobs:index] loaded_employers_count=%s", Array.isArray(state.employers) ? state.employers.length : 0);
+      console.log("[jobs:index] visible_employers_count=%s", visibleEmployers.length);
+      console.log("[jobs:index] skipped_employers=%o", skippedEmployers);
+
+      const employers = visibleEmployers
         .sort((a, b) => Number(a.display_order || 0) - Number(b.display_order || 0));
 
       if (!employers.length) {
@@ -2008,7 +2073,7 @@
       ui.employersList.innerHTML = employers.map((employer) => `
         <article style="border: 1px solid var(--border-divider); padding: 16px; background: rgba(0,0,0,0.18);">
           <div style="font-family: var(--font-mono); font-size: 0.65rem; color: var(--accent-chartreuse); text-transform: uppercase; letter-spacing: 0.05em;">${escapeHtml(cleanVisibleText(employer.hiring_focus || "Published employer"))}</div>
-          <h4 style="font-family: var(--font-serif); font-size: 1.6rem; margin-top: 8px;">${escapeHtml(cleanVisibleText(employer.organization_name || ""))}</h4>
+          <h4 style="font-family: var(--font-serif); font-size: 1.6rem; margin-top: 8px;">${escapeHtml(getEmployerDisplayName(employer))}</h4>
           <p style="color: var(--ink-secondary); margin-top: 8px;">${escapeHtml(cleanVisibleText(employer.description || ""))}</p>
           <div style="margin-top: 12px; color: var(--ink-tertiary); font-family: var(--font-mono); font-size: 0.72rem;">${escapeHtml(cleanVisibleText(employer.submitted_roles || ""))}</div>
         </article>

@@ -7,6 +7,10 @@ const { readJobs, readJson, readPendingSyncedJobs, readSources } = require("./jo
 const { readJobRecords, TALENT_PROFILES_FILE, EMPLOYERS_FILE } = require("./public-records");
 const { readSourceHealthSnapshot } = require("./source-health-store");
 const { hasMalformedDescriptionTemplateSafe } = require("./malformed-description-helper");
+const {
+  OCTOPUS_PUBLIC_CAP,
+  auditOctopusState
+} = require("./octopus-source-reconciliation");
 
 const ROOT = path.resolve(__dirname, "..");
 const PAGES_DIR = path.join(ROOT, "pages");
@@ -372,6 +376,7 @@ async function buildValidationReport(options = {}) {
   const talentContactProtectionViolations = [];
   const employerLocalEditViolations = [];
   const talentIconRenderViolations = [];
+  const octopusValidationViolations = [];
   const hardValidationFailures = [];
 
   for (const job of jobs) {
@@ -872,6 +877,85 @@ async function buildValidationReport(options = {}) {
     jobs.map((job) => String(job.specialization || "").trim() || "(blank)"),
     (value) => value
   );
+  const octopusAudit = auditOctopusState({
+    records,
+    jobs,
+    pending,
+    sourceHealth,
+    pageFiles: htmlPageFiles
+  });
+  const octopusPublicDuplicateCanonicalUrls = octopusAudit.duplicateGroups.filter((group) => group.key_name === "canonical_url");
+  const octopusPublicDuplicateSourceJobIds = octopusAudit.duplicateGroups.filter((group) => group.key_name === "source_job_id");
+  const octopusStalePublic = octopusAudit.publicAuditItems.filter((item) => {
+    if (item.source_status && item.source_status !== "live") return true;
+    if (Number(item.stale_score || 0) >= 60) return true;
+    return item.missing_last_seen_at;
+  });
+  const octopusMissingFromSnapshot = octopusAudit.snapshot.authoritative
+    ? octopusAudit.publicAuditItems.filter((item) => !item.present_in_latest_snapshot && !item.explicit_keep_override)
+    : [];
+
+  if (octopusAudit.snapshot.authoritative && octopusAudit.octopusPublicJobs.length > OCTOPUS_PUBLIC_CAP) {
+    octopusValidationViolations.push({
+      reason: "octopus_public_cap_exceeded",
+      public_count: octopusAudit.octopusPublicJobs.length,
+      cap: OCTOPUS_PUBLIC_CAP
+    });
+    hardValidationFailures.push({
+      id: "octopus-energy",
+      title: "Octopus public jobs",
+      organization: "Octopus Energy",
+      reason: "octopus_public_cap_exceeded"
+    });
+  }
+  if (octopusStalePublic.length) {
+    octopusValidationViolations.push({
+      reason: "octopus_public_contains_stale_source_owned_records",
+      ids: octopusStalePublic.map((item) => item.id)
+    });
+    hardValidationFailures.push({
+      id: "octopus-energy-stale",
+      title: "Octopus stale public jobs",
+      organization: "Octopus Energy",
+      reason: "octopus_public_contains_stale_source_owned_records"
+    });
+  }
+  if (octopusMissingFromSnapshot.length) {
+    octopusValidationViolations.push({
+      reason: "octopus_public_missing_from_latest_source_snapshot",
+      ids: octopusMissingFromSnapshot.map((item) => item.id)
+    });
+    hardValidationFailures.push({
+      id: "octopus-energy-missing-from-source",
+      title: "Octopus missing-from-source public jobs",
+      organization: "Octopus Energy",
+      reason: "octopus_public_missing_from_latest_source_snapshot"
+    });
+  }
+  if (octopusPublicDuplicateCanonicalUrls.length) {
+    octopusValidationViolations.push({
+      reason: "octopus_duplicate_canonical_urls_public",
+      groups: octopusPublicDuplicateCanonicalUrls
+    });
+    hardValidationFailures.push({
+      id: "octopus-energy-duplicate-canonical-url",
+      title: "Octopus duplicate canonical URL",
+      organization: "Octopus Energy",
+      reason: "octopus_duplicate_canonical_urls_public"
+    });
+  }
+  if (octopusPublicDuplicateSourceJobIds.length) {
+    octopusValidationViolations.push({
+      reason: "octopus_duplicate_source_job_ids_public",
+      groups: octopusPublicDuplicateSourceJobIds
+    });
+    hardValidationFailures.push({
+      id: "octopus-energy-duplicate-source-job-id",
+      title: "Octopus duplicate source job id",
+      organization: "Octopus Energy",
+      reason: "octopus_duplicate_source_job_ids_public"
+    });
+  }
 
   const errors = [];
   if (publicRecordsCount !== jobsJsonCount) errors.push(`jobs.json count ${jobsJsonCount} does not match published record count ${publicRecordsCount}`);
@@ -901,6 +985,7 @@ async function buildValidationReport(options = {}) {
   if (talentContactProtectionViolations.length) errors.push(`talent contact protection violation count ${talentContactProtectionViolations.length}`);
   if (employerLocalEditViolations.length) errors.push(`employer local edit violation count ${employerLocalEditViolations.length}`);
   if (talentIconRenderViolations.length) errors.push(`talent icon render violation count ${talentIconRenderViolations.length}`);
+  if (octopusValidationViolations.length) errors.push(`octopus validation violation count ${octopusValidationViolations.length}`);
   if (hardValidationFailures.length) errors.push(`hard validation failure count ${hardValidationFailures.length}`);
 
   return {
@@ -943,6 +1028,7 @@ async function buildValidationReport(options = {}) {
     talent_contact_protection_violation_count: talentContactProtectionViolations.length,
     employer_local_edit_violation_count: employerLocalEditViolations.length,
     talent_icon_render_violation_count: talentIconRenderViolations.length,
+    octopus_validation_violation_count: octopusValidationViolations.length,
     hard_validation_failure_count: hardValidationFailures.length,
     source_health: sourceHealth,
     errors,
@@ -977,6 +1063,7 @@ async function buildValidationReport(options = {}) {
       talent_contact_protection_violations: talentContactProtectionViolations.slice(0, 20),
       employer_local_edit_violations: employerLocalEditViolations.slice(0, 20),
       talent_icon_render_violations: talentIconRenderViolations.slice(0, 20),
+      octopus_validation_violations: octopusValidationViolations.slice(0, 20),
       hard_validation_failures: hardValidationFailures.slice(0, 20),
       suspicious_specialization: suspiciousSpecialization.slice(0, 20),
       low_confidence_specialization: lowConfidenceSpecializations.slice(0, 20),

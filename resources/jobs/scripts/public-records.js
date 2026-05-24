@@ -2,7 +2,7 @@ const path = require("path");
 const { readJson, writeJsonIfChanged } = require("./job-utils");
 const { hasUsableDescription, normalizeJob, normalizePayDisplay, normalizeWorkplaceType, stableHash, stringifySafe, todayIso, truncateTextForStorage } = require("./job-normalizer");
 const { buildCanonicalPublishedDisplay, canonicalizeJobShape } = require("./canonical-job-shape");
-const { applyPublishLifecycle, resolveDisplayJobFromRecord } = require("./lifecycle-utils");
+const { applyPublishLifecycle, computeStaleScore, resolveDisplayJobFromRecord } = require("./lifecycle-utils");
 
 const ROOT = process.env.JOBS_DATA_DIR
   ? path.resolve(process.env.JOBS_DATA_DIR)
@@ -386,6 +386,13 @@ function toDisplayJob(record) {
 function buildJobRecord(job, existing = {}, options = {}) {
   const normalized = normalizeJob(job);
   const now = String(options.now || new Date().toISOString());
+  const authoritativeLastCheckedAt = stringifySafe(normalized.last_checked_at || existing.last_checked_at);
+  const authoritativeLastSeenAt = stringifySafe(normalized.last_seen_at || existing.last_seen_at);
+  const authoritativeSourceStatus = stringifySafe(normalized.source_status || existing.source_status);
+  const authoritativeSourceConfidence = stringifySafe(normalized.source_confidence || existing.source_confidence);
+  const authoritativeSourceClassification = stringifySafe(normalized.source_classification || existing.source_classification);
+  const authoritativeFailedSyncCount = Number(normalized.failed_sync_count ?? existing.failed_sync_count ?? 0) || 0;
+  const authoritativeStaleScore = normalized.stale_score ?? existing.stale_score ?? null;
   const sourceType =
     stringifySafe(existing.source_type) ||
     (normalized.sync_origin === "ats" ? "scraped" : normalized.sync_origin === "manual" ? "manual" : "scraped");
@@ -588,7 +595,10 @@ function buildJobRecord(job, existing = {}, options = {}) {
     published,
     source_fingerprint: stringifySafe(existing.source_fingerprint) || buildJobFingerprint(normalized),
     last_normalized_at: now,
-    last_source_sync_at: options.context === "source_sync" ? now : stringifySafe(existing.last_source_sync_at),
+    last_source_sync_at:
+      options.context === "source_sync"
+        ? (authoritativeLastCheckedAt || authoritativeLastSeenAt || stringifySafe(existing.last_source_sync_at))
+        : stringifySafe(existing.last_source_sync_at),
     last_manual_edit_at: stringifySafe(existing.last_manual_edit_at),
     raw_source_data: {
       ...normalized,
@@ -609,13 +619,13 @@ function buildJobRecord(job, existing = {}, options = {}) {
       parser_confidence: normalized.parser_confidence,
       parser_confidence_score: normalized.parser_confidence_score,
       content_quality_score: normalized.content_quality_score,
-      last_checked_at: normalized.last_checked_at,
-      last_seen_at: normalized.last_seen_at,
-      source_status: normalized.source_status,
-      stale_score: normalized.stale_score,
-      source_confidence: normalized.source_confidence,
-      source_classification: normalized.source_classification,
-      failed_sync_count: normalized.failed_sync_count
+      last_checked_at: authoritativeLastCheckedAt,
+      last_seen_at: authoritativeLastSeenAt,
+      source_status: authoritativeSourceStatus,
+      stale_score: authoritativeStaleScore,
+      source_confidence: authoritativeSourceConfidence,
+      source_classification: authoritativeSourceClassification,
+      failed_sync_count: authoritativeFailedSyncCount
     },
     display: mergedDisplay,
     field_meta: buildFieldMetaSnapshot(existing, mergedDisplay, {
@@ -648,6 +658,16 @@ function buildJobRecord(job, existing = {}, options = {}) {
 
   if (nextRecord.published && nextRecord.public_visibility && nextRecord.status === "published") {
     nextRecord = applyPublishLifecycle(nextRecord);
+    if (authoritativeLastCheckedAt) nextRecord.last_checked_at = authoritativeLastCheckedAt;
+    if (authoritativeLastSeenAt) nextRecord.last_seen_at = authoritativeLastSeenAt;
+    if (authoritativeSourceStatus) nextRecord.source_status = authoritativeSourceStatus;
+    nextRecord.failed_sync_count = authoritativeFailedSyncCount;
+    if (authoritativeSourceConfidence) nextRecord.source_confidence = authoritativeSourceConfidence;
+    if (authoritativeSourceClassification) nextRecord.source_classification = authoritativeSourceClassification;
+    nextRecord.stale_score = computeStaleScore({
+      ...nextRecord,
+      stale_score: authoritativeStaleScore
+    }, { now: new Date(now) });
   } else {
     nextRecord.first_published_at = stringifySafe(existing.first_published_at);
     nextRecord.last_verified_at = stringifySafe(existing.last_verified_at);
@@ -673,6 +693,7 @@ function isPublishedPublicJobRecord(record) {
 
 function shouldPreserveNonPublishedJobRecord(record) {
   if (!record || record.record_type !== "job") return false;
+  if (isPublishedPublicJobRecord(record)) return false;
   const status = String(record.status || "").toLowerCase();
   if (["archived", "rejected"].includes(status)) return true;
   if (Array.isArray(record.manual_overrides) && record.manual_overrides.length) return true;
@@ -689,6 +710,8 @@ async function readJobRecords() {
 async function syncJobRecordStore(publicJobs, options = {}) {
   const logger = options.logger || console;
   const label = options.label || "jobs:record-store";
+  const context = stringifySafe(options.context) || "public_export_sync";
+  const preserveMissingPublishedRecords = options.preserveMissingPublishedRecords !== false;
   const existingRecords = await readJobRecords();
   const byFingerprint = new Map();
   const byId = new Map();
@@ -703,17 +726,19 @@ async function syncJobRecordStore(publicJobs, options = {}) {
   const nextRecords = publicJobs.map((job) => {
     const fingerprint = buildJobFingerprint(job);
     const existing = byFingerprint.get(fingerprint) || byId.get(String(job.id || "")) || {};
-    return buildJobRecord(job, existing, { context: "source_sync" });
+    return buildJobRecord(job, existing, { context });
   });
   const existingPublishedBefore = existingRecords.filter(isPublishedPublicJobRecord);
   const existingProtectedNonPublished = existingRecords.filter(shouldPreserveNonPublishedJobRecord);
   const nextRecordIds = new Set(nextRecords.map((record) => String(record.id || "")).filter(Boolean));
   const nextFingerprints = new Set(nextRecords.map((record) => stringifySafe(record.source_fingerprint)).filter(Boolean));
-  const preservedPublishedRecords = existingPublishedBefore.filter((record) => {
-    const id = String(record.id || "");
-    const fingerprint = stringifySafe(record.source_fingerprint);
-    return !nextRecordIds.has(id) && (!fingerprint || !nextFingerprints.has(fingerprint));
-  });
+  const preservedPublishedRecords = preserveMissingPublishedRecords
+    ? existingPublishedBefore.filter((record) => {
+      const id = String(record.id || "");
+      const fingerprint = stringifySafe(record.source_fingerprint);
+      return !nextRecordIds.has(id) && (!fingerprint || !nextFingerprints.has(fingerprint));
+    })
+    : [];
   const preservedProtectedRecords = existingProtectedNonPublished.filter((record) => {
     const id = String(record.id || "");
     const fingerprint = stringifySafe(record.source_fingerprint);

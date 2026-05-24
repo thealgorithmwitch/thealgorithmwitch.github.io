@@ -221,7 +221,12 @@ async function runCustomSync(options = {}) {
     label: "jobs:sync-custom"
   });
   if (syncJobRecords) {
-    await syncJobRecordStore(publicWriteResult.jobs, { logger, label: "jobs:sync-custom" });
+    await syncJobRecordStore(publicWriteResult.jobs, {
+      logger,
+      label: "jobs:sync-custom",
+      context: "source_sync",
+      preserveMissingPublishedRecords: false
+    });
   }
   const scrapeReportPayload = await upsertScrapeReports(scrapeReports);
   const triaged = await triagePendingJobs(mergedPendingJobs, publicWriteResult.jobs, scrapeReportPayload);
@@ -231,7 +236,12 @@ async function runCustomSync(options = {}) {
     label: "jobs:sync-custom"
   });
   if (syncJobRecords) {
-    await syncJobRecordStore(finalPublicWriteResult.jobs, { logger, label: "jobs:sync-custom" });
+    await syncJobRecordStore(finalPublicWriteResult.jobs, {
+      logger,
+      label: "jobs:sync-custom",
+      context: "source_sync",
+      preserveMissingPublishedRecords: false
+    });
   }
   await writeJson(PENDING_SYNCED_FILE, triaged.adminPendingJobs);
   await upsertScrapeReports(triaged.report.sources);

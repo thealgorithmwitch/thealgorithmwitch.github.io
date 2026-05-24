@@ -446,14 +446,11 @@ function actionPrecedence(operation) {
 }
 
 function getActionTargetIds(action) {
-  const ids = Array.isArray(action?.payload?.ids) ? action.payload.ids.map(String).filter(Boolean) : [];
-  if (ids.length) return ids;
+  const normalizedPayload = normalizePublishSelectedPayload(action?.payload || {});
+  if (normalizedPayload.ids.length) return normalizedPayload.ids;
   const singleId = String(action?.payload?.id || action?.payload?.recordId || "").trim();
   if (singleId) return [singleId];
-  const payloadJobIds = Array.isArray(action?.payload?.jobs)
-    ? action.payload.jobs.map((job) => String(job?.id || "")).filter(Boolean)
-    : [];
-  return payloadJobIds;
+  return normalizedPayload.jobs.map((job) => String(job?.id || "")).filter(Boolean);
 }
 
 function latestQueuedTimestamp(actions) {
@@ -697,11 +694,31 @@ function buildActionResult(status, detail) {
   };
 }
 
+function normalizePublishSelectedPayload(payload = {}) {
+  const ids = []
+    .concat(Array.isArray(payload?.ids) ? payload.ids : [])
+    .concat(Array.isArray(payload?.selected_ids) ? payload.selected_ids : [])
+    .concat(Array.isArray(payload?.selectedIds) ? payload.selectedIds : [])
+    .concat(Array.isArray(payload?.job_ids) ? payload.job_ids : [])
+    .concat(Array.isArray(payload?.jobIds) ? payload.jobIds : [])
+    .map(String)
+    .map((value) => value.trim())
+    .filter(Boolean);
+  const jobs = []
+    .concat(Array.isArray(payload?.jobs) ? payload.jobs : [])
+    .concat(Array.isArray(payload?.selected_jobs) ? payload.selected_jobs : [])
+    .concat(Array.isArray(payload?.selectedJobs) ? payload.selectedJobs : [])
+    .filter((job) => job && job.id);
+  return {
+    ids: Array.from(new Set(ids)),
+    jobs
+  };
+}
+
 function isEmptyPublishSelectedAction(action = {}) {
   const operation = String(action?.operation || "");
   if (operation !== "publish_selected") return false;
-  const ids = Array.isArray(action?.payload?.ids) ? action.payload.ids.map(String).filter(Boolean) : [];
-  const jobs = Array.isArray(action?.payload?.jobs) ? action.payload.jobs.filter((job) => job && job.id) : [];
+  const { ids, jobs } = normalizePublishSelectedPayload(action?.payload || {});
   return ids.length === 0 && jobs.length === 0;
 }
 
@@ -1264,7 +1281,8 @@ async function runAdminActionDiagnostics(options = {}) {
     const operation = String(action.operation || "");
     const actionTimestamp = parseActionTimestamp(action);
     const freshIds = getFreshIdsForAction(action, latestDecisionByJobId);
-    const selectedJobs = Array.isArray(action.payload?.jobs) ? action.payload.jobs : [];
+    const normalizedPayload = normalizePublishSelectedPayload(action.payload || {});
+    const selectedJobs = normalizedPayload.jobs;
     const targetIds = getActionTargetIds(action);
 
     if (!action.id) {
@@ -1334,7 +1352,7 @@ async function runAdminActionDiagnostics(options = {}) {
       continue;
     }
 
-    const payloadJobsById = buildJobsById(action.payload.jobs);
+    const payloadJobsById = buildJobsById(selectedJobs);
     const editedJobsById = new Map(
       (Array.isArray(action.payload?.edited_jobs) ? action.payload.edited_jobs : [])
         .filter((item) => item && item.id)
@@ -1657,9 +1675,10 @@ async function main() {
     }
     seenActionIds.add(action.id);
 
-    const ids = Array.isArray(action.payload.ids) ? action.payload.ids.map(String) : [];
+    const normalizedPayload = normalizePublishSelectedPayload(action.payload || {});
+    const ids = normalizedPayload.ids;
     const targetIds = getActionTargetIds(action);
-    const selectedJobs = Array.isArray(action.payload.jobs) ? action.payload.jobs : [];
+    const selectedJobs = normalizedPayload.jobs;
     if (isEmptyPublishSelectedAction(action)) {
       actionResults[action.id] = buildActionResult("ignored_invalid_empty_publish_selected", "publish_selected missing ids and jobs");
       logActionOutcome(action, actionSource, "ignored_invalid_empty_publish_selected", "publish_selected missing ids and jobs");
@@ -1681,7 +1700,7 @@ async function main() {
     if (action.operation === "publish_selected") {
       const pendingBefore = nextPending.length;
       const activeBefore = countPublishedJobs(nextRecords);
-      const payloadJobsById = buildJobsById(action.payload.jobs);
+      const payloadJobsById = buildJobsById(selectedJobs);
       const matchingPendingIds = freshIds.filter((id) => nextPending.some((pendingJob) => String(pendingJob.id) === id));
       const missingPendingIds = freshIds.filter((id) => !matchingPendingIds.includes(id));
       console.log(

@@ -313,7 +313,12 @@ async function runSyncForTypes(types = []) {
     logger: console,
     label: "jobs:sync-sources"
   });
-  await syncJobRecordStore(publicWriteResult.jobs, { logger: console, label: "jobs:sync-sources" });
+  await syncJobRecordStore(publicWriteResult.jobs, {
+    logger: console,
+    label: "jobs:sync-sources",
+    context: "source_sync",
+    preserveMissingPublishedRecords: false
+  });
   const scrapeReportPayload = await upsertScrapeReports(scrapeReports);
   const triaged = await triagePendingJobs(mergedPendingJobs, publicWriteResult.jobs, scrapeReportPayload);
   const finalPublicJobs = attachPublicJobPageUrls(dedupeJobs([...publicWriteResult.jobs, ...(triaged.autoPublishedJobs || [])]));
@@ -321,7 +326,12 @@ async function runSyncForTypes(types = []) {
     logger: console,
     label: "jobs:sync-sources"
   });
-  await syncJobRecordStore(finalPublicWriteResult.jobs, { logger: console, label: "jobs:sync-sources" });
+  await syncJobRecordStore(finalPublicWriteResult.jobs, {
+    logger: console,
+    label: "jobs:sync-sources",
+    context: "source_sync",
+    preserveMissingPublishedRecords: false
+  });
   await writeJson(PENDING_SYNCED_FILE, triaged.adminPendingJobs);
   await upsertScrapeReports(triaged.report.sources);
 

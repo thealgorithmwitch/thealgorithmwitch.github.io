@@ -82,6 +82,72 @@ async function main() {
   assert.strictEqual(validReport.publishSummary.publishable_count, 1);
   assert.strictEqual(validReport.emptyPublishSelectedIgnoredCount, 0);
 
+  const validSnakeCaseAction = {
+    id: "valid-publish-action-snake",
+    status: "queued",
+    created_at: "2026-05-24T00:00:00.000Z",
+    updated_at: "2026-05-24T00:00:00.000Z",
+    operation: "publish_selected",
+    payload_json: JSON.stringify({
+      operation: "publish_selected",
+      selected_ids: ["valid-job-1"]
+    })
+  };
+  const validSnakeCaseReport = await runAdminActionDiagnostics({
+    pendingJobs: [validPendingJob],
+    jobRecords: [],
+    fetched: {
+      source: "snapshot",
+      actions: [validSnakeCaseAction]
+    }
+  });
+  assert.strictEqual(validSnakeCaseReport.safeToApply, true);
+  assert.strictEqual(validSnakeCaseReport.publishSummary.publishable_count, 1);
+
+  const validCamelCaseAction = {
+    id: "valid-publish-action-camel",
+    status: "queued",
+    created_at: "2026-05-24T00:00:00.000Z",
+    updated_at: "2026-05-24T00:00:00.000Z",
+    operation: "publish_selected",
+    payload_json: JSON.stringify({
+      operation: "publish_selected",
+      selectedIds: ["valid-job-1"]
+    })
+  };
+  const validCamelCaseReport = await runAdminActionDiagnostics({
+    pendingJobs: [validPendingJob],
+    jobRecords: [],
+    fetched: {
+      source: "snapshot",
+      actions: [validCamelCaseAction]
+    }
+  });
+  assert.strictEqual(validCamelCaseReport.safeToApply, true);
+  assert.strictEqual(validCamelCaseReport.publishSummary.publishable_count, 1);
+
+  const validEmbeddedJobsAction = {
+    id: "valid-publish-action-embedded",
+    status: "queued",
+    created_at: "2026-05-24T00:00:00.000Z",
+    updated_at: "2026-05-24T00:00:00.000Z",
+    operation: "publish_selected",
+    payload_json: JSON.stringify({
+      operation: "publish_selected",
+      selectedJobs: [validPendingJob]
+    })
+  };
+  const validEmbeddedJobsReport = await runAdminActionDiagnostics({
+    pendingJobs: [],
+    jobRecords: [],
+    fetched: {
+      source: "snapshot",
+      actions: [validEmbeddedJobsAction]
+    }
+  });
+  assert.strictEqual(validEmbeddedJobsReport.safeToApply, true);
+  assert.strictEqual(validEmbeddedJobsReport.publishSummary.publishable_count, 1);
+
   const malformedAction = {
     id: "malformed-publish-action",
     status: "queued",

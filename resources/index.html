@@ -65,30 +65,69 @@
             border: 1px solid rgba(139, 92, 246, 0.15);
         }
 
-        
         .gallery-container {
             display: grid;
-            grid-template-columns: repeat(12, 1fr);
-            gap: 2rem;
-            align-items: start;
+            grid-template-columns: repeat(12, minmax(0, 1fr));
+            gap: 1.5rem;
+            align-items: stretch;
+            position: relative;
+            margin-top: 0;
+        }
+
+        .gallery-container::before {
+            content: "";
+            position: absolute;
+            inset: -1.25rem;
+            border-radius: 2rem;
+            background:
+                linear-gradient(rgba(168, 85, 247, 0.045) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(168, 85, 247, 0.045) 1px, transparent 1px);
+            background-size: 38px 38px;
+            pointer-events: none;
+            mask-image: radial-gradient(circle at center, black 55%, transparent 100%);
         }
 
         .gallery-item {
             position: relative;
-            transition: all 0.6s cubic-bezier(0.23, 1, 0.32, 1);
-            z-index: 10;
+            z-index: 2;
+            margin-top: 0 !important;
+            transition: transform 0.35s ease, z-index 0.35s ease;
         }
 
         .gallery-item:hover {
-            z-index: 50;
-            transform: scale(1.02) translateY(-10px);
+            z-index: 20;
+            transform: translateY(-6px);
         }
 
         .resource-card {
+            position: relative;
+            height: 100%;
+            border-radius: 1.35rem;
             background: var(--bg-surface);
             border: 1px solid rgba(255,255,255,0.05);
             box-shadow: 0 10px 30px -10px rgba(0,0,0,0.5);
-            overflow: hidden;
+            overflow: visible;
+        }
+
+        .gallery-container .resource-card::before {
+            content: attr(data-file-tab);
+            position: absolute;
+            top: -13px;
+            left: 1.25rem;
+            height: 26px;
+            padding: 0 0.9rem;
+            border-radius: 0.75rem 0.75rem 0 0;
+            border: 1px solid rgba(255,255,255,0.08);
+            border-bottom: 0;
+            background: rgba(13, 12, 34, 0.95);
+            color: rgba(226, 232, 240, 0.58);
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 8px;
+            letter-spacing: 0.18em;
+            text-transform: uppercase;
+            display: flex;
+            align-items: center;
+            z-index: 3;
         }
 
         .card-purple:hover { border-color: rgba(168, 85, 247, 0.4); box-shadow: 0 30px 60px -12px rgba(168, 85, 247, 0.2); }
@@ -97,12 +136,15 @@
         .card-fuchsia:hover { border-color: rgba(217, 70, 239, 0.4); box-shadow: 0 30px 60px -12px rgba(217, 70, 239, 0.2); }
 
         
-        .item-1 { grid-column: 1 / 5; margin-top: 0; }
-        .item-2 { grid-column: 6 / 10; margin-top: 120px; z-index: 20; }
-        .item-3 { grid-column: 3 / 7; margin-top: -80px; }
-        .item-4 { grid-column: 8 / 13; margin-top: 40px; }
-        .item-5 { grid-column: 1 / 6; margin-top: 60px; }
-        .item-6 { grid-column: 7 / 11; margin-top: -140px; }
+        .item-1 { grid-column: 1 / span 6; grid-row: span 2; }
+        .item-2 { grid-column: 7 / span 3; }
+        .item-3 { grid-column: 7 / span 3; }
+        .item-4 { grid-column: 10 / span 3; }
+        .item-5 { grid-column: 10 / span 3; }
+        .item-6 { grid-column: 1 / span 12; }
+        .item-6 .resource-card {
+            min-height: 180px;
+        }
 
         .text-glow-gold {
             background: linear-gradient(135deg, #fde047 0%, #b45309 100%);
@@ -186,10 +228,31 @@
             scroll-margin-top: 120px;
         }
 
+        #library-grid {
+            display: grid;
+            grid-template-columns: repeat(12, minmax(0, 1fr));
+            gap: 1.5rem;
+            align-items: stretch;
+            margin-top: 1.5rem;
+        }
+
+        .library-card {
+            min-height: 100%;
+        }
+
+        .library-card:nth-child(1) { grid-column: span 7; }
+        .library-card:nth-child(2) { grid-column: span 5; }
+        .library-card:nth-child(3) { grid-column: span 5; }
+        .library-card:nth-child(4) { grid-column: span 7; }
+        .library-card:nth-child(5) { grid-column: span 12; }
+        .library-card:nth-child(6) { grid-column: span 6; }
+        .library-card:nth-child(7) { grid-column: span 3; }
+        .library-card:nth-child(8) { grid-column: span 3; }
+
         @media (max-width: 1024px) {
-            .gallery-container {
+            .gallery-container,
+            #library-grid {
                 grid-template-columns: repeat(2, minmax(0, 1fr));
-                gap: 1.25rem;
             }
 
             .item-1,
@@ -197,16 +260,21 @@
             .item-3,
             .item-4,
             .item-5,
-            .item-6 {
+            .item-6,
+            .library-card:nth-child(n) {
                 grid-column: auto;
-                margin-top: 0;
-                z-index: auto;
+                grid-row: auto;
             }
         }
 
         @media (max-width: 640px) {
-            .gallery-container {
+            .gallery-container,
+            #library-grid {
                 grid-template-columns: 1fr;
+            }
+
+            .resource-card::before {
+                left: 1rem;
             }
         }
     </style>
@@ -1298,7 +1366,7 @@ video {
 
             <div class="gallery-container" vid="37">
                 <div class="gallery-item item-1 fade-in-up" vid="38">
-                    <article class="resource-card card-purple rounded-xl p-10 flex flex-col group min-h-[420px]" vid="39">
+                    <article class="resource-card card-purple rounded-xl p-10 flex flex-col group min-h-[420px]" data-file-tab="file 01" vid="39">
                         <div class="flex justify-between items-start mb-8" vid="40">
                             <i class="ph-duotone ph-briefcase text-5xl text-purple-400" vid="41"></i>
                             <span class="font-mono-tech text-[9px] text-gray-500 border border-white/10 px-2 py-1" vid="42">PRIMARY RESOURCE</span>
@@ -1320,7 +1388,7 @@ video {
                 </div>
 
                 <div class="gallery-item item-2 fade-in-up" style="transition-delay: 140ms;" vid="46">
-                    <article class="resource-card card-cyan rounded-xl p-8 flex flex-col group scale-110 min-h-[320px]" vid="47">
+                    <article class="resource-card card-cyan rounded-xl p-8 flex flex-col group min-h-[320px]" data-file-tab="file 02" vid="47">
                         <div class="flex justify-between items-start mb-8" vid="48">
                             <i class="ph-duotone ph-chart-line-up text-4xl text-cyan-400" vid="49"></i>
                             <span class="font-mono-tech text-[9px] text-gray-500 border border-white/10 px-2 py-1" vid="50">FEATURED GUIDE</span>
@@ -1332,7 +1400,7 @@ video {
                 </div>
 
                 <div class="gallery-item item-3 fade-in-up" style="transition-delay: 150ms;" vid="54">
-                    <article class="resource-card card-amber rounded-xl p-8 flex flex-col group border-l-4 border-amber-500/40 min-h-[260px]" vid="55">
+                    <article class="resource-card card-amber rounded-xl p-8 flex flex-col group border-l-4 border-amber-500/40 min-h-[260px]" data-file-tab="file 03" vid="55">
                         <div class="mb-6" vid="56">
                             <i class="ph-duotone ph-path text-3xl text-amber-400" vid="57"></i>
                         </div>
@@ -1346,7 +1414,7 @@ video {
                 </div>
 
                 <div class="gallery-item item-4 fade-in-up" style="transition-delay: 320ms;" vid="63">
-                    <article class="resource-card card-fuchsia rounded-xl p-10 flex flex-col group min-h-[300px]" vid="64">
+                    <article class="resource-card card-fuchsia rounded-xl p-10 flex flex-col group min-h-[300px]" data-file-tab="file 04" vid="64">
                         <div class="w-20 h-20 mb-8 mx-auto bg-fuchsia-500/10 rounded-full flex items-center justify-center border border-fuchsia-500/20" vid="65">
                             <i class="ph-duotone ph-newspaper-clipping text-4xl text-fuchsia-400" vid="66"></i>
                         </div>
@@ -1357,7 +1425,7 @@ video {
                 </div>
 
                 <div class="gallery-item item-5 fade-in-up" style="transition-delay: 200ms;" vid="70">
-                    <article class="resource-card card-purple rounded-xl p-8 flex items-center gap-6 group min-h-[180px]" vid="71">
+                    <article class="resource-card card-purple rounded-xl p-8 flex items-center gap-6 group min-h-[180px]" data-file-tab="file 05" vid="71">
                         <div class="w-16 h-16 shrink-0 bg-purple-500/10 rounded border border-purple-500/20 flex items-center justify-center" vid="72">
                             <i class="ph-duotone ph-funnel text-3xl text-purple-400" vid="73"></i>
                         </div>
@@ -1370,7 +1438,7 @@ video {
                 </div>
 
                 <div class="gallery-item item-6 fade-in-up" style="transition-delay: 500ms;" vid="77">
-                    <article class="resource-card card-cyan rounded-xl p-8 flex flex-col group min-h-[220px]" vid="78">
+                    <article class="resource-card card-cyan rounded-xl p-8 flex flex-col group min-h-[220px]" data-file-tab="archive" vid="78">
                         <div class="flex justify-between items-center mb-6" vid="79">
                             <span class="px-3 py-1 bg-cyan-500/10 text-cyan-400 font-mono-tech text-[9px] rounded-full border border-cyan-500/20" vid="80">LIBRARY PATH</span>
                         </div>

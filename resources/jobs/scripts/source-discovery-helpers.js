@@ -113,6 +113,14 @@ function canonicalizeSourceUrl(provider, value) {
   url.hash = "";
   url.search = "";
 
+  if (/\.applytojob\.com$/i.test(url.hostname)) {
+    const applyPath = url.pathname.match(/^\/apply(?:\/|$)/i);
+    if (applyPath) {
+      url.pathname = "/apply";
+      return url.toString().replace(/\/$/, "");
+    }
+  }
+
   if (provider === "greenhouse") {
     const match = url.pathname.match(/^\/([^/]+)(?:\/jobs(?:\/[^/]+)?)?\/?$/i);
     if (match) {
@@ -164,6 +172,18 @@ function detectProviderFromUrls(urls) {
   for (const rawUrl of toArray(urls)) {
     const url = normalizeUrl(rawUrl);
     if (!url || isBlockedAggregatorUrl(url) || isBlockedSourceUrl(url)) continue;
+
+    if (/\.applytojob\.com\/apply(?:\/|$)/i.test(url)) {
+      const canonicalUrl = canonicalizeSourceUrl("", url);
+      return {
+        detected_provider: "",
+        detected_job_url: canonicalUrl || url,
+        confidence_score: 94,
+        provider_supported: true,
+        recommended_sync_path: "jobs:discover-sources-manual-sync",
+        source_type: "direct_career_page"
+      };
+    }
 
     for (const detector of PROVIDER_DETECTORS) {
       if (detector.pattern.test(url)) {
@@ -223,7 +243,9 @@ function looksLikeEmployerCareerPage(value) {
   if (PROVIDER_DETECTORS.some((detector) => detector.pattern.test(url))) return false;
   const hostname = normalizeHostname(url);
   if (!hostname || hostname === "localhost") return false;
-  return /\/(careers?|jobs?|employment|join-us|joinourteam|work-with-us|opportunities)(\/|$)/i.test(url);
+  return /\/(careers?|jobs?|employment|join-us|joinourteam|work-with-us|opportunities|apply)(\/|$)/i.test(url) && (
+    !/\.applytojob\.com\/apply\/[^/]+\/[^/]+/i.test(url) || /\.applytojob\.com\/apply(?:\/|$)/i.test(url)
+  );
 }
 
 function findExistingSource(existingSources, candidate) {

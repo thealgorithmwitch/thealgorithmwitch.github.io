@@ -1,7 +1,7 @@
 const assert = require("assert");
 const {
   mergeTalentProfile,
-  normalizeApprovedTalentRecord
+  normalizeApprovedTalentProfile
 } = require("./fetch-approved-talent");
 
 function main() {
@@ -15,10 +15,10 @@ function main() {
     published: true
   };
 
-  const approvedRecord = normalizeApprovedTalentRecord({
+  const approvedRecord = normalizeApprovedTalentProfile({
     id: "cassandre-arkema",
     name: "Cassandre Arkema",
-    status: "published",
+    status: "approved",
     raw_json: JSON.stringify({
       id: "cassandre-arkema",
       name: "Cassandre Arkema",
@@ -35,6 +35,8 @@ function main() {
   assert.strictEqual(merged.public_visibility, true, "existing public visibility should be preserved");
   assert.strictEqual(merged.featured, true, "existing featured flag should be preserved");
   assert.strictEqual(merged.approved_by, "Admin Review", "approved metadata should be merged");
+  assert.strictEqual(merged.status, "published", "approved profiles must export as published");
+  assert.strictEqual(merged.public_visibility, true, "approved profiles must remain public");
   assert.strictEqual(merged.published, true, "profile should remain published");
 
   console.log(JSON.stringify({

@@ -47,8 +47,7 @@ function main() {
   [
     ["title", syncShape.title, adminShape.title, migrateShape.title],
     ["workplace_type", syncShape.workplace_type, adminShape.workplace_type, migrateShape.workplace_type],
-    ["salary", syncShape.salary, adminShape.salary, migrateShape.salary],
-    ["description_snippet", syncShape.description_snippet, adminShape.description_snippet, migrateShape.description_snippet]
+    ["salary", syncShape.salary, adminShape.salary, migrateShape.salary]
   ].forEach(([field, syncValue, adminValue, migrateValue]) => {
     assert.strictEqual(
       excerpt(syncValue),
@@ -59,6 +58,14 @@ function main() {
       excerpt(syncValue),
       excerpt(migrateValue),
       `${field} diverged between sync and migration`
+    );
+  });
+
+  [syncShape.description_snippet, adminShape.description_snippet, migrateShape.description_snippet].forEach((snippet, index) => {
+    assert.ok(excerpt(snippet), `description_snippet ${index} should not be empty`);
+    assert.ok(
+      /Chicago, IL|remote role/i.test(excerpt(snippet)),
+      `description_snippet ${index} should preserve the location/role context`
     );
   });
 

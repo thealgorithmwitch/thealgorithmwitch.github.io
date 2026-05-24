@@ -1,3 +1,5 @@
+const path = require("path");
+const { execSync } = require("child_process");
 const { readJson, writeJsonIfChanged } = require("./job-utils");
 const { TALENT_PROFILES_FILE } = require("./public-records");
 
@@ -30,7 +32,86 @@ function parseRawJson(value) {
 }
 
 function toBoolean(value) {
-  return value === true || String(value).toLowerCase() === "true";
+  if (value === true) return true;
+  if (value === false) return false;
+  const text = String(value || "").trim().toLowerCase();
+  return ["true", "1", "yes", "y", "on", "approved", "active", "published"].includes(text);
+}
+
+function extractArray(payload) {
+  if (Array.isArray(payload)) return payload;
+  if (!payload || typeof payload !== "object") return [];
+  return (
+    payload.approvedTalent ||
+    payload.approved_talent ||
+    payload.talent ||
+    payload.profiles ||
+    payload.items ||
+    payload.rows ||
+    payload.data ||
+    payload.results ||
+    []
+  );
+}
+
+function log(message, details) {
+  if (details === undefined) {
+    console.log(`[jobs:fetch-approved-talent] ${message}`);
+    return;
+  }
+  console.log(`[jobs:fetch-approved-talent] ${message}=${details}`);
+}
+
+function logSkip(profile, reason) {
+  const name = normalizeText(profile && (profile.name || profile.full_name || profile.fullName || profile.email || profile.id));
+  console.warn(
+    `[jobs:fetch-approved-talent] skipped_approved_profile reason=${reason} name=${name || "(missing)"} id=${normalizeText(profile && profile.id) || "(missing)"}`
+  );
+}
+
+function normalizeApprovedTalentProfile(row = {}) {
+  const raw = parseRawJson(row.raw_json || row.rawJson || row.json || row.payload_json);
+  const source = {
+    ...raw,
+    ...row
+  };
+  const id = normalizeText(source.id || source.email || source.name);
+  const name = normalizeText(source.name || source.full_name || source.fullName);
+  const title = normalizeText(source.title || source.headline || source.role);
+  const headline = normalizeText(source.headline || source.title || source.role);
+  const shortBio = normalizeText(source.short_bio || source.bio || source.summary);
+  const bio = normalizeText(source.bio || source.short_bio || source.summary);
+  const location = normalizeText(source.location);
+  const publicVisibility = true;
+  const featured = toBoolean(source.featured) ? true : undefined;
+  const status = normalizeText(source.status || "published").toLowerCase();
+
+  return {
+    ...raw,
+    ...source,
+    id,
+    name,
+    title,
+    headline,
+    short_bio: shortBio,
+    bio,
+    location,
+    public_visibility: publicVisibility,
+    featured,
+    published: true,
+    status: status === "active" || status === "approved" || status === "published" ? "published" : "published",
+    record_type: "talent",
+    raw_json: source.raw_json || JSON.stringify(raw || source || {})
+  };
+}
+
+function buildExistingTalentById(records = []) {
+  const map = new Map();
+  (Array.isArray(records) ? records : []).forEach((record) => {
+    const id = normalizeText(record && record.id);
+    if (id) map.set(id, record);
+  });
+  return map;
 }
 
 function mergeTalentProfile(current = {}, incoming = {}) {
@@ -52,126 +133,186 @@ function mergeTalentProfile(current = {}, incoming = {}) {
   return next;
 }
 
-function normalizeApprovedTalentRecord(item = {}) {
-  const raw = parseRawJson(item.raw_json);
-  const id = String(raw.id || item.id || "").trim();
-  const createdAt = item.created_at || raw.created_at || undefined;
-  const updatedAt = item.updated_at || raw.updated_at || undefined;
-  const publicVisibilitySource = Object.prototype.hasOwnProperty.call(item, "public_visibility")
-    ? item.public_visibility
-    : Object.prototype.hasOwnProperty.call(raw, "public_visibility")
-      ? raw.public_visibility
-      : undefined;
-  const featuredSource = Object.prototype.hasOwnProperty.call(item, "featured")
-    ? item.featured
-    : Object.prototype.hasOwnProperty.call(raw, "featured")
-      ? raw.featured
-      : undefined;
-  const publicVisibility =
-    publicVisibilitySource === undefined
-      ? undefined
-      : toBoolean(publicVisibilitySource);
-  const featured =
-    featuredSource === undefined
-      ? undefined
-      : toBoolean(featuredSource);
-  const displayOrderValue = item.display_order ?? raw.display_order;
-  const displayOrder = displayOrderValue === undefined || displayOrderValue === null || displayOrderValue === ""
-    ? undefined
-    : Number.isFinite(Number(displayOrderValue))
-      ? Number(displayOrderValue)
-      : undefined;
-
-  return {
-    ...raw,
-    id,
-    record_type: "talent",
-    status: String(item.status || raw.status || "published"),
-    public_visibility: publicVisibility,
-    featured,
-    published: true,
-    created_at: createdAt ? String(createdAt) : undefined,
-    updated_at: updatedAt ? String(updatedAt) : undefined,
-    source_type: item.source_type || raw.source_type,
-    admin_notes: String(item.admin_notes || raw.admin_notes || ""),
-    display_order: displayOrder,
-    source: item.source || raw.source,
-    name: String(item.name || raw.name || ""),
-    email: String(item.email || raw.email || ""),
-    current_role: String(item.current_role || raw.current_role || ""),
-    location: String(item.location || raw.location || ""),
-    approved_by: String(item.approved_by || raw.approved_by || ""),
-    raw_json: String(item.raw_json || JSON.stringify(raw || {}))
-  };
-}
-
 async function fetchBackendTalent(actionName) {
-  const response = await fetch(APPS_SCRIPT_URL, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json"
-    },
-    body: JSON.stringify({
-      action: actionName
-    })
-  });
-  const payload = await response.json();
+  let response;
+  try {
+    response = await fetch(APPS_SCRIPT_URL, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        action: actionName
+      })
+    });
+  } catch (error) {
+    throw new Error(`Apps Script request failed for ${actionName}: ${error.message}`);
+  }
+
+  let payload = null;
+  try {
+    payload = await response.json();
+  } catch (error) {
+    throw new Error(`Apps Script ${actionName} returned invalid JSON: ${error.message}`);
+  }
+
   if (!response.ok) {
     throw new Error(`Apps Script request failed with HTTP ${response.status}.`);
   }
   if (!payload || !payload.ok) {
     throw new Error(payload && payload.error ? payload.error : `Apps Script ${actionName} returned an error.`);
   }
-  const items = Array.isArray(payload.items) ? payload.items : [];
-  return items;
+
+  return {
+    ok: Boolean(payload.ok),
+    payload,
+    items: extractArray(payload)
+  };
 }
 
-function buildExistingTalentById(records = []) {
-  const map = new Map();
-  (Array.isArray(records) ? records : []).forEach((record) => {
-    const id = normalizeText(record && record.id);
-    if (id) map.set(id, record);
-  });
-  return map;
+function findExistingTalentMatch(existingProfiles, profile) {
+  const targetId = normalizeText(profile && profile.id);
+  const targetName = normalizeText(profile && profile.name).toLowerCase();
+  const targetEmail = normalizeText(profile && profile.email).toLowerCase();
+  const list = Array.isArray(existingProfiles) ? existingProfiles : [];
+
+  if (targetId) {
+    const byId = list.find((item) => normalizeText(item && item.id) === targetId);
+    if (byId) return byId;
+  }
+
+  if (targetEmail) {
+    const byEmail = list.find((item) => normalizeText(item && item.email).toLowerCase() === targetEmail);
+    if (byEmail) return byEmail;
+  }
+
+  if (targetName) {
+    const byName = list.find((item) => normalizeText(item && item.name).toLowerCase() === targetName);
+    if (byName) return byName;
+  }
+
+  return null;
+}
+
+function ensurePublishedTalentShape(profile = {}) {
+  return {
+    ...profile,
+    published: true,
+    public_visibility: true,
+    status: "published",
+    record_type: profile.record_type || "talent"
+  };
+}
+
+function getGitStatusAfterWrite() {
+  try {
+    const root = path.dirname(TALENT_PROFILES_FILE);
+    return execSync("git status --short -- talent-profiles.json", {
+      cwd: root,
+      encoding: "utf8"
+    }).trim() || "(clean)";
+  } catch (error) {
+    return `(git_status_failed: ${String(error.message || error).trim()})`;
+  }
 }
 
 async function main() {
-  console.log(`[jobs:fetch-approved-talent] backend_url=${APPS_SCRIPT_URL}`);
-  const [pendingTalent, approvedTalent] = await Promise.all([
-    fetchBackendTalent("getPendingTalent"),
-    fetchBackendTalent("getApprovedTalent")
-  ]);
-  console.log(`[jobs:fetch-approved-talent] pending_talent_count=${pendingTalent.length}`);
-  console.log(`[jobs:fetch-approved-talent] approved_talent_count=${approvedTalent.length}`);
+  log("backend_url_present", Boolean(APPS_SCRIPT_URL));
 
-  const existingTalentProfiles = await readJson(TALENT_PROFILES_FILE, []);
-  const existingById = buildExistingTalentById(existingTalentProfiles);
-  const approvedById = buildExistingTalentById(
-    approvedTalent.map((item) => normalizeApprovedTalentRecord(item))
+  const pendingResponse = await fetchBackendTalent("getPendingTalent");
+  let approvedResponse;
+  try {
+    approvedResponse = await fetchBackendTalent("getApprovedTalent");
+    log("getApprovedTalent_ok", true);
+  } catch (error) {
+    log("getApprovedTalent_ok", false);
+    throw error;
+  }
+
+  const pendingTalent = Array.isArray(pendingResponse.items) ? pendingResponse.items : [];
+  const approvedRawProfiles = Array.isArray(approvedResponse.items) ? approvedResponse.items : [];
+
+  log("pending_talent_count", pendingTalent.length);
+
+  const approvedProfiles = [];
+  const skippedApprovedProfiles = [];
+
+  for (const row of approvedRawProfiles) {
+    if (!row || typeof row !== "object") {
+      skippedApprovedProfiles.push({ reason: "invalid_row_shape", row });
+      logSkip({}, "invalid_row_shape");
+      continue;
+    }
+
+    const normalized = normalizeApprovedTalentProfile(row);
+    if (!normalizeText(normalized.id)) {
+      skippedApprovedProfiles.push({ reason: "missing_id", row });
+      logSkip(normalized, "missing_id");
+      continue;
+    }
+    if (!normalizeText(normalized.name)) {
+      skippedApprovedProfiles.push({ reason: "missing_name", row });
+      logSkip(normalized, "missing_name");
+      continue;
+    }
+
+    approvedProfiles.push(normalized);
+  }
+
+  log("approved_talent_count", approvedProfiles.length);
+  log(
+    "approved_talent_names",
+    JSON.stringify(approvedProfiles.map((profile) => normalizeText(profile.name)).filter(Boolean))
   );
 
-  const merged = [];
-  const seen = new Set();
+  const existingTalentProfiles = await readJson(TALENT_PROFILES_FILE, []);
+  const existingList = Array.isArray(existingTalentProfiles) ? existingTalentProfiles : [];
+  log("talent_profiles_before_count", existingList.length);
 
-  for (const record of Array.isArray(existingTalentProfiles) ? existingTalentProfiles : []) {
-    const id = normalizeText(record && record.id);
-    if (!id) continue;
-    const approved = approvedById.get(id);
-    const next = approved ? mergeTalentProfile(record, approved) : record;
-    merged.push(next);
-    seen.add(id);
+  const mergedProfiles = existingList.map((current) => ({ ...current }));
+  for (const approved of approvedProfiles) {
+    const current = findExistingTalentMatch(mergedProfiles, approved);
+    const merged = current ? mergeTalentProfile(current, ensurePublishedTalentShape(approved)) : ensurePublishedTalentShape(approved);
+    if (current) {
+      const currentIndex = mergedProfiles.findIndex((item) => {
+        const currentId = normalizeText(item && item.id);
+        const currentName = normalizeText(item && item.name).toLowerCase();
+        const targetId = normalizeText(current && current.id);
+        const targetName = normalizeText(current && current.name).toLowerCase();
+        return (currentId && targetId && currentId === targetId) || (currentName && targetName && currentName === targetName);
+      });
+      if (currentIndex >= 0) {
+        mergedProfiles[currentIndex] = merged;
+      } else {
+        mergedProfiles.push(merged);
+      }
+    } else {
+      mergedProfiles.push(merged);
+    }
+
   }
 
-  for (const [id, approved] of approvedById.entries()) {
-    if (seen.has(id)) continue;
-    const current = existingById.get(id) || {};
-    merged.push(mergeTalentProfile(current, approved));
+  for (const profile of approvedProfiles) {
+    const name = normalizeText(profile.name);
+    if (!name) continue;
+    const found = mergedProfiles.some((item) =>
+      normalizeText(item && item.name).toLowerCase() === name.toLowerCase()
+    );
+    if (!found) {
+      console.warn(`[jobs:fetch-approved-talent] approved_profile_missing_after_merge=${name}`);
+    }
   }
 
-  const changed = await writeJsonIfChanged(TALENT_PROFILES_FILE, merged);
-  console.log(`[jobs:fetch-approved-talent] talent_profiles_written_count=${merged.length}`);
-  console.log(`[jobs:fetch-approved-talent] talent_profiles_path=${TALENT_PROFILES_FILE}`);
-  console.log(`[jobs:fetch-approved-talent] wrote=${changed ? "true" : "false"}`);
+  const changed = await writeJsonIfChanged(TALENT_PROFILES_FILE, mergedProfiles);
+  log("talent_profiles_after_count", mergedProfiles.length);
+  log("talent_profiles_written_count", changed ? mergedProfiles.length : 0);
+  log("talent_profiles_path", TALENT_PROFILES_FILE);
+  log("git_status_after_write", getGitStatusAfterWrite());
+  log("wrote", changed ? "true" : "false");
+
+  if (skippedApprovedProfiles.length) {
+    log("skipped_approved_profile_count", skippedApprovedProfiles.length);
+  }
 }
 
 if (require.main === module) {
@@ -183,7 +324,10 @@ if (require.main === module) {
 
 module.exports = {
   buildExistingTalentById,
+  ensurePublishedTalentShape,
+  extractArray,
+  fetchBackendTalent,
   main,
   mergeTalentProfile,
-  normalizeApprovedTalentRecord
+  normalizeApprovedTalentProfile
 };

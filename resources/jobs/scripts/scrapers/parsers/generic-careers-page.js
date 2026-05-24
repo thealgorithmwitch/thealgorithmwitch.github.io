@@ -6,7 +6,13 @@ const {
   stripHtml,
   toAbsoluteUrl
 } = require("../base-utils");
-const { stableHash, stringifySafe, todayIso } = require("../../job-normalizer");
+const {
+  extractSalaryData,
+  parseSalaryRange,
+  stableHash,
+  stringifySafe,
+  todayIso
+} = require("../../job-normalizer");
 
 const CARD_PATTERN = /<(li|tr|article|section|div)\b[^>]*>([\s\S]*?)<\/\1>/gi;
 const JSON_SCRIPT_PATTERN = /<script\b([^>]*)>([\s\S]*?)<\/script>/gi;
@@ -69,7 +75,7 @@ function extractLinks(html, pageUrl) {
 }
 
 function pickBestTitle({ anchorText, headingText, contextTitle, urlTitle }) {
-  const candidates = [anchorText, headingText, contextTitle, urlTitle].map((value) => cleanJobTitle(value)).filter(Boolean);
+  const candidates = [anchorText, headingText, urlTitle, contextTitle].map((value) => cleanJobTitle(value)).filter(Boolean);
   return candidates.find((value) => isLikelyJobTitle(value)) || candidates[0] || "";
 }
 
@@ -95,6 +101,17 @@ function buildRawJob(source, pageUrl, values = {}) {
   const title = cleanJobTitle(values.title);
   const originalUrl = stringifySafe(values.original_url || values.apply_url || values.url);
   if (!title || !originalUrl) return null;
+  const pageText = stringifySafe(values.page_text || values.raw_description || values.description || values.content || "");
+  const payExtraction = extractSalaryData({
+    salary: values.pay || values.salary || "",
+    compensation: values.compensation || "",
+    description: values.description || values.raw_description || pageText,
+    raw_description: values.raw_description || pageText,
+    content: pageText,
+    raw_payload: values.raw_payload || {}
+  });
+  const payText = stringifySafe(values.pay || values.salary || payExtraction.text || "");
+  const payShape = parseSalaryRange(payText, stringifySafe(values.location));
 
   return {
     id: values.id || `${source.id || source.organization}-${stableHash(`${title}:${originalUrl}`)}`,
@@ -104,7 +121,18 @@ function buildRawJob(source, pageUrl, values = {}) {
     location: stringifySafe(values.location),
     workplace_type: stringifySafe(values.workplace_type),
     job_type: stringifySafe(values.job_type),
-    salary: stringifySafe(values.pay || values.salary),
+    salary: payShape.salary || payText,
+    raw_salary: payShape.raw_salary || payText,
+    salary_min: payShape.salary_min ?? null,
+    salary_max: payShape.salary_max ?? null,
+    salary_currency: payShape.salary_currency || "Unknown",
+    salary_period: payShape.salary_period || "Unknown",
+    salary_visible: Boolean(payShape.salary_visible),
+    pay_parse_warning: payShape.pay_parse_warning || "",
+    pay_parse_source: payExtraction.source || "",
+    pay_parse_confidence: payExtraction.confidence || "low",
+    pay_like_detected: Boolean(payExtraction.payLikeDetected),
+    pay_parse_failed_snippet: payExtraction.failedSnippet || "",
     source: values.source || "Custom Careers Page",
     source_type: values.source_type || source.type || "generic",
     source_url: stringifySafe(values.source_url || pageUrl || source.source_url),
@@ -117,6 +145,8 @@ function buildRawJob(source, pageUrl, values = {}) {
     function: stringifySafe(values.function || values.department) ||
       (Array.isArray(source.function_defaults) && source.function_defaults.length ? source.function_defaults[0] : ""),
     notes: stringifySafe(values.notes || `Scraped from ${pageUrl || source.source_url}`),
+    description_source_url: stringifySafe(values.description_source_url || pageUrl || source.source_url),
+    pay_source_url: stringifySafe(values.pay_source_url || pageUrl || source.source_url),
     raw_payload: values.raw_payload || values
   };
 }
@@ -137,6 +167,7 @@ function extractAnchorRecords(html, pageUrl, source) {
           urlTitle
         }),
         original_url: link.url,
+        page_text: link.context,
         raw_description: link.context,
         description: link.context,
         raw_payload: {
@@ -171,6 +202,7 @@ function extractCardRecords(html, pageUrl, source) {
         original_url: link.url,
         location: extractLocation(blockText),
         function: extractDepartment(blockText),
+        page_text: blockText,
         raw_description: blockText,
         description: blockText,
         raw_payload: {
@@ -269,6 +301,14 @@ function objectToJobRecord(jobObject, pageUrl, source) {
     location,
     job_type: stringifySafe(jobObject.employmentType || jobObject.commitment || jobObject.employment_type || jobObject.type),
     workplace_type: stringifySafe(jobObject.workplaceType || jobObject.workplace || jobObject.remote),
+    page_text: stripHtml(
+      jobObject.descriptionHtml ||
+      jobObject.description_html ||
+      jobObject.content ||
+      jobObject.summary ||
+      jobObject.description ||
+      ""
+    ),
     pay: stringifySafe(jobObject.salary || jobObject.compensation?.summary || jobObject.compensation || jobObject.pay),
     description: stringifySafe(
       jobObject.description ||

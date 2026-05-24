@@ -1390,6 +1390,42 @@ function normalizeSalaryPeriodToken(value) {
   return "";
 }
 
+const PAY_WINDOW_MARKERS = [
+  "$",
+  "salary",
+  "salary range",
+  "compensation",
+  "compensation range",
+  "pay range",
+  "annual salary",
+  "base salary",
+  "hourly",
+  "per hour",
+  "USD",
+  "CAD",
+  "GBP",
+  "EUR"
+];
+
+function extractPayWindows(text) {
+  const clean = String(text || "").replace(/\s+/g, " ").trim();
+  if (!clean) return [];
+
+  const windows = [];
+  const lower = clean.toLowerCase();
+  for (const marker of PAY_WINDOW_MARKERS) {
+    let index = lower.indexOf(marker.toLowerCase());
+    while (index !== -1) {
+      const start = Math.max(0, index - 160);
+      const end = Math.min(clean.length, index + 240);
+      windows.push(clean.slice(start, end));
+      index = lower.indexOf(marker.toLowerCase(), index + marker.length);
+    }
+  }
+
+  return Array.from(new Set(windows));
+}
+
 function formatSalaryAmount(amount) {
   if (!Number.isFinite(Number(amount))) return "";
   const rounded = Math.round(Number(amount));
@@ -1546,9 +1582,11 @@ function buildSalaryContextCandidates(text) {
   const cleaned = normalizeWhitespace(stripHtml(text));
   if (!cleaned) return [];
   const paragraphs = normalizeParagraphs(cleaned);
+  const payWindows = extractPayWindows(cleaned);
   const tailFirst = paragraphs.slice(-4).reverse();
   const body = paragraphs.filter((paragraph) => hasPayContext(paragraph));
   return Array.from(new Set([
+    ...payWindows,
     ...tailFirst.filter((paragraph) => hasPayContext(paragraph) || /[$€£]|\b(?:USD|CAD|EUR|GBP)\b/i.test(paragraph)),
     ...body,
     cleaned
@@ -1609,6 +1647,39 @@ function findBestSalaryMatch(text) {
   return "";
 }
 
+function findBestSalaryMatchFromWindows(text) {
+  const contexts = buildSalaryContextCandidates(text);
+  if (!contexts.length) return "";
+
+  const matchers = [
+    /(?:annual salary range is|salary range(?: for this position)? is|salary for this position is|compensation for this position is|this role pays|compensation range:?|pay range:?|salary:?|compensation:?|pay:?|wage:?|rate:?|stipend:?|base salary:?)[^.]{0,180}(?:USD|CAD|EUR|GBP|US\$|CA\$|C\$|[$€£])?\s*\d[\d,]*(?:\.\d+)?\s*[kKmM]?(?:\s*(?:\/\s*(?:hour|hr|day|week|month|mo|year|yr)|per\s+(?:hour|day|week|month|year)|hourly|daily|weekly|monthly|yearly|annual|annually))?(?:\s*(?:-|–|—|to)\s*(?:USD|CAD|EUR|GBP|US\$|CA\$|C\$|[$€£])?\s*\d[\d,]*(?:\.\d+)?\s*[kKmM]?(?:\s*(?:\/\s*(?:hour|hr|day|week|month|mo|year|yr)|per\s+(?:hour|day|week|month|year)|hourly|daily|weekly|monthly|yearly|annual|annually))?)?/i,
+    /(?:starting at|starts at|from|up to)\s*(?:USD|CAD|EUR|GBP|US\$|CA\$|C\$|[$€£])?\s*\d[\d,]*(?:\.\d+)?\s*[kKmM]?(?:\s*(?:\/\s*(?:hour|hr|day|week|month|mo|year|yr)|per\s+(?:hour|day|week|month|year)|hourly|daily|weekly|monthly|yearly|annual|annually))?/i,
+    /(?:USD|CAD|EUR|GBP|US\$|CA\$|C\$|[$€£])\s*\d[\d,]*(?:\.\d+)?\s*[kKmM]?(?:\s*(?:\/\s*(?:hour|hr|day|week|month|mo|year|yr)|per\s+(?:hour|day|week|month|year)|hourly|daily|weekly|monthly|yearly|annual|annually))?(?:\s*(?:-|–|—|to)\s*(?:USD|CAD|EUR|GBP|US\$|CA\$|C\$|[$€£])?\s*\d[\d,]*(?:\.\d+)?\s*[kKmM]?(?:\s*(?:\/\s*(?:hour|hr|day|week|month|mo|year|yr)|per\s+(?:hour|day|week|month|year)|hourly|daily|weekly|monthly|yearly|annual|annually))?)?/i,
+    /(?:[$€£])\s*\d[\d,]*(?:\.\d+)?\s*[kKmM]?(?:\s*(?:\/\s*(?:hour|hr|day|week|month|mo|year|yr)|per\s+(?:hour|day|week|month|year)|hourly|daily|weekly|monthly|yearly|annual|annually))?(?:\s*(?:-|–|—|to)\s*(?:[$€£])?\s*\d[\d,]*(?:\.\d+)?\s*[kKmM]?(?:\s*(?:\/\s*(?:hour|hr|day|week|month|mo|year|yr)|per\s+(?:hour|day|week|month|year)|hourly|daily|weekly|monthly|yearly|annual|annually))?)?/i,
+    /\b\d[\d,]*(?:\.\d+)?\s*[kKmM]?(?:\s*(?:-|–|—|to)\s*\d[\d,]*(?:\.\d+)?\s*[kKmM]?)?(?:\s*(?:\/\s*(?:hour|hr|day|week|month|mo|year|yr)|per\s+(?:hour|day|week|month|year)|hourly|daily|weekly|monthly|yearly|annual|annually))?/i,
+    /\b(?:competitive salary|competitive compensation|salary not listed|compensation not listed|pay not listed|salary unavailable|compensation unavailable|not disclosed|undisclosed)\b/i
+  ];
+
+  for (const cleaned of contexts) {
+    if (!cleaned) continue;
+    if (detectMalformedPayText(cleaned)) return cleaned;
+
+    for (const matcher of matchers) {
+      const match = cleaned.match(matcher);
+      if (match && match[0]) {
+        return normalizeWhitespace(match[0].replace(/\s+([.,!?;:])/g, "$1"));
+      }
+    }
+
+    if (hasPayContext(cleaned)) {
+      const numericSpan = cleaned.match(/\b\d[\d,]*(?:\.\d+)?\s*[kKmM]?(?:\s*(?:\/\s*(?:hour|hr|day|week|month|mo|year|yr)|per\s+(?:hour|day|week|month|year)|hourly|daily|weekly|monthly|yearly|annual|annually))?(?:\s*(?:-|–|—|to)\s*\d[\d,]*(?:\.\d+)?\s*[kKmM]?(?:\s*(?:\/\s*(?:hour|hr|day|week|month|mo|year|yr)|per\s+(?:hour|day|week|month|year)|hourly|daily|weekly|monthly|yearly|annual|annually))?)?/i);
+      if (numericSpan && numericSpan[0]) return normalizeWhitespace(numericSpan[0]);
+    }
+  }
+
+  return "";
+}
+
 function findPayLikeSnippet(value) {
   const text = stringifySafe(value) || cleanFlattenedText(value);
   if (!text) return "";
@@ -1666,7 +1737,7 @@ function extractSalaryData(job = {}) {
     const text = normalizeWhitespace(salaryCandidateToText(candidate) || stringifySafe(candidate) || cleanFlattenedText(candidate));
     if (!text) continue;
     candidateSnippets.push(text.slice(0, 280));
-    const matched = findBestSalaryMatch(text) || text;
+    const matched = findBestSalaryMatchFromWindows(text) || findBestSalaryMatch(text) || text;
     const confidence = detectPayParseConfidence(matched, matched ? "ats_field" : "none");
     return {
       text: matched,
@@ -1694,7 +1765,7 @@ function extractSalaryData(job = {}) {
     const tailParagraphs = paragraphs.slice(-4).reverse();
     for (const paragraph of tailParagraphs) {
       if (paragraph) candidateSnippets.push(paragraph.slice(0, 280));
-      const matched = findBestSalaryMatch(paragraph);
+      const matched = findBestSalaryMatchFromWindows(paragraph) || findBestSalaryMatch(paragraph);
       if (matched) {
         return {
           text: matched,
@@ -1729,7 +1800,7 @@ function extractSalaryData(job = {}) {
   for (const candidate of secondaryCandidates) {
     const flattened = normalizeWhitespace(stringifySafe(candidate) || cleanFlattenedText(candidate));
     if (flattened) candidateSnippets.push(flattened.slice(0, 280));
-    const matched = findBestSalaryMatch(candidate);
+    const matched = findBestSalaryMatchFromWindows(candidate) || findBestSalaryMatch(candidate);
     if (matched) {
       return {
         text: matched,
@@ -3017,6 +3088,7 @@ module.exports = {
   buildFallbackDescription,
   computeParserConfidenceScore,
   extractSalaryData,
+  extractPayWindows,
   normalizeLocationDisplay,
   normalizeSpecialization,
   normalizeSpecializationDetailed,

@@ -4,6 +4,7 @@ const {
   buildDescriptionSnippet,
   buildFallbackDescription,
   extractSalaryText,
+  extractPayWindows,
   hasMalformedDescriptionTemplate,
   hasRoleSignal,
   hasUsableDescription,
@@ -18,11 +19,16 @@ const salaryCases = [
   { input: "$80,000 - $100,000", min: 80000, max: 100000, currency: "USD", period: "year", visible: true },
   { input: "$80k-$100k", min: 80000, max: 100000, currency: "USD", period: "year", visible: true },
   { input: "USD 80k – 100k", min: 80000, max: 100000, currency: "USD", period: "year", visible: true },
+  { input: "salary range: $70,000 - $90,000", min: 70000, max: 90000, currency: "USD", period: "year", visible: true },
+  { input: "compensation: $70,000-$90,000", min: 70000, max: 90000, currency: "USD", period: "year", visible: true },
+  { input: "USD 70,000 - 90,000", min: 70000, max: 90000, currency: "USD", period: "year", visible: true },
   { input: "CA$90k–CA$120k", min: 90000, max: 120000, currency: "CAD", period: "year", visible: true },
   { input: "CAD $90,000 to $120,000", min: 90000, max: 120000, currency: "CAD", period: "year", visible: true },
   { input: "€70k - €90k", min: 70000, max: 90000, currency: "EUR", period: "year", visible: true },
   { input: "EUR 70,000–90,000", min: 70000, max: 90000, currency: "EUR", period: "year", visible: true },
   { input: "£60k–£85k", min: 60000, max: 85000, currency: "GBP", period: "year", visible: true },
+  { input: "$35/hour - $45/hour", min: 35, max: 45, currency: "USD", period: "hour", visible: true },
+  { input: "$35 to $45 per hour", min: 35, max: 45, currency: "USD", period: "hour", visible: true },
   { input: "$35/hr", min: 35, max: 35, currency: "USD", period: "hour", visible: true },
   { input: "$800/day", min: 800, max: 800, currency: "USD", period: "day", visible: true },
   { input: "$5k/mo", min: 5000, max: 5000, currency: "USD", period: "month", visible: true },
@@ -45,6 +51,9 @@ for (const testCase of salaryCases) {
     assert.strictEqual(actual.salary, testCase.salary, `salary mismatch for ${testCase.input}`);
   }
 }
+
+const payWindows = extractPayWindows("Benefits include salary range: $70,000 - $90,000 and bonus eligibility.");
+assert.ok(payWindows.some((window) => /salary range/i.test(window) && /\$70,000 - \$90,000/i.test(window)));
 
 const descriptionInput = `
   <div>

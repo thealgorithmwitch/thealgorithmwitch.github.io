@@ -288,12 +288,15 @@ function buildDiagnosticSummary(report = {}) {
     .map((item) => `${item.id}: ${item.failure_reasons.join(",")}`);
   const malformedNonJob = (report.malformedNonJobActions || [])
     .map((item) => `${item.id || "<missing-id>"}:${item.operation}:${item.reason}`);
+  const malformedPublish = (report.malformedPublishActions || [])
+    .map((item) => `${item.id || "<missing-id>"}:${item.operation}:${item.reason}`);
   const staleNonJob = (report.staleNonJobActions || [])
     .map((item) => `${item.id}:${item.operation}:${item.reason}`);
   const unsupported = (report.unsupportedActions || [])
     .map((item) => `${item.id || "<missing-id>"}:${item.operation}:${item.reason}`);
   const details = []
     .concat(jobFailures)
+    .concat(malformedPublish)
     .concat(malformedNonJob)
     .concat(staleNonJob)
     .concat(unsupported);
@@ -312,6 +315,9 @@ function logDiagnosticReport(report = {}, label = DIAGNOSTIC_LABEL) {
   (report.malformedNonJobActions || []).forEach((item) => {
     console.warn(`[${label}] malformed_non_job_action id=${item.id || "<missing-id>"} operation=${item.operation} reason=${item.reason}`);
   });
+  (report.malformedPublishActions || []).forEach((item) => {
+    console.warn(`[${label}] malformed_publish_action id=${item.id || "<missing-id>"} operation=${item.operation} reason=${item.reason}`);
+  });
   (report.staleNonJobActions || []).forEach((item) => {
     console.warn(`[${label}] stale_non_job_action id=${item.id} operation=${item.operation} reason=${item.reason}`);
   });
@@ -319,7 +325,7 @@ function logDiagnosticReport(report = {}, label = DIAGNOSTIC_LABEL) {
     console.warn(`[${label}] unsupported_action id=${item.id || "<missing-id>"} operation=${item.operation} reason=${item.reason}`);
   });
   console.log(
-    `[${label}] malformed_non_job_actions=${(report.malformedNonJobActions || []).length} stale_non_job_actions=${(report.staleNonJobActions || []).length} unsupported_actions=${(report.unsupportedActions || []).length} apply_safe=${report.safeToApply}`
+    `[${label}] empty_publish_selected_ignored=${report.emptyPublishSelectedIgnoredCount || 0} ignored_action_ids=${JSON.stringify(report.ignoredActionIds || [])} malformed_publish_actions=${(report.malformedPublishActions || []).length} malformed_non_job_actions=${(report.malformedNonJobActions || []).length} stale_non_job_actions=${(report.staleNonJobActions || []).length} unsupported_actions=${(report.unsupportedActions || []).length} apply_safe=${report.safeToApply}`
   );
   if (report.publishSummary) {
     console.log(
@@ -689,6 +695,14 @@ function buildActionResult(status, detail) {
     status,
     detail: detail || ""
   };
+}
+
+function isEmptyPublishSelectedAction(action = {}) {
+  const operation = String(action?.operation || "");
+  if (operation !== "publish_selected") return false;
+  const ids = Array.isArray(action?.payload?.ids) ? action.payload.ids.map(String).filter(Boolean) : [];
+  const jobs = Array.isArray(action?.payload?.jobs) ? action.payload.jobs.filter((job) => job && job.id) : [];
+  return ids.length === 0 && jobs.length === 0;
 }
 
 function logScopedPublishFailures(diagnostics = []) {
@@ -1224,6 +1238,8 @@ async function runAdminActionDiagnostics(options = {}) {
     source: fetched.source,
     actionsFound: actions.length,
     publishSelectedActionCount: 0,
+    emptyPublishSelectedIgnoredCount: 0,
+    ignoredActionIds: [],
     selectedJobsCount: 0,
     publishSelectedJobs: [],
     publishSummary: {
@@ -1234,6 +1250,7 @@ async function runAdminActionDiagnostics(options = {}) {
       blocked_jobs: []
     },
     malformedNonJobActions: [],
+    malformedPublishActions: [],
     staleNonJobActions: [],
     unsupportedActions: [],
     safeToApply: true
@@ -1302,8 +1319,14 @@ async function runAdminActionDiagnostics(options = {}) {
 
     report.publishSelectedActionCount += 1;
 
+    if (isEmptyPublishSelectedAction(action)) {
+      report.emptyPublishSelectedIgnoredCount += 1;
+      report.ignoredActionIds.push(String(action.id));
+      continue;
+    }
+
     if (!targetIds.length && !selectedJobs.length) {
-      report.unsupportedActions.push({
+      report.malformedPublishActions.push({
         id: String(action.id),
         operation,
         reason: "publish_selected_missing_ids_and_jobs"
@@ -1451,6 +1474,15 @@ async function runAdminActionDiagnostics(options = {}) {
         remaining_dirty_reasons: sanitized.remainingJunkReasons
       });
     }
+
+    const actionLevelBlockedCount = report.publishSelectedJobs.filter((item) => item.action_id === String(action.id) && item.safe_to_apply === false).length;
+    if (targetIds.length > 0 && selectedJobs.length === 0 && actionLevelBlockedCount === uniqueIds.length) {
+      report.malformedPublishActions.push({
+        id: String(action.id),
+        operation,
+        reason: "publish_selected_unresolvable_targets"
+      });
+    }
   }
 
   const simulatedPublicJobs = buildPublicJobsFromRecords(nextRecords);
@@ -1501,6 +1533,7 @@ async function runAdminActionDiagnostics(options = {}) {
   report.publishSummary.blocked_count = report.publishSummary.blocked_jobs.length;
 
   report.safeToApply =
+    report.malformedPublishActions.length === 0 &&
     report.malformedNonJobActions.length === 0 &&
     report.unsupportedActions.length === 0;
 
@@ -1627,11 +1660,11 @@ async function main() {
     const ids = Array.isArray(action.payload.ids) ? action.payload.ids.map(String) : [];
     const targetIds = getActionTargetIds(action);
     const selectedJobs = Array.isArray(action.payload.jobs) ? action.payload.jobs : [];
-    if (action.operation === "publish_selected" && !targetIds.length && !selectedJobs.length) {
-      actionResults[action.id] = buildActionResult("empty_payload", "publish_selected missing ids and jobs");
-      logActionOutcome(action, actionSource, "empty_payload", "publish_selected missing ids and jobs");
+    if (isEmptyPublishSelectedAction(action)) {
+      actionResults[action.id] = buildActionResult("ignored_invalid_empty_publish_selected", "publish_selected missing ids and jobs");
+      logActionOutcome(action, actionSource, "ignored_invalid_empty_publish_selected", "publish_selected missing ids and jobs");
       console.warn(
-        `[jobs:apply-admin-actions] operation=publish_selected action_id=${action.id} ids_count=${ids.length} jobs_count=${selectedJobs.length} outcome=empty_payload`
+        `[jobs:apply-admin-actions] operation=publish_selected action_id=${action.id} ids_count=${ids.length} jobs_count=${selectedJobs.length} outcome=ignored_invalid_empty_publish_selected`
       );
       continue;
     }
@@ -2423,6 +2456,7 @@ module.exports = {
   buildDiagnosticSummary,
   logDiagnosticReport,
   runAdminActionDiagnostics,
+  isEmptyPublishSelectedAction,
   selectedPublishSanitizerHelpers: {
     buildDescriptionSnippet,
     hasMalformedDescriptionTemplate: safeHasMalformedDescriptionTemplate,

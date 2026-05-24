@@ -873,6 +873,12 @@
 
     function setLocalReviewState() {
       window.localStorage.setItem(LOCAL_JOB_REVIEW_KEY, JSON.stringify(state.localJobReview));
+      const selectedCount = Array.isArray(state.localJobReview.selectedIds) ? state.localJobReview.selectedIds.length : 0;
+      const bulkPublishButton = document.getElementById("bulk-publish");
+      if (bulkPublishButton) {
+        bulkPublishButton.disabled = selectedCount === 0;
+        bulkPublishButton.setAttribute("aria-disabled", selectedCount === 0 ? "true" : "false");
+      }
     }
 
     function getLocalActionQueue() {
@@ -916,6 +922,9 @@
 
     function buildPublishQueuePayload(jobs) {
       const selectedJobs = Array.isArray(jobs) ? jobs.filter(Boolean) : [];
+      if (!selectedJobs.length) {
+        return null;
+      }
       const payload = {
         operation: "publish_selected",
         actor: "Admin Review Console",
@@ -1605,6 +1614,10 @@
               }))
               .filter((item) => item.editedRecord)
           };
+      if (action === "publish_selected" && (!payload || !Array.isArray(payload.ids) || payload.ids.length === 0)) {
+        setStatus("Select at least one local pending job first.", true);
+        return;
+      }
       queueAdminAction(payload).then(async (result) => {
         const optimisticUpdate = () => {
           selectedIds.forEach((id) => {
@@ -2188,9 +2201,24 @@
     }
 
     async function queueAdminAction(payload) {
+      if (
+        payload &&
+        payload.operation === "publish_selected" &&
+        (!Array.isArray(payload.ids) || payload.ids.length === 0) &&
+        (!Array.isArray(payload.jobs) || payload.jobs.length === 0)
+      ) {
+        throw new Error("publish_selected requires at least one selected job.");
+      }
       if (canUseBackendAdmin()) {
         try {
           const queued = await requestAdmin("queueLocalJobAction", payload);
+          if (queued && queued.ignored) {
+            console.warn("[admin-review] backend ignored empty publish_selected", {
+              operation: payload.operation,
+              reason: queued.reason || "invalid_empty_publish_selected"
+            });
+            return { mode: "backend", warning: "Ignored empty publish_selected action." };
+          }
           console.log("[admin-review] backend queue success", {
             operation: payload.operation,
             actionId: queued && queued.id ? queued.id : "",

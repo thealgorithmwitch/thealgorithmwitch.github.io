@@ -26,6 +26,38 @@ function toIso(value) {
   return date.toISOString();
 }
 
+function computeStaleScore(record = {}, options = {}) {
+  const now = options.now instanceof Date ? options.now : new Date();
+  const lastSeenValue = record.last_seen_at || record.last_verified_at || record.updated_at || record.created_at;
+  const lastSeen = new Date(lastSeenValue || 0);
+  const ageDays = Number.isNaN(lastSeen.getTime()) ? 30 : Math.max(0, Math.floor((now.getTime() - lastSeen.getTime()) / 86400000));
+  const verificationStatus = String(record.verification_status || record.source_status || "").toLowerCase();
+  let score = Math.min(80, ageDays * 8);
+  if (verificationStatus === "needs_review") score += 18;
+  if (verificationStatus === "expired") score += 28;
+  if (verificationStatus === "removed") score = 100;
+  return Math.max(0, Math.min(100, Math.round(score)));
+}
+
+function applyFreshnessMetadata(record = {}, options = {}) {
+  const now = options.now instanceof Date ? options.now : new Date();
+  const checkedAt = toIso(now);
+  const sourceStatus = String(options.sourceStatus || record.source_status || "").trim() || "live";
+  const next = {
+    ...record,
+    last_checked_at: checkedAt,
+    source_status: sourceStatus,
+    failed_sync_count: Math.max(0, Number(options.failedSyncCount ?? record.failed_sync_count ?? 0) || 0)
+  };
+  if (options.lastSeen !== false) {
+    next.last_seen_at = checkedAt;
+  } else {
+    next.last_seen_at = stringifySafe(record.last_seen_at);
+  }
+  next.stale_score = computeStaleScore(next, { now });
+  return next;
+}
+
 function detectApplicationDeadline(job) {
   const text = [
     stringifySafe(job.display?.description),
@@ -53,7 +85,7 @@ function applyPublishLifecycle(record, options = {}) {
   const expiresAt = deadline ? deadline.toISOString() : addDays(now, 7).toISOString();
   const isExpiredByDeadline = deadline && deadline.getTime() < now.getTime();
 
-  return {
+  return applyFreshnessMetadata({
     ...record,
     first_published_at: firstPublishedAt,
     last_verified_at: now.toISOString(),
@@ -61,7 +93,11 @@ function applyPublishLifecycle(record, options = {}) {
     stale_reason: isExpiredByDeadline ? "application deadline has passed" : "",
     verification_status: isExpiredByDeadline ? "expired" : "verified",
     verification_method: deadline ? "deadline_detected" : "manual"
-  };
+  }, {
+    now,
+    sourceStatus: isExpiredByDeadline ? "removed" : "live",
+    lastSeen: !isExpiredByDeadline
+  });
 }
 
 function isClosedPosting(content) {
@@ -91,7 +127,7 @@ function isStale(record, options = {}) {
 
 function markNeedsReview(record, reason, method = "manual", options = {}) {
   const now = options.now instanceof Date ? options.now : new Date();
-  return {
+  return applyFreshnessMetadata({
     ...record,
     status: "pending",
     published: false,
@@ -100,12 +136,17 @@ function markNeedsReview(record, reason, method = "manual", options = {}) {
     verification_status: "needs_review",
     verification_method: method,
     updated_at: now.toISOString()
-  };
+  }, {
+    now,
+    sourceStatus: "needs_review",
+    lastSeen: false,
+    failedSyncCount: Number(record.failed_sync_count || 0) + 1
+  });
 }
 
 function markRemoved(record, reason, options = {}) {
   const now = options.now instanceof Date ? options.now : new Date();
-  return {
+  return applyFreshnessMetadata({
     ...record,
     status: "archived",
     published: false,
@@ -114,12 +155,16 @@ function markRemoved(record, reason, options = {}) {
     verification_status: "removed",
     verification_method: "source_recheck",
     updated_at: now.toISOString()
-  };
+  }, {
+    now,
+    sourceStatus: "removed",
+    lastSeen: false
+  });
 }
 
 function markExpired(record, reason, options = {}) {
   const now = options.now instanceof Date ? options.now : new Date();
-  return {
+  return applyFreshnessMetadata({
     ...record,
     status: "archived",
     published: false,
@@ -128,14 +173,18 @@ function markExpired(record, reason, options = {}) {
     verification_status: "expired",
     verification_method: "deadline_detected",
     updated_at: now.toISOString()
-  };
+  }, {
+    now,
+    sourceStatus: "removed",
+    lastSeen: false
+  });
 }
 
 function extendVerification(record, method = "source_recheck", options = {}) {
   const now = options.now instanceof Date ? options.now : new Date();
   const deadline = detectApplicationDeadline(record);
   const expiresAt = deadline ? deadline : addDays(now, 7);
-  return {
+  return applyFreshnessMetadata({
     ...record,
     first_published_at: record.first_published_at || now.toISOString(),
     status: "published",
@@ -147,7 +196,12 @@ function extendVerification(record, method = "source_recheck", options = {}) {
     verification_status: deadline && expiresAt.getTime() < now.getTime() ? "expired" : "verified",
     verification_method: deadline ? "deadline_detected" : method,
     updated_at: now.toISOString()
-  };
+  }, {
+    now,
+    sourceStatus: deadline && expiresAt.getTime() < now.getTime() ? "removed" : "live",
+    lastSeen: !(deadline && expiresAt.getTime() < now.getTime()),
+    failedSyncCount: 0
+  });
 }
 
 function resolveDisplayJobFromRecord(record) {
@@ -186,7 +240,17 @@ function resolveDisplayJobFromRecord(record) {
     apply_url: stringifySafe(display.application_url) || raw.apply_url,
     date_posted: stringifySafe(display.date_collected) || raw.date_posted,
     featured: typeof record.featured === "boolean" ? record.featured : raw.featured,
-    status: shouldShowPublicRecord(record) ? "published" : String(record.status || raw.status || "")
+    status: shouldShowPublicRecord(record) ? "published" : String(record.status || raw.status || ""),
+    parser_confidence: stringifySafe(raw.parser_confidence),
+    parser_confidence_score: raw.parser_confidence_score,
+    content_quality_score: raw.content_quality_score,
+    source_status: stringifySafe(record.source_status || raw.source_status),
+    source_confidence: stringifySafe(raw.source_confidence),
+    source_classification: stringifySafe(raw.source_classification),
+    stale_score: raw.stale_score,
+    last_checked_at: stringifySafe(record.last_checked_at || raw.last_checked_at),
+    last_seen_at: stringifySafe(record.last_seen_at || raw.last_seen_at),
+    failed_sync_count: raw.failed_sync_count
   });
   if (!normalized) return null;
   const fullDescription = hasUsableDescription(canonicalDescription || stringifySafe(normalized.description || normalized.raw_description), { title: normalized.title })
@@ -218,5 +282,7 @@ module.exports = {
   markNeedsReview,
   markRemoved,
   resolveDisplayJobFromRecord,
-  shouldShowPublicRecord
+  shouldShowPublicRecord,
+  applyFreshnessMetadata,
+  computeStaleScore
 };

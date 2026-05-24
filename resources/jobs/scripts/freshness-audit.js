@@ -13,6 +13,8 @@ const {
   stringifySafe
 } = require("./job-normalizer");
 const {
+  applyFreshnessMetadata,
+  computeStaleScore,
   extendVerification,
   markNeedsReview,
   markRemoved,
@@ -26,6 +28,7 @@ const RISKY_REPORT_JSON_FILE = path.join(ROOT, "reports", "freshness-audit-risky
 const RISKY_REPORT_MD_FILE = path.join(ROOT, "reports", "freshness-audit-risky-changes.md");
 const PENDING_SYNCED_FILE = path.join(ROOT, "pending-synced-jobs.json");
 const STALE_DAYS = 7;
+const STALE_ARCHIVE_DAYS = 21;
 const REQUEST_TIMEOUT_MS = 15000;
 const USER_AGENT = "AlgorithmWitchJobsFreshnessAudit/1.0 (+https://github.com/actions)";
 const DEAD_STATUS_CODES = new Set([404, 410, 451]);
@@ -266,12 +269,16 @@ function daysOld(value, now = new Date()) {
 
 function isStalePublicJob(job, record, now = new Date()) {
   const referenceDate =
+    record?.last_checked_at ||
+    record?.last_seen_at ||
     record?.last_verified_at ||
     record?.updated_at ||
     job?.date_updated ||
     job?.date_posted ||
     "";
-  return daysOld(referenceDate, now) >= STALE_DAYS;
+  const age = daysOld(referenceDate, now);
+  const staleScore = computeStaleScore(record || job || {}, { now });
+  return age >= STALE_DAYS || staleScore >= 60;
 }
 
 function compareText(left, right) {
@@ -545,6 +552,13 @@ async function main() {
 
     const page = await fetchLivePage(sourceUrl);
     if (page.error) {
+      const refreshedRecord = applyFreshnessMetadata(record, {
+        now,
+        sourceStatus: "sync_error",
+        lastSeen: false,
+        failedSyncCount: Number(record.failed_sync_count || 0) + 1
+      });
+      nextRecords = nextRecords.map((item) => cleanText(item.id) === cleanText(record.id) ? refreshedRecord : item);
       reportEntry.action = "flag_review";
       reportEntry.reasons.push("uncertain_network_failure");
       reportEntry.network_error = page.error.message;
@@ -606,6 +620,14 @@ async function main() {
       {
         ...safeReparsed.job,
         status: "published",
+        last_checked_at: generatedAt,
+        last_seen_at: generatedAt,
+        source_status: reasons.length ? "needs_review" : "live",
+        parser_confidence: readiness.parser_confidence,
+        parser_confidence_score: readiness.parser_confidence_score,
+        content_quality_score: readiness.content_quality_score,
+        stale_score: reasons.length ? 25 : 0,
+        failed_sync_count: 0,
         review_reason: reasons.join(";"),
         triage_reason: reasons.join(";")
       },
@@ -634,6 +656,7 @@ async function main() {
     generated_at: generatedAt,
     mode: args.write ? "write" : "dry_run",
     stale_threshold_days: STALE_DAYS,
+    stale_archive_days: STALE_ARCHIVE_DAYS,
     public_jobs_scanned: stalePublicJobs.length,
     changed_jobs_count: changedJobs.length,
     kept_public_count: keptJobs.length,

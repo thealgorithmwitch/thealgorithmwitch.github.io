@@ -26,6 +26,21 @@ const { applySourcePendingControls } = require("./source-sync-quality");
 
 const SUPPORTED_TYPES = new Set(["greenhouse", "lever", "ashby", "bamboohr", "recruitee", "smartrecruiters", "workable"]);
 
+function computeSourceStatus(entry = {}) {
+  if (Number(entry.failed_sync_count || entry.failure_error_count || 0) > 0) return "sync_error";
+  if (Number(entry.jobs_found || 0) > 0 || Number(entry.jobs_normalized || 0) > 0) return "live";
+  if (Number(entry.jobs_skipped || 0) > 0) return "needs_review";
+  return "stale";
+}
+
+function computeSourceFreshnessScore(entry = {}) {
+  let score = 100;
+  score -= Math.min(45, Number(entry.failed_sync_count || entry.failure_error_count || 0) * 20);
+  if (Number(entry.jobs_found || 0) === 0) score -= 20;
+  if (Array.isArray(entry.skip_reasons) && entry.skip_reasons.length) score -= Math.min(20, entry.skip_reasons.length * 4);
+  return Math.max(0, Math.min(100, Math.round(score)));
+}
+
 function isManagedAtsJob(job, activeSourceIds) {
   return job.sync_origin === "ats" && activeSourceIds.has(String(job.source_id || ""));
 }
@@ -98,8 +113,9 @@ async function runSyncForTypes(types = []) {
   const sourceHealthEntries = [];
 
   for (const source of enabledSources) {
+    const normalizedSource = normalizeSource(source);
     const sourceStartedAt = Date.now();
-    const provider = source.provider || source.type;
+    const provider = normalizedSource.provider || normalizedSource.type;
     if (!SUPPORTED_TYPES.has(provider)) {
       counts[source.id] = {
         fetched: 0,
@@ -124,6 +140,12 @@ async function runSyncForTypes(types = []) {
       console.log(`[jobs:sync-sources] ${source.id}: Skipped: unsupported direct ATS provider.`);
       sourceHealthEntries.push({
         source_id: source.id,
+        source_name: normalizedSource.organization,
+        source_url: normalizedSource.source_url,
+        ats_provider: normalizedSource.ats_provider,
+        parser_type: normalizedSource.parser_type,
+        source_classification: normalizedSource.source_classification,
+        source_confidence: normalizedSource.source_confidence_tier,
         source_checked: true,
         jobs_found: 0,
         jobs_normalized: 0,
@@ -131,9 +153,12 @@ async function runSyncForTypes(types = []) {
         skip_reasons: ["unsupported direct ATS provider"],
         pending_count_delta: 0,
         public_count_delta: 0,
+        last_checked_at: new Date().toISOString(),
+        last_seen_at: "",
         last_successful_sync: "",
         sync_duration_ms: Date.now() - sourceStartedAt,
-        failure_error_count: 0
+        failure_error_count: 0,
+        failed_sync_count: 0
       });
       continue;
     }
@@ -195,6 +220,12 @@ async function runSyncForTypes(types = []) {
       counts[source.id].skipped_low_relevance = controlledPending.skippedLowRelevanceCount;
       sourceHealthEntries.push({
         source_id: source.id,
+        source_name: normalizedSource.organization,
+        source_url: normalizedSource.source_url,
+        ats_provider: normalizedSource.ats_provider,
+        parser_type: normalizedSource.parser_type,
+        source_classification: normalizedSource.source_classification,
+        source_confidence: normalizedSource.source_confidence_tier,
         source_checked: true,
         jobs_found: rawJobs.length,
         jobs_normalized: counts[source.id].active + sourcePendingJobs.length,
@@ -212,9 +243,12 @@ async function runSyncForTypes(types = []) {
         public_count_delta: counts[source.id].active,
         capped_count: counts[source.id].capped || 0,
         skipped_low_relevance_count: counts[source.id].skipped_low_relevance || 0,
+        last_checked_at: new Date().toISOString(),
+        last_seen_at: rawJobs.length ? new Date().toISOString() : "",
         last_successful_sync: new Date().toISOString(),
         sync_duration_ms: Date.now() - sourceStartedAt,
-        failure_error_count: 0
+        failure_error_count: 0,
+        failed_sync_count: 0
       });
     } catch (error) {
       counts[source.id] = { fetched: 0, active: 0, pending: 0, error: error.message };
@@ -249,6 +283,12 @@ async function runSyncForTypes(types = []) {
       );
       sourceHealthEntries.push({
         source_id: source.id,
+        source_name: normalizedSource.organization,
+        source_url: normalizedSource.source_url,
+        ats_provider: normalizedSource.ats_provider,
+        parser_type: normalizedSource.parser_type,
+        source_classification: normalizedSource.source_classification,
+        source_confidence: normalizedSource.source_confidence_tier,
         source_checked: true,
         jobs_found: 0,
         jobs_normalized: 0,
@@ -256,9 +296,12 @@ async function runSyncForTypes(types = []) {
         skip_reasons: [error.message],
         pending_count_delta: 0,
         public_count_delta: 0,
+        last_checked_at: new Date().toISOString(),
+        last_seen_at: "",
         last_successful_sync: "",
         sync_duration_ms: Date.now() - sourceStartedAt,
-        failure_error_count: 1
+        failure_error_count: 1,
+        failed_sync_count: 1
       });
     }
   }
@@ -322,9 +365,24 @@ async function runSyncForTypes(types = []) {
   const previousBySource = new Map((previousHealth.sources || []).map((item) => [String(item.source_id || ""), item]));
   const nextHealthEntries = sourceHealthEntries.map((entry) => {
     const previous = previousBySource.get(String(entry.source_id || "")) || {};
-    return {
+    const failedSyncCount = Number(previous.failed_sync_count || previous.failure_error_count || 0) + Number(entry.failed_sync_count || entry.failure_error_count || 0);
+    const merged = {
+      ...previous,
       ...entry,
-      failure_error_count: Number(previous.failure_error_count || 0) + Number(entry.failure_error_count || 0)
+      failure_error_count: failedSyncCount,
+      failed_sync_count: failedSyncCount,
+      last_checked_at: entry.last_checked_at || new Date().toISOString(),
+      last_seen_at: entry.last_seen_at || previous.last_seen_at || "",
+      source_status: computeSourceStatus({
+        ...previous,
+        ...entry,
+        failed_sync_count: failedSyncCount
+      })
+    };
+    return {
+      ...merged,
+      stale_score: 100 - computeSourceFreshnessScore(merged),
+      source_freshness_score: computeSourceFreshnessScore(merged)
     };
   });
   await writeSourceHealthSnapshot({

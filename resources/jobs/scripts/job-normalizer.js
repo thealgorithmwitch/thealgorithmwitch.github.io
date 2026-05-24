@@ -3,6 +3,10 @@ const {
   evaluateSourceTitleRules,
   resolveBoardSourceAttribution
 } = require("./source-rules");
+const {
+  inferSourceClassification,
+  inferSourceConfidenceTier
+} = require("./source-utils");
 
 const VALID_CURRENCIES = new Set(["USD", "CAD", "EUR", "GBP", "Unknown"]);
 const VALID_PERIODS = new Set(["hour", "day", "week", "month", "year", "Unknown"]);
@@ -189,6 +193,15 @@ const BAD_PUBLIC_CONTENT_PATTERNS = [
   /\blocality\b/i,
   /\bcareer_page\b/i,
   /\bgeo(?:code)?\b/i
+];
+const DESCRIPTION_REJECT_PREFIX_PATTERNS = [
+  /^[)\]}>,.;:!?/\\|%+-]+\s*/,
+  /^(?:[-*•]\s*|#+\s+)/,
+  /^\d{1,3}%\)?\s+/,
+  /^(?:check out our website|learn more|click here|read more|view job|view opening|apply now|apply today)\b/i,
+  /^(?:previous|next|post navigation|share this job|back to jobs|job title|department|location|reports to|supervises)\b/i,
+  /^(?:<svg|<path|<div|<\/|https?:\/\/|job categories|career_page|taxonomy|work type|employment type)\b/i,
+  /^(?:\[\]|\(\)|\[\w+\]\([^)]+\))/i
 ];
 const INVALID_PUBLIC_LOCATION_PATTERNS = [
   /\bTitle Business(?: Platform Location Date)?\b/i,
@@ -1523,6 +1536,46 @@ function normalizePayDisplay(options = {}) {
   return next;
 }
 
+function clampScore(value) {
+  const numeric = Number(value);
+  if (!Number.isFinite(numeric)) return 0;
+  return Math.max(0, Math.min(100, Math.round(numeric)));
+}
+
+function confidenceLabelFromScore(score) {
+  if (score >= 85) return "high";
+  if (score >= 70) return "medium";
+  return "low";
+}
+
+function normalizeSourceStatus(value, fallback = "live") {
+  const normalized = normalizeWhitespace(String(value || "")).toLowerCase();
+  if (["live", "verified", "active", "published"].includes(normalized)) return "live";
+  if (["pending", "pending_review", "needs_review", "review"].includes(normalized)) return "needs_review";
+  if (["stale", "aging"].includes(normalized)) return "stale";
+  if (["removed", "archived", "expired"].includes(normalized)) return "removed";
+  if (["sync_error", "fetch_failed", "parser_failed"].includes(normalized)) return "sync_error";
+  return fallback;
+}
+
+function dedupeOrganizationMentions(text, organization = "") {
+  const cleaned = normalizeWhitespace(text);
+  const org = normalizeWhitespace(organization);
+  if (!cleaned || !org) return cleaned;
+  const escaped = escapeRegExp(org);
+  return normalizeWhitespace(
+    cleaned
+      .replace(new RegExp(`(?:${escaped})(?:\\s*[|,:;-]\\s*${escaped})+`, "gi"), org)
+      .replace(new RegExp(`\\b${escaped}\\b\\s+\\b${escaped}\\b`, "gi"), org)
+  );
+}
+
+function startsWithRejectedDescriptionFragment(value) {
+  const text = normalizeWhitespace(String(value || ""));
+  if (!text) return false;
+  return DESCRIPTION_REJECT_PREFIX_PATTERNS.some((pattern) => pattern.test(text));
+}
+
 function salaryCandidateToText(value) {
   if (!value || typeof value !== "object" || Array.isArray(value)) return "";
 
@@ -2287,6 +2340,10 @@ function normalizeDescription(description, options = {}) {
       .replace(/\b(?:share to|share on)\s+(?:twitter|facebook|linkedin)\b/gi, " ")
       .replace(/\b(?:share this job|email this job|copy link|tweet)\b/gi, " ")
       .replace(/\b\d+\s+hours?\)\s*(?:On-site|Remote|Hybrid)\b/gi, " ")
+      .replace(/\b(?:[A-Z][A-Za-z/&,\s-]{2,80})\s*\(\d{1,3}%\)\s*/g, " ")
+      .replace(/\)\s*[A-Z][A-Za-z/&,\s-]{2,80}\s*\(\d{1,3}%\)\s*/g, " ")
+      .replace(/\s+[oO]\s+(?=[A-Z])/g, ". ")
+      .replace(/\bRemote roles?\s*:/gi, " ")
       .replace(/\b\d*\/svg\b/gi, " ")
       .replace(/\bviewBox="[^"]*"/gi, " ")
       .replace(/<span\b/gi, " ")
@@ -2306,9 +2363,14 @@ function normalizeDescription(description, options = {}) {
         stripStandaloneMetadataNumbers(strippedLeading)
       )
     )
-  );
+  ).replace(/^[)\]}>,.;:!?/\\|%+-]+\s*/, "");
 
-  if (!numericCleaned || !/[A-Za-z]{3,}/.test(numericCleaned) || /^[>"'<\s|/\\-]+$/.test(numericCleaned)) {
+  if (
+    !numericCleaned
+    || !/[A-Za-z]{3,}/.test(numericCleaned)
+    || /^[>"'<\s|/\\-]+$/.test(numericCleaned)
+    || startsWithRejectedDescriptionFragment(numericCleaned)
+  ) {
     return {
       raw_description: rawDescription,
       description: "",
@@ -2363,7 +2425,7 @@ function normalizeDescription(description, options = {}) {
     chosenDescription = fallbackSentence;
     fallbackSentenceUsed = true;
   }
-  const capitalized = capitalizeDescriptionOpening(chosenDescription);
+  const capitalized = capitalizeDescriptionOpening(dedupeOrganizationMentions(chosenDescription, organization));
   const metadataHeavyDescription = /\b(?:career_page|other \d+|ipo \d+|point\s*\(|locality\b|business\/productivity software|cleantech|oil\s*&\s*gas|renewable energy|revenue|valuation|headquarters|employee size)\b/i.test(finalDescription);
 
   const dominatedByNoise =
@@ -2376,7 +2438,7 @@ function normalizeDescription(description, options = {}) {
 
   return {
     raw_description: rawDescription,
-    description: dominatedByNoise || dominatedBySchemaMetadata || isArticleLikeDescription(capitalized.text) || (metadataHeavyDescription && selected.length === 0) ? "" : capitalized.text,
+    description: dominatedByNoise || dominatedBySchemaMetadata || isArticleLikeDescription(capitalized.text) || startsWithRejectedDescriptionFragment(capitalized.text) || (metadataHeavyDescription && selected.length === 0) ? "" : capitalized.text,
     diagnostics: {
       description_cleaning_applied: strippedLeading !== cleaned || capitalized.changed,
       description_leading_fragment_removed: strippedLeading !== cleaned,
@@ -2506,6 +2568,26 @@ function hasUsableDescription(value, options = {}) {
   return !isLikelyCorruptedDescription(text, options);
 }
 
+function computeContentQualityScore(job = {}) {
+  const description = normalizeWhitespace(job.description || "");
+  const rawDescription = normalizeWhitespace(job.raw_description || "");
+  const snippet = normalizeWhitespace(job.description_snippet || job.summary || "");
+  const organization = normalizeWhitespace(job.organization || "");
+  let score = 100;
+
+  if (!description) score -= 45;
+  if (description && description.length < 140) score -= 10;
+  if (startsWithRejectedDescriptionFragment(description) || startsWithRejectedDescriptionFragment(snippet)) score -= 30;
+  if (DESCRIPTION_JUNK_PATTERNS.some((pattern) => pattern.test(description)) || DESCRIPTION_JUNK_PATTERNS.some((pattern) => pattern.test(snippet))) score -= 30;
+  if (BAD_PUBLIC_CONTENT_PATTERNS.some((pattern) => pattern.test(rawDescription))) score -= 12;
+  if (organization && countRegexMatches(description, new RegExp(escapeRegExp(organization), "gi")) >= 3) score -= 10;
+  if (!hasDescriptionVerbSignal(description)) score -= 10;
+  if (!normalizeWhitespace(job.salary || "") && normalizeWhitespace(job.pay_parse_warning || "")) score -= 6;
+  if (normalizeWhitespace(job.parse_warning || "")) score -= 8;
+
+  return clampScore(score);
+}
+
 function buildDescriptionSnippet(value, maxLength = 220, options = {}) {
   const title = normalizeWhitespace(options.title || "");
   const organization = normalizeWhitespace(options.organization || "");
@@ -2523,7 +2605,7 @@ function buildDescriptionSnippet(value, maxLength = 220, options = {}) {
 
   const preferredSentence = sentences.find((sentence) => !looksLikeWeakSnippetStart(sentence)) || sentences[0];
   const finalSnippet = preferredSentence || normalizeWhitespace(normalizedDescription);
-  if (!finalSnippet || isLikelyCorruptedDescription(finalSnippet, { title, organization })) return "";
+  if (!finalSnippet || startsWithRejectedDescriptionFragment(finalSnippet) || isLikelyCorruptedDescription(finalSnippet, { title, organization })) return "";
   if (finalSnippet.length <= maxLength) return finalSnippet;
   return `${finalSnippet.slice(0, maxLength - 1).trimEnd()}…`;
 }
@@ -2591,6 +2673,7 @@ function computeParserConfidenceScore(job = {}) {
 
   if (isBadPublicContent(job.title) || isBadPublicContent(job.location)) score -= 20;
   if (!normalizeWhitespace(job.title) || !normalizeWhitespace(job.organization)) score -= 20;
+  score += Math.round(computeContentQualityScore(job) * 0.12);
 
   return Math.max(0, Math.min(100, score));
 }
@@ -2628,7 +2711,8 @@ function assessPublicJobReadiness(job = {}, options = {}) {
     ready: reasons.length === 0,
     reasons,
     parser_confidence_score: parserConfidenceScore,
-    parser_confidence: parserConfidenceScore >= 85 ? "high" : parserConfidenceScore >= 70 ? "medium" : "low",
+    parser_confidence: confidenceLabelFromScore(parserConfidenceScore),
+    content_quality_score: computeContentQualityScore(job),
     apply_url_valid: isPotentiallyHumanApplyUrl(applyUrl, { source: options.source }),
     source_url_valid: isValidSourceUrl(sourceUrl),
     description_usable: descriptionUsable
@@ -2775,8 +2859,24 @@ function normalizeJob(input = {}) {
   const workableApplyValidationReason = /workable/i.test(`${input.source || ""} ${input.source_type || ""} ${applyUrl} ${sourceUrl}`)
     ? (isPotentiallyHumanApplyUrl(applyUrl, { source: { provider: input.source_type || input.source } }) ? "human_apply_url_confirmed" : "workable_apply_url_not_human_usable")
     : "";
+  const normalizedSourceMeta = {
+    type: safeStringField(input.source_type || input.sourceType),
+    provider: safeStringField(input.source_provider || input.provider || input.source_type || input.sourceType),
+    trusted: typeof input.trusted === "boolean" ? input.trusted : false,
+    auto_publish: typeof input.auto_publish === "boolean" ? input.auto_publish : false,
+    enabled: input.source_enabled !== false
+  };
+  const parserConfidenceScore = resolveNumericField(input.parser_confidence_score ?? input.parserConfidenceScore);
+  const contentQualityScore = resolveNumericField(input.content_quality_score ?? input.contentQualityScore);
+  const failedSyncCount = Math.max(0, Number(input.failed_sync_count ?? input.failedSyncCount ?? 0) || 0);
+  const rawStaleScore = resolveNumericField(input.stale_score ?? input.staleScore);
+  const sourceConfidence = safeStringField(input.source_confidence || input.sourceConfidence || inferSourceConfidenceTier(normalizedSourceMeta));
+  const sourceClassification = safeStringField(input.source_classification || input.sourceClassification || inferSourceClassification(normalizedSourceMeta));
+  const lastCheckedAt = safeStringField(input.last_checked_at || input.lastCheckedAt || input.last_verified_at || input.lastVerifiedAt || new Date().toISOString());
+  const lastSeenAt = safeStringField(input.last_seen_at || input.lastSeenAt || lastCheckedAt);
+  const sourceStatus = normalizeSourceStatus(input.source_status || input.sourceStatus || input.verification_status || input.status, "live");
 
-  return {
+  const normalizedJob = {
     id,
     ref: safeStringField(input.ref),
     external_id: safeStringField(input.external_id || input.externalId),
@@ -2855,10 +2955,31 @@ function normalizeJob(input = {}) {
     relevance_reasons: ensureArray(input.relevance_reasons || input.relevanceReasons)
       .map((reason) => normalizeWhitespace(stringifySafe(reason)))
       .filter(Boolean),
+    parser_confidence: safeStringField(input.parser_confidence || input.parserConfidence),
+    parser_confidence_score: parserConfidenceScore,
+    content_quality_score: contentQualityScore,
+    last_checked_at: lastCheckedAt,
+    last_seen_at: lastSeenAt,
+    source_status: sourceStatus,
+    stale_score: rawStaleScore,
+    source_confidence: sourceConfidence,
+    source_classification: sourceClassification,
+    failed_sync_count: failedSyncCount,
     trusted: typeof input.trusted === "boolean" ? input.trusted : undefined,
     auto_publish: typeof input.auto_publish === "boolean" ? input.auto_publish : undefined,
     sync_origin: safeStringField(input.sync_origin)
   };
+
+  const resolvedParserConfidenceScore = normalizedJob.parser_confidence_score ?? computeParserConfidenceScore(normalizedJob);
+  normalizedJob.parser_confidence_score = clampScore(resolvedParserConfidenceScore);
+  normalizedJob.parser_confidence = safeStringField(normalizedJob.parser_confidence || confidenceLabelFromScore(normalizedJob.parser_confidence_score));
+  normalizedJob.content_quality_score = clampScore(
+    normalizedJob.content_quality_score ?? computeContentQualityScore(normalizedJob)
+  );
+  normalizedJob.stale_score = clampScore(
+    normalizedJob.stale_score ?? (normalizedJob.source_status === "stale" ? 60 : normalizedJob.source_status === "removed" ? 100 : 0)
+  );
+  return normalizedJob;
 }
 
 function normalizeSector(value) {
@@ -3005,13 +3126,21 @@ function dedupeJobs(jobs) {
 }
 
 function routeSyncedJob(job, source) {
+  const sourceConfidence = inferSourceConfidenceTier(source || {});
+  const sourceClassification = inferSourceClassification(source || {});
   const routed = normalizeJob({
     ...job,
     source_id: source.id,
     source_type: source.type,
+    source_provider: source.provider,
+    source_confidence: sourceConfidence,
+    source_classification: sourceClassification,
     trusted: Boolean(source.trusted),
     auto_publish: Boolean(source.auto_publish),
-    sync_origin: job.sync_origin || "ats"
+    sync_origin: job.sync_origin || "ats",
+    last_checked_at: new Date().toISOString(),
+    last_seen_at: new Date().toISOString(),
+    source_status: "live"
   });
   if (!routed) return null;
 
@@ -3034,7 +3163,12 @@ function routeSyncedJob(job, source) {
     return normalizeJob({
       ...routed,
       status: "active",
-      confidence: readiness.parser_confidence
+      confidence: readiness.parser_confidence,
+      parser_confidence: readiness.parser_confidence,
+      parser_confidence_score: readiness.parser_confidence_score,
+      content_quality_score: readiness.content_quality_score,
+      source_status: "live",
+      stale_score: 0
     });
   }
 
@@ -3044,6 +3178,11 @@ function routeSyncedJob(job, source) {
     auto_publish: false,
     status: "pending",
     confidence: readiness.parser_confidence,
+    parser_confidence: readiness.parser_confidence,
+    parser_confidence_score: readiness.parser_confidence_score,
+    content_quality_score: readiness.content_quality_score,
+    source_status: "needs_review",
+    stale_score: 15,
     review_reason: routed.review_reason || reviewReason || "pending_review_required",
     triage_reason: routed.triage_reason || reviewReason || "pending_review_required"
   });
@@ -3086,6 +3225,7 @@ module.exports = {
   normalizeJob,
   buildDescriptionSnippet,
   buildFallbackDescription,
+  computeContentQualityScore,
   computeParserConfidenceScore,
   extractSalaryData,
   extractPayWindows,
@@ -3103,6 +3243,7 @@ module.exports = {
   normalizeSector,
   normalizeOrganization,
   normalizePayDisplay,
+  normalizeSourceStatus,
   parseSalaryRange,
   resetParserCleanupStats,
   routeSyncedJob,

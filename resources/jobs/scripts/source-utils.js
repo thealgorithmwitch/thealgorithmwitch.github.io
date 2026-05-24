@@ -32,6 +32,12 @@ const DIRECT_PROVIDER_TYPES = new Set([
 
 const DEFAULT_CRAWL_DEPTH = 1;
 const DEFAULT_QUALITY_MODE = "pending";
+const SOURCE_CLASSIFICATIONS = {
+  TRUSTED_ATS_AUTO_SYNC: "trusted_ats_auto_sync",
+  TRUSTED_NONPROFIT_PENDING_REVIEW: "trusted_nonprofit_pending_review",
+  MANUAL_REVIEW_COMMUNITY: "manual_review_community",
+  LOW_CONFIDENCE_EXPERIMENTAL: "low_confidence_experimental"
+};
 
 function normalizeProvider(provider) {
   const normalized = String(provider || "").trim().toLowerCase();
@@ -51,17 +57,67 @@ function normalizeSourceType(type) {
   return normalized || "generic";
 }
 
-function normalizeSource(source = {}) {
-  const provider = normalizeProvider(source.provider || inferProviderFromType(source.type));
-  const url = String(source.url || source.source_url || "").trim();
+function detectAtsProvider(source = {}) {
+  const explicit = normalizeProvider(source.provider || inferProviderFromType(source.type));
+  if (explicit) return explicit;
+  const url = String(source.url || source.source_url || "").toLowerCase();
+  for (const provider of ATS_PROVIDERS) {
+    if (url.includes(provider)) return provider;
+  }
+  return "";
+}
 
-  return {
+function detectParserType(source = {}) {
+  const explicit = String(source.parser || "").trim().toLowerCase();
+  if (explicit) return explicit;
+  const type = normalizeSourceType(source.type);
+  const provider = detectAtsProvider(source);
+  if (type === "ats" && provider) return `ats:${provider}`;
+  if (provider && DIRECT_PROVIDER_TYPES.has(provider)) return `ats:${provider}`;
+  if (type === "custom") return "custom-careers-page";
+  if (type === "generic") return "generic-careers-page";
+  return type || "unknown";
+}
+
+function inferSourceClassification(source = {}) {
+  const type = normalizeSourceType(source.type);
+  const provider = detectAtsProvider(source);
+  const trusted = source.trusted === true;
+  const autoPublish = source.auto_publish === true;
+  const parserEnabled = source.parser_enabled !== false;
+  const enabled = source.enabled !== false;
+
+  if (enabled && trusted && autoPublish && type === "ats" && isDirectAtsProvider(provider)) {
+    return SOURCE_CLASSIFICATIONS.TRUSTED_ATS_AUTO_SYNC;
+  }
+  if (enabled && parserEnabled && (trusted || type === "ats" || type === "custom")) {
+    return SOURCE_CLASSIFICATIONS.TRUSTED_NONPROFIT_PENDING_REVIEW;
+  }
+  if (enabled && parserEnabled && (type === "custom" || type === "generic")) {
+    return SOURCE_CLASSIFICATIONS.MANUAL_REVIEW_COMMUNITY;
+  }
+  return SOURCE_CLASSIFICATIONS.LOW_CONFIDENCE_EXPERIMENTAL;
+}
+
+function inferSourceConfidenceTier(source = {}) {
+  const classification = inferSourceClassification(source);
+  if (classification === SOURCE_CLASSIFICATIONS.TRUSTED_ATS_AUTO_SYNC) return "high";
+  if (classification === SOURCE_CLASSIFICATIONS.TRUSTED_NONPROFIT_PENDING_REVIEW) return "medium";
+  if (classification === SOURCE_CLASSIFICATIONS.MANUAL_REVIEW_COMMUNITY) return "medium";
+  return "low";
+}
+
+function normalizeSource(source = {}) {
+  const provider = detectAtsProvider(source);
+  const url = String(source.url || source.source_url || "").trim();
+  const type = normalizeSourceType(source.type);
+  const normalized = {
     ...source,
     name: String(source.name || source.organization || source.id || "").trim(),
     organization: String(source.organization || source.name || source.id || "").trim(),
     url,
     source_url: url,
-    type: normalizeSourceType(source.type),
+    type,
     provider,
     enabled: source.enabled !== false,
     custom_sync_enabled: source.custom_sync_enabled !== false,
@@ -70,6 +126,14 @@ function normalizeSource(source = {}) {
       ? Math.max(0, Number(source.crawl_depth))
       : DEFAULT_CRAWL_DEPTH,
     quality_mode: String(source.quality_mode || DEFAULT_QUALITY_MODE).trim().toLowerCase() || DEFAULT_QUALITY_MODE
+  };
+
+  return {
+    ...normalized,
+    ats_provider: provider,
+    parser_type: detectParserType(normalized),
+    source_classification: inferSourceClassification(normalized),
+    source_confidence_tier: inferSourceConfidenceTier(normalized)
   };
 }
 
@@ -94,7 +158,12 @@ module.exports = {
   ATS_PROVIDERS,
   DEFAULT_CRAWL_DEPTH,
   DEFAULT_QUALITY_MODE,
+  SOURCE_CLASSIFICATIONS,
+  detectAtsProvider,
+  detectParserType,
   inferProviderFromType,
+  inferSourceClassification,
+  inferSourceConfidenceTier,
   isDirectAtsProvider,
   isDirectAtsSource,
   normalizeProvider,

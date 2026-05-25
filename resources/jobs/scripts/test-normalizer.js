@@ -3,6 +3,7 @@ const {
   applyTitleToMalformedTemplate,
   buildDescriptionSnippet,
   buildFallbackDescription,
+  extractMultiLocationSalaryRanges,
   extractSalaryText,
   extractPayWindows,
   hasMalformedDescriptionTemplate,
@@ -36,7 +37,12 @@ const salaryCases = [
   { input: "Salary not listed", min: null, max: null, currency: "Unknown", period: "Unknown", visible: false },
   { input: "Competitive", min: null, max: null, currency: "Unknown", period: "Unknown", visible: true, salary: "Competitive" },
   { input: "Up to $120k", min: null, max: 120000, currency: "USD", period: "year", visible: true },
-  { input: "Starting at $75k", min: 75000, max: null, currency: "USD", period: "year", visible: true }
+  { input: "Starting at $75k", min: 75000, max: null, currency: "USD", period: "year", visible: true },
+  { input: "Salary: Estimated at $75,780 – $84,200*; Based on experience", min: 75780, max: 84200, currency: "USD", period: "year", visible: true },
+  { input: "$62,000 - $69,000", min: 62000, max: 69000, currency: "USD", period: "year", visible: true },
+  { input: "Salary: Estimated at $62,280 – $69,200*; Based on experience", min: 62280, max: 69200, currency: "USD", period: "year", visible: true },
+  { input: "Salary: Estimated at $54,450 – $60,500*; Based on experience & HR policies", min: 54450, max: 60500, currency: "USD", period: "year", visible: true },
+  { input: "The HR department handles all recruiting. Salary: $75,000 - $90,000.", min: 75000, max: 90000, currency: "USD", period: "year", visible: true }
 ];
 
 for (const testCase of salaryCases) {
@@ -51,6 +57,78 @@ for (const testCase of salaryCases) {
     assert.strictEqual(actual.salary, testCase.salary, `salary mismatch for ${testCase.input}`);
   }
 }
+
+const payExtractionCases = [
+  { input: "Salary: Estimated at $75,780 – $84,200, Based on experience", min: 75780, max: 84200, period: "year" },
+  { input: "Annual salary range: $190,000-205,000, commensurate with experience", min: 190000, max: 205000, period: "year" },
+  { input: "$190,000-205,000", min: 190000, max: 205000, period: "year" },
+  { input: "$75,780 – $84,200*", min: 75780, max: 84200, period: "year" },
+  { input: "Salary range: $80k - $100k", min: 80000, max: 100000, period: "year" },
+  { input: "Compensation: $90,000 - $110,000", min: 90000, max: 110000, period: "year" },
+  { input: "Salary: Estimated at $62,280 – $69,200*; Based on experience. Interview with HR manager.", min: 62280, max: 69200, period: "year" },
+  { input: "Title: Digital Specialist Location: Remote Salary: Estimated at $75,780 – $84,200* Supervisor: Director of Marketing Reports to: VP of HR", min: 75780, max: 84200, period: "year" }
+];
+
+for (const tc of payExtractionCases) {
+  const actual = parseSalaryRange(tc.input, "");
+  assert.strictEqual(actual.salary_min, tc.min, `min mismatch for ${tc.input}`);
+  assert.strictEqual(actual.salary_max, tc.max, `max mismatch for ${tc.input}`);
+  assert.strictEqual(actual.salary_visible, true, `visible should be true for ${tc.input}`);
+  assert.strictEqual(actual.salary_period, tc.period, `period mismatch for ${tc.input}`);
+  assert.ok(actual.salary_min > 0, `min should be > 0 for ${tc.input}`);
+}
+
+const multiLocationCases = [
+  {
+    desc: "The annual salary for candidates based in San Francisco, CA, and New York, NY, is $205,300 – $228,100.\nThe annual salary for candidates based in Washington, D.C.: $195,000 – $216,700",
+    min: 195000, max: 228100, note: "Multiple location-based ranges"
+  },
+  {
+    desc: "The annual salary for candidates based in Chicago, IL is $100,000 – $120,000",
+    min: 100000, max: 120000, note: ""
+  }
+];
+
+for (const tc of multiLocationCases) {
+  const result = extractMultiLocationSalaryRanges(tc.desc);
+  assert.ok(result, `multi-location result should not be null for ${tc.desc}`);
+  assert.strictEqual(result.salary_min, tc.min, `min mismatch for multi-location case`);
+  assert.strictEqual(result.salary_max, tc.max, `max mismatch for multi-location case`);
+  assert.strictEqual(result.salary_note, tc.note, `note mismatch for multi-location case`);
+}
+
+const earthjusticeDescription = "Salary & Benefits\n\nSalary is based on location and experience.\n\nThe annual salary for candidates based in San Francisco, CA, and New York, NY, is $205,300 – $228,100.\n\nThe annual salary for candidates based in Washington, D.C.: $195,000 – $216,700\n\nBenefits: See Earthjustice employee benefits.";
+const ejResult = extractMultiLocationSalaryRanges(earthjusticeDescription);
+assert.ok(ejResult, `Earthjustice multi-location result should not be null`);
+assert.strictEqual(ejResult.salary_min, 195000, `Earthjustice min should be 195000 got ${ejResult.salary_min}`);
+assert.strictEqual(ejResult.salary_max, 228100, `Earthjustice max should be 228100 got ${ejResult.salary_max}`);
+assert.strictEqual(ejResult.salary_note, "Multiple location-based ranges");
+
+const benefitsNotSalary = extractMultiLocationSalaryRanges("Benefits: Medical, Dental, Vision, 403b retirement savings plan, Vacation");
+assert.strictEqual(benefitsNotSalary, null, `benefits text should not produce a multi-location result`);
+
+const singleRangeNotMulti = extractMultiLocationSalaryRanges("We offer a competitive salary of $80,000 - $100,000 based on experience.");
+assert.strictEqual(singleRangeNotMulti, null, `single non-location-based range should not produce multi-location result`);
+
+const goodPowerJob = normalizeJob({
+  title: "Director of Policy",
+  organization: "Good Power",
+  description: "Position Details\nAnnual salary range: $190,000-205,000, commensurate with experience\nLocation: Remote\nGenerous benefits include: Medical, Dental, Vision",
+  salary_visible: true
+});
+assert.strictEqual(goodPowerJob.salary_min, 190000, `GoodPower min should be 190000 got ${goodPowerJob.salary_min}`);
+assert.strictEqual(goodPowerJob.salary_max, 205000, `GoodPower max should be 205000 got ${goodPowerJob.salary_max}`);
+assert.strictEqual(goodPowerJob.salary_visible, true, `GoodPower salary visible should be true`);
+
+const abcJob = normalizeJob({
+  title: "Digital Engagement Specialist",
+  organization: "American Bird Conservancy",
+  description: "Digital Engagement Specialist Salary: Estimated at $75,780 – $84,200, Based on experience",
+  salary_visible: true
+});
+assert.strictEqual(abcJob.salary_min, 75780, `ABC min should be 75780 got ${abcJob.salary_min}`);
+assert.strictEqual(abcJob.salary_max, 84200, `ABC max should be 84200 got ${abcJob.salary_max}`);
+assert.strictEqual(abcJob.salary_visible, true, `ABC salary visible should be true`);
 
 const payWindows = extractPayWindows("Benefits include salary range: $70,000 - $90,000 and bonus eligibility.");
 assert.ok(payWindows.some((window) => /salary range/i.test(window) && /\$70,000 - \$90,000/i.test(window)));

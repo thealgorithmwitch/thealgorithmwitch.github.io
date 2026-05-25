@@ -156,7 +156,7 @@ function normalizeSource(source = {}) {
     provider,
     enabled: source.enabled !== false,
     sync_enabled: isSyncDisabled ? false : source.sync_enabled !== false,
-    custom_sync_enabled: isSyncDisabled ? false : source.custom_sync_enabled !== false,
+    custom_sync_enabled: source.custom_sync_enabled !== false,
     manual_review_required: isManualReview || isManualCommunity,
     temporarily_disabled: source.temporarily_disabled === true,
     requires_browser: Boolean(source.requires_browser),
@@ -194,7 +194,6 @@ function isDirectAtsSource(source) {
 function shouldUseDiscoverySync(source) {
   const normalized = normalizeSource(source);
   if (!normalized.enabled) return false;
-  if (normalized.sync_enabled === false) return false;
   if (normalized.custom_sync_enabled === false) return false;
   if (normalized.type === "ats" && isDirectAtsProvider(normalized.provider)) return false;
   return true;

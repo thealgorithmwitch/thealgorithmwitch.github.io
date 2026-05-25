@@ -280,7 +280,13 @@ function applySourcePendingControls(source, jobsOrOptions = [], maybeOptions = {
     .filter(Boolean);
   const config = getSourceControlConfig(source, { jobCount: normalizedIncoming.length || existingPendingJobs.length });
 
-  if (!config.broadSourceControls && !config.targetPositionMatching && !config.maxPendingPerSync) {
+  const isManualReviewSource = source && (
+    source.manual_review_required === true
+    || String(source.source_classification || "").trim() === "tracked_manual_org"
+    || String(source.source_classification || "").trim() === "community_submission_source"
+  );
+
+  if (isManualReviewSource || (!config.broadSourceControls && !config.targetPositionMatching && !config.maxPendingPerSync)) {
     return {
       config,
       activeReviewJobs: normalizedIncoming,

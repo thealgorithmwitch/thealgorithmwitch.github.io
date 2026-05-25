@@ -3272,6 +3272,7 @@ function routeSyncedJob(job, source) {
     source_classification: sourceClassification,
     trusted: Boolean(source.trusted),
     auto_publish: Boolean(source.auto_publish),
+    manual_review_required: source.manual_review_required === true,
     sync_origin: job.sync_origin || "ats",
     last_checked_at: new Date().toISOString(),
     last_seen_at: new Date().toISOString(),

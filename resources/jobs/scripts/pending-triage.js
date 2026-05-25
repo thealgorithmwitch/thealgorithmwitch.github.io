@@ -926,6 +926,23 @@ function classifyPendingJob(job, context = {}) {
     };
   }
 
+  const isManualReviewSource = job.manual_review_required === true
+    || String(job.source_classification || "").trim() === "tracked_manual_org"
+    || String(job.source_classification || "").trim() === "manual_review_community"
+    || String(job.source_classification || "").trim() === "community_submission_source";
+  if (isManualReviewSource) {
+    if (context.seenUrls) context.seenUrls.add(originalUrl);
+    return {
+      bucket: "review_ready",
+      job: {
+        ...nextJob,
+        triage_bucket: "review_ready",
+        triage_reason: "manual review source"
+      },
+      reason: "manual review source"
+    };
+  }
+
   if (nextJob._reject_reason) {
     const forcedReason = nextJob._quality?.rule || nextJob._quality?.reason || nextJob._reject_reason;
     return {

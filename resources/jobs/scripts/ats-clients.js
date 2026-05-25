@@ -818,38 +818,45 @@ function deriveRipplingJobType(text) {
 function ripplingJobToSchema(source, job) {
   const descriptionHtml = stringifySafe(job.descriptionHtml || job.description || "");
   const descriptionText = stripHtml(descriptionHtml || job.snippet || "");
-  const location = stringifySafe(job.location || job.locationName || "");
-  const workplaceType = /\bremote\b/i.test(`${location} ${job.title || ""} ${descriptionText}`) ? "Remote" : stringifySafe(job.workplaceType || "");
+  const jobTitle = stringifySafe(job.name || job.title || "");
+  const jobUrl = stringifySafe(job.url || job.link || job.applyUrl || source.source_url);
+  const locationArr = Array.isArray(job.locations) ? job.locations : [];
+  const firstLocation = locationArr[0] || {};
+  const location = stringifySafe(job.location || job.locationName || firstLocation.name || "");
+  const workplaceType = stringifySafe(firstLocation.workplaceType || job.workplaceType || "");
+  const resolvedWorkplaceType = /\bremote\b/i.test(`${location} ${jobTitle} ${descriptionText}`) ? "Remote" : (workplaceType || "");
   const salaryMatch = descriptionText.match(/\$[\d,]+(?:\s*-\s*\$?[\d,]+)?/);
   const functionMatch = descriptionText.match(/department:\s*([^\n]+)/i);
+  const deptName = job.department && typeof job.department === "object" ? stringifySafe(job.department.name) : stringifySafe(job.department || "");
+  const jobId = stringifySafe(job.id || job.jobId || "");
   return {
-    id: `${source.organization}-${job.id || job.jobId || job.link || job.title}`,
-    external_id: job.id || job.jobId
-      ? `rippling_${source.id}_${job.id || job.jobId}`
-      : `rippling_${stableHash(`${source.id}:${job.title || ""}:${job.link || job.applyUrl || ""}`)}`,
-    title: stringifySafe(job.title),
+    id: `${source.organization}-${jobId || jobUrl || jobTitle}`.slice(0, 200),
+    external_id: jobId
+      ? `rippling_${source.id}_${jobId}`
+      : `rippling_${stableHash(`${source.id}:${jobTitle}:${jobUrl}`)}`,
+    title: jobTitle,
     organization: source.organization,
     location: location || "Location listed on application",
     job_type: stringifySafe(job.employmentType || deriveRipplingJobType(descriptionHtml || descriptionText) || "Full-time"),
     sector: source.sector,
-    function: stringifySafe(job.department || (functionMatch ? functionMatch[1] : "") || ensureDefault(source.function_defaults)),
-    workplace_type: workplaceType,
+    function: deptName || (functionMatch ? functionMatch[1] : "") || ensureDefault(source.function_defaults),
+    workplace_type: resolvedWorkplaceType,
     salary: stringifySafe(job.salary || (salaryMatch ? salaryMatch[0] : "")),
     source: "Rippling",
-    source_url: stringifySafe(job.link || job.applyUrl || source.source_url),
-    apply_url: stringifySafe(job.link || job.applyUrl || source.source_url),
+    source_url: jobUrl || source.source_url,
+    apply_url: jobUrl || source.source_url,
     date_posted: stringifySafe(job.postedAt || job.createdAt || todayIso()),
     raw_description: descriptionHtml || stringifySafe(job.snippet || ""),
     description: descriptionText,
-    tags: [source.sector, stringifySafe(job.department), "rippling"].filter(Boolean),
+    tags: [source.sector, deptName, "rippling"].filter(Boolean),
     shared_by: "ATS Sync",
     notes: `Synced from public Rippling board ${source.source_url}.`,
     raw_payload: {
-      id: job.id || job.jobId || null,
-      title: stringifySafe(job.title),
+      id: jobId || null,
+      title: jobTitle,
       location: location,
-      apply_url: stringifySafe(job.link || job.applyUrl || source.source_url),
-      workplace_type: workplaceType,
+      apply_url: jobUrl || source.source_url,
+      workplace_type: resolvedWorkplaceType,
       job_type: stringifySafe(job.employmentType || deriveRipplingJobType(descriptionHtml || descriptionText))
     }
   };

@@ -1690,11 +1690,13 @@
       const text = String(value || "").trim();
       const normalized = normalizeTypeToken(text);
       if (!normalized) return "";
+      if (/^[—–-]+$/.test(normalized)) return "";
       if (normalized === "full time") return "Full-time";
       if (normalized === "part time") return "Part-time";
       if (normalized === "contract" || normalized === "contractor") return "Contract";
       if (normalized === "temporary" || normalized === "temp") return "Temporary";
       if (normalized === "intern" || normalized === "internship") return "Internship";
+      if (normalized === "fellowship" || normalized === "fellow" || normalized === "paid fellowship") return "Fellowship";
       return text;
     }
 

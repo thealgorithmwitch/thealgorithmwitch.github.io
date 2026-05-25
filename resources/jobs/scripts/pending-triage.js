@@ -30,6 +30,35 @@ const HIGH_VOLUME_SOURCE_PATTERNS = [
 const VERY_HIGH_RELEVANCE_SCORE = 12;
 const AUTO_PUBLISH_PUBLIC_THRESHOLD = 15;
 
+const HIGH_PRIORITY_CATEGORIES = [
+  "communications", "social media", "campaigns", "organizing",
+  "policy", "advocacy", "partnerships", "civic tech",
+  "storytelling", "content", "design", "creative",
+  "legal/contracts", "research", "public interest data",
+  "climate justice", "EJ"
+];
+
+const HIGH_PRIORITY_PATTERNS = [
+  /\bcommunications?\b/i, /\bsocial media\b/i, /\bcampaign\b/i, /\borganizing\b/i,
+  /\bpolicy\b/i, /\badvocacy\b/i, /\bpartnerships?\b/i, /\bcivic tech\b/i,
+  /\bstorytelling\b/i, /\bcontent\b/i, /\bdesign(?:er)?\b/i, /\bcreative\b/i,
+  /\blegal\b/i, /\bcontracts?\b/i, /\bresearch(?:er)?\b/i, /\bpublic interest\b/i,
+  /\bclimate justice\b/i, /\benvironmental justice\b/i
+];
+
+const MISSION_ALIGNED_ORG_PATTERNS = [
+  /\bprotect democracy\b/i, /\bearthjustice\b/i, /\bclimate justice alliance\b/i,
+  /\bwe act\b/i, /\bgreenpeace\b/i, /\b350\.?\s*org\b/i, /\bsierra club\b/i,
+  /\bhip hop caucus\b/i, /\bbullard center\b/i, /\bmovement generation\b/i,
+  /\bpartnership for public good\b/i, /\bsunrise movement\b/i,
+  /\bfresh energy\b/i, /\bgroundswell\b/i,
+  /\blouisiana bucket brigade\b/i, /\bindigenous environmental network\b/i,
+  /\bapen\b/i, /\byouth vs\b/i, /\bnrdc\b/i, /\bpublic citizen\b/i,
+  /\bdemocracy\b/, /\bcivil rights\b/i, /\bcivil liberties\b/i,
+  /\baclu\b/i, /\bcommon cause\b/i, /\bleague of women voters\b/i,
+  /\bvoting rights\b/i, /\belection security\b/i, /\bvoteshield\b/i
+];
+
 const CLIMATE_TERMS = [
   "climate",
   "clean energy",
@@ -391,6 +420,45 @@ function scoreTextHits(text, terms) {
   return terms.filter((term) => haystack.includes(term)).length;
 }
 
+function hasMissionTextMatch(text) {
+  return HIGH_PRIORITY_PATTERNS.some((p) => p.test(text)) || MISSION_ALIGNED_ORG_PATTERNS.some((p) => p.test(text));
+}
+
+function computeMissionAlignmentScore(job) {
+  const text = [
+    job.title, job.organization, job.sector, job.function,
+    job.specialization, job.description, job.raw_description,
+    Array.isArray(job.tags) ? job.tags.join(" ") : "", job.notes
+  ].filter(Boolean).join(" ").toLowerCase();
+  let score = 0;
+  if (HIGH_PRIORITY_CATEGORIES.some((c) => text.includes(c))) score += 15;
+  if (HIGH_PRIORITY_PATTERNS.some((p) => p.test(text))) score += 10;
+  if (MISSION_ALIGNED_ORG_PATTERNS.some((p) => p.test(text))) score += 25;
+  if (/\bclimate\b/.test(text)) score += 8;
+  if (/\b(?:environmental|sustainab)/i.test(text)) score += 5;
+  if (/\b(?:democracy|voting|civic|public interest)/i.test(text)) score += 12;
+  if (/\b(?:policy|advocacy|campaign)/i.test(text)) score += 7;
+  return Math.min(100, score);
+}
+
+function computeEditorialPriorityScore(job) {
+  const text = [
+    job.title, job.organization, job.sector, job.function,
+    job.specialization, job.description, job.raw_description,
+    Array.isArray(job.tags) ? job.tags.join(" ") : "", job.notes, job.location
+  ].filter(Boolean).join(" ");
+  const missionScore = computeMissionAlignmentScore(job);
+  let score = 0;
+  const reasons = [];
+  if (missionScore > 0) { score += missionScore * 0.5; reasons.push("mission_aligned"); }
+  if (hasMissionTextMatch(text)) { score += 10; reasons.push("high_priority_category"); }
+  if (/\b(?:director|vice president|vp|head of|chief)\b/i.test(text)) { score += 3; reasons.push("senior_role"); }
+  if (/\b(?:salary|compensation|pay|usd|gbp|eur)\b/i.test(text)) { score += 2; reasons.push("has_pay"); }
+  if (/\b(?:remote|hybrid)\b/i.test(text)) { score += 1; reasons.push("flexible_work"); }
+  if (job.relevance_score) score += Number(job.relevance_score) * 0.5;
+  return { score: Math.round(score * 10) / 10, reasons, missionAlignmentScore: missionScore, editorialPriorityScore: score };
+}
+
 function bytesToMegabytes(bytes) {
   return Number(bytes || 0) / (1024 * 1024);
 }
@@ -693,6 +761,14 @@ function scorePendingJob(job) {
     score += Math.min(priorityBoostCount, 4);
     reasons.push("priority_function_terms");
   }
+  if (hasMissionTextMatch(text)) {
+    score += 6;
+    reasons.push("high_priority_mission");
+  }
+  if (MISSION_ALIGNED_ORG_PATTERNS.some((p) => p.test(text))) {
+    score += 8;
+    reasons.push("mission_aligned_org");
+  }
   if (trustedContext) {
     score += 2;
     reasons.push("trusted_sustainability_source");
@@ -802,6 +878,7 @@ function classifyPendingJob(job, context = {}) {
     originalUrl &&
     !titleLooksBad &&
     !nonRoleUrl;
+  const sourceTemporarilyUnavailable = Boolean(context.sourceTemporarilyUnavailable);
   const minimumPreserveRelevant =
     scoreMeta.climateContext &&
     scoreMeta.specializationMatch &&
@@ -821,11 +898,17 @@ function classifyPendingJob(job, context = {}) {
     !broadSourceStrictFail &&
     !uncertainEmployerOrApply;
 
+  const editorialScores = computeEditorialPriorityScore(job);
+  const missionScore = computeMissionAlignmentScore(job);
+
   const nextJob = {
     ...job,
     original_url: originalUrl,
     relevance_score: scoreMeta.score,
-    relevance_reasons: scoreMeta.reasons
+    relevance_reasons: scoreMeta.reasons,
+    mission_alignment_score: missionScore,
+    editorial_priority_score: editorialScores.editorialPriorityScore,
+    resurfacing_priority_score: editorialScores.score + missionScore
   };
 
   if (exclusionReason) {
@@ -900,6 +983,18 @@ function classifyPendingJob(job, context = {}) {
     };
   }
   if ((scoreMeta.unrelatedEngineering || scoreMeta.salesRole) && !scoreMeta.climateContext) {
+    if (context.isPreservedPending && sourceTemporarilyUnavailable) {
+      if (context.seenUrls) context.seenUrls.add(originalUrl);
+      return {
+        bucket: "needs_cleanup",
+        job: {
+          ...nextJob,
+          triage_bucket: "needs_cleanup",
+          triage_reason: "preserved pending retained because source fetch failed"
+        },
+        reason: "preserved pending retained because source fetch failed"
+      };
+    }
     return {
       bucket: "rejected_noise",
       job: { ...nextJob, triage_bucket: "rejected_noise", triage_reason: "unrelated engineering or sales role without sustainability context" },
@@ -907,6 +1002,18 @@ function classifyPendingJob(job, context = {}) {
     };
   }
   if (context.isPreservedPending && !minimumPreserveRelevant && !hasManualProtection) {
+    if (sourceTemporarilyUnavailable) {
+      if (context.seenUrls) context.seenUrls.add(originalUrl);
+      return {
+        bucket: "needs_cleanup",
+        job: {
+          ...nextJob,
+          triage_bucket: "needs_cleanup",
+          triage_reason: "preserved pending retained because source fetch failed"
+        },
+        reason: "preserved pending retained because source fetch failed"
+      };
+    }
     return {
       bucket: "rejected_noise",
       job: { ...nextJob, triage_bucket: "rejected_noise", triage_reason: "preserved pending no longer meets minimum relevance" },
@@ -914,6 +1021,18 @@ function classifyPendingJob(job, context = {}) {
     };
   }
   if (broadSourceStrictFail) {
+    if (context.isPreservedPending && sourceTemporarilyUnavailable) {
+      if (context.seenUrls) context.seenUrls.add(originalUrl);
+      return {
+        bucket: "needs_cleanup",
+        job: {
+          ...nextJob,
+          triage_bucket: "needs_cleanup",
+          triage_reason: "preserved pending retained because source fetch failed"
+        },
+        reason: "preserved pending retained because source fetch failed"
+      };
+    }
     if (lenientPendingEligible) {
       if (context.seenUrls) context.seenUrls.add(originalUrl);
       return {
@@ -933,6 +1052,18 @@ function classifyPendingJob(job, context = {}) {
     };
   }
   if (!roleRelevant) {
+    if (context.isPreservedPending && sourceTemporarilyUnavailable) {
+      if (context.seenUrls) context.seenUrls.add(originalUrl);
+      return {
+        bucket: "needs_cleanup",
+        job: {
+          ...nextJob,
+          triage_bucket: "needs_cleanup",
+          triage_reason: "preserved pending retained because source fetch failed"
+        },
+        reason: "preserved pending retained because source fetch failed"
+      };
+    }
     if (lenientPendingEligible) {
       if (context.seenUrls) context.seenUrls.add(originalUrl);
       return {
@@ -1102,6 +1233,12 @@ async function triagePendingJobs(pendingJobs, publicJobs, scrapeReport) {
       .filter(Boolean)
   );
   const publicIndex = buildPublicDuplicateIndex(publicJobs);
+  const temporarilyUnavailableSourceIds = new Set(
+    (Array.isArray(scrapeReport?.sources) ? scrapeReport.sources : [])
+      .filter((source) => source && (source.source_temporarily_unavailable || source.fallback_used))
+      .map((source) => String(source.source_id || ""))
+      .filter(Boolean)
+  );
   const buckets = {
     review_ready: [],
     needs_cleanup: [],
@@ -1150,7 +1287,8 @@ async function triagePendingJobs(pendingJobs, publicJobs, scrapeReport) {
       result = classifyPendingJob(job, {
         seenUrls,
         isPreservedPending: Boolean(job.__pending_preserved),
-        manualProtection
+        manualProtection,
+        sourceTemporarilyUnavailable: temporarilyUnavailableSourceIds.has(String(job.source_id || ""))
       });
       if (override.triage_bucket === "needs_cleanup") {
         result.bucket = "needs_cleanup";

@@ -977,6 +977,86 @@ async function buildValidationReport(options = {}) {
         resurfacing_priority_score: Number(job.resurfacing_priority_score || 0)
       });
     });
+
+  const pipelineHealthWarnings = [];
+  const pipelineHealthFailures = [];
+
+  const publicOrgNames = new Set(jobs.map((j) => String(j.organization || "").trim().toLowerCase()).filter(Boolean));
+  const pendingOrgs = new Set(pending.map((j) => String(j.organization || "").trim().toLowerCase()).filter(Boolean));
+  const highPriorityOrgs = ["protect democracy", "earthjustice", "sierra club", "nrdc", "greenpeace", "350.org", "aclu"];
+
+  for (const expectedOrg of highPriorityOrgs) {
+    if (!publicOrgNames.has(expectedOrg)) {
+      pipelineHealthWarnings.push({
+        type: "warning", field: "missing_high_priority_org",
+        message: `High-priority org "${expectedOrg}" not found on public board`,
+        organization: expectedOrg
+      });
+    }
+  }
+
+  const broadSourcePendingCount = pending.filter((j) => {
+    const sid = String(j.source_id || "").toLowerCase();
+    return ["quince", "goodleap", "woolpert", "nextera-energy", "rwe", "grove-collaborative"].includes(sid);
+  }).length;
+  const broadSourceDominanceRatio = pending.length ? broadSourcePendingCount / pending.length : 0;
+  if (pending.length > 0 && broadSourceDominanceRatio > 0.4) {
+    pipelineHealthWarnings.push({
+      type: "warning", field: "excessive_broad_source_dominance",
+      message: `Broad source dominance too high: ${(broadSourceDominanceRatio * 100).toFixed(0)}% of pending (${broadSourcePendingCount}/${pending.length})`,
+      ratio: Number(broadSourceDominanceRatio.toFixed(3))
+    });
+  }
+
+  const highQualityPending = pending.filter((j) => {
+    const missionScore = Number(j.mission_alignment_score || 0);
+    const editorialScore = Number(j.editorial_priority_score || 0);
+    return missionScore >= 20 && editorialScore >= 10 && (j.hidden_from_review_default === true || j.broad_source_backlog === true);
+  });
+  if (highQualityPending.length > 5) {
+    pipelineHealthWarnings.push({
+      type: "warning", field: "high_quality_pending_trapped",
+      message: `${highQualityPending.length} high-quality pending jobs trapped in backlog/backlogged`,
+      count: highQualityPending.length,
+      examples: highQualityPending.slice(0, 5).map((j) => ({ id: j.id, title: j.title, organization: j.organization, mission_score: j.mission_alignment_score }))
+    });
+    hardValidationFailures.push({
+      id: "pipeline-health",
+      title: "High quality pending backlog",
+      organization: "",
+      reason: `high_quality_pending_trapped:${highQualityPending.length}`
+    });
+  }
+
+  if (jobs.length < 30) {
+    pipelineHealthFailures.push({
+      type: "failure", field: "public_board_shrinkage",
+      message: `Public board count (${jobs.length}) critically low`,
+      count: jobs.length
+    });
+  }
+
+  const missionAlignedPublic = jobs.filter((j) => {
+    const org = String(j.organization || "").trim().toLowerCase();
+    return highPriorityOrgs.includes(org) || /\b(?:protect democracy|earthjustice|climate justice|sierra club|nrdc|aclu)\b/i.test(org);
+  });
+  if (missionAlignedPublic.length < 3) {
+    pipelineHealthWarnings.push({
+      type: "warning", field: "low_mission_aligned_public_count",
+      message: `Only ${missionAlignedPublic.length} mission-aligned orgs on public board`,
+      count: missionAlignedPublic.length
+    });
+  }
+
+  const publicOrgCount = publicOrgNames.size;
+  if (publicOrgCount < 15) {
+    pipelineHealthWarnings.push({
+      type: "warning", field: "low_public_diversity",
+      message: `Low public org diversity: ${publicOrgCount} unique organizations`,
+      count: publicOrgCount
+    });
+  }
+
   for (const [id, count] of jobIdCounts.entries()) {
     if (count > 1) duplicateIds.push({ id, count });
   }
@@ -1136,6 +1216,8 @@ async function buildValidationReport(options = {}) {
   if (talentIconRenderViolations.length) errors.push(`talent icon render violation count ${talentIconRenderViolations.length}`);
   if (octopusValidationViolations.length) errors.push(`octopus validation violation count ${octopusValidationViolations.length}`);
   if (hardValidationFailures.length) errors.push(`hard validation failure count ${hardValidationFailures.length}`);
+  if (pipelineHealthFailures.length) errors.push(`pipeline health failure count ${pipelineHealthFailures.length}`);
+  if (pipelineHealthWarnings.length) errors.push(`pipeline health warning count ${pipelineHealthWarnings.length}`);
 
   return {
     public_records_count: publicRecordsCount,
@@ -1186,6 +1268,12 @@ async function buildValidationReport(options = {}) {
     talent_icon_render_violation_count: talentIconRenderViolations.length,
     octopus_validation_violation_count: octopusValidationViolations.length,
     hard_validation_failure_count: hardValidationFailures.length,
+    pipeline_health_warning_count: pipelineHealthWarnings.length,
+    pipeline_health_failure_count: pipelineHealthFailures.length,
+    broad_source_pending_dominance_ratio: broadSourceDominanceRatio,
+    high_quality_pending_trapped_count: highQualityPending.length,
+    mission_aligned_public_org_count: missionAlignedPublic.length,
+    public_org_diversity_count: publicOrgCount,
     source_health: sourceHealth,
     errors,
     samples: {
@@ -1227,6 +1315,8 @@ async function buildValidationReport(options = {}) {
       talent_icon_render_violations: talentIconRenderViolations.slice(0, 20),
       octopus_validation_violations: octopusValidationViolations.slice(0, 20),
       hard_validation_failures: hardValidationFailures.slice(0, 20),
+      pipeline_health_warnings: pipelineHealthWarnings.slice(0, 20),
+      pipeline_health_failures: pipelineHealthFailures.slice(0, 20),
       suspicious_specialization: suspiciousSpecialization.slice(0, 20),
       low_confidence_specialization: lowConfidenceSpecializations.slice(0, 20),
       suspicious_generic_specialization: suspiciousGenericSpecializations.slice(0, 20),

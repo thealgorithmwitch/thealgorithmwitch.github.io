@@ -17,6 +17,10 @@ const DEADLINE_PATTERNS = [
 const DEFAULT_PUBLISHED_GRACE_DAYS = 14;
 const DEFAULT_MISSING_CONFIRMATIONS_REQUIRED = 2;
 
+function toArray(value) {
+  return Array.isArray(value) ? value : [];
+}
+
 function addDays(date, days) {
   const next = new Date(date.getTime());
   next.setUTCDate(next.getUTCDate() + days);
@@ -174,6 +178,50 @@ function markRemoved(record, reason, options = {}) {
   });
 }
 
+function addSourceIdentityHistory(record, options = {}) {
+  const now = options.now instanceof Date ? options.now : new Date();
+  const currentId = record.raw_source_data?.id || record.id || "";
+  const currentTitle = record.raw_source_data?.title || "";
+  const currentOrg = record.raw_source_data?.organization || "";
+  const currentSourceId = record.raw_source_data?.source_id || record.source_id || "";
+
+  const sourceIdentityHistory = Array.isArray(record.source_identity_history) ? [...record.source_identity_history] : [];
+  const canonicalIdentityHistory = Array.isArray(record.canonical_identity_history) ? [...record.canonical_identity_history] : [];
+
+  if (currentSourceId) {
+    const exists = sourceIdentityHistory.some((e) => e.source_id === currentSourceId);
+    if (!exists) {
+      sourceIdentityHistory.push({ source_id: currentSourceId, title: currentTitle, recorded_at: now.toISOString() });
+    }
+  }
+
+  if (currentId) {
+    const exists = canonicalIdentityHistory.some((e) => e.id === currentId);
+    if (!exists) {
+      canonicalIdentityHistory.push({ id: currentId, title: currentTitle, organization: currentOrg, recorded_at: now.toISOString() });
+    }
+  }
+
+  return { ...record, source_identity_history: sourceIdentityHistory, canonical_identity_history: canonicalIdentityHistory };
+}
+
+function computeArchivalConfidenceScore(record = {}) {
+  const confirmations = Number(record.missing_from_source_confirmations || 0);
+  const requiredConfirmations = Math.max(1, Number(record.required_missing_confirmations || 2));
+  const identityHistoryCount = Math.max(1, Array.from(new Set([
+    ...toArray(record.source_identity_history).map((e) => e.source_id),
+    ...toArray(record.canonical_identity_history).map((e) => e.id)
+  ])).length);
+
+  const score = Math.max(0, Math.min(100,
+    (confirmations / requiredConfirmations) * 50 +
+    (identityHistoryCount > 1 ? 20 : 0) +
+    (record.last_verified_at ? 15 : 0) +
+    (record.first_published_at ? 15 : 0)
+  ));
+  return Math.round(score);
+}
+
 function markMissingFromSource(record, reason, options = {}) {
   const now = options.now instanceof Date ? options.now : new Date();
   const confirmationsRequired = Math.max(
@@ -187,16 +235,19 @@ function markMissingFromSource(record, reason, options = {}) {
   const graceExpired = Boolean(publishedGraceUntil && Date.parse(publishedGraceUntil) <= now.getTime());
   const canArchive = authoritativeSnapshotConfirmed && nextConfirmations >= confirmationsRequired && graceExpired;
 
+  const withIdentity = addSourceIdentityHistory(record, { now });
+
   if (canArchive) {
     return markRemoved({
-      ...record,
+      ...withIdentity,
       missing_from_source_confirmations: nextConfirmations,
-      published_grace_until: publishedGraceUntil
+      published_grace_until: publishedGraceUntil,
+      archival_confidence_score: computeArchivalConfidenceScore(withIdentity)
     }, reason, { now });
   }
 
   const nextRecord = applyFreshnessMetadata({
-    ...record,
+    ...withIdentity,
     status: "published",
     published: true,
     public_visibility: true,
@@ -206,7 +257,8 @@ function markMissingFromSource(record, reason, options = {}) {
     updated_at: now.toISOString(),
     published_grace_until: publishedGraceUntil,
     missing_from_source_confirmations: nextConfirmations,
-    required_missing_confirmations: confirmationsRequired
+    required_missing_confirmations: confirmationsRequired,
+    archival_confidence_score: computeArchivalConfidenceScore(withIdentity)
   }, {
     now,
     sourceStatus: authoritativeSnapshotConfirmed ? "grace_missing" : "sync_unverified",
@@ -337,6 +389,7 @@ module.exports = {
   CLOSED_PATTERNS,
   addDays,
   applyPublishLifecycle,
+  computeArchivalConfidenceScore,
   detectApplicationDeadline,
   extendVerification,
   isClosedPosting,
@@ -349,5 +402,6 @@ module.exports = {
   shouldShowPublicRecord,
   applyFreshnessMetadata,
   computeStaleScore,
-  isSourceOwnedRecord
+  isSourceOwnedRecord,
+  addSourceIdentityHistory
 };

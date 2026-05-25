@@ -36,8 +36,18 @@ const SOURCE_CLASSIFICATIONS = {
   TRUSTED_ATS_AUTO_SYNC: "trusted_ats_auto_sync",
   TRUSTED_NONPROFIT_PENDING_REVIEW: "trusted_nonprofit_pending_review",
   MANUAL_REVIEW_COMMUNITY: "manual_review_community",
+  MANUAL_EDITORIAL_SOURCE: "manual_editorial_source",
+  TRACKED_MANUAL_ORG: "tracked_manual_org",
+  COMMUNITY_SUBMISSION_SOURCE: "community_submission_source",
   LOW_CONFIDENCE_EXPERIMENTAL: "low_confidence_experimental"
 };
+
+const MANUAL_COMMUNITY_ORGANIZATIONS = [
+  "Sunrise Movement", "Climate Justice Alliance", "Hip Hop Caucus",
+  "Movement Generation", "Partnership for Public Good", "APEN",
+  "WE ACT", "Bullard Center", "Indigenous Environmental Network",
+  "Louisiana Bucket Brigade", "Youth Vs. Apocalypse"
+];
 
 function normalizeProvider(provider) {
   const normalized = String(provider || "").trim().toLowerCase();
@@ -79,13 +89,30 @@ function detectParserType(source = {}) {
   return type || "unknown";
 }
 
+function isManualCommunityOrg(orgName) {
+  if (!orgName) return false;
+  const normalized = String(orgName || "").toLowerCase().replace(/[^a-z0-9]+/g, " ").trim();
+  return MANUAL_COMMUNITY_ORGANIZATIONS.some((name) => normalized === name.toLowerCase().replace(/[^a-z0-9]+/g, " ").trim() || normalized.includes(name.toLowerCase().replace(/[^a-z0-9]+/g, " ").trim()));
+}
+
 function inferSourceClassification(source = {}) {
+  const explicit = String(source.source_classification || source.sourceClassification || "").trim();
+  if (explicit) return explicit;
   const type = normalizeSourceType(source.type);
   const provider = detectAtsProvider(source);
   const trusted = source.trusted === true;
   const autoPublish = source.auto_publish === true;
   const parserEnabled = source.parser_enabled !== false;
   const enabled = source.enabled !== false;
+  const org = String(source.organization || source.name || source.id || "").trim();
+  const isCommunitySubmission = source.community_submission === true;
+  const isManualOrg = isManualCommunityOrg(org) || source.manual_review_required === true;
+
+  if (isManualOrg || isCommunitySubmission) {
+    return isCommunitySubmission
+      ? SOURCE_CLASSIFICATIONS.COMMUNITY_SUBMISSION_SOURCE
+      : SOURCE_CLASSIFICATIONS.TRACKED_MANUAL_ORG;
+  }
 
   if (enabled && trusted && autoPublish && type === "ats" && isDirectAtsProvider(provider)) {
     return SOURCE_CLASSIFICATIONS.TRUSTED_ATS_AUTO_SYNC;
@@ -100,6 +127,8 @@ function inferSourceClassification(source = {}) {
 }
 
 function inferSourceConfidenceTier(source = {}) {
+  const explicit = String(source.source_confidence_tier || source.sourceConfidenceTier || source.source_confidence || "").trim().toLowerCase();
+  if (explicit) return explicit;
   const classification = inferSourceClassification(source);
   if (classification === SOURCE_CLASSIFICATIONS.TRUSTED_ATS_AUTO_SYNC) return "high";
   if (classification === SOURCE_CLASSIFICATIONS.TRUSTED_NONPROFIT_PENDING_REVIEW) return "medium";
@@ -111,17 +140,29 @@ function normalizeSource(source = {}) {
   const provider = detectAtsProvider(source);
   const url = String(source.url || source.source_url || "").trim();
   const type = normalizeSourceType(source.type);
+  const org = String(source.organization || source.name || source.id || "").trim();
+  const isManual = isManualCommunityOrg(org) || source.manual_review_required === true;
+  const isCommunity = source.community_submission === true;
   const normalized = {
     ...source,
-    name: String(source.name || source.organization || source.id || "").trim(),
-    organization: String(source.organization || source.name || source.id || "").trim(),
+    name: org,
+    organization: org,
     url,
     source_url: url,
     type,
     provider,
     enabled: source.enabled !== false,
-    custom_sync_enabled: source.custom_sync_enabled !== false,
+    sync_enabled: isManual || isCommunity ? false : source.sync_enabled !== false,
+    custom_sync_enabled: isManual || isCommunity ? false : source.custom_sync_enabled !== false,
+    manual_review_required: source.manual_review_required === true || isManual,
+    temporarily_disabled: source.temporarily_disabled === true,
     requires_browser: Boolean(source.requires_browser),
+    manual_editorial_source: isManual,
+    tracked_manual_org: isManual,
+    community_submission_source: isCommunity,
+    lowered_fetch_failure_penalty: isManual || isCommunity,
+    manual_freshness_tracking: isManual || isCommunity,
+    editorial_reminder_path: isManual || isCommunity ? "manual_editorial" : "",
     crawl_depth: Number.isInteger(Number(source.crawl_depth))
       ? Math.max(0, Number(source.crawl_depth))
       : DEFAULT_CRAWL_DEPTH,
@@ -131,7 +172,7 @@ function normalizeSource(source = {}) {
   return {
     ...normalized,
     ats_provider: provider,
-    parser_type: detectParserType(normalized),
+    parser_type: isManual || isCommunity ? "manual_editorial" : detectParserType(normalized),
     source_classification: inferSourceClassification(normalized),
     source_confidence_tier: inferSourceConfidenceTier(normalized)
   };
@@ -143,12 +184,14 @@ function isDirectAtsProvider(provider) {
 
 function isDirectAtsSource(source) {
   const normalized = normalizeSource(source);
+  if (normalized.sync_enabled === false) return false;
   return normalized.type === "ats" && isDirectAtsProvider(normalized.provider);
 }
 
 function shouldUseDiscoverySync(source) {
   const normalized = normalizeSource(source);
   if (!normalized.enabled) return false;
+  if (normalized.sync_enabled === false) return false;
   if (normalized.custom_sync_enabled === false) return false;
   if (normalized.type === "ats" && isDirectAtsProvider(normalized.provider)) return false;
   return true;
@@ -159,6 +202,7 @@ module.exports = {
   DEFAULT_CRAWL_DEPTH,
   DEFAULT_QUALITY_MODE,
   SOURCE_CLASSIFICATIONS,
+  MANUAL_COMMUNITY_ORGANIZATIONS,
   detectAtsProvider,
   detectParserType,
   inferProviderFromType,
@@ -166,6 +210,7 @@ module.exports = {
   inferSourceConfidenceTier,
   isDirectAtsProvider,
   isDirectAtsSource,
+  isManualCommunityOrg,
   normalizeProvider,
   normalizeSource,
   shouldUseDiscoverySync

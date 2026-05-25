@@ -277,6 +277,44 @@ const SALES_TERMS = [
   "closer"
 ];
 
+const MANUAL_SOURCE_NON_JOB_TITLE_PATTERNS = [
+  /^view all jobs?\s*(?:\([^)]*\))?$/i,
+  /^powered by/i,
+  /^apply now?\s*$/i,
+  /^apply\s*$/i,
+  /^find jobs?\s+in\b/i,
+  /^jobs?\s+in\b/i,
+  /^discover job opportunities?\s+in\b/i,
+  /^explore jobs?\s+opportunities?\s+in\b/i,
+  /^explore career options?\s+in\b/i,
+  /^explore programmes?\s*$/i,
+  /^find out more about\b/i,
+  /^join\s+#?teamrwe\b/i,
+  /^join our vibrant\b/i,
+  /^join our team/i,
+  /^check out our\b/i,
+  /^further insights on\b/i,
+  /^untitled\s*$/i,
+  /^welcome\s*$/i,
+  /^learn more\s*$/i,
+  /^funding opportunities?\s*$/i,
+  /^reports?\s*$/i,
+  /^articles?\s*$/i,
+  /^resources\s*$/i,
+  /^search jobs?\s*$/i,
+  /^why work here/i,
+  /^onboarding\b/i,
+  /^learning & development\b/i,
+  /^equal opportunity employer\b/i,
+  /^statements?\s*&?\s*positions?\s*$/i,
+  /^see\s+(?:nuclear|power)\s+/i,
+  /^view jobs?\s*$/i,
+  /^find open positions?\s*$/i,
+  /^emerging leaders\b/i,
+  /\b\.html\s*$/i,
+  /^\s*$/
+];
+
 const BAD_TITLE_PATTERNS = [
   /^previous$/i,
   /^next$/i,
@@ -415,6 +453,177 @@ function isNonRoleUrl(url) {
   if (/\/go\//i.test(path) || /\/content\//i.test(path)) return true;
 
   return false;
+}
+
+const MANUAL_SOURCE_NON_ROLE_URL_PATTERNS = [
+  /info\.jazzhr\.com\//i,
+  /\.applytojob\.com\/apply\/?$/i,
+  /\.applytojob\.com\/apply\/?\?/i,
+  /americanprogress\.org\/(?:article|report)\//i,
+  /energycommunities\.gov\//i,
+  /\/(?:funding-opportunities|funding|grants)\b/i,
+  /\/(?:report|reports)\//i,
+  /\/(?:article|articles)\//i,
+  /\/(?:policy|resources)\b/i,
+  /\/(?:press|press-release|news|blog)\b/i,
+  /\/(?:people|profile|team|employee|story|stories|meet-our)\//i,
+  /\/(?:career-stories?|teamrwe)\//i,
+  /\/(?:from-learning-to-leading|the-power-of-all-voices)\//i,
+  /\/global-presence\//i,
+  /\/faq\b/i,
+  /\/privacy\b/i,
+  /\/privacy-policy\b/i,
+  /\/cookie\b/i,
+  /\/legal\b/i,
+  /\/accessibility\b/i,
+  /\/terms-of-/i,
+  /\/equal-opportunity\b/i,
+  /\/ca-ccpa-notice\b/i,
+  /\?locale=/i,
+  /\?searchby=/i,
+  /nexteraenergy\.com\/careers\/join-our-team\//i,
+  /nexteraenergy\.com\/careers\/life-at-/i,
+  /nexteraenergy\.com\/careers\/(?:ca-|equal-)/i,
+  /nexteraenergy\.com\/careers\.html/i,
+  /nexteraenergy\.com\/careers\/join-our-team\.html/i,
+  /\/(?:searchby=|\?q=|search\?)/i,
+  /\/(?:job-offers|job-offers\/)\?(?:.*[?&])?(?:ci|cn)=/i,
+  /rwe\.com\/en\/press\//i,
+  /rwe\.com\/en\/rwe-careers-portal\/teamrwe\//i,
+  /rwe\.com\/en\/rwe-careers-portal\/why-work-here\//i,
+  /rwe\.com\/en\/rwe-careers-portal\/experienced-professionals\//i,
+  /rwe\.com\/en\/rwe-careers-portal\/what-we-offer\//i,
+  /rwe\.com\/en\/rwe-careers-portal\/early-careers\//i,
+  /rwe\.com\/en\/rwe-careers-portal\/careers-asia\//i,
+  /rwe\.com\/en\/rwe-careers-portal\/(?:#|$)/i,
+  /pl\.rwe\.com\//i,
+  /uk\.rwe\.com\//i,
+  /fr\.rwe\.com\//i,
+  /americas\.rwe\.com\//i,
+  /rwe\.com\/en\/press\//i
+];
+
+function isManualSourceNonRoleUrl(url, title) {
+  const normalized = normalizeUrl(url);
+  if (!normalized) return { rejected: true, reason: "missing_url" };
+
+  const titleClean = String(title || "").toLowerCase().trim();
+
+  if (MANUAL_SOURCE_NON_ROLE_URL_PATTERNS.some((p) => p.test(normalized))) {
+    return { rejected: true, reason: "non_job_url" };
+  }
+
+  const parsed = new URL(normalized);
+  const host = parsed.hostname.toLowerCase();
+  const path = parsed.pathname.toLowerCase();
+  const query = parsed.search.toLowerCase();
+
+  if (host.includes("rwe.com") && /\/job-offers\//i.test(path)) {
+    if (/[?&](?:ci|cn)=/i.test(query) && !/\/\d{6,}\//i.test(path)) {
+      return { rejected: true, reason: "rwe_location_search_page" };
+    }
+    if (/\/job-offers\/?$/i.test(path) && !/\/\d{6,}\//i.test(path)) {
+      return { rejected: true, reason: "rwe_job_offers_listing" };
+    }
+  }
+
+  if (host.includes("nexteraenergy.com") && !host.includes("jobs.nexteraenergy.com")) {
+    if (/\/(?:join-our-team|life-at|recent-grads|field-jobs)/i.test(path)) {
+      return { rejected: true, reason: "nextera_category_page" };
+    }
+  }
+
+  if (host.includes("jobs.nexteraenergy.com")) {
+    if (!/\/job\//i.test(path) && !/\/job\//i.test(decodeURIComponent(path))) {
+      if (/\/(?:search|$)/i.test(path) && !titleClean.includes("product manager") && !titleClean.includes("director")) {
+        return { rejected: true, reason: "nextera_search_or_home" };
+      }
+    }
+  }
+
+  if (host.includes("applytojob.com") && host !== "louisianabucketbrigade.applytojob.com") {
+    if (/\/apply\/?$/i.test(path) || /\/apply\/?\?/i.test(path)) {
+      return { rejected: true, reason: "applytojob_listing_page" };
+    }
+  }
+
+  return { rejected: false, reason: null };
+}
+
+function isManualSourceNonJobTitle(title) {
+  const clean = String(title || "").trim();
+  if (!clean) return { rejected: true, reason: "empty_title" };
+  if (MANUAL_SOURCE_NON_JOB_TITLE_PATTERNS.some((p) => p.test(clean))) {
+    return { rejected: true, reason: "generic_non_job_title" };
+  }
+  const lower = clean.toLowerCase();
+  if (/^[a-z\s]+$/.test(clean) && clean.split(/\s+/).length <= 2 && !/\b(?:manager|director|analyst|specialist|lead|coordinator|associate|officer|engineer|consultant|representative|advisor|supervisor|technician|assistant|head|vp|chief|president|attorney|counsel|developer|architect|scientist|planner|writer|editor|producer|strategist)\b/i.test(lower)) {
+    return { rejected: true, reason: "generic_non_specific_title" };
+  }
+  return { rejected: false, reason: null };
+}
+
+function attemptTitleRecovery(job) {
+  const rawTitle = String(job.title || "");
+  const rawDesc = String(job.raw_description || job.description || "");
+  const recovered = rawTitle;
+  if (!rawTitle.trim() || MANUAL_SOURCE_NON_JOB_TITLE_PATTERNS.some((p) => p.test(rawTitle.trim()))) {
+    if (/GIS\s+Manager/i.test(rawDesc)) return "GIS Manager";
+    if (/donor\s+engagement\s+manager/i.test(rawDesc)) return "Donor Engagement Manager";
+    const titleMatch = rawDesc.match(/\b([A-Z][a-z]+(?:\s+[A-Z][a-z]+){0,4})\s+(?:Manager|Director|Coordinator|Specialist|Analyst|Lead|Officer|Engineer|Consultant|Advisor|Associate|Supervisor|Attorney|Counsel|Developer|Architect|Scientist|Planner|Writer|Editor|Producer|Strategist|Head|VP|Chief|President)\b/i);
+    if (titleMatch && titleMatch[1]) {
+      const fullStart = titleMatch[0];
+      if (fullStart.length >= 6 && fullStart.length <= 150) return fullStart;
+    }
+  }
+  return recovered;
+}
+
+function looksLikeRealJobUrl(url) {
+  const normalized = normalizeUrl(url);
+  if (!normalized) return false;
+  try {
+    const parsed = new URL(normalized);
+    const path = parsed.pathname.toLowerCase();
+    if (/\/postings\//i.test(path)) return true;
+    if (/\/job\//i.test(path)) return true;
+    if (/\/jobs\//i.test(path) && /\/\d{6,}\//i.test(path)) return true;
+    if (/\/apply\//i.test(path) && path.split("/").filter(Boolean).length >= 3) return true;
+    if (/-[A-Z]{2}-\d{5,}\//i.test(path)) return true;
+    return false;
+  } catch (_error) {
+    return false;
+  }
+}
+
+function validateManualSourceCandidate(job) {
+  let title = String(job.title || "").trim();
+  const organization = String(job.organization || "").trim();
+  const url = job.original_url || job.apply_url || job.source_url;
+  const recovered = attemptTitleRecovery(job);
+  if (recovered && recovered !== title) {
+    title = recovered;
+    job.title = recovered;
+    job.title_confidence = "medium";
+  }
+  const titleResult = isManualSourceNonJobTitle(title);
+  if (titleResult.rejected) {
+    if (titleResult.reason === "empty_title" && url && !isManualSourceNonRoleUrl(url, title).rejected && looksLikeRealJobUrl(url)) {
+      return { valid: false, bucket: "needs_cleanup", reason: "manual_source_empty_title_recoverable_job_url" };
+    }
+    return { valid: false, bucket: "rejected_noise", reason: `manual_source_${titleResult.reason}` };
+  }
+  if (!url) {
+    return { valid: false, bucket: "rejected_noise", reason: "manual_source_missing_url" };
+  }
+  const urlResult = isManualSourceNonRoleUrl(url, title);
+  if (urlResult.rejected) {
+    return { valid: false, bucket: "rejected_noise", reason: `manual_source_${urlResult.reason}` };
+  }
+  if (!organization) {
+    return { valid: false, bucket: "rejected_noise", reason: "manual_source_missing_organization" };
+  }
+  return { valid: true, bucket: "review_ready", reason: null };
 }
 
 function hasAny(text, terms) {
@@ -931,15 +1140,28 @@ function classifyPendingJob(job, context = {}) {
     || String(job.source_classification || "").trim() === "manual_review_community"
     || String(job.source_classification || "").trim() === "community_submission_source";
   if (isManualReviewSource) {
+    const validation = validateManualSourceCandidate(job);
+    if (validation.valid) {
+      if (context.seenUrls) context.seenUrls.add(originalUrl);
+      return {
+        bucket: "review_ready",
+        job: {
+          ...nextJob,
+          triage_bucket: "review_ready",
+          triage_reason: "manual review source"
+        },
+        reason: "manual review source"
+      };
+    }
     if (context.seenUrls) context.seenUrls.add(originalUrl);
     return {
-      bucket: "review_ready",
+      bucket: validation.bucket || "rejected_noise",
       job: {
         ...nextJob,
-        triage_bucket: "review_ready",
-        triage_reason: "manual review source"
+        triage_bucket: validation.bucket || "rejected_noise",
+        triage_reason: validation.reason || "manual_source_rejected"
       },
-      reason: "manual review source"
+      reason: validation.reason || "manual_source_rejected"
     };
   }
 

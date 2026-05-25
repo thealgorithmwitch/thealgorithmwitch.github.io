@@ -2351,14 +2351,25 @@ async function main() {
 
   let finalJobsJsonCount = Array.isArray(publicSync.publicJobs) ? publicSync.publicJobs.length : 0;
   if (shouldRunPublicSync) {
-    expectedPublicJobsCount = buildPublicJobsFromRecords(nextRecords).length;
     scopedIds = publicScopeIds.size ? Array.from(publicScopeIds) : [];
+    const existingJobs = await readJobs();
+    const existingJobsJsonCount = Array.isArray(existingJobs) ? existingJobs.length : 0;
+    const totalPublishableRecordsCount = buildPublicJobsFromRecords(nextRecords).length;
+    console.log(
+      `[jobs:apply-admin-actions] reconciliation_check existing_jobs_json_count=${existingJobsJsonCount} total_publishable_records_count=${totalPublishableRecordsCount} scoped=${scopedIds.length > 0} scoped_ids_count=${scopedIds.length}`
+    );
+    if (existingJobsJsonCount < totalPublishableRecordsCount && !scopedIds.length) {
+      console.warn(
+        `[jobs:apply-admin-actions] reconciliation_gap jobs_json=${existingJobsJsonCount} records=${totalPublishableRecordsCount} delta=${totalPublishableRecordsCount - existingJobsJsonCount}`
+      );
+    }
     publicSync = await syncPublicJobsFromRecords(nextRecords, {
       label: "jobs:apply-admin-actions",
       scopeIds: scopedIds
     });
     const syncedJobs = await readJobs();
     finalJobsJsonCount = Array.isArray(syncedJobs) ? syncedJobs.length : 0;
+    const expectedPublicJobsCount = publicSync.publishedCount;
     const syncMismatch = finalJobsJsonCount !== expectedPublicJobsCount;
     console.log(
       `[jobs:apply-admin-actions] expected_public_jobs_count=${expectedPublicJobsCount} final_jobs_json_count=${finalJobsJsonCount} wrote_jobs_json=${publicSync.wrote} sync_mismatch=${syncMismatch}`

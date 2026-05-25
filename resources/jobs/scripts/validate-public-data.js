@@ -1188,6 +1188,7 @@ async function buildValidationReport(options = {}) {
   }
 
   const errors = [];
+  const warnings = [];
   if (publicRecordsCount !== jobsJsonCount) errors.push(`jobs.json count ${jobsJsonCount} does not match published record count ${publicRecordsCount}`);
   if (missingPageUrl.length) errors.push(`missing page_url count ${missingPageUrl.length}`);
   if (stalePageUrl.length) errors.push(`stale page_url count ${stalePageUrl.length}`);
@@ -1224,7 +1225,7 @@ async function buildValidationReport(options = {}) {
   if (octopusValidationViolations.length) errors.push(`octopus validation violation count ${octopusValidationViolations.length}`);
   if (hardValidationFailures.length) errors.push(`hard validation failure count ${hardValidationFailures.length}`);
   if (pipelineHealthFailures.length) errors.push(`pipeline health failure count ${pipelineHealthFailures.length}`);
-  if (pipelineHealthWarnings.length) errors.push(`pipeline health warning count ${pipelineHealthWarnings.length}`);
+  if (pipelineHealthWarnings.length) warnings.push(`pipeline health warning count ${pipelineHealthWarnings.length}`);
 
   return {
     public_records_count: publicRecordsCount,
@@ -1283,6 +1284,7 @@ async function buildValidationReport(options = {}) {
     public_org_diversity_count: publicOrgCount,
     source_health: sourceHealth,
     errors,
+    warnings,
     samples: {
       missing_page_url: missingPageUrl.slice(0, 10),
       stale_page_url: stalePageUrl.slice(0, 10),

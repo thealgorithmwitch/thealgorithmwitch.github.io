@@ -73,15 +73,11 @@ jobs:
       - name: Build job pages
         run: npm --prefix "$JOBS_DIR" run jobs:build-pages
 
-      - name: Diagnose validation after admin actions
-        if: always()
-        shell: bash
-        run: |
-          npm --prefix "$JOBS_DIR" run jobs:validate-public-data || true
-          npm --prefix "$JOBS_DIR" run jobs:validate-source-expansion || true
+      - name: Validate public data after admin actions
+        run: npm --prefix "$JOBS_DIR" run jobs:validate-public-data
 
-      - name: Validate after admin actions
-        run: npm --prefix "$JOBS_DIR" run jobs:validate
+      - name: Validate source expansion after admin actions
+        run: npm --prefix "$JOBS_DIR" run jobs:validate-source-expansion
 
       - name: Audit source coverage
         if: always()

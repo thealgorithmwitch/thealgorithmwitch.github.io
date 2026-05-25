@@ -1,126 +1,97 @@
-name: Jobs Freshness Audit
+Overall: usable, but not safe enough yet.
 
-on:
-  workflow_dispatch:
-  schedule:
-    - cron: "30 12 * * *"
+Main problems:
 
-permissions:
-  contents: write
+1. Pre-audit validation can block the audit
+Current:
+- validate runs before freshness audit
 
-concurrency:
-  group: jobs-board-state
-  cancel-in-progress: false
+Problem:
+- stale source-health / fetch_failed state can fail before the audit can repair or refresh freshness state
 
-jobs:
-  freshness-audit:
-    runs-on: ubuntu-latest
+Fix:
+- remove pre-audit validation
+- or make it non-blocking
 
-    env:
-      JOBS_DIR: resources/jobs
+2. Build pages is missing
+After freshness audit writes changes, pages may be stale.
 
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
+Add:
+npm --prefix "$JOBS_DIR" run jobs:build-pages
 
-      - name: Set up Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: "24"
-          cache: npm
-          cache-dependency-path: resources/jobs/package.json
+3. Source coverage audit is missing
+Freshness changes should update source reporting.
 
-      - name: Install dependencies if needed
-        shell: bash
-        run: |
-          if [ -f "$JOBS_DIR/package-lock.json" ] || [ -f "$JOBS_DIR/npm-shrinkwrap.json" ]; then
-            npm --prefix "$JOBS_DIR" ci
-          elif node -e "const p=require('./resources/jobs/package.json'); const hasDeps=Object.keys(p.dependencies||{}).length > 0 || Object.keys(p.devDependencies||{}).length > 0; process.exit(hasDeps ? 0 : 1)"; then
-            npm --prefix "$JOBS_DIR" install
-          else
-            echo "No package dependencies declared. Skipping npm install."
-          fi
+Add:
+npm --prefix "$JOBS_DIR" run jobs:audit-source-coverage
 
-      - name: Validate freshness audit scripts
-        run: |
-          node --check "$JOBS_DIR/scripts/freshness-audit.js"
-          node --check "$JOBS_DIR/scripts/job-normalizer.js"
-          node --check "$JOBS_DIR/scripts/public-records.js"
-          node --check "$JOBS_DIR/scripts/public-jobs.js"
+4. Commit paths are incomplete
+Currently commits only narrow freshness files.
 
-      - name: Validate public data before audit
-        run: npm --prefix "$JOBS_DIR" run jobs:validate
+Add:
+- "$JOBS_DIR/source-health-latest.json"
+- "$JOBS_DIR/reports"
+- "$JOBS_DIR/pages"
 
+5. Hardcoded paths still appear
+Use "$JOBS_DIR" consistently instead of resources/jobs.
+
+6. Validation order should be:
+- freshness dry run
+- freshness write
+- build pages
+- validate
+- check blocked sources
+- audit source coverage
+- commit
+
+7. Artifact paths should include:
+- reports/**
+- pages/**
+- source-health-latest.json
+
+8. This workflow should not run sync-sources
+Freshness audit is not the same as source sync. It should audit existing state, not discover new jobs.
+
+9. Dry run + write is good
+Keep both.
+
+10. Concurrency is good
+jobs-board-state is correct.
+
+Recommended order:
+
+1. checkout
+2. setup node
+3. install dependencies
+4. node --check scripts
+5. freshness audit dry run
+6. freshness audit write
+7. build pages
+8. validate
+9. check blocked sources
+10. audit source coverage
+11. detect changes
+12. upload artifacts
+13. commit changes
+
+Suggested fixed core steps:
+
+```yaml
       - name: Run freshness audit dry run
         run: npm --prefix "$JOBS_DIR" run jobs:freshness-audit -- --dry-run
 
       - name: Run freshness audit write
         run: npm --prefix "$JOBS_DIR" run jobs:freshness-audit -- --write
 
-      - name: Validate public data after audit
+      - name: Build job pages
+        run: npm --prefix "$JOBS_DIR" run jobs:build-pages
+
+      - name: Validate after audit
         run: npm --prefix "$JOBS_DIR" run jobs:validate
 
       - name: Guard blocked sources
         run: npm --prefix "$JOBS_DIR" run jobs:check-blocked-sources
 
-      - name: Check for freshness audit changes
-        id: changes
-        shell: bash
-        run: |
-          CHANGED="$(git status --porcelain -- \
-            resources/jobs/job-records.json \
-            resources/jobs/jobs.json \
-            resources/jobs/pending-synced-jobs.json \
-            resources/jobs/reports/freshness-audit-latest.json \
-            resources/jobs/reports/freshness-audit-risky-changes.json \
-            resources/jobs/reports/freshness-audit-risky-changes.md \
-            resources/jobs/validation-snapshots/latest.json \
-            || true)"
-          if [ -n "$CHANGED" ]; then
-            echo "changed=true" >> "$GITHUB_OUTPUT"
-            echo "Detected freshness audit changes:"
-            echo "$CHANGED"
-          else
-            echo "changed=false" >> "$GITHUB_OUTPUT"
-            echo "No freshness audit changes detected."
-          fi
-
-      - name: Upload freshness audit artifacts
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: jobs-freshness-audit-${{ github.run_id }}
-          if-no-files-found: warn
-          path: |
-            resources/jobs/job-records.json
-            resources/jobs/jobs.json
-            resources/jobs/pending-synced-jobs.json
-            resources/jobs/reports/freshness-audit-latest.json
-            resources/jobs/reports/freshness-audit-risky-changes.json
-            resources/jobs/reports/freshness-audit-risky-changes.md
-            resources/jobs/validation-snapshots/latest.json
-
-      - name: Commit and push freshness audit changes
-        if: steps.changes.outputs.changed == 'true'
-        shell: bash
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add \
-            resources/jobs/job-records.json \
-            resources/jobs/jobs.json \
-            resources/jobs/pending-synced-jobs.json \
-            resources/jobs/reports/freshness-audit-latest.json \
-            resources/jobs/reports/freshness-audit-risky-changes.json \
-            resources/jobs/reports/freshness-audit-risky-changes.md \
-            resources/jobs/validation-snapshots/latest.json
-          if git diff --cached --quiet; then
-            echo "No staged changes to commit."
-            exit 0
-          fi
-          git commit -m "Run jobs freshness audit"
-          git push
-
-      - name: Report no-op
-        if: steps.changes.outputs.changed != 'true'
-        run: echo "No commit created."
+      - name: Audit source coverage
+        run: npm --prefix "$JOBS_DIR" run jobs:audit-source-coverage

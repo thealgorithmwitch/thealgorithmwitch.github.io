@@ -58,14 +58,18 @@ jobs:
           node --check "$JOBS_DIR/scripts/public-jobs.js"
           node --check "$JOBS_DIR/scripts/audit-source-coverage.js"
 
-      - name: Validate public data before sync
-        run: npm --prefix "$JOBS_DIR" run jobs:validate
-
       - name: Sync ATS sources
         run: npm --prefix "$JOBS_DIR" run jobs:sync-sources
 
       - name: Sync custom / manual sources
         run: npm --prefix "$JOBS_DIR" run jobs:sync-custom
+
+      - name: Enrich pending descriptions
+        if: hashFiles('${{ env.JOBS_DIR }}/scripts/enrich-pending-descriptions.js') != ''
+        run: node "$JOBS_DIR/scripts/enrich-pending-descriptions.js"
+
+      - name: Editorial pipeline stabilization
+        run: npm --prefix "$JOBS_DIR" run jobs:editorial-stabilization
 
       - name: Snapshot queued admin actions
         run: npm --prefix "$JOBS_DIR" run jobs:snapshot-admin-actions
@@ -85,7 +89,13 @@ jobs:
       - name: Guard blocked sources
         run: npm --prefix "$JOBS_DIR" run jobs:check-blocked-sources
 
-      - name: Validate public data after admin sync
+      - name: Validate public data after sync
+        run: npm --prefix "$JOBS_DIR" run jobs:validate-public-data
+
+      - name: Validate source expansion after sync
+        run: npm --prefix "$JOBS_DIR" run jobs:validate-source-expansion
+
+      - name: Full validation after sync
         run: npm --prefix "$JOBS_DIR" run jobs:validate
 
       - name: Build job pages

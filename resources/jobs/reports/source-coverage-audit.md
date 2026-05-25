@@ -1,11 +1,11 @@
 # Source Coverage Audit
 
-Generated: 2026-05-25T01:28:38.909Z
+Generated: 2026-05-25T02:33:23.930Z
 
 ## Summary
 
-- Total sources: 167
-- Total prospects: 90
+- Total sources: 186
+- Total prospects: 91
 - Total public organizations: 32
 - Total pending organizations: 31
 
@@ -18,21 +18,27 @@ Generated: 2026-05-25T01:28:38.909Z
 | Active Minds | active-minds |  | low_confidence_experimental |  | 0 | 0 | 0 |
 | ADP Employer ca44b751 | adp-ca44b751 | adp | low_confidence_experimental |  | 0 | 0 | 0 |
 | ADP Employer cde26da5 | adp-cde26da5 | adp | low_confidence_experimental |  | 0 | 0 | 0 |
-| Advanced Energy United | advanced-energy-united |  | low_confidence_experimental |  | 0 | 0 | 0 |
+| Advanced Energy United | advanced-energy-united | rippling | tracked_manual_org |  | 0 | 0 | 0 |
 | AES Corporation | aes | workday | low_confidence_experimental |  | 0 | 0 | 0 |
 | AllTrails | alltrails | lever | trusted_nonprofit_pending_review | sync_error | 5 | 0 | 0 |
+| Amazon Watch | amazon-watch |  | manual_review_community |  | 0 | 0 | 0 |
 | American Bird Conservancy | american-bird-conservancy | paylocity | trusted_nonprofit_pending_review |  | 0 | 0 | 3 |
 | American Council on Renewable Energy | acore |  | manual_review_community |  | 0 | 0 | 0 |
 | Antora Energy | antora |  | low_confidence_experimental |  | 0 | 0 | 0 |
+| APEN | apen4ej |  | manual_review_community |  | 0 | 0 | 0 |
+| Appalachian Voices | appalachian-voices |  | manual_review_community |  | 0 | 0 | 0 |
 | Arevon Energy | arevon |  | low_confidence_experimental |  | 0 | 1 | 5 |
 | Array Technologies | array-technologies | workday | low_confidence_experimental |  | 0 | 0 | 0 |
 | Ascent | ascent | paylocity | trusted_nonprofit_pending_review |  | 0 | 2 | 2 |
 | Asian Pacific Environmental Network | asian-pacific-environmental-network |  | manual_review_community |  | 0 | 0 | 0 |
 | Aspen Institute | aspen-institute |  | low_confidence_experimental |  | 0 | 0 | 0 |
+| Black Girl Environmentalist | black-girl-environmentalist |  | manual_review_community |  | 0 | 0 | 0 |
 | BlocPower | blocpower |  | low_confidence_experimental |  | 0 | 0 | 0 |
+| BlueGreen Alliance | bluegreen-alliance |  | manual_review_community |  | 0 | 0 | 0 |
 | Boldr | boldr | workable | low_confidence_experimental | sync_error | 6 | 0 | 0 |
 | Boundary Stone Partners | boundary-stone |  | low_confidence_experimental |  | 0 | 0 | 0 |
 | Brightline Defense | brightline-defense |  | manual_review_community |  | 0 | 0 | 0 |
+| Bullard Center for Environmental and Climate Justice | bullard-center |  | manual_review_community |  | 0 | 0 | 0 |
 | California Environmental Justice Alliance | california-environmental-justice-alliance |  | manual_review_community |  | 0 | 0 | 0 |
 | CALSTART | calstart | lever | trusted_nonprofit_pending_review | sync_error | 5 | 0 | 8 |
 | Canadian Solar | canadian-solar | workday | low_confidence_experimental |  | 0 | 0 | 0 |
@@ -41,6 +47,7 @@ Generated: 2026-05-25T01:28:38.909Z
 | CEEZER | ceezer | ashby | low_confidence_experimental | sync_error | 5 | 0 | 0 |
 | Ceres | ceres |  | low_confidence_experimental |  | 0 | 0 | 0 |
 | ChargerHelp! | chargerhelp | recruitee | trusted_nonprofit_pending_review | sync_error | 5 | 1 | 0 |
+| Citizen's Climate Lobby | citizens-climate-lobby |  | manual_review_community |  | 0 | 0 | 0 |
 | Clean Air Task Force | clean-air-task-force |  | low_confidence_experimental |  | 0 | 0 | 0 |
 | Clean Energy Trust | clean-energy-trust | bamboohr | trusted_nonprofit_pending_review | sync_error | 5 | 0 | 0 |
 | Clean Slate Initiative | clean-slate-initiative |  | low_confidence_experimental |  | 0 | 0 | 0 |
@@ -51,18 +58,11 @@ Generated: 2026-05-25T01:28:38.909Z
 | Climate Justice Alliance | climate-justice-alliance |  | manual_review_community |  | 0 | 0 | 0 |
 | Climate Mayors | climate-mayors |  | low_confidence_experimental |  | 0 | 0 | 0 |
 | ClimateWorks Foundation | climateworks-foundation |  | trusted_nonprofit_pending_review |  | 0 | 0 | 0 |
+| Conservation International | conservation-international |  | manual_review_community |  | 0 | 0 | 0 |
 | Conservation Law Foundation | conservation-law-foundation |  | manual_review_community |  | 0 | 0 | 0 |
 | Creator Accountability Network | creator-accountability-network | bamboohr | trusted_nonprofit_pending_review | sync_error | 5 | 0 | 0 |
 | Creo Syndicate | creo-syndicate |  | low_confidence_experimental |  | 0 | 0 | 0 |
 | Crux | crux-climate |  | low_confidence_experimental |  | 0 | 0 | 0 |
-| Dataiku | dataiku | greenhouse | low_confidence_experimental |  | 0 | 0 | 0 |
-| Deep South Center for Environmental Justice | deep-south-center-for-environmental-justice |  | manual_review_community |  | 0 | 0 | 0 |
-| Dimensional Energy | dimensional-energy |  | low_confidence_experimental |  | 0 | 0 | 0 |
-| Dylan Green | dylan-green |  | low_confidence_experimental |  | 0 | 0 | 1 |
-| Earth Force | earthforce | ashby | trusted_nonprofit_pending_review | sync_error | 5 | 0 | 0 |
-| Earthjustice | earthjustice |  | low_confidence_experimental |  | 0 | 0 | 7 |
-| Earthworks | earthworks |  | manual_review_community |  | 0 | 0 | 0 |
-| EDP | edp |  | low_confidence_experimental |  | 0 | 0 | 2 |
 
 ## Public Job Coverage
 
@@ -120,37 +120,20 @@ Generated: 2026-05-25T01:28:38.909Z
 | --- | --- | --- | --- |
 | 1% for the Planet | https://www.onepercentfortheplanet.org/ | https://www.onepercentfortheplanet.org/careers | add_to_sources_json |
 | Alliance to Save Energy | https://www.ase.org/ | https://www.ase.org/careers | add_to_sources_json |
-| Amazon Watch | https://amazonwatch.org/ | https://amazonwatch.org/about/jobs | add_to_sources_json |
-| Appalachian Voices | https://appvoices.org/ | https://appvoices.org/about-us/jobs | add_to_sources_json |
 | Arbor Day Foundation | https://www.arborday.org/ | https://www.arborday.org/careers | add_to_sources_json |
 | Avōq |  | https://jobs.workable.com/view/kpYa2WZ8M2TWGCiFtFJS1o/hybrid-communications-fellow---reputation-management-in-new-york-at-av%C5%8Dq | add_to_sources_json |
-| Black Girl Environmentalist | https://blackgirlenvironmentalist.org/ | https://blackgirlenvironmentalist.org/careers | add_to_sources_json |
-| BlueGreen Alliance | https://www.bluegreenalliance.org/ | https://www.bluegreenalliance.org/about/jobs | add_to_sources_json |
-| Bullard Center for Environmental and Climate Justice | https://bullardcenter.org/ |  | add_to_sources_json |
-| Citizen's Climate Lobby | https://citizensclimatelobby.org/ | https://citizensclimatelobby.org/about-ccl/careers | add_to_sources_json |
 | Climate Reality Project | https://www.climaterealityproject.org/ | https://www.climaterealityproject.org/careers | add_to_sources_json |
 | ConnectDER |  | https://jobs.elementalimpact.com/jobs | add_to_sources_json |
-| Conservation International | https://www.conservation.org/ | https://www.conservation.org/about-us/careers | add_to_sources_json |
 | Convergent Energy and Power |  | https://jobs.workable.com/view/sS1h4NbvgxbJZrFqFfSEDA/remote-director%2C-marketing-operations-in-united-states-at-convergent-energy-and-power | add_to_sources_json |
 | Education Reform Now Advocacy |  | https://jobs.workable.com/view/ttoHVPpzzztUWErqjEExef/remote-senior-director-of-partnerships-%26-advocacy-in-united-states-at-education-reform-now-advocacy | add_to_sources_json |
-| Emerald Cities Collaborative | https://emeraldcities.org/ | https://emeraldcities.org/careers | add_to_sources_json |
 | Energy Infrastructure Partners LLC |  | https://jobs.workable.com/view/71KVJnn2zzEaqB5AeEvfUa/hybrid-senior-outreach-representative-in-los-angeles-at-energy-infrastructure-partners-llc | add_to_sources_json |
-| Extinction Rebellion | https://rebellion.global/ |  | add_to_sources_json |
 | Grassroots Carbon |  | https://jobs.workable.com/view/66JEqQTu5Aaik8B4Y67gVh/director%2C-brand-reach-%26-communications-in-san-antonio-at-grassroots-carbon | add_to_sources_json |
 | Mitti Labs |  | https://jobs.workable.com/view/uWSQQPVWb4Lm2PkXjVyRqg/remote-program-manager%2C-operations---tamil-nadu-in-tamil-nadu-at-mitti-labs | add_to_sources_json |
-| Partnership for Public Good | https://ppgbuffalo.org/ | https://ppgbuffalo.org/jobs | add_to_sources_json |
 | PLUS Communications |  | https://jobs.workable.com/view/7mXsGiweVFByL5UehwA27z/hybrid-digital-director-in-arlington-at-plus-communications | add_to_sources_json |
-| Power Forward Communities | https://powerforwardcommunities.org/ |  | add_to_sources_json |
-| Rainforest Action Network | https://www.ran.org/ | https://www.ran.org/about/jobs | add_to_sources_json |
-| RE-volv | https://re-volv.org/ | https://re-volv.org/careers | add_to_sources_json |
 | Resource Innovations |  | https://jobs.elementalimpact.com/jobs | add_to_sources_json |
 | Rocky Mountain Institute (RMI) | https://rmi.org/ | https://rmi.org/careers | add_to_sources_json |
 | Rystad Energy |  | https://jobs.workable.com/view/9NTBEjXYhRRLc17cDvdDEX/hybrid-business-development-manager%2C-clean-energy-in-houston-at-rystad-energy | add_to_sources_json |
 | SSC HR Solutions |  | https://jobs.workable.com/view/pH3oMwvUPZjCoXP2DEevSz/sustainability-manager-in-cairo-at-ssc-hr-solutions | add_to_sources_json |
-| The Climate Group | https://www.theclimategroup.org/ | https://www.theclimategroup.org/careers | add_to_sources_json |
-| The Solutions Project | https://thesolutionsproject.org/ | https://thesolutionsproject.org/jobs | add_to_sources_json |
-| Urban Habitat | https://urbanhabitat.org/ | https://urbanhabitat.org/jobs | add_to_sources_json |
-| Youth Vs. Apocalypse | https://www.youthvsapocalypse.org/ |  | add_to_sources_json |
 
 ## Broken / Failing Sources
 
@@ -257,38 +240,21 @@ _None_
 | --- | --- | --- |
 | 1% for the Planet | https://www.onepercentfortheplanet.org/careers | add_to_sources_json |
 | Alliance to Save Energy | https://www.ase.org/careers | add_to_sources_json |
-| Amazon Watch | https://amazonwatch.org/about/jobs | add_to_sources_json |
-| Appalachian Voices | https://appvoices.org/about-us/jobs | add_to_sources_json |
 | Arbor Day Foundation | https://www.arborday.org/careers | add_to_sources_json |
 | Avōq | https://jobs.workable.com/view/kpYa2WZ8M2TWGCiFtFJS1o/hybrid-communications-fellow---reputation-management-in-new-york-at-av%C5%8Dq | add_to_sources_json |
-| Black Girl Environmentalist | https://blackgirlenvironmentalist.org/careers | add_to_sources_json |
-| BlueGreen Alliance | https://www.bluegreenalliance.org/about/jobs | add_to_sources_json |
-| Bullard Center for Environmental and Climate Justice |  | add_to_sources_json |
-| Citizen's Climate Lobby | https://citizensclimatelobby.org/about-ccl/careers | add_to_sources_json |
 | Climate Reality Project | https://www.climaterealityproject.org/careers | add_to_sources_json |
 | ConnectDER | https://jobs.elementalimpact.com/jobs | add_to_sources_json |
-| Conservation International | https://www.conservation.org/about-us/careers | add_to_sources_json |
 | Convergent Energy and Power | https://jobs.workable.com/view/sS1h4NbvgxbJZrFqFfSEDA/remote-director%2C-marketing-operations-in-united-states-at-convergent-energy-and-power | add_to_sources_json |
 | Education Reform Now Advocacy | https://jobs.workable.com/view/ttoHVPpzzztUWErqjEExef/remote-senior-director-of-partnerships-%26-advocacy-in-united-states-at-education-reform-now-advocacy | add_to_sources_json |
-| Emerald Cities Collaborative | https://emeraldcities.org/careers | add_to_sources_json |
 | Energy Infrastructure Partners LLC | https://jobs.workable.com/view/71KVJnn2zzEaqB5AeEvfUa/hybrid-senior-outreach-representative-in-los-angeles-at-energy-infrastructure-partners-llc | add_to_sources_json |
-| Extinction Rebellion |  | add_to_sources_json |
 | Fervo Energy |  | candidate_for_new_pull |
 | Grassroots Carbon | https://jobs.workable.com/view/66JEqQTu5Aaik8B4Y67gVh/director%2C-brand-reach-%26-communications-in-san-antonio-at-grassroots-carbon | add_to_sources_json |
 | HIVED |  | candidate_for_new_pull |
 | Mitti Labs | https://jobs.workable.com/view/uWSQQPVWb4Lm2PkXjVyRqg/remote-program-manager%2C-operations---tamil-nadu-in-tamil-nadu-at-mitti-labs | add_to_sources_json |
-| Partnership for Public Good | https://ppgbuffalo.org/jobs | add_to_sources_json |
 | PLUS Communications | https://jobs.workable.com/view/7mXsGiweVFByL5UehwA27z/hybrid-digital-director-in-arlington-at-plus-communications | add_to_sources_json |
-| Power Forward Communities |  | add_to_sources_json |
 | Proterra |  | candidate_for_new_pull |
-| Rainforest Action Network | https://www.ran.org/about/jobs | add_to_sources_json |
-| RE-volv | https://re-volv.org/careers | add_to_sources_json |
 | Resource Innovations | https://jobs.elementalimpact.com/jobs | add_to_sources_json |
 | Rocky Mountain Institute (RMI) | https://rmi.org/careers | add_to_sources_json |
 | Rystad Energy | https://jobs.workable.com/view/9NTBEjXYhRRLc17cDvdDEX/hybrid-business-development-manager%2C-clean-energy-in-houston-at-rystad-energy | add_to_sources_json |
 | SSC HR Solutions | https://jobs.workable.com/view/pH3oMwvUPZjCoXP2DEevSz/sustainability-manager-in-cairo-at-ssc-hr-solutions | add_to_sources_json |
-| The Climate Group | https://www.theclimategroup.org/careers | add_to_sources_json |
-| The Solutions Project | https://thesolutionsproject.org/jobs | add_to_sources_json |
-| Urban Habitat | https://urbanhabitat.org/jobs | add_to_sources_json |
 | VIA |  | candidate_for_new_pull |
-| Youth Vs. Apocalypse |  | add_to_sources_json |

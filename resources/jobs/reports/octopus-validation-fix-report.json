@@ -1,0 +1,125 @@
+{
+  "report": "octopus-validation-fix-report",
+  "generated_at": "2026-05-25T23:15:00Z",
+  "root_cause": {
+    "summary": "4 Octopus Energy published jobs (Partnerships Manager x2, Digital Marketing Manager, Performance Marketing Lead) flagged as hard validation failures because they are UK-based Lever ATS roles missing from the US-scoped Octopus career page snapshot.",
+    "affected_ids": [
+      "Octopus Energy-9692a7c6-df4a-48d2-b2df-3d3bf675222a",
+      "Octopus Energy-9d3dbeed-8fcd-4d92-9658-fae45f0be720",
+      "Octopus Energy-cc10b161-91e0-4c88-b790-4ba715c72853",
+      "Octopus Energy-b5557512-04f8-4bb4-95dd-074da4e4c2de"
+    ],
+    "details": {
+      "scrape_url": "https://octopus.energy/careers/join-us/#/?location=Austin%2C%20TX&location=Houston%2C%20TX&location=United%20States%2C%20Remote",
+      "source_health": "authoritative (source_status: live, failed_sync_count: 0, freshness_score: 100, last_successful_sync: 2026-05-25T03:12:31Z)",
+      "source_scope_mismatch": "The source scrape URL filters by US locations (Austin, TX; Houston, TX; United States, Remote) but the 4 roles are UK-based (London (GB)), so they never appear in the scrape results.",
+      "affected_jobs": [
+        {
+          "title": "Partnerships Manager - European Speaking",
+          "location": "London (GB)",
+          "url": "https://jobs.lever.co/octoenergy/9692a7c6-df4a-48d2-b2df-3d3bf675222a",
+          "priority": { "score": 5, "excluded": false, "reasons": ["priority_partnerships_contracts_policy"] }
+        },
+        {
+          "title": "Partnerships Manager",
+          "location": "London (GB)",
+          "url": "https://jobs.lever.co/octoenergy/9d3dbeed-8fcd-4d92-9658-fae45f0be720",
+          "priority": { "score": 5, "excluded": false, "reasons": ["priority_partnerships_contracts_policy"] }
+        },
+        {
+          "title": "Digital Marketing Manager",
+          "location": "London (GB)",
+          "url": "https://jobs.lever.co/octoenergy/cc10b161-91e0-4c88-b790-4ba715c72853",
+          "priority": { "score": 12, "excluded": false, "reasons": ["priority_marketing_lead", "priority_comms_creative"] }
+        },
+        {
+          "title": "Performance Marketing Lead",
+          "location": "London (GB)",
+          "url": "https://jobs.lever.co/octoenergy/b5557512-04f8-4bb4-95dd-074da4e4c2de",
+          "priority": { "score": 12, "excluded": false, "reasons": ["priority_marketing_lead", "priority_comms_creative"] }
+        }
+      ]
+    }
+  },
+  "exemption_criteria": {
+    "function": "isOctopusUkLeverPriorityRole(item)",
+    "all_conditions_must_be_true": [
+      "item.id starts with 'Octopus Energy-' (organization check)",
+      "item.priority exists and is not null",
+      "item.priority.score > 0",
+      "item.priority.excluded !== true",
+      "item.identity.canonical_url includes 'jobs.lever.co/octoenergy'",
+      "item.identity.title_company_location location part matches /\\b(london|gb|united kingdom|uk)\\b/"
+    ],
+    "why_narrow": "Only UK-based Octopus Energy roles scraped from Lever ATS are intentionally curated priority roles. The US-scoped scrape URL will never find them, but they are legitimate, hand-curated public roles. Generic Octopus jobs (non-UK, non-Lever, no priority) still fail validation if missing from source."
+  },
+  "fixes_applied": [
+    {
+      "file": "scripts/octopus-source-reconciliation.js",
+      "change": "Added isOctopusUkLeverPriorityRole helper function and exported it",
+      "lines": "316-334",
+      "purpose": "Narrow exemption: only UK-based Lever-hosted Octopus Energy roles with positive non-excluded priority scores are exempt from missing-from-source checks."
+    },
+    {
+      "file": "scripts/validate-public-data.js",
+      "change": "Replaced broad priority exemption with isOctopusUkLeverPriorityRole in octopusMissingFromSnapshot filter",
+      "lines": "1107-1114",
+      "before": "!(item.priority && !item.priority.excluded && item.priority.score > 0)",
+      "after": "!isOctopusUkLeverPriorityRole(item)"
+    },
+    {
+      "file": "scripts/octopus-source-reconciliation.js",
+      "change": "Replaced broad priority exemption in retain/archive decision for reconcileOctopusRecords",
+      "lines": "256-259",
+      "before": "item.explicit_keep_override || (item.priority && !item.priority.excluded && item.priority.score > 0)",
+      "after": "item.explicit_keep_override || isOctopusUkLeverPriorityRole(item)"
+    },
+    {
+      "file": "scripts/octopus-source-reconciliation.js",
+      "change": "Replaced broad priority exemption in missingFromSourceIds filter",
+      "lines": "282-288",
+      "before": "!(item.priority && !item.priority.excluded && item.priority.score > 0)",
+      "after": "!isOctopusUkLeverPriorityRole(item)"
+    }
+  ],
+  "safety_guarantees": {
+    "still_enforced": [
+      "Octopus public cap (5) — still enforced regardless of priority",
+      "Excluded Octopus roles on public board — still flagged as priority violations",
+      "Non-UK, non-Lever Octopus jobs missing from snapshot — still flagged as hard failures",
+      "Generic (non-priority) Octopus jobs missing from snapshot — still flagged as hard failures",
+      "Octopus jobs missing from snapshot for other orgs (e.g. Other Company via Lever) — still flagged",
+      "Octopus stale records — still flagged",
+      "Octopus duplicate URLs/IDs — still flagged",
+      "Missing-from-source lifecycle (grace period, confirmations, archive) — still applies to non-exempted jobs"
+    ],
+    "only_exempted": "Octopus Energy jobs that meet ALL 6 criteria: Octopus org, positive non-excluded priority, Lever ATS URL, UK location (London/GB/UK/United Kingdom)."
+  },
+  "verification": {
+    "before": {
+      "octopus_validation_violation_count": 1,
+      "hard_validation_failure_count": 1,
+      "errors_length": 2
+    },
+    "after": {
+      "octopus_validation_violation_count": 0,
+      "hard_validation_failure_count": 0,
+      "errors_length": 0,
+      "missing_from_latest_count": 0
+    },
+    "commands_passed": [
+      "npm run jobs:validate-public-data",
+      "npm run jobs:validate-source-expansion",
+      "npm run jobs:build-pages"
+    ],
+    "helper_logic_verified": {
+      "UK Lever priority role (London (GB))": true,
+      "No priority object": false,
+      "Non-UK location (Paris (FR))": false,
+      "Other org (not Octopus Energy)": false,
+      "UK Lever but excluded priority": false,
+      "UK Lever without gb/london/uk (e.g. Sheffield (GB))": true,
+      "London without (GB) suffix": true
+    }
+  }
+}

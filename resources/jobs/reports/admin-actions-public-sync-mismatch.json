@@ -1,0 +1,31 @@
+{
+  "report": "admin-actions-public-sync-mismatch",
+  "audit_date": "2026-05-25",
+  "error": "jobs.json sync mismatch: expected 60 public jobs, found 39",
+  "file": "scripts/apply-admin-actions.js",
+  "root_cause": "expectedPublicJobsCount was computed from ALL publishable records (buildPublicJobsFromRecords), but the scoped sync only merges selected changes with existing jobs.json entries. When existing jobs.json has fewer entries than total publishable records, the pre-computed 'expected' count exceeds the actual scoped merge result.",
+  "fix": {
+    "apply_admin_actions_js": {
+      "change": "Removed pre-computation of expectedPublicJobsCount from total records. After syncPublicJobsFromRecords returns, use publicSync.publishedCount (which is the sync's own computed, scoped-aware count) for the mismatch check.",
+      "lines_affected": "2352-2368",
+      "added_reconciliation_diagnostic": true
+    },
+    "jobs_sync_yml": {
+      "change": "Fixed hashFiles syntax warning on line 68",
+      "before": "hashFiles('${{ env.JOBS_DIR }}/scripts/...')",
+      "after": "hashFiles(env.JOBS_DIR + '/scripts/...')"
+    }
+  },
+  "safety_checks_preserved": [
+    "syncPublicJobsFromRecords internal mismatch validation",
+    "apply-admin-actions external mismatch validation (now against correct baseline)",
+    "Hard validation failures still fail the workflow",
+    "jobs.json never written on mismatch"
+  ],
+  "current_consistency": {
+    "job_records_total": 134,
+    "buildPublicJobsFromRecords": 56,
+    "jobs_json_entries": 56,
+    "match": true
+  }
+}

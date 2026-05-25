@@ -2,58 +2,46 @@
   "report": "jobs-sync-workflow-audit",
   "audit_date": "2026-05-25",
   "file": "jobs/backend/dotgithub/workflows/jobs-sync.yml",
-  "findings": {
-    "correct_jobs_dir_path": {
-      "status": "pass",
-      "detail": "Uses steps.workspace.outputs.dir = resources/jobs"
-    },
-    "sync_sources_present": {
-      "status": "fail",
-      "detail": "Missing jobs:sync-sources step. Admin actions run against potentially stale data.",
-      "fix": "Add jobs:sync-sources before admin action steps"
-    },
-    "sync_custom_present": {
-      "status": "fail",
-      "detail": "Missing jobs:sync-custom step. Manual/custom sources not synced.",
-      "fix": "Add jobs:sync-custom after sync-sources"
-    },
-    "build_pages_present": {
-      "status": "fail",
-      "detail": "Missing jobs:build-pages step. HTML pages not regenerated after admin actions mutate jobs.json.",
-      "fix": "Add jobs:build-pages after post-sync validation"
-    },
-    "audit_source_coverage_present": {
-      "status": "fail",
-      "detail": "Missing jobs:audit-source-coverage step.",
-      "fix": "Add jobs:audit-source-coverage after build-pages"
-    },
-    "commit_paths_complete": {
-      "status": "fail",
-      "detail": "Missing source-health-latest.json, sources.json, source-prospects.json, broad-source-config.json, admin-job-actions.json, reports/** in commit paths",
-      "fix": "Add all generated files to commit and change-detection paths"
-    },
-    "stale_snapshot_path": {
-      "status": "pass",
-      "detail": "No reference to admin-actions-snapshot.json. Snapshot goes to admin-job-actions.json (not committed, intentional)"
-    },
-    "warning_exit_code": {
-      "status": "pass",
-      "detail": "validate-public-data.js warnings separated from errors (fixed in prior session)"
-    },
-    "manual_source_candidates": {
-      "status": "pass",
-      "detail": "Three pipeline gates fixed in prior session — manual review source jobs now route to admin review"
-    },
-    "consistent_jobs_dir_usage": {
-      "status": "warn",
-      "detail": "Lines 66-88 use hardcoded resources/jobs instead of $JOBS_DIR",
-      "fix": "Use ${{ steps.workspace.outputs.dir }} consistently"
-    }
-  },
-  "summary": {
-    "pass": 5,
-    "fail": 5,
-    "warn": 1,
-    "total": 11
+  "previous_failure": "jobs:validate (validate-public-data) ran before sync, detecting stale source-health fetch_failed entries. Stale pre-sync data caused false hard failure, blocking the workflow.",
+  "fix": "Removed pre-sync validation step. Reordered to sync-first safe sequence.",
+  "steps": [
+    { "order": 1, "name": "Checkout repository", "action": "actions/checkout@v4" },
+    { "order": 2, "name": "Set up Node.js", "action": "actions/setup-node@v4" },
+    { "order": 3, "name": "Install dependencies", "action": "npm ci || npm install" },
+    { "order": 4, "name": "Validate sync scripts", "action": "node --check (syntax only)" },
+    { "order": 5, "name": "Sync ATS sources", "action": "npm run jobs:sync-sources" },
+    { "order": 6, "name": "Sync custom / manual sources", "action": "npm run jobs:sync-custom" },
+    { "order": 7, "name": "Enrich pending descriptions", "action": "node enrich-pending-descriptions.js" },
+    { "order": 8, "name": "Editorial pipeline stabilization", "action": "npm run jobs:editorial-stabilization" },
+    { "order": 9, "name": "Snapshot queued admin actions", "action": "npm run jobs:snapshot-admin-actions" },
+    { "order": 10, "name": "Diagnose queued admin actions", "action": "npm run jobs:diagnose-admin-actions" },
+    { "order": 11, "name": "Apply queued admin actions", "action": "npm run jobs:apply-admin-actions" },
+    { "order": 12, "name": "Fetch approved talent profiles", "action": "npm run jobs:fetch-approved-talent" },
+    { "order": 13, "name": "Fetch approved featured employers", "action": "npm run jobs:fetch-approved-employers" },
+    { "order": 14, "name": "Guard blocked sources", "action": "npm run jobs:check-blocked-sources" },
+    { "order": 15, "name": "Validate public data after sync", "action": "npm run jobs:validate-public-data" },
+    { "order": 16, "name": "Validate source expansion after sync", "action": "npm run jobs:validate-source-expansion" },
+    { "order": 17, "name": "Full validation after sync", "action": "npm run jobs:validate" },
+    { "order": 18, "name": "Build job pages", "action": "npm run jobs:build-pages" },
+    { "order": 19, "name": "Audit source coverage", "action": "npm run jobs:audit-source-coverage" },
+    { "order": 20, "name": "Detect all changes", "action": "git status --porcelain" },
+    { "order": 21, "name": "Commit and push generated changes", "action": "git add + commit + push" },
+    { "order": 22, "name": "Upload admin sync artifacts", "action": "actions/upload-artifact@v4" },
+    { "order": 23, "name": "Report no-op", "action": "echo" }
+  ],
+  "checks": {
+    "pre_sync_validation_removed": true,
+    "enrichment_step_present": true,
+    "editorial_stabilization_present": true,
+    "validate_after_sync_present": true,
+    "build_pages_present": true,
+    "audit_source_coverage_present": true,
+    "commit_jobs_json": true,
+    "commit_job_records_json": true,
+    "commit_pending_synced_jobs_json": true,
+    "commit_source_health_latest_json": true,
+    "commit_pages": true,
+    "commit_reports": true,
+    "yaml_syntax_ok": true
   }
 }

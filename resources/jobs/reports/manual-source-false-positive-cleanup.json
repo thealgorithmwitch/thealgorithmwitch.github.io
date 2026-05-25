@@ -1,0 +1,510 @@
+{
+  "report": "manual-source-false-positive-cleanup",
+  "generated_at": "2026-05-25T22:36:26.482Z",
+  "validation_function": "validateManualSourceCandidate in pending-triage.js",
+  "changes": {
+    "pending_triage_js": "Replaced unconditional manual-source review_ready bypass with validateManualSourceCandidate() validation gate",
+    "sources_json": [
+      "nextera-energy → source_classification: tracked_manual_org, notes updated",
+      "rwe → source_classification: tracked_manual_org",
+      "louisiana-bucket-brigade → source_url: https://louisianabucketbrigade.applytojob.com/apply/"
+    ],
+    "title_recovery": "attemptTitleRecovery() extracts titles from raw_description for empty/generic title cases",
+    "empty_title_handling": "Empty titles with real-looking job URLs route to needs_cleanup instead of rejected_noise"
+  },
+  "totals": {
+    "total_manual_source_candidates": 102,
+    "retained_ready": 32,
+    "rejected": 69,
+    "needs_cleanup": 1
+  },
+  "by_source": {
+    "climate-justice-alliance": {
+      "org": "Climate Justice Alliance",
+      "source_url": "https://climatejusticealliance.applytojob.com/apply",
+      "retained_ready": 0,
+      "rejected": 3,
+      "needs_cleanup": 0
+    },
+    "bullard-center": {
+      "org": "Bullard Center for Environmental and Climate Justice",
+      "source_url": "https://bullardcenter.org/about/careers",
+      "retained_ready": 0,
+      "rejected": 0,
+      "needs_cleanup": 1
+    },
+    "louisiana-bucket-brigade": {
+      "org": "Louisiana Bucket Brigade",
+      "source_url": "https://labucketbrigade.org/",
+      "retained_ready": 2,
+      "rejected": 0,
+      "needs_cleanup": 0
+    },
+    "emerald-cities-collaborative": {
+      "org": "Emerald Cities Collaborative",
+      "source_url": "https://emeraldcities.org/j40playbook/",
+      "retained_ready": 2,
+      "rejected": 2,
+      "needs_cleanup": 0
+    },
+    "rwe": {
+      "org": "RWE",
+      "source_url": "https://www.rwe.com/en/rwe-careers-portal/why-work-here/global-presence/",
+      "retained_ready": 0,
+      "rejected": 50,
+      "needs_cleanup": 0
+    },
+    "nextera-energy": {
+      "org": "NextEra Energy",
+      "source_url": "https://www.nexteraenergy.com/careers.html",
+      "retained_ready": 28,
+      "rejected": 14,
+      "needs_cleanup": 0
+    }
+  },
+  "removed_from_review_ready": 70,
+  "example_rejected": [
+    {
+      "source": "climate-justice-alliance",
+      "organization": "Climate Justice Alliance",
+      "title": "View All Jobs",
+      "url": "http://climatejusticealliance.applytojob.com/apply/",
+      "old_status": "review_ready",
+      "new_status": "rejected_noise",
+      "rejection_reason": "manual_source_generic_non_job_title",
+      "removed_from_review_ready": true,
+      "better_url_found": null
+    },
+    {
+      "source": "bullard-center",
+      "organization": "Bullard Center for Environmental and Climate Justice",
+      "title": "(empty)",
+      "url": "https://jobs.tsu.edu/postings/9798",
+      "old_status": "review_ready",
+      "new_status": "needs_cleanup",
+      "rejection_reason": "manual_source_empty_title_recoverable_job_url",
+      "removed_from_review_ready": true,
+      "better_url_found": null
+    },
+    {
+      "source": "emerald-cities-collaborative",
+      "organization": "Emerald Cities Collaborative",
+      "title": "Interagency Working Group on Coal & Power Plant Communities & Economic Revitalization",
+      "url": "https://energycommunities.gov/funding-opportunities/",
+      "old_status": "review_ready",
+      "new_status": "rejected_noise",
+      "rejection_reason": "manual_source_non_job_url",
+      "removed_from_review_ready": true,
+      "better_url_found": null
+    },
+    {
+      "source": "emerald-cities-collaborative",
+      "organization": "Emerald Cities Collaborative",
+      "title": "CAP’s Report: Proven State and Local Strategies To Create Good Jobs with IIJA Infrastructure Funds",
+      "url": "https://www.americanprogress.org/article/proven-state-and-local-strategies-to-create-good-jobs-with-iija-infrastructure-funds/",
+      "old_status": "review_ready",
+      "new_status": "rejected_noise",
+      "rejection_reason": "manual_source_non_job_url",
+      "removed_from_review_ready": true,
+      "better_url_found": null
+    },
+    {
+      "source": "rwe",
+      "organization": "RWE",
+      "title": "Find jobs in Copenhagen",
+      "url": "https://www.rwe.com/en/rwe-careers-portal/job-offers/?ci=Copenhagen",
+      "old_status": "review_ready",
+      "new_status": "rejected_noise",
+      "rejection_reason": "manual_source_generic_non_job_title",
+      "removed_from_review_ready": true,
+      "better_url_found": null
+    },
+    {
+      "source": "rwe",
+      "organization": "RWE",
+      "title": "jobs in Hamburg",
+      "url": "https://www.rwe.com/en/rwe-careers-portal/job-offers/?ci=Hamburg",
+      "old_status": "review_ready",
+      "new_status": "rejected_noise",
+      "rejection_reason": "manual_source_generic_non_job_title",
+      "removed_from_review_ready": true,
+      "better_url_found": null
+    },
+    {
+      "source": "rwe",
+      "organization": "RWE",
+      "title": "Find out more about RWE in Hamburg",
+      "url": "https://www.rwe.com/en/rwe-careers-portal/why-work-here/global-presence/rwe-in-hamburg/",
+      "old_status": "review_ready",
+      "new_status": "rejected_noise",
+      "rejection_reason": "manual_source_generic_non_job_title",
+      "removed_from_review_ready": true,
+      "better_url_found": null
+    },
+    {
+      "source": "rwe",
+      "organization": "RWE",
+      "title": "Find jobs in Paris",
+      "url": "https://www.rwe.com/en/rwe-careers-portal/job-offers/?ci=Paris",
+      "old_status": "review_ready",
+      "new_status": "rejected_noise",
+      "rejection_reason": "manual_source_generic_non_job_title",
+      "removed_from_review_ready": true,
+      "better_url_found": null
+    },
+    {
+      "source": "rwe",
+      "organization": "RWE",
+      "title": "Discover job opportunities in India",
+      "url": "https://www.rwe.com/en/rwe-careers-portal/job-offers/?cn=IN",
+      "old_status": "review_ready",
+      "new_status": "rejected_noise",
+      "rejection_reason": "manual_source_generic_non_job_title",
+      "removed_from_review_ready": true,
+      "better_url_found": null
+    },
+    {
+      "source": "rwe",
+      "organization": "RWE",
+      "title": "Explore jobs opportunities in Tokyo",
+      "url": "https://www.rwe.com/en/rwe-careers-portal/job-offers/?ci=Tokyo",
+      "old_status": "review_ready",
+      "new_status": "rejected_noise",
+      "rejection_reason": "manual_source_generic_non_job_title",
+      "removed_from_review_ready": true,
+      "better_url_found": null
+    },
+    {
+      "source": "rwe",
+      "organization": "RWE",
+      "title": "Join #TeamRWE in Singapore",
+      "url": "https://www.rwe.com/en/rwe-careers-portal/job-offers/?cn=SG",
+      "old_status": "review_ready",
+      "new_status": "rejected_noise",
+      "rejection_reason": "manual_source_generic_non_job_title",
+      "removed_from_review_ready": true,
+      "better_url_found": null
+    },
+    {
+      "source": "rwe",
+      "organization": "RWE",
+      "title": "Join our vibrant London team!",
+      "url": "https://www.rwe.com/en/rwe-careers-portal/job-offers/?ci=London",
+      "old_status": "review_ready",
+      "new_status": "rejected_noise",
+      "rejection_reason": "manual_source_generic_non_job_title",
+      "removed_from_review_ready": true,
+      "better_url_found": null
+    },
+    {
+      "source": "nextera-energy",
+      "organization": "NextEra Energy",
+      "title": "CA Privacy",
+      "url": "https://www.nexteraenergy.com/careers/ca-ccpa-notice.html",
+      "old_status": "review_ready",
+      "new_status": "rejected_noise",
+      "rejection_reason": "manual_source_non_job_url",
+      "removed_from_review_ready": true,
+      "better_url_found": null
+    },
+    {
+      "source": "climate-justice-alliance",
+      "organization": "Climate Justice Alliance",
+      "title": "Powered by",
+      "url": "https://info.jazzhr.com/job-seekers.html",
+      "old_status": "review_ready",
+      "new_status": "rejected_noise",
+      "rejection_reason": "manual_source_generic_non_job_title",
+      "removed_from_review_ready": true,
+      "better_url_found": null
+    },
+    {
+      "source": "rwe",
+      "organization": "RWE",
+      "title": "This team creates quarterly earnings events and meets investors and analysts at both physical and virtual roadshows and conferences",
+      "url": "https://www.rwe.com/en/rwe-careers-portal/job-offers/?fa=P-26",
+      "old_status": "review_ready",
+      "new_status": "rejected_noise",
+      "rejection_reason": "manual_source_rwe_job_offers_listing",
+      "removed_from_review_ready": true,
+      "better_url_found": null
+    },
+    {
+      "source": "rwe",
+      "organization": "RWE",
+      "title": "RWE Careers in France",
+      "url": "https://fr.rwe.com/en/career/",
+      "old_status": "review_ready",
+      "new_status": "rejected_noise",
+      "rejection_reason": "manual_source_non_job_url",
+      "removed_from_review_ready": true,
+      "better_url_found": null
+    },
+    {
+      "source": "rwe",
+      "organization": "RWE",
+      "title": "From learning to leading",
+      "url": "https://www.rwe.com/en/rwe-careers-portal/teamrwe/from-learning-to-leading/",
+      "old_status": "review_ready",
+      "new_status": "rejected_noise",
+      "rejection_reason": "manual_source_non_job_url",
+      "removed_from_review_ready": true,
+      "better_url_found": null
+    },
+    {
+      "source": "rwe",
+      "organization": "RWE",
+      "title": "What counts are the people at RWE",
+      "url": "https://www.rwe.com/en/rwe-careers-portal/teamrwe/it-was-great-to-develop-my-coding-skills-and-commercial-awareness/",
+      "old_status": "review_ready",
+      "new_status": "rejected_noise",
+      "rejection_reason": "manual_source_non_job_url",
+      "removed_from_review_ready": true,
+      "better_url_found": null
+    },
+    {
+      "source": "rwe",
+      "organization": "RWE",
+      "title": "Zsuzsanna Team insight Discover a different outlook on career growth and development from our Director Legal",
+      "url": "https://www.rwe.com/en/rwe-careers-portal/teamrwe/if-you-stop-becoming-active-and-you-stop-growing-you-are-shrinking-actually/",
+      "old_status": "review_ready",
+      "new_status": "rejected_noise",
+      "rejection_reason": "manual_source_non_job_url",
+      "removed_from_review_ready": true,
+      "better_url_found": null
+    },
+    {
+      "source": "rwe",
+      "organization": "RWE",
+      "title": "Gregor Head of Research Center Recultivation “Our work today will shape landscapes for the",
+      "url": "https://www.rwe.com/en/rwe-careers-portal/teamrwe/recultivation-as-an-opportunity-for-a-greener-future/",
+      "old_status": "review_ready",
+      "new_status": "rejected_noise",
+      "rejection_reason": "manual_source_non_job_url",
+      "removed_from_review_ready": true,
+      "better_url_found": null
+    },
+    {
+      "source": "rwe",
+      "organization": "RWE",
+      "title": "ront and Back Office, Risk, Finance, Accounting and Legal",
+      "url": "https://www.rwe.com/en/rwe-careers-portal/job-offers/?cm=RWE%20Supply%20%26%20Trading&amp;ex=F-2%7CF-5%7CF-6&amp;fa=P-3",
+      "old_status": "review_ready",
+      "new_status": "rejected_noise",
+      "rejection_reason": "manual_source_rwe_job_offers_listing",
+      "removed_from_review_ready": true,
+      "better_url_found": null
+    },
+    {
+      "source": "rwe",
+      "organization": "RWE",
+      "title": "of our Commercial or IT Developer",
+      "url": "https://www.rwe.com/en/rwe-careers-portal/job-offers/?cn=JP%7CSG%7CIN%7CID%7CCN&amp;ex=F-2%7CF-5%7CF-6&amp;fa=P-3%7CP-38%7CP-39%7CP-40%7CP-22%7CP-42%7CP-26%7CP-27%7CP-44%7CP-32%7CP-10%7CP-48%7CP-34%7CP-13%7CP-49%7CP-33",
+      "old_status": "review_ready",
+      "new_status": "rejected_noise",
+      "rejection_reason": "manual_source_non_job_url",
+      "removed_from_review_ready": true,
+      "better_url_found": null
+    },
+    {
+      "source": "rwe",
+      "organization": "RWE",
+      "title": "of our Commercial or IT Developer",
+      "url": "https://www.rwe.com/en/rwe-careers-portal/early-careers/graduate-programmes/?location%5b0%5d=%7bD1C22B3D-7B63-426C-B924-768AF1F923B1%7d",
+      "old_status": "review_ready",
+      "new_status": "rejected_noise",
+      "rejection_reason": "manual_source_non_job_url",
+      "removed_from_review_ready": true,
+      "better_url_found": null
+    },
+    {
+      "source": "rwe",
+      "organization": "RWE",
+      "title": "Find jobs in Austin (rwe.com)",
+      "url": "https://www.rwe.com/en/rwe-careers-portal/job-offers/?ci=Austin",
+      "old_status": "review_ready",
+      "new_status": "rejected_noise",
+      "rejection_reason": "manual_source_generic_non_job_title",
+      "removed_from_review_ready": true,
+      "better_url_found": null
+    },
+    {
+      "source": "rwe",
+      "organization": "RWE",
+      "title": "Explore career options in Chicago (rwe.com)",
+      "url": "https://www.rwe.com/en/rwe-careers-portal/job-offers/?ci=Chicago",
+      "old_status": "review_ready",
+      "new_status": "rejected_noise",
+      "rejection_reason": "manual_source_generic_non_job_title",
+      "removed_from_review_ready": true,
+      "better_url_found": null
+    }
+  ],
+  "example_retained": [
+    {
+      "source": "louisiana-bucket-brigade",
+      "organization": "Louisiana Bucket Brigade",
+      "title": "Volunteer Coordinator",
+      "url": "https://louisianabucketbrigade.applytojob.com/apply/dAp7L2PwiF/Volunteer-Coordinator?source=TWIT&#038;referrer=20250219163128WWAB3QWWLFGWWQ9Q",
+      "old_status": "review_ready",
+      "new_status": "review_ready",
+      "rejection_reason": null,
+      "removed_from_review_ready": false,
+      "better_url_found": null
+    },
+    {
+      "source": "louisiana-bucket-brigade",
+      "organization": "Louisiana Bucket Brigade",
+      "title": "Donor Engagement Manager",
+      "url": "https://louisianabucketbrigade.applytojob.com/apply/Rq9AD0rnpz/Donor-Engagement-Manager",
+      "old_status": "review_ready",
+      "new_status": "review_ready",
+      "rejection_reason": null,
+      "removed_from_review_ready": false,
+      "better_url_found": null
+    },
+    {
+      "source": "emerald-cities-collaborative",
+      "organization": "Emerald Cities Collaborative",
+      "title": "GPC",
+      "url": "https://emeraldcities.org/our-work/green-path-careers-gpc",
+      "old_status": "review_ready",
+      "new_status": "review_ready",
+      "rejection_reason": null,
+      "removed_from_review_ready": false,
+      "better_url_found": null
+    },
+    {
+      "source": "nextera-energy",
+      "organization": "NextEra Energy",
+      "title": "Sr Product Manager I - NEA",
+      "url": "https://jobs.nexteraenergy.com/job/Juno-Beach-Sr-Product-Manager-I-NEA-FL-33408/1384482400/",
+      "old_status": "review_ready",
+      "new_status": "review_ready",
+      "rejection_reason": null,
+      "removed_from_review_ready": false,
+      "better_url_found": null
+    },
+    {
+      "source": "nextera-energy",
+      "organization": "NextEra Energy",
+      "title": "Project Director Development - Data Center Infrastructure Solutions",
+      "url": "https://jobs.nexteraenergy.com/job/Juno-Beach-Project-Director-Development-Data-Center-Infrastructure-Solutions-FL-33408/1339558400/",
+      "old_status": "review_ready",
+      "new_status": "review_ready",
+      "rejection_reason": null,
+      "removed_from_review_ready": false,
+      "better_url_found": null
+    },
+    {
+      "source": "nextera-energy",
+      "organization": "NextEra Energy",
+      "title": "Director, Corporate Real Estate Strategy & Analytics",
+      "url": "https://jobs.nexteraenergy.com/job/Juno-Beach-Director%2C-Corporate-Real-Estate-Strategy-&amp;-Analytics-FL-33408/1388612700/",
+      "old_status": "review_ready",
+      "new_status": "review_ready",
+      "rejection_reason": null,
+      "removed_from_review_ready": false,
+      "better_url_found": null
+    },
+    {
+      "source": "nextera-energy",
+      "organization": "NextEra Energy",
+      "title": "Lead Quality Assurance Analyst",
+      "url": "https://jobs.nexteraenergy.com/job/North-Palm-Beach-Lead-Quality-Assurance-Analyst-FL-33408/1347001500/",
+      "old_status": "review_ready",
+      "new_status": "review_ready",
+      "rejection_reason": null,
+      "removed_from_review_ready": false,
+      "better_url_found": null
+    },
+    {
+      "source": "nextera-energy",
+      "organization": "NextEra Energy",
+      "title": "Business Analyst - Collections",
+      "url": "https://jobs.nexteraenergy.com/job/Houston-Business-Analyst-Collections-TX-77002/1393421300/",
+      "old_status": "review_ready",
+      "new_status": "review_ready",
+      "rejection_reason": null,
+      "removed_from_review_ready": false,
+      "better_url_found": null
+    },
+    {
+      "source": "nextera-energy",
+      "organization": "NextEra Energy",
+      "title": "Senior IT Business Systems Analyst",
+      "url": "https://jobs.nexteraenergy.com/job/North-Palm-Beach-Senior-IT-Business-Systems-Analyst-FL-33408/1384533400/",
+      "old_status": "review_ready",
+      "new_status": "review_ready",
+      "rejection_reason": null,
+      "removed_from_review_ready": false,
+      "better_url_found": null
+    },
+    {
+      "source": "nextera-energy",
+      "organization": "NextEra Energy",
+      "title": "Senior Financial Analyst",
+      "url": "https://jobs.nexteraenergy.com/job/Juno-Beach-Senior-Financial-Analyst-FL-33408/1385329300/",
+      "old_status": "review_ready",
+      "new_status": "review_ready",
+      "rejection_reason": null,
+      "removed_from_review_ready": false,
+      "better_url_found": null
+    },
+    {
+      "source": "nextera-energy",
+      "organization": "NextEra Energy",
+      "title": "Quantitative Analyst",
+      "url": "https://jobs.nexteraenergy.com/job/Juno-Beach-Quantitative-Analyst-FL-33408/1376516900/",
+      "old_status": "review_ready",
+      "new_status": "review_ready",
+      "rejection_reason": null,
+      "removed_from_review_ready": false,
+      "better_url_found": null
+    },
+    {
+      "source": "nextera-energy",
+      "organization": "NextEra Energy",
+      "title": "Business Analyst II",
+      "url": "https://jobs.nexteraenergy.com/job/Houston-Business-Analyst-II-TX-77002/1393581700/",
+      "old_status": "review_ready",
+      "new_status": "review_ready",
+      "rejection_reason": null,
+      "removed_from_review_ready": false,
+      "better_url_found": null
+    },
+    {
+      "source": "nextera-energy",
+      "organization": "NextEra Energy",
+      "title": "Claims Analyst",
+      "url": "https://jobs.nexteraenergy.com/job/North-Palm-Beach-Claims-Analyst-FL-33408/1386224300/",
+      "old_status": "review_ready",
+      "new_status": "review_ready",
+      "rejection_reason": null,
+      "removed_from_review_ready": false,
+      "better_url_found": null
+    },
+    {
+      "source": "nextera-energy",
+      "organization": "NextEra Energy",
+      "title": "Tax Analyst",
+      "url": "https://jobs.nexteraenergy.com/job/Juno-Beach-Tax-Analyst-FL-33408/1386118600/",
+      "old_status": "review_ready",
+      "new_status": "review_ready",
+      "rejection_reason": null,
+      "removed_from_review_ready": false,
+      "better_url_found": null
+    },
+    {
+      "source": "nextera-energy",
+      "organization": "NextEra Energy",
+      "title": "Manager, Financial Planning and Analysis",
+      "url": "https://jobs.nexteraenergy.com/job/Houston-Manager%2C-Financial-Planning-and-Analysis-TX-77024/1385890100/",
+      "old_status": "review_ready",
+      "new_status": "review_ready",
+      "rejection_reason": null,
+      "removed_from_review_ready": false,
+      "better_url_found": null
+    }
+  ]
+}

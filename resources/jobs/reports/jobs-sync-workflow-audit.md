@@ -4,104 +4,53 @@
 - **File:** `jobs/backend/dotgithub/workflows/jobs-sync.yml`
 - **Trigger:** Every 15 min (`*/15 * * * *`) + push to `admin-actions-local.json`
 
-## Methodology
+## Previous Failure
 
-Compared against:
-1. The 6 sibling workflows in `backend/dotgithub/workflows/`
-2. The reference order specified for "safe admin action with source sync"
-3. The actual files on disk and what scripts write to them
+`jobs:validate` (validate-public-data) ran BEFORE sync, detecting stale `source-health` entries with `fetch_failed` state. The stale pre-sync data caused a false hard failure, blocking the entire workflow.
 
-## Audit Findings
+## Fix: Reordered to Safe Sequence
 
-### 1. JOBS_DIR Path (✅ Correct)
-
-Uses `steps.workspace.outputs.dir` = `resources/jobs`. All paths resolve correctly to `resources/jobs/...`.
-
-### 2. Current Sync Command (❌ Missing `sync-sources` / `sync-custom`)
-
-The workflow runs admin actions but **never syncs fresh job data from sources**. The other sync workflows are:
-- `jobs-sync-pending-sources.yml` — runs weekly (Wed 15:00), only pending sources
-- `jobs-auto-expand.yml` — runs Tue/Fri 13:45, full lifecycle
-
-The admin action workflow runs every 15 min and could apply stale admin actions against stale data. Both `sync-sources` and `sync-custom` scripts exist and write to `jobs.json`, `pending-synced-jobs.json`, and `source-health-latest.json`.
-
-**Fix:** Add `sync-sources` and `sync-custom` steps before admin action application.
-
-### 3. validate / build-pages After Sync (❌ Missing `build-pages`)
-
-The workflow validates after admin actions (line 87-88) but **never runs `jobs:build-pages`**. After `apply-admin-actions` modifies `jobs.json`, the static HTML pages go stale until some other workflow rebuilds them.
-
-Other workflows:
-- `jobs-sync-pending-sources.yml`: validates but doesn't build pages (pending sync doesn't change public jobs)
-- `jobs-freshness-audit.yml`: validates but doesn't build pages (freshness audit can remove stale entries)
-- `jobs-auto-expand.yml`: validates but doesn't build pages (the lifecycle script handles it internally)
-
-Since admin actions directly mutate `jobs.json`, pages should be rebuilt immediately after.
-
-**Fix:** Add `jobs:build-pages` after validation post-sync.
-
-### 4. Commit Paths (❌ Incomplete)
-
-The change detection and commit steps track only a subset of files. Missing:
-
-| File on disk | In commit path? | Notes |
+| Step | Action | Why |
 |---|---|---|
-| `source-health-latest.json` | ❌ | Written by sync-sources/sync-custom |
-| `sources.json` | ❌ | Could be modified by sync/actions |
-| `source-prospects.json` | ❌ | Exists on disk, modified by discovery |
-| `broad-source-config.json` | ❌ | Exists on disk, relevant to source health |
-| `reports/**` (all reports) | ❌ | Only 2 specific reports committed |
-| `admin-job-actions.json` | ❌ | Written by snapshot step |
-| `talent-profiles.json` | ✅ | |
-| `employers.json` | ✅ | |
-| `pending-talent.json` / `pending-talent-profiles.json` | ✅ | (files may not exist on disk) |
+| 1 | Checkout | |
+| 2 | Setup Node.js | |
+| 3 | Install dependencies | |
+| 4 | Validate sync scripts (syntax only) | Light pre-flight; no data access |
+| 5 | `jobs:sync-sources` | Fetch fresh ATS data first |
+| 6 | `jobs:sync-custom` | Fetch custom/manual sources |
+| 7 | Enrich pending descriptions | Quality pass on fresh pending data |
+| 8 | Editorial pipeline stabilization | Triage/promote pending jobs |
+| 9-11 | Admin action pipeline (snapshot/diagnose/apply) | Apply admin edits on fresh data |
+| 12-13 | Fetch talent/employer profiles | |
+| 14 | Guard blocked sources | |
+| 15-17 | **Validate after sync** (3 steps) | validate-public-data → validate-source-expansion → validate |
+| 18 | Build job pages | Generate HTML from validated data |
+| 19 | Audit source coverage | |
+| 20-22 | Detect → Commit → Upload | |
 
-**Fix:** Add all generated files to change detection and commit paths.
+## Key Changes from Previous Version
 
-### 5. stale admin-actions-snapshot.json Paths (✅ No)
+| Change | Detail |
+|---|---|
+| ❌ Removed | "Validate public data before sync" — was at step 5, caused stale-data failures |
+| ✅ Added | Enrich pending descriptions (`enrich-pending-descriptions.js`) |
+| ✅ Added | Editorial pipeline stabilization (`jobs:editorial-stabilization`) |
+| ✅ Split | Validation into 3 explicit steps after all data operations |
+| ✅ Preserved | Admin action pipeline, talent/employer fetch, blocked source guard |
+| ✅ Preserved | Full commit paths including source-health-latest.json, reports/, pages/ |
 
-The snapshot path is `admin-job-actions.json` (from `ADMIN_JOB_ACTIONS_SNAPSHOT_FILE`). The workflow never references `admin-actions-snapshot.json`. The snapshot is NOT committed (intentional — it's a transient artifact fetched from backend).
+## Commit Paths Verified
 
-### 6. Warning-Only Validate Exit Code (✅ Fixed)
+All user-required files committed:
+- `resources/jobs/jobs.json` ✅
+- `resources/jobs/job-records.json` ✅
+- `resources/jobs/pending-synced-jobs.json` ✅
+- `resources/jobs/source-health-latest.json` ✅
+- `resources/jobs/pages/**` ✅
+- `resources/jobs/reports/**` ✅
 
-The `validate-public-data.js` exit code fix (separating `warnings` from `errors`) ensures warnings don't fail this workflow step.
+## Failure Mode Design
 
-### 7. Manual Source Candidates (✅ Handled by earlier fixes)
-
-The three pipeline gates (`pending-triage.js`, `source-sync-quality.js`, `job-normalizer.js`) were fixed in a prior session. Manual review source jobs now route to admin review.
-
-### 8. Inconsistent JOBS_DIR in npm Commands (⚠️ Style)
-
-Lines 66-88 use hardcoded `resources/jobs` instead of `$JOBS_DIR` or `${{ steps.workspace.outputs.dir }}`. Matches pattern seen in other workflows (e.g., `jobs-freshness-audit.yml` before fix).
-
-**Fix:** Use `${{ steps.workspace.outputs.dir }}` for consistency.
-
-## Required Changes Summary
-
-| # | Change | Priority |
-|---|---|---|
-| 1 | Add `jobs:sync-sources` step before admin actions | High |
-| 2 | Add `jobs:sync-custom` step after sync-sources | High |
-| 3 | Add `jobs:build-pages` after admin actions + validation | High |
-| 4 | Add `jobs:audit-source-coverage` after build-pages | Medium |
-| 5 | Expand change detection to include all generated files | High |
-| 6 | Expand commit paths to include all generated files | High |
-| 7 | Use `$JOBS_DIR` consistently instead of hardcoded path | Low |
-
-## New Order (Patched)
-
-1. Install dependencies
-2. Validate scripts + data before sync
-3. `jobs:sync-sources` — fetch fresh ATS data
-4. `jobs:sync-custom` — fetch custom/manual source data
-5. Validate data after sync
-6. `jobs:snapshot-admin-actions` — fetch admin action queue
-7. `jobs:diagnose-admin-actions` — preview actions
-8. `jobs:apply-admin-actions` — apply mutations
-9. `jobs:fetch-approved-talent` — sync talent profiles
-10. `jobs:fetch-approved-employers` — sync employer profiles
-11. `jobs:check-blocked-sources` — enforce blocklist
-12. Validate data after admin actions
-13. `jobs:build-pages` — regenerate HTML pages
-14. `jobs:audit-source-coverage` — verify coverage
-15. Detect changes → Commit → Upload
+- **Sync fetch fails (network error):** `sync-sources` / `sync-custom` write `source_health: sync_error` but do not fail the workflow. Fresh sync output (even with errors) replaces the stale snapshot. Post-sync validation sees current state, not stale data.
+- **Warning-only validation:** `validate-public-data.js` separated `warnings` from `errors` (prior fix). Warnings are reported but don't cause `exitCode = 1`.
+- **True hard failures after sync:** `validate` steps still exit 1 on hard failures (missing pages, broken links, hard validation failures). These are legitimate post-sync issues.

@@ -526,9 +526,11 @@ function normalizeEmploymentType(value, fallback = "") {
   const text = normalizeWhitespace(stringifySafe(value));
   const normalized = normalizeLooseToken(text);
   if (!normalized) return fallback;
+  if (/^[—–-]+$/.test(normalized)) return fallback;
   if (/\bcontract(?:or)?\b/.test(normalized)) return "Contract";
   if (/\btemporary\b|\btemp\b/.test(normalized)) return "Temporary";
   if (/\bintern(?:ship)?\b/.test(normalized)) return "Internship";
+  if (/\bfellow(?:ship)?\b/.test(normalized)) return "Fellowship";
   if (/\bpart time\b/.test(normalized)) return "Part-time";
   if (/\bfull time\b/.test(normalized)) return "Full-time";
   return text;

@@ -312,7 +312,12 @@ const BAD_TITLE_PATTERNS = [
   /^jasmine$/i,
   /^life at\b/i,
   /^ron and back office,\s*risk$/i,
-  /^the power of .+/i
+  /^the power of .+/i,
+  /^click here to (?:read|view|see|learn|find)\b/i,
+  /^from\s+\w+\s+to\s+\w+\s*$/i,
+  /\b(?:role model|testimonial|employee story|my experience|my journey|my story|I can now|we build|nothing flows)\b/i,
+  /[“"][A-Z][a-z]+ [a-z]+ (?:and|are|has|have|can|will|is\s)/,
+  /\(rwe\.com\)/i
 ];
 
 const SUSPICIOUS_TITLE_PATTERNS = [
@@ -350,7 +355,9 @@ const NON_ROLE_URL_PATTERNS = [
   /\/search(?:\/|$|\?)/i,
   /\/search-results(?:\/|$)/i,
   /\/talentcommunity\//i,
-  /\/sign[_-]in(?:\/|$)/i
+  /\/sign[_-]in(?:\/|$)/i,
+  /\/teamrwe\//i,
+  /\/(?:profile|employee|people|team|story|career-stories?|meet-our)\//i
 ];
 
 const COMMON_SINGLE_WORD_ROLE_TITLES = new Set([

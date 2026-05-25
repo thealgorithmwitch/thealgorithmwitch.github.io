@@ -141,8 +141,11 @@ function normalizeSource(source = {}) {
   const url = String(source.url || source.source_url || "").trim();
   const type = normalizeSourceType(source.type);
   const org = String(source.organization || source.name || source.id || "").trim();
-  const isManual = isManualCommunityOrg(org) || source.manual_review_required === true;
+  const isManualCommunity = isManualCommunityOrg(org);
   const isCommunity = source.community_submission === true;
+  const isManualReview = source.manual_review_required === true;
+  const isSyncDisabled = isManualCommunity || isCommunity;
+  const isManualType = isManualCommunity || isManualReview;
   const normalized = {
     ...source,
     name: org,
@@ -152,17 +155,17 @@ function normalizeSource(source = {}) {
     type,
     provider,
     enabled: source.enabled !== false,
-    sync_enabled: isManual || isCommunity ? false : source.sync_enabled !== false,
-    custom_sync_enabled: isManual || isCommunity ? false : source.custom_sync_enabled !== false,
-    manual_review_required: source.manual_review_required === true || isManual,
+    sync_enabled: isSyncDisabled ? false : source.sync_enabled !== false,
+    custom_sync_enabled: isSyncDisabled ? false : source.custom_sync_enabled !== false,
+    manual_review_required: isManualReview || isManualCommunity,
     temporarily_disabled: source.temporarily_disabled === true,
     requires_browser: Boolean(source.requires_browser),
-    manual_editorial_source: isManual,
-    tracked_manual_org: isManual,
+    manual_editorial_source: isManualType,
+    tracked_manual_org: isManualType,
     community_submission_source: isCommunity,
-    lowered_fetch_failure_penalty: isManual || isCommunity,
-    manual_freshness_tracking: isManual || isCommunity,
-    editorial_reminder_path: isManual || isCommunity ? "manual_editorial" : "",
+    lowered_fetch_failure_penalty: isManualType || isCommunity,
+    manual_freshness_tracking: isManualType || isCommunity,
+    editorial_reminder_path: isManualType || isCommunity ? "manual_editorial" : "",
     crawl_depth: Number.isInteger(Number(source.crawl_depth))
       ? Math.max(0, Number(source.crawl_depth))
       : DEFAULT_CRAWL_DEPTH,
@@ -172,7 +175,7 @@ function normalizeSource(source = {}) {
   return {
     ...normalized,
     ats_provider: provider,
-    parser_type: isManual || isCommunity ? "manual_editorial" : detectParserType(normalized),
+    parser_type: isManualCommunity || isCommunity ? "manual_editorial" : detectParserType(normalized),
     source_classification: inferSourceClassification(normalized),
     source_confidence_tier: inferSourceConfidenceTier(normalized)
   };

@@ -22,6 +22,7 @@ const CANONICAL_RENDER_TARGETS = [
   path.join(ROOT, "scripts", "generate-job-pages.js")
 ];
 const VALID_WORKPLACE_TYPES = new Set(["Remote", "Hybrid", "On-site", ""]);
+const VALID_JOB_TYPES = new Set(["Full-time", "Part-time", "Contract", "Temporary", "Internship", "Fellowship", "Paid Fellowship", ""]);
 const BLANK_SNIPPET_THRESHOLD = 0;
 const BAD_SNIPPET_PATTERNS = [
   /\bprevious\b/i,
@@ -373,6 +374,7 @@ async function buildValidationReport(options = {}) {
   const brokenLinks = [];
   const invalidPay = [];
   const invalidWorkplace = [];
+  const invalidJobType = [];
   const invalidLocation = [];
   const invalidSnippet = [];
   const invalidTitle = [];
@@ -611,6 +613,7 @@ async function buildValidationReport(options = {}) {
     const snippet = String(job.description_snippet || job.summary || "").trim();
     const payDisplay = String(job.salary || "").trim();
     const workplaceType = String(job.workplace_type || "").trim();
+    const jobType = String(job.job_type || job.employment_type || "").trim();
     const specialization = String(job.specialization || "").trim();
     const specializationConfidence = String(job.specialization_confidence || "low").trim().toLowerCase();
     const location = String(job.location || "").trim();
@@ -859,6 +862,9 @@ async function buildValidationReport(options = {}) {
     }
     if (!VALID_WORKPLACE_TYPES.has(workplaceType)) {
       invalidWorkplace.push({ id, title: job.title, organization: job.organization, workplace_type: workplaceType });
+    }
+    if (jobType && !VALID_JOB_TYPES.has(jobType)) {
+      invalidJobType.push({ id, title: job.title, organization: job.organization, job_type: jobType });
     }
     if (hasBadLocation(location)) {
       invalidLocation.push({ id, title: job.title, organization: job.organization, location });
@@ -1194,6 +1200,7 @@ async function buildValidationReport(options = {}) {
   if (malformedDescriptionTemplates.length) errors.push(`malformed description template count ${malformedDescriptionTemplates.length}`);
   if (malformedOpeningParagraphs.length) errors.push(`malformed opening paragraph count ${malformedOpeningParagraphs.length}`);
   if (invalidWorkplace.length) errors.push(`invalid workplace_type count ${invalidWorkplace.length}`);
+  if (invalidJobType.length) errors.push(`invalid job_type count ${invalidJobType.length}`);
   if (invalidLocation.length) errors.push(`invalid location count ${invalidLocation.length}`);
   if (invalidSnippet.length > BLANK_SNIPPET_THRESHOLD) errors.push(`invalid snippet count ${invalidSnippet.length}`);
   if (missingCanonicalDescription.length) errors.push(`missing canonical description count ${missingCanonicalDescription.length}`);
@@ -1288,6 +1295,7 @@ async function buildValidationReport(options = {}) {
       malformed_opening_paragraphs: malformedOpeningParagraphs.slice(0, 20),
       lowercase_sentence_descriptions: lowercaseSentenceDescriptions.slice(0, 20),
       invalid_workplace_type: invalidWorkplace.slice(0, 10),
+      invalid_job_type: invalidJobType.slice(0, 10),
       invalid_location: invalidLocation.slice(0, 10),
       invalid_snippet: invalidSnippet.slice(0, 10),
       missing_canonical_description: missingCanonicalDescription.slice(0, 10),

@@ -1,22 +1,60 @@
 {
-  "generated_at": "2026-05-24T22:00:00.000Z",
-  "audit": "workflow-automation",
+  "report": "workflow-automation-audit",
+  "audit_date": "2026-05-25",
   "project_root": "jobs/",
-  "finding": {
-    "workflows_directory_exists": false,
-    "workflow_count": 0,
-    "workflows": []
-  },
-  "impact": {
-    "no_ci_cd_automation": true,
-    "severity": "medium",
-    "missing_pr_checks": true,
-    "missing_deployment_pipeline": true,
-    "missing_scheduled_syncs": true
-  },
-  "recommendations": [
-    "Add .github/workflows/sync-custom.yml for scheduled sync-custom runs",
-    "Add .github/workflows/validate.yml for PR validation on jobs/ changes",
-    "Add .github/workflows/deploy-jobs.yml for automated job page deployment"
+  "workflow_dir": "jobs/backend/dotgithub/workflows/",
+  "finding": "7 workflow files found and audited",
+  "workflows": [
+    {
+      "file": "jobs-sync.yml",
+      "trigger": "Every 15 min + push to admin-actions-local.json",
+      "purpose": "Apply queued admin actions, sync talent/employers, commit changes",
+      "issues": []
+    },
+    {
+      "file": "jobs-sync-pending-sources.yml",
+      "trigger": "Weekly Wed 15:00 UTC",
+      "purpose": "Sync pending-only ATS sources, update source health",
+      "issues": []
+    },
+    {
+      "file": "jobs-migrate-existing.yml",
+      "trigger": "Manual dispatch",
+      "purpose": "Run manual parser migration (dry-run or write)",
+      "issues": []
+    },
+    {
+      "file": "jobs-auto-expand.yml",
+      "trigger": "Tue/Fri 13:45 UTC + manual",
+      "purpose": "Orchestrated auto-expand lifecycle (discover, search, sync, promote)",
+      "issues": []
+    },
+    {
+      "file": "jobs-discover-sources.yml",
+      "trigger": "Manual dispatch",
+      "purpose": "Discover new mission-aligned ATS sources",
+      "issues": []
+    },
+    {
+      "file": "jobs-discovery-and-search-ingest.yml",
+      "trigger": "Weekly Wed 13:15 UTC + manual",
+      "purpose": "Combined discovery + search ingest pipeline",
+      "issues": []
+    },
+    {
+      "file": "jobs-freshness-audit.yml",
+      "trigger": "Daily 12:30 UTC",
+      "purpose": "Audit job freshness, remove stale entries",
+      "issues": [
+        "Fixed: hardcoded resources/jobs changed to $JOBS_DIR (lines 55, 58)"
+      ]
+    }
+  ],
+  "verify_scripts": 19,
+  "verify_scripts_missing": 0,
+  "all_paths_valid": true,
+  "fixes_applied": [
+    "validate-public-data.js: separated warnings from errors for exit code",
+    "jobs-freshness-audit.yml: $JOBS_DIR consistency fix"
   ]
 }

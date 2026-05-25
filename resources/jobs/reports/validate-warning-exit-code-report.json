@@ -1,0 +1,18 @@
+{
+  "report": "validate-warning-exit-code-report",
+  "generated_at": "2026-05-25T21:18:57Z",
+  "component": "scripts/validate-public-data.js",
+  "issue": "Warnings in pipelineHealthWarnings (e.g. missing_high_priority_org) were pushed into the 'errors' array, causing process.exitCode = 1 despite being non-fatal warnings",
+  "root_cause": "Line 1227: `if (pipelineHealthWarnings.length) errors.push(...)` — warnings and hard failures shared the same array. The `main()` function checked `report.errors.length` to set exit code 1, so any warning triggered a non-zero exit.",
+  "fix": {
+    "change_1": "Created separate `warnings` array initialized alongside `errors` (line 1190)",
+    "change_2": "Moved pipelineHealthWarnings from `errors.push(...)` to `warnings.push(...)` (line 1227)",
+    "change_3": "Added `warnings` to the returned report object alongside `errors` (line 1285)",
+    "effect": "`pipelineHealthWarnings` are now reported in the `warnings` array. Only hard errors (in `errors`) cause `exitCode = 1`. Warnings are visible in output but don't fail the pipeline."
+  },
+  "impact": {
+    "before": "npm run jobs:validate-public-data would exit code 1 whenever a high-priority org like 'protect democracy' was missing from the public board, or similar non-fatal warnings existed. This blocked subsequent workflow steps (guard blocked sources, commit, etc.)",
+    "after": "Only hard validation failures and pipeline health failures cause exit code 1. Non-fatal pipeline health warnings are reported in JSON output but don't fail the step."
+  },
+  "test": "`npm run jobs:validate-public-data` will now succeed (exit 0) even when warnings are present, as long as no hard validation failures exist"
+}

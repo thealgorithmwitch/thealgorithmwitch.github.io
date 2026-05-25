@@ -1,0 +1,59 @@
+{
+  "report": "jobs-sync-workflow-audit",
+  "audit_date": "2026-05-25",
+  "file": "jobs/backend/dotgithub/workflows/jobs-sync.yml",
+  "findings": {
+    "correct_jobs_dir_path": {
+      "status": "pass",
+      "detail": "Uses steps.workspace.outputs.dir = resources/jobs"
+    },
+    "sync_sources_present": {
+      "status": "fail",
+      "detail": "Missing jobs:sync-sources step. Admin actions run against potentially stale data.",
+      "fix": "Add jobs:sync-sources before admin action steps"
+    },
+    "sync_custom_present": {
+      "status": "fail",
+      "detail": "Missing jobs:sync-custom step. Manual/custom sources not synced.",
+      "fix": "Add jobs:sync-custom after sync-sources"
+    },
+    "build_pages_present": {
+      "status": "fail",
+      "detail": "Missing jobs:build-pages step. HTML pages not regenerated after admin actions mutate jobs.json.",
+      "fix": "Add jobs:build-pages after post-sync validation"
+    },
+    "audit_source_coverage_present": {
+      "status": "fail",
+      "detail": "Missing jobs:audit-source-coverage step.",
+      "fix": "Add jobs:audit-source-coverage after build-pages"
+    },
+    "commit_paths_complete": {
+      "status": "fail",
+      "detail": "Missing source-health-latest.json, sources.json, source-prospects.json, broad-source-config.json, admin-job-actions.json, reports/** in commit paths",
+      "fix": "Add all generated files to commit and change-detection paths"
+    },
+    "stale_snapshot_path": {
+      "status": "pass",
+      "detail": "No reference to admin-actions-snapshot.json. Snapshot goes to admin-job-actions.json (not committed, intentional)"
+    },
+    "warning_exit_code": {
+      "status": "pass",
+      "detail": "validate-public-data.js warnings separated from errors (fixed in prior session)"
+    },
+    "manual_source_candidates": {
+      "status": "pass",
+      "detail": "Three pipeline gates fixed in prior session — manual review source jobs now route to admin review"
+    },
+    "consistent_jobs_dir_usage": {
+      "status": "warn",
+      "detail": "Lines 66-88 use hardcoded resources/jobs instead of $JOBS_DIR",
+      "fix": "Use ${{ steps.workspace.outputs.dir }} consistently"
+    }
+  },
+  "summary": {
+    "pass": 5,
+    "fail": 5,
+    "warn": 1,
+    "total": 11
+  }
+}

@@ -6,6 +6,7 @@ on:
     - cron: "*/15 * * * *"
   push:
     paths:
+      - "resources/jobs/admin-job-actions.json"
       - "resources/jobs/admin-actions-local.json"
 
 permissions:
@@ -21,55 +22,26 @@ jobs:
 
     env:
       JOBS_DIR: resources/jobs
-      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
       JOBS_BACKEND_URL: ${{ secrets.JOBS_BACKEND_URL }}
       JOBS_ADMIN_TOKEN: ${{ secrets.JOBS_ADMIN_TOKEN }}
 
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      - name: Set up Node.js
-        uses: actions/setup-node@v4
+      - uses: actions/setup-node@v4
         with:
           node-version: "24"
           cache: npm
           cache-dependency-path: ${{ env.JOBS_DIR }}/package.json
 
-      - name: Install dependencies if needed
-        shell: bash
-        run: |
-          if [ -f "$JOBS_DIR/package-lock.json" ] || [ -f "$JOBS_DIR/npm-shrinkwrap.json" ]; then
-            npm --prefix "$JOBS_DIR" ci
-          elif node -e "const p=require('./$JOBS_DIR/package.json'); const hasDeps=Object.keys(p.dependencies||{}).length > 0 || Object.keys(p.devDependencies||{}).length > 0; process.exit(hasDeps ? 0 : 1)"; then
-            npm --prefix "$JOBS_DIR" install
-          else
-            echo "No package dependencies declared. Skipping npm install."
-          fi
+      - name: Install dependencies
+        run: npm --prefix "$JOBS_DIR" install
 
-      - name: Validate sync scripts
+      - name: Validate admin scripts
         run: |
-          node --check "$JOBS_DIR/scripts/sync-sources.js"
-          node --check "$JOBS_DIR/scripts/sync-custom.js"
           node --check "$JOBS_DIR/scripts/apply-admin-actions.js"
-          node --check "$JOBS_DIR/scripts/fetch-approved-talent.js"
-          node --check "$JOBS_DIR/scripts/fetch-approved-employers.js"
           node --check "$JOBS_DIR/scripts/validate-public-data.js"
           node --check "$JOBS_DIR/scripts/public-jobs.js"
-          node --check "$JOBS_DIR/scripts/audit-source-coverage.js"
-
-      - name: Sync ATS sources
-        run: npm --prefix "$JOBS_DIR" run jobs:sync-sources
-
-      - name: Sync custom / manual sources
-        run: npm --prefix "$JOBS_DIR" run jobs:sync-custom
-
-      - name: Enrich pending descriptions
-        if: hashFiles(env.JOBS_DIR + '/scripts/enrich-pending-descriptions.js') != ''
-        run: node "$JOBS_DIR/scripts/enrich-pending-descriptions.js"
-
-      - name: Editorial pipeline stabilization
-        run: npm --prefix "$JOBS_DIR" run jobs:editorial-stabilization
 
       - name: Snapshot queued admin actions
         run: npm --prefix "$JOBS_DIR" run jobs:snapshot-admin-actions
@@ -86,120 +58,11 @@ jobs:
       - name: Fetch approved featured employers
         run: npm --prefix "$JOBS_DIR" run jobs:fetch-approved-employers
 
-      - name: Guard blocked sources
-        run: npm --prefix "$JOBS_DIR" run jobs:check-blocked-sources
-
-      - name: Validate public data after sync
-        run: npm --prefix "$JOBS_DIR" run jobs:validate-public-data
-
-      - name: Validate source expansion after sync
-        run: npm --prefix "$JOBS_DIR" run jobs:validate-source-expansion
-
-      - name: Full validation after sync
-        run: npm --prefix "$JOBS_DIR" run jobs:validate
-
       - name: Build job pages
         run: npm --prefix "$JOBS_DIR" run jobs:build-pages
 
+      - name: Validate after admin actions
+        run: npm --prefix "$JOBS_DIR" run jobs:validate
+
       - name: Audit source coverage
         run: npm --prefix "$JOBS_DIR" run jobs:audit-source-coverage
-
-      - name: Detect all changes
-        id: changes
-        shell: bash
-        run: |
-          CHANGED="$(git status --porcelain -- \
-            "$JOBS_DIR/job-records.json" \
-            "$JOBS_DIR/jobs.json" \
-            "$JOBS_DIR/talent-profiles.json" \
-            "$JOBS_DIR/pending-talent.json" \
-            "$JOBS_DIR/pending-talent-profiles.json" \
-            "$JOBS_DIR/employers.json" \
-            "$JOBS_DIR/pending-synced-jobs.json" \
-            "$JOBS_DIR/source-health-latest.json" \
-            "$JOBS_DIR/sources.json" \
-            "$JOBS_DIR/source-prospects.json" \
-            "$JOBS_DIR/broad-source-config.json" \
-            "$JOBS_DIR/admin-actions-local.json" \
-            "$JOBS_DIR/admin-pending-overrides.json" \
-            "$JOBS_DIR/admin-action-overrides.json" \
-            "$JOBS_DIR/admin-organization-rules.json" \
-            "$JOBS_DIR/admin-job-actions.json" \
-            "$JOBS_DIR/validation-snapshots/latest.json" \
-            "$JOBS_DIR/reports" \
-            "$JOBS_DIR/pages" \
-            || true)"
-          if [ -n "$CHANGED" ]; then
-            echo "changed=true" >> "$GITHUB_OUTPUT"
-            echo "Detected changes:"
-            echo "$CHANGED"
-          else
-            echo "changed=false" >> "$GITHUB_OUTPUT"
-            echo "No changes detected."
-          fi
-
-      - name: Commit and push generated changes
-        if: steps.changes.outputs.changed == 'true'
-        shell: bash
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add \
-            "$JOBS_DIR/job-records.json" \
-            "$JOBS_DIR/jobs.json" \
-            "$JOBS_DIR/talent-profiles.json" \
-            "$JOBS_DIR/pending-talent.json" \
-            "$JOBS_DIR/pending-talent-profiles.json" \
-            "$JOBS_DIR/employers.json" \
-            "$JOBS_DIR/pending-synced-jobs.json" \
-            "$JOBS_DIR/source-health-latest.json" \
-            "$JOBS_DIR/sources.json" \
-            "$JOBS_DIR/source-prospects.json" \
-            "$JOBS_DIR/broad-source-config.json" \
-            "$JOBS_DIR/admin-actions-local.json" \
-            "$JOBS_DIR/admin-pending-overrides.json" \
-            "$JOBS_DIR/admin-action-overrides.json" \
-            "$JOBS_DIR/admin-organization-rules.json" \
-            "$JOBS_DIR/admin-job-actions.json" \
-            "$JOBS_DIR/validation-snapshots/latest.json" \
-            "$JOBS_DIR/reports" \
-            "$JOBS_DIR/pages" \
-            || true
-          if git diff --cached --quiet; then
-            echo "No staged changes to commit."
-            exit 0
-          fi
-          git commit -m "Apply queued admin job actions"
-          git push
-          echo "Commit created and pushed."
-
-      - name: Upload admin sync artifacts
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: jobs-admin-sync-${{ github.run_id }}
-          if-no-files-found: warn
-          path: |
-            resources/jobs/job-records.json
-            resources/jobs/jobs.json
-            resources/jobs/talent-profiles.json
-            resources/jobs/pending-talent.json
-            resources/jobs/pending-talent-profiles.json
-            resources/jobs/employers.json
-            resources/jobs/pending-synced-jobs.json
-            resources/jobs/source-health-latest.json
-            resources/jobs/sources.json
-            resources/jobs/source-prospects.json
-            resources/jobs/broad-source-config.json
-            resources/jobs/admin-actions-local.json
-            resources/jobs/admin-pending-overrides.json
-            resources/jobs/admin-action-overrides.json
-            resources/jobs/admin-organization-rules.json
-            resources/jobs/admin-job-actions.json
-            resources/jobs/validation-snapshots/latest.json
-            resources/jobs/reports
-            resources/jobs/pages
-
-      - name: Report no-op
-        if: steps.changes.outputs.changed != 'true'
-        run: echo "No commit created."

@@ -10,6 +10,7 @@ const { hasMalformedDescriptionTemplateSafe } = require("./malformed-description
 const {
   OCTOPUS_PUBLIC_CAP,
   auditOctopusState,
+  isOctopusUkLeverPriorityRole,
   scoreOctopusPriority
 } = require("./octopus-source-reconciliation");
 
@@ -1105,7 +1106,11 @@ async function buildValidationReport(options = {}) {
     return item.missing_last_seen_at;
   });
   const octopusMissingFromSnapshot = octopusAudit.snapshot.authoritative
-    ? octopusAudit.publicAuditItems.filter((item) => !item.present_in_latest_snapshot && !item.explicit_keep_override)
+    ? octopusAudit.publicAuditItems.filter((item) =>
+        !item.present_in_latest_snapshot &&
+        !item.explicit_keep_override &&
+        !isOctopusUkLeverPriorityRole(item)
+      )
     : [];
 
   if (octopusAudit.octopusPublicJobs.length > OCTOPUS_PUBLIC_CAP) {

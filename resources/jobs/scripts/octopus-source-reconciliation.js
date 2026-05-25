@@ -253,7 +253,7 @@ function reconcileOctopusRecords(records = [], audit = {}, options = {}) {
   let retainedCount = 0;
 
   for (const item of candidates) {
-    if (item.explicit_keep_override) {
+    if (item.explicit_keep_override || isOctopusUkLeverPriorityRole(item)) {
       retainedIds.push(item.id);
       retainedCount += 1;
       continue;
@@ -280,7 +280,11 @@ function reconcileOctopusRecords(records = [], audit = {}, options = {}) {
 
   const archivedIds = Array.from(archiveReasonsById.keys());
   const missingFromSourceIds = candidates
-    .filter((item) => !item.present_in_latest_snapshot && !item.explicit_keep_override)
+    .filter((item) =>
+      !item.present_in_latest_snapshot &&
+      !item.explicit_keep_override &&
+      !isOctopusUkLeverPriorityRole(item)
+    )
     .map((item) => item.id);
 
   const nextRecords = (Array.isArray(records) ? records : []).map((record) => {
@@ -313,6 +317,24 @@ function reconcileOctopusRecords(records = [], audit = {}, options = {}) {
   };
 }
 
+function isOctopusUkLeverPriorityRole(item = {}) {
+  if (!item || !item.priority) return false;
+  if (item.priority.score <= 0 || item.priority.excluded) return false;
+
+  if (!String(item.id || "").startsWith("Octopus Energy-")) return false;
+
+  const canonicalUrl = String(item.identity?.canonical_url || "").toLowerCase();
+  if (!canonicalUrl.includes("jobs.lever.co/octoenergy")) return false;
+
+  const key = String(item.identity?.title_company_location || "").toLowerCase();
+  const lastSep = key.lastIndexOf("::");
+  if (lastSep < 0) return false;
+  const locationPart = key.slice(lastSep + 2);
+  if (!locationPart) return false;
+
+  return /\b(london|gb|united kingdom|uk)\b/.test(locationPart);
+}
+
 module.exports = {
   REPORT_FILE,
   OCTOPUS_ORGANIZATION,
@@ -323,6 +345,7 @@ module.exports = {
   buildLatestSnapshot,
   isExplicitPublicKeepOverride,
   isOctopusEntity,
+  isOctopusUkLeverPriorityRole,
   matchesSnapshot,
   normalizeCanonicalUrl,
   scoreOctopusPriority,

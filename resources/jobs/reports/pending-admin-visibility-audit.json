@@ -1,0 +1,38 @@
+{
+  "generated_at": "2026-05-24T22:00:00.000Z",
+  "audit": "pending-admin-visibility",
+  "root_cause": {
+    "gate_1": {
+      "file": "source-sync-quality.js",
+      "function": "applySourcePendingControls",
+      "issue": "defaults.maxPendingPerSync=5 from broad-source-config.json activated relevance-based capping for all sources",
+      "fix": "Added manual_review_required bypass — source.manual_review_required === true returns all jobs as activeReview"
+    },
+    "gate_2": {
+      "file": "pending-triage.js",
+      "function": "classifyPendingJob",
+      "issue": "non-broad-source manual jobs failing roleRelevant check rejected as noise (line 1086-1090)",
+      "fix": "Added manual_review_required and source_classification bypass before relevance check"
+    }
+  },
+  "changes_made": [
+    "classifyPendingJob in pending-triage.js — added manual_review_required bypass",
+    "applySourcePendingControls in source-sync-quality.js — added manual_review_required bypass",
+    "routeSyncedJob in job-normalizer.js — propagate manual_review_required to job",
+    "Removed duplicate APEN source entry (asian-pacific-environmental-network)"
+  ],
+  "total_manual_sources": 83,
+  "enabled": 68,
+  "disabled": 15,
+  "custom_sync_enabled": 48,
+  "custom_sync_disabled": 20,
+  "affected_after_fix": {
+    "enabled_and_syncing": 48,
+    "now_bypassing_relevance_filters": true
+  },
+  "remaining_gaps": [
+    "20 manual sources have custom_sync_enabled: false — excluded from sync-custom",
+    "No ATS adapter for 7 provider types (greenhouse, lever, bamboohr, ashby, workable, smartrecruiters, recruitee, rippling)",
+    "15 disabled sources — may need re-enable or removal"
+  ]
+}

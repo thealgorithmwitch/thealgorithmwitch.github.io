@@ -14,6 +14,9 @@ const DEADLINE_PATTERNS = [
   /\b(?:application deadline|apply by|deadline to apply|closing date|closes on|applications close)\b[:\s-]*(\d{4}-\d{2}-\d{2})/i
 ];
 
+const DEFAULT_PUBLISHED_GRACE_DAYS = 14;
+const DEFAULT_MISSING_CONFIRMATIONS_REQUIRED = 2;
+
 function addDays(date, days) {
   const next = new Date(date.getTime());
   next.setUTCDate(next.getUTCDate() + days);
@@ -56,6 +59,15 @@ function applyFreshnessMetadata(record = {}, options = {}) {
   }
   next.stale_score = computeStaleScore(next, { now });
   return next;
+}
+
+function isSourceOwnedRecord(record = {}) {
+  const sourceType = String(record.source_type || record.raw_source_data?.sync_origin || "").toLowerCase();
+  if (sourceType === "manual") return false;
+  return Boolean(
+    String(record.raw_source_data?.source_id || record.source_id || "").trim()
+    || String(record.raw_source_data?.source_url || record.source_url || record.display?.source_url || "").trim()
+  );
 }
 
 function detectApplicationDeadline(job) {
@@ -162,6 +174,50 @@ function markRemoved(record, reason, options = {}) {
   });
 }
 
+function markMissingFromSource(record, reason, options = {}) {
+  const now = options.now instanceof Date ? options.now : new Date();
+  const confirmationsRequired = Math.max(
+    1,
+    Number(options.confirmationsRequired ?? record.required_missing_confirmations ?? DEFAULT_MISSING_CONFIRMATIONS_REQUIRED) || DEFAULT_MISSING_CONFIRMATIONS_REQUIRED
+  );
+  const nextConfirmations = Math.max(0, Number(record.missing_from_source_confirmations || 0) || 0) + 1;
+  const graceDays = Math.max(1, Number(options.graceDays ?? DEFAULT_PUBLISHED_GRACE_DAYS) || DEFAULT_PUBLISHED_GRACE_DAYS);
+  const authoritativeSnapshotConfirmed = options.authoritativeSnapshotConfirmed === true;
+  const publishedGraceUntil = toIso(options.publishedGraceUntil || record.published_grace_until || addDays(now, graceDays));
+  const graceExpired = Boolean(publishedGraceUntil && Date.parse(publishedGraceUntil) <= now.getTime());
+  const canArchive = authoritativeSnapshotConfirmed && nextConfirmations >= confirmationsRequired && graceExpired;
+
+  if (canArchive) {
+    return markRemoved({
+      ...record,
+      missing_from_source_confirmations: nextConfirmations,
+      published_grace_until: publishedGraceUntil
+    }, reason, { now });
+  }
+
+  const nextRecord = applyFreshnessMetadata({
+    ...record,
+    status: "published",
+    published: true,
+    public_visibility: true,
+    stale_reason: reason,
+    verification_status: "verified",
+    verification_method: "source_grace_period",
+    updated_at: now.toISOString(),
+    published_grace_until: publishedGraceUntil,
+    missing_from_source_confirmations: nextConfirmations,
+    required_missing_confirmations: confirmationsRequired
+  }, {
+    now,
+    sourceStatus: authoritativeSnapshotConfirmed ? "grace_missing" : "sync_unverified",
+    lastSeen: false,
+    failedSyncCount: Number(record.failed_sync_count || 0)
+  });
+  nextRecord.first_published_at = stringifySafe(record.first_published_at || now.toISOString());
+  nextRecord.last_verified_at = stringifySafe(record.last_verified_at || now.toISOString());
+  return nextRecord;
+}
+
 function markExpired(record, reason, options = {}) {
   const now = options.now instanceof Date ? options.now : new Date();
   return applyFreshnessMetadata({
@@ -184,7 +240,7 @@ function extendVerification(record, method = "source_recheck", options = {}) {
   const now = options.now instanceof Date ? options.now : new Date();
   const deadline = detectApplicationDeadline(record);
   const expiresAt = deadline ? deadline : addDays(now, 7);
-  return applyFreshnessMetadata({
+  const next = applyFreshnessMetadata({
     ...record,
     first_published_at: record.first_published_at || now.toISOString(),
     status: "published",
@@ -202,6 +258,13 @@ function extendVerification(record, method = "source_recheck", options = {}) {
     lastSeen: !(deadline && expiresAt.getTime() < now.getTime()),
     failedSyncCount: 0
   });
+  next.missing_from_source_confirmations = 0;
+  next.published_grace_until = "";
+  next.required_missing_confirmations = Math.max(
+    1,
+    Number(record.required_missing_confirmations || DEFAULT_MISSING_CONFIRMATIONS_REQUIRED) || DEFAULT_MISSING_CONFIRMATIONS_REQUIRED
+  );
+  return next;
 }
 
 function resolveDisplayJobFromRecord(record) {
@@ -279,10 +342,12 @@ module.exports = {
   isClosedPosting,
   isStale,
   markExpired,
+  markMissingFromSource,
   markNeedsReview,
   markRemoved,
   resolveDisplayJobFromRecord,
   shouldShowPublicRecord,
   applyFreshnessMetadata,
-  computeStaleScore
+  computeStaleScore,
+  isSourceOwnedRecord
 };

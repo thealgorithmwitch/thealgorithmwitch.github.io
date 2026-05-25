@@ -241,7 +241,7 @@ async function runCustomSync(options = {}) {
       logger,
       label: "jobs:sync-custom",
       context: "source_sync",
-      preserveMissingPublishedRecords: false
+      preserveMissingPublishedRecords: true
     });
   }
   const scrapeReportPayload = await upsertScrapeReports(scrapeReports);
@@ -256,7 +256,7 @@ async function runCustomSync(options = {}) {
       logger,
       label: "jobs:sync-custom",
       context: "source_sync",
-      preserveMissingPublishedRecords: false
+      preserveMissingPublishedRecords: true
     });
   }
   await writeJson(PENDING_SYNCED_FILE, triaged.adminPendingJobs);

@@ -8,6 +8,7 @@ const ROOT = path.resolve(__dirname, "..");
 const REPORTS_DIR = path.join(ROOT, "reports");
 const SOURCE_PROSPECTS_FILE = path.join(ROOT, "source-prospects.json");
 const SEARCH_SOURCES_FILE = path.join(ROOT, "search-sources.json");
+const JOBS2_FILE = path.join(ROOT, "jobs2.json");
 const OUTPUT_JSON = path.join(REPORTS_DIR, "source-coverage-audit.json");
 const OUTPUT_MD = path.join(REPORTS_DIR, "source-coverage-audit.md");
 
@@ -73,14 +74,15 @@ async function readSearchSources() {
 }
 
 async function main() {
-  const [sources, prospects, searchQueries, sourceHealth, jobs, records, pendingJobs] = await Promise.all([
+  const [sources, prospects, searchQueries, sourceHealth, jobs, records, pendingJobs, jobs2] = await Promise.all([
     readSources(),
     readProspects(),
     readSearchSources(),
     readSourceHealthSnapshot(),
     readJobs(),
     readJobRecords(),
-    readPendingSyncedJobs()
+    readPendingSyncedJobs(),
+    readJson(JOBS2_FILE, [])
   ]);
 
   const pageFiles = await fs.readdir(path.join(ROOT, "pages")).catch(() => []);
@@ -257,6 +259,27 @@ async function main() {
   const duplicateOrgs = entries.filter((entry) => entry.duplicate_source_records.length > 0);
   const missingPreferredOrgs = entries.filter((entry) => entry.present_in_source_prospects && !entry.present_in_sources_json);
   const recommendedNextPulls = entries.filter((entry) => ["add_to_sources_json", "candidate_for_new_pull"].includes(entry.recommended_action));
+  const disappearingOrgs = entries.filter((entry) => entry.source_status === "grace_missing");
+  const malformedDescriptionByOrg = summarizeCounts(
+    records.filter((record) => /malformed_opening_paragraph|malformed_description_template/i.test(String(record.raw_source_data?.parse_warning || ""))).map((record) => ({
+      organization: text(record.display?.organization || record.raw_source_data?.organization)
+    })),
+    "organization"
+  );
+  const lowRelevanceByOrg = summarizeCounts(
+    pendingJobs.filter((job) => Number(job.relevance_score || 0) <= 2 || text(job.skip_reason) === "broad_source_low_relevance").map((job) => ({
+      organization: text(job.organization)
+    })),
+    "organization"
+  );
+  const restoreCandidatesFromJobs2 = (Array.isArray(jobs2) ? jobs2 : [])
+    .filter((job) => !jobs.some((current) => text(current.id) === text(job.id)))
+    .map((job) => ({
+      organization: text(job.organization),
+      title: text(job.title),
+      source_url: text(job.source_url || job.apply_url)
+    }))
+    .slice(0, 100);
 
   const report = {
     generated_at: new Date().toISOString(),
@@ -281,8 +304,13 @@ async function main() {
         display_name: entry.display_name,
         duplicate_source_records: entry.duplicate_source_records
       })),
+      active_public_orgs_without_sources: publicButNoActiveSource.map((entry) => entry.display_name),
+      orgs_disappearing_reappearing: disappearingOrgs.map((entry) => entry.display_name),
+      top_sources_by_corruption_rate: listTop(malformedDescriptionByOrg.map((entry) => ({ organization: entry.name, count: entry.count })), 20),
+      top_sources_by_low_relevance_rate: listTop(lowRelevanceByOrg.map((entry) => ({ organization: entry.name, count: entry.count })), 20),
       high_priority_missing_orgs: missingPreferredOrgs.map((entry) => entry.display_name),
-      recommended_next_orgs_to_add: recommendedNextPulls.map((entry) => entry.display_name)
+      recommended_next_orgs_to_add: recommendedNextPulls.map((entry) => entry.display_name),
+      restore_candidates_from_jobs2: restoreCandidatesFromJobs2
     }
   };
 
@@ -347,6 +375,18 @@ async function main() {
       last_checked_at: entry.last_checked_at,
       recommended_action: entry.recommended_action
     })), ["organization", "source_id", "failed_sync_count", "source_status", "last_checked_at", "recommended_action"]),
+    "",
+    "## Public Orgs Without Sources",
+    "",
+    formatTable(publicButNoActiveSource.slice(0, 50).map((entry) => ({
+      organization: entry.display_name,
+      public_jobs: entry.public_job_count,
+      recommended_action: entry.recommended_action
+    })), ["organization", "public_jobs", "recommended_action"]),
+    "",
+    "## Restore Candidates From jobs2.json",
+    "",
+    formatTable(restoreCandidatesFromJobs2.slice(0, 50), ["organization", "title", "source_url"]),
     "",
     "## Duplicate Cleanup",
     "",

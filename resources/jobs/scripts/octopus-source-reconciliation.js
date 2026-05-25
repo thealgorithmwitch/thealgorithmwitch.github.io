@@ -1,12 +1,26 @@
 const path = require("path");
 const { buildJobPagePathMap } = require("./job-page-paths");
-const { markRemoved, shouldShowPublicRecord } = require("./lifecycle-utils");
+const { markMissingFromSource, markRemoved, shouldShowPublicRecord } = require("./lifecycle-utils");
 
 const ROOT = path.resolve(__dirname, "..");
 const REPORT_FILE = path.join(ROOT, "reports", "octopus-cleanup-report.json");
 const OCTOPUS_SOURCE_ID = "octopus-energy";
 const OCTOPUS_ORGANIZATION = "Octopus Energy";
 const OCTOPUS_PUBLIC_CAP = 5;
+const OCTOPUS_PRIORITY_PATTERNS = [
+  { pattern: /\b(?:performance marketing|digital marketing)\b/i, points: 7, reason: "priority_marketing_lead" },
+  { pattern: /\b(?:marketing|brand|creative|content|writer|editor|social media|campaign|communications?)\b/i, points: 5, reason: "priority_comms_creative" },
+  { pattern: /\b(?:partnerships?|commercial contracts?|contracts?|legal|policy)\b/i, points: 5, reason: "priority_partnerships_contracts_policy" },
+  { pattern: /\b(?:commercial|commercial operations|risk|optimisation|optimization)\b/i, points: 2, reason: "priority_commercial_adjacent" }
+];
+const OCTOPUS_EXCLUSION_PATTERNS = [
+  { pattern: /\b(?:engineer|engineering|developer|software|backend|frontend|fullstack|full stack|devops|architect|techops)\b/i, points: -10, reason: "exclude_engineering" },
+  { pattern: /\b(?:field application|field technician|smart meter|technician)\b/i, points: -10, reason: "exclude_field_technician" },
+  { pattern: /\b(?:finance|treasury|accounting|reporting)\b/i, points: -8, reason: "exclude_finance_only" },
+  { pattern: /\b(?:operations specialist|warehouse|logistics|customer operations)\b/i, points: -7, reason: "exclude_operations_only" },
+  { pattern: /\b(?:sales executive|business development)\b/i, points: -6, reason: "exclude_generic_business_development" },
+  { pattern: /\b(?:end of lease|onboarding|customer success|energy specialist|executive assistant|warehouse)\b/i, points: -8, reason: "exclude_low_priority_support_role" }
+];
 
 function text(value) {
   return String(value || "").trim();
@@ -75,6 +89,29 @@ function isExplicitPublicKeepOverride(record = {}) {
       normalizeLoose(record.raw_source_data?.sync_origin) === "manual"
     )
   );
+}
+
+function scoreOctopusPriority(entity = {}) {
+  const title = text(entity.display?.title || entity.raw_source_data?.title || entity.title);
+  const specialization = text(entity.display?.specialization || entity.raw_source_data?.specialization || entity.specialization);
+  const haystack = `${title} ${specialization}`.trim();
+  let score = 0;
+  const reasons = [];
+  OCTOPUS_PRIORITY_PATTERNS.forEach(({ pattern, points, reason }) => {
+    if (!pattern.test(haystack)) return;
+    score += points;
+    reasons.push(reason);
+  });
+  OCTOPUS_EXCLUSION_PATTERNS.forEach(({ pattern, points, reason }) => {
+    if (!pattern.test(haystack)) return;
+    score += points;
+    reasons.push(reason);
+  });
+  return {
+    score,
+    reasons,
+    excluded: score <= 0 || reasons.some((reason) => reason.startsWith("exclude_"))
+  };
 }
 
 function buildDuplicateGroups(items = [], keyName) {
@@ -163,7 +200,8 @@ function auditOctopusState({ records = [], jobs = [], pending = [], sourceHealth
     missing_source_ref: !text(record.raw_source_data?.source_id || record.source_id) || !(
       text(record.raw_source_data?.source_url || record.display?.source_url || record.source_url) ||
       text(record.raw_source_data?.external_id || record.external_id)
-    )
+    ),
+    priority: scoreOctopusPriority(record)
   }));
   const { map: pagePathMap } = buildJobPagePathMap(octopusPublicJobs);
   const stalePageCandidates = publicAuditItems
@@ -204,6 +242,9 @@ function reconcileOctopusRecords(records = [], audit = {}, options = {}) {
     if (left.present_in_latest_snapshot !== right.present_in_latest_snapshot) {
       return left.present_in_latest_snapshot ? -1 : 1;
     }
+    if (Number(left.priority?.score || 0) !== Number(right.priority?.score || 0)) {
+      return Number(right.priority?.score || 0) - Number(left.priority?.score || 0);
+    }
     return sortByFreshness(left, right);
   });
 
@@ -219,6 +260,10 @@ function reconcileOctopusRecords(records = [], audit = {}, options = {}) {
     }
     if (!item.present_in_latest_snapshot) {
       archiveReasonsById.set(item.id, "missing_from_latest_octopus_source_snapshot");
+      continue;
+    }
+    if (item.priority?.excluded) {
+      archiveReasonsById.set(item.id, item.priority.reasons[0] || "octopus_low_priority_role");
       continue;
     }
     if (duplicateIds.has(item.id)) {
@@ -243,6 +288,19 @@ function reconcileOctopusRecords(records = [], audit = {}, options = {}) {
     const recordId = text(record.id);
     const reason = archiveReasonsById.get(recordId);
     if (!reason) return record;
+    if (
+      reason === "missing_from_latest_octopus_source_snapshot"
+      && record.published === true
+      && record.public_visibility === true
+      && String(record.status || "").toLowerCase() === "published"
+    ) {
+      return markMissingFromSource(record, reason, {
+        now,
+        authoritativeSnapshotConfirmed: true,
+        confirmationsRequired: 2,
+        graceDays: 10
+      });
+    }
     return markRemoved(record, reason, { now });
   });
 
@@ -267,5 +325,6 @@ module.exports = {
   isOctopusEntity,
   matchesSnapshot,
   normalizeCanonicalUrl,
+  scoreOctopusPriority,
   reconcileOctopusRecords
 };

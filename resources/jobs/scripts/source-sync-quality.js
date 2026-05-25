@@ -14,8 +14,21 @@ const NEGATIVE_PATTERNS = [
   /\b(?:sales representative|account executive|sdr|bdr|business development representative)\b/i,
   /\bwarehouse\b|\blogistics\b/i,
   /\bretail\b/i,
-  /\b(?:accountant|accounting manager|controller|finance manager|finance analyst|payroll specialist)\b/i,
-  /\bconstruction\b/i
+  /\b(?:accountant|accounting manager|controller|finance manager|finance analyst|payroll specialist|tax manager|tax analyst|technical accounting)\b/i,
+  /\bconstruction\b/i,
+  /\b(?:ecommerce|merchandising|store operations|retail media)\b/i,
+  /\b(?:quota carrying|quota-carrying|enterprise sales|inside sales)\b/i
+];
+
+const MISSION_PRIORITY_PATTERNS = [
+  /\b(?:climate justice|environmental justice|energy democracy|just transition|public interest|civic infrastructure|equitable development|public systems)\b/i,
+  /\b(?:democracy|democratic|voting|elections?|rights|civil rights|rule of law|litigation|organizing|movement)\b/i,
+  /\b(?:policy|advocacy|campaign|community|research|coalition|resilience|workforce transition|labor|storytelling|partnerships|legal|contracts?)\b/i
+];
+
+const ROLE_PRIORITY_PATTERNS = [
+  /\b(?:data scientist|research scientist|policy analyst|policy counsel|staff attorney|litigation|organizer|campaign manager|communications director|communications manager|social media manager|content strategist|writer\/editor)\b/i,
+  /\b(?:civic tech|product manager|designer|researcher|state impact specialist|partnerships manager|brand manager|creative producer|contracts manager|commercial contracts)\b/i
 ];
 
 function toArray(value) {
@@ -90,6 +103,14 @@ function getSourceControlConfig(source = {}, options = {}) {
       source.min_relevance_score ?? override.min_relevance_score ?? DEFAULTS.min_relevance_score,
       2
     ),
+    highPriorityRelevanceScore: toNumber(
+      source.high_priority_relevance_score ?? override.high_priority_relevance_score ?? DEFAULTS.high_priority_relevance_score,
+      9
+    ),
+    highPriorityOverflowSlots: toNumber(
+      source.high_priority_overflow_slots ?? override.high_priority_overflow_slots ?? DEFAULTS.high_priority_overflow_slots,
+      2
+    ),
     recentSurfaceCooldownDays: toNumber(
       source.recent_surface_cooldown_days ?? override.recent_surface_cooldown_days ?? DEFAULTS.recent_surface_cooldown_days,
       7
@@ -123,6 +144,9 @@ function scoreJobForPendingSource(job = {}) {
   const haystack = buildRelevanceHaystack(job);
   let score = 0;
   const reasons = [];
+  const sourceClassification = normalizeLoose(job.source_classification);
+  const organization = normalizeLoose(job.organization);
+  const sourceId = normalizeLoose(job.source_id);
 
   POSITIVE_TERMS.forEach((term) => {
     const pattern = new RegExp(`\\b${term.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}\\b`, "i");
@@ -141,6 +165,32 @@ function scoreJobForPendingSource(job = {}) {
   if (/\b(?:community|partnerships|program manager|program director|operations manager|data scientist|software engineer|product manager|designer|communications manager|policy analyst|strategy lead|marketing manager)\b/i.test(haystack)) {
     score += 2;
     reasons.push("positive:role_signal");
+  }
+
+  if (/\b(?:communications?|social media|organizing|policy|advocacy|campaigns?|civic tech|climate justice|environmental justice|storytelling|partnerships?|legal|contracts?|movement building|research|public interest|writer|editor|brand|creative|content)\b/i.test(haystack)) {
+    score += 3;
+    reasons.push("positive:specialization_boost");
+  }
+
+  MISSION_PRIORITY_PATTERNS.forEach((pattern, index) => {
+    if (!pattern.test(haystack)) return;
+    score += 4;
+    reasons.push(`mission:${index + 1}`);
+  });
+
+  ROLE_PRIORITY_PATTERNS.forEach((pattern, index) => {
+    if (!pattern.test(haystack)) return;
+    score += 3;
+    reasons.push(`mission_role:${index + 1}`);
+  });
+
+  if (
+    sourceClassification.includes("trusted_nonprofit_pending_review")
+    || /\b(?:protect democracy|earthjustice|climate justice alliance|we act|greenpeace|350\.org|sierra club|people'?s action|southern alliance for clean energy|hip hop caucus|bullard center|movement generation|partnership for public good|sunrise movement|fresh energy|groundswell|louisiana bucket brigade|indigenous environmental network|apen)\b/i.test(organization)
+    || /\b(?:protect-democracy|earthjustice|greenpeace|350-org|sierra-club|peoples-action|southern-alliance-for-clean-energy|hip-hop-caucus|bullard-center|movement-generation|partnership-for-public-good|sunrise-movement|fresh-energy|groundswell|louisiana-bucket-brigade|indigenous-environmental-network|apen)\b/i.test(sourceId)
+  ) {
+    score += 2;
+    reasons.push("mission:trusted_source");
   }
 
   return {
@@ -192,20 +242,25 @@ function buildRotationScore(entry, config, currentIso) {
     - ageDecay;
 }
 
+function buildResurfacingPriorityScore(entry, config, currentIso) {
+  return buildRotationScore(entry, config, currentIso) + (toNumber(entry.score, 0) * 10);
+}
+
 function mergeCurrentJob(existingJob, incomingJob, source, currentIso) {
   const base = existingJob ? { ...existingJob } : {};
   const merged = incomingJob ? { ...base, ...incomingJob } : base;
   const relevance = scoreJobForPendingSource(merged);
-  return {
-    ...merged,
+    return {
+      ...merged,
     source_id: normalizeText(merged.source_id || source.id),
     trusted: false,
     auto_publish: false,
     quality_mode: normalizeText(merged.quality_mode || source.quality_mode || "pending"),
-    broad_source_controls: true,
-    relevance_score: relevance.score,
-    relevance_reasons: relevance.reasons,
-    first_seen_at: normalizeText(base.first_seen_at || merged.first_seen_at || currentIso),
+      broad_source_controls: true,
+      relevance_score: relevance.score,
+      relevance_reasons: relevance.reasons,
+      resurfacing_priority_score: relevance.score,
+      first_seen_at: normalizeText(base.first_seen_at || merged.first_seen_at || currentIso),
     last_seen_at: incomingJob ? currentIso : normalizeText(base.last_seen_at || currentIso),
     surfaced_count: toNumber(base.surfaced_count ?? merged.surfaced_count, 0),
     last_review_cycle_at: normalizeText(base.last_review_cycle_at || merged.last_review_cycle_at || "")
@@ -299,6 +354,7 @@ function applySourcePendingControls(source, jobsOrOptions = [], maybeOptions = {
       return;
     }
     entry.rotationScore = buildRotationScore(entry, config, currentIso);
+    entry.resurfacingPriorityScore = buildResurfacingPriorityScore(entry, config, currentIso);
     relevantEntries.push(entry);
   });
 
@@ -316,14 +372,22 @@ function applySourcePendingControls(source, jobsOrOptions = [], maybeOptions = {
   let resurfacedFromBacklog = 0;
   let repeatSurfacePreventedCount = 0;
   let cappedExisting = 0;
+  let highPriorityOverflowUsed = 0;
 
   const activeReviewJobs = [];
   const backlogJobs = [];
 
   relevantEntries.forEach((entry, index) => {
-    const activeSlot = config.maxPendingPerSync > 0 ? index < config.maxPendingPerSync : true;
+    const withinBaseCap = config.maxPendingPerSync > 0 ? index < config.maxPendingPerSync : true;
+    const highPriorityOverflow = !withinBaseCap
+      && entry.score >= config.highPriorityRelevanceScore
+      && highPriorityOverflowUsed < config.highPriorityOverflowSlots;
+    const activeSlot = withinBaseCap || highPriorityOverflow;
     const cleanedJob = cleanupSourceControlFlags(entry.job);
     if (activeSlot) {
+      if (highPriorityOverflow) {
+        highPriorityOverflowUsed += 1;
+      }
       const surfacedCount = toNumber(cleanedJob.surfaced_count, 0) + 1;
       activeReviewJobs.push({
         ...cleanedJob,
@@ -331,7 +395,8 @@ function applySourcePendingControls(source, jobsOrOptions = [], maybeOptions = {
         broad_source_backlog: false,
         source_capped: false,
         surfaced_count: surfacedCount,
-        last_review_cycle_at: currentIso
+        last_review_cycle_at: currentIso,
+        resurfacing_priority_score: entry.resurfacingPriorityScore
       });
       if (!entry.existedBefore || entry.previouslyBacklog) activeReviewAdded += 1;
       if (entry.previouslyBacklog) resurfacedFromBacklog += 1;
@@ -352,7 +417,8 @@ function applySourcePendingControls(source, jobsOrOptions = [], maybeOptions = {
       hidden_from_review_default: true,
       broad_source_backlog: true,
       source_capped: true,
-      skip_reason: "source_cap_exceeded"
+      skip_reason: "source_cap_exceeded",
+      resurfacing_priority_score: entry.resurfacingPriorityScore
     });
   });
 
@@ -376,7 +442,8 @@ function applySourcePendingControls(source, jobsOrOptions = [], maybeOptions = {
         broad_source_backlog: true,
         source_capped: false,
         skip_reason: "broad_source_low_relevance",
-        backlog_rank: backlogRank++
+        backlog_rank: backlogRank++,
+        resurfacing_priority_score: entry.resurfacingPriorityScore || entry.score
       };
     });
 
@@ -397,7 +464,8 @@ function applySourcePendingControls(source, jobsOrOptions = [], maybeOptions = {
     repeatSurfacePreventedCount,
     cappedExisting,
     cappedCount: rankedBacklogJobs.length,
-    skippedLowRelevanceCount: lowRelevanceBacklog.length
+    skippedLowRelevanceCount: lowRelevanceBacklog.length,
+    highPriorityOverflowUsed
   };
 }
 

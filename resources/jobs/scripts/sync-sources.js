@@ -45,6 +45,17 @@ function isManagedAtsJob(job, activeSourceIds) {
   return job.sync_origin === "ats" && activeSourceIds.has(String(job.source_id || ""));
 }
 
+function countManagedPendingBySource(existingPending = []) {
+  const counts = new Map();
+  for (const job of Array.isArray(existingPending) ? existingPending : []) {
+    if (job.sync_origin !== "ats") continue;
+    const sourceId = String(job.source_id || "");
+    if (!sourceId) continue;
+    counts.set(sourceId, Number(counts.get(sourceId) || 0) + 1);
+  }
+  return counts;
+}
+
 async function fetchJobsForSource(source) {
   if (source.provider === "greenhouse" || source.type === "greenhouse") {
     return fetchGreenhouseJobsForSource(source);
@@ -106,6 +117,8 @@ async function runSyncForTypes(types = []) {
   const preservedPendingJobs = existingPending
     .filter((job) => !isManagedAtsJob(job, activeSourceIds))
     .map((job) => ({ ...job, __pending_preserved: true }));
+  const managedPendingCounts = countManagedPendingBySource(existingPending);
+  const unavailableSourceIds = new Set();
   const publicJobs = [];
   const pendingJobs = [];
   const counts = {};
@@ -165,6 +178,7 @@ async function runSyncForTypes(types = []) {
 
     try {
       const rawJobs = await fetchJobsForSource(source);
+      const preservedPendingCount = Number(managedPendingCounts.get(String(source.id || "")) || 0);
       counts[source.id] = {
         fetched: rawJobs.length,
         active: 0,
@@ -248,9 +262,15 @@ async function runSyncForTypes(types = []) {
         last_successful_sync: new Date().toISOString(),
         sync_duration_ms: Date.now() - sourceStartedAt,
         failure_error_count: 0,
-        failed_sync_count: 0
+        failed_sync_count: 0,
+        source_temporarily_unavailable: false,
+        fallback_used: false,
+        fallback_reason: "",
+        preserved_pending_count: preservedPendingCount
       });
     } catch (error) {
+      const preservedPendingCount = Number(managedPendingCounts.get(String(source.id || "")) || 0);
+      unavailableSourceIds.add(String(source.id || ""));
       counts[source.id] = { fetched: 0, active: 0, pending: 0, error: error.message };
       const attemptedUrl =
         provider === "greenhouse"
@@ -276,6 +296,11 @@ async function runSyncForTypes(types = []) {
         jobs_parsed: 0,
         reason_for_zero_results: error.message,
         browser_fallback_recommended: false,
+        source_temporarily_unavailable: true,
+        fallback_used: preservedPendingCount > 0,
+        fallback_reason: preservedPendingCount > 0
+          ? `Preserved ${preservedPendingCount} existing pending jobs because the source failed during fetch.`
+          : "",
         errors: [error.message]
       });
       console.error(
@@ -294,15 +319,27 @@ async function runSyncForTypes(types = []) {
         jobs_normalized: 0,
         jobs_skipped: 0,
         skip_reasons: [error.message],
-        pending_count_delta: 0,
+        pending_count_delta: preservedPendingCount,
         public_count_delta: 0,
         last_checked_at: new Date().toISOString(),
         last_seen_at: "",
         last_successful_sync: "",
         sync_duration_ms: Date.now() - sourceStartedAt,
         failure_error_count: 1,
-        failed_sync_count: 1
+        failed_sync_count: 1,
+        source_temporarily_unavailable: true,
+        fallback_used: preservedPendingCount > 0,
+        fallback_reason: preservedPendingCount > 0
+          ? `Preserved ${preservedPendingCount} existing pending jobs because the source failed during fetch.`
+          : "",
+        preserved_pending_count: preservedPendingCount
       });
+    }
+  }
+
+  for (const job of managedExistingPendingJobs) {
+    if (unavailableSourceIds.has(String(job.source_id || ""))) {
+      pendingJobs.push({ ...job, __pending_preserved: true });
     }
   }
 
@@ -317,7 +354,7 @@ async function runSyncForTypes(types = []) {
     logger: console,
     label: "jobs:sync-sources",
     context: "source_sync",
-    preserveMissingPublishedRecords: false
+    preserveMissingPublishedRecords: true
   });
   const scrapeReportPayload = await upsertScrapeReports(scrapeReports);
   const triaged = await triagePendingJobs(mergedPendingJobs, publicWriteResult.jobs, scrapeReportPayload);
@@ -330,7 +367,7 @@ async function runSyncForTypes(types = []) {
     logger: console,
     label: "jobs:sync-sources",
     context: "source_sync",
-    preserveMissingPublishedRecords: false
+    preserveMissingPublishedRecords: true
   });
   await writeJson(PENDING_SYNCED_FILE, triaged.adminPendingJobs);
   await upsertScrapeReports(triaged.report.sources);

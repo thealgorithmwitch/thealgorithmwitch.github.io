@@ -9,7 +9,8 @@ const { readSourceHealthSnapshot } = require("./source-health-store");
 const { hasMalformedDescriptionTemplateSafe } = require("./malformed-description-helper");
 const {
   OCTOPUS_PUBLIC_CAP,
-  auditOctopusState
+  auditOctopusState,
+  scoreOctopusPriority
 } = require("./octopus-source-reconciliation");
 
 const ROOT = path.resolve(__dirname, "..");
@@ -76,6 +77,11 @@ const COMMUNICATIONS_FILTER_SIGNAL_PATTERNS = [
 const URL_COMPANY_ALIASES = new Map([
   ["thegoodfoodinstitute80", "The Good Food Institute"]
 ]);
+const MALFORMED_OPENING_PATTERNS = [
+  /^\)\s*[A-Z]/,
+  /^we strongly encourage candidates/i,
+  /^(?:apply now|back to jobs|see all openings|www\.)/i
+];
 
 function findCassandreTalentRecord(records = []) {
   return records.find((record) => {
@@ -241,6 +247,19 @@ function isValidPayDisplay(value) {
   return !BAD_PAY_PATTERNS.some((pattern) => pattern.test(text));
 }
 
+function missingCurrencySymbol(value) {
+  const text = String(value || "").trim();
+  if (!text || !/\d/.test(text)) return false;
+  if (/[€$£]|CA\$|\b(?:USD|CAD|EUR|GBP)\b/i.test(text)) return false;
+  return /\b\d[\d,]*(?:\.\d+)?\s*(?:-|–|—|to)\s*\d[\d,]*(?:\.\d+)?\b/.test(text) || /^\d[\d,\s]+(?:\/\s*(?:hour|day|week|month|year))?$/i.test(text);
+}
+
+function hasMalformedOpeningParagraph(value) {
+  const text = String(value || "").trim();
+  if (!text) return false;
+  return MALFORMED_OPENING_PATTERNS.some((pattern) => pattern.test(text));
+}
+
 function extractPayFacts(value) {
   const text = String(value || "").trim();
   const amounts = Array.from(text.matchAll(/\d[\d,]*(?:\.\d+)?/g))
@@ -379,6 +398,8 @@ async function buildValidationReport(options = {}) {
   const suspiciousPayDowngrades = [];
   const suspiciousTinyMonthlyPay = [];
   const malformedDescriptionTemplates = [];
+  const malformedOpeningParagraphs = [];
+  const missingCurrencySymbolJobs = [];
   const lowercaseSentenceDescriptions = [];
   const viaIdentityConflicts = [];
   const publicSourceFilterViolations = [];
@@ -388,6 +409,10 @@ async function buildValidationReport(options = {}) {
   const employerLocalEditViolations = [];
   const talentIconRenderViolations = [];
   const octopusValidationViolations = [];
+  const excessiveGenericSourceJobs = [];
+  const disappearedPublishedJobs = [];
+  const failedFetchPublicRemovals = [];
+  const orphanedBacklogHighPriority = [];
   const hardValidationFailures = [];
 
   for (const job of jobs) {
@@ -612,6 +637,10 @@ async function buildValidationReport(options = {}) {
       hasMalformedDescriptionTemplateSafe(snippet) ||
       hasMalformedDescriptionTemplateSafe(String(job.summary || ""));
     const malformedPageDescription = pageContents && hasMalformedDescriptionTemplateSafe(pageContents);
+    const malformedOpening =
+      hasMalformedOpeningParagraph(canonicalDescription) ||
+      hasMalformedOpeningParagraph(snippet) ||
+      hasMalformedOpeningParagraph(String(job.summary || ""));
     const lowercaseSentenceDescription =
       startsWithLowercaseSentenceFragment(canonicalDescription) ||
       startsWithLowercaseSentenceFragment(snippet) ||
@@ -674,6 +703,15 @@ async function buildValidationReport(options = {}) {
           reason: "malformed_public_pay"
         });
       }
+    }
+    if (missingCurrencySymbol(payDisplay)) {
+      missingCurrencySymbolJobs.push({ id, title: job.title, organization: job.organization, salary: payDisplay });
+      hardValidationFailures.push({
+        id,
+        title: job.title,
+        organization: job.organization,
+        reason: "public_pay_missing_currency_symbol"
+      });
     }
     if (hasInvalidPublicTitle(job.title) || String(job.title_confidence || "").trim().toLowerCase() === "low") {
       invalidTitle.push({ id, title: job.title, organization: job.organization, title_confidence: job.title_confidence || "" });
@@ -844,6 +882,20 @@ async function buildValidationReport(options = {}) {
         reason: "malformed_description_template"
       });
     }
+    if (malformedOpening) {
+      malformedOpeningParagraphs.push({
+        id,
+        title: job.title,
+        organization: job.organization,
+        opening: (canonicalDescription || snippet || String(job.summary || "")).slice(0, 180)
+      });
+      hardValidationFailures.push({
+        id,
+        title: job.title,
+        organization: job.organization,
+        reason: "malformed_opening_paragraph"
+      });
+    }
     if (!hasUsableDescription(canonicalDescription, { title: job.title })) {
       missingCanonicalDescription.push({ id, title: job.title, organization: job.organization });
     }
@@ -862,6 +914,12 @@ async function buildValidationReport(options = {}) {
     if (!expectedById.has(id)) {
       suspiciousSpecialization.push({ id, title: job.title, organization: job.organization, specialization, note: "job_missing_from_published_records" });
     }
+    if (
+      /\b(?:quince|goodleap|woolpert|nextera|rwe|grove collaborative)\b/i.test(String(job.organization || ""))
+      && /\b(?:engineer|developer|backend|frontend|devops|tax|finance|accounting|sales executive|ecommerce)\b/i.test(String(job.title || ""))
+    ) {
+      excessiveGenericSourceJobs.push({ id, title: job.title, organization: job.organization });
+    }
     redirectPaths.forEach((redirectPath) => {
       const normalizedRedirectPath = normalizePath(redirectPath);
       if (!normalizedRedirectPath) return;
@@ -878,6 +936,47 @@ async function buildValidationReport(options = {}) {
   for (const [pageUrl, count] of pageUrlCounts.entries()) {
     if (count > 1) duplicatePageUrls.push({ page_url: pageUrl, count });
   }
+  records
+    .filter((record) => record.record_type === "job")
+    .forEach((record) => {
+      if (
+        record.published === true
+        && record.public_visibility === true
+        && String(record.status || "").toLowerCase() === "published"
+        && !expectedById.has(String(record.id || ""))
+      ) {
+        disappearedPublishedJobs.push({
+          id: String(record.id || ""),
+          title: String(record.display?.title || record.raw_source_data?.title || ""),
+          organization: String(record.display?.organization || record.raw_source_data?.organization || ""),
+          published_grace_until: String(record.published_grace_until || ""),
+          missing_from_source_confirmations: Number(record.missing_from_source_confirmations || 0)
+        });
+        if (String(record.source_status || "").toLowerCase() === "sync_error") {
+          failedFetchPublicRemovals.push({
+            id: String(record.id || ""),
+            title: String(record.display?.title || record.raw_source_data?.title || ""),
+            organization: String(record.display?.organization || record.raw_source_data?.organization || "")
+          });
+          hardValidationFailures.push({
+            id: String(record.id || ""),
+            title: String(record.display?.title || record.raw_source_data?.title || ""),
+            organization: String(record.display?.organization || record.raw_source_data?.organization || ""),
+            reason: "failed_fetch_public_removal"
+          });
+        }
+      }
+    });
+  pending
+    .filter((job) => String(job.triage_bucket || "").toLowerCase() === "backlog" && Number(job.resurfacing_priority_score || 0) >= 900)
+    .forEach((job) => {
+      orphanedBacklogHighPriority.push({
+        id: String(job.id || ""),
+        title: String(job.title || ""),
+        organization: String(job.organization || ""),
+        resurfacing_priority_score: Number(job.resurfacing_priority_score || 0)
+      });
+    });
   for (const [id, count] of jobIdCounts.entries()) {
     if (count > 1) duplicateIds.push({ id, count });
   }
@@ -913,6 +1012,7 @@ async function buildValidationReport(options = {}) {
   });
   const octopusPublicDuplicateCanonicalUrls = octopusAudit.duplicateGroups.filter((group) => group.key_name === "canonical_url");
   const octopusPublicDuplicateSourceJobIds = octopusAudit.duplicateGroups.filter((group) => group.key_name === "source_job_id");
+  const octopusPriorityViolations = octopusAudit.publicAuditItems.filter((item) => item.priority?.excluded);
   const octopusStalePublic = octopusAudit.publicAuditItems.filter((item) => {
     if (item.source_status && item.source_status !== "live") return true;
     if (Number(item.stale_score || 0) >= 60) return true;
@@ -922,7 +1022,7 @@ async function buildValidationReport(options = {}) {
     ? octopusAudit.publicAuditItems.filter((item) => !item.present_in_latest_snapshot && !item.explicit_keep_override)
     : [];
 
-  if (octopusAudit.snapshot.authoritative && octopusAudit.octopusPublicJobs.length > OCTOPUS_PUBLIC_CAP) {
+  if (octopusAudit.octopusPublicJobs.length > OCTOPUS_PUBLIC_CAP) {
     octopusValidationViolations.push({
       reason: "octopus_public_cap_exceeded",
       public_count: octopusAudit.octopusPublicJobs.length,
@@ -983,6 +1083,23 @@ async function buildValidationReport(options = {}) {
       reason: "octopus_duplicate_source_job_ids_public"
     });
   }
+  if (octopusPriorityViolations.length) {
+    octopusValidationViolations.push({
+      reason: "octopus_priority_policy_violation",
+      ids: octopusPriorityViolations.map((item) => ({
+        id: item.id,
+        title: item.title,
+        priority_score: Number(item.priority?.score || 0),
+        reasons: item.priority?.reasons || []
+      }))
+    });
+    hardValidationFailures.push({
+      id: "octopus-energy-priority",
+      title: "Octopus priority policy",
+      organization: "Octopus Energy",
+      reason: "octopus_priority_policy_violation"
+    });
+  }
 
   const errors = [];
   if (publicRecordsCount !== jobsJsonCount) errors.push(`jobs.json count ${jobsJsonCount} does not match published record count ${publicRecordsCount}`);
@@ -995,10 +1112,15 @@ async function buildValidationReport(options = {}) {
   if (invalidPay.length) errors.push(`invalid pay count ${invalidPay.length}`);
   if (invalidTitle.length) errors.push(`invalid title count ${invalidTitle.length}`);
   if (malformedDescriptionTemplates.length) errors.push(`malformed description template count ${malformedDescriptionTemplates.length}`);
+  if (malformedOpeningParagraphs.length) errors.push(`malformed opening paragraph count ${malformedOpeningParagraphs.length}`);
   if (invalidWorkplace.length) errors.push(`invalid workplace_type count ${invalidWorkplace.length}`);
   if (invalidLocation.length) errors.push(`invalid location count ${invalidLocation.length}`);
   if (invalidSnippet.length > BLANK_SNIPPET_THRESHOLD) errors.push(`invalid snippet count ${invalidSnippet.length}`);
   if (missingCanonicalDescription.length) errors.push(`missing canonical description count ${missingCanonicalDescription.length}`);
+  if (missingCurrencySymbolJobs.length) errors.push(`missing currency symbol count ${missingCurrencySymbolJobs.length}`);
+  if (disappearedPublishedJobs.length) errors.push(`disappeared published jobs count ${disappearedPublishedJobs.length}`);
+  if (failedFetchPublicRemovals.length) errors.push(`failed fetch public removal count ${failedFetchPublicRemovals.length}`);
+  if (orphanedBacklogHighPriority.length) errors.push(`orphaned backlog high priority count ${orphanedBacklogHighPriority.length}`);
   if (redirectLoops.length) errors.push(`redirect loop count ${redirectLoops.length}`);
   if (canonicalFieldViolations.length) errors.push(`canonical field architecture violation count ${canonicalFieldViolations.length}`);
   if (publicSourceFilterViolations.length) errors.push(`public source filter violation count ${publicSourceFilterViolations.length}`);
@@ -1029,7 +1151,14 @@ async function buildValidationReport(options = {}) {
     broken_link_count: brokenLinks.length,
     invalid_title_count: invalidTitle.length,
     malformed_description_template_count: malformedDescriptionTemplates.length,
+    malformed_opening_paragraph_count: malformedOpeningParagraphs.length,
+    broken_workable_intro_count: malformedOpeningParagraphs.filter((item) => /workable/i.test(String(item.opening || ""))).length,
     lowercase_sentence_description_count: lowercaseSentenceDescriptions.length,
+    missing_currency_symbol_count: missingCurrencySymbolJobs.length,
+    excessive_generic_source_count: excessiveGenericSourceJobs.length,
+    disappeared_published_jobs_count: disappearedPublishedJobs.length,
+    failed_fetch_public_removal_count: failedFetchPublicRemovals.length,
+    orphaned_backlog_high_priority_count: orphanedBacklogHighPriority.length,
     pending_public_overlap_count: pendingPublicOverlapCount,
     invalid_snippet_count: invalidSnippet.length,
     missing_canonical_description_count: missingCanonicalDescription.length,
@@ -1065,8 +1194,10 @@ async function buildValidationReport(options = {}) {
       duplicate_page_url: duplicatePageUrls.slice(0, 10),
       broken_link: brokenLinks.slice(0, 10),
       invalid_pay: invalidPay.slice(0, 10),
+      missing_currency_symbol_jobs: missingCurrencySymbolJobs.slice(0, 10),
       invalid_title: invalidTitle.slice(0, 20),
       malformed_description_templates: malformedDescriptionTemplates.slice(0, 20),
+      malformed_opening_paragraphs: malformedOpeningParagraphs.slice(0, 20),
       lowercase_sentence_descriptions: lowercaseSentenceDescriptions.slice(0, 20),
       invalid_workplace_type: invalidWorkplace.slice(0, 10),
       invalid_location: invalidLocation.slice(0, 10),
@@ -1087,6 +1218,10 @@ async function buildValidationReport(options = {}) {
       via_identity_conflicts: viaIdentityConflicts.slice(0, 20),
       suspicious_pay_downgrades: suspiciousPayDowngrades.slice(0, 20),
       suspicious_tiny_monthly_pay: suspiciousTinyMonthlyPay.slice(0, 20),
+      excessive_generic_source_jobs: excessiveGenericSourceJobs.slice(0, 20),
+      disappeared_published_jobs: disappearedPublishedJobs.slice(0, 20),
+      failed_fetch_public_removals: failedFetchPublicRemovals.slice(0, 20),
+      orphaned_backlog_high_priority: orphanedBacklogHighPriority.slice(0, 20),
       talent_contact_protection_violations: talentContactProtectionViolations.slice(0, 20),
       employer_local_edit_violations: employerLocalEditViolations.slice(0, 20),
       talent_icon_render_violations: talentIconRenderViolations.slice(0, 20),
@@ -1113,7 +1248,11 @@ async function persistValidationSnapshot(report) {
     ["broken_link_count", "broken links increased"],
     ["suspicious_unmapped_specialization_count", "specialization blanks increased"],
     ["pending_public_overlap_count", "pending/public overlap increased"],
-    ["invalid_snippet_count", "malformed snippets increased"]
+    ["invalid_snippet_count", "malformed snippets increased"],
+    ["disappeared_published_jobs_count", "published jobs disappeared unexpectedly"],
+    ["failed_fetch_public_removal_count", "public jobs removed after failed fetch"],
+    ["missing_currency_symbol_count", "pay lost currency symbols"],
+    ["malformed_opening_paragraph_count", "malformed openings increased"]
   ];
   const current = {
     generated_at: new Date().toISOString(),

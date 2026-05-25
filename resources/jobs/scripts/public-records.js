@@ -108,6 +108,10 @@ const RAW_SOURCE_DATA_FIELDS = [
   "last_seen_at",
   "source_status",
   "stale_score",
+  "published_grace_until",
+  "missing_from_source_confirmations",
+  "required_missing_confirmations",
+  "resurfacing_priority_score",
   "source_confidence",
   "source_classification",
   "failed_sync_count",
@@ -264,6 +268,12 @@ function parseTimestampMs(value) {
   return Number.isFinite(parsed) ? parsed : 0;
 }
 
+function resolveNumericField(value) {
+  if (value === null || value === undefined || value === "") return null;
+  const numeric = Number(value);
+  return Number.isFinite(numeric) ? numeric : null;
+}
+
 function getFieldMeta(record = {}, field) {
   return record.field_meta && typeof record.field_meta === "object" && record.field_meta[field]
     ? { ...record.field_meta[field] }
@@ -393,6 +403,18 @@ function buildJobRecord(job, existing = {}, options = {}) {
   const authoritativeSourceClassification = stringifySafe(normalized.source_classification || existing.source_classification);
   const authoritativeFailedSyncCount = Number(normalized.failed_sync_count ?? existing.failed_sync_count ?? 0) || 0;
   const authoritativeStaleScore = normalized.stale_score ?? existing.stale_score ?? null;
+  const authoritativePublishedGraceUntil = stringifySafe(normalized.published_grace_until || existing.published_grace_until);
+  const authoritativeMissingConfirmations = Math.max(
+    0,
+    Number(normalized.missing_from_source_confirmations ?? existing.missing_from_source_confirmations ?? 0) || 0
+  );
+  const authoritativeRequiredMissingConfirmations = Math.max(
+    1,
+    Number(normalized.required_missing_confirmations ?? existing.required_missing_confirmations ?? 2) || 2
+  );
+  const authoritativeResurfacingPriorityScore = resolveNumericField(
+    normalized.resurfacing_priority_score ?? existing.resurfacing_priority_score
+  );
   const sourceType =
     stringifySafe(existing.source_type) ||
     (normalized.sync_origin === "ats" ? "scraped" : normalized.sync_origin === "manual" ? "manual" : "scraped");
@@ -623,6 +645,10 @@ function buildJobRecord(job, existing = {}, options = {}) {
       last_seen_at: authoritativeLastSeenAt,
       source_status: authoritativeSourceStatus,
       stale_score: authoritativeStaleScore,
+      published_grace_until: authoritativePublishedGraceUntil,
+      missing_from_source_confirmations: authoritativeMissingConfirmations,
+      required_missing_confirmations: authoritativeRequiredMissingConfirmations,
+      resurfacing_priority_score: authoritativeResurfacingPriorityScore,
       source_confidence: authoritativeSourceConfidence,
       source_classification: authoritativeSourceClassification,
       failed_sync_count: authoritativeFailedSyncCount
@@ -668,6 +694,10 @@ function buildJobRecord(job, existing = {}, options = {}) {
       ...nextRecord,
       stale_score: authoritativeStaleScore
     }, { now: new Date(now) });
+    nextRecord.published_grace_until = authoritativePublishedGraceUntil;
+    nextRecord.missing_from_source_confirmations = authoritativeMissingConfirmations;
+    nextRecord.required_missing_confirmations = authoritativeRequiredMissingConfirmations;
+    nextRecord.resurfacing_priority_score = authoritativeResurfacingPriorityScore;
   } else {
     nextRecord.first_published_at = stringifySafe(existing.first_published_at);
     nextRecord.last_verified_at = stringifySafe(existing.last_verified_at);
@@ -675,6 +705,10 @@ function buildJobRecord(job, existing = {}, options = {}) {
     nextRecord.stale_reason = stringifySafe(existing.stale_reason);
     nextRecord.verification_status = stringifySafe(existing.verification_status) || "needs_review";
     nextRecord.verification_method = stringifySafe(existing.verification_method);
+    nextRecord.published_grace_until = authoritativePublishedGraceUntil;
+    nextRecord.missing_from_source_confirmations = authoritativeMissingConfirmations;
+    nextRecord.required_missing_confirmations = authoritativeRequiredMissingConfirmations;
+    nextRecord.resurfacing_priority_score = authoritativeResurfacingPriorityScore;
   }
 
   nextRecord.__merge_stats = mergeStats;

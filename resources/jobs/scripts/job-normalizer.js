@@ -198,10 +198,10 @@ const DESCRIPTION_REJECT_PREFIX_PATTERNS = [
   /^[)\]}>,.;:!?/\\|%+-]+\s*/,
   /^(?:[-*•]\s*|#+\s+)/,
   /^\d{1,3}%\)?\s+/,
-  /^(?:check out our website|learn more|click here|read more|view job|view opening|apply now|apply today)\b/i,
-  /^(?:previous|next|post navigation|share this job|back to jobs|job title|department|location|reports to|supervises)\b/i,
+  /^(?:check out our website|learn more|click here|read more|view job|view opening|apply now|apply today|we strongly encourage candidates)\b/i,
+  /^(?:previous|next|post navigation|share this job|back to jobs|see all openings|search jobs|job title|department|location|reports to|supervises)\b/i,
   /^(?:<svg|<path|<div|<\/|https?:\/\/|job categories|career_page|taxonomy|work type|employment type)\b/i,
-  /^(?:\[\]|\(\)|\[\w+\]\([^)]+\))/i
+  /^(?:\[\]|\(\)|\[\w+\]\([^)]+\)|www\.)/i
 ];
 const INVALID_PUBLIC_LOCATION_PATTERNS = [
   /\bTitle Business(?: Platform Location Date)?\b/i,
@@ -1503,6 +1503,7 @@ function isInvalidPayDisplayText(value, options = {}) {
   if (!text) return true;
   if (/^(?:-|—|–|\$-|\$0|0|n\/a|na|not listed|not disclosed|undisclosed)$/i.test(text)) return true;
   if (/\b\d{1,3}\s+\d{3}\b/.test(text) && !/[€$£]|usd|cad|eur|gbp|annual|year|month|hour|day|salary|compensation|pay/i.test(text)) return true;
+  if (/^\d[\d,]*(?:\.\d+)?(?:\s*\/\s*(?:hour|day|week|month|year))?$/i.test(text) && !/[€$£]|usd|cad|eur|gbp/i.test(text)) return true;
   if (/^[£€$]?\d{1,3}(?:\.\d{1,2})?$/.test(text)) {
     const amount = Number(text.replace(/[^\d.]/g, ""));
     const period = String(options.period || "").toLowerCase();
@@ -2326,7 +2327,17 @@ function capitalizeDescriptionOpening(value) {
 
 function looksLikeWeakSnippetStart(sentence) {
   return /^(?:this role|the role will|will oversee|we grow|remote eligible|hybrid eligible)\b/i.test(sentence)
-    || /^[*•%\-–—]/.test(sentence);
+    || /^(?:we strongly encourage candidates|apply now|back to jobs|see all openings|www\.)/i.test(sentence)
+    || /^[*•%\-–—)]/.test(sentence);
+}
+
+function hasMalformedOpeningParagraph(value) {
+  const text = normalizeWhitespace(String(value || ""));
+  if (!text) return false;
+  const firstSentence = splitIntoSentences(text).map((sentence) => normalizeWhitespace(sentence)).find(Boolean) || text;
+  return startsWithRejectedDescriptionFragment(firstSentence)
+    || /^(?:we strongly encourage candidates|apply now|back to jobs|see all openings|www\.)/i.test(firstSentence)
+    || /^\)\s*[A-Z]/.test(firstSentence);
 }
 
 function hasMalformedDescriptionTemplate(value) {
@@ -2437,6 +2448,7 @@ function normalizeDescription(description, options = {}) {
   sentences = dedupeDescriptionSentences(removeBoilerplateSentences(sentences)
     .filter((sentence) => !/^(job title|department|reports to|location|duration)\b/i.test(sentence))
     .filter((sentence) => !/^(apply now|apply today|submit application|learn more|read more|view job|view opening)\b/i.test(sentence))
+    .filter((sentence) => !hasMalformedOpeningParagraph(sentence))
     .filter((sentence) => !/^[A-Z][a-z]+(?:\s+[A-Z][a-z]+){0,2}$/.test(sentence))
     .filter((sentence) => !title || normalizeComparableText(sentence) !== normalizeComparableText(title))
     .filter((sentence) => !/\b(?:webpage|readaction|privacy policy|terms of use|cookie policy|share this job|equal opportunity employer)\b/i.test(sentence))
@@ -2463,6 +2475,7 @@ function normalizeDescription(description, options = {}) {
   let fallbackSentenceUsed = false;
   const fallbackSentence = sentences.find((sentence) => (
     !looksLikeWeakSnippetStart(sentence)
+    && !hasMalformedOpeningParagraph(sentence)
     && sentence.length >= 35
     && !DESCRIPTION_JUNK_PATTERNS.some((pattern) => pattern.test(sentence))
     && /[a-z]{3,}\s+(?:is|are|will|can|should|must|plans|coordinates|executes|supports|manages|builds|seeks|works|develops|leads|drives|partners|optimizes)/i.test(sentence)
@@ -2624,6 +2637,7 @@ function computeContentQualityScore(job = {}) {
   if (!description) score -= 45;
   if (description && description.length < 140) score -= 10;
   if (startsWithRejectedDescriptionFragment(description) || startsWithRejectedDescriptionFragment(snippet)) score -= 30;
+  if (hasMalformedOpeningParagraph(description) || hasMalformedOpeningParagraph(snippet)) score -= 24;
   if (DESCRIPTION_JUNK_PATTERNS.some((pattern) => pattern.test(description)) || DESCRIPTION_JUNK_PATTERNS.some((pattern) => pattern.test(snippet))) score -= 30;
   if (BAD_PUBLIC_CONTENT_PATTERNS.some((pattern) => pattern.test(rawDescription))) score -= 12;
   if (organization && countRegexMatches(description, new RegExp(escapeRegExp(organization), "gi")) >= 3) score -= 10;
@@ -3145,6 +3159,8 @@ function dedupeJobs(jobs) {
   for (const rawJob of jobs) {
     const job = normalizeJob(rawJob);
     if (!job) continue;
+    if (rawJob && rawJob.__pending_preserved) job.__pending_preserved = true;
+    if (rawJob && rawJob.__pending_new) job.__pending_new = true;
     const key = buildDedupeKey(job);
     if (!key) continue;
     const existing = seen.get(key);

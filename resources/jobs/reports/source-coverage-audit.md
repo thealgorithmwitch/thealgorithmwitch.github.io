@@ -1,12 +1,12 @@
 # Source Coverage Audit
 
-Generated: 2026-05-26T13:55:26.657Z
+Generated: 2026-05-26T14:20:30.044Z
 
 ## Summary
 
 - Total sources: 0
 - Total prospects: 91
-- Total public organizations: 33
+- Total public organizations: 34
 - Total pending organizations: 55
 
 ## Active Source Coverage
@@ -25,6 +25,7 @@ _None_
 | Arevon Energy | 3 |
 | Greenpeace | 3 |
 | Ascent | 2 |
+| Earthjustice | 2 |
 | Education Reform Now Advocacy | 2 |
 | Energy Infrastructure Partners LLC | 2 |
 | Grove Collaborative | 2 |
@@ -36,7 +37,6 @@ _None_
 | Avōq | 1 |
 | ChargerHelp! | 1 |
 | Climate Cabinet | 1 |
-| ConnectDER | 1 |
 
 ## Pending Review Coverage
 
@@ -56,12 +56,12 @@ _None_
 | Woolpert | 8 |
 | Conservation International | 7 |
 | Dylan Green | 6 |
-| Earthjustice | 6 |
 | Good Power | 6 |
 | HA Sustainable Infrastructure Capital | 6 |
 | League of Conservation Voters | 6 |
 | Remix | 6 |
 | Advanced Energy United | 5 |
+| Fervo Energy | 5 |
 
 ## Missing Preferred Orgs
 
@@ -134,6 +134,7 @@ _None_
 | Climate Cabinet | 1 | ready_for_manual_review |
 | ConnectDER | 1 | add_to_sources_json |
 | Convergent Energy and Power | 1 | add_to_sources_json |
+| Earthjustice | 2 | add_to_sources_json |
 | Education Reform Now Advocacy | 2 | add_to_sources_json |
 | Energy Infrastructure Partners LLC | 2 | add_to_sources_json |
 | Environmental Defense Fund | 1 | add_to_sources_json |

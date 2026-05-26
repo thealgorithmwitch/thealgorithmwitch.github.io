@@ -12,7 +12,7 @@ const APPROVED_PAY_GATED_ORGS = new Set([
   "Powerlines", "American Bird Conservancy", "HA Sustainable Infrastructure Capital",
   "Get Vocal", "The Good Food Institute", "Greenpeace", "Renew Home",
   "Woolpert", "Octopus Energy", "Clean Capital", "Dylan Green",
-  "The Nature Conservancy", "World Resources Institute", "GoodPower",
+  "The Nature Conservancy", "World Resources Institute",   "GoodPower", "Good Power",
   "League of Conservation Voters", "Arevon", "Louisiana Bucket Brigade", "Earthjustice"
 ]);
 

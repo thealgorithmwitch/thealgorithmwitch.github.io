@@ -1,0 +1,45 @@
+{
+  "generated_at": "2026-05-26T00:52:46.691Z",
+  "before_fix": {
+    "jobs_json": 61,
+    "published_records": 60,
+    "mismatch": 1
+  },
+  "after_fix": {
+    "jobs_json": 61,
+    "published_records": 61,
+    "match": true
+  },
+  "root_cause": {
+    "location": "buildJobRecord() in public-records.js lines 422-425",
+    "behavior": "When an incoming job has an existing record in job-records.json (existing.id is truthy), the published/public_visibility/status flags are preserved from the existing record, ignoring the incoming job's values.",
+    "code": [
+      "const published = existing.id",
+      "    ? Boolean(existing.published)  // <-- preserves existing false",
+      "    : [\"active\", \"approved\", \"published\"].includes(String(normalized.status || \"\").toLowerCase());",
+      "const status = stringifySafe(existing.status) || (published ? \"published\" : \"pending\");"
+    ],
+    "impact": "The auto-publish script's buildPublicJobShape() sets published=true, public_visibility=true, status='active' on the public job object, but syncJobRecordStore -> buildJobRecord ignores these for records that already exist in job-records.json (e.g., from pending triage)."
+  },
+  "affected_job": {
+    "id": "arevon-a3d114f378de",
+    "title": "Senior Associate Scada Operations",
+    "organization": "Arevon Energy",
+    "record_state_before": {
+      "status": "pending",
+      "published": false,
+      "public_visibility": false
+    }
+  },
+  "fix_applied": {
+    "description": "After syncJobRecordStore, patched the record directly in job-records.json to set published=true, public_visibility=true, status='published'",
+    "in_script": "pay-gated-autopublish.js now includes a post-sync fixup loop that corrects records for all publishedIds",
+    "details": "The post-sync fix reads job-records.json, finds records matching publishedIds, and forces their flags to published=true, public_visibility=true, status='published'"
+  },
+  "verification": {
+    "jobs_json_count": 61,
+    "published_records_count": 61,
+    "in_jobs_not_published_records": 0,
+    "in_published_records_not_jobs": 0
+  }
+}

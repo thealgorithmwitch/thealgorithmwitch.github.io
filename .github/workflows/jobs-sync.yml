@@ -147,7 +147,7 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add \
+          for path in \
             "$JOBS_DIR/job-records.json" \
             "$JOBS_DIR/jobs.json" \
             "$JOBS_DIR/talent-profiles.json" \
@@ -164,7 +164,13 @@ jobs:
             "$JOBS_DIR/admin-job-actions.json" \
             "$JOBS_DIR/validation-snapshots/latest.json" \
             "$JOBS_DIR/reports" \
-            "$JOBS_DIR/pages"
+            "$JOBS_DIR/pages"; do
+            if [ -e "$path" ]; then
+              git add "$path"
+            else
+              echo "Skipping missing path: $path"
+            fi
+          done
           if git diff --cached --quiet; then
             echo "No staged changes to commit."
             exit 0

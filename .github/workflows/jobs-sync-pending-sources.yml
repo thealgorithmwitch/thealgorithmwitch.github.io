@@ -47,11 +47,17 @@ jobs:
           node --check "$JOBS_DIR/scripts/ats-clients.js"
           node --check "$JOBS_DIR/scripts/source-discovery-helpers.js"
 
+      - name: Validate public data before pending sync
+        run: npm --prefix "$JOBS_DIR" run jobs:validate
+
       - name: Run pending-only source sync
         run: npm --prefix "$JOBS_DIR" run jobs:sync-targeted-pending-sources
 
       - name: Guard blocked sources
         run: npm --prefix "$JOBS_DIR" run jobs:check-blocked-sources
+
+      - name: Validate public data after pending sync
+        run: npm --prefix "$JOBS_DIR" run jobs:validate
 
       - name: Check for pending/source-health changes
         id: changes
@@ -64,6 +70,7 @@ jobs:
           REPORT_CHANGED="$(git status --porcelain -- \
             resources/jobs/reports/targeted-pending-source-sync.json \
             resources/jobs/reports/pending-source-state-audit.json \
+            resources/jobs/validation-snapshots/latest.json \
             || true)"
           if [ -n "$CORE_CHANGED" ]; then
             echo "changed=true" >> "$GITHUB_OUTPUT"
@@ -93,6 +100,7 @@ jobs:
             resources/jobs/source-health-latest.json
             resources/jobs/reports/targeted-pending-source-sync.json
             resources/jobs/reports/pending-source-state-audit.json
+            resources/jobs/validation-snapshots/latest.json
 
       - name: Commit and push pending/source-health changes
         if: steps.changes.outputs.changed == 'true'
@@ -100,11 +108,18 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add \
+          for path in \
             resources/jobs/pending-synced-jobs.json \
             resources/jobs/source-health-latest.json \
             resources/jobs/reports/targeted-pending-source-sync.json \
-            resources/jobs/reports/pending-source-state-audit.json
+            resources/jobs/reports/pending-source-state-audit.json \
+            resources/jobs/validation-snapshots/latest.json; do
+            if [ -e "$path" ]; then
+              git add "$path"
+            else
+              echo "Skipping missing path: $path"
+            fi
+          done
           if git diff --cached --quiet; then
             echo "No staged changes to commit."
             exit 0

@@ -123,7 +123,18 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add resources/jobs/job-records.json resources/jobs/jobs.json resources/jobs/pending-synced-jobs.json resources/jobs/pages
+          for path in \
+            resources/jobs/job-records.json \
+            resources/jobs/jobs.json \
+            resources/jobs/pending-synced-jobs.json \
+            resources/jobs/pages \
+            resources/jobs/validation-snapshots/latest.json; do
+            if [ -e "$path" ]; then
+              git add "$path"
+            else
+              echo "Skipping missing path: $path"
+            fi
+          done
           git commit -m "Apply manual parser migration to jobs"
           git push
 

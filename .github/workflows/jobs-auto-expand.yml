@@ -176,7 +176,7 @@ jobs:
           fi
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add \
+          for path in \
             resources/jobs/sources.json \
             resources/jobs/search-sources.json \
             resources/jobs/source-discovery-candidates.json \
@@ -191,7 +191,13 @@ jobs:
             resources/jobs/reports/source-expansion-validation-latest.json \
             resources/jobs/reports/public-promotion-latest.json \
             resources/jobs/reports/auto-expand-lifecycle-latest.json \
-            resources/jobs/validation-snapshots/latest.json
+            resources/jobs/validation-snapshots/latest.json; do
+            if [ -e "$path" ]; then
+              git add "$path"
+            else
+              echo "Skipping missing path: $path"
+            fi
+          done
           if git diff --cached --quiet; then
             echo "No staged changes to commit."
             exit 0

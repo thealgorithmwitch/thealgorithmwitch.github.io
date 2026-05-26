@@ -1,0 +1,67 @@
+{
+  "report": "talent-workflow-cleanup-report",
+  "generated_at": "2026-05-25T23:50:00Z",
+  "cleanup_summary": {
+    "file_modified": "backend/dotgithub/workflows/jobs-sync.yml",
+    "stale_file_patterns_removed": [
+      "resources/jobs/pending-talent.json",
+      "resources/jobs/pending-talent-profiles.json"
+    ],
+    "sections_cleaned": [
+      {
+        "section": "Detect all changes (git status --porcelain)",
+        "lines_removed": 2,
+        "details": "Removed \"$JOBS_DIR/pending-talent.json\" and \"$JOBS_DIR/pending-talent-profiles.json\" from git status change detection"
+      },
+      {
+        "section": "Upload admin sync artifacts",
+        "lines_removed": 2,
+        "details": "Removed resources/jobs/pending-talent.json and resources/jobs/pending-talent-profiles.json from upload-artifact path list"
+      },
+      {
+        "section": "Commit and push generated changes (git add)",
+        "lines_removed": 2,
+        "details": "Removed \"$JOBS_DIR/pending-talent.json\" and \"$JOBS_DIR/pending-talent-profiles.json\" from git add"
+      }
+    ],
+    "total_lines_removed": 6
+  },
+  "canonical_files_preserved": [
+    {
+      "path": "resources/jobs/talent-profiles.json",
+      "in_detect_changes": "line 94 (preserved)",
+      "in_upload_artifact": "line 128 (preserved)",
+      "in_git_add": "line 153 (preserved)"
+    }
+  ],
+  "confirmation": {
+    "grep_for_stale_refs": "No remaining references to pending-talent in jobs-sync.yml",
+    "no_other_stale_workflows": "grep across entire repo found pending-talent references ONLY in audit report files (reports/talent-pipeline-audit.*), not in any workflow files"
+  },
+  "verification": {
+    "jobs_validate": {
+      "command": "npm run jobs:validate",
+      "result": "passed",
+      "octopus_validation_violation_count": 0,
+      "hard_validation_failure_count": 0,
+      "errors": []
+    },
+    "jobs_build_pages": {
+      "command": "npm run jobs:build-pages",
+      "result": "passed",
+      "pages_written_count": 0,
+      "pages_skipped_unchanged_count": 56,
+      "stale_pages_deleted_count": 0
+    }
+  },
+  "what_was_not_affected": [
+    "scripts/fetch-approved-talent.js — still fetches getPendingTalent/getApprovedTalent from GAS backend",
+    "scripts/fetch-approved-talent.js — still merges approved profiles into talent-profiles.json via writeJsonIfChanged",
+    "admin-review.html — still loads pending talent via requestAdmin('getPendingTalent') from GAS backend in real-time",
+    "admin-review.html — still loads active talent via LOCAL_TALENT_URL = './talent-profiles.json'",
+    "index.html — still fetches talent-profiles.json for public display",
+    "validate-public-data.js — still validates talent-profiles.json contact/icons",
+    "backend/apps-script/Code.gs — GAS pending talent endpoints (getPendingTalent, getApprovedTalent, approveTalent, rejectTalent, submitTalent) are untouched",
+    "talent-profiles.json references — preserved in all 3 workflow sections (git status, artifact, git add)"
+  ]
+}

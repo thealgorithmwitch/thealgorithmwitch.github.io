@@ -1,0 +1,166 @@
+{
+  "report": "talent-pipeline-audit",
+  "generated_at": "2026-05-25T23:45:00Z",
+  "canonical_files": {
+    "talent_profiles_json": {
+      "path": "resources/jobs/talent-profiles.json",
+      "status": "CANONICAL — exists on disk, actively generated and consumed",
+      "defined_in": "scripts/public-records.js:11 — const TALENT_PROFILES_FILE = path.join(ROOT, \"talent-profiles.json\")",
+      "generated_by": "scripts/fetch-approved-talent.js — merges approved profiles from GAS backend, writes via writeJsonIfChanged()",
+      "consumed_by": [
+        "index.html:2467 — fetch('./talent-profiles.json?ts=...') for public talent archive display",
+        "admin-review.html:682 — LOCAL_TALENT_URL = './talent-profiles.json', loaded as activeTalentProfiles for 'Active Talent' tab",
+        "validate-public-data.js:351 — readJson(TALENT_PROFILES_FILE, []) for talent contact/icon validation",
+        "apply-admin-actions.js:1568 — readJson(TALENT_PROFILES_FILE, []) for admin update/archive/unpublish/feature operations",
+        "apply-admin-actions.js:2349 — writeJson(TALENT_PROFILES_FILE, nextTalentProfiles) after admin actions"
+      ],
+      "tracked_in_ci": true,
+      "ci_refs": [
+        "backend/dotgithub/workflows/jobs-sync.yml:94 — git status --porcelain",
+        "backend/dotgithub/workflows/jobs-sync.yml:130 — upload artifact",
+        "backend/dotgithub/workflows/jobs-sync.yml:157 — git add"
+      ]
+    }
+  },
+  "files_that_do_not_exist_but_are_referenced": {
+    "pending_talent_json": {
+      "path": "resources/jobs/pending-talent.json",
+      "status": "STALE REFERENCE — does not exist on disk, no script ever generates it",
+      "referenced_in_ci": true,
+      "ci_refs": [
+        "backend/dotgithub/workflows/jobs-sync.yml:95 — git status --porcelain",
+        "backend/dotgithub/workflows/jobs-sync.yml:131 — upload artifact",
+        "backend/dotgithub/workflows/jobs-sync.yml:158 — git add"
+      ],
+      "what_fetch_approved_talent_does": "fetch-approved-talent.js:126 calls getPendingTalent from GAS but ONLY for audit/logging (lines 135, 138, 141, 203). It NEVER writes pending-talent.json.",
+      "remediation": "Remove all 3 CI references (lines 95, 131, 158) from jobs-sync.yml. The pending queue is served in real-time from GAS backend by admin-review.html."
+    },
+    "pending_talent_profiles_json": {
+      "path": "resources/jobs/pending-talent-profiles.json",
+      "status": "STALE REFERENCE — does not exist on disk, no script ever generates it",
+      "referenced_in_ci": true,
+      "ci_refs": [
+        "backend/dotgithub/workflows/jobs-sync.yml:96 — git status --porcelain",
+        "backend/dotgithub/workflows/jobs-sync.yml:132 — upload artifact",
+        "backend/dotgithub/workflows/jobs-sync.yml:159 — git add"
+      ],
+      "remediation": "Remove all 3 CI references (lines 96, 132, 159) from jobs-sync.yml."
+    }
+  },
+  "files_that_do_not_exist_and_are_not_referenced": {
+    "public_talent_js": {
+      "path": "scripts/public-talent.js",
+      "status": "DOES NOT EXIST — no such script. No npm script, no require(), no import references it.",
+      "note": "No public-talent pipeline exists. Talent profiles are consumed directly from talent-profiles.json, unlike jobs which have public-jobs.js build step.",
+      "remediation": "None needed. Talent does not need a separate public build step."
+    }
+  },
+  "scripts_analysis": {
+    "fetch_approved_talent_js": {
+      "path": "scripts/fetch-approved-talent.js",
+      "line_count": 228,
+      "role": "FETCHES approved talent from GAS backend (getApprovedTalent), MERGES into talent-profiles.json",
+      "inputs": [
+        "GAS backend — fetchBackendAction('getApprovedTalent')",
+        "talent-profiles.json — reads existing profiles for merge"
+      ],
+      "outputs": [
+        "talent-profiles.json — merged approved profiles (via writeJsonIfChanged)",
+        "reports/talent-export-audit.json — audit report"
+      ],
+      "invoked_by": "npm run jobs:fetch-approved-talent (package.json:7) → CI jobs-sync.yml:68"
+    },
+    "validate_public_data_js": {
+      "path": "scripts/validate-public-data.js",
+      "talent_validation_lines": [88, 351, 411, 413, 531, 581, 593, 1227, 1229, 1279, 1281, 1328, 1330],
+      "talent_validations": [
+        "talentContactProtectionViolations — checks Cassandre's contact fields (email, portfolio, linkedin, public_contact)",
+        "talentIconRenderViolations — checks icon rendering in page templates (briefcase, linkedin, email)",
+        "talent_local_edit_blank_detected — checks for structured local edit blanks"
+      ]
+    },
+    "apply_admin_actions_js": {
+      "path": "scripts/apply-admin-actions.js",
+      "talent_operations": [
+        "update_active_talent (line 2020)",
+        "archive_active_talent (line 2045)",
+        "unpublish_active_talent (line 2053)",
+        "feature_active_talent (line 2061)"
+      ],
+      "talent_read_path": "readJson(TALENT_PROFILES_FILE, []) (line 1568)",
+      "talent_write_path": "writeJson(TALENT_PROFILES_FILE, nextTalentProfiles) (line 2349)"
+    }
+  },
+  "apps_script_backend": {
+    "path": "backend/apps-script/Code.gs",
+    "talent_sheets": [
+      { "name": "Pending Talent", "constant": "SHEETS.pendingTalent (line 4)" },
+      { "name": "Approved Talent", "constant": "SHEETS.approvedTalent (line 5)" }
+    ],
+    "talent_actions": [
+      { "action": "submitTalent", "handler": "submitTalent_() (line 225)", "flow": "Public form → GAS → Pending Talent sheet" },
+      { "action": "getPendingTalent", "handler": "buildListResponse_('pendingTalent', SHEETS.pendingTalent, TALENT_HEADERS) (line 142)" },
+      { "action": "getApprovedTalent", "handler": "buildListResponse_('approvedTalent', SHEETS.approvedTalent, TALENT_HEADERS) (line 145)" },
+      { "action": "approveTalent", "handler": "approveRecord_(...) moves row from Pending → Approved (line 166)" },
+      { "action": "rejectTalent", "handler": "rejectRecord_(...) removes from Pending (line 169)" }
+    ]
+  },
+  "html_consumption": {
+    "index_html": {
+      "path": "index.html:2467",
+      "fetch": "fetch('./talent-profiles.json?ts=...', { cache: 'no-store' }).catch(() => null)",
+      "render_func": "renderProfiles() (line 1971) → profiles-grid div (line 1324)",
+      "tracking": "TRACKING_TYPES.talentClick = 'talent_click' (line 1477), data-talent-click attributes"
+    },
+    "admin_review_html": {
+      "path": "admin-review.html",
+      "active_talent_url": "LOCAL_TALENT_URL = './talent-profiles.json' (line 682)",
+      "pending_talent_source": "TAB_CONFIG.talent.fetchAction = 'getPendingTalent' (line 708) — calls backend in real-time",
+      "approve_action": "TAB_CONFIG.talent.approveAction = 'approveTalent' (line 709)",
+      "reject_action": "TAB_CONFIG.talent.rejectAction = 'rejectTalent' (line 710)"
+    },
+    "talent_apply_html": {
+      "path": "talent-apply.html:455",
+      "submission": "submitTalentToBackend() → POST to GAS with action='submitTalent'"
+    }
+  },
+  "data_flow_summary": {
+    "submission": "talent-apply.html → GAS (submitTalent) → 'Pending Talent' sheet",
+    "admin_review": "admin-review.html → GAS (getPendingTalent/approveTalent/rejectTalent) → Approved/Pending sheets",
+    "sync_to_local": "CI (jobs:fetch-approved-talent) → GAS (getApprovedTalent) → merge into talent-profiles.json",
+    "public_display": "index.html → fetch(talent-profiles.json) → render profiles",
+    "admin_display_active": "admin-review.html → fetch(talent-profiles.json) → show active profiles with edit controls",
+    "validation": "validate-public-data.js → read talent-profiles.json → check contact/icons"
+  },
+  "stale_references_to_remove": [
+    {
+      "file": "backend/dotgithub/workflows/jobs-sync.yml",
+      "lines": [95, 96],
+      "text": "\"$JOBS_DIR/pending-talent.json\" and \"$JOBS_DIR/pending-talent-profiles.json\"",
+      "section": "git status change detection"
+    },
+    {
+      "file": "backend/dotgithub/workflows/jobs-sync.yml",
+      "lines": [131, 132],
+      "text": "resources/jobs/pending-talent.json and resources/jobs/pending-talent-profiles.json",
+      "section": "upload artifact"
+    },
+    {
+      "file": "backend/dotgithub/workflows/jobs-sync.yml",
+      "lines": [158, 159],
+      "text": "\"$JOBS_DIR/pending-talent.json\" and \"$JOBS_DIR/pending-talent-profiles.json\"",
+      "section": "git add for commit"
+    }
+  ],
+  "active_references_to_preserve": [
+    "backend/dotgithub/workflows/jobs-sync.yml:94,130,157 — talent-profiles.json (CANONICAL)",
+    "backend/dotgithub/workflows/jobs-sync.yml:68 — npm run jobs:fetch-approved-talent (CANONICAL script)",
+    "scripts/public-records.js:11 — TALENT_PROFILES_FILE definition (CANONICAL)",
+    "scripts/fetch-approved-talent.js — full pipeline (CANONICAL)",
+    "scripts/validate-public-data.js — talent validation (CANONICAL)",
+    "scripts/apply-admin-actions.js — admin talent operations (CANONICAL)",
+    "index.html:2467 — talent display (CANONICAL)",
+    "admin-review.html:682 — active talent load (CANONICAL)",
+    "admin-review.html:708-710 — pending talent backend calls (CANONICAL)"
+  ]
+}

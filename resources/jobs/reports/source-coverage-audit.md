@@ -1,13 +1,13 @@
 # Source Coverage Audit
 
-Generated: 2026-05-26T14:20:30.044Z
+Generated: 2026-05-26T14:29:05.981Z
 
 ## Summary
 
 - Total sources: 0
 - Total prospects: 91
-- Total public organizations: 34
-- Total pending organizations: 55
+- Total public organizations: 48
+- Total pending organizations: 47
 
 ## Active Source Coverage
 
@@ -17,26 +17,26 @@ _None_
 
 | organization | public_jobs |
 | --- | --- |
+| Renew Home | 8 |
 | More Perfect Union Action | 5 |
-| Renew Home | 5 |
+| Powerlines | 5 |
 | HA Sustainable Infrastructure Capital | 4 |
 | Octopus Energy | 4 |
-| Powerlines | 4 |
 | Arevon Energy | 3 |
+| CleanCapital | 3 |
+| Earthjustice | 3 |
 | Greenpeace | 3 |
+| Protect Democracy | 3 |
+| The Nature Conservancy | 3 |
+| American Bird Conservancy | 2 |
 | Ascent | 2 |
-| Earthjustice | 2 |
+| CALSTART | 2 |
+| EDP | 2 |
 | Education Reform Now Advocacy | 2 |
 | Energy Infrastructure Partners LLC | 2 |
+| Greenlight America | 2 |
 | Grove Collaborative | 2 |
-| Protect Democracy | 2 |
-| Resource Innovations | 2 |
-| Sunrun | 2 |
-| The Nature Conservancy | 2 |
-| American Bird Conservancy | 1 |
-| Avōq | 1 |
-| ChargerHelp! | 1 |
-| Climate Cabinet | 1 |
+| Louisiana Bucket Brigade | 2 |
 
 ## Pending Review Coverage
 
@@ -44,24 +44,24 @@ _None_
 | --- | --- |
 | Reformation | 50 |
 | RWE | 50 |
-| NextEra Energy | 42 |
 | Octopus Energy | 41 |
+| NextEra Energy | 40 |
 | Quince | 38 |
 | GoodLeap | 26 |
 | BlueGreen Alliance | 11 |
 | Rocky Mountain Institute | 10 |
-| World Resources Institute | 10 |
 | Arevon Energy | 8 |
-| CALSTART | 8 |
 | Woolpert | 8 |
+| World Resources Institute | 8 |
 | Conservation International | 7 |
-| Dylan Green | 6 |
+| CALSTART | 6 |
 | Good Power | 6 |
 | HA Sustainable Infrastructure Capital | 6 |
 | League of Conservation Voters | 6 |
 | Remix | 6 |
-| Advanced Energy United | 5 |
+| Dylan Green | 5 |
 | Fervo Energy | 5 |
+| Get Vocal PBC | 5 |
 
 ## Missing Preferred Orgs
 
@@ -126,40 +126,54 @@ _None_
 
 | organization | public_jobs | recommended_action |
 | --- | --- | --- |
-| American Bird Conservancy | 1 | add_to_sources_json |
+| Advanced Energy United | 1 | add_to_sources_json |
+| American Bird Conservancy | 2 | add_to_sources_json |
 | Arevon Energy | 3 | add_to_sources_json |
 | Ascent | 2 | add_to_sources_json |
 | Avōq | 1 | add_to_sources_json |
+| Bullard Center for Environmental and Climate Justice | 1 | add_to_sources_json |
+| CALSTART | 2 | ready_for_manual_review |
 | ChargerHelp! | 1 | ready_for_manual_review |
+| CleanCapital | 3 | ready_for_manual_review |
 | Climate Cabinet | 1 | ready_for_manual_review |
 | ConnectDER | 1 | add_to_sources_json |
 | Convergent Energy and Power | 1 | add_to_sources_json |
-| Earthjustice | 2 | add_to_sources_json |
+| Dylan Green | 1 | add_to_sources_json |
+| Earthjustice | 3 | add_to_sources_json |
+| EDP | 2 | add_to_sources_json |
 | Education Reform Now Advocacy | 2 | add_to_sources_json |
 | Energy Infrastructure Partners LLC | 2 | add_to_sources_json |
 | Environmental Defense Fund | 1 | add_to_sources_json |
 | Good Power | 1 | add_to_sources_json |
 | Grassroots Carbon | 1 | add_to_sources_json |
+| Greenlight America | 2 | add_to_sources_json |
 | Greenpeace | 3 | add_to_sources_json |
 | Grove Collaborative | 2 | ready_for_manual_review |
 | HA Sustainable Infrastructure Capital | 4 | add_to_sources_json |
+| Hip Hop Caucus | 1 | add_to_sources_json |
+| Louisiana Bucket Brigade | 2 | add_to_sources_json |
 | Mission 44 | 1 | ready_for_manual_review |
 | Mitti Labs | 1 | add_to_sources_json |
 | More Perfect Union Action | 5 | add_to_sources_json |
+| NextEra Energy | 2 | add_to_sources_json |
 | Octopus Energy | 4 | add_to_sources_json |
 | PLUS Communications | 1 | add_to_sources_json |
-| Powerlines | 4 | ready_for_manual_review |
-| Protect Democracy | 2 | ready_for_manual_review |
+| Powerlines | 5 | ready_for_manual_review |
+| Protect Democracy | 3 | ready_for_manual_review |
+| Proterra | 1 | ready_for_manual_review |
 | Quince | 1 | ready_for_manual_review |
-| Renew Home | 5 | ready_for_manual_review |
+| Renew Home | 8 | ready_for_manual_review |
 | Resource Innovations | 2 | add_to_sources_json |
 | Rystad Energy | 1 | add_to_sources_json |
 | Sierra Club | 1 | ready_for_manual_review |
 | SSC HR Solutions | 1 | add_to_sources_json |
 | Sunrun | 2 | ready_for_manual_review |
 | Teverra | 1 | add_to_sources_json |
-| The Nature Conservancy | 2 | add_to_sources_json |
+| The Good Food Institute | 1 | ready_for_manual_review |
+| The Nature Conservancy | 3 | add_to_sources_json |
+| Weave Grid | 1 | ready_for_manual_review |
 | Woolpert | 1 | ready_for_manual_review |
+| World Resources Institute | 2 | add_to_sources_json |
 
 ## Restore Candidates From jobs2.json
 

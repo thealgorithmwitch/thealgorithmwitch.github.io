@@ -1,13 +1,13 @@
 # Source Coverage Audit
 
-Generated: 2026-05-26T00:18:35.794Z
+Generated: 2026-05-26T01:26:07.896Z
 
 ## Summary
 
 - Total sources: 0
 - Total prospects: 91
-- Total public organizations: 32
-- Total pending organizations: 54
+- Total public organizations: 33
+- Total pending organizations: 55
 
 ## Active Source Coverage
 
@@ -17,11 +17,13 @@ _None_
 
 | organization | public_jobs |
 | --- | --- |
-| More Perfect Union Action | 6 |
+| More Perfect Union Action | 5 |
 | Octopus Energy | 5 |
+| Renew Home | 5 |
+| HA Sustainable Infrastructure Capital | 4 |
 | Powerlines | 4 |
-| HA Sustainable Infrastructure Capital | 3 |
-| Renew Home | 3 |
+| Arevon Energy | 3 |
+| Greenpeace | 3 |
 | Ascent | 2 |
 | Education Reform Now Advocacy | 2 |
 | Energy Infrastructure Partners LLC | 2 |
@@ -30,13 +32,11 @@ _None_
 | Resource Innovations | 2 |
 | Sunrun | 2 |
 | The Nature Conservancy | 2 |
-| Arevon Energy | 1 |
+| American Bird Conservancy | 1 |
 | Avōq | 1 |
 | ChargerHelp! | 1 |
 | Climate Cabinet | 1 |
 | ConnectDER | 1 |
-| Convergent Energy and Power | 1 |
-| Environmental Defense Fund | 1 |
 
 ## Pending Review Coverage
 
@@ -45,23 +45,23 @@ _None_
 | Reformation | 50 |
 | RWE | 50 |
 | NextEra Energy | 42 |
-| Octopus Energy | 42 |
+| Octopus Energy | 41 |
 | Quince | 38 |
 | GoodLeap | 26 |
 | BlueGreen Alliance | 11 |
-| Arevon Energy | 10 |
 | Rocky Mountain Institute | 10 |
 | World Resources Institute | 10 |
+| Arevon Energy | 8 |
 | CALSTART | 8 |
 | Woolpert | 8 |
 | Conservation International | 7 |
-| HA Sustainable Infrastructure Capital | 7 |
-| Renew Home | 7 |
 | Dylan Green | 6 |
 | Earthjustice | 6 |
 | Good Power | 6 |
+| HA Sustainable Infrastructure Capital | 6 |
 | League of Conservation Voters | 6 |
 | Remix | 6 |
+| Advanced Energy United | 5 |
 
 ## Missing Preferred Orgs
 
@@ -126,7 +126,8 @@ _None_
 
 | organization | public_jobs | recommended_action |
 | --- | --- | --- |
-| Arevon Energy | 1 | add_to_sources_json |
+| American Bird Conservancy | 1 | add_to_sources_json |
+| Arevon Energy | 3 | add_to_sources_json |
 | Ascent | 2 | add_to_sources_json |
 | Avōq | 1 | add_to_sources_json |
 | ChargerHelp! | 1 | ready_for_manual_review |
@@ -138,18 +139,18 @@ _None_
 | Environmental Defense Fund | 1 | add_to_sources_json |
 | Good Power | 1 | add_to_sources_json |
 | Grassroots Carbon | 1 | add_to_sources_json |
-| Greenpeace | 1 | add_to_sources_json |
+| Greenpeace | 3 | add_to_sources_json |
 | Grove Collaborative | 2 | ready_for_manual_review |
-| HA Sustainable Infrastructure Capital | 3 | add_to_sources_json |
+| HA Sustainable Infrastructure Capital | 4 | add_to_sources_json |
 | Mission 44 | 1 | ready_for_manual_review |
 | Mitti Labs | 1 | add_to_sources_json |
-| More Perfect Union Action | 6 | add_to_sources_json |
+| More Perfect Union Action | 5 | add_to_sources_json |
 | Octopus Energy | 5 | add_to_sources_json |
 | PLUS Communications | 1 | add_to_sources_json |
 | Powerlines | 4 | ready_for_manual_review |
 | Protect Democracy | 2 | ready_for_manual_review |
 | Quince | 1 | ready_for_manual_review |
-| Renew Home | 3 | ready_for_manual_review |
+| Renew Home | 5 | ready_for_manual_review |
 | Resource Innovations | 2 | add_to_sources_json |
 | Rystad Energy | 1 | add_to_sources_json |
 | Sierra Club | 1 | ready_for_manual_review |
@@ -161,7 +162,32 @@ _None_
 
 ## Restore Candidates From jobs2.json
 
-_None_
+| organization | title | source_url |
+| --- | --- | --- |
+| ChargerHelp! | Product Manager | https://chargerhelp.recruitee.com/o/product-manager |
+| Carbon Direct | Staff Engineer | https://job-boards.greenhouse.io/carbondirect/jobs/5122832007 |
+| Octopus Energy | Engineering Lead - Analytics Platform | https://jobs.lever.co/octoenergy/ddbb9842-625c-4900-a3f8-3f468e444190 |
+| Octopus Energy | Data Lead - Commercial Analytics | https://jobs.lever.co/octoenergy/dfb64070-cade-4c38-a967-fc2527c0fbae |
+| Octopus Energy | Senior Heat Pump Field Application Engineer | https://jobs.lever.co/octoenergy/f6d3b885-43d2-4ebb-8145-5b5815c16f79 |
+| Octopus Energy | Optimisation Manager | https://jobs.lever.co/octoenergy/87dc1a69-d1f1-40dd-affd-2d6dee521080 |
+| Octopus Energy | EV Mobility Consultant | https://jobs.lever.co/octoenergy/d123eae7-75df-4cfd-a0f6-19424e208a31 |
+| Octopus Energy | Customer Success Executive | https://jobs.lever.co/octoenergy/fcb250d5-7d64-41c6-8d21-4d7e41ef7ace |
+| More Perfect Union Action | Video Production Fellow | https://more-perfect-union-action.rippling-ats.com/job/1012606/video-production-fellow |
+| Renew Home | Senior Engineer, Core Infrastructure (Remote, US) | https://apply.workable.com/renewhome/j/1CA1EB4590/ |
+| Environmental Defense Fund | Vice President, Accounting | https://www.edf.org/jobs/vice-president-accounting |
+| VIA | Senior Quality Assurance Engineer | https://jobs.elementalimpact.com/jobs |
+| VIA | General Manager | https://jobs.elementalimpact.com/jobs |
+| The Nature Conservancy | Preserve Manager, Palmyra Atoll | https://careers.tnc.org/us/en/search-results |
+| Sunrun | Field Sales Consultant | https://careers.sunrun.com/job/schaumburg/field-sales-consultant/21632/94634311760 |
+| Octopus Energy | Fullstack Engineer (m/w/d) – | https://jobs.lever.co/octoenergy/68d428bb-4a13-4852-9a82-2f8c189be665 |
+| HA Sustainable Infrastructure Capital | Senior Associate | https://jobs.lever.co/hasi/b9bc3e08-ae78-4df1-a08e-b086627fea50 |
+| Carbon Direct | Power Systems Engineer | https://job-boards.greenhouse.io/carbondirect/jobs/5096071007 |
+| Education First Consulting | Senior Consultant | https://apply.workable.com/education-first-consulting/j/222F87F648/ |
+| Powerlines | Intern (Summer 2026) | https://apply.workable.com/powerlines/j/37404CB2F4/ |
+| Quince | Sr. Manager, Community | https://job-boards.greenhouse.io/quince/jobs/5212483008 |
+| Quince | Retention Marketing Manager (Canada) | https://job-boards.greenhouse.io/quince/jobs/5167606008 |
+| Renew Home | Engineering Manager, Infrastructure (Remote, US) | https://apply.workable.com/renewhome/j/7AED6402A0/ |
+| Woolpert | Geospatial Business Development Director | https://job-boards.greenhouse.io/woolpert/jobs/4173664009 |
 
 ## Duplicate Cleanup
 

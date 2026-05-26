@@ -1,0 +1,128 @@
+{
+  "report": "workflow-safe-git-add-report",
+  "generated_at": "2026-05-25T23:58:00Z",
+  "summary": "Replaced all plain `git add file1 file2 ...` blocks across all 7 workflows with a safe exists-check loop that prints 'Skipping missing path: ...' for non-existent files and continues.",
+  "workflows_patched": [
+    {
+      "name": "Jobs Admin Action Sync",
+      "file": "backend/dotgithub/workflows/jobs-sync.yml",
+      "section": "Commit and push generated changes",
+      "old_pattern": "git add \\ (17 files, multi-line)",
+      "new_pattern": "for path in ...; do if [ -e \"$path\" ]; then git add \"$path\"; else echo \"Skipping missing path: $path\"; fi; done",
+      "paths_count": 17,
+      "known_optional_paths": [
+        "admin-action-overrides.json",
+        "admin-pending-overrides.json",
+        "admin-organization-rules.json"
+      ]
+    },
+    {
+      "name": "Jobs Freshness Audit",
+      "file": "backend/dotgithub/workflows/jobs-freshness-audit.yml",
+      "section": "Commit and push freshness audit changes",
+      "old_pattern": "git add \\ (7 files, multi-line)",
+      "new_pattern": "for path in ... safe loop",
+      "paths_count": 7,
+      "known_optional_paths": [
+        "validation-snapshots/latest.json (may not exist before first run)",
+        "reports (may be empty)"
+      ]
+    },
+    {
+      "name": "Jobs Auto Expand",
+      "file": "backend/dotgithub/workflows/jobs-auto-expand.yml",
+      "section": "Commit and push auto-expand changes",
+      "old_pattern": "git add \\ (15 files, multi-line)",
+      "new_pattern": "for path in ... safe loop",
+      "paths_count": 15,
+      "known_optional_paths": [
+        "reports/*.json (may not exist before first run)",
+        "validation-snapshots/latest.json"
+      ]
+    },
+    {
+      "name": "Jobs Manual Parser Migration",
+      "file": "backend/dotgithub/workflows/jobs-migrate-existing.yml",
+      "section": "Commit and push migration changes",
+      "old_pattern": "git add resources/jobs/job-records.json resources/jobs/jobs.json ... (5 files, single-line)",
+      "new_pattern": "for path in ... safe loop",
+      "paths_count": 5,
+      "known_optional_paths": [
+        "validation-snapshots/latest.json"
+      ]
+    },
+    {
+      "name": "Jobs Sync Pending Sources",
+      "file": "backend/dotgithub/workflows/jobs-sync-pending-sources.yml",
+      "section": "Commit and push pending/source-health changes",
+      "old_pattern": "git add \\ (5 files, multi-line)",
+      "new_pattern": "for path in ... safe loop",
+      "paths_count": 5,
+      "known_optional_paths": [
+        "reports/pending-source-state-audit.json",
+        "validation-snapshots/latest.json"
+      ]
+    },
+    {
+      "name": "Jobs Discover Sources",
+      "file": "backend/dotgithub/workflows/jobs-discover-sources.yml",
+      "section": "Commit and push discovery changes",
+      "old_pattern": "git add \\ (4 files, multi-line)",
+      "new_pattern": "for path in ... safe loop",
+      "paths_count": 4,
+      "known_optional_paths": [
+        "reports/source-discovery-report.json",
+        "validation-snapshots/latest.json"
+      ]
+    },
+    {
+      "name": "Jobs Discovery and Search Ingest",
+      "file": "backend/dotgithub/workflows/jobs-discovery-and-search-ingest.yml",
+      "section": "Commit and push discovery/search changes",
+      "old_pattern": "git add \\ (4 report files, multi-line) under conditional",
+      "new_pattern": "for path in ... safe loop under same conditional",
+      "paths_count": 4,
+      "known_optional_paths": [
+        "reports/source-discovery-report.json",
+        "reports/search-ingest-report.json",
+        "validation-snapshots/latest.json"
+      ]
+    }
+  ],
+  "detect_changes_sections": {
+    "status": "already safe in all workflows",
+    "note": "All `git status --porcelain --` blocks already have `|| true` error handling and tolerate missing paths",
+    "workflow_check": {
+      "jobs-sync.yml": "line 109: `|| true)",
+      "jobs-freshness-audit.yml": "line 83: `|| true)",
+      "jobs-auto-expand.yml": "line 136: `|| true)",
+      "jobs-migrate-existing.yml": "line 77: `|| true)",
+      "jobs-sync-pending-sources.yml": "lines 69, 74: `|| true)",
+      "jobs-discover-sources.yml": "line 100: `|| true)",
+      "jobs-discovery-and-search-ingest.yml": "lines 117-125: each has `|| true`)"
+    }
+  },
+  "what_was_not_affected": [
+    "Canonical talent-profiles.json — references preserved in all sections",
+    "fetch-approved-talent.js — pipeline unchanged",
+    "admin-review.html — pending talent still loads from backend in real-time",
+    "index.html — talent display unchanged",
+    "validate-public-data.js — validation unchanged"
+  ],
+  "verification": {
+    "jobs_validate": {
+      "command": "npm run jobs:validate",
+      "result": "passed",
+      "octopus_validation_violation_count": 0,
+      "hard_validation_failure_count": 0,
+      "errors": []
+    },
+    "jobs_build_pages": {
+      "command": "npm run jobs:build-pages",
+      "result": "passed",
+      "pages_written_count": 0,
+      "pages_skipped_unchanged_count": 56,
+      "stale_pages_deleted_count": 0
+    }
+  }
+}

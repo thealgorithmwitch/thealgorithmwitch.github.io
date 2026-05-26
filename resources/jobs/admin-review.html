@@ -1108,6 +1108,13 @@
     }
 
     function isQuickPublishEligible(job) {
+      const nonPublishBuckets = new Set(["rejected_noise", "needs_cleanup"]);
+      const nonPublishReasons = ["broken", "rejected_non_job_link", "rejected_noise",
+        "no_openings_detected", "stale_manual_candidate", "needs_cleanup"];
+      const triageReason = String(job.triage_reason || "").toLowerCase();
+      const bucket = String(job.triage_bucket || "").toLowerCase();
+      if (nonPublishBuckets.has(bucket)) return false;
+      if (nonPublishReasons.some((r) => triageReason.includes(r))) return false;
       return Boolean(
         job &&
         job.title &&
@@ -1115,8 +1122,7 @@
         job.original_url &&
         job.location &&
         Number(job.relevance_score || 0) >= 8 &&
-        !/[<>]|mailto:|class=|&#/i.test(String(job.title || "")) &&
-        !String(job.triage_reason || "").toLowerCase().includes("broken")
+        !/[<>]|mailto:|class=|&#/i.test(String(job.title || ""))
       );
     }
 

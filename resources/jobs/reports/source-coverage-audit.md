@@ -1,6 +1,6 @@
 # Source Coverage Audit
 
-Generated: 2026-05-27T14:08:25.337Z
+Generated: 2026-05-27T14:06:11.465Z
 
 ## Summary
 
@@ -178,7 +178,9 @@ _None_
 
 ## Restore Candidates From jobs2.json
 
-_None_
+| organization | title | source_url |
+| --- | --- | --- |
+| Mission 44 | Senior Manager Policy and Campaigns | https://jobs.workable.com/view/7irAitgA6D2XAM6a6beCda/hybrid-senior-manager-policy-and-campaigns-in-london-at-mission-44 |
 
 ## Duplicate Cleanup
 

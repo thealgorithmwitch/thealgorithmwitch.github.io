@@ -1,6 +1,6 @@
 # Source Coverage Audit
 
-Generated: 2026-05-27T14:06:11.465Z
+Generated: 2026-05-27T15:01:12.686Z
 
 ## Summary
 
@@ -17,7 +17,7 @@ _None_
 
 | organization | public_jobs |
 | --- | --- |
-| Renew Home | 9 |
+| Renew Home | 8 |
 | More Perfect Union Action | 5 |
 | Powerlines | 5 |
 | HA Sustainable Infrastructure Capital | 4 |
@@ -152,7 +152,7 @@ _None_
 | Grove Collaborative | 2 | ready_for_manual_review |
 | HA Sustainable Infrastructure Capital | 4 | add_to_sources_json |
 | Hip Hop Caucus | 1 | add_to_sources_json |
-| Louisiana Bucket Brigade | 2 | add_to_sources_json |
+| Louisiana Bucket Brigade | 1 | add_to_sources_json |
 | Mitti Labs | 1 | add_to_sources_json |
 | More Perfect Union Action | 5 | add_to_sources_json |
 | NextEra Energy | 2 | add_to_sources_json |
@@ -163,7 +163,7 @@ _None_
 | Proterra | 1 | ready_for_manual_review |
 | Quince | 1 | ready_for_manual_review |
 | RE-volv | 1 | add_to_sources_json |
-| Renew Home | 9 | ready_for_manual_review |
+| Renew Home | 8 | ready_for_manual_review |
 | Resource Innovations | 2 | add_to_sources_json |
 | Rystad Energy | 1 | add_to_sources_json |
 | Sierra Club | 1 | ready_for_manual_review |
@@ -181,6 +181,7 @@ _None_
 | organization | title | source_url |
 | --- | --- | --- |
 | Mission 44 | Senior Manager Policy and Campaigns | https://jobs.workable.com/view/7irAitgA6D2XAM6a6beCda/hybrid-senior-manager-policy-and-campaigns-in-london-at-mission-44 |
+| Louisiana Bucket Brigade | Volunteer Coordinator | https://labucketbrigade.org/ |
 
 ## Duplicate Cleanup
 

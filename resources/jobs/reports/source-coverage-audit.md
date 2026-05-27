@@ -1,12 +1,12 @@
 # Source Coverage Audit
 
-Generated: 2026-05-27T12:01:30.161Z
+Generated: 2026-05-27T14:08:25.337Z
 
 ## Summary
 
 - Total sources: 0
-- Total prospects: 91
-- Total public organizations: 48
+- Total prospects: 92
+- Total public organizations: 49
 - Total pending organizations: 47
 
 ## Active Source Coverage
@@ -17,7 +17,7 @@ _None_
 
 | organization | public_jobs |
 | --- | --- |
-| Renew Home | 8 |
+| Renew Home | 9 |
 | More Perfect Union Action | 5 |
 | Powerlines | 5 |
 | HA Sustainable Infrastructure Capital | 4 |
@@ -34,34 +34,34 @@ _None_
 | EDP | 2 |
 | Education Reform Now Advocacy | 2 |
 | Energy Infrastructure Partners LLC | 2 |
+| Get Vocal PBC | 2 |
 | Greenlight America | 2 |
 | Grove Collaborative | 2 |
-| Louisiana Bucket Brigade | 2 |
 
 ## Pending Review Coverage
 
 | organization | pending_jobs |
 | --- | --- |
 | Reformation | 50 |
-| RWE | 50 |
-| Octopus Energy | 41 |
-| NextEra Energy | 40 |
-| Quince | 38 |
+| RWE | 45 |
+| NextEra Energy | 38 |
+| Quince | 37 |
+| Octopus Energy | 33 |
 | GoodLeap | 26 |
-| BlueGreen Alliance | 11 |
+| BlueGreen Alliance | 10 |
 | Rocky Mountain Institute | 10 |
-| Arevon Energy | 8 |
 | Woolpert | 8 |
 | World Resources Institute | 8 |
+| Arevon Energy | 7 |
 | Conservation International | 7 |
 | CALSTART | 6 |
-| Good Power | 6 |
-| HA Sustainable Infrastructure Capital | 6 |
 | League of Conservation Voters | 6 |
 | Remix | 6 |
 | Dylan Green | 5 |
 | Fervo Energy | 5 |
-| Get Vocal PBC | 5 |
+| Good Power | 5 |
+| Advanced Energy United | 4 |
+| Grove Collaborative | 4 |
 
 ## Missing Preferred Orgs
 
@@ -115,8 +115,8 @@ _None_
 | Grassroots Carbon |  | https://jobs.workable.com/view/66JEqQTu5Aaik8B4Y67gVh/director%2C-brand-reach-%26-communications-in-san-antonio-at-grassroots-carbon | add_to_sources_json |
 | Greenlight America | https://www.greenlightamerica.org/ | https://www.greenlightamerica.org/careers/ | add_to_sources_json |
 | Greenpeace | https://www.greenpeace.org/ | https://www.greenpeace.org/international/jobs | add_to_sources_json |
+| Greentown Labs | https://greentownlabs.org/ | https://ats.rippling.com/greentown-labs/jobs | add_to_sources_json |
 | GRID Alternatives | https://gridalternatives.org/ | https://gridalternatives.org/jobs | add_to_sources_json |
-| Groundswell | https://groundswell.org/ | https://groundswell.org/careers | add_to_sources_json |
 
 ## Broken / Failing Sources
 
@@ -144,6 +144,7 @@ _None_
 | Education Reform Now Advocacy | 2 | add_to_sources_json |
 | Energy Infrastructure Partners LLC | 2 | add_to_sources_json |
 | Environmental Defense Fund | 1 | add_to_sources_json |
+| Get Vocal PBC | 2 | ready_for_manual_review |
 | Good Power | 1 | add_to_sources_json |
 | Grassroots Carbon | 1 | add_to_sources_json |
 | Greenlight America | 2 | add_to_sources_json |
@@ -152,7 +153,6 @@ _None_
 | HA Sustainable Infrastructure Capital | 4 | add_to_sources_json |
 | Hip Hop Caucus | 1 | add_to_sources_json |
 | Louisiana Bucket Brigade | 2 | add_to_sources_json |
-| Mission 44 | 1 | ready_for_manual_review |
 | Mitti Labs | 1 | add_to_sources_json |
 | More Perfect Union Action | 5 | add_to_sources_json |
 | NextEra Energy | 2 | add_to_sources_json |
@@ -162,7 +162,8 @@ _None_
 | Protect Democracy | 3 | ready_for_manual_review |
 | Proterra | 1 | ready_for_manual_review |
 | Quince | 1 | ready_for_manual_review |
-| Renew Home | 8 | ready_for_manual_review |
+| RE-volv | 1 | add_to_sources_json |
+| Renew Home | 9 | ready_for_manual_review |
 | Resource Innovations | 2 | add_to_sources_json |
 | Rystad Energy | 1 | add_to_sources_json |
 | Sierra Club | 1 | ready_for_manual_review |
@@ -236,4 +237,4 @@ _None_
 | Grassroots Carbon | https://jobs.workable.com/view/66JEqQTu5Aaik8B4Y67gVh/director%2C-brand-reach-%26-communications-in-san-antonio-at-grassroots-carbon | add_to_sources_json |
 | Greenlight America | https://www.greenlightamerica.org/careers/ | add_to_sources_json |
 | Greenpeace | https://www.greenpeace.org/international/jobs | add_to_sources_json |
-| GRID Alternatives | https://gridalternatives.org/jobs | add_to_sources_json |
+| Greentown Labs | https://ats.rippling.com/greentown-labs/jobs | add_to_sources_json |

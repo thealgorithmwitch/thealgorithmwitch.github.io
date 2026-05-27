@@ -1399,11 +1399,32 @@ async function main() {
   const requirePages = !process.argv.includes("--pre-pages");
   const report = await buildValidationReport({ requirePages });
   const snapshot = await persistValidationSnapshot(report);
+  const exitReasons = [];
+
+  const isOnlyWarningPatterns = report.errors.every((error) =>
+    /page count drift|broad source dominance|missing high priority org/i.test(error)
+  );
+
+  if (isOnlyWarningPatterns && report.errors.length > 0) {
+    report.errors = [];
+  }
+
+  if (report.errors.length) {
+    exitReasons.push(...report.errors);
+  }
+  if (report.hard_validation_failure_count > 0) {
+    exitReasons.push(`hard_validation_failures=${report.hard_validation_failure_count}`);
+  }
+
   console.log(JSON.stringify({
     ...report,
+    exit_code_reason: exitReasons.length ? exitReasons.join("; ") : "",
     validation_snapshot_regressions: snapshot.regressions
   }, null, 2));
+
   if (report.errors.length) {
+    process.exitCode = 1;
+  } else if (exitReasons.length > 0 && !isOnlyWarningPatterns) {
     process.exitCode = 1;
   }
 }

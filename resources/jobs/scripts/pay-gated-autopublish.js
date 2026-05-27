@@ -4,6 +4,15 @@ const fs = require("fs/promises");
 const { readJson, writeJson, readJobs, readPendingSyncedJobs, safeWritePublicJobs, JOBS_FILE, PENDING_SYNCED_FILE } = require("./job-utils");
 const { readJobRecords, syncJobRecordStore, JOB_RECORDS_FILE } = require("./public-records");
 const { normalizeJob, stringifySafe } = require("./job-normalizer");
+const {
+  isOctopusEntity,
+  scoreOctopusPriority,
+  OCTOPUS_PUBLIC_CAP,
+  isOctopusUkLeverPriorityRole,
+  buildLatestSnapshot,
+  matchesSnapshot,
+  buildCanonicalIdentity
+} = require("./octopus-source-reconciliation");
 
 const ROOT = path.resolve(__dirname, "..");
 const REPORTS_DIR = path.join(ROOT, "reports");
@@ -40,6 +49,34 @@ const BLOCKED_TITLE_PATTERNS = [
   /\bmachine\s+learning\b/i,
   /\bqa\s+engineer\b/i
 ];
+
+function hasCorruptedPay(job) {
+  const salaryText = String(job.salary || job.raw_salary || "").trim();
+  if (!salaryText) return false;
+  if (/^\d+[–-]\d+$/.test(salaryText) && salaryText.length < 8) return true;
+  return false;
+}
+
+function isOctopusPriorityJob(job) {
+  const priority = scoreOctopusPriority(job);
+  return !priority.excluded;
+}
+
+function countExistingOctopusPublic(records) {
+  return (Array.isArray(records) ? records : [])
+    .filter((r) => isOctopusEntity(r) && r.published === true && r.public_visibility === true)
+    .length;
+}
+
+function hasValidSalaryMinimum(job) {
+  const min = Number(job.salary_min) || 0;
+  if (min === 0) return true;
+  const period = String(job.salary_period || job.salaryPeriod || "yearly").toLowerCase();
+  if (period.includes("year") && min < 30000) return false;
+  if (period.includes("month") && min < 2500) return false;
+  if (period.includes("hour") && min < 15) return false;
+  return true;
+}
 
 function hasPay(job) {
   const hasSalaryFields = Boolean(
@@ -169,12 +206,12 @@ function checkOrgSpecificRules(job) {
     }
   }
 
-  if (org.includes("octopus")) {
-    const preferredTerms = ["market", "partner", "comms", "communic", "content", "campaign", "policy", "legal", "contract", "operations", "digital", "analytics", "finance", "analyst", "manager", "lead"];
-    const isPreferred = preferredTerms.some((t) => title.includes(t));
-    if (!isPreferred) {
-      return { allowed: false, reason: "Octopus: non-preferred role" };
+  if (isOctopusEntity(job)) {
+    const priority = scoreOctopusPriority(job);
+    if (priority.excluded) {
+      return { allowed: false, reason: "Octopus: " + (priority.reasons[0] || "excluded role") };
     }
+    return { allowed: true, reason: "" };
   }
 
   return { allowed: true, reason: "" };
@@ -261,6 +298,11 @@ async function main() {
     }
   }
 
+  const existingOctopusPublicCount = countExistingOctopusPublic(records);
+  const octopusRemainingSlots = Math.max(0, OCTOPUS_PUBLIC_CAP - existingOctopusPublicCount);
+  const octopusSnapshot = buildLatestSnapshot(pendingJobs);
+  octopusSnapshot.authoritative = true;
+
   const candidates = [];
 
   for (const job of pendingJobs) {
@@ -277,6 +319,29 @@ async function main() {
 
     const orgSpecific = checkOrgSpecificRules(job);
 
+    let octopusOk = true;
+    let octopusReason = "";
+    if (isOctopusEntity(job)) {
+      if (hasCorruptedPay(job)) {
+        octopusOk = false;
+        octopusReason = "corrupted_pay";
+      } else if (!hasValidSalaryMinimum(job)) {
+        octopusOk = false;
+        octopusReason = "salary_too_low";
+      } else if (!isOctopusPriorityJob(job)) {
+        octopusOk = false;
+        octopusReason = "low_priority_or_excluded";
+      } else {
+        const identity = buildCanonicalIdentity(job);
+        const inSnapshot = matchesSnapshot(identity, octopusSnapshot);
+        const isUkLever = isOctopusUkLeverPriorityRole({ id: job.id, identity, priority: scoreOctopusPriority(job) });
+        if (!inSnapshot && !isUkLever) {
+          octopusOk = false;
+          octopusReason = "missing_from_source_snapshot";
+        }
+      }
+    }
+
     const egs = {
       id: stringifySafe(job.id),
       title: stringifySafe(job.title),
@@ -292,7 +357,10 @@ async function main() {
       title_not_blocked: !titleBlocked,
       org_approved: orgSpecific.allowed,
       org_reason: orgSpecific.reason,
-      passes_all: payOk && confOk && qualityOk && urlOk && titleOk && !titleBlocked && orgSpecific.allowed
+      is_octopus: isOctopusEntity(job),
+      octopus_ok: octopusOk,
+      octopus_reason: octopusReason,
+      passes_all: payOk && confOk && qualityOk && urlOk && titleOk && !titleBlocked && orgSpecific.allowed && octopusOk
     };
 
     if (egs.passes_all) {
@@ -319,9 +387,23 @@ async function main() {
     return b.score - a.score;
   });
 
-  const selected = candidates.slice(0, MAX_AUTOPUBLISH_PER_RUN);
+  let octopusSelected = 0;
+  const capFiltered = [];
+  for (const c of candidates) {
+    if (c.checks.is_octopus) {
+      if (octopusSelected >= octopusRemainingSlots) {
+        logger.log(`  OCTOPUS CAP REACHED: skipping ${c.checks.organization} - ${c.checks.title} (${octopusSelected}/${octopusRemainingSlots} slots used)`);
+        continue;
+      }
+      octopusSelected++;
+    }
+    capFiltered.push(c);
+  }
+
+  const selected = capFiltered.slice(0, MAX_AUTOPUBLISH_PER_RUN);
 
   logger.log(`Candidates found: ${candidates.length}`);
+  logger.log(`Octopus existing public: ${existingOctopusPublicCount}, remaining slots: ${octopusRemainingSlots}`);
   logger.log(`Selected for publish: ${selected.length}`);
 
   const publishedJobs = [];
@@ -350,8 +432,13 @@ async function main() {
         organization: c.checks.organization,
         editorial_priority_score: c.checks.editorial_priority_score,
         mission_alignment_score: c.checks.mission_alignment_score,
-        checks: { pay: c.checks.pay, parser_confidence: c.checks.parser_confidence, content_quality: c.checks.content_quality, apply_url_valid: c.checks.apply_url_valid, title_specific: c.checks.title_specific, org_approved: c.checks.org_approved, org_reason: c.checks.org_reason }
+        checks: { pay: c.checks.pay, parser_confidence: c.checks.parser_confidence, content_quality: c.checks.content_quality, apply_url_valid: c.checks.apply_url_valid, title_specific: c.checks.title_specific, org_approved: c.checks.org_approved, org_reason: c.checks.org_reason, is_octopus: c.checks.is_octopus, octopus_ok: c.checks.octopus_ok, octopus_reason: c.checks.octopus_reason }
       })),
+      octopus_guardrails: {
+        cap: OCTOPUS_PUBLIC_CAP,
+        existing_public: existingOctopusPublicCount,
+        remaining_slots: octopusRemainingSlots
+      },
       summary: { pay_gated_autopublish: 0, max_per_run: MAX_AUTOPUBLISH_PER_RUN, future_candidates: candidates.length }
     };
     await writeJson(path.join(REPORTS_DIR, "pay-gated-autopublish-report.json"), report);
@@ -420,8 +507,13 @@ async function main() {
       organization: c.checks.organization,
       editorial_priority_score: c.checks.editorial_priority_score,
       mission_alignment_score: c.checks.mission_alignment_score,
-      checks: { pay: c.checks.pay, parser_confidence: c.checks.parser_confidence, content_quality: c.checks.content_quality, apply_url_valid: c.checks.apply_url_valid, title_specific: c.checks.title_specific, org_approved: c.checks.org_approved, org_reason: c.checks.org_reason }
+      checks: { pay: c.checks.pay, parser_confidence: c.checks.parser_confidence, content_quality: c.checks.content_quality, apply_url_valid: c.checks.apply_url_valid, title_specific: c.checks.title_specific, org_approved: c.checks.org_approved, org_reason: c.checks.org_reason, is_octopus: c.checks.is_octopus, octopus_ok: c.checks.octopus_ok, octopus_reason: c.checks.octopus_reason }
     })),
+    octopus_guardrails: {
+      cap: OCTOPUS_PUBLIC_CAP,
+      existing_public: existingOctopusPublicCount,
+      remaining_slots: octopusRemainingSlots
+    },
     summary: { pay_gated_autopublish: publishedJobs.length, max_per_run: MAX_AUTOPUBLISH_PER_RUN, remaining_candidates: candidates.length - selected.length, future_candidates: candidates.length }
   };
 
@@ -438,4 +530,4 @@ if (require.main === module) {
   });
 }
 
-module.exports = { main, APPROVED_PAY_GATED_ORGS, MAX_AUTOPUBLISH_PER_RUN, hasPay, getPayQuality, hasGoodParserConfidence, hasStrongContentQuality, hasValidApplyUrl, hasSpecificTitle, isApprovedOrg, isAlreadyPublic, prioritySortKey, buildPublicJobShape, checkOrgSpecificRules };
+module.exports = { main, APPROVED_PAY_GATED_ORGS, MAX_AUTOPUBLISH_PER_RUN, OCTOPUS_PUBLIC_CAP, hasPay, hasCorruptedPay, isOctopusPriorityJob, countExistingOctopusPublic, hasValidSalaryMinimum, getPayQuality, hasGoodParserConfidence, hasStrongContentQuality, hasValidApplyUrl, hasSpecificTitle, isApprovedOrg, isAlreadyPublic, prioritySortKey, buildPublicJobShape, checkOrgSpecificRules };

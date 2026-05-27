@@ -17,6 +17,12 @@ const {
   stringifySafe,
   stripGenericCareersContent
 } = require("./job-normalizer");
+const {
+  hasCorruptedPay,
+  isOctopusPriorityJob,
+  countExistingOctopusPublic,
+  hasValidSalaryMinimum
+} = require("./pay-gated-autopublish");
 
 const salaryCases = [
   { input: "$80,000 - $100,000", min: 80000, max: 100000, currency: "USD", period: "year", visible: true },
@@ -427,5 +433,31 @@ assert.ok(/This role supports Environmental Defense Fund's work across Policy\/A
 
 assert.strictEqual(stringifySafe({ value: "$60,000 - $70,000" }), "$60,000 - $70,000");
 assert.strictEqual(stringifySafe({ unexpected: "ignored" }), "");
+
+// Octopus guardrail tests
+assert.strictEqual(hasCorruptedPay({ salary: "2–3" }), true, "corrupted pay 2-3 (endash) should be detected");
+assert.strictEqual(hasCorruptedPay({ raw_salary: "2-3" }), true, "corrupted pay 2-3 (hyphen) should be detected");
+assert.strictEqual(hasCorruptedPay({ salary: "$80,000 - $100,000" }), false, "normal pay should not be corrupted");
+assert.strictEqual(hasCorruptedPay({ salary: "" }), false, "empty salary should not be corrupted");
+assert.strictEqual(hasCorruptedPay({}), false, "missing salary should not be corrupted");
+
+assert.strictEqual(isOctopusPriorityJob({ title: "Marketing Manager", organization: "Octopus Energy" }), true, "marketing manager should be priority");
+assert.strictEqual(isOctopusPriorityJob({ title: "Software Engineer", organization: "Octopus Energy" }), false, "software engineer should be excluded");
+assert.strictEqual(isOctopusPriorityJob({ title: "Finance Analyst", organization: "Octopus Energy" }), false, "finance analyst should be excluded");
+assert.strictEqual(isOctopusPriorityJob({ title: "Senior Business Development Manager", organization: "Octopus Energy" }), false, "business development should be excluded");
+
+assert.strictEqual(hasValidSalaryMinimum({ salary_min: 50000, salary_period: "yearly" }), true, "50000 yearly should be valid");
+assert.strictEqual(hasValidSalaryMinimum({ salary_min: 20000, salary_period: "yearly" }), false, "20000 yearly should be rejected");
+assert.strictEqual(hasValidSalaryMinimum({ salary_min: 0, salary_period: "yearly" }), true, "0 salary should pass (no min set)");
+assert.strictEqual(hasValidSalaryMinimum({ salary_min: 30000, salary_period: "yearly" }), true, "30000 yearly should be valid (equal to threshold)");
+
+const octopusRecord = { organization: "Octopus Energy", published: true, public_visibility: true };
+const nonOctopusRecord = { organization: "Other Corp", published: true, public_visibility: true };
+const unpublishedOctopus = { organization: "Octopus Energy", published: false, public_visibility: false };
+assert.strictEqual(countExistingOctopusPublic([octopusRecord]), 1, "one public octopus record");
+assert.strictEqual(countExistingOctopusPublic([octopusRecord, nonOctopusRecord]), 1, "non-octopus should not be counted");
+assert.strictEqual(countExistingOctopusPublic([octopusRecord, octopusRecord]), 2, "two public octopus records");
+assert.strictEqual(countExistingOctopusPublic([unpublishedOctopus]), 0, "unpublished octopus should not be counted");
+assert.strictEqual(countExistingOctopusPublic([]), 0, "empty records should return 0");
 
 console.log("test-normalizer: all checks passed");

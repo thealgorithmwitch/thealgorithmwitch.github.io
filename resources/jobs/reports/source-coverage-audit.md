@@ -1,12 +1,12 @@
 # Source Coverage Audit
 
-Generated: 2026-05-27T15:01:12.686Z
+Generated: 2026-05-27T16:07:35.064Z
 
 ## Summary
 
 - Total sources: 0
 - Total prospects: 92
-- Total public organizations: 49
+- Total public organizations: 48
 - Total pending organizations: 47
 
 ## Active Source Coverage
@@ -17,7 +17,6 @@ _None_
 
 | organization | public_jobs |
 | --- | --- |
-| Renew Home | 8 |
 | More Perfect Union Action | 5 |
 | Powerlines | 5 |
 | HA Sustainable Infrastructure Capital | 4 |
@@ -37,6 +36,7 @@ _None_
 | Get Vocal PBC | 2 |
 | Greenlight America | 2 |
 | Grove Collaborative | 2 |
+| NextEra Energy | 2 |
 
 ## Pending Review Coverage
 
@@ -163,7 +163,6 @@ _None_
 | Proterra | 1 | ready_for_manual_review |
 | Quince | 1 | ready_for_manual_review |
 | RE-volv | 1 | add_to_sources_json |
-| Renew Home | 8 | ready_for_manual_review |
 | Resource Innovations | 2 | add_to_sources_json |
 | Rystad Energy | 1 | add_to_sources_json |
 | Sierra Club | 1 | ready_for_manual_review |
@@ -180,8 +179,16 @@ _None_
 
 | organization | title | source_url |
 | --- | --- | --- |
+| Renew Home | Senior Technical Implementation Manager, VPP (Remote, US) | https://apply.workable.com/renewhome/j/213B4DC828/ |
+| Renew Home | Manager, Market Development (Remote, US) | https://apply.workable.com/renewhome/j/60AD0CF584/ |
 | Mission 44 | Senior Manager Policy and Campaigns | https://jobs.workable.com/view/7irAitgA6D2XAM6a6beCda/hybrid-senior-manager-policy-and-campaigns-in-london-at-mission-44 |
+| Renew Home | Senior Data Scientist, Product Analytics (Remote, US) | https://apply.workable.com/renewhome/j/F436892CAA/ |
+| Renew Home | Senior Engineer, Test and Automation (Remote, US) | https://apply.workable.com/renewhome/j/63F167E6BD/ |
+| Renew Home | Staff Sales Engineer, Omnichannel (Remote, US) | https://apply.workable.com/renewhome/j/48CCA91FF8/ |
 | Louisiana Bucket Brigade | Volunteer Coordinator | https://labucketbrigade.org/ |
+| Renew Home | HubSpot Consultant (3 Month Contract | https://apply.workable.com/renewhome/j/8F00486888/ |
+| Renew Home | Product Designer (6 Month Contract | https://apply.workable.com/renewhome/j/AFE17A14E0/ |
+| Renew Home | Engineering Manager, Consumer (Remote, US) | https://apply.workable.com/renewhome/j/4F78EA1295/ |
 
 ## Duplicate Cleanup
 

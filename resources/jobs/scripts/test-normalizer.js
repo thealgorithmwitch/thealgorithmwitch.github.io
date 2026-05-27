@@ -3,6 +3,7 @@ const {
   applyTitleToMalformedTemplate,
   buildDescriptionSnippet,
   buildFallbackDescription,
+  detectPreferredRoleSections,
   extractMultiLocationSalaryRanges,
   extractSalaryText,
   extractPayWindows,
@@ -13,7 +14,8 @@ const {
   normalizeDescription,
   normalizeJob,
   parseSalaryRange,
-  stringifySafe
+  stringifySafe,
+  stripGenericCareersContent
 } = require("./job-normalizer");
 
 const salaryCases = [
@@ -371,6 +373,50 @@ const malformedSnippet = buildDescriptionSnippet(
 );
 assert.ok(/will lead the development and implementation/i.test(malformedSnippet));
 assert.strictEqual(hasMalformedDescriptionTemplate(malformedSnippet), false);
+
+const genericCareersContent = `
+  How we support our staff
+  We offer competitive salaries and wages, professional development and training, and a supportive work environment.
+
+  Current Openings
+  View our open positions and apply today.
+
+  Purpose of the Position
+  The Donor Engagement Manager advances Louisiana Bucket Brigade's environmental justice mission by growing annual support through campaigns, donor activities, and one-on-one donor engagement.
+
+  Job Status
+  Full-time, 40 hours per week
+
+  Salary
+  $65,000 per year
+`;
+const cleanedCareers = normalizeDescription(genericCareersContent, { title: "Donor Engagement Manager", organization: "Louisiana Bucket Brigade" });
+assert.ok(cleanedCareers.description.includes("environmental justice mission"), `generic careers content should prefer role-specific sections: ${cleanedCareers.description}`);
+assert.ok(!/How we support our staff/i.test(cleanedCareers.description), "generic careers heading should be stripped");
+assert.ok(!/Current Openings/i.test(cleanedCareers.description), "current openings heading should be stripped");
+assert.ok(!/competitive salaries and wages/i.test(cleanedCareers.description), "competitive salaries boilerplate should be stripped");
+assert.ok(cleanedCareers.description.length < 300, `cleaned careers description should be concise: ${cleanedCareers.description.length} chars`);
+
+const stripResult = stripGenericCareersContent(genericCareersContent);
+assert.ok(!/How we support our staff/i.test(stripResult), "stripGenericCareersContent should remove generic section");
+assert.ok(stripResult.includes("Purpose of the Position"), "stripGenericCareersContent should keep preferred sections");
+
+const detectResult = detectPreferredRoleSections(genericCareersContent);
+assert.ok(detectResult.includes("environmental justice mission"), "detectPreferredRoleSections should find role-specific content");
+assert.ok(!detectResult.includes("How we support our staff"), "detectPreferredRoleSections should exclude generic content");
+
+// Louisiana Bucket Brigade salary parsing
+const lbbSalary = parseSalaryRange("$65,000", "");
+assert.strictEqual(lbbSalary.salary_min, 65000, "Louisiana Bucket Brigade min should be 65000");
+assert.strictEqual(lbbSalary.salary_max, 65000, "Louisiana Bucket Brigade max should be 65000");
+assert.strictEqual(lbbSalary.salary_currency, "USD", "Louisiana Bucket Brigade currency should be USD");
+assert.strictEqual(lbbSalary.salary_period, "year", "Louisiana Bucket Brigade period should be year");
+assert.strictEqual(lbbSalary.salary_visible, true, "Louisiana Bucket Brigade salary should be visible");
+
+const lbbSalaryYearly = parseSalaryRange("$65,000 per year", "");
+assert.strictEqual(lbbSalaryYearly.salary_min, 65000, "yearly min should be 65000");
+assert.strictEqual(lbbSalaryYearly.salary_max, 65000, "yearly max should be 65000");
+assert.strictEqual(lbbSalaryYearly.salary_visible, true, "yearly salary should be visible");
 
 const neutralFallback = buildFallbackDescription({
   organization: "Environmental Defense Fund",

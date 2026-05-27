@@ -645,6 +645,58 @@ async function main() {
     keptJobs.push(reportEntry);
   }
 
+  // --- Pending job freshness check ---
+  const pendingChanges = [];
+  for (const pendingJob of filteredPendingJobs) {
+    if (pendingJob.status === "archived" || pendingJob.status === "rejected") continue;
+    const sourceUrl = cleanText(pendingJob.apply_url || pendingJob.source_url || "");
+    if (!sourceUrl || /^https?:\/\/(?:www\.)?(?:linkedin|google|facebook|twitter|glassdoor|indeed)\./i.test(sourceUrl)) continue;
+    const pendingReportEntry = {
+      id: pendingJob.id,
+      title: pendingJob.title,
+      organization: pendingJob.organization,
+      source_url: sourceUrl,
+      previous_status: pendingJob.status || "pending",
+      action: "unchanged",
+      reasons: [],
+      checked_at: generatedAt
+    };
+    const page = await fetchLivePage(sourceUrl);
+    if (page.error) {
+      pendingReportEntry.reasons.push("fetch_failed");
+      pendingChanges.push(pendingReportEntry);
+      continue;
+    }
+    const pageMode = detectPageMode(page, page.body);
+    if (pageMode.mode === "dead") {
+      const isReviewReady = pendingJob.triage_bucket === "review_ready";
+      const updatedPending = {
+        ...pendingJob,
+        triage_bucket: "closed_posting",
+        triage_reason: "freshness_unavailable",
+        status: "rejected",
+        published: false,
+        public_visibility: false,
+        auto_publish: false,
+        stale_score: 100,
+        last_checked_at: generatedAt,
+        date_updated: nowIso().slice(0, 10)
+      };
+      const idx = nextPending.findIndex((j) => cleanText(j.id) === cleanText(pendingJob.id));
+      if (idx >= 0) nextPending[idx] = updatedPending;
+      pendingReportEntry.action = "rejected";
+      pendingReportEntry.reasons.push(`dead_page:${pageMode.reason}`);
+      if (isReviewReady) pendingReportEntry.reasons.push("was_review_ready");
+      pendingChanges.push(pendingReportEntry);
+    } else if (pageMode.mode === "code_feed") {
+      pendingReportEntry.reasons.push("code_feed_page");
+      pendingChanges.push(pendingReportEntry);
+    } else {
+      pendingReportEntry.reasons.push("live");
+      pendingChanges.push(pendingReportEntry);
+    }
+  }
+
   const riskyReport = await writeRiskyChangesReport(riskyChanges, {
     generated_at: generatedAt,
     mode: args.write ? "write" : "dry_run",
@@ -658,13 +710,16 @@ async function main() {
     stale_threshold_days: STALE_DAYS,
     stale_archive_days: STALE_ARCHIVE_DAYS,
     public_jobs_scanned: stalePublicJobs.length,
+    pending_jobs_scanned: pendingChanges.length,
     changed_jobs_count: changedJobs.length,
     kept_public_count: keptJobs.length,
     flagged_review_count: flaggedJobs.length,
+    pending_rejected_count: pendingChanges.filter((e) => e.action === "rejected").length,
     skipped_risky_changes_count: riskyReport.risky_changes.length,
     changed_jobs: changedJobs,
     kept_public_jobs: keptJobs,
     flagged_review_jobs: flaggedJobs,
+    pending_changes: pendingChanges,
     risky_changes_report: path.relative(ROOT, RISKY_REPORT_JSON_FILE)
   };
 

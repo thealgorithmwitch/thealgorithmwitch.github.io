@@ -815,9 +815,19 @@ function deriveRipplingJobType(text) {
   return match ? stripHtml(match[1]) : "";
 }
 
+function stripRipplingUuidBlobs(text) {
+  return String(text || "")
+    .replace(/\b[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\b/gi, "")
+    .replace(/(?:^|\s|\()-?[0-9a-f]{3,8}-?\s*-?\s*[0-9a-f]{0,8}-?\s*-?\s*[0-9a-f]{0,8}-?\s*-?\s*[0-9a-f]{0,8}-?\s*-?\s*[0-9a-f]{0,12}\b/gi, "")
+    .replace(/[0-9a-f]{8}-[0-9a-f]{4}-[-\s]*[0-9a-f]{4,8}[-\s]*[0-9a-f]{4,8}[-\s]*[0-9a-f]{4,8}[-\s]*[0-9a-f]{4,12}/gi, "")
+    .replace(/\s{2,}/g, " ")
+    .trim();
+}
+
 function ripplingJobToSchema(source, job) {
   const descriptionHtml = stringifySafe(job.descriptionHtml || job.description || "");
-  const descriptionText = stripHtml(descriptionHtml || job.snippet || "");
+  const rawSnippet = stripRipplingUuidBlobs(stringifySafe(job.snippet || ""));
+  const descriptionText = stripHtml(descriptionHtml || rawSnippet || "");
   const jobTitle = stringifySafe(job.name || job.title || "");
   const jobUrl = stringifySafe(job.url || job.link || job.applyUrl || source.source_url);
   const locationArr = Array.isArray(job.locations) ? job.locations : [];

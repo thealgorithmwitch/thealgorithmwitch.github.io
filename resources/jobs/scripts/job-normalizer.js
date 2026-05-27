@@ -175,7 +175,8 @@ const DESCRIPTION_JUNK_PATTERNS = [
   /\bcareer_page\b/i,
   /\bBusiness\/Productivity Software\b/i,
   /\bCleantech\b/i,
-  /\bOil\s*&\s*Gas\b/i
+  /\bOil\s*&\s*Gas\b/i,
+  /\b[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\b/i
 ];
 const BAD_PUBLIC_CONTENT_PATTERNS = [
   /^\s*[\[{].*(?:"@context"|jobs?|items?|feed|rss|xml)/i,
@@ -2207,6 +2208,178 @@ function isArticleLikeDescription(text) {
   return false;
 }
 
+const PREFERRED_ROLE_SECTION_HEADINGS = [
+  /purpose\s+of\s+(?:the\s+)?(?:role|position)/i,
+  /reports?\s+to/i,
+  /job\s+status/i,
+  /(?:about|overview\s+of)\s+(?:the\s+)?role/i,
+  /position\s+summary/i,
+  /role\s+(?:overview|summary|description)/i,
+  /what\s+(?:you(?:'|’)ll|you\s+will)\s+do/i,
+  /key\s+responsibilities/i,
+  /responsibilities/i,
+  /duties\s+and\s+(?:responsibilities|expectations)/i,
+  /qualifications/i,
+  /requirements/i,
+  /what\s+(?:we(?:'|’)?re\s+)?looking\s+for/i
+];
+
+const HIGH_PRIORITY_SECTIONS = [
+  /purpose\s+of\s+(?:the\s+)?(?:role|position)/i,
+  /position\s+summary/i,
+  /role\s+(?:summary|overview|description)/i,
+  /about\s+(?:the\s+)?role/i,
+  /responsibilities/i,
+  /what\s+you(?:'|'|')\u0099?(?:ll| will)\s+do/i,
+  /key\s+responsibilities/i,
+  /duties\s+and\s+(?:responsibilities|expectations)/i,
+  /reports?\s+to/i,
+  /compensation\b(?!\s+(?:and|&)\s+benefits)/i,
+  /salary\b(?!\s+(?:and|&)\s+benefits)/i,
+  /requirements?\b(?!\s+(?:and|&)\s+qualifications)/i,
+  /qualifications?\b/i,
+  /what\s+we(?:'|'|')\u0099?re\s+looking\s+for/i,
+  /we\s+are\s+seeking\b/i,
+  /the\s+(?:ideal|right)\s+candidate/i
+];
+
+const LOW_PRIORITY_SECTIONS = [
+  /benefits?\b/i,
+  /perks?\b/i,
+  /DEI\b|diversity\s+(?:equity|inclusion)|equal\s+opportunity/i,
+  /how\s+we\s+support\s+our\s+(?:staff|team|employees)/i,
+  /office\s+(?:perks|amenities|lunch|snacks|dogs|pets)/i,
+  /fun\s+(?:facts|stuff|perks|benefits)/i,
+  /(?:view|see)\s+(?:all|more|our)\s+(?:jobs|openings|positions|roles)\b/i,
+  /powered\s+by\b/i,
+  /apply\s+(?:now|today|here)\b/i,
+  /join\s+(?:our\s+)?(?:talent\s+)?(?:community|network|team)\b/i,
+  /share\s+(?:this|the)\s+(?:job|posting|position)\b/i,
+  /follow\s+us\b/i,
+  /(?:copyright|\u00a9)\s+\d{4}/i,
+  /privacy\s+(?:policy|notice|statement)/i,
+  /terms\s+(?:of\s+)?(?:use|service|employment)/i,
+  /unsolicited\s+(?:resumes|cv)/i,
+  /recruitment\s+(?:agency|firm)/i,
+  /background\s+check/i,
+  /drug\s+(?:test|free|screen)/i,
+  /e-?verify\b/i,
+  /employment\s+is\s+contingent/i,
+  /(?:network\s+of\s+\d+|hundreds\s+of)\s+(?:local\s+)?(?:chapters|offices|employees)/i,
+  /our\s+(?:destinies|fates)\s+are\s+tied/i,
+  /we\s+(?:are\s+)?(?:an?\s+)?equal\s+opportunity\s+(?:employer|workplace)/i,
+  /work\s+(?:for|at|with)\s+us\b/i,
+  /why\s+(?:work|join)\s+(?:for|at|with)\s+us\b/i,
+  /life\s+at\b/i,
+  /our\s+(?:mission|values|culture|story)\b/i,
+  /about\s+(?:us|our\s+(?:company|organization))\b/i,
+  /careers?\s+(?:page|home|list|site)\b/i,
+  /current\s+openings?\b/i,
+  /as\s+we\s+think\s+about\s+a\s+growing\s+staff/i,
+  /competitive\s+(?:salaries|wages|pay)\b/i,
+  /professional\s+development\s+(?:and|&)\s+training/i
+];
+
+function extractCanonicalRoleSection(text) {
+  if (!text) return "";
+  const raw = String(text);
+  const hasBreaks = /\n{2,}/.test(raw);
+  const hasHtml = /<[a-z]+[^>]*>/i.test(raw);
+  let splitText = raw;
+  if (!hasBreaks) {
+    if (hasHtml) {
+      splitText = raw
+        .replace(/<\/p>|<\/div>|<\/li>|<\/section>|<\/article>|<\/h[1-6]>/gi, "\n\n")
+        .replace(/<br\s*\/?>/gi, "\n");
+    } else {
+      splitText = raw.replace(/(?:\.|!|\?)\s+(?=[A-Z])/g, "$&\n\n");
+    }
+  }
+  const paragraphs = splitText.split(/\n{2,}/).map((p) => p.trim()).filter(Boolean);
+
+  let phase = "before";
+  const kept = [];
+  for (const para of paragraphs) {
+    if (!para) continue;
+
+    const isLowPriority = LOW_PRIORITY_SECTIONS.some((p) => p.test(para));
+    const isHighPriority = HIGH_PRIORITY_SECTIONS.some((p) => p.test(para));
+
+    if (isHighPriority) {
+      phase = "role";
+      kept.push(para);
+      continue;
+    }
+
+    if (phase === "before") {
+      if (!isLowPriority && para.length >= 30 && /[A-Z]/.test(para)) {
+        kept.push(para);
+      }
+      continue;
+    }
+
+    if (phase === "role") {
+      if (isLowPriority) {
+        continue;
+      }
+      kept.push(para);
+    }
+  }
+
+  return kept.join("\n\n");
+}
+
+const GENERIC_CAREERS_SECTION_HEADINGS = [
+  /how\s+we\s+support\s+our\s+(?:staff|team|employees)/i,
+  /current\s+openings/i,
+  /as\s+we\s+think\s+about\s+a\s+growing\s+staff/i,
+  /competitive\s+(?:salaries|pay|compensation)/i,
+  /professional\s+development\s+(?:and|&)\s+training/i,
+  /benefits?\s+(?:and|&)\s+(?:perks|compensation)/i,
+  /why\s+(?:work|join)\s+(?:for|at|with)\s+us/i,
+  /life\s+at\b(?!\s+(?:the\s+)?role)/i,
+  /our\s+(?:culture|values|mission|story)/i,
+  /join\s+our\s+team/i,
+  /careers?\s+(?:page|home|list)/i,
+  /view\s+(?:our\s+)?(?:open|current)\s+(?:positions|roles|jobs)/i
+];
+
+function detectPreferredRoleSections(text) {
+  if (!text) return null;
+  const paragraphs = String(text).split(/\n{2,}/);
+  const roleParagraphs = [];
+  let inGenericSection = false;
+  for (const paragraph of paragraphs) {
+    const trimmed = paragraph.trim();
+    if (!trimmed) continue;
+    const isGenericHeading = GENERIC_CAREERS_SECTION_HEADINGS.some((p) => p.test(trimmed));
+    const isPreferredHeading = PREFERRED_ROLE_SECTION_HEADINGS.some((p) => p.test(trimmed));
+    if (isGenericHeading) { inGenericSection = true; continue; }
+    if (isPreferredHeading) { inGenericSection = false; roleParagraphs.push(trimmed); continue; }
+    if (!inGenericSection && /[A-Z][a-z]{2,}/.test(trimmed) && trimmed.length >= 30) {
+      roleParagraphs.push(trimmed);
+    }
+  }
+  return roleParagraphs.length > 0 ? roleParagraphs.join("\n\n") : null;
+}
+
+function stripGenericCareersContent(text) {
+  if (!text) return text;
+  const paragraphs = String(text).split(/\n{2,}/);
+  const kept = [];
+  let inGenericSection = false;
+  for (const paragraph of paragraphs) {
+    const trimmed = paragraph.trim();
+    if (!trimmed) continue;
+    const isGenericHeading = GENERIC_CAREERS_SECTION_HEADINGS.some((p) => p.test(trimmed));
+    const isPreferredHeading = PREFERRED_ROLE_SECTION_HEADINGS.some((p) => p.test(trimmed));
+    if (isGenericHeading) { inGenericSection = true; continue; }
+    if (isPreferredHeading) { inGenericSection = false; kept.push(trimmed); continue; }
+    if (!inGenericSection) kept.push(trimmed);
+  }
+  return kept.join("\n\n");
+}
+
 function findTitleMatchingDescriptionParagraph(job = {}) {
   const title = normalizeWhitespace(job.title || "");
   const comparableTitle = normalizeComparableText(title);
@@ -2301,7 +2474,26 @@ function removeBoilerplateSentences(sentences) {
     /employment scams/i,
     /sample employment test/i,
     /our destinies are tied/i,
-    /network of \d+ local chapters/i
+    /network of \d+ local chapters/i,
+    /how we support our staff/i,
+    /how we support our team/i,
+    /current openings/i,
+    /as we think about a growing staff/i,
+    /competitive salaries and wages/i,
+    /professional development and training/i,
+    /browse (?:our )?(?:current )?(?:job )?openings/i,
+    /all qualified candidates are encouraged/i,
+    /we encourage candidates from/i,
+    /we are (?:an )?equal opportunity/i,
+    /we are committed to creating/i,
+    /we are dedicated to building/i,
+    /we offer a (?:competitive|comprehensive).+(?:salary|benefit|compensation|package)/i,
+    /(?:our|the) (?:team|organization|culture) (?:is|are) (?:committed|dedicated|passionate)/i,
+    /we believe (?:that )?(?:diversity|equity|inclusion|our people)/i,
+    /(?:apply|submit) (?:your|an) (?:application|resume)/i,
+    /join (?:our|the) (?:team|talent community)/i,
+    /for (?:more|additional) information (?:about|regarding)/i,
+    /\b(?:why\s+)?work\s+(?:for|at|with)\s+(?:us|our\s+company|our\s+organization)\b/i
   ];
 
   return sentences.filter((sentence) => !boilerplatePatterns.some((pattern) => pattern.test(sentence)));
@@ -2434,10 +2626,14 @@ function applyTitleToMalformedTemplate(text, title) {
 function normalizeDescription(description, options = {}) {
   const title = normalizeWhitespace(options.title || "");
   const organization = normalizeWhitespace(options.organization || "");
-  const descriptionInput = normalizeWhitespace(stringifySafe(description) || cleanFlattenedText(description));
-  const rawDescription = stripParserTemplateJunk(descriptionInput, "description");
+  const descriptionInput = stringifySafe(description) || cleanFlattenedText(description);
+  const strippedGeneric = stripGenericCareersContent(descriptionInput);
+  const normalizedInput = normalizeWhitespace(strippedGeneric);
+  const rawDescription = stripParserTemplateJunk(normalizedInput, "description");
+  const canonicalRoleText = extractCanonicalRoleSection(rawDescription);
+  const pipelineInput = canonicalRoleText && canonicalRoleText.length >= 30 ? canonicalRoleText : rawDescription;
   const cleaned = applyTitleToMalformedTemplate(collapseRepeatedPhrases(normalizeWhitespace(
-    stripSchemaMetadata(stripHtml(rawDescription))
+    stripSchemaMetadata(stripHtml(pipelineInput))
       .replace(/[>›»]+/g, " ")
       .replace(/\s*=\s*/g, " ")
       .replace(/&(amp|nbsp|quot|apos|#39|lt|gt);/gi, " ")
@@ -2587,6 +2783,11 @@ function extractDescriptionText(job = {}) {
         parserOptions
       )
     );
+    const preferredSections = detectPreferredRoleSections(text);
+    if (preferredSections) {
+      fallbackText = preferredSections;
+      break;
+    }
     if (text.length >= 80) {
       fallbackText = text;
       break;
@@ -2640,7 +2841,9 @@ function buildFallbackDescription(job = {}) {
   const workplaceType = normalizeWhitespace(stringifySafe(job.workplace_type));
   const functionName = normalizeWhitespace(stringifySafe(job.function));
   const sector = normalizeWhitespace(stringifySafe(job.sector));
-  if (!title && !organization && !functionName && !sector) return "";
+  if (!title && !organization && !functionName && !sector) {
+    return "Role details are available on the original posting.";
+  }
 
   const pieces = [];
   const scope = functionName || sector || "its climate and sustainability work";
@@ -2650,11 +2853,6 @@ function buildFallbackDescription(job = {}) {
       ? `This role supports ${possessiveOrganization} work across ${scope}.`
       : `This role supports work across ${scope}.`
   );
-  if (location || workplaceType) {
-    pieces.push(
-      `This position is listed${location ? ` in ${location}` : ""}${workplaceType ? `${location ? " and " : " as "}a ${workplaceType.toLowerCase()} role` : ""}.`
-    );
-  }
   return normalizeWhitespace(pieces.join(" "));
 }
 
@@ -3327,6 +3525,9 @@ function routeSyncedJob(job, source) {
 module.exports = {
   CANONICAL_SPECIALIZATIONS,
   cleanCustomCareerPageText,
+  detectPreferredRoleSections,
+  extractCanonicalRoleSection,
+  stripGenericCareersContent,
   cleanFlattenedText,
   cleanElementalImpactText,
   cleanLocationText,

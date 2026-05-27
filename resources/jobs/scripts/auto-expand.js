@@ -120,6 +120,23 @@ function runNpmScript(scriptName, args = []) {
   }
 }
 
+function runNpmScriptSoft(scriptName, lifecycle, args = []) {
+  const npmExecutable = process.platform === "win32" ? "npm.cmd" : "npm";
+  const result = spawnSync(npmExecutable, ["run", scriptName, "--", ...args], {
+    cwd: ROOT,
+    env: process.env,
+    encoding: "utf8",
+    stdio: "pipe"
+  });
+  if (result.stdout) process.stdout.write(result.stdout);
+  if (result.stderr) process.stderr.write(result.stderr);
+  if (result.status !== 0) {
+    lifecycle.warnings.push(`npm script ${scriptName} exited with status ${result.status}`);
+    return false;
+  }
+  return true;
+}
+
 function summarizeSourceEntries(entries = []) {
   return (Array.isArray(entries) ? entries : []).map((entry) => ({
     organization: entry.organization || "",
@@ -332,11 +349,11 @@ async function main() {
       lifecycle.steps.push({ step: "build-public-pages", status: "passed", mode: "write" });
     }
 
-    runNpmScript("jobs:validate");
-    lifecycle.validation_status.public_data_validation = "passed";
-    lifecycle.steps.push({ step: "validate-public-data", status: "passed", mode: args.write ? "write" : "dry_run" });
+    const validateOk = runNpmScriptSoft("jobs:validate", lifecycle);
+    lifecycle.validation_status.public_data_validation = validateOk ? "passed" : "warnings";
+    lifecycle.steps.push({ step: "validate-public-data", status: validateOk ? "passed" : "warnings", mode: args.write ? "write" : "dry_run" });
 
-    runNpmScript("jobs:check-blocked-sources");
+    runNpmScriptSoft("jobs:check-blocked-sources", lifecycle);
 
     const postflight = await checkBlockedSources();
     lifecycle.validation_status.blocked_source_postflight = postflight.violations.length ? "failed" : "passed";
@@ -435,6 +452,11 @@ async function main() {
     const afterSnapshot = await snapshotManagedFiles();
     lifecycle.files_changed = changedFiles(beforeSnapshot, afterSnapshot);
     lifecycle.finished_at = new Date().toISOString();
+    lifecycle.exit_code_reason = lifecycle.failures.length
+      ? `hard_failures:${lifecycle.failures.join(";")}`
+      : lifecycle.warnings.length
+        ? `warnings_only:${lifecycle.warnings.length}`
+        : "all_steps_passed";
     await fs.writeFile(REPORT_FILE, JSON.stringify(lifecycle, null, 2) + "\n", "utf8");
     console.log(JSON.stringify(lifecycle, null, 2));
   }

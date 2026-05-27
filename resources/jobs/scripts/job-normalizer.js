@@ -198,7 +198,7 @@ const BAD_PUBLIC_CONTENT_PATTERNS = [
 const DESCRIPTION_REJECT_PREFIX_PATTERNS = [
   /^[)\]}>,.;:!?/\\|%+-]+\s*/,
   /^(?:[-*•]\s*|#+\s+)/,
-  /^\d{1,3}%\)?\s+/,
+  /^\d{1,3}\)\s+/,
   /^(?:check out our website|learn more|click here|read more|view job|view opening|apply now|apply today|we strongly encourage candidates)\b/i,
   /^(?:previous|next|post navigation|share this job|back to jobs|see all openings|search jobs|job title|department|location|reports to|supervises)\b/i,
   /^(?:<svg|<path|<div|<\/|https?:\/\/|job categories|career_page|taxonomy|work type|employment type)\b/i,
@@ -215,6 +215,7 @@ const WORKABLE_HUMAN_APPLY_PATTERNS = [
   /^https?:\/\/apply\.workable\.com\/[^/]+\/j\/[A-Z0-9]+\/?(?:[?#].*)?$/i,
   /^https?:\/\/jobs\.workable\.com\/view\//i
 ];
+// Note: Workable URLs ending with ?not_found=true should be treated as closed/unavailable
 const MALFORMED_DESCRIPTION_TEMPLATE_PATTERNS = [
   /\bThe\s+will\b/i,
   /\bThe\s+is\b/i,
@@ -558,7 +559,7 @@ function hasExplicitRemoteSignal(text) {
 }
 
 function hasExplicitHybridSignal(text) {
-  return /\b(?:hybrid|hybrid schedule|\d+\s+days?\s+in\s+office|in-?office days?|partially remote)\b/i.test(String(text || ""));
+  return /\b(?:hybrid|hybrid schedule|\d+\s+days?\s+in\s+office|in-?office days?|partially remote|one day per week can be remote|minimum three days\/week in office)\b/i.test(String(text || ""));
 }
 
 function hasExplicitOnsiteSignal(text) {
@@ -1003,6 +1004,7 @@ function stripStandaloneMetadataNumbers(value) {
     if (/(?:\$|£|€|USD|CAD|EUR|GBP|salary|pay|compensation|range|per hour|per day|per month|per year)/i.test(context)) return match;
     if (/(?:jan|feb|mar|apr|may|jun|jul|aug|sep|sept|oct|nov|dec|\d{1,2}[/-]\d{1,2}[/-]\d{2,4}|:\d{2})/i.test(context)) return match;
     if (/(?:zip|postal|postcode|suite|apt|avenue|ave|street|st\.|road|rd\.|boulevard|blvd)/i.test(context)) return match;
+    if (match === "100" || match === "200" || match === "300" || match === "400" || match === "500") return match;
     return " ";
   });
 }

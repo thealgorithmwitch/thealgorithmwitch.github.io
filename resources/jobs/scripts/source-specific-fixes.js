@@ -261,7 +261,8 @@ function generateReports(report) {
   md += "## 2. Earthjustice Pay Fix\n- Total: " + (report.earthjustice?.total||0) + " | Pay found: " + (report.earthjustice?.payFound||0) + " | Pay fixed: " + (report.earthjustice?.payFixed||0) + "\n\n";
   md += "## 3. GoodPower Pay Fix\n- Total: " + (report.goodpower?.total||0) + " | Fetched: " + (report.goodpower?.fetched||0) + " | Pay fixed: " + (report.goodpower?.payFixed||0) + "\n\n";
   md += "## 4. LCV / Conservation PA\n- Total: " + (report.lcv?.total||0) + " | Kept: " + (report.lcv?.kept||0) + " | Rejected: " + (report.lcv?.rejected||0) + " | Added: " + (report.lcv?.added||0) + "\n\n";
-  md += "## 5. Source Public Cap\n";
+  md += "## 5. Louisiana Bucket Brigade\n- Total: " + (report.louisianaBucketBrigade?.total||0) + " | Kept: " + (report.louisianaBucketBrigade?.kept||0) + " | Rejected: " + (report.louisianaBucketBrigade?.rejected||0) + "\n\n";
+  md += "## 6. Source Public Cap\n";
   for (const c of (report.sourceCap?.capped||[])) {
     md += "- " + c.sourceId + ": kept=" + c.kept + " moved=" + c.moved + "\n";
   }
@@ -295,6 +296,11 @@ async function main() {
   fixLCVConservationPA(jobs, report);
   console.log("  Kept:", report.lcv.kept, "Rejected:", report.lcv.rejected);
 
+  // 6. Louisiana Bucket Brigade
+  console.log("\n--- Louisiana Bucket Brigade ---");
+  fixLouisianaBucketBrigade(jobs, report);
+  console.log("  Kept:", report.louisianaBucketBrigade.kept, "Rejected:", report.louisianaBucketBrigade.rejected);
+
   // Write pending
   writeJson(PENDING_FILE, jobs);
   console.log("\nWrote pending-synced-jobs.json");
@@ -309,6 +315,50 @@ async function main() {
   // Generate reports
   generateReports(report);
   console.log("\nReports generated");
+}
+
+// ========== 6. Louisiana Bucket Brigade specific fixes ==========
+// ApplyToJob: extract individual current jobs only, not stale roles
+// Salary: parse "$65,000 annually" format
+// Hybrid: classify "one day per week can be remote" as hybrid
+function fixLouisianaBucketBrigade(jobs, report) {
+  report.louisianaBucketBrigade = { total: 0, kept: 0, rejected: 0, details: [] };
+  for (const job of jobs) {
+    const org = String(job.organization||"").toLowerCase();
+    const sid = String(job.source_id||"").toLowerCase();
+    if (!org.includes("louisiana bucket") && sid !== "louisiana-bucket-brigade") continue;
+    report.louisianaBucketBrigade.total++;
+    const url = String(job.apply_url||job.source_url||job.original_url||"").toLowerCase();
+    const title = String(job.title||"");
+    // Keep only ApplyToJob individual job URLs, reject stale/aggregate ones
+    if (url.includes("applytojob.com") && url.match(/\/jobs\/\d+/)) {
+      report.louisianaBucketBrigade.kept++;
+      report.louisianaBucketBrigade.details.push({ id: job.id, title: job.title, reason: "valid_applytojob_role" });
+    } else {
+      job.triage_bucket = "rejected_noise"; job.triage_reason = "rejected_non_job_link";
+      job.skip_reason = "labucketbrigade_stale_aggregate"; job.rejected_noise = true;
+      report.louisianaBucketBrigade.rejected++;
+      report.louisianaBucketBrigade.details.push({ id: job.id, title: job.title, reason: "not_individual_applytojob_url", url: url.slice(0,80) });
+    }
+    // Parse "$65,000 annually" salary format
+    const desc = String(job.description||job.raw_description||"");
+    const salaryMatch = desc.match(/\$(\d[\d,]*)\s+(?:annually|per year|year|annual)/i);
+    if (salaryMatch) {
+      const val = Number(salaryMatch[1].replace(/[,\s]/g,""));
+      if (Number.isFinite(val) && val > 0) {
+        job.salary_min = val; job.salary_max = val;
+        job.salary_currency = "USD"; job.salary_period = "yearly";
+        job.salary_visible = true;
+        job.salary = `\$${val.toLocaleString()} / year`;
+        job.raw_salary = `\$${val.toLocaleString()}`;
+        job.pay_parse_source = "source_fix";
+      }
+    }
+    // Classify "one day per week can be remote" as hybrid
+    if (desc.match(/one day per week can be remote/i)) {
+      job.remote_status = "hybrid";
+    }
+  }
 }
 
 if (require.main === module) { main().catch(e => { console.error("Failed:", e.message); process.exit(1); }); }

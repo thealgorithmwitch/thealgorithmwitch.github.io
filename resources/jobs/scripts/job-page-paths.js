@@ -23,7 +23,9 @@ function cleanVisibleText(value) {
     .replace(/\b([A-Za-z][A-Za-z&,'/-]{2,})\s*\|\s*\1\b/gi, "$1")
     .replace(/\b(\d{3,})\b/g, (match) => {
       const numeric = Number(match);
-      return match.length === 4 && numeric >= 1900 && numeric <= 2100 ? match : " ";
+      if (match.length === 4 && numeric >= 1900 && numeric <= 2100) return match;
+      if (match === "100" || match === "200" || match === "300" || match === "400" || match === "500") return match;
+      return " ";
     })
     .replace(/<[^>]*>/g, " ")
     .replace(/\s*[>›»]+\s*/g, " ")

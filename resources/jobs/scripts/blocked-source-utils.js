@@ -4,7 +4,7 @@ const BLOCKED_SOURCE_RULES = [
   { id: "remofirst", pattern: /\bremofirst\b/i },
   { id: "recidiviz", pattern: /\brecidiviz\b/i },
   { id: "cribl", pattern: /\bcribl\b/i },
-  { id: "found", pattern: /\bfound\b/i },
+  { id: "found", pattern: /\bfound\b(?!(?:\s+not|\s+that|\s+in|\s+out|\s+on|\s+for|\s+at|\s+by|\s+upon|ed\b))/i },
   { id: "canonical", pattern: /\bcanonical(?:jobs)?\b/i },
   { id: "cohere", pattern: /\bcohere\b/i },
   { id: "chilipiper", pattern: /\bchilipiper\b/i },
@@ -14,7 +14,13 @@ const BLOCKED_SOURCE_RULES = [
   { id: "superside", pattern: /\bsuperside\b/i },
   { id: "samsara", pattern: /\bsamsara\b/i },
   { id: "gusto", pattern: /\bgusto\b/i },
-  { id: "climatechangejobs", pattern: /\bclimate\s*change\s*jobs\b|\bclimatechangejobs\b|\bclimate-change-jobs\b/i }
+  { id: "climatechangejobs", pattern: /\bclimate\s*change\s*jobs\b|\bclimatechangejobs\b|\bclimate-change-jobs\b/i },
+  { id: "saas-group", pattern: /\bsaas\.group\b/i },
+  { id: "reformation", pattern: /\b(?:reformation|reformashion)\b/i },
+  { id: "remix", pattern: /\b(?:remix|r[eé]mix)\b/i },
+  { id: "woolpert", pattern: /\b(?:woolpert|wolpert)\b/i },
+  { id: "woolpert-inc", pattern: /\bwoolpert\s+(?:inc|llc|co)\b/i },
+  { id: "woolpert-com", pattern: /\bwoolpert\.com\b/i }
 ];
 
 function stringify(value) {

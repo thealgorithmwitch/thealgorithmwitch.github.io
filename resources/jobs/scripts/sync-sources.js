@@ -8,6 +8,7 @@ const {
   writeJson
 } = require("./job-utils");
 const { dedupeJobs, getParserCleanupStats, resetParserCleanupStats, routeSyncedJob } = require("./job-normalizer");
+const { isBlockedSourceEntry } = require("./blocked-source-utils");
 const { attachPublicJobPageUrls } = require("./public-jobs");
 const {
   fetchAshbyJobsForSource,
@@ -15,7 +16,9 @@ const {
   fetchBambooHrJobsForSource,
   fetchGreenhouseJobsForSource,
   fetchLeverJobsForSource,
-  fetchRecruiteeJobsForSource
+  fetchRecruiteeJobsForSource,
+  fetchCareerPuckJobsForSource,
+  fetchTrakstarJobsForSource
 } = require("./ats-clients");
 const { syncJobRecordStore } = require("./public-records");
 const { upsertScrapeReports } = require("./scrape-report");
@@ -24,7 +27,7 @@ const { triagePendingJobs } = require("./pending-triage");
 const { mergeSourceHealthSnapshots, readSourceHealthSnapshot, writeSourceHealthSnapshot } = require("./source-health-store");
 const { applySourcePendingControls } = require("./source-sync-quality");
 
-const SUPPORTED_TYPES = new Set(["greenhouse", "lever", "ashby", "bamboohr", "recruitee", "smartrecruiters", "workable"]);
+const SUPPORTED_TYPES = new Set(["greenhouse", "lever", "ashby", "bamboohr", "recruitee", "smartrecruiters", "workable", "careerpuck", "trakstar", "taleo"]);
 
 function computeSourceStatus(entry = {}) {
   if (Number(entry.failed_sync_count || entry.failure_error_count || 0) > 0) return "sync_error";
@@ -201,6 +204,10 @@ async function runSyncForTypes(types = []) {
       });
 
       for (const rawJob of rawJobs) {
+        if (isBlockedSourceEntry(rawJob)) {
+          console.log(`[jobs:sync-sources] ${source.id}: Skipping blocked source job`);
+          continue;
+        }
         const routed = routeSyncedJob(rawJob, source);
         if (!routed) continue;
         if (routed.status === "active") {

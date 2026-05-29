@@ -12,7 +12,9 @@ const PROVIDER_DETECTORS = [
   { provider: "recruitee", pattern: /\.recruitee\.com/i, syncPath: "jobs:sync-targeted-pending-sources", confidence: 96, type: "ats", automationSupported: true },
   { provider: "paylocity", pattern: /recruiting\.paylocity\.com/i, syncPath: "jobs:sync-targeted-pending-sources", confidence: 95, type: "ats", automationSupported: true },
   { provider: "workday", pattern: /\.myworkdayjobs\.com/i, syncPath: "adapter-required", confidence: 95, type: "ats", automationSupported: false },
-  { provider: "rippling", pattern: /ats\.rippling\.com|rippling-ats\.com/i, syncPath: "jobs:sync-targeted-pending-sources", confidence: 95, type: "ats", automationSupported: true }
+  { provider: "rippling", pattern: /ats\.rippling\.com|rippling-ats\.com/i, syncPath: "jobs:sync-targeted-pending-sources", confidence: 95, type: "ats", automationSupported: true },
+  { provider: "careerpuck", pattern: /careerpuck\.com\/job-board/i, syncPath: "jobs:sync-targeted-pending-sources", confidence: 95, type: "ats", automationSupported: true },
+  { provider: "trakstar", pattern: /hire\.trakstar\.com/i, syncPath: "jobs:sync-targeted-pending-sources", confidence: 95, type: "ats", automationSupported: true }
 ];
 
 const UNSUPPORTED_PROVIDER_PATTERNS = [
@@ -161,6 +163,13 @@ function canonicalizeSourceUrl(provider, value) {
     }
   } else if (provider === "bamboohr") {
     url.pathname = "/careers";
+  } else if (provider === "careerpuck") {
+    const match = url.pathname.match(/^\/job-board\/([^/]+)/i);
+    if (match) {
+      url.pathname = `/job-board/${match[1]}`;
+    }
+  } else if (provider === "trakstar") {
+    url.pathname = "/";
   } else if (!provider) {
     url.pathname = url.pathname.replace(/\/+$/, "") || "/";
   }
@@ -294,6 +303,16 @@ function deriveProviderMetadata(provider, url) {
   if (provider === "recruitee") {
     const match = value.match(/https?:\/\/([^./]+)\.recruitee\.com/i);
     return { company_slug: match ? match[1] : "" };
+  }
+  if (provider === "careerpuck") {
+    const match = value.match(/job-board\/([^/?#"'&<>\s]+)/i);
+    return { company_slug: match ? match[1] : "" };
+  }
+  if (provider === "trakstar") {
+    const match = value.match(/https?:\/\/([^./]+)\.hire\.trakstar\.com/i);
+    const companySlug = match ? match[1] : "";
+    const rssCompanyName = companySlug ? companySlug.charAt(0).toUpperCase() + companySlug.slice(1) : "";
+    return { company_slug: companySlug, rss_company_name: rssCompanyName };
   }
   return {};
 }

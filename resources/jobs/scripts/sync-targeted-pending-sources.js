@@ -15,7 +15,7 @@ const { applySourcePendingControls, buildSourceControlKey } = require("./source-
 
 const ROOT = path.resolve(__dirname, "..");
 const REPORT_FILE = path.join(ROOT, "reports", "targeted-pending-source-sync.json");
-const ELIGIBLE_PROVIDERS = new Set(["greenhouse", "smartrecruiters", "paylocity", "lever", "ashby", "bamboohr", "workable", "recruitee", "rippling"]);
+const ELIGIBLE_PROVIDERS = new Set(["greenhouse", "smartrecruiters", "paylocity", "lever", "ashby", "bamboohr", "workable", "recruitee", "rippling", "careerpuck", "trakstar", "taleo"]);
 const STRUCTURED_ADAPTER_GAP_PROVIDERS = new Set(["workday", "teamtailor", "pinpoint"]);
 const REMOVED_PENDING_SOURCE_PATTERN = /articulate|empowerly|remofirst|recidiviz|cribl|found|canonicaljobs|canonical|cohere|chilipiper|beehiiv|posthog|automattic|superside|samsara|gusto/i;
 

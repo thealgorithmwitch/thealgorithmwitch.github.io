@@ -9,7 +9,7 @@ const {
 } = require("./job-utils");
 const { dedupeJobs, getParserCleanupStats, resetParserCleanupStats, routeSyncedJob } = require("./job-normalizer");
 const { attachPublicJobPageUrls } = require("./public-jobs");
-const { scrapeSourceWithDiscovery } = require("./scrapers");
+const { scrapeCustomSource, scrapeSourceWithDiscovery } = require("./scrapers");
 const { syncJobRecordStore } = require("./public-records");
 const { upsertScrapeReports } = require("./scrape-report");
 const { shouldUseDiscoverySync } = require("./source-utils");
@@ -51,7 +51,12 @@ function countManagedPendingBySource(existingPending = []) {
 
 async function runCustomSync(options = {}) {
   const logger = options.logger || console;
-  const scrapeImpl = options.scrapeImpl || scrapeSourceWithDiscovery;
+  const scrapeImpl = options.scrapeImpl || ((source) => {
+    if (source.parser) {
+      return scrapeCustomSource(source).then(jobs => ({ jobs, report: { parser_used: source.parser, source_id: source.id, source_name: source.organization, source_url: source.source_url, pages_checked: [source.source_url], links_discovered: [], job_links_found: jobs.map(j => j.title), jobs_parsed: jobs.length, reason_for_zero_results: "" } }));
+    }
+    return scrapeSourceWithDiscovery(source);
+  });
   const syncJobRecords = options.syncJobRecords !== false;
   const syncStartedAt = Date.now();
   resetParserCleanupStats();

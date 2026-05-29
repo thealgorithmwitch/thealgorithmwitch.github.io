@@ -433,29 +433,54 @@ function extractAshbyOrganizationSlug(value) {
   return match ? match[1] : "";
 }
 
+function buildBambooHrIndividualUrl(source, job) {
+  const jobId = job.id || job.jobOpeningId;
+  if (!jobId) return null;
+  const slug = source.company_slug || String(source.source_url || "").replace(/^https?:\/\//i, "").split(".")[0];
+  const base = `https://${slug}.bamboohr.com/careers/${jobId}`;
+  const sourceMatch = String(source.source_url || "").match(/[?&]source=([^&]+)/);
+  const sourceParam = sourceMatch ? sourceMatch[0].replace(/^[?&]/, "") : "";
+  return sourceParam ? `${base}?${sourceParam}` : base;
+}
+
 function bambooHrJobToSchema(source, job) {
+  function buildLocation(job) {
+    const loc = job.atsLocation || job.location || {};
+    const parts = [loc.city, loc.state, loc.country].filter(Boolean);
+    return parts.length ? parts.join(", ") : (stringifySafe(job.location) || "Location listed on application");
+  }
+  function buildWorkplaceType(job) {
+    if (job.isRemote === true || job.locationType === "2") return "Remote";
+    if (job.locationType === "1") return "On-site";
+    if (job.isRemote === false) return "On-site";
+    return "";
+  }
+  const individualUrl = buildBambooHrIndividualUrl(source, job);
+  const finalUrl = individualUrl || stringifySafe(job.jobLink || source.source_url);
+  const individualUrlMissing = !individualUrl && !!(job.id || job.jobOpeningId);
   return {
     id: `${source.organization}-${job.id || job.jobOpeningId || job.jobTitle}`,
     external_id: job.id || job.jobOpeningId
       ? `bamboohr_${source.id}_${job.id || job.jobOpeningId}`
-      : `bamboohr_${stableHash(`${source.id}:${job.jobTitle || job.title || ""}:${job.jobLink || source.source_url || ""}`)}`,
-    title: stringifySafe(job.jobTitle) || stringifySafe(job.title),
+      : `bamboohr_${stableHash(`${source.id}:${job.jobTitle || job.title || job.jobOpeningName || ""}:${job.jobLink || source.source_url || ""}`)}`,
+    title: stringifySafe(job.jobTitle) || stringifySafe(job.title) || stringifySafe(job.jobOpeningName),
     organization: source.organization,
-    location: stringifySafe(job.location) || "Location listed on application",
-    job_type: stringifySafe(job.employmentType) || "Full-time",
+    location: buildLocation(job),
+    job_type: stringifySafe(job.employmentStatusLabel || job.employmentType) || "Full-time",
     sector: source.sector,
-    function: stringifySafe(job.department) || ensureDefault(source.function_defaults),
-    workplace_type: stringifySafe(job.workplaceType),
+    function: stringifySafe(job.departmentLabel || job.department) || ensureDefault(source.function_defaults),
+    workplace_type: buildWorkplaceType(job),
     salary: job.salary || job.compensation || job.pay || "",
     source: "BambooHR",
-    source_url: stringifySafe(job.jobLink || source.source_url),
-    apply_url: stringifySafe(job.jobLink || source.source_url),
+    source_url: finalUrl,
+    apply_url: finalUrl,
     date_posted: job.postedDate || todayIso(),
     raw_description: job.description || "",
     description: job.description || "",
-    tags: [source.sector, job.department, "bamboohr"].filter(Boolean),
+    tags: [source.sector, job.departmentLabel || job.department, "bamboohr"].filter(Boolean),
     shared_by: "ATS Sync",
     notes: `Synced from BambooHR company slug ${source.company_slug || ""}.`,
+    individual_url_missing: individualUrlMissing || undefined,
     raw_payload: job
   };
 }
@@ -478,7 +503,7 @@ async function fetchBambooHrJobsForSource(source) {
   }
 
   const payload = await response.json();
-  const jobs = Array.isArray(payload) ? payload : Array.isArray(payload.jobs) ? payload.jobs : [];
+  const jobs = Array.isArray(payload) ? payload : Array.isArray(payload.result) ? payload.result : Array.isArray(payload.jobs) ? payload.jobs : [];
   console.log(`[sync-bamboohr] ${source.organization}: received ${jobs.length} jobs.`);
   return jobs.map((job) => bambooHrJobToSchema(source, job));
 }
@@ -968,6 +993,149 @@ async function fetchWorkableJobsForSource(source) {
   return normalizedJobs;
 }
 
+function careerPuckJobToSchema(source, job) {
+  const location = stringifySafe(job.location) || (job.offices && job.offices.length > 0 ? job.offices.map(o => o.location).filter(Boolean).join(", ") : "Remote");
+  return {
+    id: `${source.organization}-${job.permalink || job.atsSourceId}`,
+    external_id: `careerpuck_${source.id}_${job.atsSourceId || job.permalink}`,
+    title: stringifySafe(job.title),
+    organization: source.organization,
+    location: location,
+    job_type: job.workType || "Full-time",
+    sector: source.sector,
+    function: stringifySafe(job.department) || (job.departments && job.departments.length > 0 ? job.departments[0].name : "") || ensureDefault(source.function_defaults),
+    workplace_type: job.workplaceType === "remote" ? "Remote" : job.workplaceType === "onsite" ? "On-site" : job.workplaceType === "hybrid" ? "Hybrid" : "",
+    salary: job.salaryDescription || "",
+    source: "CareerPuck",
+    source_url: stringifySafe(job.publicUrl || source.source_url),
+    apply_url: stringifySafe(job.applyUrl || job.publicUrl || source.source_url),
+    date_posted: job.postedAt ? job.postedAt.slice(0, 10) : todayIso(),
+    raw_description: job.content || "",
+    description: (job.content || "").replace(/<[^>]+>/g, "").replace(/&[a-z]+;/g, " ").replace(/\s+/g, " ").trim(),
+    tags: [source.sector, job.department, "careerpuck"].filter(Boolean),
+    shared_by: "ATS Sync",
+    notes: `Synced from CareerPuck board ${source.company_slug || ""}.`,
+    raw_payload: job
+  };
+}
+
+async function fetchCareerPuckJobsForSource(source) {
+  const companySlug =
+    source.company_slug ||
+    String(source.source_url || "").replace(/^https?:\/\//i, "").match(/job-board\/([^/?#"'&<>\s]+)/i)?.[1] ||
+    "";
+  const url = source.api_url || (companySlug ? `https://api.careerpuck.com/v1/public/job-boards/${companySlug}` : "");
+
+  if (!url) {
+    throw new Error("Needs company slug or explicit CareerPuck API URL.");
+  }
+
+  console.log(`[sync-careerpuck] Fetching ${source.organization} from ${url}`);
+  const response = await fetch(url, {
+    headers: {
+      "accept": "*/*",
+      "origin": "https://app.careerpuck.com",
+      "referer": "https://app.careerpuck.com/"
+    }
+  });
+
+  if (!response.ok) {
+    throw new Error(`HTTP ${response.status} for ${source.organization}`);
+  }
+
+  const payload = await response.json();
+  const jobs = Array.isArray(payload.jobs) ? payload.jobs : [];
+  console.log(`[sync-careerpuck] ${source.organization}: received ${jobs.length} jobs.`);
+  return jobs.map((job) => careerPuckJobToSchema(source, job));
+}
+
+function trakstarJobToSchema(source, item) {
+  const title = item.title || "";
+  const description = item.description || "";
+  const locationParts = [item["job:locationCity"], item["job:locationState"], item["job:locationCountry"]].filter(Boolean);
+  const location = locationParts.length > 0 ? locationParts.join(", ") : "";
+  const team = item["job:team"] || "";
+  const positionType = item["job:positionType"] || "";
+  const link = item.link || "";
+  const applyUrl = String(link).replace(/\/jobs\//, "/jobs/").replace(/\/?$/, "/?apply=true") || link;
+
+  return {
+    id: `${source.organization}-${item.guid || item.link || title}`,
+    external_id: `trakstar_${source.id}_${stableHash(`${source.id}:${title}:${link}`)}`,
+    title: stringifySafe(title),
+    organization: source.organization,
+    location: location || "Location listed on application",
+    job_type: positionType === "part_time" ? "Part-time" : positionType === "full_time" ? "Full-time" : "Full-time",
+    sector: source.sector,
+    function: stringifySafe(team) || ensureDefault(source.function_defaults),
+    workplace_type: "",
+    salary: "",
+    source: "Trakstar Hire",
+    source_url: stringifySafe(link || source.source_url),
+    apply_url: stringifySafe(applyUrl || source.source_url),
+    date_posted: item.pubDate ? new Date(item.pubDate).toISOString().slice(0, 10) : todayIso(),
+    raw_description: description,
+    description: (description || "").replace(/<[^>]+>/g, "").replace(/&[a-z]+;/g, " ").replace(/\s+/g, " ").trim(),
+    tags: [source.sector, team, "trakstar"].filter(Boolean),
+    shared_by: "ATS Sync",
+    notes: `Synced from Trakstar Hire company ${source.company_slug || ""}.`,
+    raw_payload: item
+  };
+}
+
+async function fetchTrakstarJobsForSource(source) {
+  const companySlug =
+    source.company_slug ||
+    String(source.source_url || "").replace(/^https?:\/\//i, "").split(".")[0];
+  const rssCompanyName = source.rss_company_name || companySlug.charAt(0).toUpperCase() + companySlug.slice(1);
+
+  if (!companySlug) {
+    throw new Error("Needs company slug or explicit Trakstar source URL.");
+  }
+
+  const url = source.api_url || `https://${companySlug}.hire.trakstar.com/jobfeeds/${rssCompanyName}`;
+  console.log(`[sync-trakstar] Fetching ${source.organization} from ${url}`);
+
+  const response = await fetch(url);
+  if (!response.ok) {
+    throw new Error(`HTTP ${response.status} for ${source.organization}`);
+  }
+
+  const text = await response.text();
+  const items = [];
+  const itemRegex = /<item>([\s\S]*?)<\/item>/gi;
+  let match;
+
+  while ((match = itemRegex.exec(text)) !== null) {
+    const block = match[1];
+    const extract = (tag) => {
+      const m = block.match(new RegExp(`<${tag}[^>]*>([\\s\\S]*?)<\\/${tag}>`, "i"));
+      return m ? m[1].trim() : "";
+    };
+    const extractNs = (tag) => {
+      const m = block.match(new RegExp(`<job:${tag}[^>]*>([\\s\\S]*?)<\\/job:${tag}>`, "i"));
+      return m ? m[1].trim() : "";
+    };
+
+    items.push({
+      title: extract("title"),
+      link: extract("link"),
+      description: extract("description"),
+      pubDate: extract("pubDate"),
+      guid: extract("guid"),
+      "job:locationCity": extractNs("locationCity"),
+      "job:locationState": extractNs("locationState"),
+      "job:locationCountry": extractNs("locationCountry"),
+      "job:closeDte": extractNs("closeDte"),
+      "job:positionType": extractNs("positionType"),
+      "job:team": extractNs("team")
+    });
+  }
+
+  console.log(`[sync-trakstar] ${source.organization}: received ${items.length} jobs.`);
+  return items.map((item) => trakstarJobToSchema(source, item));
+}
+
 function deriveProviderSource(source, provider, context = {}) {
   const contextText = [source.source_url, source.api_url, context.pageUrl, context.html]
     .filter(Boolean)
@@ -1018,7 +1186,123 @@ function deriveProviderSource(source, provider, context = {}) {
   if (normalizedProvider === "rippling") {
     return { ...source, provider: normalizedProvider, type: "ats" };
   }
+  if (normalizedProvider === "careerpuck") {
+    const companySlug =
+      source.company_slug ||
+      String(source.source_url || context.pageUrl || "").replace(/^https?:\/\//i, "").match(/job-board\/([^/?#"'&<>\s]+)/i)?.[1] ||
+      "";
+    return { ...source, provider: normalizedProvider, type: "ats", company_slug: companySlug };
+  }
+  if (normalizedProvider === "trakstar") {
+    const companySlug =
+      source.company_slug ||
+      String(source.source_url || context.pageUrl || "").replace(/^https?:\/\//i, "").split(".")[0];
+    return { ...source, provider: normalizedProvider, type: "ats", company_slug: companySlug };
+  }
+  if (normalizedProvider === "taleo") {
+    const orgMatch = String(source.source_url || "").match(/[?&]org=([^&]+)/i);
+    const cwsMatch = String(source.source_url || "").match(/[?&]cws=(\d+)/i);
+    return {
+      ...source,
+      provider: normalizedProvider,
+      type: "ats",
+      org: orgMatch ? orgMatch[1] : "",
+      cws: cwsMatch ? cwsMatch[1] : "",
+      company_slug: source.company_slug || ""
+    };
+  }
   return { ...source, provider: normalizedProvider };
+}
+
+const TALEO_SEARCH_RESULTS_PAGE = /\/searchResults\?/i;
+const TALEO_VIEW_REQUISITION = /\/viewRequisition\?/i;
+const TALEO_LOGIN_PAGE = /\/candidateLogin\?/i;
+
+function taleoJobToSchema(source, job) {
+  const rid = job.rid || "";
+  const base = source.source_url ? source.source_url.replace(/\/searchResults\?.*$/, "").replace(/\/viewRequisition\?.*$/, "").replace(/\/candidateLogin\?.*$/, "") : "";
+  const viewUrl = rid ? `${base}/viewRequisition?org=${encodeURIComponent(source.org)}&cws=${source.cws}&rid=${rid}` : source.source_url;
+  return {
+    id: `${source.id}-rid-${rid}`,
+    external_id: `taleo_${source.id}_${rid}`,
+    title: job.title || "",
+    organization: source.organization,
+    location: job.location || "",
+    job_type: job.jobType || "Full-time",
+    workplace_type: job.workplaceType || "",
+    source: "Taleo",
+    source_url: viewUrl,
+    apply_url: viewUrl,
+    date_posted: job.datePosted || todayIso(),
+    raw_description: job.description || "",
+    description: job.description || "",
+    tags: [source.sector || "general", "taleo"].filter(Boolean),
+    shared_by: "ATS Sync",
+    notes: `Imported from ${source.organization} Taleo ATS (rid=${rid}). Organization: ${source.organization}. Location: ${job.location || "Unknown"}.`,
+    raw_payload: job
+  };
+}
+
+async function fetchTaleoJobsForSource(source) {
+  const url = source.source_url || "";
+  if (!url || TALEO_LOGIN_PAGE.test(url)) {
+    throw new Error(`Taleo source URL is a login page: ${url}`);
+  }
+  if (!TALEO_SEARCH_RESULTS_PAGE.test(url) && !TALEO_VIEW_REQUISITION.test(url)) {
+    console.log(`[sync-taleo] ${source.organization}: source URL is not a search results or requisition page. Attempting to fetch anyway.`);
+  }
+
+  console.log(`[sync-taleo] Fetching ${source.organization} from ${url}`);
+  const response = await fetch(url);
+  if (!response.ok) {
+    throw new Error(`HTTP ${response.status} for ${source.organization}`);
+  }
+
+  const html = await response.text();
+  const jobs = [];
+
+  // Extract viewRequisition links from HTML
+  const linkRegex = /viewRequisition\?org=([^&"'\s]+)&cws=(\d+)&rid=(\d+)/gi;
+  const seenRids = new Set();
+  let linkMatch;
+  while ((linkMatch = linkRegex.exec(html)) !== null) {
+    const rid = linkMatch[3];
+    if (seenRids.has(rid)) continue;
+    seenRids.add(rid);
+
+    // Extract title and location from surrounding HTML
+    // Taleo listings typically have: Title\nLocation before the View/Apply buttons
+    const contextStart = Math.max(0, linkMatch.index - 300);
+    const contextEnd = Math.min(html.length, linkMatch.index + 50);
+    const context = html.slice(contextStart, contextEnd);
+    const contextStr = context.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ");
+
+    let title = "";
+    let location = "";
+
+    // Try to extract title and location from the surrounding snippet
+    // Pattern: "Title Location" before the view link
+    const jobMatch = contextStr.match(/([A-Z][A-Za-z0-9\s,&-]{5,80}?)\s+([A-Z][A-Za-z\s,-]{3,60})(?=.*viewRequisition)/i);
+    if (jobMatch) {
+      title = jobMatch[1].trim();
+      location = jobMatch[2].trim();
+    }
+
+    // Fallback: use text before the link
+    if (!title) {
+      const before = contextStr.replace(/.*viewRequisition/i, "").replace(/viewRequisition.*/i, "").trim();
+      const parts = before.split(/\s{2,}|(?<=[a-z])(?=[A-Z])/);
+      if (parts.length >= 2) {
+        title = parts.slice(0, -1).join(" ").trim();
+        location = parts[parts.length - 1].trim();
+      }
+    }
+
+    jobs.push({ rid, title, location: location || "", description: "" });
+  }
+
+  console.log(`[sync-taleo] ${source.organization}: found ${jobs.length} jobs.`);
+  return jobs.map((job) => taleoJobToSchema(source, job));
 }
 
 async function fetchAtsJobsByProvider(provider, source, context = {}) {
@@ -1034,6 +1318,9 @@ async function fetchAtsJobsByProvider(provider, source, context = {}) {
   if (normalizedProvider === "workable") return fetchWorkableJobsForSource(derivedSource);
   if (normalizedProvider === "paylocity") return fetchPaylocityJobsForSource(derivedSource);
   if (normalizedProvider === "rippling") return fetchRipplingJobsForSource(derivedSource);
+  if (normalizedProvider === "careerpuck") return fetchCareerPuckJobsForSource(derivedSource);
+  if (normalizedProvider === "trakstar") return fetchTrakstarJobsForSource(derivedSource);
+  if (normalizedProvider === "taleo") return fetchTaleoJobsForSource(derivedSource);
   throw new Error(`Unsupported ATS provider: ${provider}`);
 }
 
@@ -1049,6 +1336,9 @@ module.exports = {
   fetchRecruiteeJobsForSource,
   fetchPaylocityJobsForSource,
   fetchRipplingJobsForSource,
+  fetchCareerPuckJobsForSource,
+  fetchTrakstarJobsForSource,
+  fetchTaleoJobsForSource,
   greenhouseJobToSchema,
   leverJobToSchema,
   ashbyJobToSchema,
@@ -1057,5 +1347,8 @@ module.exports = {
   workableJobToSchema,
   recruiteeJobToSchema,
   paylocityJobToSchema,
-  ripplingJobToSchema
+  ripplingJobToSchema,
+  careerPuckJobToSchema,
+  trakstarJobToSchema,
+  taleoJobToSchema
 };

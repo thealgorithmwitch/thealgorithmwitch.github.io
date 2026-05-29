@@ -17,7 +17,10 @@ const ATS_PROVIDERS = [
   "pinpoint",
   "workday",
   "adp",
-  "comeet"
+  "comeet",
+  "careerpuck",
+  "trakstar",
+  "taleo"
 ];
 
 const DIRECT_PROVIDER_TYPES = new Set([
@@ -27,7 +30,10 @@ const DIRECT_PROVIDER_TYPES = new Set([
   "bamboohr",
   "recruitee",
   "smartrecruiters",
-  "workable"
+  "workable",
+  "careerpuck",
+  "trakstar",
+  "taleo"
 ]);
 
 const DEFAULT_CRAWL_DEPTH = 1;

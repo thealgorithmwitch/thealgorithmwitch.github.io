@@ -19,7 +19,14 @@ const JUNK_DESCRIPTION_PATTERNS = [
   /\bRenewable Energy\b/i,
   /\bheaders?\b\s*(?:"\s*)+/i,
   /\b(?:taxonomy|valuation|headquarters|employee size|funding|revenue)\b/i,
-  /\b\d{7,10}\b/
+  /\b\d{7,10}\b/,
+  /\b[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\b/i,
+  /\bBusiness and Industrial\b/i,
+  /\bCleantech & Environment\b/i,
+  /\bElectrical Distribution\b/i,
+  /\bIndustrial Automation\b/i,
+  /\bPower Generation\b/i,
+  /\bRenewable Energy & Environment\b/i
 ];
 
 function cleanText(value) {

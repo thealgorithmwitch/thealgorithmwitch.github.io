@@ -661,6 +661,11 @@ function evaluateSourceTitleRules(job = {}) {
 
   if (!title) return null;
 
+  const BLOCKED_BY_ORG = ["reformation", "remix", "woolpert"];
+  if (BLOCKED_BY_ORG.some((name) => organization.includes(name) || source.includes(name) || sourceId.includes(name))) {
+    return { reason: "source_title_rule:blocked_organization" };
+  }
+
   if (
     (organization === "sunrun" || source.includes("sunrun") || sourceId.includes("sunrun")) &&
     matchRule(title, [/^previous$/i, /^next$/i, /^life at sunrun$/i])

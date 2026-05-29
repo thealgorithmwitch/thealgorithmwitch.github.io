@@ -361,4 +361,171 @@ function fixLouisianaBucketBrigade(jobs, report) {
   }
 }
 
+// ========== 6. Job-post authenticity validator ==========
+const NON_JOB_TITLE_PATTERNS = [
+  /^login\s*$/i,
+  /^login\s+page\s*$/i,
+  /^sign\s+in\s*$/i,
+  /^candidate\s+login\s*$/i,
+  /^search\s*$/i,
+  /^new\s+search\s*$/i,
+  /^careers?\s*$/i,
+  /^careers?\s+page\s*$/i,
+  /^benefits?\s*$/i,
+  /^view\s+our\s+benefits?\s*$/i,
+  /^procurement\s*$/i,
+  /^procurement\s+opportunities?\s*$/i,
+  /^contact\s+us\s*$/i,
+  /^proposal\s+request\s*$/i,
+  /^browse\s+job\s+listings?\s*$/i,
+  /^conservation\s+international\s+jobs?\s*$/i,
+  /^put\s+your\s+passion\s*,\s*your\s+skills\s*,\s*and/i,
+  /^just\s+want\s+to\s+submit\s+your\s+resume\?/i
+];
+
+const NON_JOB_URL_PATTERNS = [
+  /candidatelogin/i,
+  /benefits/i,
+  /procurement/i,
+  /procurement-opportunities/i,
+  /contact-us/i,
+  /proposal-request/i,
+  /(?:\/|\?)search(?:$|[?#])/i,
+  /benefits\.aspx/i,
+  /careers\/(?:faq|why-work|life-at|join-our-team)(?:\/|$)/i,
+  /conservation\.org\/(?:about\/)?(?:careers?|jobs?)(?:\/|$)/i,
+  /conservation\.org\/procurement-opportunities(?:\/|$)/i,
+  /taleo\.net\/.*candidatelogin/i,
+  /taleo\.net\/.*jobsearch/i,
+  /jobSearch\?/i
+];
+
+const JOB_CONTENT_SIGNALS = [
+  /\bposition\s+description\b/i,
+  /\bposition\s+summary\b/i,
+  /\bposition\s+overview\b/i,
+  /\bresponsibilities\b/i,
+  /\bqualifications?\b/i,
+  /\bapply\s+(?:now|today|here)\b/i,
+  /\brequisition\s+id\b/i,
+  /\bjob\s+id\b/i,
+  /\breq\s*#\s*\d+/i,
+  /viewRequisition\?.*rid=/i
+];
+
+const NON_JOB_CONTENT_SIGNALS = [
+  /\bjob\s+search\b/i,
+  /\bsearch\s+(?:jobs?|openings|positions)\b/i,
+  /login/i,
+  /\bsign\s+(?:in|up)\b/i,
+  /\bbrowse\s+(?:all\s+)?(?:jobs?|openings|positions)/i,
+  /\bview\s+(?:all\s+)?(?:jobs?|openings|positions)/i,
+  /\b(?:our|your)\s+benefits?\b/i,
+  /\bcareer\s+(?:opportunities?|resources?|advice|tips)/i,
+  /navigation/i,
+  /footer/i,
+  /header/i
+];
+
+function isNonJobPostingTitle(title) {
+  const clean = String(title || "").trim().replace(/\\u2019|\\u0092/g, "'").replace(/\s+/g, " ");
+  if (!clean) return { rejected: true, reason: "empty_title", pageType: "empty" };
+  for (const pattern of NON_JOB_TITLE_PATTERNS) {
+    if (pattern.test(clean)) {
+      return { rejected: true, reason: "non_job_title_pattern", pageType: classifyPageType(clean) };
+    }
+  }
+  return { rejected: false };
+}
+
+function isNonJobPostingUrl(url) {
+  const normalized = String(url || "").toLowerCase();
+  if (!normalized) return { rejected: true, reason: "missing_url", pageType: "unknown" };
+  for (const pattern of NON_JOB_URL_PATTERNS) {
+    if (pattern.test(normalized)) {
+      return { rejected: true, reason: "non_job_url_pattern", pageType: classifyPageTypeFromUrl(normalized) };
+    }
+  }
+  return { rejected: false };
+}
+
+function isLandingPageWithNoJobData(title, text) {
+  const cleanTitle = String(title || "").toLowerCase();
+  const cleanText = String(text || "").toLowerCase();
+
+  const hasLandingSignal = /\b(careers?|jobs?|employment)\b/i.test(cleanTitle);
+  if (!hasLandingSignal) return { rejected: false };
+
+  const hasJobContent = JOB_CONTENT_SIGNALS.some((p) => p.test(cleanText));
+  if (hasJobContent) return { rejected: false };
+
+  const hasNonJobContent = NON_JOB_CONTENT_SIGNALS.some((p) => p.test(cleanText));
+  if (hasNonJobContent) {
+    return { rejected: true, reason: "landing_page_no_job_content", pageType: "careers_landing_page" };
+  }
+
+  return { rejected: false };
+}
+
+function isJobPostAuthentic(job) {
+  const titleCheck = isNonJobPostingTitle(job.title);
+  if (titleCheck.rejected) return titleCheck;
+
+  const urlCheck = isNonJobPostingUrl(job.source_url || job.original_url || job.apply_url || "");
+  if (urlCheck.rejected) return urlCheck;
+
+  const landingCheck = isLandingPageWithNoJobData(job.title, job.raw_description || job.description || "");
+  if (landingCheck.rejected) return landingCheck;
+
+  return { rejected: false };
+}
+
+function rejectNonJobPostings(jobs, report) {
+  report.falseJobPagesDetected = { total: 0, rejected: 0, kept: 0, details: [] };
+  for (const job of jobs) {
+    const result = isJobPostAuthentic(job);
+    report.falseJobPagesDetected.total++;
+    if (result.rejected) {
+      job.triage_bucket = "rejected_noise";
+      job.triage_reason = result.reason;
+      job.skip_reason = "non_job_posting";
+      job.rejected_noise = true;
+      report.falseJobPagesDetected.rejected++;
+      report.falseJobPagesDetected.details.push({
+        id: job.id,
+        title: job.title,
+        url: (job.source_url || job.original_url || "").slice(0, 100),
+        rejection_reason: result.reason,
+        page_type: result.pageType || "unknown"
+      });
+    } else {
+      report.falseJobPagesDetected.kept++;
+    }
+  }
+}
+
+function classifyPageType(title) {
+  const t = String(title || "").toLowerCase();
+  if (/login|sign\s+in/.test(t)) return "login_page";
+  if (/benefits/.test(t)) return "benefits_page";
+  if (/procurement/.test(t)) return "procurement_page";
+  if (/search/.test(t)) return "search_page";
+  if (/careers?\s*$|conservation.*jobs/.test(t)) return "careers_landing_page";
+  if (/contact|proposal/.test(t)) return "navigation_page";
+  if (/browse|put your passion/.test(t)) return "navigation_page";
+  return "unknown";
+}
+
+function classifyPageTypeFromUrl(url) {
+  const u = String(url || "").toLowerCase();
+  if (/candidatelogin/.test(u)) return "login_page";
+  if (/benefits/.test(u)) return "benefits_page";
+  if (/procurement/.test(u)) return "procurement_page";
+  if (/search|jobSearch|jobsearch/.test(u)) return "search_page";
+  if (/careers?\/?$|jobs?\/?$/.test(u)) return "careers_landing_page";
+  if (/contact-us/.test(u)) return "navigation_page";
+  if (/proposal-request/.test(u)) return "navigation_page";
+  return "unknown";
+}
+
 if (require.main === module) { main().catch(e => { console.error("Failed:", e.message); process.exit(1); }); }

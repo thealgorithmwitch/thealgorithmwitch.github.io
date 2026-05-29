@@ -139,6 +139,9 @@ const LOCATION_ONLY_TITLES = new Set([
   "usa",
   "united states"
 ]);
+const US_STATE_NAMES = new Set([
+  "alabama", "alaska", "arizona", "arkansas", "california", "colorado", "connecticut", "delaware", "florida", "georgia", "hawaii", "idaho", "illinois", "indiana", "iowa", "kansas", "kentucky", "louisiana", "maine", "maryland", "massachusetts", "michigan", "minnesota", "mississippi", "missouri", "montana", "nebraska", "nevada", "new hampshire", "new jersey", "new mexico", "new york", "north carolina", "north dakota", "ohio", "oklahoma", "oregon", "pennsylvania", "rhode island", "south carolina", "south dakota", "tennessee", "texas", "utah", "vermont", "virginia", "washington", "west virginia", "wisconsin", "wyoming"
+]);
 const BAD_SEMANTIC_TITLE_PATTERNS = [
   /^(previous|next|home|search|faq)\b/i,
   /\b(?:our impact|life at|about(?:\s+it)?|job explorer)\b/i,
@@ -176,7 +179,18 @@ const DESCRIPTION_JUNK_PATTERNS = [
   /\bBusiness\/Productivity Software\b/i,
   /\bCleantech\b/i,
   /\bOil\s*&\s*Gas\b/i,
-  /\b[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\b/i
+  /\bRenewable Energy\b/i,
+  /\bsee current openings\b/i,
+  /\bheaders?\b\s*(?:"\s*)+/i,
+  /\b(?:taxonomy|valuation|headquarters|employee size|funding|revenue)\b/i,
+  /\b\d{7,10}\b/,
+  /\b[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\b/i,
+  /\bBusiness and Industrial\b/i,
+  /\bElectrical Distribution\b/i,
+  /\bIndustrial Automation\b/i,
+  /\bPower Generation\b/i,
+  /\bRenewable Energy & Environment\b/i,
+  /\bCleantech & Environment\b/i
 ];
 const BAD_PUBLIC_CONTENT_PATTERNS = [
   /^\s*[\[{].*(?:"@context"|jobs?|items?|feed|rss|xml)/i,
@@ -260,8 +274,79 @@ const CLOSED_JOB_PATTERNS = [
   /\bposition has been filled\b/i,
   /\bjob is no longer available\b/i,
   /\bthis role has been filled\b/i,
-  /\bclosed for applications\b/i
+  /\bclosed for applications\b/i,
+  /\bnew applications are no longer being accepted\b/i,
+  /\bposition is closed\b/i,
+  /\brole is closed\b/i,
+  /\brole has been closed\b/i,
+  /\bposition closed\b/i,
+  /404\b/i,
+  /\bpage not found\b/i,
+  /\bthe page you are looking for does not exist\b/i,
+  /\bpage may have moved\b/i,
+  /\bnot found\b(?:\s|$)/i
 ];
+
+function hasClosedJobSignal(value) {
+  return CLOSED_JOB_PATTERNS.some((pattern) => pattern.test(String(value || "")));
+}
+
+function fixUnclosedParentheses(value) {
+  let text = String(value || "");
+  if (!text) return text;
+  text = text.replace(/\]\(([^)]{1,120})(?=\s+[A-Z][a-z]|\.\s+[A-Z]|\.$|$)/g, (match, content) => {
+    if (!content.endsWith(")") && content.trim()) {
+      return `](${content.trim()})`;
+    }
+    return match;
+  });
+  text = text.replace(/\(([^()]*?)(?:\.(?=\s+[A-Z]|\s*$)|(?=\s*$))(?!\))/g, (match, content) => {
+    if (content.trim().length >= 1 && !content.includes(")") && !content.endsWith(".") && content !== "...") {
+      return `(${content})`;
+    }
+    if (content === ".") {
+      return "(...)";
+    }
+    return match;
+  });
+  return text;
+}
+
+const SPANISH_PATTERNS = /\b(?:revolucionamos|energía|cambiaremos|transformaremos|sostenibilidad|innovación|apasionadas|renovable|compromiso|excepción|integrarás|automatizarás|trabajarás|buscaremos|marqueting|digitales|misión|visión|nuestra|personas|equipo|cambio|limpia|accesible|justa|todos|tecnología|trabajo|experiencia|requisitos|responsabilidades|beneficios|salario)\b/i;
+const FRENCH_PATTERNS = /\b(?:nous|notre|pour|avec|dans|sur|une|sont|leurs|projets|énergie|renouvelable|climatique|transition|poste|missions|profil|compétences|expérience|avantages|salaire|travail)\b/i;
+const GERMAN_PATTERNS = /\b(?:nachhaltig|erneuerbare|gestalten|unternehmen|zukunftsorientiert|verändern|energiemarkt|stromanbieter|bewerben|stellung|aufgaben|profil|kenntnisse|erfahrung|vergütung|gehalt|arbeit|team)\b/i;
+
+function detectDescriptionLanguage(value) {
+  const result = { language_detected: "en", language_allowed: true, language_rejected_reason: null };
+  if (!value) return result;
+  const text = String(value);
+
+  const spanishMatches = (text.match(SPANISH_PATTERNS) || []).length;
+  const frenchMatches = (text.match(FRENCH_PATTERNS) || []).length;
+  const germanMatches = (text.match(GERMAN_PATTERNS) || []).length;
+
+  const totalNonEnglish = spanishMatches + frenchMatches + germanMatches;
+  if (totalNonEnglish < 3) return result;
+
+  if (spanishMatches >= 3 && spanishMatches >= germanMatches && spanishMatches >= frenchMatches) {
+    result.language_detected = "es";
+    result.language_allowed = true;
+    return result;
+  }
+  if (frenchMatches >= 3 && frenchMatches >= germanMatches && frenchMatches >= spanishMatches) {
+    result.language_detected = "fr";
+    result.language_allowed = true;
+    return result;
+  }
+  if (germanMatches >= 3) {
+    result.language_detected = "de";
+    result.language_allowed = false;
+    result.language_rejected_reason = "Unsupported language: German detected";
+    return result;
+  }
+
+  return result;
+}
 const BLOCKED_ORGANIZATIONS = [
   "superside",
   "cribl",
@@ -271,7 +356,10 @@ const BLOCKED_ORGANIZATIONS = [
   "marcus & millichap",
   "dataiku",
   "spring health",
-  "plos"
+  "plos",
+  "reformation",
+  "remix",
+  "woolpert"
 ];
 const PARSER_CLEANUP_STATS = {
   title: 0,
@@ -1005,6 +1093,7 @@ function stripStandaloneMetadataNumbers(value) {
     if (/(?:jan|feb|mar|apr|may|jun|jul|aug|sep|sept|oct|nov|dec|\d{1,2}[/-]\d{1,2}[/-]\d{2,4}|:\d{2})/i.test(context)) return match;
     if (/(?:zip|postal|postcode|suite|apt|avenue|ave|street|st\.|road|rd\.|boulevard|blvd)/i.test(context)) return match;
     if (match === "100" || match === "200" || match === "300" || match === "400" || match === "500") return match;
+    if (full[offset + digits.length] === "%") return match;
     return " ";
   });
 }
@@ -1107,6 +1196,7 @@ function isClearlyNotJobTitle(title = "", job = {}) {
   if (isSingleFirstNameOnlyTitle(normalizedTitle)) return true;
   if (isOrganizationOnlyTitle(normalizedTitle, job.organization)) return true;
   if (isLocationOnlyTitle(normalizedTitle, job.location)) return true;
+  if (US_STATE_NAMES.has(lowered)) return true;
   if (BAD_SEMANTIC_TITLE_PATTERNS.some((pattern) => pattern.test(normalizedTitle))) return true;
 
   const words = lowered.split(/\s+/).filter(Boolean);
@@ -1130,7 +1220,17 @@ function normalizeTitle(value, organization = "", options = {}) {
     .replace(/\bno\s*wrap\b|\bnowrap\b/gi, " ")
     .replace(/\s+(?:remote|hybrid|on-?site)\s+[—-]\s+(?:full[- ]?time|part[- ]?time|contract|temporary|internship)\b.*$/i, "")
     .replace(/\s+[—-]\s+(?:full[- ]?time|part[- ]?time|contract|temporary|internship)\b.*$/i, "")
-    .replace(/^[\/|>:\-.\s]+|[\/|>:\-.\s]+$/g, " ");
+    .replace(/^[\/|>:\-.\s]+|[\/|>:\-.\s]+$/g, " ")
+    .replace(/\bviewBox\b[^<]*/gi, " ")
+    .replace(/<span\b[^>]*>/gi, " ")
+    .replace(/<\/?(?:th|td|tr|table|caption|colgroup|col)(?:\s[^>]*)?>/gi, " ")
+    .replace(/\{[\s\S]*?\}/g, " ")
+    .replace(/\[[\s\S]*?\]/g, " ")
+    .replace(/\s+[A-Z][a-z]+(?: [A-Z][a-z]+)?,\s*(AL|AK|AZ|AR|CA|CO|CT|DE|DC|FL|GA|HI|ID|IL|IN|IA|KS|KY|LA|ME|MD|MA|MI|MN|MS|MO|MT|NE|NV|NH|NJ|NM|NY|NC|ND|OH|OK|OR|PA|RI|SC|SD|TN|TX|UT|VT|VA|WA|WV|WI|WY)\s+.+$/, "")
+    .replace(/\(\s*(3|6)\s*Month\s+Contract\s*$/i, "(3 Month Contract)")
+    .replace(/\(\s*(3|6)\s*Month\s+Contract\s*\)\s*$/i, "");
+
+  text = fixUnclosedParentheses(text);
 
   text = removeTitleOrganizationSuffix(normalizeWhitespace(text), organization);
   text = stripWorkplaceLocationSuffixFromTitle(text).title;
@@ -1668,8 +1768,8 @@ function salaryCandidateToText(value) {
   return normalizeWhitespace(`${currency} up to ${format(maxValue)} ${period}`.trim());
 }
 
-const PAY_CONTEXT_PATTERN = /\b(?:salary|compensation|pay|pay range|salary range|comp range|base pay|base salary|annual|annually|yearly|hourly|per hour|per year|per month|base)\b/i;
-const PAY_FALSE_POSITIVE_PATTERN = /\b(?:people|customers?|residents?|households?)\s+pay\b|\bpay\s+for\s+(?:utility|utilities|bills?|electricity|energy|rent)\b|\butility\s+bills?\b/i;
+const PAY_CONTEXT_PATTERN = /\b(?:salary|compensation|pay|pay range|salary range|comp range|base pay|base salary|expected base salary range|full salary range|annual|annually|yearly|hourly|per hour|per year|per month|base)\b/i;
+const PAY_FALSE_POSITIVE_PATTERN = /\b(?:people|customers?|residents?|households?)\s+pay\b|\bpay\s+for\s+(?:utility|utilities|bills?|electricity|energy|rent)\b|\butility\s+bills?\b|\bPOINT\s*\(|\b(?:lat(?:itude)?|lng)\s*:?\s*[-.\d]+\b|\b\d{1,3}\s*%\b|\b(?:job id|requisition id|req id|posting id|tracking id|reference id)\s*:?\s*#?\d{3,}\b|\bid\s*:?\s*#?\d{5,}\b|\bposted\s+(?:on|in)\s+\d{4}\b/i;
 
 function hasPayContext(text) {
   const value = String(text || "");
@@ -1716,6 +1816,7 @@ function findBestSalaryMatch(text) {
   if (detectMalformedPayText(cleaned)) return cleaned;
 
   const matchers = [
+    /(?:expected base salary range|full salary range|salary range for this position|compensation range for this position)[^.]{0,120}?(?:USD|CAD|EUR|GBP|US\$|CA\$|[$€£])?\s*\d[\d,]*(?:\.\d+)?\s*[kKmM]?(?:\s*(?:-|–|—|to)\s*(?:USD|CAD|EUR|GBP|US\$|CA\$|[$€£])?\s*\d[\d,]*(?:\.\d+)?\s*[kKmM]?(?:\s*(?:per year|annually|yearly|per month|monthly|\/yr|\/year))?)?/i,
     /(?:annual salary(?: range)?(?: is|:)|salary range(?: for this position)?(?: is|:)|salary for this position is|compensation for this position is|this role pays|compensation range:?|pay range:?|salary:?|compensation:?|pay:?|wage:?|rate:?|stipend:?|base salary:?)[^.]{0,180}(?:USD|CAD|EUR|GBP|US\$|CA\$|[$€£])\s*\d[\d,]*(?:\.\d+)?\s*[kKmM]?(?:\s*(?:-|–|—|to)\s*(?:USD|CAD|EUR|GBP|US\$|CA\$|[$€£])?\s*\d[\d,]*(?:\.\d+)?\s*[kKmM]?)?(?:\s*(?:hourly|daily|weekly|monthly|annual|annually|per hour|per day|per week|per month|per year|\/hr|\/hour|\/day|\/week|\/month|\/mo|\/year|\/yr))?/i,
     /(?:starting at|up to)\s*(?:USD|CAD|EUR|GBP|US\$|CA\$|[$€£])\s*\d[\d,]*(?:\.\d+)?\s*[kKmM]?(?:\s*(?:hourly|daily|weekly|monthly|annual|annually|per hour|per day|per week|per month|per year|\/hr|\/hour|\/day|\/week|\/month|\/mo|\/year|\/yr))?/i,
     /(?:USD|CAD|EUR|GBP|US\$|CA\$|[$€£])\s*\d[\d,]*(?:\.\d+)?\s*[kKmM]?\s*(?:-|–|—|to)\s*(?:USD|CAD|EUR|GBP|US\$|CA\$|[$€£])?\s*\d[\d,]*(?:\.\d+)?\s*[kKmM]?(?:\s*(?:hourly|daily|weekly|monthly|annual|annually|per hour|per day|per week|per month|per year|\/hr|\/hour|\/day|\/week|\/month|\/mo|\/year|\/yr))?/i,
@@ -1757,6 +1858,7 @@ function findBestSalaryMatchFromWindows(text) {
   if (!contexts.length) return "";
 
   const matchers = [
+    /(?:expected base salary range|full salary range|salary range for this position|compensation range for this position)[^.]{0,120}?(?:USD|CAD|EUR|GBP|US\$|CA\$|C\$|[$€£])?\s*\d[\d,]*(?:\.\d+)?\s*[kKmM]?(?:\s*(?:-|–|—|to)\s*(?:USD|CAD|EUR|GBP|US\$|CA\$|C\$|[$€£])?\s*\d[\d,]*(?:\.\d+)?\s*[kKmM]?(?:\s*(?:\/\s*(?:hour|hr|day|week|month|mo|year|yr)|per\s+(?:hour|day|week|month|year)|hourly|daily|weekly|monthly|yearly|annual|annually))?)?/i,
     /(?:annual salary(?: range)?(?: is|:)|salary range(?: for this position)?(?: is|:)|salary for this position is|compensation for this position is|this role pays|compensation range:?|pay range:?|salary:?|compensation:?|pay:?|wage:?|rate:?|stipend:?|base salary:?)[^.]{0,180}(?:USD|CAD|EUR|GBP|US\$|CA\$|C\$|[$€£])?\s*\d[\d,]*(?:\.\d+)?\s*[kKmM]?(?:\s*(?:\/\s*(?:hour|hr|day|week|month|mo|year|yr)|per\s+(?:hour|day|week|month|year)|hourly|daily|weekly|monthly|yearly|annual|annually))?(?:\s*(?:-|–|—|to)\s*(?:USD|CAD|EUR|GBP|US\$|CA\$|C\$|[$€£])?\s*\d[\d,]*(?:\.\d+)?\s*[kKmM]?(?:\s*(?:\/\s*(?:hour|hr|day|week|month|mo|year|yr)|per\s+(?:hour|day|week|month|year)|hourly|daily|weekly|monthly|yearly|annual|annually))?)?/i,
     /(?:starting at|starts at|from|up to)\s*(?:USD|CAD|EUR|GBP|US\$|CA\$|C\$|[$€£])?\s*\d[\d,]*(?:\.\d+)?\s*[kKmM]?(?:\s*(?:\/\s*(?:hour|hr|day|week|month|mo|year|yr)|per\s+(?:hour|day|week|month|year)|hourly|daily|weekly|monthly|yearly|annual|annually))?/i,
     /(?:USD|CAD|EUR|GBP|US\$|CA\$|C\$|[$€£])\s*\d[\d,]*(?:\.\d+)?\s*[kKmM]?(?:\s*(?:\/\s*(?:hour|hr|day|week|month|mo|year|yr)|per\s+(?:hour|day|week|month|year)|hourly|daily|weekly|monthly|yearly|annual|annually))?(?:\s*(?:-|–|—|to)\s*(?:USD|CAD|EUR|GBP|US\$|CA\$|C\$|[$€£])?\s*\d[\d,]*(?:\.\d+)?\s*[kKmM]?(?:\s*(?:\/\s*(?:hour|hr|day|week|month|mo|year|yr)|per\s+(?:hour|day|week|month|year)|hourly|daily|weekly|monthly|yearly|annual|annually))?)?/i,
@@ -2114,6 +2216,81 @@ function parseSalaryRange(salary, location) {
   return next;
 }
 
+function canonicalPayValidation(job = {}, salaryExtraction = {}, salaryShape = {}) {
+  const diagnostics = {
+    visible_pay_found: false,
+    pay_source_label: "",
+    raw_pay_candidate: "",
+    pay_rejected_reason: "",
+    pay_confidence: ""
+  };
+
+  const rawText = salaryExtraction.text || "";
+  const source = salaryExtraction.source || "";
+
+  diagnostics.raw_pay_candidate = rawText;
+  diagnostics.pay_source_label = source;
+
+  if (!rawText) {
+    diagnostics.pay_confidence = "none";
+    return diagnostics;
+  }
+
+  const falsePositiveValidators = [
+    { pattern: /^\$?\s*(?:19|20)\d{2}\s*$/, reason: "looks_like_year" },
+    { pattern: /\b\d{1,3}\s*%\s*(?:of|of the|\b|$)/, reason: "looks_like_percentage" },
+    { pattern: /\bPOINT\s*\(/, reason: "looks_like_coordinate" },
+    { pattern: /\b(?:lat(?:itude)?|lng)\s*:?\s*[-.\d]+\b/i, reason: "looks_like_coordinate" },
+    { pattern: /\b(?:job id|requisition id|req id|posting id|tracking id|reference id)\s*:?\s*#?\d{3,}\b/i, reason: "looks_like_ats_field" },
+    { pattern: /\bid\s*:?\s*#?\d{5,}\b/i, reason: "looks_like_id" },
+    { pattern: /\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}/, reason: "looks_like_timestamp" }
+  ];
+
+  for (const check of falsePositiveValidators) {
+    if (check.pattern.test(rawText)) {
+      diagnostics.pay_rejected_reason = check.reason;
+      diagnostics.pay_confidence = "rejected";
+      return diagnostics;
+    }
+  }
+
+  const payContexts = [
+    "position description", "position details", "description",
+    "salary", "pay", "compensation", "salary range", "hiring range"
+  ];
+
+  const jobText = [
+    job.description,
+    job.raw_description,
+    job.descriptionPlain,
+    job.content,
+    job.title,
+    rawText
+  ].filter(Boolean).join(" ").toLowerCase();
+
+  const hasValidContext = payContexts.some(function (ctx) { return jobText.includes(ctx); });
+
+  if (!hasValidContext) {
+    diagnostics.pay_rejected_reason = "missing_pay_context";
+    diagnostics.pay_confidence = "rejected";
+    return diagnostics;
+  }
+
+  const min = salaryShape.salary_min;
+  const max = salaryShape.salary_max;
+
+  if ((min && min > 500000) || (max && max > 500000)) {
+    diagnostics.pay_rejected_reason = "exceeds_max_threshold_500k";
+    diagnostics.pay_confidence = "rejected";
+    return diagnostics;
+  }
+
+  diagnostics.visible_pay_found = true;
+  diagnostics.pay_confidence = salaryExtraction.confidence || "medium";
+
+  return diagnostics;
+}
+
 function splitIntoSentences(value) {
   return normalizeWhitespace(value).match(/[^.!?]+[.!?]+|[^.!?]+$/g) || [];
 }
@@ -2212,22 +2389,34 @@ function isArticleLikeDescription(text) {
 
 const PREFERRED_ROLE_SECTION_HEADINGS = [
   /purpose\s+of\s+(?:the\s+)?(?:role|position)/i,
+  /position\s+description/i,
+  /job\s+description/i,
+  /the\s+position\b(?!\s+(?:overview|summary))/i,
+  /about\s+the\s+(?:role|position)\b(?!\s+advanced)/i,
+  /^description$/im,
   /reports?\s+to/i,
   /job\s+status/i,
   /(?:about|overview\s+of)\s+(?:the\s+)?role/i,
+  /position\s+overview/i,
   /position\s+summary/i,
   /role\s+(?:overview|summary|description)/i,
-  /what\s+(?:you(?:'|’)ll|you\s+will)\s+do/i,
+  /what\s+(?:you(?:'|')ll|you\s+will)\s+do/i,
   /key\s+responsibilities/i,
   /responsibilities/i,
   /duties\s+and\s+(?:responsibilities|expectations)/i,
   /qualifications/i,
   /requirements/i,
-  /what\s+(?:we(?:'|’)?re\s+)?looking\s+for/i
+  /what\s+(?:we(?:'|')?re\s+)?looking\s+for/i
 ];
 
 const HIGH_PRIORITY_SECTIONS = [
   /purpose\s+of\s+(?:the\s+)?(?:role|position)/i,
+  /position\s+description/i,
+  /job\s+description/i,
+  /the\s+position\b(?!\s+(?:overview|summary))/i,
+  /about\s+the\s+(?:role|position)\b(?!\s+advanced)/i,
+  /^description$/im,
+  /position\s+overview/i,
   /position\s+summary/i,
   /role\s+(?:summary|overview|description)/i,
   /about\s+(?:the\s+)?role/i,
@@ -2283,7 +2472,8 @@ const LOW_PRIORITY_SECTIONS = [
 ];
 
 function extractCanonicalRoleSection(text) {
-  if (!text) return "";
+  const result = { text: "", heading: "" };
+  if (!text) return result;
   const raw = String(text);
   const hasBreaks = /\n{2,}/.test(raw);
   const hasHtml = /<[a-z]+[^>]*>/i.test(raw);
@@ -2305,11 +2495,15 @@ function extractCanonicalRoleSection(text) {
     if (!para) continue;
 
     const isLowPriority = LOW_PRIORITY_SECTIONS.some((p) => p.test(para));
-    const isHighPriority = HIGH_PRIORITY_SECTIONS.some((p) => p.test(para));
+    const highPriorityMatch = HIGH_PRIORITY_SECTIONS.find((p) => p.test(para));
 
-    if (isHighPriority) {
+    if (highPriorityMatch) {
       phase = "role";
       kept.push(para);
+      if (!result.heading) {
+        const firstLine = para.trim().split(/\n/)[0].trim();
+        result.heading = firstLine.length <= 80 ? firstLine : highPriorityMatch.source;
+      }
       continue;
     }
 
@@ -2328,7 +2522,8 @@ function extractCanonicalRoleSection(text) {
     }
   }
 
-  return kept.join("\n\n");
+  result.text = kept.join("\n\n");
+  return result;
 }
 
 const GENERIC_CAREERS_SECTION_HEADINGS = [
@@ -2632,7 +2827,9 @@ function normalizeDescription(description, options = {}) {
   const strippedGeneric = stripGenericCareersContent(descriptionInput);
   const normalizedInput = normalizeWhitespace(strippedGeneric);
   const rawDescription = stripParserTemplateJunk(normalizedInput, "description");
-  const canonicalRoleText = extractCanonicalRoleSection(rawDescription);
+  const canonicalRoleResult = extractCanonicalRoleSection(rawDescription);
+  const canonicalRoleText = canonicalRoleResult.text;
+  const canonicalHeading = canonicalRoleResult.heading;
   const pipelineInput = canonicalRoleText && canonicalRoleText.length >= 30 ? canonicalRoleText : rawDescription;
   const cleaned = applyTitleToMalformedTemplate(collapseRepeatedPhrases(normalizeWhitespace(
     stripSchemaMetadata(stripHtml(pipelineInput))
@@ -2662,13 +2859,25 @@ function normalizeDescription(description, options = {}) {
       .replace(/\bviewBox="[^"]*"/gi, " ")
       .replace(/<span\b/gi, " ")
       .replace(/[>"<]+/g, " ")
+      .replace(/\b(?:Business and Industrial|Cleantech & Environment|Electrical Distribution|Industrial Automation|Power Generation|Renewable Energy & Environment)\b/gi, " ")
       .replace(
         /\b(?:job title|department|location|reports to|supervises)\s*:\s*[\s\S]*?(?=(?:job title|department|location|reports to|supervises|duration|context|scope|role overview|about us|what you(?:'|’)ll do)\s*:|$)/gi,
         " "
       )
-      .replace(/\b(?:about us|about the company|about the role|job summary|role overview|what you’ll do|what you will do|responsibilities|requirements|qualifications|preferred qualifications|benefits|details|context|scope|what you bring)\s*:?/gi, " ")
+      .replace(/\b(?:about us|about the company|about the role|job summary|role overview|what you'll do|what you will do|responsibilities|requirements|qualifications|preferred qualifications|benefits|details|context|scope|what you bring)\s*:?/gi, " ")
       .replace(/\b(?:job title|department|reports to|supervises|duration|location)\s*:/gi, " ")
       .replace(/\.\s*\./g, ". ")
+      .replace(/\]\(([^)]{1,120})(?=\s+[A-Z][a-z]|\.\s+[A-Z]|\.$|$)/g, (match, content) => {
+        if (!content.endsWith(")") && content.trim()) return `](${content.trim()})`;
+        return match;
+      })
+      .replace(/\(([^()]*?)(?:\.(?=\s+[A-Z]|\s*$)|(?=\s*$))(?!\))/g, (match, content) => {
+        if (content.trim().length >= 1 && !content.includes(")") && !content.endsWith(".") && content !== "...") {
+          return `(${content})`;
+        }
+        if (content === ".") return "(...)";
+        return match;
+      })
   )), title);
   const strippedLeading = stripLeadingDescriptionFragments(cleaned, title);
   const numericCleaned = normalizeWhitespace(
@@ -2693,7 +2902,8 @@ function normalizeDescription(description, options = {}) {
         description_leading_fragment_removed: strippedLeading !== cleaned,
         description_auto_capitalized: false,
         description_fallback_sentence_used: false,
-        snippet_fallback_used: false
+        snippet_fallback_used: false,
+        ...(canonicalHeading ? { description_heading_used: canonicalHeading } : {})
       }
     };
   }
@@ -2742,8 +2952,10 @@ function normalizeDescription(description, options = {}) {
     fallbackSentenceUsed = true;
   }
   const capitalized = capitalizeDescriptionOpening(dedupeOrganizationMentions(chosenDescription, organization));
-  const metadataHeavyDescription = /\b(?:career_page|other \d+|ipo \d+|point\s*\(|locality\b|business\/productivity software|cleantech|oil\s*&\s*gas|renewable energy|revenue|valuation|headquarters|employee size)\b/i.test(finalDescription);
+  const metadataHeavyDescription = /\b(?:career_page|other \d+|ipo \d+|point\s*\(|locality\b|business\/productivity software|business and industrial|cleantech|cleantech & environment|electrical distribution|industrial automation|power generation|oil\s*&\s*gas|renewable energy|renewable energy & environment|revenue|valuation|headquarters|employee size)\b/i.test(finalDescription);
 
+  const closedJobSignal = hasClosedJobSignal(rawDescription);
+  const langResult = detectDescriptionLanguage(rawDescription);
   const dominatedByNoise =
     selected.length === 0 &&
     DESCRIPTION_NOISE_PATTERNS.some((pattern) => pattern.test(rawDescription)) &&
@@ -2754,13 +2966,18 @@ function normalizeDescription(description, options = {}) {
 
   return {
     raw_description: rawDescription,
-    description: dominatedByNoise || dominatedBySchemaMetadata || isArticleLikeDescription(capitalized.text) || startsWithRejectedDescriptionFragment(capitalized.text) || (metadataHeavyDescription && selected.length === 0) ? "" : capitalized.text,
+    description: closedJobSignal || !langResult.language_allowed || dominatedByNoise || dominatedBySchemaMetadata || isArticleLikeDescription(capitalized.text) || startsWithRejectedDescriptionFragment(capitalized.text) || (metadataHeavyDescription && selected.length === 0) ? "" : capitalized.text,
     diagnostics: {
       description_cleaning_applied: strippedLeading !== cleaned || capitalized.changed,
       description_leading_fragment_removed: strippedLeading !== cleaned,
       description_auto_capitalized: capitalized.changed,
       description_fallback_sentence_used: fallbackSentenceUsed,
-      snippet_fallback_used: false
+      snippet_fallback_used: false,
+      ...(closedJobSignal ? { closed_job_detected: true } : {}),
+      language_detected: langResult.language_detected,
+      language_allowed: langResult.language_allowed,
+      ...(langResult.language_rejected_reason ? { language_rejected_reason: langResult.language_rejected_reason } : {}),
+      ...(canonicalHeading ? { description_heading_used: canonicalHeading } : {})
     }
   };
 }
@@ -3107,6 +3324,7 @@ function normalizeJob(input = {}) {
   const salaryExtraction = extractSalaryData(input);
   const salaryText = salaryExtraction.text;
   const salaryShape = parseSalaryRange(salaryText, location);
+  const payValidation = canonicalPayValidation(input, salaryExtraction, salaryShape);
   const explicitCurrency = safeStringField(input.salary_currency || input.salaryCurrency);
   const explicitPeriod = safeStringField(input.salary_period || input.salaryPeriod);
   const descriptionCandidate = extractDescriptionText(input);
@@ -3117,7 +3335,7 @@ function normalizeJob(input = {}) {
   )) {
     incrementParserCleanupStat("description");
   }
-  const resolvedSalaryVisible = salaryText
+  const resolvedSalaryVisible = salaryText && !payValidation.pay_rejected_reason
     ? (typeof input.salary_visible === "boolean" ? input.salary_visible : salaryShape.salary_visible)
     : false;
   const datePosted = safeStringField(input.date_posted || input.datePosted);
@@ -3235,11 +3453,17 @@ function normalizeJob(input = {}) {
     pay_rejection_reason: safeStringField(input.pay_rejection_reason || input.payRejectionReason || salaryExtraction.rejectionReason),
     pay_like_detected: typeof input.pay_like_detected === "boolean" ? input.pay_like_detected : Boolean(salaryExtraction.payLikeDetected),
     pay_parse_failed_snippet: safeStringField(input.pay_parse_failed_snippet || input.payParseFailedSnippet || salaryExtraction.failedSnippet),
+    visible_pay_found: payValidation.visible_pay_found,
+    pay_source_label: payValidation.pay_source_label,
+    raw_pay_candidate: payValidation.raw_pay_candidate,
+    pay_rejected_reason: payValidation.pay_rejected_reason,
+    pay_confidence: payValidation.pay_confidence,
     description_cleaning_applied: Boolean(input.description_cleaning_applied ?? descriptionShape.diagnostics?.description_cleaning_applied),
     description_leading_fragment_removed: Boolean(input.description_leading_fragment_removed ?? descriptionShape.diagnostics?.description_leading_fragment_removed),
     description_auto_capitalized: Boolean(input.description_auto_capitalized ?? descriptionShape.diagnostics?.description_auto_capitalized),
     description_fallback_sentence_used: Boolean(input.description_fallback_sentence_used ?? descriptionShape.diagnostics?.description_fallback_sentence_used),
     snippet_fallback_used: Boolean(input.snippet_fallback_used ?? descriptionShape.diagnostics?.snippet_fallback_used),
+    description_heading_used: safeStringField(input.description_heading_used ?? descriptionShape.diagnostics?.description_heading_used),
     featured: Boolean(input.featured),
     sector: normalizeSector(input.sector || "general"),
     function: safeStringField(input.function || input.role_function),
@@ -3312,6 +3536,10 @@ function normalizeJob(input = {}) {
   normalizedJob.stale_score = clampScore(
     normalizedJob.stale_score ?? (normalizedJob.source_status === "stale" ? 60 : normalizedJob.source_status === "removed" ? 100 : 0)
   );
+  const lcvResult = applyLCVStateAffiliateRules({ ...input, title: normalizedJob.title, location: normalizedJob.location, organization: normalizedJob.organization });
+  if (lcvResult.title !== normalizedJob.title) normalizedJob.title = lcvResult.title;
+  if (lcvResult.location !== normalizedJob.location) normalizedJob.location = lcvResult.location;
+  if (lcvResult.organization !== normalizedJob.organization) normalizedJob.organization = lcvResult.organization;
   return normalizedJob;
 }
 
@@ -3524,6 +3752,64 @@ function routeSyncedJob(job, source) {
   });
 }
 
+const LCV_STATE_AFFILIATE_DOMAINS = [
+  { domain: "michiganlcv.org", state: "Michigan", org: "Michigan League of Conservation Voters" },
+  { domain: "conservationpa.org", state: "Pennsylvania", org: "Conservation Voters of Pennsylvania" },
+  { domain: "akcenter.org", state: "Alaska", org: "The Alaska Center" },
+  { domain: "conservationco.org", state: "Colorado", org: "Conservation Colorado" },
+  { domain: "indianacv.org", state: "Indiana", org: "Indiana Conservation Voters" },
+  { domain: "maineconservationvoters.bamboohr.com", state: "Maine", org: "Maine Conservation Voters" },
+  { domain: "mdlcv.org", state: "Maryland", org: "Maryland League of Conservation Voters" },
+  { domain: "environmentalleague.org", state: "Massachusetts", org: "Environmental League of Massachusetts" },
+  { domain: "mtvoters.org", state: "Montana", org: "Montana Conservation Voters" },
+  { domain: "nevadaconservationleague.org", state: "Nevada", org: "Nevada Conservation League" },
+  { domain: "cvnm.org", state: "New Mexico", org: "Conservation Voters New Mexico" },
+  { domain: "njlcv.org", state: "New Jersey", org: "New Jersey League of Conservation Voters" },
+  { domain: "nylcv.org", state: "New York", org: "New York League of Conservation Voters" },
+  { domain: "nclcv.org", state: "North Carolina", org: "North Carolina League of Conservation Voters" },
+  { domain: "theoec.org", state: "Ohio", org: "Ohio Environmental Council" },
+  { domain: "olcv.org", state: "Oregon", org: "Oregon League of Conservation Voters" },
+  { domain: "cvsc.org", state: "South Carolina", org: "Conservation Voters of South Carolina" },
+  { domain: "vermontconservationvoters.com", state: "Vermont", org: "Vermont Conservation Voters" },
+  { domain: "valcv.org", state: "Virginia", org: "Virginia League of Conservation Voters" },
+  { domain: "waconservationaction.org", state: "Washington", org: "Washington Conservation Action" },
+  { domain: "conservationvoters.org", state: "Wisconsin", org: "Wisconsin Conservation Voters" }
+];
+
+function applyLCVStateAffiliateRules(jobInput) {
+  if (!jobInput) return jobInput;
+  const result = { ...jobInput };
+  const sourceUrl = String(jobInput.source_url || jobInput.original_url || jobInput.apply_url || "");
+  const org = String(jobInput.organization || "").toLowerCase();
+
+  const matched = LCV_STATE_AFFILIATE_DOMAINS.find((d) => sourceUrl.includes(d.domain));
+  if (!matched) return result;
+
+  const state = matched.state;
+  const inferredOrg = matched.org;
+  const title = String(jobInput.title || "");
+
+  if (!title.toLowerCase().includes(state.toLowerCase())) {
+    result.title = `${state} ${title}`;
+  }
+
+  const cityMatch = sourceUrl.match(/\/(philadelphia|erie|pittsburgh|harrisburg|allentown|reading|scranton|bethlehem|lancaster)\b/i);
+  if (cityMatch) {
+    const city = cityMatch[1].charAt(0).toUpperCase() + cityMatch[1].slice(1);
+    if (!jobInput.location || jobInput.location === "Remote" || jobInput.location === `${state}`) {
+      result.location = `${city}, ${state}`;
+    }
+  } else if (!jobInput.location || jobInput.location === "Remote" || jobInput.location.trim() === "") {
+    result.location = state;
+  }
+
+  if (!org.includes("conservation voters") && !org.includes("league of conservation") && !org.includes("lcv")) {
+    result.organization = inferredOrg;
+  }
+
+  return result;
+}
+
 module.exports = {
   CANONICAL_SPECIALIZATIONS,
   cleanCustomCareerPageText,
@@ -3570,6 +3856,7 @@ module.exports = {
   extractMultiLocationSalaryRanges,
   extractSalaryData,
   extractPayWindows,
+  canonicalPayValidation,
   normalizeLocationDisplay,
   normalizeSpecialization,
   normalizeSpecializationDetailed,
@@ -3594,5 +3881,8 @@ module.exports = {
   truncateTextForStorage,
   stripHtml,
   stripSocialShareJunk,
-  todayIso
+  todayIso,
+  US_STATE_NAMES,
+  applyLCVStateAffiliateRules,
+  LCV_STATE_AFFILIATE_DOMAINS
 };

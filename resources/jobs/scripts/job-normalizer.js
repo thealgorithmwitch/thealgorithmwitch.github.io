@@ -179,7 +179,6 @@ const DESCRIPTION_JUNK_PATTERNS = [
   /\bBusiness\/Productivity Software\b/i,
   /\bCleantech\b/i,
   /\bOil\s*&\s*Gas\b/i,
-  /\bRenewable Energy\b/i,
   /\bsee current openings\b/i,
   /\bheaders?\b\s*(?:"\s*)+/i,
   /\b(?:taxonomy|valuation|headquarters|employee size|funding|revenue)\b/i,
@@ -2259,6 +2258,12 @@ function canonicalPayValidation(job = {}, salaryExtraction = {}, salaryShape = {
     "salary", "pay", "compensation", "salary range", "hiring range"
   ];
 
+  const min = salaryShape.salary_min;
+  const max = salaryShape.salary_max;
+
+  // If valid min/max already exist, skip context check - trust the extracted data
+  const hasValidMinMax = (min != null && min > 0 && min <= 500000) || (max != null && max > 0 && max <= 500000);
+
   const jobText = [
     job.description,
     job.raw_description,
@@ -2270,14 +2275,11 @@ function canonicalPayValidation(job = {}, salaryExtraction = {}, salaryShape = {
 
   const hasValidContext = payContexts.some(function (ctx) { return jobText.includes(ctx); });
 
-  if (!hasValidContext) {
+  if (!hasValidContext && !hasValidMinMax) {
     diagnostics.pay_rejected_reason = "missing_pay_context";
     diagnostics.pay_confidence = "rejected";
     return diagnostics;
   }
-
-  const min = salaryShape.salary_min;
-  const max = salaryShape.salary_max;
 
   if ((min && min > 500000) || (max && max > 500000)) {
     diagnostics.pay_rejected_reason = "exceeds_max_threshold_500k";
@@ -2390,15 +2392,18 @@ function isArticleLikeDescription(text) {
 const PREFERRED_ROLE_SECTION_HEADINGS = [
   /purpose\s+of\s+(?:the\s+)?(?:role|position)/i,
   /position\s+description/i,
-  /job\s+description/i,
+  /position\s+overview/i,
+  /position\s+summary/i,
+  /job\s+description\s+summary/i,
+  /twc\s+summary/i,
+  /job\s+description\s+summary\s*\/\s*twc\s+summary/i,
   /the\s+position\b(?!\s+(?:overview|summary))/i,
   /about\s+the\s+(?:role|position)\b(?!\s+advanced)/i,
   /^description$/im,
+  /^summary$/im,
   /reports?\s+to/i,
   /job\s+status/i,
   /(?:about|overview\s+of)\s+(?:the\s+)?role/i,
-  /position\s+overview/i,
-  /position\s+summary/i,
   /role\s+(?:overview|summary|description)/i,
   /what\s+(?:you(?:'|')ll|you\s+will)\s+do/i,
   /key\s+responsibilities/i,
@@ -2412,17 +2417,20 @@ const PREFERRED_ROLE_SECTION_HEADINGS = [
 const HIGH_PRIORITY_SECTIONS = [
   /purpose\s+of\s+(?:the\s+)?(?:role|position)/i,
   /position\s+description/i,
-  /job\s+description/i,
+  /position\s+overview/i,
+  /position\s+summary/i,
+  /job\s+description\s+summary/i,
+  /twc\s+summary/i,
+  /job\s+description\s+summary\s*\/\s*twc\s+summary/i,
   /the\s+position\b(?!\s+(?:overview|summary))/i,
   /about\s+the\s+(?:role|position)\b(?!\s+advanced)/i,
   /^description$/im,
-  /position\s+overview/i,
-  /position\s+summary/i,
+  /^summary$/im,
   /role\s+(?:summary|overview|description)/i,
   /about\s+(?:the\s+)?role/i,
-  /responsibilities/i,
   /what\s+you(?:'|'|')\u0099?(?:ll| will)\s+do/i,
   /key\s+responsibilities/i,
+  /responsibilities/i,
   /duties\s+and\s+(?:responsibilities|expectations)/i,
   /reports?\s+to/i,
   /compensation\b(?!\s+(?:and|&)\s+benefits)/i,
@@ -2471,13 +2479,73 @@ const LOW_PRIORITY_SECTIONS = [
   /professional\s+development\s+(?:and|&)\s+training/i
 ];
 
+function htmlToStructuredPlainText(html) {
+  if (!html) return "";
+  let text = String(html);
+  if (!/<[a-z][^>]*>/i.test(text)) return text;
+
+  text = text
+    .replace(/<script[\s\S]*?<\/script>/gi, "")
+    .replace(/<style[\s\S]*?<\/style>/gi, "")
+    .replace(/<nav[\s\S]*?<\/nav>/gi, "")
+    .replace(/<footer[\s\S]*?<\/footer>/gi, "")
+    .replace(/<header[\s\S]*?<\/header>/gi, "")
+    .replace(/<!--[\s\S]*?-->/g, "");
+
+  text = text
+    .replace(/<h[1-6][^>]*>(.*?)<\/h[1-6]>/gi, (match, content) => {
+      const clean = content.replace(/<[^>]*>/g, "").trim();
+      return clean ? "\n" + clean + "\n" : "";
+    })
+    .replace(/<li[^>]*>(.*?)<\/li>/gi, (match, content) => {
+      const clean = content.replace(/<[^>]*>/g, "").trim();
+      return clean ? "\n- " + clean : "";
+    })
+    .replace(/<br\s*\/?>/gi, "\n")
+    .replace(/<\/p>/gi, "\n\n")
+    .replace(/<\/div>/gi, "\n")
+    .replace(/<\/section>/gi, "\n\n")
+    .replace(/<\/article>/gi, "\n\n")
+    .replace(/<\/tr>/gi, "\n")
+    .replace(/<\/td>/gi, " ")
+    .replace(/<\/th>/gi, " ")
+    .replace(/<\/h[1-6]>/gi, "\n")
+    .replace(/<[^>]*>/g, "")
+    .replace(/&nbsp;/gi, " ")
+    .replace(/&amp;/gi, "&")
+    .replace(/&lt;/gi, "<")
+    .replace(/&gt;/gi, ">")
+    .replace(/&quot;/gi, "\"")
+    .replace(/&#39;/gi, "'")
+    .replace(/&#(\d+);/g, (m, d) => String.fromCharCode(d))
+    .replace(/\u2018|\u2019/g, "'")
+    .replace(/\u201c|\u201d/g, "\"")
+    .replace(/\u2013|\u2014/g, "—")
+    .replace(/\u00a0/g, " ")
+    .replace(/\u2022/g, "-")
+    .replace(/\u2026/g, "...");
+
+  text = text
+    .replace(/\n{3,}/g, "\n\n")
+    .replace(/[ \t]+\n/g, "\n")
+    .replace(/\n[ \t]+/g, "\n")
+    .replace(/[^\S\n]+/g, " ")
+    .trim();
+
+  return text;
+}
+
 function extractCanonicalRoleSection(text) {
-  const result = { text: "", heading: "" };
+  const result = { text: "", heading: "", structured: "" };
   if (!text) return result;
   const raw = String(text);
-  const hasBreaks = /\n{2,}/.test(raw);
   const hasHtml = /<[a-z]+[^>]*>/i.test(raw);
-  let splitText = raw;
+
+  const structured = hasHtml ? htmlToStructuredPlainText(raw) : raw;
+  result.structured = structured;
+
+  const hasBreaks = /\n{2,}/.test(structured);
+  let splitText = structured;
   if (!hasBreaks) {
     if (hasHtml) {
       splitText = raw
@@ -2964,9 +3032,25 @@ function normalizeDescription(description, options = {}) {
     );
   const dominatedBySchemaMetadata = looksLikeSchemaMetadata(rawDescription) && !selected.length;
 
+  const descriptionValid = !closedJobSignal && langResult.language_allowed && !dominatedByNoise && !dominatedBySchemaMetadata && !isArticleLikeDescription(capitalized.text) && !startsWithRejectedDescriptionFragment(capitalized.text) && !(metadataHeavyDescription && selected.length === 0);
+
+  let structuredDescription = "";
+  if (descriptionValid && canonicalRoleResult.structured) {
+    const cleanedStructured = canonicalRoleResult.structured
+      .replace(/https?:\/\/\S+/gi, "")
+      .replace(/\b(?:apply online|apply now|submit application|learn more|read more|view job|view opening|back to jobs|search jobs|privacy policy|terms of use|cookie policy|equal opportunity employer)\b[^.\n]*/gi, "")
+      .replace(/\b(?:job title|department|location|reports to|supervises|duration|posted|job id|requisition id|req id|employment type|workplace type)\s*:\s*[^.\n]*/gi, "")
+      .replace(/\n{3,}/g, "\n\n")
+      .trim();
+    if (cleanedStructured.length >= 60 && /[A-Za-z]{3,}/.test(cleanedStructured)) {
+      structuredDescription = cleanedStructured;
+    }
+  }
+
   return {
     raw_description: rawDescription,
-    description: closedJobSignal || !langResult.language_allowed || dominatedByNoise || dominatedBySchemaMetadata || isArticleLikeDescription(capitalized.text) || startsWithRejectedDescriptionFragment(capitalized.text) || (metadataHeavyDescription && selected.length === 0) ? "" : capitalized.text,
+    description: descriptionValid ? capitalized.text : "",
+    structured_description: structuredDescription,
     diagnostics: {
       description_cleaning_applied: strippedLeading !== cleaned || capitalized.changed,
       description_leading_fragment_removed: strippedLeading !== cleaned,
@@ -2977,7 +3061,8 @@ function normalizeDescription(description, options = {}) {
       language_detected: langResult.language_detected,
       language_allowed: langResult.language_allowed,
       ...(langResult.language_rejected_reason ? { language_rejected_reason: langResult.language_rejected_reason } : {}),
-      ...(canonicalHeading ? { description_heading_used: canonicalHeading } : {})
+      ...(canonicalHeading ? { description_heading_used: canonicalHeading } : {}),
+      ...(structuredDescription ? { structured_description_preserved: true } : {})
     }
   };
 }
@@ -3489,6 +3574,7 @@ function normalizeJob(input = {}) {
     approved_by: safeStringField(input.approved_by || input.approvedBy),
     raw_description: descriptionShape.raw_description,
     description: descriptionShape.description,
+    structured_description: descriptionShape.structured_description || "",
     tags,
     shared_by: safeStringField(input.shared_by || input.sharedBy),
     notes: safeStringField(input.notes),

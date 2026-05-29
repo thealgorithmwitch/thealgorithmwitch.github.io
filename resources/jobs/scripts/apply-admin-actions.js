@@ -41,6 +41,7 @@ const {
   writeOrganizationRules,
   writePendingOverrides
 } = require("./admin-actions-store");
+const { addFingerprintToRecord } = require("./archive-fingerprint-guard");
 const { buildPagesForSelectedJobs, buildPagesFromJobs } = require("./generate-job-pages");
 const { buildJobPagePathMap } = require("./job-page-paths");
 const { buildPublicJobsFromRecords, syncPublicJobsFromRecords } = require("./public-jobs");
@@ -377,6 +378,7 @@ function upsertJobRecord(records, pendingJob, status, options = {}) {
     next.public_visibility = false;
     next.verification_status = status === "rejected" ? "removed" : "needs_review";
     next.stale_reason = options.stale_reason || "";
+    addFingerprintToRecord(next);
   }
   if (existingIndex >= 0) {
     records[existingIndex] = next;
@@ -1918,7 +1920,11 @@ async function main() {
       if (organization && !nextOrgRules.hidden_organizations.includes(organization)) {
         nextOrgRules.hidden_organizations.push(organization);
       }
+      const rejectedJobs = nextPending.filter((job) => String(job.organization || "").trim() === organization);
       nextPending = nextPending.filter((job) => String(job.organization || "").trim() !== organization);
+      for (const job of rejectedJobs) {
+        upsertJobRecord(nextRecords, job, "rejected", { stale_reason: "organization_hidden" });
+      }
       if (rejectedJobs.length) shouldRunPublicSync = true;
       actionResults[action.id] = buildActionResult("applied", `hidden_organization=${organization}`);
       logActionOutcome(action, actionSource, "applied", `hidden_organization=${organization}`);
@@ -1963,16 +1969,19 @@ async function main() {
       const targetIds = freshIds.length ? freshIds : [String(action.payload.id || action.payload.recordId || "")].filter(Boolean);
       let count = 0;
       targetIds.forEach((id) => {
-        if (updateRecordListById(nextRecords, id, (record) => ({
-          ...record,
-          status: "archived",
-          published: false,
-          public_visibility: false,
-          stale_reason: "archived by admin",
-          verification_status: "removed",
-          verification_method: "manual",
-          updated_at: new Date().toISOString()
-        }))) {
+        if (updateRecordListById(nextRecords, id, (record) => {
+          const updated = {
+            ...record,
+            status: "archived",
+            published: false,
+            public_visibility: false,
+            stale_reason: "archived by admin",
+            verification_status: "removed",
+            verification_method: "manual",
+            updated_at: new Date().toISOString()
+          };
+          return addFingerprintToRecord(updated);
+        })) {
           count += 1;
           publicScopeIds.add(String(id));
           shouldRunPublicSync = true;

@@ -1,4 +1,5 @@
 const { buildDescriptionSnippet, buildFallbackDescription, hasUsableDescription, normalizeJob, normalizePayDisplay, normalizeWorkplaceType, stringifySafe } = require("./job-normalizer");
+const { addFingerprintToRecord } = require("./archive-fingerprint-guard");
 
 const CLOSED_PATTERNS = [
   /no longer accepting applications/i,
@@ -162,7 +163,7 @@ function markNeedsReview(record, reason, method = "manual", options = {}) {
 
 function markRemoved(record, reason, options = {}) {
   const now = options.now instanceof Date ? options.now : new Date();
-  return applyFreshnessMetadata({
+  const base = applyFreshnessMetadata({
     ...record,
     status: "archived",
     published: false,
@@ -176,6 +177,7 @@ function markRemoved(record, reason, options = {}) {
     sourceStatus: "removed",
     lastSeen: false
   });
+  return addFingerprintToRecord(base);
 }
 
 function addSourceIdentityHistory(record, options = {}) {

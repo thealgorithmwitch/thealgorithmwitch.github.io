@@ -9,6 +9,7 @@ const {
 const { fetchAtsJobsByProvider, fetchGreenhouseJobsForSource } = require("./ats-clients");
 const { normalizeJob } = require("./job-normalizer");
 const { filterBlockedSourceEntries, getBlockedSourceRuleForEntry } = require("./blocked-source-utils");
+const { guardIncoming, loadArchiveRecords } = require("./archive-fingerprint-guard");
 const { normalizeProvider, normalizeSource } = require("./source-utils");
 const { readSourceHealthSnapshot, writeSourceHealthSnapshot } = require("./source-health-store");
 const { applySourcePendingControls, buildSourceControlKey } = require("./source-sync-quality");
@@ -206,6 +207,8 @@ async function main() {
   const sourceHealthEntries = [];
   const reportEntries = [];
   const nextPendingBySource = new Map();
+  const archiveGuardRecords = loadArchiveRecords();
+  let archiveBlockedTotal = 0;
 
   for (const source of syncDisabledSources) {
     const entry = buildSyncDisabledEntry(source);
@@ -273,6 +276,13 @@ async function main() {
         if (!pendingJob) continue;
         if (getBlockedSourceRuleForEntry(pendingJob)) {
           duplicatesSkipped += 1;
+          continue;
+        }
+        const guarded = guardIncoming([pendingJob], archiveGuardRecords);
+        if (guarded.blocked.length) {
+          const b = guarded.blocked[0];
+          console.log(`[jobs:sync-targeted-pending-sources] ${source.id}: Skipping archived/rejected job "${pendingJob.title}" (matched ${b.matched_archive_id}: ${b.matched_archive_status})`);
+          archiveBlockedTotal++;
           continue;
         }
         const dedupeKeys = buildDedupeCandidates(pendingJob);
@@ -486,7 +496,7 @@ async function main() {
   };
   await writeJson(REPORT_FILE, report);
 
-  console.log(`[jobs:sync-targeted-pending-sources] sources_attempted=${summary.sources_attempted} jobs_found=${summary.jobs_found} jobs_normalized=${summary.jobs_normalized} relevance_matched_count=${summary.relevance_matched_count} active_review_added=${summary.active_review_added} backlog_added=${summary.backlog_added} backlog_preserved=${summary.backlog_preserved} resurfaced_from_backlog=${summary.resurfaced_from_backlog} stale_backlog_archived=${summary.stale_backlog_archived} repeat_surface_prevented_count=${summary.repeat_surface_prevented_count} capped_existing=${summary.capped_existing} jobs_added_to_pending=${summary.jobs_added_to_pending} capped_count=${summary.capped_count} skipped_low_relevance_count=${summary.skipped_low_relevance_count} duplicates_skipped=${summary.duplicates_skipped} deprecated_pending_entries_removed=${removedDeprecatedPendingCount} duration_ms=${Date.now() - startedAt}`);
+  console.log(`[jobs:sync-targeted-pending-sources] sources_attempted=${summary.sources_attempted} jobs_found=${summary.jobs_found} jobs_normalized=${summary.jobs_normalized} relevance_matched_count=${summary.relevance_matched_count} active_review_added=${summary.active_review_added} backlog_added=${summary.backlog_added} backlog_preserved=${summary.backlog_preserved} resurfaced_from_backlog=${summary.resurfaced_from_backlog} stale_backlog_archived=${summary.stale_backlog_archived} repeat_surface_prevented_count=${summary.repeat_surface_prevented_count} capped_existing=${summary.capped_existing} jobs_added_to_pending=${summary.jobs_added_to_pending} capped_count=${summary.capped_count} skipped_low_relevance_count=${summary.skipped_low_relevance_count} duplicates_skipped=${summary.duplicates_skipped} archive_blocked=${archiveBlockedTotal} deprecated_pending_entries_removed=${removedDeprecatedPendingCount} duration_ms=${Date.now() - startedAt}`);
   Object.entries(summary.skipped_reasons).forEach(([reason, count]) => {
     console.log(`[jobs:sync-targeted-pending-sources] skipped_reason reason=${reason} count=${count}`);
   });

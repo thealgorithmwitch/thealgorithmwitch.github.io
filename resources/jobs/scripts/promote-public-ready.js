@@ -14,6 +14,7 @@ const {
 } = require("./job-normalizer");
 const { hasInvalidPublicTitle, isValidPayDisplay } = require("./validate-public-data");
 const { isBlockedSourceEntry } = require("./blocked-source-utils");
+const { guardIncoming, loadArchiveRecords } = require("./archive-fingerprint-guard");
 const { readJobs, readPendingSyncedJobs, readSources, writeJsonIfChanged } = require("./job-utils");
 const {
   JOB_RECORDS_FILE,
@@ -485,6 +486,8 @@ async function runPromotion(options = {}) {
   const publicIndex = accumulateDuplicateKeys(publicJobsBefore);
   const pendingIndex = accumulateDuplicateKeys(pendingJobs);
   const recordIndex = buildExistingRecordIndex(existingRecords);
+  const archiveGuardRecords = loadArchiveRecords();
+  let archiveBlockedCount = 0;
   const considered = [];
   const promoted = [];
   const rejected = [];
@@ -494,6 +497,14 @@ async function runPromotion(options = {}) {
   let workableEligible = 0;
 
   for (const candidate of candidates) {
+    const guarded = guardIncoming([candidate], archiveGuardRecords);
+    if (guarded.blocked.length) {
+      const b = guarded.blocked[0];
+      console.log(`[promote-public-ready] Skipping archived/rejected candidate "${candidate.title}" (${candidate.organization}) — matched ${b.matched_archive_id}: ${b.matched_archive_status}`);
+      archiveBlockedCount++;
+      rejected.push({ id: candidate.id, title: candidate.title, reason: `archive_fingerprint_blocked: matched ${b.matched_archive_id} (${b.matched_archive_status})` });
+      continue;
+    }
     const source = resolveSourceForJob(candidate, sourceMap);
     const decision = buildCandidateDecision(candidate, source, publicIndex, pendingIndex, {
       ...args,
@@ -733,6 +744,7 @@ async function runPromotion(options = {}) {
     jobs_auto_published: reportedPromotions.length,
     jobs_left_pending: Math.max(0, considered.length - reportedPromotions.length),
     jobs_rejected_from_public: rejected.length,
+    archive_fingerprint_blocked: archiveBlockedCount,
     public_rejection_reasons: summarizeRejectionCounts(rejected),
     eligible_job_ids: eligibleJobIds,
     eligible_job_titles: eligibleJobTitles,
@@ -773,7 +785,7 @@ async function main() {
   const args = parseArgs(process.argv.slice(2));
   const report = await runPromotion(args);
   console.log(
-    `[jobs:promote-public-ready] mode=${report.mode} considered=${report.jobs_considered_for_public} auto_published=${report.jobs_auto_published} left_pending=${report.jobs_left_pending} rejected=${report.jobs_rejected_from_public} promotion_cap=${report.promotion_cap} promotion_cap_hit=${report.promotion_cap_hit}`
+    `[jobs:promote-public-ready] mode=${report.mode} considered=${report.jobs_considered_for_public} auto_published=${report.jobs_auto_published} left_pending=${report.jobs_left_pending} rejected=${report.jobs_rejected_from_public} archive_blocked=${report.archive_fingerprint_blocked} promotion_cap=${report.promotion_cap} promotion_cap_hit=${report.promotion_cap_hit}`
   );
 }
 

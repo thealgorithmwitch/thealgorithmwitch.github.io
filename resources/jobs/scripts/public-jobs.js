@@ -216,13 +216,21 @@ async function syncPublicJobsFromRecords(records, options = {}) {
   }
 
   if (shouldWrite && !dryRun) {
+    const expectedCount = computedPublicJobsCount;
+    if (expectedCount < Math.max(existingJobsJsonCount * 0.8, 1)) {
+      throw new Error(
+        `Refusing to overwrite jobs.json: expected ${expectedCount} jobs vs ${existingJobsJsonCount} existing (drop >20%)`
+      );
+    }
     await writeJson(JOBS_FILE, attachRedirectPaths(existingJobs, safePublicJobs));
+    const writtenJobs = await readJobs();
+    const writtenCount = Array.isArray(writtenJobs) ? writtenJobs.length : 0;
+    if (writtenCount !== expectedCount) {
+      throw new Error(`jobs.json sync mismatch: expected ${expectedCount} public jobs, found ${writtenCount}`);
+    }
     wrote = true;
   }
 
-  const finalJobs = dryRun ? existingJobs : await readJobs();
-  const finalJobsJsonCount = dryRun ? existingJobsJsonCount : (Array.isArray(finalJobs) ? finalJobs.length : 0);
-  const syncMismatch = dryRun ? false : finalJobsJsonCount !== computedPublicJobsCount;
   const descriptionSnippetGeneratedCount = safePublicJobs.filter((job) => String(job.description_snippet || "").trim()).length;
   const descriptionCleanedCount = safePublicJobs.filter((job) => {
     const description = String(job.description || "").trim();
@@ -231,15 +239,11 @@ async function syncPublicJobsFromRecords(records, options = {}) {
   }).length;
 
   logger.log(
-    `[${label}] existing_jobs_json_count=${existingJobsJsonCount} computed_public_jobs_count=${computedPublicJobsCount} final_jobs_json_count=${finalJobsJsonCount} wrote_jobs_json=${wrote} dry_run=${dryRun} write_path=${JOBS_FILE} sync_mismatch=${syncMismatch}`
+    `[${label}] existing_jobs_json_count=${existingJobsJsonCount} computed_public_jobs_count=${computedPublicJobsCount} wrote_jobs_json=${wrote} dry_run=${dryRun} write_path=${JOBS_FILE}`
   );
   logger.log(
     `[${label}] description_snippet_generated_count=${descriptionSnippetGeneratedCount} description_cleaned_count=${descriptionCleanedCount}`
   );
-
-  if (syncMismatch) {
-    throw new Error(`jobs.json sync mismatch: expected ${computedPublicJobsCount} public jobs, found ${finalJobsJsonCount}`);
-  }
 
   return {
     publicJobs,

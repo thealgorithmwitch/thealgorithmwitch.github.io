@@ -27,18 +27,39 @@ const REPORT_FILE = path.join(ROOT, "reports", "freshness-audit-latest.json");
 const RISKY_REPORT_JSON_FILE = path.join(ROOT, "reports", "freshness-audit-risky-changes.json");
 const RISKY_REPORT_MD_FILE = path.join(ROOT, "reports", "freshness-audit-risky-changes.md");
 const PENDING_SYNCED_FILE = path.join(ROOT, "pending-synced-jobs.json");
-const STALE_DAYS = 7;
+const STALE_DAYS = 3;
 const STALE_ARCHIVE_DAYS = 21;
 const REQUEST_TIMEOUT_MS = 15000;
+const FETCH_CONCURRENCY = 5;
 const USER_AGENT = "AlgorithmWitchJobsFreshnessAudit/1.0 (+https://github.com/actions)";
 const DEAD_STATUS_CODES = new Set([404, 410, 451]);
+const ACCESS_DENIED_STATUS_CODES = new Set([401, 403]);
 const DEAD_TEXT_PATTERNS = [
   /\bjob is no longer available\b/i,
   /\bno longer accepting applications\b/i,
   /\bposition has been filled\b/i,
   /\bposting has expired\b/i,
   /\bthis job has closed\b/i,
-  /\b404\b/i
+  /\bposition is closed\b/i,
+  /\brole is closed\b/i,
+  /\brole has been closed\b/i,
+  /\bapplications? closed\b/i,
+  /\bnew applications are no longer being accepted\b/i,
+  /\b404\b/i,
+  /\bpage not found\b/i,
+  /\bthe page you are looking for does not exist\b/i,
+  /\bpage may have moved\b/i,
+  /\bnot found\b(?:\s|$)/i
+];
+const ACCESS_DENIED_TEXT_PATTERNS = [
+  /\baccess denied\b/i,
+  /\baccess forbidden\b/i,
+  /\bunauthorized\b/i,
+  /\bforbidden\b/i,
+  /\blogin required\b/i,
+  /\bcandidate login\b/i,
+  /\byou do not have permission\b/i,
+  /\bnot authorized\b/i
 ];
 const FEED_TEXT_PATTERNS = [
   /^\s*[\[{]/,
@@ -51,6 +72,21 @@ const FEED_TEXT_PATTERNS = [
 ];
 const APPLY_TEXT_PATTERN = /\b(?:apply|apply now|submit application|start application|continue application)\b/i;
 const LOCATION_LABEL_PATTERN = /\b(?:location|job location)\b[:\s-]+([^\n|]{2,120})/i;
+const UNCERTAIN_PAGE_TITLE_PATTERNS = [
+  /^login\s*$/i, /^login\s+page\s*$/i, /^sign\s+in\s*$/i, /^candidate\s+login\s*$/i,
+  /^search\s*$/i, /^new\s+search\s*$/i,
+  /^benefits?\s*$/i, /^view\s+our\s+benefits?\s*$/i,
+  /^procurement\s*$/i, /^procurement\s+opportunities?\s*$/i,
+  /^contact\s+us\s*$/i, /^proposal\s+request\s*$/i,
+  /^browse\s+job\s+listings?\s*$/i,
+  /navigation/i, /footer/i, /header/i
+];
+const UNCERTAIN_PAGE_URL_PATTERNS = [
+  /candidatelogin/i, /benefits/i, /procurement/i,
+  /contact-us/i, /proposal-request/i,
+  /(?:\/|\?)search(?:$|[?#])/i,
+  /careers\/(?:faq|why-work|life-at|join-our-team)(?:\/|$)/i
+];
 
 function parseArgs(argv) {
   return {
@@ -402,15 +438,57 @@ function extractApplyUrl(html, baseUrl, jsonLd) {
   return "";
 }
 
-function detectPageMode(response, body) {
+function classifyPageTypeFromUrl(url) {
+  const u = String(url || "").toLowerCase();
+  if (/candidatelogin/.test(u)) return "login_page";
+  if (/benefits/.test(u)) return "benefits_page";
+  if (/procurement/.test(u)) return "procurement_page";
+  if (/search|jobSearch|jobsearch/.test(u)) return "search_page";
+  if (/careers?\/?$|jobs?\/?$/.test(u)) return "careers_landing_page";
+  if (/contact-us/.test(u)) return "navigation_page";
+  return null;
+}
+
+function classifyPageTypeFromTitle(title) {
+  const t = String(title || "").toLowerCase();
+  if (/login|sign\s+in/.test(t)) return "login_page";
+  if (/benefits/.test(t)) return "benefits_page";
+  if (/procurement/.test(t)) return "procurement_page";
+  if (/search/.test(t)) return "search_page";
+  if (/careers?\s*$|conservation.*jobs/.test(t)) return "careers_landing_page";
+  if (/contact|proposal/.test(t)) return "navigation_page";
+  return null;
+}
+
+function detectAccessDenied(response, text) {
+  if (ACCESS_DENIED_STATUS_CODES.has(response.status)) return `http_${response.status}`;
+  const matched = ACCESS_DENIED_TEXT_PATTERNS.find((p) => p.test(text));
+  if (matched) return "access_denied_text";
+  return null;
+}
+
+function detectPageMode(response, body, sourceUrl) {
   const contentType = cleanText(response.headers.get("content-type") || "").toLowerCase();
   const text = cleanText(body).slice(0, 4000);
-  if (DEAD_STATUS_CODES.has(response.status)) return { mode: "dead", reason: `http_${response.status}` };
-  if (/application\/json|text\/json/i.test(contentType)) return { mode: "code_feed", reason: "json_only_page" };
-  if (/xml|rss|atom/i.test(contentType)) return { mode: "code_feed", reason: "feed_only_page" };
-  if (FEED_TEXT_PATTERNS.some((pattern) => pattern.test(text))) return { mode: "code_feed", reason: "code_feed_page" };
-  if (DEAD_TEXT_PATTERNS.some((pattern) => pattern.test(text))) return { mode: "dead", reason: "expired_or_removed_text_detected" };
-  return { mode: "live", reason: "" };
+  const title = extractTitle(body);
+
+  if (DEAD_STATUS_CODES.has(response.status)) return { mode: "dead", reason: `http_${response.status}`, pageType: "dead" };
+  const accessDenied = detectAccessDenied(response, text);
+  if (accessDenied) return { mode: "dead", reason: accessDenied, pageType: "access_denied" };
+  if (/application\/json|text\/json/i.test(contentType)) return { mode: "code_feed", reason: "json_only_page", pageType: "code_feed" };
+  if (/xml|rss|atom/i.test(contentType)) return { mode: "code_feed", reason: "feed_only_page", pageType: "code_feed" };
+  if (FEED_TEXT_PATTERNS.some((pattern) => pattern.test(text))) return { mode: "code_feed", reason: "code_feed_page", pageType: "code_feed" };
+  if (DEAD_TEXT_PATTERNS.some((pattern) => pattern.test(text))) return { mode: "dead", reason: "expired_or_removed_text_detected", pageType: "dead" };
+
+  const pageTypeFromUrl = classifyPageTypeFromUrl(sourceUrl || response.finalUrl || "");
+  const pageTypeFromTitle = classifyPageTypeFromTitle(title);
+  const pageType = pageTypeFromTitle || pageTypeFromUrl || "live";
+
+  if (pageType !== "live") {
+    return { mode: "uncertain", reason: `non_job_page:${pageType}`, pageType };
+  }
+
+  return { mode: "live", reason: "", pageType: "live" };
 }
 
 async function fetchLivePage(url) {
@@ -525,7 +603,7 @@ async function main() {
   const flaggedJobs = [];
   const riskyChanges = [];
 
-  for (const publicJob of stalePublicJobs) {
+  async function processStaleJob(publicJob) {
     const record = recordsById.get(cleanText(publicJob.id));
     const workableDiagnostic = normalizeWorkableUrl(publicJob.apply_url || publicJob.original_url || publicJob.source_url);
     const sourceUrl = cleanText(workableDiagnostic.url || publicJob.apply_url || publicJob.original_url || publicJob.source_url);
@@ -540,14 +618,16 @@ async function main() {
       previous_status: "published",
       action: "unchanged",
       reasons: [],
-      checked_at: generatedAt
+      checked_at: generatedAt,
+      pageType: null
     };
 
     if (!record || !sourceUrl) {
       reportEntry.action = "flag_review";
       reportEntry.reasons.push("missing_record_or_source_url");
+      reportEntry.pageType = "no_record";
       flaggedJobs.push(reportEntry);
-      continue;
+      return;
     }
 
     const page = await fetchLivePage(sourceUrl);
@@ -561,19 +641,43 @@ async function main() {
       nextRecords = nextRecords.map((item) => cleanText(item.id) === cleanText(record.id) ? refreshedRecord : item);
       reportEntry.action = "flag_review";
       reportEntry.reasons.push("uncertain_network_failure");
+      reportEntry.pageType = "network_error";
       reportEntry.network_error = page.error.message;
       flaggedJobs.push(reportEntry);
-      continue;
+      return;
     }
 
-    const pageMode = detectPageMode(page, page.body);
+    const pageMode = detectPageMode(page, page.body, sourceUrl);
     if (pageMode.mode === "dead") {
       const updatedRecord = markRemoved(record, pageMode.reason, { now });
       nextRecords = nextRecords.map((item) => cleanText(item.id) === cleanText(record.id) ? updatedRecord : item);
       reportEntry.action = "archived";
       reportEntry.reasons.push(pageMode.reason);
+      reportEntry.pageType = pageMode.pageType;
       changedJobs.push(reportEntry);
-      continue;
+      return;
+    }
+
+    if (pageMode.mode === "uncertain") {
+      const updatedRecord = markNeedsReview(record, pageMode.reason, "freshness_audit", { now });
+      nextRecords = nextRecords.map((item) => cleanText(item.id) === cleanText(record.id) ? updatedRecord : item);
+      nextPending = upsertPending(nextPending, buildPendingJobFromRecord(updatedRecord, publicJob, [pageMode.reason]));
+      reportEntry.action = "demoted_to_pending";
+      reportEntry.reasons.push(pageMode.reason);
+      reportEntry.pageType = pageMode.pageType;
+      changedJobs.push(reportEntry);
+      return;
+    }
+
+    if (pageMode.mode === "code_feed") {
+      const updatedRecord = markNeedsReview(record, pageMode.reason, "freshness_audit", { now });
+      nextRecords = nextRecords.map((item) => cleanText(item.id) === cleanText(record.id) ? updatedRecord : item);
+      nextPending = upsertPending(nextPending, buildPendingJobFromRecord(updatedRecord, publicJob, [pageMode.reason]));
+      reportEntry.action = "demoted_to_pending";
+      reportEntry.reasons.push(pageMode.reason);
+      reportEntry.pageType = "code_feed";
+      changedJobs.push(reportEntry);
+      return;
     }
 
     const reparsed = buildReparsedJob(publicJob, record, page);
@@ -584,7 +688,7 @@ async function main() {
       reportEntry.action = "demoted_to_pending";
       reportEntry.reasons.push("live_parsing_failed");
       changedJobs.push(reportEntry);
-      continue;
+      return;
     }
 
     const readiness = assessPublicJobReadiness(reparsed, {
@@ -642,7 +746,13 @@ async function main() {
       reportEntry.reasons.push(...reasons);
     }
     reportEntry.reasons.push("live_high_confidence_valid_apply_link");
+    reportEntry.pageType = "live";
     keptJobs.push(reportEntry);
+  }
+
+  for (let i = 0; i < stalePublicJobs.length; i += FETCH_CONCURRENCY) {
+    const batch = stalePublicJobs.slice(i, i + FETCH_CONCURRENCY);
+    await Promise.all(batch.map(processStaleJob));
   }
 
   // --- Pending job freshness check ---
@@ -667,7 +777,7 @@ async function main() {
       pendingChanges.push(pendingReportEntry);
       continue;
     }
-    const pageMode = detectPageMode(page, page.body);
+    const pageMode = detectPageMode(page, page.body, sourceUrl);
     if (pageMode.mode === "dead") {
       const isReviewReady = pendingJob.triage_bucket === "review_ready";
       const updatedPending = {
@@ -686,13 +796,16 @@ async function main() {
       if (idx >= 0) nextPending[idx] = updatedPending;
       pendingReportEntry.action = "rejected";
       pendingReportEntry.reasons.push(`dead_page:${pageMode.reason}`);
+      pendingReportEntry.pageType = pageMode.pageType;
       if (isReviewReady) pendingReportEntry.reasons.push("was_review_ready");
       pendingChanges.push(pendingReportEntry);
-    } else if (pageMode.mode === "code_feed") {
-      pendingReportEntry.reasons.push("code_feed_page");
+    } else if (pageMode.mode === "uncertain" || pageMode.mode === "code_feed") {
+      pendingReportEntry.reasons.push(`${pageMode.mode}_page:${pageMode.reason}`);
+      pendingReportEntry.pageType = pageMode.pageType;
       pendingChanges.push(pendingReportEntry);
     } else {
       pendingReportEntry.reasons.push("live");
+      pendingReportEntry.pageType = "live";
       pendingChanges.push(pendingReportEntry);
     }
   }
@@ -703,6 +816,12 @@ async function main() {
     skipped_risky_changes_count: riskyChanges.length,
     stale_threshold_days: STALE_DAYS
   });
+
+  const pageTypeBreakdown = {};
+  for (const entry of [...changedJobs, ...keptJobs, ...flaggedJobs, ...pendingChanges]) {
+    const pt = entry.pageType || "unknown";
+    pageTypeBreakdown[pt] = (pageTypeBreakdown[pt] || 0) + 1;
+  }
 
   const report = {
     generated_at: generatedAt,
@@ -715,7 +834,9 @@ async function main() {
     kept_public_count: keptJobs.length,
     flagged_review_count: flaggedJobs.length,
     pending_rejected_count: pendingChanges.filter((e) => e.action === "rejected").length,
+    pending_uncertain_count: pendingChanges.filter((e) => e.reasons.some((r) => r.startsWith("uncertain_page:"))).length,
     skipped_risky_changes_count: riskyReport.risky_changes.length,
+    page_type_breakdown: pageTypeBreakdown,
     changed_jobs: changedJobs,
     kept_public_jobs: keptJobs,
     flagged_review_jobs: flaggedJobs,
@@ -751,7 +872,7 @@ async function main() {
   }
 
   console.log(
-    `[jobs:freshness-audit] mode=${report.mode} scanned=${report.public_jobs_scanned} changed=${report.changed_jobs_count} kept_public=${report.kept_public_count} flagged_review=${report.flagged_review_count} skipped_risky_changes=${report.skipped_risky_changes_count}`
+    `[jobs:freshness-audit] mode=${report.mode} scanned=${report.public_jobs_scanned} changed=${report.changed_jobs_count} kept_public=${report.kept_public_count} flagged_review=${report.flagged_review_count} pending_rejected=${report.pending_rejected_count} pending_uncertain=${report.pending_uncertain_count} skipped_risky_changes=${report.skipped_risky_changes_count}`
   );
   console.log(`[jobs:freshness-audit] report=${REPORT_FILE}`);
   console.log(`[jobs:freshness-audit] risky_changes_report=${RISKY_REPORT_JSON_FILE}`);
@@ -772,5 +893,8 @@ module.exports = {
   maybeAssignSafe,
   mergeSafePublicJob,
   writeRiskyChangesReport,
+  classifyPageTypeFromUrl,
+  classifyPageTypeFromTitle,
+  detectPageMode,
   main
 };

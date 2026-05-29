@@ -118,7 +118,7 @@ for (const [id, fix] of Object.entries(seelFixes)) {
     job.raw_description = fix.raw_description;
     job.apply_url = fix.url;
     job.original_url = fix.url;
-    job.source_url = "https://seelllc.bamboohr.com/careers";
+    job.source_url = fix.url;
     job.description_source_url = fix.url;
     job.pay_source_url = fix.url;
     job.raw_salary = "";
@@ -141,6 +141,7 @@ for (const [id, fix] of Object.entries(seelFixes)) {
       rec.raw_source_data.raw_description = fix.raw_description;
       rec.raw_source_data.apply_url = fix.url;
       rec.raw_source_data.original_url = fix.url;
+      rec.raw_source_data.source_url = fix.url;
       rec.raw_source_data.description_source_url = fix.url;
       rec.raw_source_data.pay_source_url = fix.url;
       rec.raw_source_data.raw_salary = "";
@@ -439,7 +440,213 @@ if (rhRec) {
   report.job_records_fixed.push({ id: "Renew Home-AFE17A14E0", field: "salary (removed false '6')", note: "Renew Home Product Designer fixed" });
 }
 
-// ===== FIX 9: HubSpot Consultant - fix description with malformed markdown link =====
+// ===== FIX 9: Octopus Energy - remove fake inflated salaries =====
+const octopusPayFixIds = [
+  { id: "Octopus Energy-b5557512-04f8-4bb4-95dd-074da4e4c2de", title: "Performance Marketing Lead" },
+  { id: "Octopus Energy-9d3dbeed-8fcd-4d92-9658-fae45f0be720", title: "Partnerships Manager" }
+];
+for (const { id, title } of octopusPayFixIds) {
+  const job = getById(jobs, id);
+  if (job && job.salary && (job.salary.includes("£1,300,000") || job.salary.includes("£1,200,000") || job.salary === "£1,300,000 / year" || job.salary === "£1,200,000 / year")) {
+    job.salary = "";
+    job.raw_salary = "";
+    job.salary_min = null;
+    job.salary_max = null;
+    job.salary_currency = "Unknown";
+    job.salary_period = "Unknown";
+    job.salary_visible = false;
+    job.pay_like_detected = false;
+    job.raw_pay_candidate = "";
+    job.pay_rejected_reason = "fake_inflated_salary";
+    job.pay_confidence = "rejected";
+    job.visible_pay_found = false;
+    job.pay_source_label = "none";
+    job.pay_candidate_snippets = [];
+    report.jobs_fixed.push({ id, field: "salary (removed fake inflated)", note: `Octopus ${title} salary fixed` });
+  }
+  const rec = getById(jobRecords, id);
+  if (rec) {
+    if (rec.raw_source_data) {
+      rec.raw_source_data.salary = "";
+      rec.raw_source_data.raw_salary = "";
+      rec.raw_source_data.salary_min = null;
+      rec.raw_source_data.salary_max = null;
+      rec.raw_source_data.salary_currency = "Unknown";
+      rec.raw_source_data.salary_period = "Unknown";
+      rec.raw_source_data.pay_like_detected = false;
+      rec.raw_source_data.raw_pay_candidate = "";
+    }
+    if (rec.display) {
+      rec.display.pay_display = "";
+      rec.display.salary_min = null;
+      rec.display.salary_max = null;
+    }
+    report.job_records_fixed.push({ id, field: "salary (removed fake inflated)", note: `Octopus ${title} salary fixed` });
+  }
+}
+
+// ===== FIX 10: American Bird Conservancy - fix contaminated descriptions =====
+const abcFixIds = [
+  { id: "American Bird Conservancy-4045149", title: "Production Specialist" },
+  { id: "American Bird Conservancy-4042466", title: "Writer/Editor" }
+];
+for (const { id, title } of abcFixIds) {
+  const job = getById(jobs, id);
+  if (job) {
+    // Extract clean description before the first "Title:" contamination
+    const rawDesc = job.raw_description || "";
+    const cleanBoundary = rawDesc.indexOf("Title:");
+    if (cleanBoundary > 80) {
+      job.raw_description = rawDesc.substring(0, cleanBoundary).trim();
+      job.description = job.raw_description;
+      job.description_snippet = job.raw_description.split(".")[0] + ".";
+      job.summary = job.description;
+      report.jobs_fixed.push({ id, field: "description (removed contaminated text)", note: `ABC ${title} description cleaned` });
+    }
+  }
+}
+
+// ===== FIX 11: EDP, NextEra — clear fake inflated salaries in records =====
+const fakePayFixes = [
+  { id: "edp-eaf930fcd047", title: "Senior Data Scientist", org: "EDP", fakeSalary: "$1,395,197,333 / year" },
+  { id: "nextera-energy-50fe226b28a5", title: "Senior Automation Engineer", org: "NextEra Energy", fakeSalary: "$12,000,000 / year" },
+  { id: "edp-f365739f6c21", title: "Operations and Maintenance Senior Operator", org: "EDP", fakeSalary: "€28,000,000 / year" }
+];
+for (const { id, title, org, fakeSalary } of fakePayFixes) {
+  const job = getById(jobs, id);
+  if (job && job.salary && job.salary === fakeSalary) {
+    job.salary = "";
+    job.raw_salary = "";
+    job.salary_min = null;
+    job.salary_max = null;
+    job.salary_currency = "Unknown";
+    job.salary_period = "Unknown";
+    job.salary_visible = false;
+    job.pay_like_detected = false;
+    job.raw_pay_candidate = "";
+    job.pay_rejected_reason = "fake_inflated_salary";
+    job.pay_confidence = "rejected";
+    job.visible_pay_found = false;
+    job.pay_source_label = "none";
+    job.pay_candidate_snippets = [];
+    report.jobs_fixed.push({ id, field: "salary (cleared fake inflated)", note: `${org} ${title} fake pay cleared` });
+  }
+  const rec = getById(jobRecords, id);
+  if (rec) {
+    if (rec.raw_source_data) {
+      rec.raw_source_data.salary = "";
+      rec.raw_source_data.raw_salary = "";
+      rec.raw_source_data.salary_min = null;
+      rec.raw_source_data.salary_max = null;
+      rec.raw_source_data.salary_currency = "Unknown";
+      rec.raw_source_data.salary_period = "Unknown";
+      rec.raw_source_data.pay_like_detected = false;
+      rec.raw_source_data.raw_pay_candidate = "";
+    }
+    if (rec.display) {
+      rec.display.pay_display = "";
+      rec.display.salary_min = null;
+      rec.display.salary_max = null;
+    }
+    report.job_records_fixed.push({ id, field: "salary (cleared fake inflated)", note: `${org} ${title} fake pay cleared` });
+  }
+}
+
+// ===== FIX 12: EDF — fix Workday /apply/autofillWithResume URLs =====
+const edfUrlFixes = [
+  {
+    id: "edf-68fa50f7fc84",
+    title: "Analyst, Total Rewards",
+    correctUrl: "https://osv-edf.wd5.myworkdayjobs.com/en-US/EDF_External_Careers/job/Remote---US-Home/Analyst--Total-Rewards_REQ-002498-1"
+  },
+  {
+    id: "edf-2097bb83af97",
+    title: "Senior Manager, California State Affairs",
+    correctUrl: "https://osv-edf.wd5.myworkdayjobs.com/en-US/EDF_External_Careers/job/Remote---US-Field/Senior-Manager--California-State-Affairs_REQ-002318-1"
+  }
+];
+for (const { id, title, correctUrl } of edfUrlFixes) {
+  const job = getById(jobs, id);
+  if (job) {
+    const oldApply = job.apply_url || "";
+    if (oldApply.includes("/apply/autofillWithResume") || oldApply.includes("/apply/")) {
+      job.apply_url = correctUrl;
+      job.original_url = correctUrl;
+      report.jobs_fixed.push({ id, field: "apply_url (removed /apply/ suffix)", note: `EDF ${title} URL fixed` });
+    }
+  }
+  const rec = getById(jobRecords, id);
+  if (rec) {
+    if (rec.raw_source_data) {
+      const oldRaw = rec.raw_source_data.apply_url || "";
+      if (oldRaw.includes("/apply/autofillWithResume") || oldRaw.includes("/apply/")) {
+        rec.raw_source_data.apply_url = correctUrl;
+        rec.raw_source_data.original_url = correctUrl;
+      }
+    }
+    if (rec.display && rec.display.application_url && rec.display.application_url.includes("/apply/")) {
+      rec.display.application_url = correctUrl;
+    }
+    report.job_records_fixed.push({ id, field: "apply_url (removed /apply/ suffix)", note: `EDF ${title} URL fixed` });
+  }
+}
+
+// ===== FIX 13: Sunrun — fix workplace/location contradiction (On-site + Remote → On-site + Lehi, Utah) =====
+const sunrunIds = ["sunrun-f9ad259806d4"];
+for (const id of sunrunIds) {
+  const job = getById(jobs, id);
+  if (job && job.workplace_type === "On-site" && job.location === "Remote") {
+    job.location = "Lehi, Utah";
+    report.jobs_fixed.push({ id, field: "location (On-site + Remote → Lehi, Utah)", note: `Sunrun ${job.title} location fixed` });
+  }
+  const rec = getById(jobRecords, id);
+  if (rec) {
+    if (rec.raw_source_data && rec.raw_source_data.workplace_type === "On-site" && rec.raw_source_data.location === "Remote") {
+      rec.raw_source_data.location = "Lehi, Utah";
+    }
+    if (rec.display && rec.display.location === "Remote") {
+      rec.display.location = "Lehi, Utah";
+    }
+    report.job_records_fixed.push({ id, field: "location (On-site + Remote → Lehi, Utah)", note: "Sunrun record location fixed" });
+  }
+}
+
+// ===== FIX 14: SEEL records — fix display.source_url to individual BambooHR URLs =====
+const seelRecordIds = ["SEEL-412", "SEEL-416", "SEEL-419", "SEEL-423", "SEEL-425", "SEEL-426"];
+for (const id of seelRecordIds) {
+  const rec = getById(jobRecords, id);
+  if (rec) {
+    const rawSource = rec.raw_source_data && rec.raw_source_data.source_url;
+    if (rawSource && rawSource.match(/\/careers\/\d+$/)) {
+      rec.source_url = rawSource;
+      if (rec.display && rec.display.source_url && !rec.display.source_url.match(/\/careers\/\d+$/)) {
+        rec.display.source_url = rawSource;
+        report.job_records_fixed.push({ id, field: "display.source_url (fixed to individual URL)", note: "SEEL display.source_url fixed" });
+      }
+    }
+  }
+}
+
+// ===== FIX 15: ABC closed jobs — remove from public board =====
+const abcClosedIds = new Set(["American Bird Conservancy-4045149", "American Bird Conservancy-4042466"]);
+const abcsInJobs = jobs.filter(j => abcClosedIds.has(j.id));
+for (const job of abcsInJobs) {
+  report.jobs_fixed.push({ id: job.id, field: "entire record (removed)", note: `ABC ${job.title} closed job removed from board` });
+}
+const abcsInRecords = jobRecords.filter(r => abcClosedIds.has(r.id));
+for (const rec of abcsInRecords) {
+  report.job_records_fixed.push({ id: rec.id, field: "entire record (removed)", note: `ABC ${rec.id} closed job removed from records` });
+}
+// Filter out the ABC records from both arrays
+const filteredJobs = jobs.filter(j => !abcClosedIds.has(j.id));
+const filteredRecords = jobRecords.filter(r => !abcClosedIds.has(r.id));
+// Replace in-place
+jobs.length = 0;
+jobs.push(...filteredJobs);
+jobRecords.length = 0;
+jobRecords.push(...filteredRecords);
+
+// ===== FIX 16: HubSpot Consultant - fix description with malformed markdown link =====
 const hubJob = getById(jobs, "Renew Home-8F00486888");
 if (hubJob && hubJob.description && hubJob.description.includes("[www")) {
   hubJob.description = hubJob.description.replace(/\[www\.[^\]]*\]\([^)]{0,20}/g, "");

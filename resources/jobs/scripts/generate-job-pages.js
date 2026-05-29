@@ -58,7 +58,6 @@ function buildJsonLd(job) {
     "@type": "JobPosting",
     title: cleanVisibleText(job.title),
     description: cleanVisibleText(job.description || ""),
-    directApply: true,
     hiringOrganization: job.organization
       ? {
           "@type": "Organization",
@@ -124,8 +123,10 @@ function buildPage(job, slug, hash) {
   const normalizedJobType = normalizeEmploymentType(canonical.job_type || "");
   const normalizedWorkplaceType = normalizeWorkplaceType(canonical.workplace_type || "");
   const title = `${cleanVisibleText(canonical.title)} at ${cleanVisibleText(canonical.organization)}`;
-  const fullDescription = cleanVisibleText(canonical.description || "");
-  const descriptionSnippet = truncate(canonical.description_snippet || canonical.summary || fullDescription || `${cleanVisibleText(canonical.title)} at ${cleanVisibleText(canonical.organization)} in climate, clean energy, sustainability, policy, and creative work.`);
+  const structuredDesc = canonical.structured_description || "";
+  const flattenedDesc = cleanVisibleText(canonical.description || "");
+  const fullDescription = structuredDesc && structuredDesc.length >= 60 && /[A-Za-z]{3,}/.test(structuredDesc) ? structuredDesc : flattenedDesc;
+  const descriptionSnippet = truncate(canonical.description_snippet || canonical.summary || flattenedDesc || `${cleanVisibleText(canonical.title)} at ${cleanVisibleText(canonical.organization)} in climate, clean energy, sustainability, policy, and creative work.`);
   const originalUrl = canonical.original_url || canonical.apply_url || canonical.source_url || "#";
   const tags = Array.isArray(canonical.tags) ? canonical.tags.map((tag) => cleanVisibleText(tag)).filter(Boolean) : [];
   const summary = fullDescription;
@@ -189,7 +190,7 @@ ${buildJsonLd(job)}
         <div style="font-size:1.05rem; color:var(--ink-secondary);">${escapeHtml(canonical.organization)}</div>
         <div class="meta-list">
           ${canonical.location ? `<div class="meta">${escapeHtml(canonical.location)}</div>` : ""}
-          ${normalizedWorkplaceType ? `<div class="meta">${escapeHtml(normalizedWorkplaceType)}</div>` : ""}
+          ${normalizedWorkplaceType && normalizedWorkplaceType !== canonical.location ? `<div class="meta">${escapeHtml(normalizedWorkplaceType)}</div>` : ""}
           ${normalizedJobType ? `<div class="meta">${escapeHtml(normalizedJobType)}</div>` : ""}
           ${canonical.salary ? `<div class="meta">${escapeHtml(canonical.salary)}</div>` : ""}
           ${canonical.source ? `<div class="meta">${escapeHtml(canonical.source)}</div>` : ""}

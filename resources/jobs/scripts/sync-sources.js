@@ -9,6 +9,7 @@ const {
 } = require("./job-utils");
 const { dedupeJobs, getParserCleanupStats, resetParserCleanupStats, routeSyncedJob } = require("./job-normalizer");
 const { isBlockedSourceEntry } = require("./blocked-source-utils");
+const { guardIncoming, loadArchiveRecords } = require("./archive-fingerprint-guard");
 const { attachPublicJobPageUrls } = require("./public-jobs");
 const {
   fetchAshbyJobsForSource,
@@ -127,6 +128,8 @@ async function runSyncForTypes(types = []) {
   const counts = {};
   const scrapeReports = [];
   const sourceHealthEntries = [];
+  const archiveGuardRecords = loadArchiveRecords();
+  let archiveBlockedCount = 0;
 
   for (const source of enabledSources) {
     const normalizedSource = normalizeSource(source);
@@ -206,6 +209,13 @@ async function runSyncForTypes(types = []) {
       for (const rawJob of rawJobs) {
         if (isBlockedSourceEntry(rawJob)) {
           console.log(`[jobs:sync-sources] ${source.id}: Skipping blocked source job`);
+          continue;
+        }
+        const guarded = guardIncoming([rawJob], archiveGuardRecords);
+        if (guarded.blocked.length) {
+          const b = guarded.blocked[0];
+          console.log(`[jobs:sync-sources] ${source.id}: Skipping archived/rejected job "${rawJob.title}" (matched ${b.matched_archive_id}: ${b.matched_archive_status})`);
+          archiveBlockedCount++;
           continue;
         }
         const routed = routeSyncedJob(rawJob, source);
@@ -409,7 +419,7 @@ async function runSyncForTypes(types = []) {
     );
   });
   console.log(
-    `[jobs:sync-sources] Wrote ${finalPublicWriteResult.jobs.length} public jobs to ${JOBS_FILE}, ${triaged.adminPendingJobs.length} admin-pending jobs to ${PENDING_SYNCED_FILE}, auto_published=${triaged.summary.auto_published || 0}, rejected ${triaged.summary.rejected_noise} as noise, dropped_by_cap=${triaged.summary.dropped_by_cap_total}, final_pending_size_mb=${triaged.summary.final_pending_file_size_mb}.`
+    `[jobs:sync-sources] Wrote ${finalPublicWriteResult.jobs.length} public jobs to ${JOBS_FILE}, ${triaged.adminPendingJobs.length} admin-pending jobs to ${PENDING_SYNCED_FILE}, auto_published=${triaged.summary.auto_published || 0}, rejected ${triaged.summary.rejected_noise} as noise, dropped_by_cap=${triaged.summary.dropped_by_cap_total}, final_pending_size_mb=${triaged.summary.final_pending_file_size_mb}, archive_blocked=${archiveBlockedCount}.`
   );
   const parserStats = getParserCleanupStats();
   console.log(

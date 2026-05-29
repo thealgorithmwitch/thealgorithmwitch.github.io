@@ -1,0 +1,94 @@
+{
+  "report_type": "source_onboarding",
+  "generated_at": "2026-05-29T02:57:36.456262Z",
+  "new_sources": 3,
+  "total_jobs_found": 5,
+  "total_jobs_accepted": 5,
+  "total_jobs_rejected": 0,
+  "sources": [
+    {
+      "source_id": "energy-policy-institute",
+      "name": "Energy & Policy Institute",
+      "type": "custom",
+      "provider": "energy-policy-institute (custom parser)",
+      "url": "https://energyandpolicy.org/jobs/",
+      "expected_count": 3,
+      "jobs_found": 3,
+      "jobs_accepted": 3,
+      "jobs_rejected": 0,
+      "rejection_reasons": [],
+      "route": "pending",
+      "status": "pending (manual review required)",
+      "job_titles": [
+        "Data Engineer",
+        "Research Manager",
+        "Research Fellow"
+      ],
+      "title_parsing": "Direct from known titles in HTML",
+      "description_extraction": "Generic (no job descriptions on page, placeholder text added)",
+      "pay_visibility": "Hidden (not listed on page)",
+      "duplicates_created": 0,
+      "notes": "Jobs listed as plain anchor tags on simple HTML page. No API available."
+    },
+    {
+      "source_id": "permit-power",
+      "name": "Permit Power",
+      "type": "ats",
+      "provider": "careerpuck",
+      "url": "https://app.careerpuck.com/job-board/permit-power",
+      "expected_count": 1,
+      "jobs_found": 1,
+      "jobs_accepted": 1,
+      "jobs_rejected": 0,
+      "rejection_reasons": [],
+      "route": "pending",
+      "status": "pending (manual review required)",
+      "job_titles": [
+        "Advocacy Director"
+      ],
+      "title_parsing": "Direct from API (title field)",
+      "description_extraction": "Full HTML description available via API",
+      "pay_visibility": "Hidden ($133,000-$160,000/year mentioned in description but not extracted as structured pay)",
+      "duplicates_created": 0,
+      "notes": "CareerPuck API at api.careerpuck.com/v1/public/job-boards/{slug}. Requires Origin + Referer headers."
+    },
+    {
+      "source_id": "climate-action-campaign",
+      "name": "Climate Action Campaign",
+      "type": "ats",
+      "provider": "trakstar",
+      "url": "https://climateactioncampaign.hire.trakstar.com/",
+      "expected_count": 1,
+      "jobs_found": 1,
+      "jobs_accepted": 1,
+      "jobs_rejected": 0,
+      "rejection_reasons": [],
+      "route": "pending",
+      "status": "pending (manual review required)",
+      "job_titles": [
+        "DigiComms Fellowship"
+      ],
+      "title_parsing": "From RSS feed item title",
+      "description_extraction": "Full HTML description from RSS feed",
+      "pay_visibility": "Hidden ($19/hour mentioned in description but not extracted as structured pay)",
+      "duplicates_created": 0,
+      "notes": "Trakstar RSS feed at {company}.hire.trakstar.com/jobfeeds/{CompanyName} (case-sensitive). No public JSON API."
+    }
+  ],
+  "infrastructure_changes": [
+    "Added careerpuck and trakstar to ATS_PROVIDERS in source-utils.js",
+    "Added careerpuck and trakstar to DIRECT_PROVIDER_TYPES in source-utils.js",
+    "Added careerpuck and trakstar to SUPPORTED_TYPES in sync-sources.js",
+    "Added careerpuck and trakstar to ELIGIBLE_PROVIDERS in sync-targeted-pending-sources.js",
+    "Added careerpuck and trakstar ATS patterns to discovery.js",
+    "Added careerpuck and trakstar provider detectors to source-discovery-helpers.js",
+    "Added careerpuck and trakstar handlers in deriveProviderMetadata()",
+    "Added careerpuck and trakstar canonical URLs in canonicalizeSourceUrl()",
+    "Created fetchCareerPuckJobsForSource() and careerPuckJobToSchema() in ats-clients.js",
+    "Created fetchTrakstarJobsForSource() and trakstarJobToSchema() in ats-clients.js",
+    "Created energy-policy-institute custom parser in scrapers/parsers/",
+    "Added energy-policy-institute to scrapers/index.js",
+    "Modified sync-custom.js to use scrapeCustomSource when parser field is set",
+    "Added 3 new sources to sources.json (total now 187)"
+  ]
+}

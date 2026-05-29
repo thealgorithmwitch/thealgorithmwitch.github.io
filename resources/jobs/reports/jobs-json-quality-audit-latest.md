@@ -1,15 +1,15 @@
 # Jobs JSON Quality Audit Report
 
-Generated: 2026-05-29T15:56:20.438Z
+Generated: 2026-05-29T19:36:50.789Z
 
 ## Summary
 
 | File | Records |
 | --- | --- |
-| jobs.json | 94 |
+| jobs.json | 93 |
 | job-records.json | 172 |
 | pending-synced-jobs.json | 346 |
-| **Total** | **612** |
+| **Total** | **611** |
 
 **Total issues found: 206**
 

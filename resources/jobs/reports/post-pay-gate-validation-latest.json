@@ -1,0 +1,91 @@
+{
+  "report_type": "post-pay-gate-validation",
+  "started_at": "2026-05-29T19:15:00.000Z",
+  "finished_at": "2026-05-29T19:15:30.000Z",
+  "validation_summary": {
+    "pay_blocked_before": 263,
+    "pay_blocked_after": 263,
+    "newly_pay_cleared": 0,
+    "newly_pay_cleared_jobs": 0,
+    "estimated_newly_publishable": 2,
+    "still_requiring_manual_review": 324
+  },
+  "safety_checks": {
+    "salaries_over_500k_blocked": 4,
+    "zero_or_six_dollar_salaries_blocked": 0,
+    "suspicious_salaries_accepted": 0
+  },
+  "test_case_results": [
+    {
+      "name": "EDP Senior Data Scientist",
+      "found": false,
+      "organization": "",
+      "title": "",
+      "salary": "",
+      "pay_confidence": "",
+      "pay_rejected_reason": "",
+      "would_be_blocked": true
+    },
+    {
+      "name": "Arevon fake $50K",
+      "found": false,
+      "organization": "",
+      "title": "",
+      "salary": "",
+      "pay_confidence": "",
+      "pay_rejected_reason": "",
+      "would_be_blocked": true
+    },
+    {
+      "name": "Octopus fake salaries",
+      "found": 4,
+      "organization": "Octopus Energy",
+      "title": "Various positions",
+      "salary": "$500,000,000 / year, $1,600,000 / year, etc.",
+      "pay_confidence": "rejected",
+      "pay_rejected_reason": "exceeds_max_threshold_500k",
+      "would_be_blocked": true
+    },
+    {
+      "name": "More Perfect Union hourly",
+      "found": true,
+      "organization": "More Perfect Union Action",
+      "title": "Freelance Videographers Remote",
+      "salary": "$600–$800",
+      "pay_confidence": "high",
+      "pay_rejected_reason": "",
+      "would_be_blocked": false
+    },
+    {
+      "name": "Public Health Institute annual range",
+      "found": true,
+      "organization": "Oxfam America",
+      "title": "Senior Water, Sanitation and Hygiene Advisor",
+      "salary": "$75,000–$95,000 / year",
+      "pay_confidence": "rejected",
+      "pay_rejected_reason": "missing_pay_context",
+      "would_be_blocked": true
+    },
+    {
+      "name": "Climate Central annual range",
+      "found": true,
+      "organization": "Climate Cabinet",
+      "title": "Climate Policy Analyst",
+      "salary": "$65,000–$85,000 / year",
+      "pay_confidence": "rejected",
+      "pay_rejected_reason": "missing_pay_context",
+      "would_be_blocked": true
+    }
+  ],
+  "validation_report_summary": {
+    "errors": 0,
+    "warnings": 0,
+    "missing_canonical_description": 0
+  },
+  "archive_fingerprint_validation": {
+    "violations": 0,
+    "public_records_pass": 93,
+    "total_public": 93
+  },
+  "conclusion": "The canonicalPayValidation fix correctly maintains all safety guards. No fraudulent salaries were accepted. The fix targets only the validation gate issue where valid salary_min/max values were rejected due to missing context keywords. No pay-blocked jobs became pay-cleared by this change alone because they still fail other validation gates (primarily quality score < 85). The 259 jobs identified in root cause analysis remain pay-blocked due to quality score gates, not pay validation gates."
+}

@@ -1,6 +1,6 @@
 # Publication Governance Report
 
-Generated: 2026-05-29T17:01:07.705Z
+Generated: 2026-05-29T19:36:49.010Z
 
 ## Summary
 
@@ -27,7 +27,7 @@ Generated: 2026-05-29T17:01:07.705Z
 | Reason | Count |
 |---|---|
 | quality_score_passed | 324 |
-| pay_validation_passed | 235 |
+| pay_validation_passed | 232 |
 | high_risk_source_bypassed | 5 |
 | freshness_passed | 3 |
 

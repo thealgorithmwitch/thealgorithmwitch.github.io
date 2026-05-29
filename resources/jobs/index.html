@@ -1279,6 +1279,10 @@
             <span class="mini-filter-label">Salary</span>
             <div class="filter-list" id="filter-salary"></div>
           </div>
+          <div>
+            <span class="mini-filter-label">State</span>
+            <div class="filter-list" id="filter-state"></div>
+          </div>
           <div class="filter-group-specialization">
             <span class="mini-filter-label">Specialization</span>
             <div class="filter-list filter-list-specialization" id="filter-specialization"></div>
@@ -1436,7 +1440,8 @@
         sector: new Set(),
         specialization: new Set(),
         salary: new Set(),
-        company: new Set()
+        company: new Set(),
+        state: new Set()
       }
     };
 
@@ -1514,7 +1519,8 @@
         jobType: document.getElementById("filter-job-type"),
         sector: document.getElementById("filter-sector"),
         specialization: document.getElementById("filter-specialization"),
-        salary: document.getElementById("filter-salary")
+        salary: document.getElementById("filter-salary"),
+        state: document.getElementById("filter-state")
       }
     };
 
@@ -1782,6 +1788,28 @@
       return null;
     }
 
+    const US_STATE_MAP = {
+      'AL':'Alabama','AK':'Alaska','AZ':'Arizona','AR':'Arkansas','CA':'California','CO':'Colorado','CT':'Connecticut','DE':'Delaware','FL':'Florida','GA':'Georgia','HI':'Hawaii','ID':'Idaho','IL':'Illinois','IN':'Indiana','IA':'Iowa','KS':'Kansas','KY':'Kentucky','LA':'Louisiana','ME':'Maine','MD':'Maryland','MA':'Massachusetts','MI':'Michigan','MN':'Minnesota','MS':'Mississippi','MO':'Missouri','MT':'Montana','NE':'Nebraska','NV':'Nevada','NH':'New Hampshire','NJ':'New Jersey','NM':'New Mexico','NY':'New York','NC':'North Carolina','ND':'North Dakota','OH':'Ohio','OK':'Oklahoma','OR':'Oregon','PA':'Pennsylvania','RI':'Rhode Island','SC':'South Carolina','SD':'South Dakota','TN':'Tennessee','TX':'Texas','UT':'Utah','VT':'Vermont','VA':'Virginia','WA':'Washington','WV':'West Virginia','WI':'Wisconsin','WY':'Wyoming'
+    };
+
+    function getStateFilterValues(job) {
+      const loc = String(job.location || '').trim();
+      if (!loc) return new Set();
+      const states = new Set();
+      const locLower = loc.toLowerCase();
+      // Match state name or abbreviation after comma, e.g. "New York, NY" or "San Francisco, CA"
+      const abbrMatch = locLower.match(/,\s*([a-z]{2})\s*$/);
+      if (abbrMatch) {
+        const abbr = abbrMatch[1].toUpperCase();
+        if (US_STATE_MAP[abbr]) states.add(US_STATE_MAP[abbr]);
+      }
+      // Match full state names
+      Object.values(US_STATE_MAP).forEach(name => {
+        if (locLower.includes(name.toLowerCase())) states.add(name);
+      });
+      return states;
+    }
+
     function matchesSalaryFilter(job) {
       if (!state.filters.salary.size) return true;
       const salaryFloor = getSalaryFloor(job);
@@ -1877,6 +1905,7 @@
       if (state.filters.jobType.size && !state.filters.jobType.has(job.job_type)) return false;
       if (state.filters.sector.size && !state.filters.sector.has(getSectorFilterLabel(job))) return false;
       if (state.filters.specialization.size && !Array.from(state.filters.specialization).some((value) => getSpecializationFilterValues(job).has(value))) return false;
+      if (state.filters.state.size && !Array.from(state.filters.state).some((value) => getStateFilterValues(job).has(value))) return false;
       if (!matchesSalaryFilter(job)) return false;
 
       return true;
@@ -1907,6 +1936,7 @@
         jobType: [...new Set(activeJobs.map((job) => job.job_type).filter(Boolean))],
         sector: [...new Set(activeJobs.map((job) => getSectorFilterLabel(job)).filter(Boolean))],
         salary: SALARY_FILTER_OPTIONS,
+        state: [...new Set(activeJobs.flatMap((job) => Array.from(getStateFilterValues(job))))].sort(),
         specialization: SPECIALIZATION_OPTIONS.filter((value) => activeJobs.some((job) => getSpecializationFilterValues(job).has(value)))
       };
 

@@ -1,0 +1,80 @@
+{
+  "report_type": "final-cleanup",
+  "generated_at": "2026-05-29T16:46:49.189Z",
+  "phases": {
+    "phase1_stale_pages": {
+      "orphaned_found": 0,
+      "orphaned_removed": [
+        "production-specialist-american-bird-conservancy.html",
+        "writer-editor-american-bird-conservancy.html"
+      ],
+      "pages_remaining": 93,
+      "jobs_in_json": 93,
+      "pages_match_jobs": true,
+      "status": "pass"
+    },
+    "phase2_quince_warning": {
+      "root_cause": "DESCRIPTION_JUNK_PATTERNS in job-normalizer.js matched legitimate text",
+      "fix": "Removed /\\bRenewable Energy\\b/i from DESCRIPTION_JUNK_PATTERNS (false positive)",
+      "affected_job": "arevon-a3d114f378de Scada Operations Supervisor flagged as corrupted",
+      "quince_job_action": "Quince-5167665008 removed from public, archived in job-records.json (Greenhouse 404)",
+      "validation_before": "missing canonical description count 1",
+      "validation_after": "errors: [] (clean)",
+      "status": "pass"
+    },
+    "phase3_cicd_workflows": {
+      "workflows_created": [
+        {
+          "file": ".github/workflows/jobs-freshness.yml",
+          "schedule": "Every 3 days at 09:00",
+          "purpose": "Freshness audit + validation + reports"
+        },
+        {
+          "file": ".github/workflows/jobs-sync.yml",
+          "schedule": "Daily at 06:00",
+          "purpose": "Full pipeline: sync, admin, promote, validate, build pages"
+        },
+        {
+          "file": ".github/workflows/jobs-audit.yml",
+          "schedule": "Weekly on Monday at 08:00",
+          "purpose": "Quality audit + archive + duplicate/structure/pay"
+        }
+      ],
+      "safety_gates": [
+        "validate-public-data must pass before commit",
+        "Archive fingerprint validation (0 violations required)",
+        "Duplicate ID detection (0 duplicates)",
+        "Public/pending overlap check (0 overlaps)",
+        "Pay integrity check (>$500k blocked)",
+        "Jobs.json >20% drop guard",
+        "Page-to-job count match",
+        "Malformed JSON guard"
+      ],
+      "status": "pass"
+    }
+  },
+  "validation": {
+    "stale_generated_pages": "0 stale pages remaining",
+    "quince_warnings": "0 (dead job removed, false positive fixed)",
+    "public_pending_overlap": 0,
+    "archive_fingerprint_violations": 0,
+    "duplicate_public_jobs": 0,
+    "fake_public_salaries": 0,
+    "closed_public_jobs": 0,
+    "generated_pages_match_jobs": true,
+    "cicd_workflows_present": true
+  },
+  "system_health": {
+    "public_jobs": 93,
+    "pending_jobs": 346,
+    "archived_jobs": 19,
+    "total_records": 172,
+    "workflow_coverage": "3 workflows (freshness, sync, audit)",
+    "known_remaining_risks": [
+      "329/346 pending jobs blocked by promotion gate (pay_not_clean)",
+      "No CI/CD secrets configured for commit/push in sync workflow",
+      "Freshness audit dry-run by default (--write required for effect)",
+      "promote-public-ready --write --auto-publish may need manual oversight initially"
+    ]
+  }
+}

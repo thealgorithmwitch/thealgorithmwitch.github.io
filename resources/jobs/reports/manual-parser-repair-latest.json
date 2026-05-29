@@ -1,107 +1,58 @@
 {
-  "report_type": "manual_parser_repair",
-  "generated_at": "2026-05-28T14:00:00.000Z",
-  "job_count_before": 101,
-  "job_count_after": 101,
-  "record_count_before": 174,
-  "record_count_after": 174,
-  "fixes_applied": {
-    "unclosed_parentheses_titles": {
-      "count": 2,
-      "records": [
-        "Renew Home-8F00486888 (HubSpot Consultant (3 Month Contract) -> added closing paren)",
-        "Renew Home-AFE17A14E0 (Product Designer (6 Month Contract) -> added closing paren)"
-      ]
+  "reportGeneratedAt": "2026-05-29T15:44:45.000Z",
+  "totalJobsInFile": 96,
+  "totalRecordsInFile": 174,
+  "fixesApplied": {
+    "SEEL URLs": {
+      "recordsUpdated": 6,
+      "description": "Updated SEEL source_url from generic careers page to individual BambooHR job URLs (e.g., /careers/412)"
     },
-    "unclosed_parentheses_descriptions": {
-      "count": 8,
-      "note": "Fixed malformed markdown links (]( without )) and dangling open parens across descriptions"
+    "Arevon fake salary": {
+      "recordsUpdated": 2,
+      "description": "Removed fake $50K salary from Arevon SCADA Supervisor and BESS Field Technician"
     },
-    "seel_records_repaired": {
-      "count": 6,
-      "records": ["SEEL-412", "SEEL-416", "SEEL-419", "SEEL-423", "SEEL-425", "SEEL-426"],
-      "fixes": {
-        "location": "Extracted from raw description (e.g. Collinsville, Illinois -> Collinsville, Illinois)",
-        "description": "Replaced metadata junk with proper role descriptions",
-        "url": "Set per-job BambooHR apply URLs",
-        "salary": "Removed false salary=0 default",
-        "workplace_type": "Kept as On-site (correct from ATS)"
-      }
+    "TNC URLs": {
+      "recordsUpdated": 3,
+      "description": "Fixed Nature Conservancy URLs from Workday /apply to careers.tnc.org individual listings"
     },
-    "arevon_salary_removed": {
-      "count": 2,
-      "records": ["arevon-a3d114f378de", "arevon-d70e963ac829"],
-      "fix": "Removed fake $50K salary that appeared in all Arevon listings (was reused template default)"
+    "Closed parentheses": {
+      "descriptionsFixed": 4,
+      "description": "Fixed unclosed parentheses in descriptions across multiple records"
     },
-    "earthjustice_descriptions_improved": {
-      "count": 2,
-      "records": [
-        "earthjustice-d1cc12f62ae5 (Enterprise Systems Product Manager - used real hybrid work description)",
-        "earthjustice-c2fd77315e2d (Director of Digital Fundraising - added proper role description)"
-      ]
+    "Renew Home Product Designer salary": {
+      "recordsUpdated": 1,
+      "description": "Removed false salary '6' parsed as pay, updated job_type to Contract"
     },
-    "nature_conservancy_urls_fixed": {
-      "count": 3,
-      "records": [
-        "tnc-7863547f4769 (Montana Director of Development - /apply -> description URL, deduped description)",
-        "tnc-d00634de07a7 (Hospitality Specialist - /apply -> description URL)",
-        "tnc-6f8f3462f7e9 (WY Director of External Affairs - /apply -> description URL, deduped description)"
-      ]
+    "Renew Home HubSpot Consultant": {
+      "recordsUpdated": 1,
+      "description": "Removed malformed markdown link from description"
     },
-    "renew_home_salary_fix": {
-      "count": 1,
-      "records": ["Renew Home-AFE17A14E0"],
-      "fix": "Removed false salary=6 (parsed from '6 Month Contract' text)"
+    "Earthjustice descriptions": {
+      "recordsUpdated": 2,
+      "description": "Improved descriptions for Enterprise Systems Product Manager and Director of Digital Fundraising"
     },
-    "hip_hop_caucus": {
-      "status": "already_correct",
-      "note": "Think 100% Campaigns Manager title is correct; stripStandaloneMetadataNumbers preserves 100 + % suffix"
+    "Octopus Energy fake inflated salaries": {
+      "recordsUpdated": 2,
+      "description": "Removed fake inflated salaries £1,300,000/year and £1,200,000/year from Performance Marketing Lead and Partnerships Manager"
     },
-    "wri_records": {
-      "status": "reviewed_no_changes_needed",
-      "note": "Climate Associate (South Africa) is valid; Project Intern title is generic but legitimate. Non-English filter added to parser."
+    "American Bird Conservancy description": {
+      "recordsUpdated": 1,
+      "description": "Cleaned contaminated description for Production Specialist (removed multi-job text)"
     }
   },
-  "parser_rules_added": [
-    {
-      "file": "job-normalizer.js",
-      "rule": "fixUnclosedParentheses(text)",
-      "applied_in": ["normalizeTitle", "normalizeDescription"],
-      "purpose": "Closes dangling open parens and malformed markdown links in titles and descriptions"
-    },
-    {
-      "file": "job-normalizer.js",
-      "rule": "hasClosedJobSignal(rawDescription)",
-      "applied_in": "normalizeDescription return guard",
-      "purpose": "Returns empty description when raw description contains closed job signals (application closed, position filled, etc.)"
-    },
-    {
-      "file": "job-normalizer.js",
-      "rule": "looksLikeNonEnglishDescription(rawDescription)",
-      "applied_in": "normalizeDescription return guard",
-      "purpose": "Returns empty description when description matches Spanish/German/French/common non-English patterns"
-    },
-    {
-      "file": "job-normalizer.js",
-      "rule": "Inline malformed markdown fix (]( without )) and dangling parens fix",
-      "applied_in": "normalizeDescription pipeline chain",
-      "purpose": "Fixes malformed markdown links like [text]( and dangling open parens like ( Experience/"
-    },
-    {
-      "file": "job-normalizer.js",
-      "rule": "Title-level paren fix for 3/6 Month Contract patterns",
-      "applied_in": "normalizeTitle",
-      "purpose": "Closes unclosed '(3 Month Contract' and '(6 Month Contract' patterns"
-    }
+  "frontendFixesApplied": [
+    "Added formatWorkplaceLocation() helper to deduplicate workplace_type/location display",
+    "Updated card rendering to use formatWorkplaceLocation instead of raw location",
+    "Updated generated detail pages to skip redundant workplace_type when identical to location",
+    "State filter now renders in 2-column grid layout inside the filter row"
   ],
-  "validation": {
-    "jobs_json_count": 101,
-    "job_records_count": 174,
-    "page_build_safe": true,
-    "pages_written": 15,
-    "stale_pages_deleted": 0,
-    "slug_collisions": 0,
-    "duplicate_slug_count": 0,
-    "largest_description_length": 16000
-  }
+  "parserRulesAdded": [],
+  "validationPassed": true,
+  "filesChanged": [
+    "jobs.json",
+    "job-records.json",
+    "index.html",
+    "scripts/manual-parser-repair.js",
+    "scripts/generate-job-pages.js"
+  ]
 }

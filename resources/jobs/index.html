@@ -457,6 +457,13 @@
       align-items: start;
     }
 
+    .filter-list.filter-list-grid-2 {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px 18px;
+      align-items: start;
+    }
+
     .filter-list.filter-list-specialization {
       display: grid;
       grid-auto-flow: column;
@@ -1146,6 +1153,10 @@
         grid-template-columns: 1fr;
       }
 
+      .filter-list.filter-list-grid-2 {
+        grid-template-columns: 1fr;
+      }
+
       .filter-list.filter-list-specialization {
         grid-auto-flow: row;
         grid-template-rows: none;
@@ -1281,7 +1292,7 @@
           </div>
           <div>
             <span class="mini-filter-label">State</span>
-            <div class="filter-list" id="filter-state"></div>
+            <div class="filter-list filter-list-grid-2" id="filter-state"></div>
           </div>
           <div class="filter-group-specialization">
             <span class="mini-filter-label">Specialization</span>
@@ -1695,10 +1706,20 @@
 
     function getWorkMode(job) {
       if (job.workplace_type) return normalizeWorkplaceTypeLabel(job.workplace_type);
-      const location = String(job.location || "").toLowerCase();
-      if (location.includes("remote")) return "Remote";
-      if (location.includes("hybrid")) return "Hybrid";
-      return "On-site";
+      if (job.location) return normalizeWorkplaceTypeLabel(job.location);
+      return "";
+    }
+
+    function formatWorkplaceLocation(job) {
+      const wt = (job.workplace_type || "").trim();
+      const loc = (job.location || "").trim();
+      const wtLower = wt.toLowerCase();
+      const locLower = loc.toLowerCase();
+      if (wtLower && locLower && wtLower === locLower) return "";
+      if (locLower === "remote" && !wtLower) return "Remote";
+      if (!locLower) return wt || "";
+      if (!wtLower) return loc || "";
+      return `${wt} / ${loc}`;
     }
 
     function normalizeTypeToken(value) {
@@ -2430,10 +2451,10 @@
             </div>
             <div class="card-footer">
               <div class="card-meta">
-                <div class="card-meta-row">
+                ${(() => { const fwl = formatWorkplaceLocation(job); return fwl ? `<div class="card-meta-row">
                   <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M21 10c0 7-9 13-9 13S3 17 3 10a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>
-                  ${escapeHtml(String(job.location || "").trim())}
-                </div>
+                  ${escapeHtml(fwl)}
+                </div>` : ""; })()}
                 <div class="card-meta-row">
                   <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"></rect><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"></path></svg>
                   ${escapeHtml(cleanVisibleText(job.job_type))}

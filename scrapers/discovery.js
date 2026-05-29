@@ -1,0 +1,423 @@
+const { deriveProviderSource, fetchAtsJobsByProvider } = require("../ats-clients");
+const { parseGenericCareersPage, extractLinks, extractJsonScripts } = require("./parsers/generic-careers-page");
+const { normalizeProvider } = require("../source-utils");
+const { toAbsoluteUrl } = require("./base-utils");
+
+const DISCOVERY_KEYWORDS = [
+  "careers",
+  "jobs",
+  "openings",
+  "opportunities",
+  "employment",
+  "join-us",
+  "work-with-us",
+  "greenhouse",
+  "lever",
+  "ashby",
+  "bamboohr",
+  "workable",
+  "smartrecruiters"
+];
+
+const ATS_PATTERNS = {
+  greenhouse: [/greenhouse\.io/i, /boards-api\.greenhouse\.io/i, /gh_jid/i, /grnhse/i],
+  lever: [/lever\.co/i, /jobs\.lever\.co/i, /api\.lever\.co/i],
+  ashby: [/ashbyhq\.com/i],
+  workable: [/workable\.com/i],
+  bamboohr: [/bamboohr\.com\/careers/i],
+  smartrecruiters: [/smartrecruiters\.com/i],
+  jazzhr: [/jazzhr\.com/i],
+  breezyhr: [/breezy\.hr/i],
+  paylocity: [/paylocity/i, /recruiting\.paylocity\.com/i],
+  ukg: [/\bukg\b/i, /ultipro/i],
+  icims: [/icims\.com/i],
+  jobvite: [/jobvite\.com/i],
+  rippling: [/rippling\.com/i],
+  recruitee: [/recruitee\.com/i],
+  teamtailor: [/teamtailor\.com/i],
+  pinpoint: [/pinpoint/i],
+  workday: [/workdayjobs\.com/i, /myworkdayjobs\.com/i],
+  adp: [/workforcenow\.adp\.com/i],
+  comeet: [/comeet\.com/i],
+  careerpuck: [/careerpuck\.com/i, /app\.careerpuck\.com\/job-board/i],
+  trakstar: [/hire\.trakstar\.com/i, /recruiterbox\.com/i],
+  taleo: [/taleo\.net/i, /tbe\.taleo\.net/i]
+};
+
+const GENERIC_PARSER_SELECTORS_USED = [
+  "json-ld <script>",
+  "embedded JSON <script>",
+  "job card blocks <li|tr|article|section|div>",
+  "job links <a href>"
+];
+
+const DEFAULT_FETCH_TIMEOUT_MS = 15000;
+
+const SOURCE_FETCH_PROFILES = {
+  climatechangejobs: {
+    timeout_ms: 20000,
+    headers: {
+      "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36 FreshRolesBot/1.0",
+      "accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+      "accept-language": "en-US,en;q=0.9",
+      "cache-control": "no-cache",
+      "pragma": "no-cache",
+      "upgrade-insecure-requests": "1"
+    }
+  }
+};
+
+function detectAtsProvider(text) {
+  const haystack = String(text || "");
+  for (const [provider, patterns] of Object.entries(ATS_PATTERNS)) {
+    if (patterns.some((pattern) => pattern.test(haystack))) {
+      return provider;
+    }
+  }
+  return "";
+}
+
+function filterDiscoveryLinks(links, sourceUrl) {
+  return links
+    .map((link) => ({
+      url: toAbsoluteUrl(sourceUrl, link.url || link.href || ""),
+      text: String(link.text || "").trim()
+    }))
+    .filter((link) => link.url)
+    .filter((link) => DISCOVERY_KEYWORDS.some((keyword) => link.url.toLowerCase().includes(keyword) || link.text.toLowerCase().includes(keyword)));
+}
+
+function findAtsUrls(html, pageUrl) {
+  const urls = new Set();
+  const patterns = [
+    /https?:\/\/[^\s"'<>]+/gi,
+    /(?:src|href)=["']([^"']+)["']/gi
+  ];
+
+  for (const pattern of patterns) {
+    let match;
+    while ((match = pattern.exec(html))) {
+      const candidate = toAbsoluteUrl(pageUrl, match[1] || match[0]);
+      if (!candidate) continue;
+      if (detectAtsProvider(candidate)) urls.add(candidate);
+    }
+  }
+
+  return Array.from(urls);
+}
+
+function canAttemptDirectAts(provider, source, currentUrl) {
+  const normalizedProvider = normalizeProvider(provider || source.provider || source.type);
+  if (!normalizedProvider) return false;
+  if (normalizeProvider(source.provider || source.type) === normalizedProvider) return true;
+  return detectAtsProvider(currentUrl) === normalizedProvider;
+}
+
+function browserFallbackRecommended(html, scripts, jobsFound) {
+  if (jobsFound > 0) return false;
+  const scriptCount = Array.isArray(scripts) ? scripts.length : 0;
+  return (
+    /__NEXT_DATA__|__NUXT__|webpack|react-root|data-reactroot|hydration|root-render|vite/i.test(html) &&
+    scriptCount >= 4
+  );
+}
+
+function getSourceFetchProfile(source = {}) {
+  return SOURCE_FETCH_PROFILES[String(source.id || "").trim().toLowerCase()] || {};
+}
+
+function normalizeDiscoveryUrl(source = {}, value) {
+  const absolute = toAbsoluteUrl(source.source_url || value, value);
+  if (!absolute) return "";
+  try {
+    const url = new URL(absolute);
+    if (String(source.id || "").trim().toLowerCase() === "climatechangejobs" && /^\/jobs$/i.test(url.pathname)) {
+      url.pathname = "/jobs/";
+    }
+    return url.toString();
+  } catch (_error) {
+    return absolute;
+  }
+}
+
+function buildDiscoverySeedUrls(source = {}) {
+  const seed = normalizeDiscoveryUrl(source, source.source_url || "");
+  if (!seed) return [];
+  const urls = [seed];
+  if (String(source.id || "").trim().toLowerCase() === "climatechangejobs") {
+    try {
+      const parsed = new URL(seed);
+      if (/^\/jobs\/$/i.test(parsed.pathname)) {
+        const withoutSlash = new URL(parsed.toString());
+        withoutSlash.pathname = "/jobs";
+        urls.push(withoutSlash.toString());
+      }
+    } catch (_error) {
+      // Ignore malformed URL here; the primary seed will fail separately if needed.
+    }
+  }
+  return Array.from(new Set(urls.filter(Boolean)));
+}
+
+function isSourceTemporarilyUnavailableReport(report = {}) {
+  const pagesChecked = Array.isArray(report.pages_checked) ? report.pages_checked : [];
+  const hadAttempt = pagesChecked.length > 0;
+  const everyAttemptFailed = hadAttempt && pagesChecked.every((page) => page.status === "fetch-failed" || Number(page.status) >= 400);
+  const reason = String(report.reason_for_zero_results || "").toLowerCase();
+  return everyAttemptFailed || reason.includes("failed to fetch") || reason.includes("temporarily unavailable");
+}
+
+async function fetchHtmlPageForSource(url, source = {}, options = {}) {
+  const profile = getSourceFetchProfile(source);
+  const controller = new AbortController();
+  const timeoutMs = Number(profile.timeout_ms || options.timeout_ms || DEFAULT_FETCH_TIMEOUT_MS);
+  const timeoutId = setTimeout(() => controller.abort(new Error(`timeout after ${timeoutMs}ms`)), timeoutMs);
+  try {
+    const response = await (options.fetchImpl || fetch)(url, {
+      method: "GET",
+      redirect: "follow",
+      headers: {
+        ...profile.headers,
+        ...(options.headers || {})
+      },
+      signal: controller.signal
+    });
+    const html = await response.text();
+    return {
+      ok: response.ok,
+      status: response.status,
+      status_text: response.statusText || "",
+      html,
+      final_url: response.url || url,
+      redirected: Boolean(response.redirected)
+    };
+  } catch (error) {
+    const message = error?.name === "AbortError"
+      ? `timeout after ${timeoutMs}ms`
+      : String(error?.message || error || "unknown fetch error");
+    return {
+      ok: false,
+      status: "fetch-failed",
+      status_text: message,
+      html: "",
+      final_url: url,
+      redirected: false,
+      error: message
+    };
+  } finally {
+    clearTimeout(timeoutId);
+  }
+}
+
+function getDirectAtsSkipReason(provider, source, context = {}) {
+  const normalizedProvider = normalizeProvider(provider || source.provider || source.type);
+  if (!normalizedProvider) return "";
+  const derivedSource = deriveProviderSource(source, normalizedProvider, context);
+  if (normalizedProvider === "greenhouse" && !String(derivedSource.board_token || "").trim()) {
+    return "missing Greenhouse board slug.";
+  }
+  if (normalizedProvider === "lever" && !String(derivedSource.company_slug || "").trim()) {
+    return "missing Lever company slug.";
+  }
+  return "";
+}
+
+function makeEmptyReport(source) {
+  return {
+    source_id: source.id,
+    source_name: source.organization || source.name || source.id,
+    source_url: source.source_url,
+    detected_ats_provider: "",
+    parser_used: "",
+    pages_checked: [],
+    links_discovered: [],
+    job_links_found: [],
+    parser_selectors_used: [],
+    jobs_parsed: 0,
+    reason_for_zero_results: "",
+    browser_fallback_recommended: false,
+    source_temporarily_unavailable: false,
+    fallback_used: false,
+    fallback_reason: "",
+    generated_at: new Date().toISOString(),
+    errors: []
+  };
+}
+
+async function scrapeSourceWithDiscovery(source, options = {}) {
+  const report = makeEmptyReport(source);
+  const normalizedProvider = normalizeProvider(source.provider);
+  const queue = buildDiscoverySeedUrls(source).map((url) => ({ url, depth: 0 }));
+  const visited = new Set();
+  const allJobs = [];
+  const discoveredLinks = [];
+  let atsDetection = normalizedProvider;
+  let directAtsAttempted = false;
+  let directAtsError = "";
+
+  while (queue.length) {
+    const current = queue.shift();
+    if (!current?.url || visited.has(current.url)) continue;
+    visited.add(current.url);
+
+    let page;
+    try {
+      page = await fetchHtmlPageForSource(current.url, source, options);
+    } catch (error) {
+      page = {
+        ok: false,
+        status: "fetch-failed",
+        status_text: String(error.message || error),
+        html: "",
+        final_url: current.url,
+        redirected: false,
+        error: String(error.message || error)
+      };
+    }
+
+    report.pages_checked.push({
+      url: current.url,
+      depth: current.depth,
+      status: page.status,
+      status_text: page.status_text || "",
+      final_url: page.final_url || current.url,
+      redirected: Boolean(page.redirected),
+      error: page.error || ""
+    });
+
+    if (page.status === "fetch-failed") {
+      report.errors.push(`${current.url}: ${page.error || page.status_text || "fetch failed"}`);
+      continue;
+    }
+
+    if (!page.ok) {
+      report.errors.push(`${current.url}: HTTP ${page.status}${page.status_text ? ` ${page.status_text}` : ""}`);
+      continue;
+    }
+
+    const pageProvider = detectAtsProvider(current.url);
+    if (!atsDetection && pageProvider) {
+      atsDetection = pageProvider;
+    }
+
+    const atsUrls = findAtsUrls(page.html, current.url);
+    if (!atsDetection && atsUrls.length) {
+      atsDetection = detectAtsProvider(atsUrls.join("\n"));
+    }
+
+    if (atsDetection && !directAtsAttempted && canAttemptDirectAts(atsDetection, source, current.url)) {
+      directAtsAttempted = true;
+      const skipReason = getDirectAtsSkipReason(atsDetection, source, {
+        pageUrl: current.url,
+        html: page.html
+      });
+      if (skipReason) {
+        directAtsError = skipReason;
+        report.errors.push(`ats:${atsDetection}: ${skipReason}`);
+        console.warn(`[jobs:sync-custom] Skipping ${source.organization || source.id}: ${skipReason}`);
+        continue;
+      }
+      try {
+        const atsJobs = await fetchAtsJobsByProvider(atsDetection, source, {
+          pageUrl: current.url,
+          html: page.html
+        });
+        if (atsJobs.length) {
+          report.detected_ats_provider = atsDetection;
+          report.parser_used = `ats:${atsDetection}`;
+          report.parser_selectors_used = [`provider:${atsDetection}`];
+          report.jobs_parsed = atsJobs.length;
+          report.job_links_found = atsJobs.map((job) => job.apply_url).filter(Boolean).slice(0, 100);
+          return { jobs: atsJobs, report };
+        }
+      } catch (error) {
+        directAtsError = error.message;
+        report.errors.push(`ats:${atsDetection}: ${error.message}`);
+      }
+    }
+
+    const parsed = parseGenericCareersPage(page.html, current.url, source);
+    const pageJobs = parsed.jobs || [];
+    const pageLinks = parsed.links || extractLinks(page.html, current.url);
+    const scripts = parsed.scripts || extractJsonScripts(page.html);
+    const candidateLinks = filterDiscoveryLinks(pageLinks, current.url);
+
+    report.links_discovered.push(...candidateLinks.map((link) => link.url));
+    report.job_links_found.push(...pageJobs.map((job) => job.apply_url));
+    allJobs.push(...pageJobs);
+
+    discoveredLinks.push(...candidateLinks);
+    if (current.depth < Number(source.crawl_depth || 1)) {
+      for (const link of candidateLinks) {
+        const normalizedLink = normalizeDiscoveryUrl(source, link.url);
+        if (normalizedLink && !visited.has(normalizedLink)) {
+          queue.push({ url: normalizedLink, depth: current.depth + 1 });
+        }
+      }
+      for (const atsUrl of atsUrls) {
+        const normalizedAtsUrl = normalizeDiscoveryUrl(source, atsUrl);
+        if (normalizedAtsUrl && !visited.has(normalizedAtsUrl)) {
+          queue.push({ url: normalizedAtsUrl, depth: current.depth + 1 });
+        }
+      }
+    }
+
+    report.browser_fallback_recommended = report.browser_fallback_recommended || browserFallbackRecommended(page.html, scripts, pageJobs.length);
+  }
+
+  const dedupedJobs = [];
+  const seen = new Set();
+  for (const job of allJobs) {
+    const fallbackUrl = String(job.apply_url || job.original_url || job.source_url || source.source_url || "").toLowerCase();
+    const key = `${String(job.title || "").toLowerCase()}::${fallbackUrl}`;
+    if (!job?.title || seen.has(key)) continue;
+    seen.add(key);
+    dedupedJobs.push({
+      ...job,
+      source_url: job.source_url || source.source_url || "",
+      original_url: job.original_url || job.apply_url || job.source_url || source.source_url || ""
+    });
+  }
+
+  report.detected_ats_provider = atsDetection;
+  report.parser_used = dedupedJobs.length ? "generic:discovery" : atsDetection ? `generic-after-ats:${atsDetection}` : "generic:discovery";
+  report.parser_selectors_used = report.parser_used.startsWith("generic") ? GENERIC_PARSER_SELECTORS_USED.slice() : report.parser_selectors_used;
+  report.links_discovered = Array.from(new Set(report.links_discovered)).slice(0, 200);
+  report.job_links_found = Array.from(new Set(report.job_links_found)).slice(0, 200);
+  report.jobs_parsed = dedupedJobs.length;
+
+  if (!dedupedJobs.length) {
+    const allFetchFailed =
+      report.pages_checked.length > 0 &&
+      report.pages_checked.every((page) => page.status === "fetch-failed" || Number(page.status) >= 400);
+    if (atsDetection && directAtsError) {
+      report.reason_for_zero_results = `Detected ${atsDetection} but direct route failed: ${directAtsError}`;
+    } else if (allFetchFailed) {
+      report.reason_for_zero_results = "All discovered pages failed to fetch.";
+    } else if (atsDetection) {
+      report.reason_for_zero_results = `Detected ${atsDetection} but no jobs were returned from direct or generic parsing.`;
+    } else if (!report.pages_checked.length) {
+      report.reason_for_zero_results = "No pages could be fetched.";
+    } else if (report.browser_fallback_recommended && !source.requires_browser) {
+      report.reason_for_zero_results = "Static scraping found no jobs and the page looks JS-rendered.";
+    } else if (!report.links_discovered.length) {
+      report.reason_for_zero_results = "No likely careers or jobs links were discovered from the provided page.";
+    } else {
+      report.reason_for_zero_results = "Discovery links were checked but no parseable job listings were found.";
+    }
+  }
+
+  report.source_temporarily_unavailable = isSourceTemporarilyUnavailableReport(report);
+
+  return {
+    jobs: dedupedJobs,
+    report
+  };
+}
+
+module.exports = {
+  detectAtsProvider,
+  fetchHtmlPageForSource,
+  isSourceTemporarilyUnavailableReport,
+  scrapeSourceWithDiscovery
+};

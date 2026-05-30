@@ -1,0 +1,355 @@
+{
+  "generated_at": "2026-05-30T23:08:43.178Z",
+  "issues": {
+    "SEEL BambooHR subpage links": {
+      "summary": "Use individual BambooHR job pages when an id exists.",
+      "found_count": 19,
+      "files": [
+        "job-records.json",
+        "jobs.json",
+        "pending-synced-jobs.json"
+      ],
+      "fix_applied": "Canonicalized SEEL apply/source/original URLs to individual BambooHR /careers/{id} pages.",
+      "parser_source_rule_added": "BambooHR adapter builds individual URLs from job.id/jobOpeningId.",
+      "validation_added": "Verification requires SEEL-412 exact subpage URL.",
+      "unresolved": ""
+    },
+    "Bullard Center pay and description": {
+      "summary": "Parse hiring range and Job Description Summary / TWC Summary.",
+      "found_count": 2,
+      "files": [
+        "job-records.json",
+        "jobs.json"
+      ],
+      "fix_applied": "Set Bullard description from TWC summary and hiring range $80,870.19-$103,109.49.",
+      "parser_source_rule_added": "High-priority description headings include Job Description Summary and TWC Summary; pay parser supports Hiring Range.",
+      "validation_added": "Verification requires Bullard pay and opening description.",
+      "unresolved": ""
+    },
+    "Nature Conservancy public URLs": {
+      "summary": "Use careers.tnc.org detail URLs, not Workday apply URLs.",
+      "found_count": 9,
+      "files": [
+        "job-records.json",
+        "jobs.json",
+        "pending-synced-jobs.json"
+      ],
+      "fix_applied": "Converted TNC Workday URLs to careers.tnc.org /us/en/job/{JR}/{slug} URLs and archived Montana Director because the live TNC page says the job is no longer posted.",
+      "parser_source_rule_added": "Normalizer canonicalizes Nature Conservancy Workday URLs to public careers.tnc.org URLs.",
+      "validation_added": "Verification rejects public Nature Conservancy Workday apply URLs, checks the archived Montana exact URL, and requires Montana not be public.",
+      "unresolved": ""
+    },
+    "Hip Hop Caucus percent preservation": {
+      "summary": "Remove orphan think % while preserving Think 100%.",
+      "found_count": 0,
+      "files": [],
+      "fix_applied": "Replaced orphan think%/think % text with Think 100% in all canonical fields.",
+      "parser_source_rule_added": "Description cleaning keeps percent signs and validation searches public/generated text.",
+      "validation_added": "Verification rejects think % and requires Think 100% remains.",
+      "unresolved": ""
+    },
+    "More Perfect Union hourly pay": {
+      "summary": "Campus Video Editor Fellow base pay should be $25/hr; reimbursement as note.",
+      "found_count": 2,
+      "files": [
+        "job-records.json",
+        "jobs.json"
+      ],
+      "fix_applied": "Set base pay to $25/hr and moved reimbursement to compensation_note/salary_note.",
+      "parser_source_rule_added": "Rippling adapter now uses salary extractor instead of first dollar amount; pay formatter preserves hourly /hr.",
+      "validation_added": "Verification requires Campus Video Editor Fellow salary $25/hr.",
+      "unresolved": ""
+    },
+    "Renew Home redundant remote formatting": {
+      "summary": "Avoid Remote / Remote or remote role and Remote duplication.",
+      "found_count": 23,
+      "files": [
+        "job-records.json",
+        "jobs.json",
+        "pending-synced-jobs.json"
+      ],
+      "fix_applied": "Normalized Renew Home remote locations to Remote with a single Remote workplace label.",
+      "parser_source_rule_added": "Frontend/detail formatters collapse duplicate remote tokens.",
+      "validation_added": "Verification rejects Remote / Remote and duplicate remote role text.",
+      "unresolved": ""
+    },
+    "GoodPower audit": {
+      "summary": "Verify GoodPower URL/pay/remote/location.",
+      "found_count": 6,
+      "files": [
+        "job-records.json",
+        "jobs.json",
+        "pending-synced-jobs.json"
+      ],
+      "fix_applied": "Confirmed live GoodPower Lifecycle Marketing Manager; set Remote - US and $78,000-$83,000 / year.",
+      "parser_source_rule_added": "Existing pay parser supports Annual salary range from JazzHR/ApplyToJob pages.",
+      "validation_added": "Report records URL/pay/location audit result.",
+      "unresolved": ""
+    },
+    "Emerald Cities Collaborative removal": {
+      "summary": "Remove/block source because it only posts on Indeed.",
+      "found_count": 0,
+      "files": [
+        "sources.json"
+      ],
+      "fix_applied": "Removed pending Emerald Cities entries and disabled/blocked source.",
+      "parser_source_rule_added": "Blocked-source rules now include Emerald Cities Collaborative.",
+      "validation_added": "Verification requires no Emerald Cities public or pending records.",
+      "unresolved": ""
+    },
+    "RMI zero openings": {
+      "summary": "Remove/archive RMI false jobs and mark zero-openings.",
+      "found_count": 0,
+      "files": [
+        "sources.json"
+      ],
+      "fix_applied": "Removed RMI pending false positives and marked RMI sources zero_openings.",
+      "parser_source_rule_added": "Source config disabled with source_status=zero_openings.",
+      "validation_added": "Verification requires no RMI public jobs.",
+      "unresolved": ""
+    },
+    "Advanced Energy United starting pay": {
+      "summary": "Director Expanding Wholesale Markets pay should parse Starting at $120,000.",
+      "found_count": 1,
+      "files": [
+        "pending-synced-jobs.json"
+      ],
+      "fix_applied": "Set Director - Expanding Wholesale Markets pay to $120,000+ / year.",
+      "parser_source_rule_added": "Pay parser/formatter supports Salary: Starting at $120,000.",
+      "validation_added": "Verification requires starting-at display.",
+      "unresolved": ""
+    },
+    "Greentown Labs no-dollar USD ranges": {
+      "summary": "Parse 60,000 - 68,000 USD per year.",
+      "found_count": 3,
+      "files": [
+        "pending-synced-jobs.json"
+      ],
+      "fix_applied": "Set Greentown Coordinator pay ranges to $60,000-$68,000 / year.",
+      "parser_source_rule_added": "Pay parser supports ranges without dollar signs followed by USD per year.",
+      "validation_added": "Verification requires Program Coordinator range.",
+      "unresolved": ""
+    },
+    "EDF source": {
+      "summary": "Use https://www.edf.org/jobs and remove stale Workday/API public URLs.",
+      "found_count": 1,
+      "files": [
+        "jobs.json",
+        "pending-synced-jobs.json",
+        "sources.json"
+      ],
+      "fix_applied": "Archived stale EDF public record, set source to edf.org/jobs, and seeded current EDF jobs to pending from EDF page.",
+      "parser_source_rule_added": "Source config points at https://www.edf.org/jobs.",
+      "validation_added": "Verification requires EDF source config exact URL and no stale EDF public Workday/API records.",
+      "unresolved": ""
+    },
+    "Oxfam SmartRecruiters public URLs": {
+      "summary": "Use jobs.smartrecruiters.com URLs, not API refs.",
+      "found_count": 7,
+      "files": [
+        "pending-synced-jobs.json"
+      ],
+      "fix_applied": "Converted all Oxfam SmartRecruiters API URLs to public jobs.smartrecruiters.com URLs.",
+      "parser_source_rule_added": "SmartRecruiters adapter now builds public jobs.smartrecruiters.com links.",
+      "validation_added": "Verification rejects api.smartrecruiters.com for Oxfam public/pending URLs.",
+      "unresolved": ""
+    },
+    "Climate Action Campaign Trakstar URLs": {
+      "summary": "Use Trakstar job page URL.",
+      "found_count": 1,
+      "files": [
+        "pending-synced-jobs.json"
+      ],
+      "fix_applied": "Canonicalized Climate Action Campaign to https://climateactioncampaign.hire.trakstar.com/jobs/fk0z2nn/.",
+      "parser_source_rule_added": "Trakstar adapter now emits job page URLs without ?apply=true.",
+      "validation_added": "Verification requires Trakstar job page URL.",
+      "unresolved": ""
+    },
+    "Carbon Direct Salary Range": {
+      "summary": "Staff Engineer salary should parse Salary Range $184,000-$225,000 a year.",
+      "found_count": 1,
+      "files": [
+        "pending-synced-jobs.json"
+      ],
+      "fix_applied": "Set Carbon Direct Staff Engineer pay to $184,000-$225,000 / year.",
+      "parser_source_rule_added": "Pay parser supports Salary Range headings followed by line-break ranges.",
+      "validation_added": "Verification requires Carbon Direct Staff Engineer display range.",
+      "unresolved": ""
+    },
+    "HASI expected salary range": {
+      "summary": "Parse Expected salary range of $80,000-$100,000 without bonus/equity.",
+      "found_count": 4,
+      "files": [
+        "job-records.json",
+        "jobs.json",
+        "pending-synced-jobs.json"
+      ],
+      "fix_applied": "Set HASI Senior Associate base salary to $80,000-$100,000 / year and kept bonus/equity out of base salary.",
+      "parser_source_rule_added": "Pay parser supports Expected salary range of ...",
+      "validation_added": "Verification requires HASI Senior Associate display range.",
+      "unresolved": ""
+    },
+    "Workflow scripts": {
+      "summary": "Audit workflows for resources/jobs script paths and freshness cadence.",
+      "found_count": 1,
+      "files": [
+        "backend/dotgithub/workflows"
+      ],
+      "fix_applied": "Workflow audit script/report checks script existence, validation gating, admin actions, reports, pruning, and 3-day freshness cadence.",
+      "parser_source_rule_added": "N/A.",
+      "validation_added": "Verification includes workflow path/cadence checks.",
+      "unresolved": ""
+    }
+  },
+  "validations": {
+    "seel_project_specialist_url": {
+      "passed": true,
+      "details": "https://seelllc.bamboohr.com/careers/412"
+    },
+    "bullard_pay_parses": {
+      "passed": true,
+      "details": "$80,870–$103,109 / year"
+    },
+    "bullard_description_present": {
+      "passed": true,
+      "details": "The GIS/Research Director, Bullard Center for Environmental and Climate Justice is responsible for providing technical e"
+    },
+    "tnc_montana_exact_url": {
+      "passed": true,
+      "details": "https://careers.tnc.org/us/en/job/JR102700/Montana-Director-of-Development"
+    },
+    "tnc_montana_not_public_closed": {
+      "passed": true,
+      "details": "archived"
+    },
+    "tnc_no_public_workday_apply_urls": {
+      "passed": true,
+      "details": ""
+    },
+    "no_think_orphan_percent": {
+      "passed": true,
+      "details": ""
+    },
+    "think_100_preserved": {
+      "passed": true,
+      "details": ""
+    },
+    "mpu_campus_pay": {
+      "passed": true,
+      "details": "$25/hr"
+    },
+    "renew_home_no_duplicate_remote": {
+      "passed": true,
+      "details": ""
+    },
+    "emerald_removed_blocked": {
+      "passed": true,
+      "details": ""
+    },
+    "rmi_no_public_jobs": {
+      "passed": true,
+      "details": ""
+    },
+    "advanced_energy_starting_pay": {
+      "passed": true,
+      "details": "$120,000+ / year"
+    },
+    "greentown_pay_range": {
+      "passed": true,
+      "details": "$60,000–$68,000 / year"
+    },
+    "edf_source_url": {
+      "passed": true,
+      "details": "https://www.edf.org/jobs"
+    },
+    "oxfam_public_urls": {
+      "passed": true,
+      "details": ""
+    },
+    "climate_action_trakstar_page_url": {
+      "passed": true,
+      "details": "https://climateactioncampaign.hire.trakstar.com/jobs/fk0z2nn/ https://climateactioncampaign.hire.trakstar.com/jobs/fk0z2nn/"
+    },
+    "carbon_direct_staff_engineer_pay": {
+      "passed": true,
+      "details": "$184,000–$225,000 / year"
+    },
+    "hasi_expected_salary_pay": {
+      "passed": true,
+      "details": "$80,000–$100,000 / year"
+    },
+    "no_public_fake_salary": {
+      "passed": true,
+      "details": ""
+    },
+    "no_duplicate_public_jobs": {
+      "passed": true,
+      "details": ""
+    },
+    "no_public_pending_overlap": {
+      "passed": true,
+      "details": ""
+    },
+    "no_archived_fingerprint_violations": {
+      "passed": true,
+      "details": ""
+    },
+    "generated_pages_match_jobs_json": {
+      "passed": true,
+      "details": "missing=0 mismatched=0 stale=0"
+    },
+    "workflows_reference_existing_scripts": {
+      "passed": true,
+      "details": ""
+    },
+    "freshness_every_three_days": {
+      "passed": true,
+      "details": ""
+    },
+    "build_deploy_blocks_on_validation": {
+      "passed": true,
+      "details": ""
+    }
+  },
+  "sources_used": [
+    "https://jobs.tsu.edu/postings/9798",
+    "https://www.edf.org/jobs",
+    "https://careers.tnc.org/us/en/job/JR102700/Montana-Director-of-Development",
+    "https://rockymountain.wd1.myworkdayjobs.com/en-US/RMI?redirect=/en-US/RMI/userHome",
+    "https://goodpower.applytojob.com/apply/vMAlGDbrbu/Lifecycle-Marketing-Manager",
+    "https://ats.rippling.com/advanced-energy-united-career-opportunities/jobs/0e36c8d4-4947-4c9b-acbb-a8cb3bf748c2",
+    "https://ats.rippling.com/greentown-labs/jobs/ecf57136-a89e-46db-813e-4ec7474a21c2",
+    "https://job-boards.greenhouse.io/carbondirect/jobs/5122832007",
+    "https://jobs.lever.co/hasi/b9bc3e08-ae78-4df1-a08e-b086627fea50"
+  ],
+  "summary": {
+    "total": 27,
+    "passed": 27,
+    "failed": 0
+  },
+  "validation_summary": {
+    "passed": true,
+    "failure_count": 0,
+    "failed": []
+  },
+  "generated_pages": {
+    "expected": 91,
+    "missing": [],
+    "mismatched": [],
+    "stale": []
+  },
+  "workflow_audit": {
+    "files": [
+      "jobs-auto-expand.yml",
+      "jobs-discover-sources.yml",
+      "jobs-discovery-and-search-ingest.yml",
+      "jobs-freshness-audit.yml",
+      "jobs-migrate-existing.yml",
+      "jobs-sync-pending-sources.yml",
+      "jobs-sync.yml"
+    ],
+    "missing_script_references": [],
+    "freshness_every_three_days": true,
+    "build_deploy_blocks_on_validation": true
+  }
+}

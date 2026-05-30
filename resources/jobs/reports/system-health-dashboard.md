@@ -1,21 +1,21 @@
 # System Health Dashboard
 
-Generated: 2026-05-29T17:56:15.096Z
+Generated: 2026-05-30T23:07:17.541Z
 
 ## Data Freshness
 
-- **Public jobs:** 93
-- **Pending jobs:** 346
-- **Total records:** 172
+- **Public jobs:** 91
+- **Pending jobs:** 329
+- **Total records:** 175
 - **Sources configured:** 187
 
 ## PUBLIC BOARD HEALTH
 
 | Metric | Count | Percentage |
 |---|---|---|
-| Total jobs | 93 | 100% |
-| Jobs with pay | 63 | 68% |
-| Jobs without pay | 30 | 32% |
+| Total jobs | 91 | 100% |
+| Jobs with pay | 58 | 64% |
+| Jobs without pay | 33 | 36% |
 | Duplicate jobs | 0 | 0% |
 | Closed/archived jobs | 0 | 0% |
 | Archive violations | 0 | 0% |
@@ -23,7 +23,7 @@ Generated: 2026-05-29T17:56:15.096Z
 ### Quality Score Distribution
 
 | Score Range | Count | Percentage |
-|---|---|---|---|
+|---|---|---|
 | 0-20 | 0 | 0% |
 | 21-40 | 0 | 0% |
 | 41-60 | 20 | 6% |
@@ -33,11 +33,11 @@ Generated: 2026-05-29T17:56:15.096Z
 ## PENDING BOARD HEALTH
 
 | Metric | Count | Percentage |
-|---|---|---|---|
-| Total pending jobs | 346 | 100% |
+|---|---|---|
+| Total pending jobs | 329 | 100% |
 | Missing/poor descriptions | 0 | 0% |
-| Pay extraction issues | 263 | 76% |
-| Requiring manual review | 324 | 94% |
+| Pay extraction issues | 263 | 80% |
+| Requiring manual review | 324 | 98% |
 
 ## SOURCES HEALTH
 
@@ -91,7 +91,7 @@ Generated: 2026-05-29T17:56:15.096Z
 
 ## SYSTEM ALERTS
 
-⚠️ **WARNING**: 30 public jobs (32%) lack compensation data (public)
+⚠️ **WARNING**: 33 public jobs (36%) lack compensation data (public)
 
-⚠️ **WARNING**: 263 pending jobs (76%) have pay extraction issues (pending)
+⚠️ **WARNING**: 263 pending jobs (80%) have pay extraction issues (pending)
 

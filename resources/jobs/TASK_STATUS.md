@@ -1,113 +1,81 @@
-# Task Status — Jobs Board Quality Repair & Pipeline Hardening
+# Task Status - Jobs Board Full Overhaul
 
-## Completed
+Updated: 2026-05-30T23:07:17Z
 
-### Final Cleanup Pass (Phase 1-3)
-- **Stale page cleanup**: 2 orphaned ABC generated pages deleted; 94 pages match 93 jobs.json records
-- **Quince description warning fixed**: Root cause was false positive `/\bRenewable Energy\b/i` in `DESCRIPTION_JUNK_PATTERNS` (`job-normalizer.js:182`). Removed pattern — legitimate sector term. Arevon "Scada Operations Supervisor" description now correctly validated.
-- **Dead Quince job removed**: Quince-5167665008 (Senior Creative Strategist) returned 404 from Greenhouse. Removed from public, archived in records with fingerprint.
-- **CI/CD automation**: 3 GitHub workflow files created under `.github/workflows/`:
-  - `jobs-freshness.yml` — Every 3 days at 09:00
-  - `jobs-sync.yml` — Daily at 06:00 (full pipeline + commit)
-  - `jobs-audit.yml` — Weekly on Monday 08:00 (quality audit)
-- **All safety gates**: validate-public-data, archive fingerprint, duplicates, overlap, pay, >20% drop, JSON validity
+## Current Status
 
-### Workflow / Script Audit (12 issues found, 12 fixed)
-- Freshness audit concurrency: `FETCH_CONCURRENCY=5` batched fetch loop
-- ReferenceError in `apply-admin-actions.js`: fixed `hide_organization` handler
-- Pre-write validation in `public-jobs.js`: 20% drop guard + post-write readback
-- Pipeline orchestrator: `scripts/run-workflow.sh` (9 steps)
-- All 13 key scripts parse without syntax errors
+The full overhaul pass is complete and verified against the requested gates.
 
-### Archive Fingerprint Guard
-- **Module**: `scripts/archive-fingerprint-guard.js`
-- **Integration**: sync-sources, sync-targeted-pending-sources, promote-public-ready, lifecycle-utils, apply-admin-actions
-- **Backfill**: 18 archive records with fingerprints
-- **Validation**: 0 false positives, 6 pending jobs blocked, 94 public jobs pass
+- Public jobs in `jobs.json`: 91
+- Pending jobs in `pending-synced-jobs.json`: 329
+- Canonical records in `job-records.json`: 175
+- Generated detail pages: 91
+- Sources configured: 187
+- Public/pending overlap: 0
+- Duplicate public jobs: 0
+- Archive fingerprint violations: 0
 
-### Data Quality Repairs
-- State filter layout, SEEL URLs, Octopus pay, ABC descriptions, EDP/NextEra fake pay, EDF Workday URLs, Sunrun location, ABC closed jobs, Quince description, structure loss (219→0), formatWorkplaceLocation helper
+## Completed Repairs
 
-### Validation
-- `validate-public-data`: ✅ PASS — errors: [] (clean)
-- `promote-public-ready --dry-run`: 6 archive-blocked, 329 pay-rejected
-- `apply-admin-actions --diagnose`: 0 queued, apply_safe=true
-- `repair-published-pending-overlap`: 0 overlaps
-- Guard diagnostics: 0 false positives, 94/94 public records pass
+- Rebuilt current public data from canonical records and regenerated all job pages.
+- Reprocessed `jobs.json`, `job-records.json`, and `pending-synced-jobs.json` for the named bad records.
+- Added `scripts/full-overhaul-repair.js` for deterministic known-issue data repair.
+- Added `scripts/full-overhaul-verify.js` for the required 26-item regression gate.
+- Updated source/parser rules for BambooHR, SmartRecruiters, Trakstar, Nature Conservancy URL conversion, description heading priority, hourly pay, starting-at pay, no-dollar USD annual ranges, Salary Range headings, and Expected salary range wording.
+- Hardened public refresh so invalid current pay values are not preserved over clean canonical records.
+- Fixed duplicate Remote display handling in `index.html` and generated page metadata.
+- Removed and blocked Emerald Cities Collaborative from active public/pending results.
+- Marked RMI/Rocky Mountain Institute sources as zero-openings/disabled and removed false-positive pending records.
+- Pointed EDF source configuration at `https://www.edf.org/jobs`.
+- Archived the Nature Conservancy Montana Director record after live page verification showed the job is no longer posted; the canonical archived record keeps the exact corrected careers.tnc.org URL.
+- Updated workflow validation gates under `backend/dotgithub/workflows`.
+- Updated `reports/full-overhaul-verification-latest.json` and `.md`.
+- Refreshed `reports/system-health-dashboard.json` and `.md`.
 
-## System Health Summary
+## Required Validation Results
 
-| Metric | Value |
-|--------|-------|
-| Public jobs (jobs.json) | 93 |
-| Pending jobs (pending-synced-jobs.json) | 346 |
-| Job records (job-records.json) | 172 |
-| Archive records (archived/closed) | 19 |
-| Generated pages | 94 (matches 93 jobs + 1 pending? page) |
-| Workflow coverage | 3 (freshness, sync, audit) |
+All requested validations pass in `reports/full-overhaul-verification-latest.md` (27/27).
 
-## Publication Governance Status
+- SEEL Project Specialist URL: pass
+- Bullard Center pay and description: pass
+- Nature Conservancy Montana Director exact canonical URL: pass
+- Nature Conservancy Montana Director not public because live page is closed: pass
+- No public Nature Conservancy Workday URLs: pass
+- No `think %` generated/public text and `Think 100%` preserved: pass
+- More Perfect Union Campus Video Editor Fellow pay `$25/hr`: pass
+- Renew Home duplicate Remote text removed: pass
+- Emerald Cities removed/blocked: pass
+- RMI has no public jobs: pass
+- Advanced Energy United starting salary `$120,000+ / year`: pass
+- Greentown Labs annual range `$60,000-$68,000 / year`: pass
+- EDF source is `https://www.edf.org/jobs`: pass
+- Oxfam public URLs use `jobs.smartrecruiters.com`: pass
+- Climate Action Campaign uses Trakstar job page URL: pass
+- Carbon Direct Staff Engineer pay `$184,000-$225,000 / year`: pass
+- HASI pay `$80,000-$100,000 / year`: pass
+- Fake public salaries 0, 6, and >$500,000: pass
+- No duplicate public jobs: pass
+- No public/pending overlap: pass
+- No archived fingerprint violations: pass
+- Generated pages match `jobs.json`: pass
+- Workflows reference existing scripts and block on validation: pass
 
-- **Auto-publish threshold:** 85/100 quality score
-- **Manual review threshold:** Below 85 quality score OR failed validation gate
-- **High-risk sources requiring manual approval:** EDP, Arevon, Conservation International, Taleo-based sources, BambooHR with parser stability issues
-- **Source quality rankings:**
-  - Highest quality: 1 source (Greenpeace US, score 80)
-  - Medium quality: 151 sources
-  - High maintenance: 27 sources
-  - Candidate for removal: 8 sources
-- **Pending pay analysis:** 260/263 pay-blocked jobs have compensation that parser missed (simple fixes possible)
-- **Remaining system risks:**
-  1. Pay validation gate blocks 260/346 pending jobs (compensation exists but not formatted)
-  2. Quality score gate blocks 324/346 pending jobs (score < 85)
-  3. High-risk source gate blocks 5/346 pending jobs (EDP, Arevon, Conservation International)
-  4. No CI/CD secrets configured for GitHub commit/push in workflows
-  5. Freshness audit dry-run by default (requires --write flag)
-  6. Initial oversight recommended for auto-promotion workflow
+## Commands Verified
 
-## Remaining Audit Issues (206 total — all pending/unpublished)
+- `node scripts/full-overhaul-repair.js`
+- `npm run jobs:refresh-public`
+- `node scripts/generate-job-pages.js`
+- `node scripts/full-overhaul-verify.js`
+- `npm run jobs:validate-public-data`
+- `npm run jobs:validate-source-expansion`
+- `npm run jobs:diagnose-admin-actions`
+- `npm run jobs:freshness-audit -- --dry-run`
+- `npm run jobs:system-health-dashboard`
+- `node --check` on edited parser, workflow, repair, verification, and page-generation scripts
 
-| Category | Count | Notes |
-|---|---|---|
-| Fake/Invalid Pay | 53 | All pending (unpublished) |
-| Work Mode / Location Redundancy | 149 | Frontend-handled |
-| Dead/Closed/Invalid Roles | 2 | Pending only |
-| Bad/Generic Job Links | 1 | Pending only |
-| Title/Location Errors | 1 | Pending only |
-| Description Problems | 0 | Clean |
-| Structure Loss | 0 | Clean |
-| Duplicate Records | 0 | Clean |
+## Remaining Non-Blocking Warnings
 
-## Known Remaining Risks
-1. **259/346 pending jobs blocked by pay validation** — Context check requires "salary/pay/compensation" keywords in description text but parser already extracted valid `salary_min/max` values (98% fixable)
-2. No CI/CD secrets configured for GitHub commit/push
-3. Freshness audit dry-run by default
-4. `promote-public-ready --write --auto-publish` needs initial oversight
-
-## Priority Investigation: Pay Block Root Cause (INVESTIGATED)
-
-**Finding:** 259/263 pay-blocked jobs (98%) are blocked due to **validation gate failure**, not parser failure.
-
-**Root Cause:** The pay parser successfully extracts `salary_min`/`salary_max` values, but the validation gate in `evaluatePayState()` rejects them because the job description text doesn't contain context keywords ("salary", "pay", "compensation").
-
-**Evidence:** 
-- Jobs have valid `salary_min/max` (20k-500k range)
-- Jobs have valid `salary` strings with currency symbols
-- `pay_confidence` = "rejected" with no rejection reason
-- Governance report shows `pay_validation_passed: false`
-
-**Highest-Leverage Fix:** Modify pay validation to skip context check when `salary_min`/`salary_max` contain valid values. This would automatically unlock 259 pending jobs.
-
-**Top 5 sources responsible (68% of failures):**
-| Source | Blocked | % |
-|---|---|---|
-| Quince | 119 | 45% |
-| NextEra Energy | 26 | 10% |
-| Octopus Energy | 16 | 6% |
-| GoodLeap | 12 | 4% |
-| CALSTART | 7 | 3% |
-
-## Next Steps
-- Configure GitHub repository secrets for workflow commit/push
-- Migrate pending backlog quality improvements
-- Consider adding manual approval gates for auto-publish in sync workflow
+- Public validation reports 4 pipeline health warnings: missing high-priority public org coverage for NRDC, 350.org, and ACLU, plus broad-source pending dominance at roughly 52%.
+- Freshness dry-run could not live-check network pages in the sandboxed environment and flagged public records for manual review due to network uncertainty. It completed without script errors and made no data changes.
+- 34 public jobs still lack visible compensation because no validated base pay was available.
+- 263 pending jobs remain pay-blocked/manual-review items; these were not auto-published.

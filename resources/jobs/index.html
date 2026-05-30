@@ -1715,7 +1715,15 @@
       const loc = (job.location || "").trim();
       const wtLower = wt.toLowerCase();
       const locLower = loc.toLowerCase();
-      if (wtLower && locLower && wtLower === locLower) return "";
+      if (wtLower && locLower && wtLower === locLower) return wt;
+      if (wtLower === "remote" && /\bremote\b/i.test(loc)) {
+        const locWithoutRemote = loc
+          .replace(/\s*\((?:remote|remote,\s*us|remote\s*-\s*us)\)\s*/ig, " ")
+          .replace(/\bremote(?:\s*[-/]\s*(?:us|usa|united states))?\b/ig, " ")
+          .replace(/\s{2,}/g, " ")
+          .trim();
+        return locWithoutRemote && !/^(?:united states|us|usa)$/i.test(locWithoutRemote) ? `Remote / ${locWithoutRemote}` : "Remote";
+      }
       if (locLower === "remote" && !wtLower) return "Remote";
       if (!locLower) return wt || "";
       if (!wtLower) return loc || "";

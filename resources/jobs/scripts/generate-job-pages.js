@@ -29,6 +29,15 @@ function truncate(value, max = 160) {
   return `${text.slice(0, max - 1).trim()}…`;
 }
 
+const SECTION_HEADING_PATTERN = /^(What You Will Do|Role Summary|Job Summary|The Position|Position Description|About the Role|You Will|You Have|Who You Are|Responsibilities|Requirements|Qualifications|Key Responsibilities|About You|The Role|Your Profile|What We Offer|Benefits|About Us|Our Mission|Key Qualifications|Minimum Qualifications|Preferred Qualifications|Essential Functions):?\s*$/im;
+
+function inlineFormat(escapedText) {
+  return escapedText
+    .replace(/\*\*([^*]+)\*\*/g, "<strong>$1</strong>")
+    .replace(/(?<!\*)\*([^*]+)\*(?!\*)/g, "<em>$1</em>")
+    .replace(/_([^_]+)_/g, "<em>$1</em>");
+}
+
 function formatDescription(value) {
   const text = String(value || "").trim();
   if (!text) return escapeHtml("Open the original listing for the full posting details.");
@@ -36,31 +45,48 @@ function formatDescription(value) {
   return paragraphs.map((para) => {
     const trimmed = para.trim();
     const lines = trimmed.split("\n").filter(Boolean).map((l) => l.trim()).filter(Boolean);
-    const bulletLines = lines.filter((l) => /^[•\-*]\s/.test(l));
-    const hasBullets = bulletLines.length >= 1;
+    const firstLine = lines[0] || "";
+    const isHeading = SECTION_HEADING_PATTERN.test(firstLine);
+    const hasBullets = lines.some((l) => /^[•\-*]\s/.test(l));
     if (hasBullets) {
-      const nonBulletParts = [];
-      const bulletParts = [];
+      const parts = [];
+      let currentNonBullet = [];
+      let bulletItems = [];
       let inBullets = false;
       for (const line of lines) {
         if (/^[•\-*]\s/.test(line)) {
-          bulletParts.push(line.replace(/^[•\-*]\s+/, "").trim());
+          if (!inBullets && currentNonBullet.length) {
+            parts.push({ t: "text", content: currentNonBullet.join(" ") });
+            currentNonBullet = [];
+          }
           inBullets = true;
+          bulletItems.push(line.replace(/^[•\-*]\s+/, "").trim());
         } else {
-          if (inBullets) { nonBulletParts.push(""); inBullets = false; }
-          nonBulletParts.push(line);
+          if (inBullets && bulletItems.length) {
+            parts.push({ t: "bullets", items: bulletItems });
+            bulletItems = [];
+            inBullets = false;
+          }
+          currentNonBullet.push(line);
         }
       }
-      const result = [];
-      if (nonBulletParts.filter(Boolean).length) {
-        result.push(`<p>${escapeHtml(nonBulletParts.filter(Boolean).join(" "))}</p>`);
-      }
-      if (bulletParts.length) {
-        result.push(`<ul>${bulletParts.map((item) => `<li>${escapeHtml(item)}</li>`).join("")}</ul>`);
-      }
-      return result.join("\n");
+      if (currentNonBullet.length) parts.push({ t: "text", content: currentNonBullet.join(" ") });
+      if (bulletItems.length) parts.push({ t: "bullets", items: bulletItems });
+      return parts.map((part) => {
+        if (part.t === "bullets") {
+          return `<ul>${part.items.map((item) => `<li>${escapeHtml(item)}</li>`).join("")}</ul>`;
+        }
+        const tc = part.content.trim();
+        if (SECTION_HEADING_PATTERN.test(tc)) {
+          return `<h3>${escapeHtml(tc.replace(/:$/, ""))}</h3>`;
+        }
+        return `<p>${inlineFormat(escapeHtml(tc))}</p>`;
+      }).join("\n");
     }
-    return `<p>${escapeHtml(trimmed)}</p>`;
+    if (isHeading) {
+      return `<h3>${escapeHtml(firstLine.replace(/:$/, ""))}</h3>`;
+    }
+    return `<p>${inlineFormat(escapeHtml(trimmed))}</p>`;
   }).join("\n");
 }
 

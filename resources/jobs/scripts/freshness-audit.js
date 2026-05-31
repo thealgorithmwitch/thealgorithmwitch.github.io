@@ -49,7 +49,17 @@ const DEAD_TEXT_PATTERNS = [
   /\bpage not found\b/i,
   /\bthe page you are looking for does not exist\b/i,
   /\bpage may have moved\b/i,
-  /\bnot found\b(?:\s|$)/i
+  /\bnot found\b(?:\s|$)/i,
+  /\bthere\s+are\s+no\s+current\s+openings?\b/i,
+  /\bthere\s+are\s+currently\s+no\s+open\s+positions?\b/i,
+  /\bposition\s+is\s+no\s+longer\s+available\b/i
+];
+const REDIRECT_TO_BOARD_EXPIRED_PATTERNS = [
+  /\bcreate\s+a\s+job\s+alert\b/i,
+  /\bno\s+current\s+openings?\b/i,
+  /\bno\s+open\s+positions?\b/i,
+  /\bthis\s+job\s+is\s+no\s+longer\s+available\b/i,
+  /\bjob\s+not\s+found\b/i
 ];
 const ACCESS_DENIED_TEXT_PATTERNS = [
   /\baccess denied\b/i,
@@ -446,6 +456,39 @@ function classifyPageTypeFromUrl(url) {
   if (/search|jobSearch|jobsearch/.test(u)) return "search_page";
   if (/careers?\/?$|jobs?\/?$/.test(u)) return "careers_landing_page";
   if (/contact-us/.test(u)) return "navigation_page";
+  if (/[?&]error=true(?:\b|$)/.test(u)) return "careers_landing_page";
+  return null;
+}
+
+function isJobSpecificUrl(url) {
+  const u = String(url || "").toLowerCase();
+  // Job-specific URLs contain a job id segment like /jobs/12345 or /job/12345 or /requisition/12345
+  return /\/\b(?:jobs?|requisitions?|postings?|positions?|opening)\/\d+/i.test(u);
+}
+
+function detectRedirectToBoard(requestedUrl, finalUrl, body) {
+  const req = String(requestedUrl || "");
+  const final = String(finalUrl || "");
+  if (req === final) return null;
+  if (!isJobSpecificUrl(req)) return null;
+  // Check if final URL is a board-level page (not job-specific)
+  const text = cleanText(body).slice(0, 4000);
+  if (final.includes("?error=true")) {
+    return { mode: "dead", reason: "greenhouse_expired_redirect_to_board", pageType: "dead" };
+  }
+  // Check if final URL looks like a careers landing / search / login page
+  const finalPageType = classifyPageTypeFromUrl(final);
+  if (finalPageType && finalPageType !== "live") {
+    return { mode: "dead", reason: `redirected_to_board_${finalPageType}`, pageType: "dead" };
+  }
+  // If final URL has no job-specific path and text shows expired signals
+  if (!isJobSpecificUrl(final)) {
+    if (REDIRECT_TO_BOARD_EXPIRED_PATTERNS.some((p) => p.test(text))) {
+      return { mode: "dead", reason: "redirected_to_board_expired_text", pageType: "dead" };
+    }
+    // Final URL is board-level but text is ambiguous — flag for review
+    return { mode: "uncertain", reason: "redirected_to_board_needs_review", pageType: "careers_landing_page" };
+  }
   return null;
 }
 
@@ -644,6 +687,27 @@ async function main() {
       reportEntry.pageType = "network_error";
       reportEntry.network_error = page.error.message;
       flaggedJobs.push(reportEntry);
+      return;
+    }
+
+    const redirectToBoard = detectRedirectToBoard(sourceUrl, page.finalUrl, page.body);
+    if (redirectToBoard) {
+      if (redirectToBoard.mode === "dead") {
+        const updatedRecord = markRemoved(record, redirectToBoard.reason, { now });
+        nextRecords = nextRecords.map((item) => cleanText(item.id) === cleanText(record.id) ? updatedRecord : item);
+        reportEntry.action = "archived";
+        reportEntry.reasons.push(redirectToBoard.reason);
+        reportEntry.pageType = redirectToBoard.pageType;
+        changedJobs.push(reportEntry);
+        return;
+      }
+      const updatedRecord = markNeedsReview(record, redirectToBoard.reason, "freshness_audit", { now });
+      nextRecords = nextRecords.map((item) => cleanText(item.id) === cleanText(record.id) ? updatedRecord : item);
+      nextPending = upsertPending(nextPending, buildPendingJobFromRecord(updatedRecord, publicJob, [redirectToBoard.reason]));
+      reportEntry.action = "demoted_to_pending";
+      reportEntry.reasons.push(redirectToBoard.reason);
+      reportEntry.pageType = redirectToBoard.pageType;
+      changedJobs.push(reportEntry);
       return;
     }
 

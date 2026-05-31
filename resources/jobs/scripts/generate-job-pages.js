@@ -29,7 +29,43 @@ function truncate(value, max = 160) {
   return `${text.slice(0, max - 1).trim()}…`;
 }
 
+function formatDescription(value) {
+  const text = String(value || "").trim();
+  if (!text) return escapeHtml("Open the original listing for the full posting details.");
+  const paragraphs = text.split(/\n\s*\n/).filter(Boolean);
+  return paragraphs.map((para) => {
+    const trimmed = para.trim();
+    const lines = trimmed.split("\n").filter(Boolean).map((l) => l.trim()).filter(Boolean);
+    const bulletLines = lines.filter((l) => /^[•\-*]\s/.test(l));
+    const hasBullets = bulletLines.length >= 1;
+    if (hasBullets) {
+      const nonBulletParts = [];
+      const bulletParts = [];
+      let inBullets = false;
+      for (const line of lines) {
+        if (/^[•\-*]\s/.test(line)) {
+          bulletParts.push(line.replace(/^[•\-*]\s+/, "").trim());
+          inBullets = true;
+        } else {
+          if (inBullets) { nonBulletParts.push(""); inBullets = false; }
+          nonBulletParts.push(line);
+        }
+      }
+      const result = [];
+      if (nonBulletParts.filter(Boolean).length) {
+        result.push(`<p>${escapeHtml(nonBulletParts.filter(Boolean).join(" "))}</p>`);
+      }
+      if (bulletParts.length) {
+        result.push(`<ul>${bulletParts.map((item) => `<li>${escapeHtml(item)}</li>`).join("")}</ul>`);
+      }
+      return result.join("\n");
+    }
+    return `<p>${escapeHtml(trimmed)}</p>`;
+  }).join("\n");
+}
+
 function salaryJsonLd(job) {
+  if (!job.salary_visible) return "";
   if (!job.salary_min && !job.salary_max) return "";
   const currency = job.salary_currency && job.salary_currency !== "Unknown" ? job.salary_currency : "USD";
   const unitMap = {
@@ -74,7 +110,7 @@ function buildJsonLd(job) {
         }
       : undefined,
     employmentType: normalizedJobType || undefined,
-    baseSalary: job.salary_min || job.salary_max ? JSON.parse(salaryJsonLd(job)) : undefined,
+    baseSalary: job.salary_visible && (job.salary_min || job.salary_max) ? JSON.parse(salaryJsonLd(job)) : undefined,
     validThrough: job.expires_at || undefined,
     datePosted: job.date_posted || undefined
   };
@@ -123,13 +159,13 @@ function buildPage(job, slug, hash) {
   const normalizedJobType = normalizeEmploymentType(canonical.job_type || "");
   const normalizedWorkplaceType = normalizeWorkplaceType(canonical.workplace_type || "");
   const title = `${cleanVisibleText(canonical.title)} at ${cleanVisibleText(canonical.organization)}`;
-  const structuredDesc = canonical.structured_description || "";
-  const flattenedDesc = cleanVisibleText(canonical.description || "");
-  const fullDescription = structuredDesc && structuredDesc.length >= 60 && /[A-Za-z]{3,}/.test(structuredDesc) ? structuredDesc : flattenedDesc;
+  const rawDesc = canonical.description || "";
+  const formattedDescription = formatDescription(rawDesc);
+  const flattenedDesc = cleanVisibleText(rawDesc);
   const descriptionSnippet = truncate(canonical.description_snippet || canonical.summary || flattenedDesc || `${cleanVisibleText(canonical.title)} at ${cleanVisibleText(canonical.organization)} in climate, clean energy, sustainability, policy, and creative work.`);
   const originalUrl = canonical.original_url || canonical.apply_url || canonical.source_url || "#";
   const tags = Array.isArray(canonical.tags) ? canonical.tags.map((tag) => cleanVisibleText(tag)).filter(Boolean) : [];
-  const summary = fullDescription;
+  const salaryVisible = canonical.salary_visible && canonical.salary_min && canonical.salary_min > 0;
   const detailUrl = `https://example.com/jobs/pages/${slug}.html`;
   const locationMeta = (() => {
     const location = cleanVisibleText(canonical.location || "");
@@ -206,7 +242,7 @@ ${buildJsonLd(job)}
           ${locationMeta ? `<div class="meta">${escapeHtml(locationMeta)}</div>` : ""}
           ${normalizedWorkplaceType && normalizedWorkplaceType !== canonical.location ? `<div class="meta">${escapeHtml(normalizedWorkplaceType)}</div>` : ""}
           ${normalizedJobType ? `<div class="meta">${escapeHtml(normalizedJobType)}</div>` : ""}
-          ${canonical.salary ? `<div class="meta">${escapeHtml(canonical.salary)}</div>` : ""}
+          ${salaryVisible && canonical.salary ? `<div class="meta">${escapeHtml(canonical.salary)}</div>` : ""}
           ${canonical.source ? `<div class="meta">${escapeHtml(canonical.source)}</div>` : ""}
         </div>
         <div style="display:flex; gap:12px; flex-wrap:wrap;">
@@ -216,7 +252,7 @@ ${buildJsonLd(job)}
       </section>
       <section class="card">
         <div class="eyebrow">Summary</div>
-        <div class="summary">${escapeHtml(summary || "Open the original listing for the full posting details.")}</div>
+        <div class="summary">${formattedDescription || escapeHtml("Open the original listing for the full posting details.")}</div>
       </section>
       ${tags.length ? `<section class="card"><div class="eyebrow">Tags</div><div class="tag-row">${tags.map((tag) => `<span class="tag">#${escapeHtml(tag)}</span>`).join("")}</div></section>` : ""}
     </main>

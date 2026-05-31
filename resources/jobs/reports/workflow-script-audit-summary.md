@@ -1,58 +1,67 @@
-# Workflow / Script Audit - Summary
+# Workflow Script Audit Summary
 
-Generated: 2026-05-31T00:46:00Z
+Generated: 2026-05-31T01:10:00Z
 
-## Current Outcome
+## Freshness Redirect Repair
 
-Workflow and script validation passes for the live `resources/jobs` project.
+### Changes to `scripts/freshness-audit.js`
 
-- Workflow files checked: `backend/dotgithub/workflows/*.yml`
-- Missing workflow script references: 0
-- Admin diagnostics: runs without error
-- Public validation gate: runs without hard failures
-- Source expansion gate: runs without errors (blocked_active_counts.sources: 0)
-- Page generation: 90 generated pages for 90 public jobs
-- Stale generated pages pruned: pass
-- Archived/rejected fingerprint violations: 0
+1. **Added `DEAD_TEXT_PATTERNS` entries** — Three new text patterns catch expired Greenhouse listings:
+   - `there are no current openings`
+   - `there are currently no open positions`
+   - `position is no longer available`
 
-## Repairs Applied
+2. **Added `REDIRECT_TO_BOARD_EXPIRED_PATTERNS`** — Secondary check for pages that redirect from a job-specific URL to a board-level page showing expired signals like "Create a Job Alert" / "No current openings".
 
-| Area | Fix |
+3. **Added `isJobSpecificUrl(url)`** — Detects URLs containing a job/requisition ID segment (e.g., `/jobs/12345`).
+
+4. **Added `detectRedirectToBoard(requestedUrl, finalUrl, body)`** — Detects when a job-specific URL redirects to a board-level page. Returns `dead` if:
+   - `?error=true` query parameter present (Greenhouse-specific)
+   - Final URL classifies as a careers landing/search/login page via `classifyPageTypeFromUrl`
+   - Final URL is board-level AND page text shows expired signals
+
+   Returns `uncertain` if final URL is board-level but text is ambiguous.
+
+5. **Added `?error=true` pattern to `classifyPageTypeFromUrl`** — Greenhouse boards redirect to `?error=true` when a job is expired.
+
+6. **Added redirect check to `processStaleJob`** — Runs before `detectPageMode` to catch Greenhouse redirect-to-board scenarios.
+
+### New script: `scripts/audit-greenhouse-redirects.js`
+
+Standalone audit script that:
+- Scans all public Greenhouse jobs in `jobs.json`
+- Fetches each job URL
+- Detects redirect-to-board patterns
+- Removes expired jobs from `jobs.json`
+- Marks records as `removed`/`expired` in `job-records.json`
+- Generates `reports/freshness-redirect-repair-latest.json` and `.md`
+
+### Good Food Institute — Vice President of Operations
+
+**Action taken:** Archived due to expired Greenhouse redirect
+
+- URL: `https://job-boards.greenhouse.io/thegoodfoodinstitute80/jobs/8516386002`
+- Redirects to: `https://job-boards.greenhouse.io/thegoodfoodinstitute80?error=true`
+- Page text: "Create a Job Alert" + "There are no current openings"
+- Record status set to `removed`, `public_visibility: false`
+- Fingerprint preserved in `job-records.json` to prevent re-entry
+- Generated page deleted
+
+## Validation Results
+
+| Command | Exit Code |
 |---|---|
-| EDP Senior Data Scientist snippet | Replaced garbled ATS metadata snippet with canonical first sentence |
-| Generated page formatting | Convert `\n\n` → `<p>`, `•` → `<ul><li>` in generate-job-pages.js |
-| HubSpot Consultant | Archived with closed_or_invalid reason, page deleted, jobs.json cleaned |
-| Powerlines Government Partnerships Advisor | Cleared $420,887 fake pay, rejected metadata salary |
-| Powerlines Philanthropic Advisor | Cleared $420,887 fake pay, same fix |
-| Powerlines malformed markdown | Fixed ]([, ](), ](and patterns across 4 public jobs |
-| Salary badge visibility | Generated pages only show salary when salary_visible=true |
+| `jobs:validate-source-expansion` | 0 |
+| `jobs:validate-public-data` | 0 |
+| `jobs:validate` (both) | 0 |
+| `jobs:check-blocked-sources` | 0 |
+| `jobs:diagnose-admin-actions` | 0 |
+| `jobs:build-pages` | 0 |
+| `jobs:refresh-public` | 0 |
 
-## Known Already-Correct (No Action Needed)
+## Post-Repair State
 
-- **SEEL public URLs**: Already use direct BambooHR subpage links
-- **Blocked source validation**: Sources pass with blocked_active_counts all 0
-- **Hip Hop Caucus think %**: No orphan think % in active data files
-
-## Validation Commands
-
-```bash
-npm run jobs:validate-source-expansion
-npm run jobs:refresh-public
-node scripts/generate-job-pages.js
-npm run jobs:validate-public-data
-npm run jobs:diagnose-admin-actions
-```
-
-All commands exit 0.
-
-## Key Metrics
-
-| Metric | Value |
-|---|---|
-| Public jobs | 90 |
-| Generated pages | 90 |
-| Active sources | 187 |
-| Blocked active sources | 0 |
-| Archive violations | 0 |
-| Fake pay records | 0 |
-| Malformed markdown in public | 0 |
+- Public jobs in `jobs.json`: 89 (GFI removed, was 90)
+- Pages: 89 (GFI page deleted)
+- Greenhouse public jobs: 4 (all verified live with no redirects)
+- Blocked active sources: 0

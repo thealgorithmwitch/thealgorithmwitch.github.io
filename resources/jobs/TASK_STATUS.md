@@ -1,66 +1,62 @@
 # Task Status - Jobs Board Opencode Targeted Repair
 
-Updated: 2026-05-31T00:46:00Z
+Updated: 2026-05-31T01:10:00Z
 
 ## Current Status
 
-Targeted repair pass complete. All required validations pass.
+Repairs complete. All validations pass.
 
-- Public jobs in `jobs.json`: 90
+- Public jobs in `jobs.json`: 89 (GFI VP role archived)
 - Pending jobs in `pending-synced-jobs.json`: 332
-- Canonical records in `job-records.json`: 175 (HubSpot archived)
-- Generated detail pages: 90
+- Canonical records in `job-records.json`: 175 (GFI archived as expired)
+- Generated detail pages: 89 (GFI page deleted)
 - Sources configured: 187
 - Public/pending overlap: 0
 - Duplicate public jobs: 0
 - Blocked active sources: 0
 - Fake pay records: 0
 - Malformed markdown in public descriptions: 0
+- Greenhouse expired redirects to board: 0 remaining (GFI archived)
 
 ## Completed Repairs
 
 | Area | Fix |
 |---|---|
-| SEEL public URLs | Already correct — all 6 use direct BambooHR subpage links |
-| validate-source-expansion blocked source | Already clean — blocked_active_counts.sources: 0 |
-| Hip Hop Caucus think % | Already correct — no orphan think % in any active file |
-| EDP Senior Data Scientist snippet | Fixed garbled ATS metadata snippet → canonical first sentence |
-| EDP generated page formatting | Added `<p>`/`<ul><li>` rendering from `\n\n` and `•` delimiters |
-| HubSpot Consultant | Removed from jobs.json, archived in job-records.json, page deleted |
-| Powerlines Government Partnerships Advisor fake pay | Cleared $420,887/year, set salary_visible=false, rejected |
-| Powerlines Philanthropic Advisor fake pay | Cleared $420,887/year, same fix |
-| Powerlines malformed markdown | 4 jobs: fixed nested ]([, empty ](), ](and protocol errors |
-| Salary badge visibility | Generated pages now respect salary_visible flag |
+| validate-source-expansion | Already clean — no blocked sources. Script passes. |
+| Greenhouse expired listing detection | Added redirect-to-board detection in `freshness-audit.js`: new `DEAD_TEXT_PATTERNS`, `REDIRECT_TO_BOARD_EXPIRED_PATTERNS`, `detectRedirectToBoard()`, `isJobSpecificUrl()`, `?error=true` URL classification |
+| General redirect-to-board rule | `detectRedirectToBoard` checks final URL != requested URL, board-level destination, and expired text signals. Archives definite expired, flags uncertain for review. |
+| Good Food Institute VP role | Removed from `jobs.json`, archived in `job-records.json` as `removed`/`expired` with `greenhouse_expired_redirect_to_board`, page deleted, fingerprint preserved |
+| GFI VP role redirect verification | `https://job-boards.greenhouse.io/thegoodfoodinstitute80/jobs/8516386002` → `https://job-boards.greenhouse.io/thegoodfoodinstitute80?error=true` (no current openings) |
+| Greenhouse audit script | Created `scripts/audit-greenhouse-redirects.js` for standalone scanning of all public Greenhouse jobs |
 
 ## Required Validation Results
 
-All requested validations pass.
+All commands exit 0:
 
-- SEEL URLs correct: pass (all direct BambooHR links)
-- validate-source-expansion: pass (blocked_active_counts.sources: 0)
-- No think % in public data: pass (0 occurrences)
-- EDP snippet correct: pass (canonical first sentence, 302 chars)
-- EDP page has `<p>` and `<ul>` formatting: pass
-- HubSpot Consultant removed from jobs.json: pass
-- HubSpot archived in job-records.json: pass
-- HubSpot generated page deleted: pass
-- Powerlines fake pay cleared (Government Partnerships): pass
-- Powerlines fake pay cleared (Philanthropic Advisor): pass
-- Powerlines markdown cleaned (4 jobs): pass
-- Salary badge respects salary_visible: pass
-- JSON-LD baseSalary respects salary_visible: pass
-- Jobs count: 90 (HubSpot removed)
-- Pages count: 90 (HubSpot page deleted)
-- Page build safe: true
+| Command | Result |
+|---|---|
+| `jobs:validate-source-expansion` | Pass (0 errors) |
+| `jobs:validate-public-data` | Pass (warnings only) |
+| `jobs:validate` | Pass |
+| `jobs:check-blocked-sources` | Pass (0 blocked) |
+| `jobs:diagnose-admin-actions` | Pass |
+| `jobs:build-pages` | Pass (89 pages) |
+| `jobs:refresh-public` | Pass (89 jobs) |
+
+## Reports
+
+- `reports/freshness-redirect-repair-latest.json` — Audit results (1 archived, 0 flagged)
+- `reports/freshness-redirect-repair-latest.md` — Human-readable audit summary
+- `reports/workflow-script-audit-summary.md` — Full workflow/script changes documentation
 
 ## Commands Run
 
 ```bash
-npm run jobs:validate-source-expansion
-npm run jobs:refresh-public
+node scripts/audit-greenhouse-redirects.js
 npm run jobs:build-pages
+npm run jobs:validate-source-expansion
 npm run jobs:validate-public-data
+npm run jobs:validate
+npm run jobs:check-blocked-sources
 npm run jobs:diagnose-admin-actions
 ```
-
-All commands exit 0 and produce no hard errors.

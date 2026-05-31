@@ -45,6 +45,8 @@ const DEAD_TEXT_PATTERNS = [
   /\brole has been closed\b/i,
   /\bapplications? closed\b/i,
   /\bnew applications are no longer being accepted\b/i,
+  /\brequisition\s+(?:is\s+)?(?:no\s+longer\s+accepting|filled)\b/i,
+  /\bposition\s+filled\b/i,
   /\b404\b/i,
   /\bpage not found\b/i,
   /\bthe page you are looking for does not exist\b/i,

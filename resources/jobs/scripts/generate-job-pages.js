@@ -131,6 +131,20 @@ function buildPage(job, slug, hash) {
   const tags = Array.isArray(canonical.tags) ? canonical.tags.map((tag) => cleanVisibleText(tag)).filter(Boolean) : [];
   const summary = fullDescription;
   const detailUrl = `https://example.com/jobs/pages/${slug}.html`;
+  const locationMeta = (() => {
+    const location = cleanVisibleText(canonical.location || "");
+    if (!location) return "";
+    if (normalizedWorkplaceType === "Remote" && /\bremote\b/i.test(location)) {
+      const withoutRemote = location
+        .replace(/\s*\((?:remote|remote,\s*us|remote\s*-\s*us)\)\s*/ig, " ")
+        .replace(/\bremote(?:\s*[-/]\s*(?:us|usa|united states))?\b/ig, " ")
+        .replace(/\s{2,}/g, " ")
+        .trim();
+      const stripped = withoutRemote.replace(/^\(\s*(?:united\s+states|us|usa)\s*\)$/i, "");
+      return stripped || "";
+    }
+    return location;
+  })();
 
   return `${JOB_PAGE_HASH_PREFIX} ${hash} -->
 <!DOCTYPE html>
@@ -189,7 +203,7 @@ ${buildJsonLd(job)}
         <h2>${escapeHtml(canonical.title)}</h2>
         <div style="font-size:1.05rem; color:var(--ink-secondary);">${escapeHtml(canonical.organization)}</div>
         <div class="meta-list">
-          ${canonical.location ? `<div class="meta">${escapeHtml(canonical.location)}</div>` : ""}
+          ${locationMeta ? `<div class="meta">${escapeHtml(locationMeta)}</div>` : ""}
           ${normalizedWorkplaceType && normalizedWorkplaceType !== canonical.location ? `<div class="meta">${escapeHtml(normalizedWorkplaceType)}</div>` : ""}
           ${normalizedJobType ? `<div class="meta">${escapeHtml(normalizedJobType)}</div>` : ""}
           ${canonical.salary ? `<div class="meta">${escapeHtml(canonical.salary)}</div>` : ""}

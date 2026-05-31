@@ -78,10 +78,17 @@ function repairCanonicalDescriptionShape(job = {}, options = {}) {
   }).description;
   let description = stringifySafe(job.description || job.raw_description || normalizedDescription);
   if (needsDescriptionRepair(description, { title, organization })) {
-    description = stringifySafe(normalizedDescription);
+    const normalized = stringifySafe(normalizedDescription);
+    if (normalized) {
+      description = normalized;
+    } else {
+      const fallback = buildSharedFallbackDescription(job, { title, organization });
+      description = stringifySafe(fallback);
+    }
   }
   if (needsDescriptionRepair(description, { title, organization })) {
-    description = stringifySafe(buildSharedFallbackDescription(job, { title, organization }));
+    const fallback = buildSharedFallbackDescription(job, { title, organization });
+    description = stringifySafe(fallback);
   }
 
   let snippet = stringifySafe(job.description_snippet || job.summary);

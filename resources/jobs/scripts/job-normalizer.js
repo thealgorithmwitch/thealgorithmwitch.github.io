@@ -181,7 +181,8 @@ const DESCRIPTION_JUNK_PATTERNS = [
   /\bOil\s*&\s*Gas\b/i,
   /\bsee current openings\b/i,
   /\bheaders?\b\s*(?:"\s*)+/i,
-  /\b(?:taxonomy|valuation|headquarters|employee size|funding|revenue)\b/i,
+  /\b(?:taxonomy|valuation|headquarters|employee size|funding)\b/i,
+  /\b(?:annual\s+)?revenue\s*(?::|:?\s*[\$€£]|:?\s*\d{2,})/i,
   /\b\d{7,10}\b/,
   /\b[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\b/i,
   /\bBusiness and Industrial\b/i,
@@ -493,6 +494,32 @@ function sanitizeRoleUrl(value) {
   const text = normalizeWhitespace(String(value || ""));
   if (!text || isSocialShareUrl(text)) return "";
   return text;
+}
+
+function slugifyJobUrlPart(value) {
+  return String(value || "")
+    .trim()
+    .replace(/['’]/g, "")
+    .replace(/[^A-Za-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "")
+    .replace(/-{2,}/g, "-");
+}
+
+function normalizeNatureConservancyJobUrl(value, title = "") {
+  const original = normalizeWhitespace(String(value || ""));
+  if (!original || !/nature\.wd\d+\.myworkdayjobs\.com|careers\.tnc\.org/i.test(original)) return original;
+  const jrMatch = original.match(/\b(JR\d{5,})\b/i);
+  if (!jrMatch) return original;
+  const jobId = jrMatch[1].toUpperCase();
+  let slug = "";
+  const careerSlug = original.match(/careers\.tnc\.org\/(?:[^/]+\/){2}job\/JR\d{5,}\/([^/?#]+)/i);
+  if (careerSlug) slug = careerSlug[1];
+  if (!slug) {
+    const workdaySlug = original.match(/\/job\/[^/]+\/([^/?#]*?)_JR\d{5,}/i);
+    if (workdaySlug) slug = workdaySlug[1];
+  }
+  if (!slug) slug = slugifyJobUrlPart(title);
+  return `https://careers.tnc.org/us/en/job/${jobId}/${slugifyJobUrlPart(slug)}`;
 }
 
 function normalizePaylocityUrl(value) {
@@ -1644,7 +1671,7 @@ function normalizePayDisplay(options = {}) {
     : detectedPeriod;
   const rangeAmounts = [salaryMin, salaryMax].filter((value) => Number.isFinite(value) && value > 0);
   const shouldPreferRange = rangeAmounts.length > 0 && (
-    /(?:compensation|salary|pay|wage|hourly|annual|annually|per year|per hour)/i.test(payDisplay) ||
+    /(?:compensation|salary|pay|wage|hourly|annual|annually|per year|per hour|starting at|starts at|minimum|min\.?|from)/i.test(payDisplay) ||
     /^(?:USD|CAD|EUR|GBP)\s*\d/i.test(payDisplay) ||
     /[kK]\b/.test(payDisplay)
   );
@@ -1678,10 +1705,13 @@ function normalizePayDisplay(options = {}) {
   } else {
     const onlyAmount = salaryMin || salaryMax;
     next = `${symbol}${formatSalaryAmount(onlyAmount)}`;
+    if (salaryMin && !salaryMax && /\b(?:starting at|starts at|minimum|min\.?|from)\b|\+$/i.test(payDisplay)) {
+      next = `${next}+`;
+    }
   }
 
   if (effectivePeriod !== "Unknown") {
-    next = `${next} / ${effectivePeriod}`;
+    next = effectivePeriod === "hour" ? `${next}/hr` : `${next} / ${effectivePeriod}`;
   }
   incrementParserCleanupStat("salary_display_built_from_range");
   return next;
@@ -1767,7 +1797,7 @@ function salaryCandidateToText(value) {
   return normalizeWhitespace(`${currency} up to ${format(maxValue)} ${period}`.trim());
 }
 
-const PAY_CONTEXT_PATTERN = /\b(?:salary|compensation|pay|pay range|salary range|comp range|base pay|base salary|expected base salary range|full salary range|annual|annually|yearly|hourly|per hour|per year|per month|base)\b/i;
+const PAY_CONTEXT_PATTERN = /\b(?:salary|compensation|listed compensation|pay|pay range|salary range|expected salary range|expected base salary range|comp range|base pay|base salary|full salary range|annual|annually|yearly|hourly|per hour|per year|per month|base)\b/i;
 const PAY_FALSE_POSITIVE_PATTERN = /\b(?:people|customers?|residents?|households?)\s+pay\b|\bpay\s+for\s+(?:utility|utilities|bills?|electricity|energy|rent)\b|\butility\s+bills?\b|\bPOINT\s*\(|\b(?:lat(?:itude)?|lng)\s*:?\s*[-.\d]+\b|\b\d{1,3}\s*%\b|\b(?:job id|requisition id|req id|posting id|tracking id|reference id)\s*:?\s*#?\d{3,}\b|\bid\s*:?\s*#?\d{5,}\b|\bposted\s+(?:on|in)\s+\d{4}\b/i;
 
 function hasPayContext(text) {
@@ -1815,16 +1845,17 @@ function findBestSalaryMatch(text) {
   if (detectMalformedPayText(cleaned)) return cleaned;
 
   const matchers = [
-    /(?:expected base salary range|full salary range|salary range for this position|compensation range for this position)[^.]{0,120}?(?:USD|CAD|EUR|GBP|US\$|CA\$|[$€£])?\s*\d[\d,]*(?:\.\d+)?\s*[kKmM]?(?:\s*(?:-|–|—|to)\s*(?:USD|CAD|EUR|GBP|US\$|CA\$|[$€£])?\s*\d[\d,]*(?:\.\d+)?\s*[kKmM]?(?:\s*(?:per year|annually|yearly|per month|monthly|\/yr|\/year))?)?/i,
-    /(?:annual salary(?: range)?(?: is|:)|salary range(?: for this position)?(?: is|:)|salary for this position is|compensation for this position is|this role pays|compensation range:?|pay range:?|salary:?|compensation:?|pay:?|wage:?|rate:?|stipend:?|base salary:?)[^.]{0,180}(?:USD|CAD|EUR|GBP|US\$|CA\$|[$€£])\s*\d[\d,]*(?:\.\d+)?\s*[kKmM]?(?:\s*(?:-|–|—|to)\s*(?:USD|CAD|EUR|GBP|US\$|CA\$|[$€£])?\s*\d[\d,]*(?:\.\d+)?\s*[kKmM]?)?(?:\s*(?:hourly|daily|weekly|monthly|annual|annually|per hour|per day|per week|per month|per year|\/hr|\/hour|\/day|\/week|\/month|\/mo|\/year|\/yr))?/i,
+    /(?:expected salary range of|expected base salary range|full salary range|salary range for this position|compensation range for this position|salary range)[^.]{0,120}?(?:USD|CAD|EUR|GBP|US\$|CA\$|[$€£])?\s*\d[\d,]*(?:\.\d+)?\s*[kKmM]?(?:\s*(?:-|–|—|to)\s*(?:USD|CAD|EUR|GBP|US\$|CA\$|[$€£])?\s*\d[\d,]*(?:\.\d+)?\s*[kKmM]?(?:\s*(?:USD|CAD|EUR|GBP|per year|annually|yearly|a year|per month|monthly|\/yr|\/year))?)?/i,
+    /(?:annual salary(?: range)?(?: is|:)|salary range(?: for this position)?(?: is|:)?|salary for this position is|compensation for this position is|this role pays|compensation range:?|pay range:?|salary:?|compensation:?|listed compensation:?|pay:?|wage:?|rate:?|stipend:?|base salary:?)[^.]{0,180}(?:USD|CAD|EUR|GBP|US\$|CA\$|[$€£])?\s*\d[\d,]*(?:\.\d+)?\s*[kKmM]?(?:\s*(?:-|–|—|to)\s*(?:USD|CAD|EUR|GBP|US\$|CA\$|[$€£])?\s*\d[\d,]*(?:\.\d+)?\s*[kKmM]?)?(?:\s*(?:USD|CAD|EUR|GBP|hourly|daily|weekly|monthly|annual|annually|a year|per hour|per day|per week|per month|per year|\/hr|\/hour|\/day|\/week|\/month|\/mo|\/year|\/yr))?/i,
     /(?:starting at|up to)\s*(?:USD|CAD|EUR|GBP|US\$|CA\$|[$€£])\s*\d[\d,]*(?:\.\d+)?\s*[kKmM]?(?:\s*(?:hourly|daily|weekly|monthly|annual|annually|per hour|per day|per week|per month|per year|\/hr|\/hour|\/day|\/week|\/month|\/mo|\/year|\/yr))?/i,
     /(?:USD|CAD|EUR|GBP|US\$|CA\$|[$€£])\s*\d[\d,]*(?:\.\d+)?\s*[kKmM]?\s*(?:-|–|—|to)\s*(?:USD|CAD|EUR|GBP|US\$|CA\$|[$€£])?\s*\d[\d,]*(?:\.\d+)?\s*[kKmM]?(?:\s*(?:hourly|daily|weekly|monthly|annual|annually|per hour|per day|per week|per month|per year|\/hr|\/hour|\/day|\/week|\/month|\/mo|\/year|\/yr))?/i,
     /(?:USD|CAD|EUR|GBP|US\$|CA\$|[$€£])\s*\d[\d,]*(?:\.\d+)?\s*[kKmM]?(?:\s*(?:hourly|daily|weekly|monthly|annual|annually|per hour|per day|per week|per month|per year|\/hr|\/hour|\/day|\/week|\/month|\/mo|\/year|\/yr))/i,
     /\b\d{2,3}(?:,\d{3})+|\b\d{5,6}\b|\b\d{2,3}(?:\.\d+)?\s*[kK]\b.*(?:-|–|—|to).*\b\d{2,3}(?:,\d{3})+|\b\d{5,6}\b|\b\d{2,3}(?:\.\d+)?\s*[kK]\b(?:\s*(?:hourly|daily|weekly|monthly|annual|annually|per hour|per day|per week|per month|per year|\/hr|\/hour|\/day|\/week|\/month|\/mo|\/year|\/yr))?/i,
     /(?:salary|compensation|pay|base|stipend)[^.]{0,120}?(?:USD|CAD|EUR|GBP|US\$|CA\$|[$€£])?\s*\d[\d,]*(?:\.\d+)?\s*[kKmM]?\s*(?:-|–|—|to)\s*(?:USD|CAD|EUR|GBP|US\$|CA\$|[$€£])?\s*\d[\d,]*(?:\.\d+)?\s*[kKmM]?(?:\s*(?:annual|annually|yearly|hourly|weekly|per hour|per week|per year|per month|\/hr|\/hour|\/week|\/year|\/yr|\/month|\/mo))?/i,
     /(?:salary|compensation|pay|base|stipend)[^.]{0,80}?(?:USD|CAD|EUR|GBP|US\$|CA\$|[$€£])\s*\d[\d,]*(?:\.\d+)?\s*[kKmM]?(?:\s*(?:annual|annually|yearly|hourly|weekly|per hour|per week|per year|per month|\/hr|\/hour|\/week|\/year|\/yr|\/month|\/mo))?/i,
-    /(?:[$€£])\s*\d[\d,]*(?:\.\d+)?\s*(?:-|–|—|to)\s*(?:[$€£])?\s*\d[\d,]*(?:\.\d+)?\s*(?:per hour|hourly|weekly|per week|annual|annually|yearly|per year|\/hr|\/hour|\/week|\/year|\/yr)?/i,
+    /(?:[$€£])\s*\d[\d,]*(?:\.\d+)?\s*(?:-|–|—|to)\s*(?:[$€£])?\s*\d[\d,]*(?:\.\d+)?\s*(?:a year|per hour|hourly|weekly|per week|annual|annually|yearly|per year|\/hr|\/hour|\/week|\/year|\/yr)?/i,
     /(?:[$€£])\s*\d[\d,]*(?:\.\d+)?\s*(?:per hour|hourly|weekly|per week|annual|annually|yearly|per year|\/hr|\/hour|\/week|\/year|\/yr)/i,
+    /\b\d{2,3},\d{3}\s*(?:-|–|—|to)\s*\d{2,3},\d{3}\s*(?:USD|CAD|EUR|GBP)\s*(?:a year|per year|annually|yearly|\/yr|\/year)/i,
     /\b(?:competitive salary|competitive compensation|salary not listed|compensation not listed|pay not listed|salary unavailable|compensation unavailable|not disclosed|undisclosed)\b/i
   ];
 
@@ -1857,12 +1888,13 @@ function findBestSalaryMatchFromWindows(text) {
   if (!contexts.length) return "";
 
   const matchers = [
-    /(?:expected base salary range|full salary range|salary range for this position|compensation range for this position)[^.]{0,120}?(?:USD|CAD|EUR|GBP|US\$|CA\$|C\$|[$€£])?\s*\d[\d,]*(?:\.\d+)?\s*[kKmM]?(?:\s*(?:-|–|—|to)\s*(?:USD|CAD|EUR|GBP|US\$|CA\$|C\$|[$€£])?\s*\d[\d,]*(?:\.\d+)?\s*[kKmM]?(?:\s*(?:\/\s*(?:hour|hr|day|week|month|mo|year|yr)|per\s+(?:hour|day|week|month|year)|hourly|daily|weekly|monthly|yearly|annual|annually))?)?/i,
-    /(?:annual salary(?: range)?(?: is|:)|salary range(?: for this position)?(?: is|:)|salary for this position is|compensation for this position is|this role pays|compensation range:?|pay range:?|salary:?|compensation:?|pay:?|wage:?|rate:?|stipend:?|base salary:?)[^.]{0,180}(?:USD|CAD|EUR|GBP|US\$|CA\$|C\$|[$€£])?\s*\d[\d,]*(?:\.\d+)?\s*[kKmM]?(?:\s*(?:\/\s*(?:hour|hr|day|week|month|mo|year|yr)|per\s+(?:hour|day|week|month|year)|hourly|daily|weekly|monthly|yearly|annual|annually))?(?:\s*(?:-|–|—|to)\s*(?:USD|CAD|EUR|GBP|US\$|CA\$|C\$|[$€£])?\s*\d[\d,]*(?:\.\d+)?\s*[kKmM]?(?:\s*(?:\/\s*(?:hour|hr|day|week|month|mo|year|yr)|per\s+(?:hour|day|week|month|year)|hourly|daily|weekly|monthly|yearly|annual|annually))?)?/i,
+    /(?:expected salary range of|expected base salary range|full salary range|salary range for this position|compensation range for this position|salary range)[^.]{0,120}?(?:USD|CAD|EUR|GBP|US\$|CA\$|C\$|[$€£])?\s*\d[\d,]*(?:\.\d+)?\s*[kKmM]?(?:\s*(?:-|–|—|to)\s*(?:USD|CAD|EUR|GBP|US\$|CA\$|C\$|[$€£])?\s*\d[\d,]*(?:\.\d+)?\s*[kKmM]?(?:\s*(?:USD|CAD|EUR|GBP|\/\s*(?:hour|hr|day|week|month|mo|year|yr)|a year|per\s+(?:hour|day|week|month|year)|hourly|daily|weekly|monthly|yearly|annual|annually))?)?/i,
+    /(?:annual salary(?: range)?(?: is|:)|salary range(?: for this position)?(?: is|:)?|salary for this position is|compensation for this position is|this role pays|compensation range:?|pay range:?|salary:?|compensation:?|listed compensation:?|pay:?|wage:?|rate:?|stipend:?|base salary:?)[^.]{0,180}(?:USD|CAD|EUR|GBP|US\$|CA\$|C\$|[$€£])?\s*\d[\d,]*(?:\.\d+)?\s*[kKmM]?(?:\s*(?:\/\s*(?:hour|hr|day|week|month|mo|year|yr)|a year|per\s+(?:hour|day|week|month|year)|hourly|daily|weekly|monthly|yearly|annual|annually))?(?:\s*(?:-|–|—|to)\s*(?:USD|CAD|EUR|GBP|US\$|CA\$|C\$|[$€£])?\s*\d[\d,]*(?:\.\d+)?\s*[kKmM]?(?:\s*(?:USD|CAD|EUR|GBP|\/\s*(?:hour|hr|day|week|month|mo|year|yr)|a year|per\s+(?:hour|day|week|month|year)|hourly|daily|weekly|monthly|yearly|annual|annually))?)?/i,
     /(?:starting at|starts at|from|up to)\s*(?:USD|CAD|EUR|GBP|US\$|CA\$|C\$|[$€£])?\s*\d[\d,]*(?:\.\d+)?\s*[kKmM]?(?:\s*(?:\/\s*(?:hour|hr|day|week|month|mo|year|yr)|per\s+(?:hour|day|week|month|year)|hourly|daily|weekly|monthly|yearly|annual|annually))?/i,
     /(?:USD|CAD|EUR|GBP|US\$|CA\$|C\$|[$€£])\s*\d[\d,]*(?:\.\d+)?\s*[kKmM]?(?:\s*(?:\/\s*(?:hour|hr|day|week|month|mo|year|yr)|per\s+(?:hour|day|week|month|year)|hourly|daily|weekly|monthly|yearly|annual|annually))?(?:\s*(?:-|–|—|to)\s*(?:USD|CAD|EUR|GBP|US\$|CA\$|C\$|[$€£])?\s*\d[\d,]*(?:\.\d+)?\s*[kKmM]?(?:\s*(?:\/\s*(?:hour|hr|day|week|month|mo|year|yr)|per\s+(?:hour|day|week|month|year)|hourly|daily|weekly|monthly|yearly|annual|annually))?)?/i,
     /(?:[$€£])\s*\d[\d,]*(?:\.\d+)?\s*[kKmM]?(?:\s*(?:\/\s*(?:hour|hr|day|week|month|mo|year|yr)|per\s+(?:hour|day|week|month|year)|hourly|daily|weekly|monthly|yearly|annual|annually))?(?:\s*(?:-|–|—|to)\s*(?:[$€£])?\s*\d[\d,]*(?:\.\d+)?\s*[kKmM]?(?:\s*(?:\/\s*(?:hour|hr|day|week|month|mo|year|yr)|per\s+(?:hour|day|week|month|year)|hourly|daily|weekly|monthly|yearly|annual|annually))?)?/i,
     /\b\d[\d,]*(?:\.\d+)?\s*[kKmM]?(?:\s*(?:-|–|—|to)\s*\d[\d,]*(?:\.\d+)?\s*[kKmM]?)?(?:\s*(?:\/\s*(?:hour|hr|day|week|month|mo|year|yr)|per\s+(?:hour|day|week|month|year)|hourly|daily|weekly|monthly|yearly|annual|annually))?/i,
+    /\b\d{2,3},\d{3}\s*(?:-|–|—|to)\s*\d{2,3},\d{3}\s*(?:USD|CAD|EUR|GBP)\s*(?:a year|per year|annually|yearly|\/yr|\/year)/i,
     /\b(?:competitive salary|competitive compensation|salary not listed|compensation not listed|pay not listed|salary unavailable|compensation unavailable|not disclosed|undisclosed)\b/i
   ];
 
@@ -2439,7 +2471,8 @@ const HIGH_PRIORITY_SECTIONS = [
   /qualifications?\b/i,
   /what\s+we(?:'|'|')\u0099?re\s+looking\s+for/i,
   /we\s+are\s+seeking\b/i,
-  /the\s+(?:ideal|right)\s+candidate/i
+  /the\s+(?:ideal|right)\s+candidate/i,
+  /job\s+summary/i
 ];
 
 const LOW_PRIORITY_SECTIONS = [
@@ -3392,9 +3425,18 @@ function normalizeJob(input = {}) {
   const attributedTitle = safeStringField(sourceAttribution?.title);
   const titleCleanup = stripWorkplaceLocationSuffixFromTitle(attributedTitle || input.title);
   const title = normalizeTitle(titleCleanup.title || attributedTitle || input.title, organization, { ...parserOptions, organization });
-  const rawApplyUrl = sanitizeRoleUrl(safeStringField(sourceAttribution?.applyUrl || input.apply_url || input.applyUrl));
-  const rawOriginalUrl = sanitizeRoleUrl(safeStringField(sourceAttribution?.originalUrl || input.original_url || input.originalUrl || rawApplyUrl || input.source_url || input.sourceUrl));
-  const rawSourceUrl = sanitizeRoleUrl(safeStringField(sourceAttribution?.sourceUrl || input.source_url || input.sourceUrl));
+  const rawApplyUrl = normalizeNatureConservancyJobUrl(
+    sanitizeRoleUrl(safeStringField(sourceAttribution?.applyUrl || input.apply_url || input.applyUrl)),
+    title
+  );
+  const rawOriginalUrl = normalizeNatureConservancyJobUrl(
+    sanitizeRoleUrl(safeStringField(sourceAttribution?.originalUrl || input.original_url || input.originalUrl || rawApplyUrl || input.source_url || input.sourceUrl)),
+    title
+  );
+  const rawSourceUrl = normalizeNatureConservancyJobUrl(
+    sanitizeRoleUrl(safeStringField(sourceAttribution?.sourceUrl || input.source_url || input.sourceUrl)),
+    title
+  );
   const workableApplyDiagnostic = normalizeWorkableUrl(rawApplyUrl);
   const workableSourceDiagnostic = normalizeWorkableUrl(rawSourceUrl);
   const workableOriginalDiagnostic = normalizeWorkableUrl(rawOriginalUrl);
@@ -3524,8 +3566,8 @@ function normalizeJob(input = {}) {
     job_type: resolveEmploymentType(input),
     salary: resolvedSalaryVisible ? salaryShape.salary : "",
     raw_salary: salaryShape.raw_salary,
-    salary_min: resolveNumericField(input.salary_min) ?? salaryShape.salary_min,
-    salary_max: resolveNumericField(input.salary_max) ?? salaryShape.salary_max,
+    salary_min: resolvedSalaryVisible ? (resolveNumericField(input.salary_min) ?? salaryShape.salary_min) : null,
+    salary_max: resolvedSalaryVisible ? (resolveNumericField(input.salary_max) ?? salaryShape.salary_max) : null,
     salary_currency: VALID_CURRENCIES.has(explicitCurrency) && explicitCurrency !== "Unknown" ? explicitCurrency : salaryShape.salary_currency,
     salary_period: VALID_PERIODS.has(explicitPeriod) && explicitPeriod !== "Unknown" ? explicitPeriod : salaryShape.salary_period,
     salary_visible: resolvedSalaryVisible,
@@ -3912,6 +3954,7 @@ module.exports = {
   ensureArray,
   extractDescriptionText,
   extractSalaryText,
+  normalizeNatureConservancyJobUrl,
   flattenTextValues,
   hasExplicitHybridSignal,
   hasExplicitRemoteSignal,

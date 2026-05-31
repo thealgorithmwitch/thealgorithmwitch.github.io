@@ -30,12 +30,25 @@ function isBlankText(value) {
   return !String(value ?? "").trim();
 }
 
+function hasHardInvalidPay(job = {}) {
+  const values = [job.salary_min, job.salary_max, job.display?.salary_min, job.display?.salary_max]
+    .filter((value) => value !== null && value !== undefined && value !== "")
+    .map((value) => Number(value))
+    .filter((value) => Number.isFinite(value));
+  return values.some((value) => value === 0 || value === 6 || value > 500000);
+}
+
 function mergeSafePublicJob(current = {}, proposed = {}) {
   const next = { ...proposed };
   const currentDescription = getCanonicalDescription(current);
   const proposedDescription = getCanonicalDescription(proposed);
   if (currentDescription && (!proposedDescription || isJunkDescription(proposedDescription))) {
     next.description = current.description;
+  }
+  if (currentDescription && proposedDescription && !isJunkDescription(currentDescription) && !isJunkDescription(proposedDescription)) {
+    if (currentDescription.length >= proposedDescription.length * 2 && currentDescription.length >= 200) {
+      next.description = current.description;
+    }
   }
 
   const currentSnippet = getCanonicalSnippet(current);
@@ -47,7 +60,7 @@ function mergeSafePublicJob(current = {}, proposed = {}) {
 
   const currentPay = getCanonicalPay(current);
   const proposedPay = getCanonicalPay(proposed);
-  if (currentPay && (!proposedPay || isSuspiciousPayDowngrade(currentPay, proposedPay))) {
+  if (currentPay && !hasHardInvalidPay(current) && (!proposedPay || isSuspiciousPayDowngrade(currentPay, proposedPay))) {
     for (const field of PAY_FIELDS) {
       if (Object.prototype.hasOwnProperty.call(current, field) && !isBlankText(current[field])) {
         next[field] = current[field];
@@ -230,6 +243,13 @@ async function syncPublicJobsFromRecords(records, options = {}) {
     }
     wrote = true;
   }
+  let finalJobsJson;
+  try {
+    finalJobsJson = await readJobs();
+  } catch (readError) {
+    finalJobsJson = null;
+  }
+  const finalJobsJsonCount = Array.isArray(finalJobsJson) ? finalJobsJson.length : computedPublicJobsCount;
 
   const descriptionSnippetGeneratedCount = safePublicJobs.filter((job) => String(job.description_snippet || "").trim()).length;
   const descriptionCleanedCount = safePublicJobs.filter((job) => {
@@ -248,8 +268,8 @@ async function syncPublicJobsFromRecords(records, options = {}) {
   return {
     publicJobs,
     jobsCountBefore: existingJobsJsonCount,
-    jobsCount: dryRun ? computedPublicJobsCount : finalJobsJsonCount,
-    jobsCountAfter: dryRun ? computedPublicJobsCount : finalJobsJsonCount,
+    jobsCount: finalJobsJsonCount,
+    jobsCountAfter: finalJobsJsonCount,
     publishedCount: computedPublicJobsCount,
     wrote,
     overwriteAudit: safeOverwriteAudit

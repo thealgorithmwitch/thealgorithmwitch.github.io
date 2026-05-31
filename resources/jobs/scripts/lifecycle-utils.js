@@ -370,9 +370,13 @@ function resolveDisplayJobFromRecord(record) {
     failed_sync_count: raw.failed_sync_count
   });
   if (!normalized) return null;
-  const fullDescription = hasUsableDescription(canonicalDescription || stringifySafe(normalized.description || normalized.raw_description), { title: normalized.title })
-    ? (canonicalDescription || stringifySafe(normalized.description || normalized.raw_description))
-    : buildFallbackDescription(normalized);
+  const candidateDesc = canonicalDescription || stringifySafe(normalized.description || normalized.raw_description);
+  const fallbackDesc = buildFallbackDescription(normalized);
+  const fullDescription = hasUsableDescription(candidateDesc, { title: normalized.title })
+    ? candidateDesc
+    : (candidateDesc && candidateDesc.length >= 200 && candidateDesc.length > fallbackDesc.length * 3
+      ? candidateDesc
+      : fallbackDesc);
   const descriptionSnippet = buildDescriptionSnippet(fullDescription, 220, { title: normalized.title });
   return {
     ...normalized,

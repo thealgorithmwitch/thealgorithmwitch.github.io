@@ -2539,10 +2539,20 @@
         state.profiles = Array.isArray(profiles) ? profiles : [];
         state.employers = Array.isArray(employers) ? employers : [];
 
+        function hasValidPay(job) {
+          return Boolean(job.salary_visible) && Boolean(job.salary) && job.salary_min > 0;
+        }
+
         state.jobs = jobs
           .sort((a, b) => {
             const orderDelta = Number(a.display_order || 0) - Number(b.display_order || 0);
             if (orderDelta !== 0) return orderDelta;
+            const aFeatured = Boolean(a.featured);
+            const bFeatured = Boolean(b.featured);
+            if (aFeatured !== bFeatured) return bFeatured - aFeatured;
+            const aPay = hasValidPay(a);
+            const bPay = hasValidPay(b);
+            if (aPay !== bPay) return bPay - aPay;
             return new Date(b.date_posted) - new Date(a.date_posted);
           });
         state.jobPagePaths = buildJobPathMap(state.jobs);

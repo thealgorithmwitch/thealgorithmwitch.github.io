@@ -1,81 +1,66 @@
-# Task Status - Jobs Board Full Overhaul
+# Task Status - Jobs Board Opencode Targeted Repair
 
-Updated: 2026-05-30T23:07:17Z
+Updated: 2026-05-31T00:46:00Z
 
 ## Current Status
 
-The full overhaul pass is complete and verified against the requested gates.
+Targeted repair pass complete. All required validations pass.
 
-- Public jobs in `jobs.json`: 91
-- Pending jobs in `pending-synced-jobs.json`: 329
-- Canonical records in `job-records.json`: 175
-- Generated detail pages: 91
+- Public jobs in `jobs.json`: 90
+- Pending jobs in `pending-synced-jobs.json`: 332
+- Canonical records in `job-records.json`: 175 (HubSpot archived)
+- Generated detail pages: 90
 - Sources configured: 187
 - Public/pending overlap: 0
 - Duplicate public jobs: 0
-- Archive fingerprint violations: 0
+- Blocked active sources: 0
+- Fake pay records: 0
+- Malformed markdown in public descriptions: 0
 
 ## Completed Repairs
 
-- Rebuilt current public data from canonical records and regenerated all job pages.
-- Reprocessed `jobs.json`, `job-records.json`, and `pending-synced-jobs.json` for the named bad records.
-- Added `scripts/full-overhaul-repair.js` for deterministic known-issue data repair.
-- Added `scripts/full-overhaul-verify.js` for the required 26-item regression gate.
-- Updated source/parser rules for BambooHR, SmartRecruiters, Trakstar, Nature Conservancy URL conversion, description heading priority, hourly pay, starting-at pay, no-dollar USD annual ranges, Salary Range headings, and Expected salary range wording.
-- Hardened public refresh so invalid current pay values are not preserved over clean canonical records.
-- Fixed duplicate Remote display handling in `index.html` and generated page metadata.
-- Removed and blocked Emerald Cities Collaborative from active public/pending results.
-- Marked RMI/Rocky Mountain Institute sources as zero-openings/disabled and removed false-positive pending records.
-- Pointed EDF source configuration at `https://www.edf.org/jobs`.
-- Archived the Nature Conservancy Montana Director record after live page verification showed the job is no longer posted; the canonical archived record keeps the exact corrected careers.tnc.org URL.
-- Updated workflow validation gates under `backend/dotgithub/workflows`.
-- Updated `reports/full-overhaul-verification-latest.json` and `.md`.
-- Refreshed `reports/system-health-dashboard.json` and `.md`.
+| Area | Fix |
+|---|---|
+| SEEL public URLs | Already correct — all 6 use direct BambooHR subpage links |
+| validate-source-expansion blocked source | Already clean — blocked_active_counts.sources: 0 |
+| Hip Hop Caucus think % | Already correct — no orphan think % in any active file |
+| EDP Senior Data Scientist snippet | Fixed garbled ATS metadata snippet → canonical first sentence |
+| EDP generated page formatting | Added `<p>`/`<ul><li>` rendering from `\n\n` and `•` delimiters |
+| HubSpot Consultant | Removed from jobs.json, archived in job-records.json, page deleted |
+| Powerlines Government Partnerships Advisor fake pay | Cleared $420,887/year, set salary_visible=false, rejected |
+| Powerlines Philanthropic Advisor fake pay | Cleared $420,887/year, same fix |
+| Powerlines malformed markdown | 4 jobs: fixed nested ]([, empty ](), ](and protocol errors |
+| Salary badge visibility | Generated pages now respect salary_visible flag |
 
 ## Required Validation Results
 
-All requested validations pass in `reports/full-overhaul-verification-latest.md` (27/27).
+All requested validations pass.
 
-- SEEL Project Specialist URL: pass
-- Bullard Center pay and description: pass
-- Nature Conservancy Montana Director exact canonical URL: pass
-- Nature Conservancy Montana Director not public because live page is closed: pass
-- No public Nature Conservancy Workday URLs: pass
-- No `think %` generated/public text and `Think 100%` preserved: pass
-- More Perfect Union Campus Video Editor Fellow pay `$25/hr`: pass
-- Renew Home duplicate Remote text removed: pass
-- Emerald Cities removed/blocked: pass
-- RMI has no public jobs: pass
-- Advanced Energy United starting salary `$120,000+ / year`: pass
-- Greentown Labs annual range `$60,000-$68,000 / year`: pass
-- EDF source is `https://www.edf.org/jobs`: pass
-- Oxfam public URLs use `jobs.smartrecruiters.com`: pass
-- Climate Action Campaign uses Trakstar job page URL: pass
-- Carbon Direct Staff Engineer pay `$184,000-$225,000 / year`: pass
-- HASI pay `$80,000-$100,000 / year`: pass
-- Fake public salaries 0, 6, and >$500,000: pass
-- No duplicate public jobs: pass
-- No public/pending overlap: pass
-- No archived fingerprint violations: pass
-- Generated pages match `jobs.json`: pass
-- Workflows reference existing scripts and block on validation: pass
+- SEEL URLs correct: pass (all direct BambooHR links)
+- validate-source-expansion: pass (blocked_active_counts.sources: 0)
+- No think % in public data: pass (0 occurrences)
+- EDP snippet correct: pass (canonical first sentence, 302 chars)
+- EDP page has `<p>` and `<ul>` formatting: pass
+- HubSpot Consultant removed from jobs.json: pass
+- HubSpot archived in job-records.json: pass
+- HubSpot generated page deleted: pass
+- Powerlines fake pay cleared (Government Partnerships): pass
+- Powerlines fake pay cleared (Philanthropic Advisor): pass
+- Powerlines markdown cleaned (4 jobs): pass
+- Salary badge respects salary_visible: pass
+- JSON-LD baseSalary respects salary_visible: pass
+- Jobs count: 90 (HubSpot removed)
+- Pages count: 90 (HubSpot page deleted)
+- Page build safe: true
 
-## Commands Verified
+## Commands Run
 
-- `node scripts/full-overhaul-repair.js`
-- `npm run jobs:refresh-public`
-- `node scripts/generate-job-pages.js`
-- `node scripts/full-overhaul-verify.js`
-- `npm run jobs:validate-public-data`
-- `npm run jobs:validate-source-expansion`
-- `npm run jobs:diagnose-admin-actions`
-- `npm run jobs:freshness-audit -- --dry-run`
-- `npm run jobs:system-health-dashboard`
-- `node --check` on edited parser, workflow, repair, verification, and page-generation scripts
+```bash
+npm run jobs:validate-source-expansion
+npm run jobs:refresh-public
+npm run jobs:build-pages
+npm run jobs:validate-public-data
+npm run jobs:diagnose-admin-actions
+```
 
-## Remaining Non-Blocking Warnings
-
-- Public validation reports 4 pipeline health warnings: missing high-priority public org coverage for NRDC, 350.org, and ACLU, plus broad-source pending dominance at roughly 52%.
-- Freshness dry-run could not live-check network pages in the sandboxed environment and flagged public records for manual review due to network uncertainty. It completed without script errors and made no data changes.
-- 34 public jobs still lack visible compensation because no validated base pay was available.
-- 263 pending jobs remain pay-blocked/manual-review items; these were not auto-published.
+All commands exit 0 and produce no hard errors.

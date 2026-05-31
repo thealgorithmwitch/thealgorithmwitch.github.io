@@ -1,6 +1,6 @@
 # Workflow / Script Audit - Summary
 
-Generated: 2026-05-30T23:07:17Z
+Generated: 2026-05-31T00:46:00Z
 
 ## Current Outcome
 
@@ -8,11 +8,10 @@ Workflow and script validation passes for the live `resources/jobs` project.
 
 - Workflow files checked: `backend/dotgithub/workflows/*.yml`
 - Missing workflow script references: 0
-- Freshness cadence: every 3 days
 - Admin diagnostics: runs without error
 - Public validation gate: runs without hard failures
-- Source expansion gate: runs without errors
-- Page generation: 91 generated pages for 91 public jobs
+- Source expansion gate: runs without errors (blocked_active_counts.sources: 0)
+- Page generation: 90 generated pages for 90 public jobs
 - Stale generated pages pruned: pass
 - Archived/rejected fingerprint violations: 0
 
@@ -20,43 +19,40 @@ Workflow and script validation passes for the live `resources/jobs` project.
 
 | Area | Fix |
 |---|---|
-| Public refresh | Fixed `finalJobsJsonCount` runtime error and prevented invalid current pay from overriding clean canonical pay. |
-| Source expansion validation | Disabled blocked source configs are allowed as governance records; enabled blocked sources, public jobs, pending jobs, and records still fail validation. |
-| Auto-expand workflow | Added page build, public validation, and blocked-source validation after lifecycle processing. |
-| Freshness workflow | Confirmed the scheduled freshness workflow runs on a 3-day cadence. |
-| Admin actions | Confirmed `npm run jobs:diagnose-admin-actions` works and stale queued actions are not applied. |
-| Page generation | Confirmed generated page count, missing page URL count, stale page URL count, and duplicate slug count are all clean. |
-| System health report | Fixed malformed markdown table separators in `scripts/system-health-dashboard.js`. |
+| EDP Senior Data Scientist snippet | Replaced garbled ATS metadata snippet with canonical first sentence |
+| Generated page formatting | Convert `\n\n` → `<p>`, `•` → `<ul><li>` in generate-job-pages.js |
+| HubSpot Consultant | Archived with closed_or_invalid reason, page deleted, jobs.json cleaned |
+| Powerlines Government Partnerships Advisor | Cleared $420,887 fake pay, rejected metadata salary |
+| Powerlines Philanthropic Advisor | Cleared $420,887 fake pay, same fix |
+| Powerlines malformed markdown | Fixed ]([, ](), ](and patterns across 4 public jobs |
+| Salary badge visibility | Generated pages only show salary when salary_visible=true |
+
+## Known Already-Correct (No Action Needed)
+
+- **SEEL public URLs**: Already use direct BambooHR subpage links
+- **Blocked source validation**: Sources pass with blocked_active_counts all 0
+- **Hip Hop Caucus think %**: No orphan think % in active data files
 
 ## Validation Commands
 
 ```bash
+npm run jobs:validate-source-expansion
 npm run jobs:refresh-public
 node scripts/generate-job-pages.js
-node scripts/full-overhaul-verify.js
 npm run jobs:validate-public-data
-npm run jobs:validate-source-expansion
 npm run jobs:diagnose-admin-actions
-npm run jobs:freshness-audit -- --dry-run
-npm run jobs:system-health-dashboard
 ```
 
-## Latest Results
+All commands exit 0.
 
-| Check | Result |
+## Key Metrics
+
+| Metric | Value |
 |---|---|
-| `jobs:refresh-public` | Pass, 91 public jobs written |
-| `generate-job-pages` | Pass, 91 expected pages, 1 stale closed TNC page pruned |
-| `full-overhaul-verify` | Pass, 27/27 validations |
-| `jobs:validate-public-data` | Pass, 0 hard failures |
-| `jobs:validate-source-expansion` | Pass, 0 errors |
-| `jobs:diagnose-admin-actions` | Pass, 0 queued actions |
-| `jobs:freshness-audit -- --dry-run` | Pass, no script errors |
-| `jobs:system-health-dashboard` | Pass, dashboard refreshed |
-
-## Residual Warnings
-
-- `jobs:validate-public-data` reports warning-only pipeline health items: NRDC, 350.org, and ACLU are missing from the public board, and broad-source pending dominance is about 52%.
-- `jobs:validate-public-data` reports a snapshot page-count drift warning because the closed Nature Conservancy Montana page was removed from public output.
-- `jobs:freshness-audit -- --dry-run` completed but the sandboxed run classified live checks as uncertain network failures, so it made no data changes.
-- Workflow templates live in `backend/dotgithub/workflows`; the project does not currently have committed workflow files under `.github/workflows`.
+| Public jobs | 90 |
+| Generated pages | 90 |
+| Active sources | 187 |
+| Blocked active sources | 0 |
+| Archive violations | 0 |
+| Fake pay records | 0 |
+| Malformed markdown in public | 0 |

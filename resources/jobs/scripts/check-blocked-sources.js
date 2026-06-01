@@ -127,9 +127,48 @@ async function checkBlockedSources() {
 }
 
 async function main() {
+  const writeMode = process.argv.includes("--write") || process.argv.includes("-w");
   const { violations, historicalWarnings } = await checkBlockedSources();
 
-  if (violations.length) {
+  if (writeMode) {
+    const { readJson, writeJson, SOURCES_FILE } = require("./job-utils");
+    const { isBlockedSourceEntry, getBlockedSourceRuleForEntry, stringify: bsStringify } = require("./blocked-source-utils");
+    const rawData = await readJson(SOURCES_FILE, { sources: [] });
+    const sources = Array.isArray(rawData) ? rawData : (Array.isArray(rawData?.sources) ? rawData.sources : []);
+    if (!sources.length && rawData && (Array.isArray(rawData) || Array.isArray(rawData?.sources))) {
+      console.log("[jobs:check-blocked-sources] sources.json is empty. Nothing to repair.");
+      return;
+    }
+    const activeBlocked = sources.filter((entry) => {
+      const enabled = entry.enabled !== false || entry.custom_sync_enabled === true;
+      return enabled && isBlockedSourceEntry(entry);
+    });
+    if (activeBlocked.length) {
+      console.error(`[jobs:check-blocked-sources] Disabling ${activeBlocked.length} active blocked source(s):`);
+      for (const entry of activeBlocked) {
+        const rule = getBlockedSourceRuleForEntry(entry);
+        console.error(`  - ID: ${bsStringify(entry.id || entry.source_id || '(no-id)')}`);
+        console.error(`    Name: ${bsStringify(entry.organization || entry.name || '(no-name)')}`);
+        console.error(`    URL: ${bsStringify(entry.source_url || entry.url || '(no-url)')}`);
+        console.error(`    Reason: ${rule ? (rule.name || rule.description || '(unknown)') : '(no rule match)'}`);
+        entry.enabled = false;
+      }
+      const payload = Array.isArray(rawData) ? sources : { ...rawData, sources };
+      await writeJson(SOURCES_FILE, payload);
+      console.error(`[jobs:check-blocked-sources] Disabled ${activeBlocked.length} blocked source(s).`);
+    } else {
+      console.log("[jobs:check-blocked-sources] No active blocked sources to disable.");
+    }
+    const remaining = sources.filter((entry) => {
+      const enabled = entry.enabled !== false || entry.custom_sync_enabled === true;
+      return enabled && isBlockedSourceEntry(entry);
+    });
+    if (remaining.length) {
+      console.error(`[jobs:check-blocked-sources] ERROR: ${remaining.length} active blocked source(s) remain after repair.`);
+      process.exitCode = 1;
+      return;
+    }
+  } else if (violations.length) {
     console.error("[jobs:check-blocked-sources] Blocked source references found:");
     for (const violation of violations) {
       console.error(

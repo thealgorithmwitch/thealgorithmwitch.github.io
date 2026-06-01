@@ -76,6 +76,9 @@ jobs:
       - name: Validate public data after admin actions
         run: npm --prefix "$JOBS_DIR" run jobs:validate-public-data
 
+      - name: Guard and fix blocked sources before source expansion validation
+        run: npm --prefix "$JOBS_DIR" run jobs:check-blocked-sources -- --write
+
       - name: Validate source expansion after admin actions
         run: npm --prefix "$JOBS_DIR" run jobs:validate-source-expansion
 

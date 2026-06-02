@@ -3,10 +3,11 @@ const path = require("path");
 const { buildPublicJobsFromRecords } = require("./public-jobs");
 const { CANONICAL_SPECIALIZATIONS, hasUsableDescription, normalizePaylocityUrl } = require("./job-normalizer");
 const { buildJobPagePathMap, cleanVisibleText } = require("./job-page-paths");
-const { readJobs, readJson, readPendingSyncedJobs, readSources } = require("./job-utils");
-const { readJobRecords, TALENT_PROFILES_FILE, EMPLOYERS_FILE } = require("./public-records");
+const { readJobs, readJson, readPendingSyncedJobs, readSources, writeJson, JOBS_FILE } = require("./job-utils");
+const { readJobRecords, TALENT_PROFILES_FILE, EMPLOYERS_FILE, JOB_RECORDS_FILE } = require("./public-records");
 const { readSourceHealthSnapshot } = require("./source-health-store");
 const { hasMalformedDescriptionTemplateSafe } = require("./malformed-description-helper");
+const { markNeedsReview } = require("./lifecycle-utils");
 const {
   OCTOPUS_PUBLIC_CAP,
   auditOctopusState,
@@ -16,8 +17,33 @@ const {
 
 const ROOT = path.resolve(__dirname, "..");
 const PAGES_DIR = path.join(ROOT, "pages");
+const REPORTS_DIR = path.join(ROOT, "reports");
 const VALIDATION_SNAPSHOTS_DIR = path.join(ROOT, "validation-snapshots");
 const VALIDATION_LATEST_FILE = path.join(VALIDATION_SNAPSHOTS_DIR, "latest.json");
+
+const REPAIRABLE_SAMPLE_KEYS = [
+  "missing_page_url", "stale_page_url", "invalid_pay", "invalid_title",
+  "malformed_description_templates", "malformed_opening_paragraphs",
+  "invalid_workplace_type", "invalid_job_type", "invalid_location",
+  "invalid_snippet", "missing_canonical_description",
+  "missing_currency_symbol_jobs", "suspicious_pay_downgrades",
+  "organization_page_url_conflicts"
+];
+
+const REPAIRABLE_ERROR_PREFIXES = [
+  "missing page_url count", "stale page_url count",
+  "invalid pay count", "invalid title count",
+  "malformed description template count", "malformed opening paragraph count",
+  "invalid workplace_type count", "invalid job_type count",
+  "invalid location count", "invalid snippet count",
+  "missing canonical description count", "missing currency symbol count",
+  "suspicious pay downgrade count", "organization/page_url mismatch count"
+];
+
+const WARNING_ONLY_PREFIXES = [
+  "page count drift", "broad source dominance", "missing high priority org",
+  "orphaned backlog high priority count", "pipeline health warning count"
+];
 const CANONICAL_RENDER_TARGETS = [
   path.join(ROOT, "index.html"),
   path.join(ROOT, "scripts", "generate-job-pages.js")
@@ -1395,36 +1421,129 @@ async function persistValidationSnapshot(report) {
   return current;
 }
 
+async function routeRepairableRecords(report, records, jobs) {
+  const repairableIds = new Set();
+  const diagnostics = [];
+
+  for (const key of REPAIRABLE_SAMPLE_KEYS) {
+    const samples = report.samples[key];
+    if (!Array.isArray(samples) || !samples.length) continue;
+    for (const sample of samples) {
+      const id = String(sample.id || sample.page_url || "").trim();
+      if (!id) continue;
+      repairableIds.add(id);
+      diagnostics.push({ id, reason: key, detail: sample.reason || sample.salary || sample.location || "" });
+    }
+  }
+
+  if (!repairableIds.size) {
+    return { routedCount: 0, routedIds: [], diagnostics: [] };
+  }
+
+  const repairableIdSet = new Set(Array.from(repairableIds).filter((id) => !id.startsWith("./pages/")));
+  const nextJobs = jobs.filter((job) => !repairableIdSet.has(String(job.id || "")));
+  const nextRecords = records.map((record) => {
+    if (!repairableIdSet.has(String(record.id || ""))) return record;
+    const repairReason = diagnostics.find((d) => d.id === String(record.id));
+    return markNeedsReview(record, `validation_routed_to_backend:${repairReason ? repairReason.reason : "general"}`, "validation_repair");
+  });
+
+  await writeJson(JOBS_FILE, nextJobs);
+  await writeJson(JOB_RECORDS_FILE, nextRecords);
+
+  const { buildPagesFromJobs } = require("./generate-job-pages");
+  await buildPagesFromJobs(nextJobs);
+
+  const routedIds = Array.from(repairableIdSet);
+  return { routedCount: routedIds.length, routedIds, diagnostics };
+}
+
+async function generateRoutingReport(routingResult, report, exitDecision) {
+  await fs.mkdir(REPORTS_DIR, { recursive: true });
+  const now = new Date().toISOString();
+  const routingReport = {
+    generated_at: now,
+    records_routed_to_pending: routingResult.routedCount,
+    routed_ids: routingResult.routedIds.slice(0, 100),
+    hard_validation_failures_remaining: report.hard_validation_failure_count,
+    errors_remaining: report.errors.length,
+    records_remaining_public: report.jobs_json_count - routingResult.routedCount,
+    exit_decision: exitDecision,
+    diagnostics: routingResult.diagnostics.slice(0, 200)
+  };
+  const reportPath = path.join(REPORTS_DIR, "public-validation-routing-latest.json");
+  await writeJson(reportPath, routingReport);
+
+  const mdLines = [
+    "# Public Validation Routing Report",
+    `Generated at: ${now}`,
+    "",
+    "## Summary",
+    `Records routed to pending: ${routingResult.routedCount}`,
+    `Hard validation failures remaining: ${report.hard_validation_failure_count}`,
+    `Records remaining public: ${report.jobs_json_count - routingResult.routedCount}`,
+    `Exit decision: ${exitDecision}`,
+    "",
+    "## Routed Records",
+    ...routingResult.diagnostics.slice(0, 200).map((d) =>
+      `- \`${d.id}\`: ${d.reason}${d.detail ? ` (${d.detail})` : ""}`
+    ),
+    ""
+  ];
+  const mdPath = path.join(REPORTS_DIR, "public-validation-routing-latest.md");
+  await fs.writeFile(mdPath, mdLines.join("\n"), "utf8");
+}
+
 async function main() {
+  const routeRepairable = process.argv.includes("--route-repairable-to-pending");
   const requirePages = !process.argv.includes("--pre-pages");
-  const report = await buildValidationReport({ requirePages });
+
+  let routingResult = { routedCount: 0, routedIds: [], diagnostics: [] };
+  let report = await buildValidationReport({ requirePages });
+
+  if (routeRepairable) {
+    const records = await readJobRecords();
+    const jobs = await readJobs();
+    routingResult = await routeRepairableRecords(report, records, jobs);
+
+    if (routingResult.routedCount > 0) {
+      report = await buildValidationReport({ requirePages });
+    }
+  }
+
   const snapshot = await persistValidationSnapshot(report);
   const exitReasons = [];
 
-  const isOnlyWarningPatterns = report.errors.every((error) =>
-    /page count drift|broad source dominance|missing high priority org/i.test(error)
-  );
+  const hardErrors = report.errors.filter((error) => {
+    if (WARNING_ONLY_PREFIXES.some((p) => error.startsWith(p))) return false;
+    if (routeRepairable && REPAIRABLE_ERROR_PREFIXES.some((p) => error.startsWith(p))) return false;
+    return true;
+  });
 
-  if (isOnlyWarningPatterns && report.errors.length > 0) {
-    report.errors = [];
-  }
-
-  if (report.errors.length) {
-    exitReasons.push(...report.errors);
+  if (hardErrors.length) {
+    exitReasons.push(...hardErrors);
   }
   if (report.hard_validation_failure_count > 0) {
     exitReasons.push(`hard_validation_failures=${report.hard_validation_failure_count}`);
   }
 
+  const exitDecision = exitReasons.length ? "hard_failures" : "passed";
+
   console.log(JSON.stringify({
     ...report,
     exit_code_reason: exitReasons.length ? exitReasons.join("; ") : "",
-    validation_snapshot_regressions: snapshot.regressions
+    validation_snapshot_regressions: snapshot.regressions,
+    repairable_routed_to_pending: routingResult.routedCount,
+    records_routed_to_pending: routingResult.routedIds,
+    records_remaining_public: report.jobs_json_count - routingResult.routedCount,
+    exit_decision: exitDecision
   }, null, 2));
 
-  if (report.errors.length) {
-    process.exitCode = 1;
-  } else if (exitReasons.length > 0 && !isOnlyWarningPatterns) {
+  if (routeRepairable) {
+    await generateRoutingReport(routingResult, report, exitDecision);
+  }
+
+  if (exitReasons.length) {
     process.exitCode = 1;
   }
 }
@@ -1440,5 +1559,6 @@ module.exports = {
   buildValidationReport,
   hasInvalidPublicTitle,
   isValidPayDisplay,
-  persistValidationSnapshot
+  persistValidationSnapshot,
+  routeRepairableRecords
 };

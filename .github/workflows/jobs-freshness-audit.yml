@@ -59,11 +59,11 @@ jobs:
       - name: Build job pages
         run: npm --prefix "$JOBS_DIR" run jobs:build-pages
 
+      - name: Guard and fix blocked sources before validation
+        run: npm --prefix "$JOBS_DIR" run jobs:check-blocked-sources -- --write
+
       - name: Validate after audit
         run: npm --prefix "$JOBS_DIR" run jobs:validate
-
-      - name: Guard blocked sources
-        run: npm --prefix "$JOBS_DIR" run jobs:check-blocked-sources
 
       - name: Audit source coverage
         run: npm --prefix "$JOBS_DIR" run jobs:audit-source-coverage

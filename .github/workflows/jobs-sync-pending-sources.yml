@@ -47,14 +47,17 @@ jobs:
           node --check "$JOBS_DIR/scripts/ats-clients.js"
           node --check "$JOBS_DIR/scripts/source-discovery-helpers.js"
 
+      - name: Guard and fix blocked sources before validation
+        run: npm --prefix "$JOBS_DIR" run jobs:check-blocked-sources -- --write
+
       - name: Validate public data before pending sync
         run: npm --prefix "$JOBS_DIR" run jobs:validate
 
       - name: Run pending-only source sync
         run: npm --prefix "$JOBS_DIR" run jobs:sync-targeted-pending-sources
 
-      - name: Guard blocked sources
-        run: npm --prefix "$JOBS_DIR" run jobs:check-blocked-sources
+      - name: Guard and fix blocked sources before validation
+        run: npm --prefix "$JOBS_DIR" run jobs:check-blocked-sources -- --write
 
       - name: Validate public data after pending sync
         run: npm --prefix "$JOBS_DIR" run jobs:validate

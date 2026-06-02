@@ -71,6 +71,9 @@ jobs:
           node --check "$JOBS_DIR/scripts/search-ingest.js"
           node --check "$JOBS_DIR/scripts/source-discovery-helpers.js"
 
+      - name: Guard and fix blocked sources before validation
+        run: npm --prefix "$JOBS_DIR" run jobs:check-blocked-sources -- --write
+
       - name: Validate public data before discovery
         run: npm --prefix "$JOBS_DIR" run jobs:validate
 
@@ -83,8 +86,8 @@ jobs:
             npm --prefix "$JOBS_DIR" run jobs:discover-sources -- --candidates-file "$CANDIDATES_FILE" --queries-file "$SEARCH_SOURCES_FILE"
           fi
 
-      - name: Guard blocked sources
-        run: npm --prefix "$JOBS_DIR" run jobs:check-blocked-sources
+      - name: Guard and fix blocked sources before validation
+        run: npm --prefix "$JOBS_DIR" run jobs:check-blocked-sources -- --write
 
       - name: Validate public data after discovery
         run: npm --prefix "$JOBS_DIR" run jobs:validate

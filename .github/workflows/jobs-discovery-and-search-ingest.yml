@@ -83,6 +83,9 @@ jobs:
           node --check "$JOBS_DIR/scripts/sync-targeted-pending-sources.js"
           node --check "$JOBS_DIR/scripts/ats-clients.js"
 
+      - name: Guard and fix blocked sources before validation
+        run: npm --prefix "$JOBS_DIR" run jobs:check-blocked-sources -- --write
+
       - name: Validate public data before automation
         run: npm --prefix "$JOBS_DIR" run jobs:validate
 
@@ -104,8 +107,8 @@ jobs:
             npm --prefix "$JOBS_DIR" run jobs:search-ingest -- --queries-file "$SEARCH_SOURCES_FILE"
           fi
 
-      - name: Guard blocked sources
-        run: npm --prefix "$JOBS_DIR" run jobs:check-blocked-sources
+      - name: Guard and fix blocked sources before validation
+        run: npm --prefix "$JOBS_DIR" run jobs:check-blocked-sources -- --write
 
       - name: Validate public data after automation
         run: npm --prefix "$JOBS_DIR" run jobs:validate
@@ -186,13 +189,13 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          if [ "${{ steps.changes.outputs.sources_changed }}" = "true" ]; then
+          if [ "${{ steps.changes.outputs.sources_changed }}" = "true" ] && [ -e resources/jobs/sources.json ]; then
             git add resources/jobs/sources.json
           fi
-          if [ "${{ steps.changes.outputs.candidates_changed }}" = "true" ]; then
+          if [ "${{ steps.changes.outputs.candidates_changed }}" = "true" ] && [ -e resources/jobs/source-discovery-candidates.json ]; then
             git add resources/jobs/source-discovery-candidates.json
           fi
-          if [ "${{ steps.changes.outputs.pending_changed }}" = "true" ]; then
+          if [ "${{ steps.changes.outputs.pending_changed }}" = "true" ] && [ -e resources/jobs/pending-synced-jobs.json ]; then
             git add resources/jobs/pending-synced-jobs.json
           fi
           if [ "${{ steps.changes.outputs.should_commit_reports }}" = "true" ]; then

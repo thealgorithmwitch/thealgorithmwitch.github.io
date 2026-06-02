@@ -116,11 +116,11 @@ jobs:
       - name: Build generated job pages
         run: npm --prefix "$JOBS_DIR" run jobs:build-pages
 
+      - name: Guard and fix blocked sources before validation
+        run: npm --prefix "$JOBS_DIR" run jobs:check-blocked-sources -- --write
+
       - name: Validate generated public data
         run: npm --prefix "$JOBS_DIR" run jobs:validate
-
-      - name: Guard archived and blocked sources
-        run: npm --prefix "$JOBS_DIR" run jobs:check-blocked-sources
 
       - name: Detect relevant lifecycle changes
         id: changes

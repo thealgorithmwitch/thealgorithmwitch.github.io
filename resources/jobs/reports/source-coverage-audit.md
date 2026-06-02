@@ -1,6 +1,6 @@
 # Source Coverage Audit
 
-Generated: 2026-06-02T23:06:11.631Z
+Generated: 2026-06-02T23:08:24.638Z
 
 ## Summary
 
@@ -26,7 +26,7 @@ Generated: 2026-06-02T23:06:11.631Z
 | American Council on Renewable Energy | acore |  | manual_review_community | stale | 0 | 0 | 0 |
 | Antora Energy | antora |  | low_confidence_experimental | live | 0 | 0 | 0 |
 | Appalachian Voices | appalachian-voices |  | manual_review_community | live | 0 | 0 | 0 |
-| Arevon Energy | arevon |  | low_confidence_experimental | live | 0 | 2 | 4 |
+| Arevon Energy | arevon |  | low_confidence_experimental | live | 0 | 3 | 3 |
 | Array Technologies | array-technologies | workday | low_confidence_experimental | sync_disabled | 0 | 0 | 0 |
 | Ascent | ascent | paylocity | trusted_nonprofit_pending_review | live | 0 | 2 | 2 |
 | Asian Pacific Environmental Network | apen4ej |  | manual_review_community | stale | 0 | 0 | 0 |
@@ -75,11 +75,12 @@ Generated: 2026-06-02T23:06:11.631Z
 | Octopus Energy | 5 |
 | Powerlines | 5 |
 | Dylan Green | 4 |
+| NextEra Energy | 4 |
+| Arevon Energy | 3 |
 | Good Power | 3 |
 | Greenpeace | 3 |
 | Protect Democracy | 3 |
 | The Nature Conservancy | 3 |
-| Arevon Energy | 2 |
 | Ascent | 2 |
 | CALSTART | 2 |
 | CleanCapital | 2 |
@@ -87,7 +88,6 @@ Generated: 2026-06-02T23:06:11.631Z
 | Education Reform Now Advocacy | 2 |
 | Energy Infrastructure Partners LLC | 2 |
 | Fervo Energy | 2 |
-| Get Vocal PBC | 2 |
 
 ## Pending Review Coverage
 
@@ -95,7 +95,7 @@ Generated: 2026-06-02T23:06:11.631Z
 | --- | --- |
 | Quince | 119 |
 | Octopus Energy | 28 |
-| NextEra Energy | 25 |
+| NextEra Energy | 23 |
 | GoodLeap | 22 |
 | Get Vocal PBC | 17 |
 | CALSTART | 7 |
@@ -106,10 +106,10 @@ Generated: 2026-06-02T23:06:11.631Z
 | Carbon Direct | 5 |
 | Greentown Labs | 5 |
 | Advanced Energy United | 4 |
-| Arevon Energy | 4 |
 | Grove Collaborative | 4 |
 | Renew Home | 4 |
 | American Bird Conservancy | 3 |
+| Arevon Energy | 3 |
 | Energy & Policy Institute | 3 |
 | Fervo Energy | 3 |
 | More Perfect Union Action | 3 |

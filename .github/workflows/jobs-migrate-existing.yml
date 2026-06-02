@@ -96,6 +96,10 @@ jobs:
             exit 1
           fi
 
+      - name: Route repairable public validation issues
+        if: ${{ inputs.write == 'true' }}
+        run: npm --prefix "$JOBS_DIR" run jobs:validate-public-data:route
+
       - name: Validate public data after migration write
         if: ${{ inputs.write == 'true' }}
         run: npm --prefix "$JOBS_DIR" run jobs:validate-public-data

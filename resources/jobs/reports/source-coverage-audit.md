@@ -1,13 +1,13 @@
 # Source Coverage Audit
 
-Generated: 2026-06-02T22:12:54.571Z
+Generated: 2026-06-02T22:34:58.385Z
 
 ## Summary
 
 - Total sources: 185
 - Total prospects: 92
-- Total public organizations: 45
-- Total pending organizations: 48
+- Total public organizations: 49
+- Total pending organizations: 45
 
 ## Active Source Coverage
 
@@ -54,7 +54,7 @@ Generated: 2026-06-02T22:12:54.571Z
 | CleanChoice Energy | cleanchoice-energy |  | low_confidence_experimental | sync_error | 3 | 0 | 0 |
 | Climate Action Campaign | climate-action-campaign | trakstar | tracked_manual_org | pending_updated | 0 | 0 | 1 |
 | Climate Cabinet | climate-cabinet | greenhouse | trusted_nonprofit_pending_review | live | 0 | 1 | 0 |
-| Climate Central | climate-central |  | low_confidence_experimental | live | 0 | 0 | 1 |
+| Climate Central | climate-central |  | low_confidence_experimental | live | 0 | 1 | 0 |
 | Climate Justice Alliance | climate-justice-alliance |  | manual_review_community | live | 0 | 0 | 0 |
 | Climate Mayors | climate-mayors |  | low_confidence_experimental | sync_error | 3 | 0 | 0 |
 | ClimateWorks Foundation | climateworks-foundation |  | trusted_nonprofit_pending_review |  | 0 | 0 | 0 |
@@ -70,12 +70,15 @@ Generated: 2026-06-02T22:12:54.571Z
 | --- | --- |
 | Renew Home | 8 |
 | SEEL | 6 |
+| HA Sustainable Infrastructure Capital | 5 |
 | More Perfect Union Action | 5 |
+| Octopus Energy | 5 |
 | Powerlines | 5 |
-| HA Sustainable Infrastructure Capital | 4 |
-| Octopus Energy | 4 |
+| Dylan Green | 4 |
+| Good Power | 3 |
 | Greenpeace | 3 |
 | Protect Democracy | 3 |
+| The Nature Conservancy | 3 |
 | Arevon Energy | 2 |
 | Ascent | 2 |
 | CALSTART | 2 |
@@ -83,19 +86,16 @@ Generated: 2026-06-02T22:12:54.571Z
 | EDP | 2 |
 | Education Reform Now Advocacy | 2 |
 | Energy Infrastructure Partners LLC | 2 |
+| Fervo Energy | 2 |
 | Get Vocal PBC | 2 |
-| Greenlight America | 2 |
-| Grove Collaborative | 2 |
-| Resource Innovations | 2 |
-| Sunrun | 2 |
 
 ## Pending Review Coverage
 
 | organization | pending_jobs |
 | --- | --- |
 | Quince | 119 |
-| Octopus Energy | 29 |
-| NextEra Energy | 26 |
+| Octopus Energy | 28 |
+| NextEra Energy | 25 |
 | GoodLeap | 22 |
 | Get Vocal PBC | 17 |
 | CALSTART | 7 |
@@ -104,15 +104,15 @@ Generated: 2026-06-02T22:12:54.571Z
 | SEEL | 7 |
 | GBL HR | 6 |
 | Carbon Direct | 5 |
-| Fervo Energy | 5 |
 | Greentown Labs | 5 |
 | Advanced Energy United | 4 |
 | Arevon Energy | 4 |
-| Dylan Green | 4 |
 | Grove Collaborative | 4 |
 | Renew Home | 4 |
 | American Bird Conservancy | 3 |
 | Energy & Policy Institute | 3 |
+| Fervo Energy | 3 |
+| More Perfect Union Action | 3 |
 
 ## Missing Preferred Orgs
 
@@ -183,9 +183,11 @@ Generated: 2026-06-02T22:12:54.571Z
 | --- | --- | --- |
 | Avōq | 1 | add_to_sources_json |
 | ConnectDER | 1 | add_to_sources_json |
+| Conservation Voters of Pennsylvania | 1 | ready_for_manual_review |
 | Convergent Energy and Power | 1 | add_to_sources_json |
 | Education Reform Now Advocacy | 2 | add_to_sources_json |
 | Energy Infrastructure Partners LLC | 2 | add_to_sources_json |
+| Fervo Energy | 2 | ready_for_manual_review |
 | Grassroots Carbon | 1 | add_to_sources_json |
 | Mitti Labs | 1 | add_to_sources_json |
 | PLUS Communications | 1 | add_to_sources_json |

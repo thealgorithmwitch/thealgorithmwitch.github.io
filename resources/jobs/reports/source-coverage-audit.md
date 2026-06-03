@@ -1,13 +1,13 @@
 # Source Coverage Audit
 
-Generated: 2026-06-03T15:18:04.365Z
+Generated: 2026-06-03T19:07:57.065Z
 
 ## Summary
 
 - Total sources: 185
 - Total prospects: 92
 - Total public organizations: 58
-- Total pending organizations: 36
+- Total pending organizations: 57
 
 ## Active Source Coverage
 
@@ -18,9 +18,9 @@ Generated: 2026-06-03T15:18:04.365Z
 | Active Minds | active-minds |  | low_confidence_experimental | live | 0 | 0 | 0 |
 | ADP Employer ca44b751 | adp-ca44b751 | adp | low_confidence_experimental | stale | 0 | 0 | 0 |
 | ADP Employer cde26da5 | adp-cde26da5 | adp | low_confidence_experimental | stale | 0 | 0 | 0 |
-| Advanced Energy United | advanced-energy-united | rippling | tracked_manual_org | live | 0 | 2 | 3 |
+| Advanced Energy United | advanced-energy-united | rippling | tracked_manual_org | live | 0 | 2 | 9 |
 | AES Corporation | aes | workday | low_confidence_experimental | sync_disabled | 0 | 0 | 0 |
-| AllTrails | alltrails | lever | trusted_nonprofit_pending_review | stale | 0 | 1 | 0 |
+| AllTrails | alltrails | lever | trusted_nonprofit_pending_review | stale | 0 | 1 | 1 |
 | Amazon Watch | amazon-watch |  | manual_review_community | sync_error | 3 | 0 | 0 |
 | American Bird Conservancy | american-bird-conservancy | paylocity | trusted_nonprofit_pending_review | pending_updated | 0 | 0 | 3 |
 | American Council on Renewable Energy | acore |  | manual_review_community | stale | 0 | 0 | 0 |
@@ -39,7 +39,7 @@ Generated: 2026-06-03T15:18:04.365Z
 | Brightline Defense | brightline-defense |  | manual_review_community |  | 0 | 0 | 0 |
 | Bullard Center for Environmental and Climate Justice | bullard-center |  | manual_review_community | live | 0 | 1 | 0 |
 | California Environmental Justice Alliance | california-environmental-justice-alliance |  | manual_review_community |  | 0 | 0 | 0 |
-| CALSTART | calstart | lever | trusted_nonprofit_pending_review | live | 0 | 3 | 6 |
+| CALSTART | calstart | lever | trusted_nonprofit_pending_review | live | 0 | 3 | 5 |
 | Canadian Solar | canadian-solar | workday | low_confidence_experimental | sync_disabled | 0 | 0 | 0 |
 | Carbon Direct | carbon-direct | greenhouse | trusted_nonprofit_pending_review | live | 0 | 1 | 4 |
 | Carbon180 | carbon180 |  | low_confidence_experimental | live | 0 | 0 | 0 |
@@ -58,7 +58,7 @@ Generated: 2026-06-03T15:18:04.365Z
 | Climate Justice Alliance | climate-justice-alliance |  | manual_review_community | live | 0 | 0 | 0 |
 | Climate Mayors | climate-mayors |  | low_confidence_experimental | sync_error | 3 | 0 | 0 |
 | ClimateWorks Foundation | climateworks-foundation |  | trusted_nonprofit_pending_review |  | 0 | 0 | 0 |
-| Conservation International | conservation-international | taleo | manual_review_community | live | 0 | 1 | 0 |
+| Conservation International | conservation-international | taleo | manual_review_community | live | 0 | 1 | 9 |
 | Conservation Law Foundation | conservation-law-foundation |  | manual_review_community |  | 0 | 0 | 0 |
 | Creator Accountability Network | creator-accountability-network | bamboohr | trusted_nonprofit_pending_review | live | 0 | 0 | 1 |
 | Creo Syndicate | creo-syndicate |  | low_confidence_experimental | stale | 0 | 0 | 0 |
@@ -93,26 +93,26 @@ Generated: 2026-06-03T15:18:04.365Z
 
 | organization | pending_jobs |
 | --- | --- |
-| Quince | 117 |
+| Quince | 120 |
 | Octopus Energy | 28 |
+| GoodLeap | 25 |
 | NextEra Energy | 23 |
-| GoodLeap | 21 |
-| Get Vocal PBC | 17 |
-| SEEL | 7 |
-| CALSTART | 6 |
-| GBL HR | 6 |
+| Get Vocal PBC | 16 |
+| SEEL | 11 |
+| Grove Collaborative | 10 |
+| Advanced Energy United | 9 |
+| Conservation International | 9 |
+| GBL HR | 9 |
 | Protect Democracy | 6 |
+| CALSTART | 5 |
 | Carbon Direct | 4 |
-| Grove Collaborative | 4 |
-| Renew Home | 4 |
-| Advanced Energy United | 3 |
 | American Bird Conservancy | 3 |
 | Arevon Energy | 3 |
 | Fervo Energy | 3 |
-| Ascent | 2 |
-| Environmental Defense Fund | 2 |
-| Greentown Labs | 2 |
-| Michigan League of Conservation Voters | 2 |
+| Greentown Labs | 3 |
+| Middle Seat | 3 |
+| Renew Home | 3 |
+| Resource Innovations | 3 |
 
 ## Missing Preferred Orgs
 
@@ -239,7 +239,6 @@ _None_
 | Grassroots Carbon | https://jobs.workable.com/view/66JEqQTu5Aaik8B4Y67gVh/director%2C-brand-reach-%26-communications-in-san-antonio-at-grassroots-carbon | add_to_sources_json |
 | HIVED |  | candidate_for_new_pull |
 | Mitti Labs | https://jobs.workable.com/view/uWSQQPVWb4Lm2PkXjVyRqg/remote-program-manager%2C-operations---tamil-nadu-in-tamil-nadu-at-mitti-labs | add_to_sources_json |
-| org |  | candidate_for_new_pull |
 | PLUS Communications | https://jobs.workable.com/view/7mXsGiweVFByL5UehwA27z/hybrid-digital-director-in-arlington-at-plus-communications | add_to_sources_json |
 | Resource Innovations | https://jobs.elementalimpact.com/jobs | add_to_sources_json |
 | Rocky Mountain Institute (RMI) | https://rmi.org/careers | add_to_sources_json |

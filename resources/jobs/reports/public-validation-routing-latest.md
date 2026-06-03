@@ -1,11 +1,10 @@
 # Public Validation Routing Report
-Generated at: 2026-06-03T00:18:43.268Z
+Generated at: 2026-06-03T05:27:08.734Z
 
 ## Summary
-Records routed to pending: 1
+Records routed to pending: 0
 Hard validation failures remaining: 0
-Records remaining public: 131
+Records remaining public: 132
 Exit decision: passed
 
 ## Routed Records
-- `Climate Action Campaign-http://climateactioncampaign.hire.trakstar.com/jobs/fk0z2nn`: invalid_title

@@ -1,0 +1,568 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=1920, initial-scale=1.0" />
+<title>RE-volv Theory of Change</title>
+
+<script src="https://unpkg.com/@phosphor-icons/web"></script>
+
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;800;900&display=swap');
+
+* { box-sizing: border-box; }
+
+body {
+  font-family: 'Inter', sans-serif;
+  background: #f8fafc;
+  color: #1a237e;
+  margin: 0;
+  width: 1920px;
+  height: 1080px;
+  overflow: hidden;
+}
+
+.main-container {
+  width: 1920px;
+  height: 1080px;
+  position: relative;
+  padding: 46px 60px 34px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.brand-blue { color: #1a237e; }
+.brand-orange { color: #f57c00; }
+.brand-bg-blue { background: #1a237e; }
+.brand-bg-orange { background: #f57c00; }
+
+header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  z-index: 20;
+}
+
+.title-row {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  margin-bottom: 12px;
+}
+
+h1 {
+  margin: 0;
+  font-size: 72px;
+  line-height: 0.95;
+  font-weight: 900;
+  letter-spacing: -0.055em;
+  text-transform: uppercase;
+}
+
+.sub-row {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.sub-row h2 {
+  margin: 0;
+  color: #f57c00;
+  font-size: 34px;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.multiplier-badge {
+  background: white;
+  border: 3px solid #f57c00;
+  box-shadow: 0 15px 30px -10px rgba(245, 124, 0, 0.3);
+  border-radius: 26px;
+  padding: 24px 30px;
+  display: flex;
+  align-items: center;
+  gap: 24px;
+}
+
+.multiplier-icons {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.multiplier-label {
+  margin: 0 0 4px;
+  color: #f57c00;
+  font-size: 12px;
+  font-weight: 900;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+
+.multiplier-text {
+  margin: 0;
+  font-size: 38px;
+  line-height: 1;
+  font-weight: 900;
+}
+
+main {
+  position: relative;
+  flex: 1;
+  min-height: 610px;
+}
+
+.svg-arrows {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 1;
+  pointer-events: none;
+}
+
+.arrow-path {
+  fill: none;
+  stroke: #f57c00;
+  stroke-width: 4;
+  stroke-dasharray: 9 12;
+  opacity: 0.34;
+}
+
+.center-system {
+  position: absolute;
+  left: 50%;
+  top: 48%;
+  transform: translate(-50%, -50%);
+  z-index: 4;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.pentagon-shape {
+  width: 470px;
+  height: 470px;
+  clip-path: polygon(50% 0%, 100% 38%, 82% 100%, 18% 100%, 0% 38%);
+  background: #1a237e;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 25px 50px -12px rgba(26, 35, 126, 0.5);
+}
+
+.pentagon-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 38px;
+  margin-top: 18px;
+}
+
+.pentagon-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  color: white;
+}
+
+.pentagon-item h3 {
+  margin: 0;
+  font-size: 39px;
+  line-height: 1;
+  font-weight: 900;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.core-pill {
+  position: absolute;
+  bottom: -62px;
+  background: white;
+  border: 2px solid #f57c00;
+  border-radius: 999px;
+  padding: 13px 34px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  box-shadow: 0 18px 32px rgba(0,0,0,0.14);
+  z-index: 8;
+}
+
+.core-pill span {
+  font-size: 25px;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.floating-card {
+  position: absolute;
+  z-index: 6;
+  width: 285px;
+  min-height: 132px;
+  background: white;
+  border-radius: 24px;
+  padding: 24px;
+  box-shadow: 0 14px 30px -8px rgba(0,0,0,0.12);
+  border: 1px solid #e2e8f0;
+}
+
+.card-inner {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 14px;
+}
+
+.icon-box {
+  width: 58px;
+  height: 58px;
+  border-radius: 13px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 58px;
+}
+
+.floating-card h4 {
+  margin: 0;
+  font-size: 19px;
+  line-height: 1.15;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.mini-row {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+/* fixed spacing — no overlaps */
+.card-projects { top: 58px; left: 330px; }
+.card-equity { top: 210px; left: 160px; }
+.card-roofing { bottom: 78px; left: 330px; }
+
+.card-home { top: 58px; right: 330px; }
+.card-hub { top: 204px; right: 160px; }
+.card-faith { bottom: 78px; right: 330px; }
+
+.corner-label {
+  position: absolute;
+  z-index: 7;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.corner-label span {
+  font-size: 21px;
+  font-weight: 900;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.growth { top: 6px; left: 0; }
+.equity { top: 6px; right: 0; }
+.climate { bottom: 8px; left: 0; }
+.global { bottom: 8px; right: 0; }
+
+footer {
+  margin-top: 24px;
+  z-index: 20;
+}
+
+.gradient-banner {
+  width: 100%;
+  min-height: 236px;
+  background: linear-gradient(90deg, #1a237e 0%, #283593 100%);
+  border-radius: 40px;
+  padding: 44px 48px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25);
+}
+
+.footer-left {
+  display: flex;
+  align-items: center;
+  gap: 32px;
+}
+
+.arrow-icon {
+  width: 96px;
+  height: 96px;
+  border-radius: 20px;
+  background: rgba(255,255,255,0.1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.final-label {
+  margin: 0 0 12px;
+  color: rgba(255,255,255,0.6);
+  font-size: 20px;
+  font-weight: 800;
+  letter-spacing: 0.32em;
+  text-transform: uppercase;
+}
+
+.footer-title {
+  margin: 0;
+  color: white;
+  font-size: 51px;
+  line-height: 1.16;
+  font-weight: 900;
+  letter-spacing: -0.035em;
+  text-transform: uppercase;
+  max-width: 1240px;
+}
+
+.footer-icons {
+  display: flex;
+  gap: 18px;
+}
+
+.footer-icon {
+  width: 66px;
+  height: 66px;
+  border-radius: 17px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.footer-bullets {
+  display: flex;
+  justify-content: center;
+  gap: 84px;
+  margin-top: 18px;
+}
+
+.footer-bullet {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 10px;
+  font-weight: 900;
+  letter-spacing: 0.42em;
+  text-transform: uppercase;
+}
+
+i { line-height: 1; }
+</style>
+</head>
+
+<body>
+<div class="main-container">
+
+  <header>
+    <div>
+      <div class="title-row">
+        <i class="ph-bold ph-presentation-chart brand-blue" style="font-size:42px;"></i>
+        <h1>RE-volv's Theory of Change</h1>
+      </div>
+      <div class="sub-row">
+        <i class="ph-bold ph-plant brand-orange" style="font-size:32px;"></i>
+        <h2>The Solar Seeding Effect</h2>
+      </div>
+    </div>
+
+    <div class="multiplier-badge">
+      <div class="multiplier-icons">
+        <i class="ph-fill ph-buildings brand-blue" style="font-size:42px;"></i>
+        <i class="ph-bold ph-arrow-right brand-orange" style="font-size:26px;"></i>
+        <i class="ph-fill ph-house brand-blue" style="font-size:42px;"></i>
+      </div>
+      <div>
+        <p class="multiplier-label">The Multiplier Effect</p>
+        <p class="multiplier-text brand-blue">1 Nonprofit = <span class="brand-orange">80 Homes</span></p>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <svg class="svg-arrows" viewBox="0 0 1800 610" preserveAspectRatio="none">
+      <line x1="900" y1="300" x2="470" y2="125" class="arrow-path"></line>
+      <line x1="900" y1="300" x2="1330" y2="125" class="arrow-path"></line>
+      <line x1="900" y1="300" x2="375" y2="275" class="arrow-path"></line>
+      <line x1="900" y1="300" x2="1425" y2="275" class="arrow-path"></line>
+      <line x1="900" y1="300" x2="470" y2="490" class="arrow-path"></line>
+      <line x1="900" y1="300" x2="1330" y2="490" class="arrow-path"></line>
+    </svg>
+
+    <div class="center-system">
+      <div class="pentagon-shape">
+        <div class="pentagon-content">
+          <div class="pentagon-item">
+            <i class="ph-fill ph-currency-circle-dollar brand-orange" style="font-size:48px;"></i>
+            <h3>Invest</h3>
+          </div>
+          <div class="pentagon-item">
+            <i class="ph-fill ph-users-three brand-orange" style="font-size:48px;"></i>
+            <h3>Engage</h3>
+          </div>
+          <div class="pentagon-item">
+            <i class="ph-fill ph-lightning brand-orange" style="font-size:48px;"></i>
+            <h3>Empower</h3>
+          </div>
+        </div>
+      </div>
+
+      <div class="core-pill">
+        <i class="ph-fill ph-gear-six brand-orange" style="font-size:25px;"></i>
+        <span class="brand-blue">Core Activities</span>
+      </div>
+    </div>
+
+    <div class="floating-card card-projects">
+      <div class="card-inner">
+        <div class="icon-box brand-bg-blue">
+          <i class="ph-fill ph-buildings text-white" style="font-size:32px;color:white;"></i>
+        </div>
+        <h4>New Community<br>Projects</h4>
+      </div>
+      <div class="mini-row brand-blue">
+        <i class="ph-fill ph-building brand-orange"></i>
+        <i class="ph-fill ph-building" style="opacity:.2;"></i>
+        <i class="ph-fill ph-building" style="opacity:.2;"></i>
+      </div>
+    </div>
+
+    <div class="floating-card card-equity">
+      <div class="card-inner">
+        <div class="icon-box brand-bg-orange">
+          <i class="ph-fill ph-solar-panel" style="font-size:32px;color:white;"></i>
+        </div>
+        <h4>Energy Equity<br>Deployment</h4>
+      </div>
+      <div class="mini-row brand-blue">
+        <i class="ph-bold ph-check-circle brand-orange"></i>
+        <span>80+ Locations Reached</span>
+      </div>
+    </div>
+
+    <div class="floating-card card-roofing">
+      <div class="card-inner">
+        <div class="icon-box brand-bg-orange">
+          <i class="ph-fill ph-house" style="font-size:32px;color:white;"></i>
+        </div>
+        <h4>Subsidized<br>Roofing</h4>
+      </div>
+      <div class="mini-row brand-blue">
+        <i class="ph-fill ph-house"></i>
+        <i class="ph-fill ph-house"></i>
+        <i class="ph-fill ph-house"></i>
+      </div>
+    </div>
+
+    <div class="floating-card card-home">
+      <div class="card-inner">
+        <div class="icon-box brand-bg-orange">
+          <i class="ph-fill ph-house-line" style="font-size:32px;color:white;"></i>
+        </div>
+        <h4>Home Solar<br>Installations</h4>
+      </div>
+      <div class="mini-row brand-blue">
+        <i class="ph-fill ph-house"></i>
+        <i class="ph-fill ph-house"></i>
+        <i class="ph-fill ph-house"></i>
+        <i class="ph-fill ph-house"></i>
+      </div>
+    </div>
+
+    <div class="floating-card card-hub">
+      <div class="card-inner">
+        <div class="icon-box brand-bg-blue">
+          <i class="ph-fill ph-graduation-cap" style="font-size:32px;color:white;"></i>
+        </div>
+        <h4>Community Hub<br>Training</h4>
+      </div>
+      <div class="mini-row brand-blue">
+        <i class="ph-bold ph-users brand-orange"></i>
+        <span>Local Leadership Program</span>
+      </div>
+    </div>
+
+    <div class="floating-card card-faith">
+      <div class="card-inner">
+        <div class="icon-box brand-bg-blue">
+          <i class="ph-fill ph-buildings" style="font-size:32px;color:white;"></i>
+        </div>
+        <h4>Faith-Based<br>Initiatives</h4>
+      </div>
+      <div class="mini-row brand-blue">
+        <i class="ph-fill ph-mosque brand-orange"></i>
+        <i class="ph-fill ph-church brand-orange"></i>
+      </div>
+    </div>
+
+    <div class="corner-label growth">
+      <i class="ph-bold ph-trend-up brand-orange" style="font-size:38px;"></i>
+      <span>Exponential Growth</span>
+    </div>
+
+    <div class="corner-label equity">
+      <i class="ph-bold ph-scales brand-orange" style="font-size:38px;"></i>
+      <span>Equity Driven</span>
+    </div>
+
+    <div class="corner-label climate">
+      <i class="ph-bold ph-sun-dim brand-orange" style="font-size:38px;"></i>
+      <span>Climate Action</span>
+    </div>
+
+    <div class="corner-label global">
+      <i class="ph-bold ph-globe-hemisphere-west brand-orange" style="font-size:38px;"></i>
+      <span>Global Impact</span>
+    </div>
+  </main>
+
+  <footer>
+    <div class="gradient-banner">
+      <div class="footer-left">
+        <div class="arrow-icon">
+          <i class="ph-bold ph-arrow-circle-right" style="font-size:66px;color:white;"></i>
+        </div>
+        <div>
+          <p class="final-label">Final Goal</p>
+          <h3 class="footer-title">Outcome: A Just Transition and a Sustainable Cycle of Clean Energy</h3>
+        </div>
+      </div>
+
+      <div class="footer-icons">
+        <div class="footer-icon" style="background:white;">
+          <i class="ph-fill ph-solar-panel brand-blue" style="font-size:34px;"></i>
+        </div>
+        <div class="footer-icon brand-bg-orange">
+          <i class="ph-fill ph-lightning" style="font-size:34px;color:white;"></i>
+        </div>
+      </div>
+    </div>
+
+    <div class="footer-bullets">
+      <div class="footer-bullet brand-blue">
+        <i class="ph-fill ph-circle brand-orange" style="font-size:8px;"></i>
+        <span>Energy Independence</span>
+      </div>
+      <div class="footer-bullet brand-blue">
+        <i class="ph-fill ph-circle brand-orange" style="font-size:8px;"></i>
+        <span>Community Wealth Building</span>
+      </div>
+      <div class="footer-bullet brand-blue">
+        <i class="ph-fill ph-circle brand-orange" style="font-size:8px;"></i>
+        <span>Environmental Stewardship</span>
+      </div>
+    </div>
+  </footer>
+
+</div>
+</body>
+</html>

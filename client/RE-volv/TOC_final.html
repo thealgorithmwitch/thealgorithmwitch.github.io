@@ -1,0 +1,504 @@
+<!DOCTYPE html>
+<html>
+<head>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+<script src="https://unpkg.com/@phosphor-icons/web"></script>
+
+<style>
+* { box-sizing: border-box; }
+
+html, body {
+  width: 1920px;
+  height: 1080px;
+  margin: 0;
+  overflow: hidden;
+}
+
+body {
+  font-family: 'Inter', sans-serif;
+  background: #F8FAFC;
+  color: #1D2D7D;
+}
+
+header {
+  height: 150px;
+  padding: 52px 80px 0;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+}
+
+.title-row {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.title-icon {
+  background: #1D2D7D;
+  color: white;
+  padding: 10px;
+  border-radius: 10px;
+}
+
+h1 {
+  margin: 0;
+  font-size: 62px;
+  line-height: 1;
+  font-weight: 900;
+  letter-spacing: -0.045em;
+}
+
+.subtitle {
+  margin-top: 10px;
+  margin-left: 62px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: #F28C28;
+  font-size: 25px;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 0.2em;
+}
+
+.multiplier-tag {
+  background: linear-gradient(135deg, #FFF 0%, #F8FAFC 100%);
+  border-left: 6px solid #F28C28;
+  border-radius: 18px;
+  padding: 24px 30px;
+  display: flex;
+  align-items: center;
+  gap: 32px;
+  box-shadow: 0 14px 24px rgba(15, 23, 42, 0.12);
+}
+
+.multiplier-label {
+  font-size: 10px;
+  font-weight: 900;
+  color: #9CA3AF;
+  text-transform: uppercase;
+  letter-spacing: 0.16em;
+}
+
+.multiplier-text {
+  font-size: 31px;
+  font-weight: 900;
+  line-height: 1.1;
+}
+
+.orange { color: #F28C28; }
+
+main {
+  position: relative;
+  width: 100%;
+  height: 660px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.bg-rings {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0.05;
+  pointer-events: none;
+}
+
+.ring-large {
+  width: 760px;
+  height: 760px;
+  border: 2px solid #1D2D7D;
+  border-radius: 999px;
+}
+
+.ring-small {
+  position: absolute;
+  width: 560px;
+  height: 560px;
+  border: 1px solid #1D2D7D;
+  border-radius: 999px;
+}
+
+svg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+.center-system {
+  position: relative;
+  z-index: 10;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  transform: scale(0.78);
+  transform-origin: center center;
+}
+
+.roof {
+  width: 0;
+  height: 0;
+  border-left: 170px solid transparent;
+  border-right: 170px solid transparent;
+  border-bottom: 85px solid #F28C28;
+  position: relative;
+  filter: drop-shadow(0 18px 14px rgba(15,23,42,0.12));
+}
+
+.solar-grid {
+  position: absolute;
+  top: 34px;
+  left: -86px;
+  width: 172px;
+  height: 48px;
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  grid-template-rows: repeat(2, 1fr);
+  gap: 2px;
+  transform: skewX(-10deg);
+}
+
+.solar-cell {
+  background: rgba(255,255,255,0.3);
+  border: 1px solid rgba(255,255,255,0.5);
+}
+
+.pillars {
+  display: flex;
+  gap: 14px;
+  padding: 14px;
+  background: #111A4D;
+  border-radius: 0 0 10px 10px;
+  box-shadow: 0 22px 45px rgba(15,23,42,0.25);
+}
+
+.pillar {
+  width: 106px;
+  height: 178px;
+  background: #1D2D7D;
+  border-radius: 8px;
+  padding: 18px;
+  color: white;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.pillar span {
+  font-size: 17px;
+  font-weight: 900;
+  letter-spacing: 0.12em;
+}
+
+.hub-tag {
+  margin-top: 22px;
+  background: white;
+  color: #1D2D7D;
+  padding: 9px 26px;
+  border-radius: 999px;
+  border: 1px solid #F3F4F6;
+  box-shadow: 0 4px 8px rgba(15,23,42,0.08);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 15px;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.house-node {
+  position: absolute;
+  background: white;
+  padding: 12px;
+  border-radius: 14px;
+  border: 1px solid #FFEDD5;
+  box-shadow: 0 12px 20px rgba(15,23,42,0.12);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  z-index: 5;
+}
+
+.house-node i {
+  color: #F28C28;
+  font-size: 28px;
+}
+
+.house-node span {
+  color: #6B7280;
+  font-size: 9px;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.impact-card {
+  position: absolute;
+  right: 90px;
+  bottom: 40px;
+  background: white;
+  border: 1px solid #FED7AA;
+  border-radius: 16px;
+  padding: 14px 22px;
+  box-shadow: 0 14px 26px rgba(15,23,42,0.12);
+  text-align: center;
+}
+
+.impact-card-label {
+  color: #9CA3AF;
+  font-size: 10px;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 0.16em;
+}
+
+.impact-card-text {
+  color: #1D2D7D;
+  font-size: 23px;
+  font-weight: 900;
+}
+
+footer {
+  width: 100%;
+  height: 270px;
+  padding: 0 48px 34px;
+}
+
+.footer-card {
+  background: #1D2D7D;
+  border-radius: 28px;
+  padding: 36px 40px;
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  box-shadow: 0 25px 50px rgba(15,23,42,0.25);
+}
+
+.footer-bg-houses {
+  position: absolute;
+  right: 0;
+  top: 0;
+  height: 100%;
+  width: 33%;
+  opacity: 0.1;
+  display: flex;
+  gap: 16px;
+  transform: rotate(12deg);
+  color: white;
+}
+
+.footer-left {
+  display: flex;
+  gap: 32px;
+  align-items: center;
+  z-index: 10;
+  max-width: 920px;
+}
+
+.footer-quote-icon {
+  background: #F28C28;
+  padding: 20px;
+  border-radius: 16px;
+  color: white;
+  box-shadow: 0 10px 15px rgba(0,0,0,0.12);
+}
+
+.footer-title {
+  margin: 0;
+  font-size: 30px;
+  line-height: 1.2;
+  font-weight: 800;
+  color: white;
+}
+
+.footer-right {
+  z-index: 10;
+  text-align: right;
+}
+
+.footer-label {
+  color: #F28C28;
+  font-size: 14px;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
+
+.footer-cta {
+  color: white;
+  font-size: 20px;
+  font-weight: 800;
+  margin-top: 4px;
+}
+
+.footer-button {
+  margin-top: 16px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: #F28C28;
+  color: white;
+  padding: 12px 24px;
+  border-radius: 999px;
+  font-size: 14px;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
+
+.footer-tags {
+  margin-top: 14px;
+  display: flex;
+  justify-content: center;
+  gap: 48px;
+  color: #9CA3AF;
+  font-size: 10px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.3em;
+}
+
+.footer-tags span {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.footer-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  background: #F28C28;
+}
+
+.footer-dot.blue { background: #1D2D7D; }
+</style>
+</head>
+
+<body>
+
+<header>
+  <div>
+    <div class="title-row">
+      <div class="title-icon">
+        <i class="ph-fill ph-presentation-chart" style="font-size:36px;"></i>
+      </div>
+      <h1>RE-volv's Theory of Change</h1>
+    </div>
+
+    <div class="subtitle">
+      <i class="ph-fill ph-leaf"></i>
+      <span>The Solar Seeding Effect</span>
+    </div>
+  </div>
+
+  <div class="multiplier-tag">
+    <div style="display:flex; align-items:center; gap:12px;">
+      <i class="ph-bold ph-buildings" style="font-size:40px; color:#1D2D7D;"></i>
+      <i class="ph-bold ph-arrow-right" style="font-size:22px; color:#D1D5DB;"></i>
+      <i class="ph-bold ph-house" style="font-size:22px; color:#F28C28;"></i>
+      <i class="ph-bold ph-house" style="font-size:22px; color:#F28C28;"></i>
+    </div>
+    <div>
+      <div class="multiplier-label">The Multiplier Effect</div>
+      <div class="multiplier-text">1 nonprofit solar installation = <span class="orange">80 residents going solar</span></div>
+    </div>
+  </div>
+</header>
+
+<main>
+  <div class="bg-rings">
+    <div class="ring-large"></div>
+    <div class="ring-small"></div>
+  </div>
+
+  <svg>
+    <defs>
+      <marker id="arrowhead" markerWidth="10" markerHeight="7" refX="0" refY="3.5" orient="auto">
+        <polygon points="0 0, 10 3.5, 0 7" fill="#F28C28" opacity="0.6"></polygon>
+      </marker>
+    </defs>
+
+    <line x1="50%" y1="45%" x2="50%" y2="18%" stroke="#F28C28" stroke-width="2" stroke-dasharray="8 4" opacity="0.3" marker-end="url(#arrowhead)"></line>
+    <line x1="51%" y1="45%" x2="68%" y2="23%" stroke="#F28C28" stroke-width="2" stroke-dasharray="8 4" opacity="0.3" marker-end="url(#arrowhead)"></line>
+    <line x1="52%" y1="50%" x2="78%" y2="45%" stroke="#F28C28" stroke-width="2" stroke-dasharray="8 4" opacity="0.3" marker-end="url(#arrowhead)"></line>
+    <line x1="52%" y1="55%" x2="73%" y2="78%" stroke="#F28C28" stroke-width="2" stroke-dasharray="8 4" opacity="0.3" marker-end="url(#arrowhead)"></line>
+    <line x1="50%" y1="58%" x2="55%" y2="88%" stroke="#F28C28" stroke-width="2" stroke-dasharray="8 4" opacity="0.3" marker-end="url(#arrowhead)"></line>
+    <line x1="49%" y1="58%" x2="35%" y2="84%" stroke="#F28C28" stroke-width="2" stroke-dasharray="8 4" opacity="0.3" marker-end="url(#arrowhead)"></line>
+    <line x1="48%" y1="55%" x2="22%" y2="73%" stroke="#F28C28" stroke-width="2" stroke-dasharray="8 4" opacity="0.3" marker-end="url(#arrowhead)"></line>
+    <line x1="48%" y1="50%" x2="17%" y2="45%" stroke="#F28C28" stroke-width="2" stroke-dasharray="8 4" opacity="0.3" marker-end="url(#arrowhead)"></line>
+    <line x1="49%" y1="45%" x2="24%" y2="23%" stroke="#F28C28" stroke-width="2" stroke-dasharray="8 4" opacity="0.3" marker-end="url(#arrowhead)"></line>
+    <line x1="50%" y1="42%" x2="39%" y2="13%" stroke="#F28C28" stroke-width="2" stroke-dasharray="8 4" opacity="0.3" marker-end="url(#arrowhead)"></line>
+  </svg>
+
+  <div class="center-system">
+    <div class="roof">
+      <div class="solar-grid">
+        <div class="solar-cell"></div><div class="solar-cell"></div><div class="solar-cell"></div><div class="solar-cell"></div><div class="solar-cell"></div><div class="solar-cell"></div>
+        <div class="solar-cell"></div><div class="solar-cell"></div><div class="solar-cell"></div><div class="solar-cell"></div><div class="solar-cell"></div><div class="solar-cell"></div>
+      </div>
+    </div>
+
+    <div class="pillars">
+      <div class="pillar"><i class="ph-bold ph-coins" style="font-size:32px; margin-bottom:16px; opacity:0.8;"></i><span>INVEST</span></div>
+      <div class="pillar"><i class="ph-bold ph-users-three" style="font-size:32px; margin-bottom:16px; opacity:0.8;"></i><span>ENGAGE</span></div>
+      <div class="pillar"><i class="ph-bold ph-lightning" style="font-size:32px; margin-bottom:16px; opacity:0.8;"></i><span>EMPOWER</span></div>
+    </div>
+
+    <div class="hub-tag">
+      <i class="ph-bold ph-buildings"></i>
+      <span>Nonprofit Hub</span>
+    </div>
+  </div>
+
+  <div class="house-node" style="top:10%; left:50%; transform:translateX(-50%);"><i class="ph-fill ph-house"></i></div>
+  <div class="house-node" style="top:17%; right:26%;"><i class="ph-fill ph-house"></i></div>
+  <div class="house-node" style="top:43%; right:14%;"><i class="ph-fill ph-house"></i></div>
+  <div class="house-node" style="bottom:13%; right:23%;"><i class="ph-fill ph-house"></i></div>
+  <div class="house-node" style="bottom:5%; left:55%;"><i class="ph-fill ph-house"></i></div>
+  <div class="house-node" style="bottom:8%; left:32%;"><i class="ph-fill ph-house"></i></div>
+  <div class="house-node" style="bottom:21%; left:14%;"><i class="ph-fill ph-house"></i></div>
+  <div class="house-node" style="top:43%; left:11%;"><i class="ph-fill ph-house"></i></div>
+  <div class="house-node" style="top:17%; left:20%;"><i class="ph-fill ph-house"></i></div>
+  <div class="house-node" style="top:8%; left:38%;"><i class="ph-fill ph-house"></i></div>
+
+</main>
+
+<footer>
+  <div class="footer-card">
+    <div class="footer-bg-houses">
+      <i class="ph-fill ph-house" style="font-size:128px;"></i>
+      <i class="ph-fill ph-house" style="font-size:128px;"></i>
+    </div>
+
+    <div class="footer-left">
+      <div class="footer-quote-icon">
+        <i class="ph-bold ph-quotes" style="font-size:36px;"></i>
+      </div>
+      <h3 class="footer-title">
+        When one nonprofit goes solar, the project becomes a visible proof point that can inspire
+        <span class="orange">broader community adoption.</span>
+      </h3>
+    </div>
+  </div>
+
+  <div class="footer-tags">
+    <span><div class="footer-dot"></div>Energy Independence</span>
+    <span><div class="footer-dot blue"></div>Community Wealth Building</span>
+    <span><div class="footer-dot"></div>Environmental Stewardship</span>
+  </div>
+</footer>
+
+</body>
+</html>

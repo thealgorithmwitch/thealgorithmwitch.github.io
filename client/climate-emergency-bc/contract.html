@@ -10,79 +10,58 @@
   <script src="https://unpkg.com/@phosphor-icons/web"></script>
   <style>
     :root {
-      --bg-deep: #030008;
-      --panel-bg: rgba(10, 5, 18, 0.7);
-      --panel-bg-strong: rgba(12, 7, 22, 0.9);
-      --accent-violet: #8b5cf6;
-      --accent-violet-soft: rgba(139, 92, 246, 0.18);
-      --accent-gold: #eab308;
-      --accent-gold-soft: rgba(234, 179, 8, 0.12);
-      --text-main: #d1d5db;
-      --text-soft: #9ca3af;
-      --text-dim: #6b7280;
-      --text-bright: #ffffff;
+      --bg: #05020a;
+      --panel: #0d0718;
+      --panel-soft: rgba(13, 7, 24, 0.82);
+      --line: rgba(168, 85, 247, 0.2);
+      --line-strong: rgba(88, 28, 135, 0.5);
+      --text: #e5e7eb;
+      --text-soft: #aeb5c4;
+      --text-faint: #7d8798;
+      --gold: #fbbf24;
+      --accent: #a855f7;
+      --accent-soft: rgba(168, 85, 247, 0.18);
       --success: #4ade80;
       --danger: #fda4af;
       --sidebar-expanded: 320px;
-      --sidebar-collapsed: 72px;
+      --sidebar-collapsed: 52px;
       --content-max: 900px;
-      --shadow: 0 24px 60px rgba(0, 0, 0, 0.35);
+      --shadow: 0 24px 56px rgba(0, 0, 0, 0.35);
     }
 
-    * {
-      box-sizing: border-box;
-      -ms-overflow-style: none;
-      scrollbar-width: none;
-    }
-
-    *::-webkit-scrollbar {
-      display: none;
-    }
-
-    html {
-      scroll-behavior: smooth;
-    }
+    * { box-sizing: border-box; -ms-overflow-style: none; scrollbar-width: none; }
+    *::-webkit-scrollbar { display: none; }
+    [hidden] { display: none !important; }
+    html { scroll-behavior: smooth; }
 
     body {
       margin: 0;
       min-height: 100vh;
       overflow-x: hidden;
       background:
-        radial-gradient(circle at 15% 20%, rgba(139, 92, 246, 0.08), transparent 22%),
-        radial-gradient(circle at 80% 10%, rgba(234, 179, 8, 0.08), transparent 18%),
-        #030008;
-      color: var(--text-main);
-      font-family: "Inter", sans-serif;
+        radial-gradient(circle at 50% 0%, rgba(88, 28, 135, 0.26), transparent 42%),
+        radial-gradient(circle at 15% 18%, rgba(168, 85, 247, 0.12), transparent 24%),
+        radial-gradient(circle at 80% 76%, rgba(34, 211, 238, 0.08), transparent 18%),
+        var(--bg);
+      color: var(--text);
+      font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      -webkit-font-smoothing: antialiased;
     }
 
-    button,
-    input,
-    textarea {
-      font: inherit;
-      color: inherit;
-    }
-
-    a {
-      color: inherit;
-      text-decoration: none;
-    }
-
-    .font-magical { font-family: "Cinzel Decorative", serif; }
-    .font-serif-heading { font-family: "Playfair Display", serif; }
+    button, input, textarea { font: inherit; color: inherit; }
+    a { color: inherit; text-decoration: none; }
+    .font-magical { font-family: "Cinzel Decorative", Georgia, serif; font-weight: 400; }
+    .font-serif-heading { font-family: "Playfair Display", Georgia, serif; }
     .font-mono-code { font-family: "JetBrains Mono", monospace; }
 
     .grimoire-grid {
-      background-image: radial-gradient(circle at 2px 2px, rgba(139, 92, 246, 0.05) 1px, transparent 0);
-      background-size: 32px 32px;
+      background-image:
+        linear-gradient(to right, rgba(168, 85, 247, 0.03) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(168, 85, 247, 0.03) 1px, transparent 1px);
+      background-size: 40px 40px;
     }
 
-    .stars {
-      position: fixed;
-      inset: 0;
-      pointer-events: none;
-      z-index: 0;
-      opacity: 0.4;
-    }
+    .stars { position: fixed; inset: 0; pointer-events: none; z-index: 0; opacity: 0.78; }
 
     .sidebar {
       position: fixed;
@@ -91,766 +70,189 @@
       display: flex;
       flex-direction: column;
       padding: 2rem 0 1.5rem;
-      background: linear-gradient(to bottom, #0d0718, #05020a);
-      border-right: 1px solid rgba(139, 92, 246, 0.15);
-      transition: width 0.35s ease;
-      z-index: 20;
-    }
-
-    .sidebar.collapsed {
-      width: var(--sidebar-collapsed);
-    }
-
-    .main-content {
-      margin-left: var(--sidebar-expanded);
-      min-height: 100vh;
-      overflow-y: auto;
-      position: relative;
-      z-index: 10;
-      transition: margin-left 0.35s ease;
-    }
-
-    .sidebar.collapsed + .main-content {
-      margin-left: var(--sidebar-collapsed);
-    }
-
-    .toggle-btn {
-      position: absolute;
-      right: -12px;
-      top: 40px;
-      width: 24px;
-      height: 24px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      background: var(--accent-violet);
-      color: #fff;
-      border-radius: 4px;
-      box-shadow: 0 0 10px rgba(139, 92, 246, 0.5);
-      cursor: pointer;
-      z-index: 25;
-    }
-
-    .sidebar-inner {
-      overflow: hidden;
-      height: 100%;
-      display: flex;
-      flex-direction: column;
-    }
-
-    .brand-row,
-    .sidebar-meta,
-    .sidebar-footer,
-    .nav-text {
-      transition: opacity 0.25s ease;
-    }
-
-    .sidebar.collapsed .nav-text,
-    .sidebar.collapsed .sidebar-meta,
-    .sidebar.collapsed .sidebar-footer {
-      opacity: 0;
-      pointer-events: none;
-    }
-
-    .brand-row {
-      display: flex;
-      align-items: center;
-      gap: 1rem;
-      padding: 0 1.25rem;
-      margin-bottom: 2.5rem;
-      min-height: 3rem;
-    }
-
-    .brand-sigil {
-      width: 2rem;
-      height: 2rem;
-      flex-shrink: 0;
-      border: 1px solid rgba(139, 92, 246, 0.5);
-      transform: rotate(45deg);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      background: #000;
-    }
-
-    .brand-sigil i {
-      transform: rotate(-45deg);
-      color: #a78bfa;
-      font-size: 0.9rem;
-    }
-
-    .status-seal {
-      width: 12px;
-      height: 12px;
-      border-radius: 50%;
-      background: var(--success);
-      box-shadow: 0 0 10px var(--success);
-      animation: pulse 2.2s ease-in-out infinite;
-    }
-
-    .nav-group {
-      flex: 1;
-      overflow-y: auto;
-      padding-right: 0.25rem;
-    }
-
-    .nav-item {
-      display: flex;
-      align-items: center;
-      gap: 1.5rem;
-      height: 3rem;
-      padding: 0 1.25rem;
-      color: var(--text-soft);
-      border-left: 2px solid transparent;
-      transition: all 0.25s ease;
-      white-space: nowrap;
-    }
-
-    .nav-item:hover,
-    .nav-item:focus-visible {
-      color: var(--text-bright);
-      background: rgba(76, 29, 149, 0.1);
-      border-left-color: var(--accent-violet);
-      outline: none;
-    }
-
-    .page-wrap {
-      max-width: var(--content-max);
-      margin: 0 auto;
-      padding: 5rem 1.5rem;
-    }
-
-    .mobile-bar {
-      display: none;
-      position: sticky;
-      top: 0;
-      z-index: 18;
-      padding: 1rem;
-      backdrop-filter: blur(12px);
-      background: rgba(3, 0, 8, 0.92);
-      border-bottom: 1px solid rgba(139, 92, 246, 0.12);
-    }
-
-    .mobile-bar-inner {
-      max-width: var(--content-max);
-      margin: 0 auto;
-      display: flex;
-      flex-direction: column;
-      gap: 0.75rem;
-    }
-
-    .mobile-actions {
-      display: flex;
-      gap: 0.75rem;
-      flex-wrap: wrap;
-    }
-
-    .eyebrow {
-      display: inline-block;
-      padding: 0.25rem 0.75rem;
-      border: 1px solid rgba(139, 92, 246, 0.2);
-      margin-bottom: 1.5rem;
-      font-family: "JetBrains Mono", monospace;
-      font-size: 0.56rem;
-      letter-spacing: 0.4em;
-      text-transform: uppercase;
-      color: #a78bfa;
-    }
-
-    .header-title {
-      margin: 0 0 1.5rem;
-      font-family: "Cinzel Decorative", serif;
-      font-size: clamp(2.8rem, 8vw, 4.3rem);
-      line-height: 1.08;
-      color: var(--text-bright);
-      text-shadow: 0 0 10px rgba(139, 92, 246, 0.4);
-    }
-
-    .header-title .accent {
-      color: var(--accent-gold);
-      font-style: italic;
-      text-shadow: 0 0 12px rgba(234, 179, 8, 0.3);
-    }
-
-    .header-rule {
-      width: 6rem;
-      height: 1px;
-      background: linear-gradient(to right, var(--accent-violet), transparent);
-    }
-
-    .section-shell {
-      display: flex;
-      gap: 2.5rem;
-      margin-top: 8rem;
-      break-inside: avoid;
-      page-break-inside: avoid;
-    }
-
-    .section-num {
-      flex-shrink: 0;
-      writing-mode: vertical-rl;
-      text-orientation: mixed;
-      padding-left: 0.75rem;
-      height: 5rem;
-      opacity: 0.4;
-      border-left: 1px solid var(--accent-violet);
-      font-family: "JetBrains Mono", monospace;
-      font-size: 0.65rem;
-      color: var(--accent-violet);
-    }
-
-    .section-content {
-      flex: 1;
-      min-width: 0;
-    }
-
-    .section-title {
-      margin: 0 0 2rem;
-      font-family: "Cinzel Decorative", serif;
-      font-size: 1.15rem;
-      letter-spacing: 0.24em;
-      text-transform: uppercase;
-      color: var(--text-bright);
-    }
-
-    .rune-card {
-      background: var(--panel-bg);
-      border: 1px solid rgba(139, 92, 246, 0.12);
-      backdrop-filter: blur(10px);
+      background: linear-gradient(to bottom, rgba(13, 7, 24, 0.96), rgba(5, 2, 10, 0.96));
+      border-right: 1px solid var(--line);
       box-shadow: var(--shadow);
+      transition: width 0.28s ease;
+      z-index: 50;
+      overflow: visible !important;
     }
 
-    .hero-grid,
-    .card-grid,
-    .signature-grid,
-    .field-grid {
-      display: grid;
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-      gap: 2rem;
-    }
+    .sidebar.collapsed { width: var(--sidebar-collapsed); }
+    .main-content { min-height: 100vh; position: relative; z-index: 10; margin-left: 0 !important; padding-left: 0 !important; transition: padding-left 0.28s ease; }
+    body:not(.sidebar-collapsed) .main-content { padding-left: clamp(72px, 12vw, 180px) !important; }
+    body.sidebar-collapsed .main-content { padding-left: 56px !important; }
+    body.sidebar-collapsed .page-wrap { margin-left: auto; margin-right: auto; }
 
-    .hero-grid .rune-card,
-    .card-grid .rune-card,
-    .signature-grid .rune-card,
-    .send-panel {
-      padding: 2rem;
-      border-radius: 0;
-    }
-
-    .meta-kicker {
-      display: block;
-      margin-bottom: 1rem;
-      font-family: "JetBrains Mono", monospace;
-      font-size: 0.56rem;
-      letter-spacing: 0.25em;
-      text-transform: uppercase;
-      color: #a78bfa;
-    }
-
-    .meta-title {
-      margin: 0 0 0.5rem;
-      font-family: "Playfair Display", serif;
-      font-size: 1.7rem;
-      font-style: italic;
-      color: var(--text-bright);
-    }
-
-    .meta-subtitle {
-      margin: 0 0 0.75rem;
-      font-family: "Cinzel Decorative", serif;
-      font-size: 0.6rem;
-      letter-spacing: 0.3em;
-      text-transform: uppercase;
-      color: var(--accent-gold);
-    }
-
-    .section-copy,
-    .section-copy li {
-      font-size: 0.95rem;
-      line-height: 1.75;
-      color: var(--text-main);
-    }
-
-    .section-copy p {
-      margin: 0 0 1rem;
-    }
-
-    .section-copy ul {
-      margin: 0;
-      padding-left: 1.25rem;
-    }
-
-    .detail-pairs {
-      display: grid;
-      gap: 0.75rem;
-    }
-
-    .detail-row {
-      display: flex;
-      justify-content: space-between;
-      gap: 1rem;
-      padding-bottom: 0.5rem;
-      border-bottom: 1px solid rgba(139, 92, 246, 0.12);
-      font-family: "JetBrains Mono", monospace;
-      font-size: 0.68rem;
-      text-transform: uppercase;
-      letter-spacing: 0.16em;
-    }
-
-    .detail-row span:first-child {
-      color: var(--text-dim);
-    }
-
-    .detail-row span:last-child {
-      color: var(--text-bright);
-      text-align: right;
-    }
-
-    .field-grid {
-      gap: 1rem;
-      margin-top: 1.5rem;
-    }
-
-    .field {
-      display: grid;
-      gap: 0.6rem;
-    }
-
-    .field.full {
-      grid-column: 1 / -1;
-    }
-
-    .field label,
-    .field-label {
-      font-family: "JetBrains Mono", monospace;
-      font-size: 0.58rem;
-      letter-spacing: 0.24em;
-      text-transform: uppercase;
-      color: var(--text-dim);
-    }
-
-    .field input,
-    .field textarea {
-      width: 100%;
-      padding: 0.9rem 0;
-      background: transparent;
-      border: 0;
-      border-bottom: 1px solid rgba(139, 92, 246, 0.28);
-      color: var(--text-bright);
-      outline: none;
-    }
-
-    .field textarea {
-      min-height: 5rem;
-      resize: vertical;
-    }
-
-    .field input::placeholder,
-    .field textarea::placeholder {
-      color: var(--text-dim);
-    }
-
-    .field input:focus,
-    .field textarea:focus {
-      border-color: var(--accent-violet);
-    }
-
-    .chip-list {
-      display: grid;
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-      gap: 1.25rem;
-      margin-top: 2rem;
-    }
-
-    .chip {
-      display: flex;
-      align-items: flex-start;
-      gap: 1rem;
-      padding: 1.5rem;
-      border: 1px solid rgba(139, 92, 246, 0.12);
-      background: rgba(46, 16, 101, 0.08);
-    }
-
-    .chip i {
-      margin-top: 0.1rem;
-      color: var(--accent-gold);
-    }
-
-    .chip h4 {
-      margin: 0 0 0.35rem;
-      font-family: "JetBrains Mono", monospace;
-      font-size: 0.72rem;
-      letter-spacing: 0.18em;
-      text-transform: uppercase;
-      color: var(--text-bright);
-    }
-
-    .chip p {
-      margin: 0;
-      font-size: 0.82rem;
-      color: var(--text-soft);
-      line-height: 1.6;
-    }
-
-    .signature-area {
-      position: relative;
-      min-height: 12rem;
-      border: 1px dashed rgba(139, 92, 246, 0.3);
-      background: #000;
-      overflow: hidden;
-    }
-
-    .signature-canvas,
-    .signature-image {
+    .sidebar .toggle-btn {
       position: absolute;
-      inset: 0;
-      width: 100%;
-      height: 100%;
-      display: block;
-    }
-
-    .signature-canvas {
-      z-index: 2;
-      touch-action: none;
-      cursor: crosshair;
-    }
-
-    .signature-image {
-      z-index: 1;
-      object-fit: contain;
-      padding: 0.5rem;
-      pointer-events: none;
-    }
-
-    .signature-controls,
-    .action-row {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 0.75rem;
-      margin-top: 1rem;
-    }
-
-    .button {
-      padding: 1rem 1.35rem;
-      border: 1px solid rgba(234, 179, 8, 0.65);
-      background: transparent;
-      color: var(--accent-gold);
-      font-family: "JetBrains Mono", monospace;
-      font-size: 0.78rem;
-      letter-spacing: 0.2em;
-      text-transform: uppercase;
-      transition: all 0.25s ease;
-    }
-
-    .button:hover,
-    .button:focus-visible {
-      background: var(--accent-gold);
-      color: #000;
-      outline: none;
-    }
-
-    .button.subtle {
-      border-color: rgba(139, 92, 246, 0.4);
-      color: #c4b5fd;
-    }
-
-    .button.subtle:hover,
-    .button.subtle:focus-visible {
-      background: var(--accent-violet);
-      color: #fff;
-    }
-
-    .button.danger {
-      border-color: rgba(253, 164, 175, 0.5);
-      color: #fecdd3;
-    }
-
-    .button.danger:hover,
-    .button.danger:focus-visible {
-      background: #be123c;
-      color: #fff;
-    }
-
-    .signature-status,
-    .send-status {
-      margin-top: 1rem;
-      min-height: 1.5em;
-      font-size: 0.86rem;
-      color: var(--text-soft);
-    }
-
-    .signature-status[data-state="saved"],
-    .send-status[data-state="success"] {
-      color: #bbf7d0;
-    }
-
-    .signature-status[data-state="error"],
-    .send-status[data-state="error"] {
-      color: #fecdd3;
-    }
-
-    .practitioner-seal {
-      min-height: 12rem;
-      border: 1px solid rgba(76, 29, 149, 0.22);
-      background: rgba(46, 16, 101, 0.1);
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      text-align: center;
-      padding: 1.5rem;
-      position: relative;
-      overflow: hidden;
-    }
-
-    .practitioner-seal::before {
-      content: "";
-      position: absolute;
-      inset: 0;
-      opacity: 0.06;
-      background:
-        radial-gradient(circle, rgba(139, 92, 246, 0.5), transparent 45%),
-        linear-gradient(135deg, transparent 0%, rgba(139, 92, 246, 0.12) 50%, transparent 100%);
-    }
-
-    .practitioner-script {
-      position: relative;
-      z-index: 1;
-      margin: 0;
-      font-family: "Playfair Display", serif;
-      font-size: 2.5rem;
-      font-style: italic;
-      color: rgba(255, 255, 255, 0.85);
-      text-shadow: 0 0 10px rgba(139, 92, 246, 0.35);
-    }
-
-    .practitioner-role {
-      position: relative;
-      z-index: 1;
-      margin-top: 0.9rem;
-      font-family: "JetBrains Mono", monospace;
-      font-size: 0.58rem;
-      letter-spacing: 0.28em;
-      text-transform: uppercase;
-      color: #a78bfa;
-    }
-
-    .send-panel {
-      margin-top: 2rem;
-      border: 1px solid rgba(139, 92, 246, 0.12);
-      background: var(--panel-bg-strong);
-    }
-
-    .send-panel h3 {
-      margin: 0 0 0.75rem;
-      font-family: "Cinzel Decorative", serif;
-      font-size: 1rem;
-      letter-spacing: 0.18em;
-      text-transform: uppercase;
-      color: var(--text-bright);
-    }
-
-    .send-panel p,
-    .utility-note {
-      margin: 0;
-      color: var(--text-soft);
-      line-height: 1.7;
-    }
-
-    .screen-only {
-      display: block;
-    }
-
-    .print-header {
-      display: none;
-    }
-
-    .modal[hidden] {
-      display: none;
-    }
-
-    .modal {
-      position: fixed;
-      inset: 0;
-      z-index: 40;
+      right: -20px;
+      top: 92px;
+      width: 40px;
+      height: 40px;
+      padding: 0;
       display: grid;
       place-items: center;
-      padding: 1.5rem;
-      background: rgba(0, 0, 0, 0.76);
+      border-radius: 999px;
+      border: 1px solid rgba(255,255,255,0.18);
+      background: #a855f7;
+      color: #fff;
+      box-shadow: 0 0 18px rgba(168,85,247,0.65);
+      z-index: 999;
+      cursor: pointer;
     }
 
-    .modal-panel {
-      width: min(860px, 100%);
-      padding: 2rem;
-      background: linear-gradient(to bottom, #0d0718, #05020a);
-      border: 1px solid rgba(139, 92, 246, 0.18);
-      box-shadow: var(--shadow);
-    }
+    .sidebar-inner { overflow-y: auto; overflow-x: hidden; height: 100%; display: flex; flex-direction: column; padding-top: 1rem; }
+    .brand-row { display: flex; align-items: center; gap: 1rem; padding: 0 1.25rem; padding-top: 0.35rem; margin-top: -0.25rem; margin-bottom: 2.75rem; min-height: 3rem; }
+    .brand-sigil { width: 2.75rem; height: 2.75rem; flex-shrink: 0; border-radius: 0.95rem; display: flex; align-items: center; justify-content: center; background: rgba(12, 6, 26, 0.82); border: 1px solid rgba(255, 255, 255, 0.1); box-shadow: 0 20px 60px rgba(0, 0, 0, 0.28); backdrop-filter: blur(18px); -webkit-backdrop-filter: blur(18px); }
+    .brand-sigil .relative { position: relative; display: inline-flex; align-items: center; justify-content: center; }
+    .brand-sigil .sparkle { font-size: 1.45rem; color: var(--accent); }
+    .brand-sigil .sparkle-accent { position: absolute; top: -0.35rem; right: -0.55rem; font-size: 0.62rem; color: var(--gold); animation: pulse 2s ease-in-out infinite; }
 
-    .modal-title {
-      margin: 0 0 1rem;
-      font-family: "Cinzel Decorative", serif;
-      font-size: 1.1rem;
-      letter-spacing: 0.2em;
-      text-transform: uppercase;
-      color: var(--text-bright);
-    }
+    .nav-group { flex: 1; overflow-y: auto; padding-right: 0.25rem; }
+    .nav-item { display: flex; align-items: center; gap: 1.5rem; height: 3rem; padding: 0 1.25rem; color: var(--text-soft); border-left: 2px solid transparent; transition: all 0.25s ease; white-space: nowrap; }
+    .nav-item:hover, .nav-item:focus-visible { color: var(--text); background: var(--accent-soft); border-left-color: var(--accent); outline: none; }
 
-    .modal-copy {
-      margin: 0 0 1.5rem;
-      color: var(--text-soft);
-      line-height: 1.7;
-    }
+    .sidebar.collapsed .brand-row { width: var(--sidebar-collapsed) !important; height: 3rem !important; min-height: 3rem !important; padding: 0 !important; margin: 0 0 1.25rem !important; display: grid !important; place-items: center !important; }
+    .sidebar.collapsed .brand-sigil { width: 2rem !important; height: 2rem !important; border-radius: 0.65rem !important; margin: 0 !important; display: grid !important; place-items: center !important; overflow: hidden !important; }
+    .sidebar.collapsed .nav-item { justify-content: center; gap: 0; padding: 0; height: 3rem; }
+    .sidebar.collapsed .nav-item i { display: block; width: 100%; text-align: center; font-size: 1.18rem; color: var(--text-soft); opacity: 1; }
+    .sidebar.collapsed .nav-text, .sidebar.collapsed .sidebar-signature-label, .sidebar.collapsed .sidebar-signature-status { opacity: 0; width: 0; max-width: 0; overflow: hidden; pointer-events: none; display: none !important; }
 
-    .modal .signature-area {
-      min-height: 20rem;
-    }
+    .sidebar-signature-button { width: calc(100% - 2rem); margin: 0 1rem 1.35rem; min-height: 3rem; padding: 0.72rem 0.95rem; display: grid !important; grid-template-columns: 1fr auto; grid-template-rows: auto auto; column-gap: 0.55rem; row-gap: 0.1rem; align-items: center; text-align: left; background: rgba(168,85,247,0.12); border: 1px solid rgba(168,85,247,0.55); color: #f3e8ff; }
+    .sidebar-signature-label { grid-column: 1; grid-row: 1; font-family: "JetBrains Mono", monospace; font-size: 0.66rem; letter-spacing: 0.14em; text-transform: uppercase; }
+    .sidebar-signature-status { grid-column: 1; grid-row: 2; font-family: "JetBrains Mono", monospace; font-size: 0.48rem; letter-spacing: 0.14em; text-transform: uppercase; color: #c4b5fd; opacity: 0.82; }
+    .status-dot, .button-status-dot { width: 0.55rem; height: 0.55rem; border-radius: 999px; background: #a78bfa; box-shadow: 0 0 10px rgba(167,139,250,0.55); }
+    .status-dot[data-state="saved"], .button-status-dot[data-state="saved"], .button-status-dot[data-state="ready"] { background: #4ade80; box-shadow: 0 0 10px rgba(74,222,128,0.55); }
+    .status-dot[data-state="error"], .button-status-dot[data-state="error"] { background: #fda4af; }
+
+    .page-wrap { width: min(960px, calc(100% - 3rem)); max-width: 960px; margin: 0 auto; padding: 5.5rem 0 6rem; }
+    .mobile-bar { display: none; position: sticky; top: 0; z-index: 18; padding: 1rem; backdrop-filter: blur(12px); background: rgba(5, 2, 10, 0.92); border-bottom: 1px solid var(--line); }
+    .mobile-bar-inner { max-width: var(--content-max); margin: 0 auto; display: flex; flex-direction: column; align-items: flex-start; gap: 0.75rem; }
+    .mobile-bar-title { width: 100%; text-align: left; font-size: 1rem; letter-spacing: 0.12em; color: #fff; }
+    .mobile-actions, .signature-controls, .action-row { display: flex; gap: 0.75rem; flex-wrap: wrap; margin-top: 1rem; }
+
+    .eyebrow { display: inline-block; padding: 0.25rem 0.75rem; border: 1px solid var(--line); margin-bottom: 1.5rem; font-family: "JetBrains Mono", monospace; font-size: 0.56rem; letter-spacing: 0.4em; text-transform: uppercase; color: var(--accent); }
+    .header-title { margin: 0 0 1rem; font-family: "Cinzel Decorative", Georgia, serif; font-size: clamp(2.8rem, 8vw, 4.3rem); line-height: 1.08; color: var(--text); }
+    .header-title .accent { color: var(--gold); font-style: italic; }
+    .header-rule { width: 6rem; height: 1px; background: linear-gradient(to right, var(--accent), transparent); }
+
+    .section-shell { display: flex; gap: 2.5rem; margin-top: 4rem; break-inside: avoid; page-break-inside: avoid; }
+    .section-num { flex-shrink: 0; writing-mode: vertical-rl; text-orientation: mixed; padding-left: 0.75rem; height: 5rem; opacity: 0.55; border-left: 1px solid var(--accent); font-family: "JetBrains Mono", monospace; font-size: 0.65rem; color: var(--accent); }
+    .section-content { flex: 1; min-width: 0; }
+    .section-title { margin: 0 0 2rem; font-family: "Cinzel Decorative", Georgia, serif; font-size: 1.08rem; letter-spacing: 0.24em; text-transform: uppercase; color: var(--text); }
+    .rune-card { background: var(--panel-soft); border: 1px solid var(--line); box-shadow: var(--shadow); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); border-radius: 1rem; }
+
+    .hero-grid, .card-grid, .signature-grid, .field-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 2rem; }
+    .hero-grid .rune-card, .card-grid .rune-card, .signature-grid .rune-card, .send-panel { padding: 2rem; }
+    .meta-kicker { display: block; margin-bottom: 1rem; font-family: "JetBrains Mono", monospace; font-size: 0.56rem; letter-spacing: 0.25em; text-transform: uppercase; color: var(--accent); }
+    .meta-title { margin: 0 0 0.5rem; font-family: "Playfair Display", Georgia, serif; font-size: 1.7rem; font-style: italic; color: var(--text); }
+    .meta-subtitle { margin: 0 0 0.75rem; font-family: "JetBrains Mono", monospace; font-size: 0.62rem; letter-spacing: 0.28em; text-transform: uppercase; color: var(--gold); }
+    .section-copy, .section-copy li { font-size: 0.95rem; line-height: 1.75; color: var(--text); }
+    .section-copy p { margin: 0 0 1rem; }
+    .section-copy ul { margin: 0; padding-left: 1.25rem; }
+
+    .detail-pairs { display: grid; gap: 0.75rem; }
+    .detail-row { display: flex; justify-content: space-between; gap: 1rem; padding-bottom: 0.5rem; border-bottom: 1px solid var(--line); font-family: "JetBrains Mono", monospace; font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.16em; }
+    .detail-row span:first-child { color: var(--text-faint); }
+    .detail-row span:last-child { color: var(--text); text-align: right; }
+
+    .field-grid { gap: 1rem; margin-top: 1.5rem; }
+    .field { display: grid; gap: 0.6rem; }
+    .field.full { grid-column: 1 / -1; }
+    .field label, .field-label { font-family: "JetBrains Mono", monospace; font-size: 0.58rem; letter-spacing: 0.24em; text-transform: uppercase; color: var(--text-faint); }
+    .field input, .field textarea { width: 100%; padding: 0.9rem 0; background: transparent; border: 0; border-bottom: 1px solid var(--line-strong); color: var(--text); outline: none; }
+    .field textarea { min-height: 5rem; resize: vertical; }
+    .field input::placeholder, .field textarea::placeholder { color: var(--text-faint); }
+    .field input:focus, .field textarea:focus { border-color: var(--accent); }
+
+    .chip-list { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1.25rem; margin-top: 2rem; }
+    .chip { display: flex; align-items: flex-start; gap: 1rem; padding: 1.5rem; border: 1px solid var(--line); background: rgba(12, 6, 26, 0.62); box-shadow: var(--shadow); border-radius: 1rem; }
+    .chip i { margin-top: 0.1rem; color: var(--gold); }
+    .chip h4 { margin: 0 0 0.35rem; font-family: "JetBrains Mono", monospace; font-size: 0.72rem; letter-spacing: 0.18em; text-transform: uppercase; color: var(--text); }
+    .chip p { margin: 0; font-size: 0.82rem; color: var(--text-soft); line-height: 1.6; }
+
+    .signature-area { position: relative; min-height: 12rem; border: 1px dashed var(--line-strong); background: rgba(5, 2, 10, 0.72); overflow: hidden; border-radius: 1rem; }
+    .signature-canvas, .signature-image { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+    .signature-canvas { z-index: 2; touch-action: none; cursor: crosshair; }
+    .signature-image { z-index: 1; object-fit: contain; padding: 0.5rem; pointer-events: none; opacity: 0; visibility: hidden; }
+    .signature-image[src] { opacity: 1; visibility: visible; }
+
+    .button { padding: 1rem 1.35rem; border: 1px solid rgba(251, 191, 36, 0.65); background: transparent; color: var(--gold); font-family: "JetBrains Mono", monospace; font-size: 0.78rem; letter-spacing: 0.2em; text-transform: uppercase; transition: all 0.25s ease; display: inline-flex; align-items: center; justify-content: center; cursor: pointer; }
+    .button:hover, .button:focus-visible { background: var(--gold); color: #000; outline: none; }
+    .button.subtle { border-color: var(--line-strong); color: #d8b4fe; }
+    .button.subtle:hover, .button.subtle:focus-visible { background: var(--accent); color: #fff; }
+    .button.danger { border-color: rgba(253, 164, 175, 0.5); color: #fecdd3; }
+    .button.danger:hover, .button.danger:focus-visible { background: #be123c; color: #fff; }
+    .signature-status, .send-status { margin-top: 1rem; min-height: 1.5em; font-size: 0.86rem; color: var(--text-soft); }
+    .signature-status[data-state="saved"], .send-status[data-state="success"] { color: #bbf7d0; }
+    .signature-status[data-state="error"], .send-status[data-state="error"] { color: #fecdd3; }
+
+    .practitioner-seal { min-height: 12rem; border: 1px solid var(--line); background: rgba(12, 6, 26, 0.62); display: flex; flex-direction: column; justify-content: flex-end; text-align: left; padding: 1.5rem; position: relative; overflow: hidden; border-radius: 1rem; }
+    .practitioner-seal::before { content: ""; position: absolute; inset: 0; opacity: 0.08; background: radial-gradient(circle at 15% 20%, rgba(168, 85, 247, 0.22), transparent 36%), linear-gradient(135deg, transparent 0%, rgba(168, 85, 247, 0.06) 50%, transparent 100%); }
+    .practitioner-script { position: relative; z-index: 1; margin: 0; font-family: "Playfair Display", Georgia, serif; font-size: 1.8rem; font-style: italic; color: var(--text); }
+    .practitioner-role { position: relative; z-index: 1; margin-top: 0.9rem; font-family: "JetBrains Mono", monospace; font-size: 0.58rem; letter-spacing: 0.28em; text-transform: uppercase; color: var(--text-soft); }
+
+    .send-panel { margin-top: 2rem; border: 1px solid var(--line); background: var(--panel-soft); box-shadow: var(--shadow); border-radius: 1rem; padding: 2rem; }
+    .send-panel h3 { margin: 0 0 0.75rem; font-family: "Cinzel Decorative", Georgia, serif; font-size: 1rem; letter-spacing: 0.18em; text-transform: uppercase; color: var(--text); }
+    .send-panel p, .utility-note { margin: 0; color: var(--text-soft); line-height: 1.7; }
+    .round-button, .button.round-button { min-height: 3rem; height: 56px; padding: 0 1.5rem; border-radius: 999px; display: inline-flex; align-items: center; justify-content: center; gap: 0.45rem; font-family: "JetBrains Mono", monospace; font-size: 0.72rem; letter-spacing: 0.12em; text-transform: uppercase; white-space: nowrap; }
+    .dispatch-actions { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0.85rem; margin-top: 1.25rem; }
+    .primary-action { background: rgba(168, 85, 247, 0.16); border-color: rgba(168, 85, 247, 0.65); color: #f3e8ff; }
+    .primary-action:hover, .primary-action:focus-visible { background: #a855f7; color: #fff; }
+    .payment-action { background: rgba(251, 191, 36, 0.14); border-color: rgba(251, 191, 36, 0.75); color: #fef3c7; }
+    .payment-action:hover, .payment-action:focus-visible { background: #fbbf24; color: #05020a; }
+
+    .screen-only { display: block; }
+    .print-header { display: none; }
+    .modal[hidden] { display: none; }
+    .modal { position: fixed; inset: 0; z-index: 100; display: grid; place-items: center; padding: 1.5rem; background: rgba(0, 0, 0, 0.76); }
+    .modal-panel { width: min(860px, 100%); padding: 2rem; background: linear-gradient(to bottom, rgba(13, 7, 24, 0.96), rgba(5, 2, 10, 0.96)); border: 1px solid var(--line-strong); box-shadow: var(--shadow); border-radius: 1rem; max-height: calc(100vh - 3rem); overflow: auto; }
+    .modal-title { margin: 0 0 1rem; font-family: "Cinzel Decorative", Georgia, serif; font-size: 1.1rem; letter-spacing: 0.2em; text-transform: uppercase; color: var(--text); }
+    .modal-copy { margin: 0 0 1.5rem; color: var(--text-soft); line-height: 1.7; }
+    .modal .signature-area { min-height: 20rem; }
 
     @media (max-width: 960px) {
-      .sidebar {
-        display: none;
-      }
-
-      .main-content,
-      .sidebar.collapsed + .main-content {
-        margin-left: 0;
-      }
-
-      .mobile-bar {
-        display: block;
-      }
-
-      .page-wrap {
-        padding-top: 2rem;
-      }
+      .sidebar { display: none; }
+      .mobile-bar { display: block; }
+      .page-wrap { width: min(100%, calc(100% - 1.5rem)); padding-top: 2rem; }
+      .main-content, body.sidebar-collapsed .main-content { margin-left: 0 !important; padding-left: 0 !important; }
     }
 
     @media (max-width: 720px) {
-      .hero-grid,
-      .card-grid,
-      .signature-grid,
-      .field-grid,
-      .chip-list {
-        grid-template-columns: 1fr;
-      }
-
-      .section-shell {
-        gap: 1rem;
-        margin-top: 4rem;
-      }
-
-      .section-num {
-        height: auto;
-        writing-mode: initial;
-        border-left: 0;
-        padding-left: 0;
-      }
-
-      .page-wrap {
-        padding: 2rem 1rem 4rem;
-      }
-
-      .header-title {
-        font-size: 2.2rem;
-      }
+      .hero-grid, .card-grid, .signature-grid, .field-grid, .chip-list, .dispatch-actions { grid-template-columns: 1fr; }
+      .mobile-actions { display: grid; grid-template-columns: 1fr; align-items: stretch; }
+      .section-shell { gap: 1rem; margin-top: 4rem; }
+      .section-num { height: auto; writing-mode: initial; border-left: 0; padding-left: 0; }
+      .page-wrap { width: min(100%, calc(100% - 1rem)); padding: 2rem 0 7rem; }
+      .header-title { font-size: 2.2rem; }
+      .button { width: 100%; }
     }
 
-    @page {
-      size: Letter;
-      margin: 0.5in;
-    }
+    @keyframes pulse { 0%, 100% { opacity: 0.3; } 50% { opacity: 0.8; } }
 
     @media print {
-      body {
-        background: #fff !important;
-        color: #000 !important;
-      }
-
-      .stars,
-      .sidebar,
-      .mobile-bar,
-      .toggle-btn,
-      .button,
-      .screen-only,
-      .modal,
-      .signature-canvas {
-        display: none !important;
-      }
-
-      .main-content {
-        margin: 0 !important;
-        overflow: visible;
-      }
-
-      .page-wrap {
-        max-width: none;
-        padding: 0;
-      }
-
-      .print-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: baseline;
-        margin-bottom: 0.25in;
-        font-family: "JetBrains Mono", monospace;
-        color: #000;
-      }
-
-      .eyebrow,
-      .header-title,
-      .section-title,
-      .meta-title,
-      .meta-kicker,
-      .meta-subtitle,
-      .section-copy,
-      .section-copy li,
-      .detail-row,
-      .detail-row span,
-      .field-label,
-      .signature-status,
-      .send-status,
-      .utility-note,
-      .practitioner-role {
-        color: #000 !important;
-        text-shadow: none !important;
-      }
-
-      .rune-card,
-      .send-panel,
-      .practitioner-seal,
-      .chip {
-        background: #fff !important;
-        border-color: #999 !important;
-        box-shadow: none !important;
-      }
-
-      .field input,
-      .field textarea {
-        border-bottom-color: #999 !important;
-        color: #000 !important;
-      }
-
-      .signature-area {
-        background: #fff !important;
-        border-color: #999 !important;
-      }
-
-      .signature-image {
-        display: block !important;
-      }
-
-      .section-shell,
-      .rune-card,
-      .signature-area,
-      .practitioner-seal {
-        break-inside: avoid;
-        page-break-inside: avoid;
-      }
-    }
-
-    @keyframes pulse {
-      0%, 100% { opacity: 0.3; }
-      50% { opacity: 0.8; }
+      @page { size: Letter; margin: 0; }
+      html, body { margin: 0 !important; padding: 0 !important; width: 100% !important; min-height: 100% !important; background: #05020a !important; color: #e5e7eb !important; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; overflow: visible !important; }
+      .stars, .sidebar, .toggle-btn, .mobile-bar, .screen-only, .modal, .signature-canvas, button, nav, .send-panel, .signature-status, .send-status, .button-status-text, .button-status-dot, .status-dot, .ph, .ph-fill, .ph-bold { display: none !important; }
+      .main-content { margin: 0 !important; box-sizing: border-box !important; padding: 1.2in 0.6in 0.9in !important; width: 100% !important; min-height: 11in !important; background: #05020a !important; position: static !important; overflow: visible !important; transform: none !important; }
+      .page-wrap { width: 100% !important; max-width: 7.3in !important; margin: 0 auto !important; padding: 0 !important; background: #05020a !important; border: 0 !important; }
+      header { margin: 0 0 0.22in !important; }
+      .eyebrow { display: inline-block !important; font-size: 6.8pt !important; line-height: 1.2 !important; letter-spacing: 0.08em !important; margin: 0 0 0.08in !important; padding: 0.04in 0.07in !important; color: #c4b5fd !important; border: 1px solid rgba(168,85,247,0.45) !important; background: rgba(168,85,247,0.1) !important; }
+      .header-title { font-size: 21pt !important; line-height: 1.12 !important; margin: 0 0 0.1in !important; color: #fff !important; }
+      .header-title br { display: none !important; }
+      .header-title .accent, .font-serif-heading { color: #fbbf24 !important; }
+      .section-shell { display: block !important; margin: 0 0 0.18in !important; padding: 0 !important; break-inside: avoid !important; page-break-inside: avoid !important; }
+      .section-num { display: none !important; }
+      .section-title { font-size: 9.8pt !important; line-height: 1.3 !important; letter-spacing: 0.035em !important; margin: 0 0 0.08in !important; padding-bottom: 0.04in !important; color: #fff !important; border-bottom: 1px solid rgba(168,85,247,0.35) !important; }
+      .rune-card, .chip, .practitioner-seal { background: rgba(13, 7, 24, 0.94) !important; border: 1px solid rgba(168,85,247,0.35) !important; border-radius: 0.07in !important; padding: 0.115in !important; color: #e5e7eb !important; break-inside: avoid !important; page-break-inside: avoid !important; box-shadow: none !important; backdrop-filter: none !important; }
+      .hero-grid, .card-grid, .signature-grid, .field-grid, .chip-list { display: grid !important; grid-template-columns: 1fr 1fr !important; gap: 0.13in !important; }
+      .section-copy, .section-copy p, .section-copy li, .chip p { font-size: 8pt !important; line-height: 1.42 !important; color: #e5e7eb !important; }
+      .meta-kicker, .field-label, .meta-subtitle, .practitioner-role, .detail-row, .chip h4 { font-size: 6.6pt !important; line-height: 1.25 !important; letter-spacing: 0.045em !important; color: #c4b5fd !important; }
+      .signature-area, .practitioner-seal { min-height: 0.7in !important; height: auto !important; }
+      .signature-image { display: block !important; visibility: visible !important; opacity: 1 !important; position: static !important; width: 100% !important; height: 0.58in !important; object-fit: contain !important; padding: 0.035in !important; }
+      .signature-image:not([src]), .signature-image[src=""] { display: none !important; }
+      .practitioner-script { font-size: 15pt !important; color: #fff !important; }
     }
   </style>
 </head>
@@ -858,185 +260,133 @@
   <div class="stars" id="starField" aria-hidden="true"></div>
 
   <aside id="sidebar" class="sidebar">
-    <div class="toggle-btn screen-only" id="toggleSidebarButton" aria-label="Toggle sidebar">
-      <i id="toggleIcon" class="ph ph-caret-left"></i>
-    </div>
+    <button class="toggle-btn screen-only" id="toggleSidebarButton" type="button" aria-label="Toggle contract navigation"><i id="toggleIcon" class="ph ph-caret-left"></i></button>
     <div class="sidebar-inner">
       <div class="brand-row">
-        <div class="brand-sigil"><i class="ph-fill ph-pentagram"></i></div>
+        <div class="brand-sigil"><div class="relative"><i class="ph-fill ph-sparkle sparkle"></i><i class="ph-fill ph-star-four sparkle-accent"></i></div></div>
         <div class="nav-text">
           <h1 class="font-magical" style="margin:0;font-size:0.9rem;letter-spacing:0.2em;color:#fff;">ALGORITHM WITCH</h1>
-          <p class="font-mono-code" style="margin:0.1rem 0 0;font-size:0.5rem;color:#8b5cf6;text-transform:uppercase;">Contract Archive</p>
+          <p class="font-mono-code" style="margin:0.1rem 0 0;font-size:0.5rem;color:var(--accent);text-transform:uppercase;">Contract Archive</p>
         </div>
       </div>
 
-      <div class="sidebar-meta" style="padding:0 1.25rem;margin-bottom:2rem;">
-        <div style="margin-bottom:1rem;">
-          <p class="font-mono-code" style="margin:0;font-size:0.56rem;color:#6b7280;text-transform:uppercase;">Status</p>
-          <div style="display:flex;align-items:center;gap:0.5rem;margin-top:0.25rem;">
-            <div class="status-seal"></div>
-            <span class="font-mono-code" style="font-size:0.62rem;color:#4ade80;">READY_FOR_SEALS</span>
-          </div>
-        </div>
-        <div>
-          <p class="font-mono-code" style="margin:0;font-size:0.56rem;color:#6b7280;text-transform:uppercase;">Registry ID</p>
-          <span class="font-mono-code" style="font-size:0.68rem;color:#fff;">AW-MCE-3MO-2026</span>
-        </div>
-      </div>
+      <button class="button round-button sidebar-signature-button screen-only" type="button" id="sidebarSignatureButton">
+        <span class="sidebar-signature-label">Signature</span>
+        <span class="sidebar-signature-status" id="sidebarSignatureText">Pending</span>
+        <span class="status-dot" id="sidebarSignatureDot" data-state="pending"></span>
+      </button>
 
       <nav class="nav-group" aria-label="Contract navigation">
-        <div class="nav-text" style="padding:0 1.5rem;margin-bottom:0.5rem;">
-          <p class="font-mono-code" style="margin:0;font-size:0.56rem;color:#4b5563;text-transform:uppercase;letter-spacing:0.2em;">Covenant Map</p>
-        </div>
+        <div class="nav-text" style="padding:0 1.5rem;margin-bottom:0.5rem;"><p class="font-mono-code" style="margin:0;font-size:0.56rem;color:var(--text-faint);text-transform:uppercase;letter-spacing:0.2em;">Contract Map</p></div>
         <a href="#parties" class="nav-item"><i class="ph ph-users-three"></i><span class="nav-text font-mono-code" style="font-size:0.7rem;text-transform:uppercase;letter-spacing:0.12em;">01. Parties</span></a>
-        <a href="#term" class="nav-item"><i class="ph ph-hourglass-medium"></i><span class="nav-text font-mono-code" style="font-size:0.7rem;text-transform:uppercase;letter-spacing:0.12em;">02. Term</span></a>
-        <a href="#scope" class="nav-item"><i class="ph ph-sparkle"></i><span class="nav-text font-mono-code" style="font-size:0.7rem;text-transform:uppercase;letter-spacing:0.12em;">03. Scope</span></a>
-        <a href="#deliverables" class="nav-item"><i class="ph ph-stack"></i><span class="nav-text font-mono-code" style="font-size:0.7rem;text-transform:uppercase;letter-spacing:0.12em;">04. Deliverables</span></a>
-        <a href="#payment" class="nav-item"><i class="ph ph-coins"></i><span class="nav-text font-mono-code" style="font-size:0.7rem;text-transform:uppercase;letter-spacing:0.12em;">05. Payment</span></a>
-        <a href="#responsibilities" class="nav-item"><i class="ph ph-check-square-offset"></i><span class="nav-text font-mono-code" style="font-size:0.7rem;text-transform:uppercase;letter-spacing:0.12em;">06. Client Duties</span></a>
-        <a href="#revisions" class="nav-item"><i class="ph ph-arrows-clockwise"></i><span class="nav-text font-mono-code" style="font-size:0.7rem;text-transform:uppercase;letter-spacing:0.12em;">07. Revisions</span></a>
-        <a href="#status" class="nav-item"><i class="ph ph-scales"></i><span class="nav-text font-mono-code" style="font-size:0.7rem;text-transform:uppercase;letter-spacing:0.12em;">08. Contractor</span></a>
-        <a href="#taxes" class="nav-item"><i class="ph ph-receipt"></i><span class="nav-text font-mono-code" style="font-size:0.7rem;text-transform:uppercase;letter-spacing:0.12em;">09. Taxes</span></a>
-        <a href="#ip" class="nav-item"><i class="ph ph-seal-check"></i><span class="nav-text font-mono-code" style="font-size:0.7rem;text-transform:uppercase;letter-spacing:0.12em;">10. IP</span></a>
-        <a href="#communication" class="nav-item"><i class="ph ph-chat-circle-text"></i><span class="nav-text font-mono-code" style="font-size:0.7rem;text-transform:uppercase;letter-spacing:0.12em;">11. Communication</span></a>
-        <a href="#confidentiality" class="nav-item"><i class="ph ph-lock-key"></i><span class="nav-text font-mono-code" style="font-size:0.7rem;text-transform:uppercase;letter-spacing:0.12em;">12. Confidentiality</span></a>
-        <a href="#termination" class="nav-item"><i class="ph ph-x-circle"></i><span class="nav-text font-mono-code" style="font-size:0.7rem;text-transform:uppercase;letter-spacing:0.12em;">13. Termination</span></a>
-        <a href="#liability" class="nav-item"><i class="ph ph-warning-circle"></i><span class="nav-text font-mono-code" style="font-size:0.7rem;text-transform:uppercase;letter-spacing:0.12em;">14. Liability</span></a>
-        <a href="#law" class="nav-item"><i class="ph ph-buildings"></i><span class="nav-text font-mono-code" style="font-size:0.7rem;text-transform:uppercase;letter-spacing:0.12em;">15. Governing Law</span></a>
-        <a href="#entire-agreement" class="nav-item"><i class="ph ph-scroll"></i><span class="nav-text font-mono-code" style="font-size:0.7rem;text-transform:uppercase;letter-spacing:0.12em;">16. Entire Agreement</span></a>
-        <a href="#signatures" class="nav-item"><i class="ph ph-seal"></i><span class="nav-text font-mono-code" style="font-size:0.7rem;text-transform:uppercase;letter-spacing:0.12em;">17. Ritual Seals</span></a>
+        <a href="#scope" class="nav-item"><i class="ph ph-sparkle"></i><span class="nav-text font-mono-code" style="font-size:0.7rem;text-transform:uppercase;letter-spacing:0.12em;">02. Scope</span></a>
+        <a href="#deliverables" class="nav-item"><i class="ph ph-stack"></i><span class="nav-text font-mono-code" style="font-size:0.7rem;text-transform:uppercase;letter-spacing:0.12em;">03. Deliverables</span></a>
+        <a href="#timeline" class="nav-item"><i class="ph ph-hourglass-medium"></i><span class="nav-text font-mono-code" style="font-size:0.7rem;text-transform:uppercase;letter-spacing:0.12em;">04. Timeline</span></a>
+        <a href="#payment" class="nav-item"><i class="ph ph-coins"></i><span class="nav-text font-mono-code" style="font-size:0.7rem;text-transform:uppercase;letter-spacing:0.12em;">05. Fees</span></a>
+        <a href="#deposit" class="nav-item"><i class="ph ph-credit-card"></i><span class="nav-text font-mono-code" style="font-size:0.7rem;text-transform:uppercase;letter-spacing:0.12em;">06. Deposit</span></a>
+        <a href="#late-payment" class="nav-item"><i class="ph ph-clock-countdown"></i><span class="nav-text font-mono-code" style="font-size:0.7rem;text-transform:uppercase;letter-spacing:0.12em;">07. Late Payment</span></a>
+        <a href="#revisions" class="nav-item"><i class="ph ph-arrows-clockwise"></i><span class="nav-text font-mono-code" style="font-size:0.7rem;text-transform:uppercase;letter-spacing:0.12em;">08. Revisions</span></a>
+        <a href="#responsibilities" class="nav-item"><i class="ph ph-check-square-offset"></i><span class="nav-text font-mono-code" style="font-size:0.7rem;text-transform:uppercase;letter-spacing:0.12em;">09. Client Duties</span></a>
+        <a href="#status" class="nav-item"><i class="ph ph-scales"></i><span class="nav-text font-mono-code" style="font-size:0.7rem;text-transform:uppercase;letter-spacing:0.12em;">10. Contractor</span></a>
+        <a href="#taxes" class="nav-item"><i class="ph ph-receipt"></i><span class="nav-text font-mono-code" style="font-size:0.7rem;text-transform:uppercase;letter-spacing:0.12em;">11. Taxes</span></a>
+        <a href="#ip" class="nav-item"><i class="ph ph-seal-check"></i><span class="nav-text font-mono-code" style="font-size:0.7rem;text-transform:uppercase;letter-spacing:0.12em;">12. IP</span></a>
+        <a href="#portfolio" class="nav-item"><i class="ph ph-images-square"></i><span class="nav-text font-mono-code" style="font-size:0.7rem;text-transform:uppercase;letter-spacing:0.12em;">13. Portfolio</span></a>
+        <a href="#confidentiality" class="nav-item"><i class="ph ph-lock-key"></i><span class="nav-text font-mono-code" style="font-size:0.7rem;text-transform:uppercase;letter-spacing:0.12em;">14. Confidentiality</span></a>
+        <a href="#termination" class="nav-item"><i class="ph ph-x-circle"></i><span class="nav-text font-mono-code" style="font-size:0.7rem;text-transform:uppercase;letter-spacing:0.12em;">15. Termination</span></a>
+        <a href="#liability" class="nav-item"><i class="ph ph-warning-circle"></i><span class="nav-text font-mono-code" style="font-size:0.7rem;text-transform:uppercase;letter-spacing:0.12em;">16. Liability</span></a>
+        <a href="#law" class="nav-item"><i class="ph ph-buildings"></i><span class="nav-text font-mono-code" style="font-size:0.7rem;text-transform:uppercase;letter-spacing:0.12em;">17. Governing Law</span></a>
+        <a href="#signatures" class="nav-item"><i class="ph ph-seal"></i><span class="nav-text font-mono-code" style="font-size:0.7rem;text-transform:uppercase;letter-spacing:0.12em;">18. Signatures</span></a>
       </nav>
-
-      <div class="sidebar-footer" style="padding:0 1.25rem;">
-        <div style="padding-top:1.5rem;border-top:1px solid rgba(76,29,149,0.3);">
-          <p class="font-mono-code" style="margin:0;font-size:0.56rem;line-height:1.8;color:#4b5563;font-style:italic;">"Logic bound by digital ink."</p>
-        </div>
-      </div>
     </div>
   </aside>
 
   <div class="mobile-bar screen-only">
     <div class="mobile-bar-inner">
-      <div>
-        <div class="font-mono-code" style="font-size:0.58rem;letter-spacing:0.26em;text-transform:uppercase;color:#a78bfa;">AW-MCE-3MO-2026</div>
-        <div class="font-magical" style="margin-top:0.4rem;font-size:1rem;letter-spacing:0.12em;color:#fff;">Three-Month Content Engine Agreement</div>
-      </div>
+      <div class="mobile-bar-title font-magical">Monthly Content Engine Agreement</div>
       <div class="mobile-actions">
-        <button class="button subtle" type="button" id="mobileOpenModal">Open Signature Box</button>
-        <button class="button" type="button" id="mobilePrintButton">Print / Export PDF</button>
-        <button class="button" type="button" id="mobileSendButton">Send Signed Contract</button>
+        <button class="button round-button" type="button" id="mobileOpenModal">Open Signature Box</button>
+        <button class="button round-button" type="button" id="mobilePrintButton">Print / Export PDF</button>
+        <button class="button round-button primary-action" type="button" id="mobileSendButton">Send Signed Contract</button>
       </div>
     </div>
   </div>
 
   <main class="main-content">
     <div class="page-wrap">
-      <div class="print-header">
-        <div>Monthly Content Engine Agreement</div>
-        <div>AW-MCE-3MO-2026</div>
-      </div>
+      <div class="print-header"><div>Monthly Content Engine Agreement</div></div>
 
       <header>
-        <div class="eyebrow">Three-Month Service Agreement</div>
-        <h1 class="header-title">
-          Three-Month Content <br>
-          <span class="accent">Engine Agreement</span>
-        </h1>
+        <div class="eyebrow">Monthly Content Engine Agreement</div>
+        <h1 class="header-title">Monthly Content <br><span class="accent">Engine Agreement</span></h1>
         <div class="header-rule"></div>
       </header>
 
       <section class="section-shell" id="parties">
         <div class="section-num">01</div>
         <div class="section-content">
-          <h2 class="section-title">Contractual Entities</h2>
+          <h2 class="section-title">Parties</h2>
           <div class="hero-grid">
-            <div class="rune-card">
-              <span class="meta-kicker">The Client</span>
-              <h3 class="meta-title">[Client Organization]</h3>
-              <p class="section-copy">Canadian organization contact placeholders are included below for completion before signing.</p>
-            </div>
-            <div class="rune-card" style="border-left:4px solid rgba(234,179,8,0.5);">
-              <span class="meta-kicker">The Practitioner</span>
-              <h3 class="meta-title">Cassandre Arkema</h3>
-              <p class="meta-subtitle">THE ALGORITHM WITCH</p>
-              <p class="section-copy">[United States]</p>
-            </div>
+            <div class="rune-card"><span class="meta-kicker">The Client</span><h3 class="meta-title">Climate Emergency BC</h3><p class="section-copy">Client details may be completed with placeholders and finalized before signature and dispatch.</p></div>
+            <div class="rune-card" style="border-left:4px solid rgba(234,179,8,0.5);"><span class="meta-kicker">The Practitioner</span><h3 class="meta-title">Cassandre Arkema</h3><p class="meta-subtitle">THE ALGORITHM WITCH</p><p class="section-copy">[United States]</p></div>
           </div>
 
           <div class="rune-card" style="margin-top:2rem;padding:2rem;">
             <p class="section-copy">This Monthly Content Engine Agreement ("Agreement") is entered into by and between <strong>Cassandre Arkema, doing business as The Algorithm Witch</strong> ("Practitioner" or "Contractor"), and the following client organization ("Client"):</p>
             <div class="field-grid">
-              <div class="field">
-                <label class="field-label" for="clientOrganization">Client Organization</label>
-                <input id="clientOrganization" name="clientOrganization" type="text" placeholder="[Client Organization]">
-              </div>
-              <div class="field">
-                <label class="field-label" for="clientRepresentative">Client Representative</label>
-                <input id="clientRepresentative" name="clientRepresentative" type="text" placeholder="[Client Representative]">
-              </div>
-              <div class="field full">
-                <label class="field-label" for="clientAddress">Client Address</label>
-                <textarea id="clientAddress" name="clientAddress" placeholder="[Client Address]"></textarea>
-              </div>
-              <div class="field">
-                <label class="field-label" for="clientEmail">Client Email</label>
-                <input id="clientEmail" name="clientEmail" type="email" placeholder="[Client Email]">
-              </div>
-              <div class="field">
-                <label class="field-label" for="contractorEmail">Contractor Email</label>
-                <input id="contractorEmail" name="contractorEmail" type="email" value="[YOUR_EMAIL]">
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <section class="section-shell" id="term">
-        <div class="section-num">02</div>
-        <div class="section-content">
-          <h2 class="section-title">The Term</h2>
-          <div class="rune-card" style="padding:2.5rem;">
-            <p class="section-copy">This Agreement covers a three-month content engine engagement beginning on the confirmed start date and ending three calendar months later. At the end of the three-month period, both parties may continue, revise, or conclude the engagement in writing.</p>
-            <div class="field-grid">
-              <div class="field">
-                <label class="field-label" for="startDate">Start Date</label>
-                <input id="startDate" name="startDate" type="date" value="2026-06-15">
-              </div>
-              <div class="field">
-                <label class="field-label" for="endDate">End Date</label>
-                <input id="endDate" name="endDate" type="date" value="2026-09-15">
-              </div>
+              <div class="field"><label class="field-label" for="clientOrganization">Client Organization</label><input id="clientOrganization" name="clientOrganization" type="text" value="Climate Emergency BC" placeholder="[Client Organization]"></div>
+              <div class="field"><label class="field-label" for="clientRepresentative">Client Representative</label><input id="clientRepresentative" name="clientRepresentative" type="text" placeholder="[Client Representative]"></div>
+              <div class="field full"><label class="field-label" for="clientStreet">Street Address</label><input id="clientStreet" name="clientStreet" type="text" placeholder="Street address"></div>
+              <div class="field"><label class="field-label" for="clientCity">City</label><input id="clientCity" name="clientCity" type="text" placeholder="City"></div>
+              <div class="field"><label class="field-label" for="clientStateProvince">State / Province</label><input id="clientStateProvince" name="clientStateProvince" type="text" placeholder="State or province"></div>
+              <div class="field"><label class="field-label" for="clientPostalCode">ZIP / Postal Code</label><input id="clientPostalCode" name="clientPostalCode" type="text" placeholder="ZIP or postal code"></div>
+              <div class="field"><label class="field-label" for="clientCountry">Country</label><input id="clientCountry" name="clientCountry" type="text" placeholder="Country" value="Canada"></div>
+              <div class="field"><label class="field-label" for="clientEmail">Client Email</label><input id="clientEmail" name="clientEmail" type="email" placeholder="[Client Email]"></div>
+              <div class="field"><label class="field-label" for="contractorEmail">Contractor Email</label><input id="contractorEmail" name="contractorEmail" type="email" value="cassandre.arkema@gmail.com"></div>
             </div>
           </div>
         </div>
       </section>
 
       <section class="section-shell" id="scope">
-        <div class="section-num">03</div>
+        <div class="section-num">02</div>
         <div class="section-content">
-          <h2 class="section-title">The Sacred Scope</h2>
+          <h2 class="section-title">Scope of Services</h2>
           <div class="rune-card" style="padding:2.5rem;">
-            <p class="section-copy">Contractor will provide ongoing content and communications support for a three-month monthly content engine engagement.</p>
+            <p class="section-copy">Contractor will provide three months of content and communications support for the Client. The work is intended to function as a compact monthly content engine and may include planning, drafting, design support, coordination, and publishing preparation reasonably related to the agreed channels and priorities.</p>
             <div class="chip-list">
-              <div class="chip"><i class="ph ph-intersect-three"></i><div><h4>Social Manifestations</h4><p>Content creation for social platforms (Instagram, Bluesky, LinkedIn).</p></div></div>
-              <div class="chip"><i class="ph ph-spiral"></i><div><h4>Data Geometry</h4><p>Design of infographics and carousel posts.</p></div></div>
-              <div class="chip"><i class="ph ph-megaphone-simple"></i><div><h4>Event Signals</h4><p>Light content support for events (invitations, promotional materials).</p></div></div>
-              <div class="chip"><i class="ph ph-newspaper-clipping"></i><div><h4>Newsletter Work</h4><p>Newsletter drafting and/or management.</p></div></div>
-              <div class="chip"><i class="ph ph-magic-wand"></i><div><h4>System Support</h4><p>General content system support as needed.</p></div></div>
+              <div class="chip"><i class="ph ph-intersect-three"></i><div><h4>Social Content</h4><p>Content creation for Instagram, Bluesky, and LinkedIn, including writing, light editing, and posting support.</p></div></div>
+              <div class="chip"><i class="ph ph-spiral"></i><div><h4>Visual Posts</h4><p>Infographics, carousels, and related visual assets appropriate for the monthly content engine.</p></div></div>
+              <div class="chip"><i class="ph ph-megaphone-simple"></i><div><h4>Event Promotion</h4><p>Invitations, promotional materials, and light support tied to events or campaign moments as needed.</p></div></div>
+              <div class="chip"><i class="ph ph-newspaper-clipping"></i><div><h4>Newsletter Support</h4><p>Newsletter drafting, editing, formatting, and/or temporary newsletter management during the term.</p></div></div>
+              <div class="chip"><i class="ph ph-magic-wand"></i><div><h4>Coordination</h4><p>Light strategy and coordination reasonably necessary to move the agreed deliverables forward.</p></div></div>
             </div>
-            <p class="section-copy" style="margin-top:1.5rem;">Work is scoped to a reasonable monthly volume aligned with the $550/month content engine fee and the $1,650 USD total engagement.</p>
+            <p class="section-copy" style="margin-top:1.5rem;">The exact monthly volume may be confirmed in writing by email before work begins. Work is scoped to a reasonable monthly volume aligned with the $1,650 USD total engagement.</p>
           </div>
         </div>
       </section>
 
       <section class="section-shell" id="deliverables">
-        <div class="section-num">04</div>
+        <div class="section-num">03</div>
         <div class="section-content">
           <h2 class="section-title">Deliverables</h2>
           <div class="rune-card" style="padding:2.5rem;">
             <div class="section-copy">
-              <p>Deliverables under this Agreement may include draft copy, designed social graphics, carousel layouts, promotional assets, newsletter copy or production support, and coordination communications necessary to move those items through review and publication during the three-month engagement period.</p>
-              <p>The Practitioner will deliver work in digital form using tools and formats reasonably suited to the Client's channels and workflow. Unless otherwise stated in writing, delivery deadlines depend on the Client providing timely source materials, approvals, and access.</p>
+              <p>Deliverables may include draft and final copy, social graphics, carousel layouts, event promotional materials, newsletter copy, newsletter production support, scheduling support, coordination notes, and related working files needed to complete the agreed content cycle during the three-month term.</p>
+              <p>Deliverables will be provided in digital form using tools and file types reasonably suited to the Client's workflow. Final deliverables do not include transfer of the Contractor's private templates, internal systems, reusable frameworks, or unpublished process materials unless expressly agreed in writing.</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="section-shell" id="timeline">
+        <div class="section-num">04</div>
+        <div class="section-content">
+          <h2 class="section-title">Timeline and Three-Month Cadence</h2>
+          <div class="rune-card" style="padding:2.5rem;">
+            <p class="section-copy">This Agreement covers a three-month period beginning on the confirmed start date and ending on the confirmed end date. During the term, work may be delivered on a rolling basis rather than as a single batch, and the parties will coordinate by email or another agreed communication channel to confirm priorities, timing, and approvals.</p>
+            <div class="field-grid">
+              <div class="field"><label class="field-label" for="startDate">Start Date</label><input id="startDate" name="startDate" type="date" value="2026-06-15"></div>
+              <div class="field"><label class="field-label" for="endDate">End Date</label><input id="endDate" name="endDate" type="date" value="2026-09-15"></div>
             </div>
           </div>
         </div>
@@ -1045,214 +395,99 @@
       <section class="section-shell" id="payment">
         <div class="section-num">05</div>
         <div class="section-content">
-          <h2 class="section-title">Financial Ritual</h2>
+          <h2 class="section-title">Fees and Payment Terms</h2>
           <div class="rune-card" style="padding:2.5rem;">
             <div class="hero-grid" style="align-items:center;">
               <div>
-                <div class="font-serif-heading" style="font-size:3.5rem;color:var(--accent-gold);text-shadow:0 0 12px rgba(234,179,8,0.3);">$1,650</div>
-                <div class="font-mono-code" style="font-size:0.62rem;letter-spacing:0.2em;text-transform:uppercase;color:#6b7280;">USD Total Fee / $550 Monthly</div>
-                <p class="section-copy" style="margin-top:1rem;">Total fee is $1,650 USD for three months at $550/month. A $225 USD upfront payment is due before work begins. The remaining $1,425 USD will be paid in three monthly stipends of $475 USD each, due on or before the 30th of each month listed.</p>
+                <div class="font-serif-heading" style="font-size:3.5rem;color:var(--gold);">$1,650</div>
+                <div class="font-mono-code" style="font-size:0.62rem;letter-spacing:0.2em;text-transform:uppercase;color:var(--text-faint);">USD Total Fee</div>
+                <p class="section-copy" style="margin-top:1rem;">The total fee for the three-month Monthly Content Engine engagement is $1,650 USD, equal to $550 USD per month.</p>
               </div>
               <div class="detail-pairs">
+                <div class="detail-row"><span>Monthly Rate</span><span>$550 USD / month</span></div>
+                <div class="detail-row"><span>Term</span><span>3 months</span></div>
+                <div class="detail-row"><span>Total Fee</span><span>$1,650 USD</span></div>
                 <div class="detail-row"><span>Upfront</span><span>$225 due before work begins</span></div>
-                <div class="detail-row"><span>Monthly Stipend 01</span><span>$475 due on or before June 30, 2026</span></div>
-                <div class="detail-row"><span>Monthly Stipend 02</span><span>$475 due on or before July 30, 2026</span></div>
-                <div class="detail-row"><span>Monthly Stipend 03</span><span>$475 due on or before August 30, 2026</span></div>
-                <div class="detail-row"><span>Remaining Balance</span><span>$1,425 paid across 3 stipends</span></div>
+                <div class="detail-row"><span>Balance</span><span>$1,425 paid in 3 stipends</span></div>
+                <div class="detail-row"><span>Stipends</span><span>$475 due on or before the 30th of each month</span></div>
               </div>
             </div>
-          </div>
-        </div>
-      </section>
-
-      <section class="section-shell" id="responsibilities">
-        <div class="section-num">06</div>
-        <div class="section-content">
-          <h2 class="section-title">Client Responsibilities</h2>
-          <div class="rune-card" style="padding:2.5rem;">
-            <div class="section-copy">
-              <ul>
-                <li>Provide timely access to relevant brand materials, platform access, background information, and point-of-contact availability.</li>
-                <li>Review drafts and approvals within a commercially reasonable timeframe so the work can proceed during the three-month engagement.</li>
-                <li>Confirm any required priorities, deadlines, or campaign notes in writing.</li>
-                <li>Secure any rights or permissions needed for materials supplied by the Client.</li>
-              </ul>
+            <div class="section-copy" style="margin-top:1.5rem;">
+              <p>Client will pay Contractor an upfront payment of $225 USD before work begins. This upfront payment is credited toward the total contract fee and reserves the Contractor's time for onboarding and early production work.</p>
+              <p>The remaining balance of $1,425 USD will be paid in three monthly stipends of $475 USD each, due on or before the 30th of each month during the contract term, unless the parties agree otherwise in writing.</p>
+              <p>All fees under this Agreement are in United States dollars unless the parties agree otherwise in writing.</p>
             </div>
           </div>
         </div>
       </section>
 
-      <section class="section-shell" id="revisions">
+      <section class="section-shell" id="deposit">
+        <div class="section-num">06</div>
+        <div class="section-content">
+          <h2 class="section-title">Upfront Payment and Deposit</h2>
+          <div class="rune-card" style="padding:2.5rem;">
+            <p class="section-copy">$225 USD is due upfront before work begins. The upfront payment reserves the Contractor's time, covers onboarding and early production work, and is credited toward the total fee. The upfront payment is non-refundable once work has started or once the Client has approved the start of the engagement. Work may be paused until the upfront payment is received.</p>
+          </div>
+        </div>
+      </section>
+
+      <section class="section-shell" id="late-payment">
         <div class="section-num">07</div>
         <div class="section-content">
-          <h2 class="section-title">Review and Revisions</h2>
+          <h2 class="section-title">Late Payment</h2>
           <div class="rune-card" style="padding:2.5rem;">
-            <p class="section-copy">Reasonable review and revision cycles are included for work created during the three-month engagement, provided the requested changes stay within the agreed scope and monthly volume. Requests that materially expand the scope, volume, or channel mix may require a revised fee or written amendment.</p>
+            <p class="section-copy">Monthly stipends of $475 USD are due on or before the 30th of each month during the contract term unless the parties agree otherwise in writing. If payment is late, the Contractor may pause further work, withhold final files, or delay any extension of services until payment is brought current. The Client remains responsible for approved fees and completed work performed before any pause or termination.</p>
           </div>
         </div>
       </section>
 
-      <section class="section-shell" id="status">
-        <div class="section-num">08</div>
-        <div class="section-content">
-          <h2 class="section-title">Independent Contractor</h2>
-          <div class="rune-card" style="padding:2.5rem;">
-            <p class="section-copy">Contractor operates as an independent contractor.</p>
-          </div>
-        </div>
-      </section>
+      <section class="section-shell" id="revisions"><div class="section-num">08</div><div class="section-content"><h2 class="section-title">Revisions and Out-of-Scope Work</h2><div class="rune-card" style="padding:2.5rem;"><p class="section-copy">Reasonable revisions are included for work created during the term, provided the requests stay within the agreed scope, format, and monthly volume. Requests that materially expand the number of deliverables, add new channels, introduce major redesign work, require rush delivery, or otherwise fall outside the agreed term may require a separate quote, a written change approval, or a future agreement.</p></div></div></section>
 
-      <section class="section-shell" id="taxes">
-        <div class="section-num">09</div>
-        <div class="section-content">
-          <h2 class="section-title">Taxes</h2>
-          <div class="rune-card" style="padding:2.5rem;">
-            <p class="section-copy">Contractor is responsible for U.S. taxes. Client does not withhold Canadian taxes unless required.</p>
-          </div>
-        </div>
-      </section>
+      <section class="section-shell" id="responsibilities"><div class="section-num">09</div><div class="section-content"><h2 class="section-title">Client Responsibilities</h2><div class="rune-card" style="padding:2.5rem;"><div class="section-copy"><ul><li>Provide timely access to relevant brand materials, background information, source files, approvals, and any platform or tool access needed to complete the work.</li><li>Designate a point of contact authorized to provide feedback and approvals during the term.</li><li>Review drafts, respond to questions, and communicate decisions within a commercially reasonable timeframe.</li><li>Ensure any materials supplied by the Client can lawfully be used for the project, including text, photographs, logos, and third-party assets.</li></ul></div></div></div></section>
 
-      <section class="section-shell" id="ip">
-        <div class="section-num">10</div>
-        <div class="section-content">
-          <h2 class="section-title">Intellectual Property</h2>
-          <div class="rune-card" style="padding:2.5rem;">
-            <p class="section-copy">Client receives rights to final deliverables upon full payment. Contractor retains underlying systems and frameworks.</p>
-          </div>
-        </div>
-      </section>
+      <section class="section-shell" id="status"><div class="section-num">10</div><div class="section-content"><h2 class="section-title">Independent Contractor Status</h2><div class="rune-card" style="padding:2.5rem;"><p class="section-copy">Contractor is an independent contractor and is not an employee, partner, agent, or joint venturer of Client. Contractor controls the manner and means of performing the services, subject to the agreed scope, timeline, and deliverables. Nothing in this Agreement creates an employment relationship or gives either party authority to bind the other.</p></div></div></section>
 
-      <section class="section-shell" id="communication">
-        <div class="section-num">11</div>
-        <div class="section-content">
-          <h2 class="section-title">Communication</h2>
-          <div class="rune-card" style="padding:2.5rem;">
-            <p class="section-copy">Client provides timely feedback and approvals. Work is delivered on a rolling basis.</p>
-          </div>
-        </div>
-      </section>
+      <section class="section-shell" id="taxes"><div class="section-num">11</div><div class="section-content"><h2 class="section-title">Taxes</h2><div class="rune-card" style="padding:2.5rem;"><p class="section-copy">Contractor is responsible for all federal, state, and local taxes arising from payments received under this Agreement. Client will not withhold payroll taxes, provide employee benefits, or treat Contractor as an employee. Fees are stated in United States Dollars unless otherwise agreed in writing.</p></div></div></section>
 
-      <section class="section-shell" id="confidentiality">
-        <div class="section-num">12</div>
-        <div class="section-content">
-          <h2 class="section-title">Confidentiality</h2>
-          <div class="rune-card" style="padding:2.5rem;">
-            <p class="section-copy">Both parties agree to keep non-public information confidential.</p>
-          </div>
-        </div>
-      </section>
+      <section class="section-shell" id="ip"><div class="section-num">12</div><div class="section-content"><h2 class="section-title">Intellectual Property</h2><div class="rune-card" style="padding:2.5rem;"><p class="section-copy">After full payment is received, Client receives ownership of the final approved deliverables created specifically for Client under this Agreement. Contractor retains ownership of pre-existing materials, templates, strategy frameworks, working files, processes, know-how, and reusable systems. Contractor may reuse general knowledge and non-confidential methods developed during the engagement.</p><p class="section-copy">Contractor may reference the work in a portfolio, case study, or professional materials unless Client requests confidentiality in writing.</p></div></div></section>
 
-      <section class="section-shell" id="termination">
-        <div class="section-num">13</div>
-        <div class="section-content">
-          <h2 class="section-title">Cancellation / Termination</h2>
-          <div class="rune-card" style="padding:2.5rem;">
-            <p class="section-copy">Either party may terminate with written notice. The upfront payment is non-refundable once work has begun or the engagement start has been approved. Client remains responsible for any unpaid stipends for work already completed or approved through the termination date.</p>
-          </div>
-        </div>
-      </section>
+      <section class="section-shell" id="portfolio"><div class="section-num">13</div><div class="section-content"><h2 class="section-title">Portfolio Use</h2><div class="rune-card" style="padding:2.5rem;"><p class="section-copy">Unless the Client requests otherwise in writing for confidential or sensitive work, the Contractor may reference the Client's name and display non-confidential final deliverables in the Contractor's portfolio, website, case studies, proposals, or social channels for the limited purpose of showcasing completed work. The Contractor will not disclose confidential strategy, unpublished materials, or private operating details without permission.</p></div></div></section>
 
-      <section class="section-shell" id="liability">
-        <div class="section-num">14</div>
-        <div class="section-content">
-          <h2 class="section-title">Limitation of Liability</h2>
-          <div class="rune-card" style="padding:2.5rem;">
-            <p class="section-copy">Liability is limited to total amount paid.</p>
-          </div>
-        </div>
-      </section>
+      <section class="section-shell" id="confidentiality"><div class="section-num">14</div><div class="section-content"><h2 class="section-title">Confidentiality</h2><div class="rune-card" style="padding:2.5rem;"><p class="section-copy">Each party agrees to keep the other party's non-public business, operational, financial, and strategic information confidential and to use that information only as needed to perform or evaluate this Agreement. This obligation does not apply to information that is already public through no fault of the receiving party, was lawfully known before disclosure, or must be disclosed by law.</p></div></div></section>
 
-      <section class="section-shell" id="law">
-        <div class="section-num">15</div>
-        <div class="section-content">
-          <h2 class="section-title">Governing Law</h2>
-          <div class="rune-card" style="padding:2.5rem;">
-            <p class="section-copy">Laws of [Province], Canada.</p>
-          </div>
-        </div>
-      </section>
+      <section class="section-shell" id="termination"><div class="section-num">15</div><div class="section-content"><h2 class="section-title">Cancellation and Termination</h2><div class="rune-card" style="padding:2.5rem;"><p class="section-copy">Either party may terminate this Agreement by written notice. If the Client terminates after work has begun, the upfront payment remains non-refundable and the Client remains responsible for payment for approved work completed through the termination date. If the Contractor terminates without cause before completing the term, the Contractor will deliver any completed work prepared to date and discuss a fair prorated adjustment if appropriate.</p></div></div></section>
 
-      <section class="section-shell" id="entire-agreement">
-        <div class="section-num">16</div>
-        <div class="section-content">
-          <h2 class="section-title">Entire Agreement</h2>
-          <div class="rune-card" style="padding:2.5rem;">
-            <p class="section-copy">This document represents the full agreement.</p>
-          </div>
-        </div>
-      </section>
+      <section class="section-shell" id="liability"><div class="section-num">16</div><div class="section-content"><h2 class="section-title">Limitation of Liability</h2><div class="rune-card" style="padding:2.5rem;"><p class="section-copy">To the fullest extent permitted by law, Contractor’s total liability under this Agreement is limited to the amount actually paid by Client under this Agreement. Contractor is not liable for indirect, incidental, consequential, special, punitive, or lost-profit damages.</p></div></div></section>
+
+      <section class="section-shell" id="law"><div class="section-num">17</div><div class="section-content"><h2 class="section-title">Governing Law</h2><div class="rune-card" style="padding:2.5rem;"><p class="section-copy">This Agreement is governed by the laws of the State of Illinois, United States, without regard to conflict of law principles. The parties agree to work in good faith to resolve any dispute informally before pursuing formal remedies.</p></div></div></section>
 
       <section class="section-shell" id="signatures">
-        <div class="section-num">17</div>
+        <div class="section-num">18</div>
         <div class="section-content">
-          <h2 class="section-title">The Ritual Seals</h2>
+          <h2 class="section-title">Signatures</h2>
           <div class="signature-grid">
             <div class="rune-card">
               <span class="meta-kicker">Signature of the Client</span>
-              <div class="signature-area">
-                <img id="visibleSignatureImage" class="signature-image" alt="Client signature preview">
-                <canvas id="visibleSignatureCanvas" class="signature-canvas" aria-label="Client signature canvas"></canvas>
-              </div>
-              <div class="signature-controls screen-only">
-                <button class="button subtle" type="button" id="openModalButton">Open Signature Box</button>
-                <button class="button subtle" type="button" id="saveSignatureButton">Save Signature</button>
-                <button class="button danger" type="button" id="clearSignatureButton">Clear Signature</button>
-              </div>
+              <div class="signature-area"><img id="visibleSignatureImage" class="signature-image" alt="Client signature preview"><canvas id="visibleSignatureCanvas" class="signature-canvas" aria-label="Client signature canvas"></canvas></div>
+              <div class="signature-controls screen-only"><button class="button subtle" type="button" id="openModalButton">Open Signature Box</button><button class="button subtle" type="button" id="saveSignatureButton">Save Signature</button><button class="button danger" type="button" id="clearSignatureButton">Clear Signature</button></div>
               <div class="signature-status" id="signatureStatus" data-state="idle">Draw directly here or use the larger signature box.</div>
-              <div class="field-grid">
-                <div class="field">
-                  <label class="field-label" for="clientPrintedName">Name</label>
-                  <input id="clientPrintedName" name="clientPrintedName" type="text" placeholder="Client printed name">
-                </div>
-                <div class="field">
-                  <label class="field-label" for="clientTitle">Title</label>
-                  <input id="clientTitle" name="clientTitle" type="text" placeholder="Client title">
-                </div>
-                <div class="field">
-                  <label class="field-label" for="clientDate">Date</label>
-                  <input id="clientDate" name="clientDate" type="date" value="2026-06-11">
-                </div>
-              </div>
+              <div class="field-grid"><div class="field"><label class="field-label" for="clientPrintedName">Name</label><input id="clientPrintedName" name="clientPrintedName" type="text" placeholder="Client printed name"></div><div class="field"><label class="field-label" for="clientTitle">Title</label><input id="clientTitle" name="clientTitle" type="text" placeholder="Client title"></div><div class="field"><label class="field-label" for="clientDate">Date</label><input id="clientDate" name="clientDate" type="date"></div></div>
             </div>
-
             <div class="rune-card">
               <span class="meta-kicker">Seal of the Practitioner</span>
-              <div class="practitioner-seal">
-                <p class="practitioner-script">Cassandre Arkema</p>
-                <div class="practitioner-role">Contractor</div>
-              </div>
-              <div class="field-grid">
-                <div class="field">
-                  <label class="field-label" for="contractorName">Contractor Name</label>
-                  <input id="contractorName" name="contractorName" type="text" value="Cassandre Arkema" readonly>
-                </div>
-                <div class="field">
-                  <label class="field-label" for="practitionerDate">Date</label>
-                  <input id="practitionerDate" name="practitionerDate" type="date" value="2026-06-11">
-                </div>
-              </div>
+              <div class="practitioner-seal"><p class="practitioner-script">Cassandre Arkema</p><div class="practitioner-role">Contractor</div></div>
+              <div class="field-grid"><div class="field"><label class="field-label" for="contractorName">Contractor Name</label><input id="contractorName" name="contractorName" type="text" value="Cassandre Arkema" readonly></div><div class="field"><label class="field-label" for="practitionerDate">Date</label><input id="practitionerDate" name="practitionerDate" type="date" value="2026-06-11" readonly></div></div>
             </div>
-          </div>
-
-          <div class="action-row screen-only" style="margin-top:2rem;">
-            <button class="button" type="button" id="printButton">Crystalize &amp; Export Agreement</button>
-            <button class="button" type="button" id="sendContractButton">Send Signed Contract</button>
           </div>
 
           <div class="send-panel screen-only">
             <h3>Contract Dispatch</h3>
-            <p>Send the signed agreement as a branded HTML email with a PDF attachment to both parties.</p>
-            <div class="field-grid">
-              <div class="field">
-                <label class="field-label" for="appsScriptUrl">Apps Script Web App URL</label>
-                <input id="appsScriptUrl" name="appsScriptUrl" type="url" placeholder="[GOOGLE_APPS_SCRIPT_WEB_APP_URL]">
-              </div>
-              <div class="field">
-                <label class="field-label" for="paymentLink">Payment Link (Optional)</label>
-                <input id="paymentLink" name="paymentLink" type="url" placeholder="https://">
-              </div>
+            <p>Send the signed agreement to both parties, export a PDF copy, or complete the upfront payment now. The payment link is also included in the follow-up email.</p>
+            <div class="dispatch-actions">
+              <button class="button round-button primary-action" type="button" id="sendContractButton">Send Signed Contract</button>
+              <button class="button round-button" type="button" id="printButton">Print / Export PDF</button>
+              <a id="dynamicPaymentLink" href="https://www.paypal.com/invoice/p/#PMQJM7ZQ6DTCN79U" target="_blank" rel="noopener noreferrer" class="button round-button payment-action">Pay $225 Upfront</a>
             </div>
-            <p class="utility-note" style="margin-top:1rem;">The send action uses a `text/plain;charset=utf-8` POST payload for Apps Script compatibility.</p>
             <div class="send-status" id="sendStatus" data-state="idle"></div>
           </div>
         </div>
@@ -1264,87 +499,87 @@
     <div class="modal-panel">
       <h2 class="modal-title">Expanded Signature Box</h2>
       <p class="modal-copy">Use mouse, touch, or stylus. Save to copy the signature back into the visible contract box.</p>
-      <div class="signature-area">
-        <img id="modalSignatureImage" class="signature-image" alt="Expanded client signature preview">
-        <canvas id="modalSignatureCanvas" class="signature-canvas" aria-label="Expanded client signature canvas"></canvas>
-      </div>
-      <div class="action-row">
-        <button class="button subtle" type="button" id="modalSaveButton">Save Signature</button>
-        <button class="button danger" type="button" id="modalClearButton">Clear Signature</button>
-        <button class="button subtle" type="button" id="modalCloseButton">Close</button>
-      </div>
+      <div class="signature-area"><img id="modalSignatureImage" class="signature-image" alt="Expanded client signature preview"><canvas id="modalSignatureCanvas" class="signature-canvas" aria-label="Expanded client signature canvas"></canvas></div>
+      <div class="action-row"><button class="button subtle" type="button" id="modalSaveButton">Save Signature</button><button class="button danger" type="button" id="modalClearButton">Clear Signature</button><button class="button subtle" type="button" id="modalCloseButton">Close</button></div>
     </div>
   </div>
 
   <script>
+    window.CONTRACT_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbxhOwehutkoDiPsfNpHm0RjW-2uLXXcY9P8a4CQCCRDUtnQFJPTczPrMvNBXqpcKOEwWg/exec";
+    window.CONTRACT_BACKEND_CONFIG = window.CONTRACT_BACKEND_CONFIG || {};
+
     (() => {
+      let backendConfig = window.CONTRACT_BACKEND_CONFIG || {};
+      window.CONTRACT_BACKEND_CONFIG = backendConfig;
+      const FORM_STORAGE_KEY = "aw_contract_mce_3month_2026";
+      const SIGNATURE_STORAGE_KEY = `${FORM_STORAGE_KEY}_signature`;
       const CONTRACT_META = {
         contractorName: "Cassandre Arkema",
         contractTitle: "Monthly Content Engine Agreement",
-        contractId: "AW-MCE-3MO-2026",
+        contractId: "monthly-content-engine-climate-emergency-bc-2026",
+        monthlyFee: "$550 USD",
         totalFee: "$1,650 USD",
         upfrontPayment: "$225 USD",
         remainingBalance: "$1,425 USD",
-        monthlyStipend: "$475 USD",
-        defaultWebAppUrl: "[GOOGLE_APPS_SCRIPT_WEB_APP_URL]"
+        monthlyStipend: "$475 USD"
       };
 
       function toggleSidebar() {
         const sidebar = document.getElementById("sidebar");
         const icon = document.getElementById("toggleIcon");
-        sidebar.classList.toggle("collapsed");
-        icon.className = sidebar.classList.contains("collapsed") ? "ph ph-caret-right" : "ph ph-caret-left";
+        if (!sidebar) return;
+        const isCollapsed = sidebar.classList.toggle("collapsed");
+        document.body.classList.toggle("sidebar-collapsed", isCollapsed);
+        if (icon) icon.className = isCollapsed ? "ph ph-caret-right" : "ph ph-caret-left";
       }
-
-      document.getElementById("toggleSidebarButton").addEventListener("click", toggleSidebar);
+      document.getElementById("toggleSidebarButton")?.addEventListener("click", toggleSidebar);
 
       const starField = document.getElementById("starField");
-      for (let index = 0; index < 150; index += 1) {
-        const star = document.createElement("div");
-        star.style.position = "absolute";
-        star.style.left = `${Math.random() * 100}%`;
-        star.style.top = `${Math.random() * 100}%`;
-        star.style.width = `${Math.random() * 2}px`;
-        star.style.height = star.style.width;
-        star.style.backgroundColor = "white";
-        star.style.borderRadius = "50%";
-        star.style.opacity = Math.random();
-        star.style.animation = `pulse ${Math.random() * 3 + 2}s infinite ease-in-out`;
-        starField.appendChild(star);
+      if (starField) {
+        starField.innerHTML = "";
+        for (let index = 0; index < 150; index += 1) {
+          const star = document.createElement("div");
+          star.style.position = "absolute";
+          star.style.left = `${Math.random() * 100}%`;
+          star.style.top = `${Math.random() * 100}%`;
+          star.style.width = `${Math.random() * 2}px`;
+          star.style.height = star.style.width;
+          star.style.backgroundColor = "white";
+          star.style.borderRadius = "50%";
+          star.style.opacity = Math.random();
+          star.style.animation = `pulse ${Math.random() * 3 + 2}s infinite ease-in-out`;
+          starField.appendChild(star);
+        }
       }
 
       class SignaturePad {
         constructor(canvas, image) {
+          if (!canvas || !image) return;
           this.canvas = canvas;
           this.image = image;
           this.ctx = canvas.getContext("2d");
           this.isDrawing = false;
           this.savedDataUrl = "";
           this.lastPoint = null;
-
-          this.canvas.style.touchAction = "none";
           this.pointerDown = this.pointerDown.bind(this);
           this.pointerMove = this.pointerMove.bind(this);
           this.pointerUp = this.pointerUp.bind(this);
-
+          this.canvas.style.touchAction = "none";
           this.canvas.addEventListener("pointerdown", this.pointerDown);
           this.canvas.addEventListener("pointermove", this.pointerMove);
           this.canvas.addEventListener("pointerup", this.pointerUp);
           this.canvas.addEventListener("pointerleave", this.pointerUp);
           this.canvas.addEventListener("pointercancel", this.pointerUp);
-
           this.resizeObserver = new ResizeObserver(() => this.resize());
           this.resizeObserver.observe(this.canvas.parentElement);
           this.resize();
         }
-
         resize() {
           const rect = this.canvas.getBoundingClientRect();
           const ratio = Math.max(window.devicePixelRatio || 1, 1);
           const width = Math.max(Math.round(rect.width * ratio), 1);
           const height = Math.max(Math.round(rect.height * ratio), 1);
           if (this.canvas.width === width && this.canvas.height === height) return;
-
           const preserved = this.exportDataUrl();
           this.canvas.width = width;
           this.canvas.height = height;
@@ -1354,25 +589,20 @@
           this.ctx.lineCap = "round";
           this.ctx.lineJoin = "round";
           this.ctx.strokeStyle = "#8b5cf6";
-
-          if (preserved) {
-            this.loadFromDataUrl(preserved, false);
-          } else if (this.savedDataUrl) {
-            this.loadFromDataUrl(this.savedDataUrl, false);
-          } else {
-            this.clear(false);
-          }
+          if (preserved) this.loadFromDataUrl(preserved, false);
+          else if (this.savedDataUrl) this.loadFromDataUrl(this.savedDataUrl, false);
+          else this.clear(false);
         }
-
         pointerDown(event) {
           event.preventDefault();
+          this.image.style.display = "none";
+          this.image.removeAttribute("src");
           this.canvas.setPointerCapture(event.pointerId);
           this.isDrawing = true;
           this.lastPoint = this.getPoint(event);
           this.ctx.beginPath();
           this.ctx.moveTo(this.lastPoint.x, this.lastPoint.y);
         }
-
         pointerMove(event) {
           if (!this.isDrawing) return;
           event.preventDefault();
@@ -1383,7 +613,6 @@
           this.ctx.stroke();
           this.lastPoint = point;
         }
-
         pointerUp(event) {
           if (!this.isDrawing) return;
           event.preventDefault();
@@ -1392,134 +621,132 @@
           this.ctx.lineTo(point.x, point.y);
           this.ctx.stroke();
           this.ctx.closePath();
+          window.dispatchEvent(new CustomEvent("contract-signature-drawn"));
           this.lastPoint = null;
         }
-
         getPoint(event) {
           const rect = this.canvas.getBoundingClientRect();
           return { x: event.clientX - rect.left, y: event.clientY - rect.top };
         }
-
         isBlank() {
           const pixels = this.ctx.getImageData(0, 0, this.canvas.width, this.canvas.height).data;
-          for (let index = 3; index < pixels.length; index += 4) {
-            if (pixels[index] !== 0) return false;
-          }
+          for (let index = 3; index < pixels.length; index += 4) if (pixels[index] !== 0) return false;
           return true;
         }
-
-        exportDataUrl() {
-          return this.isBlank() ? "" : this.canvas.toDataURL("image/png");
-        }
-
+        exportDataUrl() { return this.isBlank() ? "" : this.canvas.toDataURL("image/png"); }
         setSavedDataUrl(dataUrl) {
           this.savedDataUrl = dataUrl || "";
-          if (this.savedDataUrl) {
-            this.image.src = this.savedDataUrl;
-            this.image.style.display = "block";
-          } else {
-            this.image.removeAttribute("src");
-            this.image.style.display = "none";
-          }
+          if (this.savedDataUrl) { this.image.src = this.savedDataUrl; this.image.style.display = "block"; }
+          else { this.image.removeAttribute("src"); this.image.style.display = "none"; }
         }
-
         loadFromDataUrl(dataUrl, persist = true) {
           this.clear(false);
-          if (!dataUrl) {
-            if (persist) this.setSavedDataUrl("");
-            return;
-          }
+          if (!dataUrl) { if (persist) this.setSavedDataUrl(""); return; }
           const image = new Image();
           image.onload = () => {
             this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
             this.ctx.drawImage(image, 0, 0, this.canvas.clientWidth, this.canvas.clientHeight);
             if (persist) this.setSavedDataUrl(dataUrl);
+            else { this.savedDataUrl = dataUrl; this.image.removeAttribute("src"); this.image.style.display = "none"; }
           };
           image.src = dataUrl;
         }
-
         clear(persist = true) {
           this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
           if (persist) this.setSavedDataUrl("");
         }
       }
 
-      const visiblePad = new SignaturePad(
-        document.getElementById("visibleSignatureCanvas"),
-        document.getElementById("visibleSignatureImage")
-      );
-      const modalPad = new SignaturePad(
-        document.getElementById("modalSignatureCanvas"),
-        document.getElementById("modalSignatureImage")
-      );
-
+      const visiblePad = new SignaturePad(document.getElementById("visibleSignatureCanvas"), document.getElementById("visibleSignatureImage"));
+      const modalPad = new SignaturePad(document.getElementById("modalSignatureCanvas"), document.getElementById("modalSignatureImage"));
       const modal = document.getElementById("signatureModal");
       const signatureStatus = document.getElementById("signatureStatus");
       const sendStatus = document.getElementById("sendStatus");
-      const openButtons = [document.getElementById("openModalButton"), document.getElementById("mobileOpenModal")].filter(Boolean);
+      const paymentButton = document.getElementById("dynamicPaymentLink");
+      const openButtons = [document.getElementById("openModalButton"), document.getElementById("mobileOpenModal"), document.getElementById("sidebarSignatureButton")].filter(Boolean);
       const sendButtons = [document.getElementById("sendContractButton"), document.getElementById("mobileSendButton")].filter(Boolean);
+      const DEFAULT_PAYMENT_LINK = "https://www.paypal.com/invoice/p/#PMQJM7ZQ6DTCN79U";
+      if (paymentButton) paymentButton.href = DEFAULT_PAYMENT_LINK;
+      if (backendConfig.contractorEmail && document.getElementById("contractorEmail")) document.getElementById("contractorEmail").value = backendConfig.contractorEmail;
 
       const readField = (name) => document.querySelector(`[name="${name}"]`);
       const getValue = (name) => (readField(name)?.value || "").trim();
+      function setDot(id, state) { const el = document.getElementById(id); if (el) el.dataset.state = state; }
+      function setText(id, text) { const el = document.getElementById(id); if (el) el.textContent = text; }
+      function setSignatureState(state) { setDot("sidebarSignatureDot", state); setText("sidebarSignatureText", state === "saved" ? "Saved" : "Pending"); }
+      function setSendState(state) { setText("topSendText", state === "sent" ? "Sent" : state === "error" ? "Error" : state === "sending" ? "Sending" : "Not Sent"); }
 
-      const escapeHtml = (value) => String(value || "")
-        .replace(/&/g, "&amp;")
-        .replace(/</g, "&lt;")
-        .replace(/>/g, "&gt;")
-        .replace(/"/g, "&quot;")
-        .replace(/'/g, "&#39;");
+      const saveFormState = () => {
+        const data = {};
+        document.querySelectorAll("input[name], textarea[name]").forEach((field) => { data[field.name] = field.value; });
+        localStorage.setItem(FORM_STORAGE_KEY, JSON.stringify(data));
+      };
+      const loadFormState = () => {
+        try {
+          const raw = localStorage.getItem(FORM_STORAGE_KEY);
+          if (!raw) return;
+          const data = JSON.parse(raw);
+          Object.entries(data).forEach(([name, value]) => {
+            const field = document.querySelector(`[name="${name}"]`);
+            if (field && value !== undefined && name !== "practitionerDate") field.value = value;
+          });
+        } catch (_error) {}
+      };
+      loadFormState();
+      document.querySelectorAll("input[name], textarea[name]").forEach((field) => {
+        field.addEventListener("input", saveFormState);
+        field.addEventListener("change", saveFormState);
+      });
 
+      const escapeHtml = (value) => String(value || "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#39;");
       const formatDate = (value) => {
         if (!value) return "";
         const date = new Date(`${value}T00:00:00`);
         if (Number.isNaN(date.getTime())) return value;
         return date.toLocaleDateString(undefined, { year: "numeric", month: "long", day: "numeric" });
       };
-
-      const currentSignature = () => visiblePad.exportDataUrl() || visiblePad.savedDataUrl || modalPad.exportDataUrl() || modalPad.savedDataUrl || "";
-
+      const currentSignature = () => {
+        try { const saved = localStorage.getItem(SIGNATURE_STORAGE_KEY); if (saved) return saved; } catch (_) {}
+        return visiblePad?.exportDataUrl?.() || visiblePad?.savedDataUrl || modalPad?.exportDataUrl?.() || modalPad?.savedDataUrl || "";
+      };
       const syncPads = (dataUrl) => {
-        visiblePad.setSavedDataUrl(dataUrl);
-        modalPad.setSavedDataUrl(dataUrl);
-        visiblePad.loadFromDataUrl(dataUrl);
-        modalPad.loadFromDataUrl(dataUrl);
+        visiblePad?.clear?.(false); modalPad?.clear?.(false);
+        visiblePad?.setSavedDataUrl?.(dataUrl);
+        if (modalPad) modalPad.savedDataUrl = dataUrl || "";
+        if (dataUrl) {
+          if (visiblePad?.image) { visiblePad.image.src = dataUrl; visiblePad.image.style.display = "block"; }
+          if (modalPad?.image) { modalPad.image.removeAttribute("src"); modalPad.image.style.display = "none"; }
+          modalPad?.loadFromDataUrl?.(dataUrl, false);
+        } else { visiblePad?.setSavedDataUrl?.(""); modalPad?.setSavedDataUrl?.(""); }
       };
-
       const updateSignatureStatus = (message, state = "idle") => {
-        signatureStatus.textContent = message;
-        signatureStatus.dataset.state = state;
+        if (signatureStatus) { signatureStatus.textContent = message; signatureStatus.dataset.state = state; }
+        setSignatureState(state === "saved" ? "saved" : "pending");
       };
-
       const updateSendStatus = (message, state = "idle") => {
-        sendStatus.textContent = message;
-        sendStatus.dataset.state = state;
+        if (sendStatus) { sendStatus.textContent = message; sendStatus.dataset.state = state; }
+        setSendState(state === "success" ? "sent" : state === "error" ? "error" : message ? "sending" : "idle");
       };
-
-      const openModal = () => {
-        syncPads(currentSignature());
-        modal.hidden = false;
-      };
-
-      const closeModal = () => {
-        modal.hidden = true;
-      };
-
+      try {
+        const savedSignature = localStorage.getItem(SIGNATURE_STORAGE_KEY);
+        if (savedSignature) { syncPads(savedSignature); updateSignatureStatus("Saved signature loaded.", "saved"); }
+      } catch (_) {}
+      const openModal = () => { syncPads(currentSignature()); if (modal) modal.hidden = false; };
+      const closeModal = () => { if (modal) modal.hidden = true; };
       const saveSignature = (pad) => {
+        if (!pad) return false;
         const dataUrl = pad.exportDataUrl() || pad.savedDataUrl;
-        if (!dataUrl) {
-          updateSignatureStatus("No signature detected yet. Draw a signature before saving.", "error");
-          return;
-        }
+        if (!dataUrl) { updateSignatureStatus("No signature detected yet. Draw a signature before saving.", "error"); return false; }
         syncPads(dataUrl);
-        updateSignatureStatus("Signature saved and ready for print/export.", "saved");
+        localStorage.setItem(SIGNATURE_STORAGE_KEY, dataUrl);
+        saveFormState();
+        updateSignatureStatus("Signature saved.", "saved");
+        return true;
       };
-
       const buildEmailContractHtml = () => {
         const clone = document.querySelector(".page-wrap").cloneNode(true);
         const signatureDataUrl = currentSignature();
-
-        clone.querySelectorAll(".screen-only, .mobile-bar, .modal").forEach((node) => node.remove());
-        clone.querySelectorAll(".signature-canvas").forEach((node) => node.remove());
+        clone.querySelectorAll(".screen-only, .mobile-bar, .modal, .signature-status, .send-status, .send-panel, .signature-canvas, .ph, .ph-fill, .ph-bold").forEach((node) => node.remove());
         clone.querySelectorAll("input, textarea").forEach((field) => {
           const value = field.value.trim() || field.placeholder || field.getAttribute("value") || "";
           const replacement = document.createElement("div");
@@ -1528,164 +755,91 @@
           field.replaceWith(replacement);
         });
         clone.querySelectorAll(".signature-image").forEach((image) => {
-          if (signatureDataUrl) {
-            image.src = signatureDataUrl;
-            image.style.display = "block";
-          } else {
-            image.remove();
-          }
+          if (signatureDataUrl) { image.src = signatureDataUrl; image.style.display = "block"; image.style.opacity = "1"; image.removeAttribute("alt"); }
+          else image.remove();
         });
-
-        return `<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <title>${escapeHtml(CONTRACT_META.contractTitle)}</title>
-  <style>
-    @page { size: Letter; margin: 0.5in; }
-    * { box-sizing: border-box; }
-    body { margin: 0; font-family: Arial, Helvetica, sans-serif; background: #fff; color: #111; }
-    .page-wrap { max-width: 8in; margin: 0 auto; }
-    .print-header { display: flex; justify-content: space-between; margin-bottom: 18px; font-family: monospace; }
-    .eyebrow { display: inline-block; border: 1px solid #999; padding: 4px 8px; margin-bottom: 18px; font-size: 10px; text-transform: uppercase; letter-spacing: 0.18em; }
-    .header-title { margin: 0 0 18px; font-size: 30px; line-height: 1.15; }
-    .header-rule { width: 80px; height: 1px; background: #111; }
-    .section-shell { display: flex; gap: 20px; margin-top: 36px; break-inside: avoid; page-break-inside: avoid; }
-    .section-num { font-family: monospace; font-size: 11px; color: #555; }
-    .section-content { flex: 1; }
-    .section-title { margin: 0 0 18px; font-size: 18px; text-transform: uppercase; letter-spacing: 0.12em; }
-    .rune-card, .send-panel, .chip, .practitioner-seal { border: 1px solid #bbb; padding: 18px; background: #fff; }
-    .hero-grid, .card-grid, .signature-grid, .field-grid, .chip-list { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
-    .meta-kicker, .field-label, .practitioner-role { font-size: 10px; text-transform: uppercase; letter-spacing: 0.14em; color: #555; }
-    .meta-title { margin: 0 0 8px; font-size: 24px; }
-    .meta-subtitle { margin: 0 0 8px; font-size: 10px; text-transform: uppercase; letter-spacing: 0.18em; }
-    .section-copy, .section-copy li, .chip p, .detail-row { line-height: 1.6; color: #111; }
-    .chip h4 { margin: 0 0 6px; font-size: 11px; text-transform: uppercase; letter-spacing: 0.12em; }
-    .detail-row { display: flex; justify-content: space-between; gap: 12px; padding-bottom: 8px; border-bottom: 1px solid #ddd; font-size: 11px; text-transform: uppercase; }
-    .pdf-field-value { min-height: 38px; padding: 10px 0; border-bottom: 1px solid #999; white-space: pre-wrap; }
-    .signature-area { min-height: 140px; border: 1px solid #999; background: #fff; }
-    .signature-image { width: 100%; height: auto; object-fit: contain; }
-    .practitioner-script { margin: 0; font-size: 28px; }
-    @media (max-width: 700px) {
-      .hero-grid, .card-grid, .signature-grid, .field-grid, .chip-list { grid-template-columns: 1fr; }
-      .section-shell { display: block; }
-    }
-  </style>
-</head>
-<body>
-  ${clone.outerHTML}
-</body>
-</html>`;
+        return `<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><title>${escapeHtml(CONTRACT_META.contractTitle)}</title><style>body{margin:0;font-family:Inter,Arial,sans-serif;background:#05020a;color:#e5e7eb}.pdf-page-shell{padding:1.2in .6in}.page-wrap{max-width:7.3in;margin:0 auto}.section-shell{display:block;margin-bottom:.18in}.section-num,.screen-only,button,nav,.signature-canvas{display:none!important}.rune-card,.chip,.practitioner-seal{border:1px solid rgba(168,85,247,.35);border-radius:.07in;padding:.115in;background:rgba(13,7,24,.94)}.hero-grid,.signature-grid,.field-grid,.chip-list{display:grid;grid-template-columns:1fr 1fr;gap:.12in}.section-title{border-bottom:1px solid rgba(168,85,247,.35);color:#fff}.section-copy,.section-copy li{font-size:8pt;line-height:1.42}.pdf-field-value{border-bottom:1px solid rgba(168,85,247,.45);min-height:.18in;padding:.03in 0}.signature-image{display:block;visibility:visible;opacity:1;width:100%;height:.56in;object-fit:contain}</style></head><body><div class="pdf-page-shell">${clone.outerHTML}</div></body></html>`;
       };
-
       const validateBeforeSend = () => {
         const errors = [];
-        const contractorSignature = document.querySelector(".practitioner-script")?.textContent.trim();
         if (!getValue("clientEmail")) errors.push("Client email is required.");
         if (!(getValue("clientRepresentative") || getValue("clientPrintedName"))) errors.push("Client representative name is required.");
         if (!currentSignature()) errors.push("Client signature is required.");
-        if (!contractorSignature) errors.push("Contractor signature block is required.");
         if (!getValue("contractorName")) errors.push("Contractor name is required.");
         if (!getValue("practitionerDate")) errors.push("Contractor date is required.");
-        if (!getValue("contractorEmail") || getValue("contractorEmail") === "[YOUR_EMAIL]") errors.push("Contractor email is required.");
+        if (!getValue("contractorEmail")) errors.push("Contractor email is required.");
         if (!getValue("startDate")) errors.push("Start date is required.");
         if (!getValue("endDate")) errors.push("End date is required.");
         return errors;
       };
-
-      const sendViaGoogleScript = (payload) => new Promise((resolve, reject) => {
-        google.script.run.withSuccessHandler(resolve).withFailureHandler(reject).sendSignedContractFromPage(payload);
-      });
-
+      const sendViaGoogleScript = (payload) => new Promise((resolve, reject) => google.script.run.withSuccessHandler(resolve).withFailureHandler(reject).sendSignedContractFromPage(payload));
       const sendViaFetch = async (payload) => {
-        const endpoint = getValue("appsScriptUrl") || window.CONTRACT_WEB_APP_URL || CONTRACT_META.defaultWebAppUrl;
-        if (!endpoint || endpoint.includes("[GOOGLE_APPS_SCRIPT_WEB_APP_URL]")) {
-          throw new Error("Apps Script Web App URL is required.");
-        }
-
-        const response = await fetch(endpoint, {
-          method: "POST",
-          headers: { "Content-Type": "text/plain;charset=utf-8" },
-          body: JSON.stringify(payload)
-        });
+        const endpoint = window.CONTRACT_WEB_APP_URL || "";
+        if (!endpoint) throw new Error("Contract email backend is not configured.");
+        const response = await fetch(endpoint, { method: "POST", headers: { "Content-Type": "text/plain;charset=utf-8" }, body: JSON.stringify(payload) });
         const text = await response.text();
         let data;
-        try {
-          data = JSON.parse(text);
-        } catch (error) {
-          throw new Error("Unexpected response from Apps Script.");
-        }
-        if (!response.ok || !data.ok) {
-          throw new Error(data?.error || "Unable to send signed contract.");
-        }
+        try { data = JSON.parse(text); } catch (error) { throw new Error("Unexpected response from Apps Script."); }
+        if (!response.ok || !data.ok) throw new Error(data?.error || "Unable to send signed contract.");
         return data;
       };
-
       const sendSignedContract = async () => {
+        if (!currentSignature()) { updateSendStatus("Please save the client signature before sending the contract.", "error"); openModal(); return; }
         const errors = validateBeforeSend();
-        if (errors.length) {
-          updateSendStatus(errors.join(" "), "error");
-          return;
-        }
-
+        if (errors.length) { updateSendStatus(errors.join(" "), "error"); return; }
+        const buildClientAddress = () => [getValue("clientStreet"), getValue("clientCity"), getValue("clientStateProvince"), getValue("clientPostalCode"), getValue("clientCountry")].filter(Boolean).join(", ");
         const payload = {
           action: "sendSignedContract",
           clientEmail: getValue("clientEmail"),
           clientName: getValue("clientRepresentative") || getValue("clientPrintedName"),
-          clientOrganization: getValue("clientOrganization") || "Climate Emergency BC",
+          clientOrganization: getValue("clientOrganization") || "Client Organization",
+          clientAddress: buildClientAddress(),
           contractorEmail: getValue("contractorEmail"),
           contractorName: CONTRACT_META.contractorName,
           contractTitle: CONTRACT_META.contractTitle,
           contractId: CONTRACT_META.contractId,
           contractHtml: buildEmailContractHtml(),
-          paymentLink: getValue("paymentLink"),
+          paymentLink: DEFAULT_PAYMENT_LINK,
           startDate: formatDate(getValue("startDate")),
           endDate: formatDate(getValue("endDate")),
+          monthlyFee: CONTRACT_META.monthlyFee,
           totalFee: CONTRACT_META.totalFee,
-          upfrontPayment: CONTRACT_META.upfrontPayment
+          upfrontPayment: CONTRACT_META.upfrontPayment,
+          remainingBalance: CONTRACT_META.remainingBalance,
+          monthlyStipend: CONTRACT_META.monthlyStipend,
+          signatureDataUrl: currentSignature()
         };
-
         updateSendStatus("Sending signed contract...", "idle");
         sendButtons.forEach((button) => { button.disabled = true; });
-
         try {
           const result = window.google?.script?.run ? await sendViaGoogleScript(payload) : await sendViaFetch(payload);
           if (!result?.ok) throw new Error(result?.error || "Unable to send signed contract.");
           updateSendStatus("Signed contract sent to both parties.", "success");
-        } catch (error) {
-          updateSendStatus(error?.message || "Unable to send signed contract.", "error");
-        } finally {
-          sendButtons.forEach((button) => { button.disabled = false; });
-        }
+        } catch (error) { updateSendStatus(error?.message || "Unable to send signed contract.", "error"); }
+        finally { sendButtons.forEach((button) => { button.disabled = false; }); }
       };
 
       openButtons.forEach((button) => button.addEventListener("click", openModal));
       sendButtons.forEach((button) => button.addEventListener("click", sendSignedContract));
-
-      document.getElementById("saveSignatureButton").addEventListener("click", () => saveSignature(visiblePad));
-      document.getElementById("clearSignatureButton").addEventListener("click", () => {
-        visiblePad.clear();
-        modalPad.clear();
-        updateSignatureStatus("Signature cleared.", "idle");
-      });
-      document.getElementById("modalSaveButton").addEventListener("click", () => {
-        saveSignature(modalPad);
-        closeModal();
-      });
-      document.getElementById("modalClearButton").addEventListener("click", () => modalPad.clear());
-      document.getElementById("modalCloseButton").addEventListener("click", closeModal);
-      modal.addEventListener("click", (event) => {
-        if (event.target === modal) closeModal();
-      });
-      document.addEventListener("keydown", (event) => {
-        if (event.key === "Escape" && !modal.hidden) closeModal();
-      });
-
+      document.getElementById("saveSignatureButton")?.addEventListener("click", () => saveSignature(visiblePad));
+      document.getElementById("clearSignatureButton")?.addEventListener("click", () => { syncPads(""); localStorage.removeItem(SIGNATURE_STORAGE_KEY); updateSignatureStatus("Signature cleared.", "idle"); });
+      document.getElementById("modalSaveButton")?.addEventListener("click", () => { saveSignature(modalPad); closeModal(); });
+      document.getElementById("modalClearButton")?.addEventListener("click", () => { syncPads(""); localStorage.removeItem(SIGNATURE_STORAGE_KEY); updateSignatureStatus("Signature cleared.", "idle"); });
+      document.getElementById("modalCloseButton")?.addEventListener("click", closeModal);
+      modal?.addEventListener("click", (event) => { if (event.target === modal) closeModal(); });
+      document.addEventListener("keydown", (event) => { if (event.key === "Escape" && modal && !modal.hidden) closeModal(); });
       const printHandler = () => window.print();
-      document.getElementById("printButton").addEventListener("click", printHandler);
-      document.getElementById("mobilePrintButton").addEventListener("click", printHandler);
-
-      updateSignatureStatus("Draw directly here or use the larger signature box.");
+      document.getElementById("printButton")?.addEventListener("click", printHandler);
+      document.getElementById("mobilePrintButton")?.addEventListener("click", printHandler);
+      window.addEventListener("contract-signature-drawn", () => {
+        const dataUrl = currentSignature();
+        if (!dataUrl) return;
+        syncPads(dataUrl);
+        localStorage.setItem(SIGNATURE_STORAGE_KEY, dataUrl);
+        saveFormState();
+        updateSignatureStatus("Signature auto-saved.", "saved");
+      });
+      setSignatureState(currentSignature() ? "saved" : "pending");
       updateSendStatus("");
       window.signaturePads = { visiblePad, modalPad };
     })();

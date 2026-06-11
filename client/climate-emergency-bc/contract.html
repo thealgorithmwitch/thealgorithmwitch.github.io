@@ -1769,8 +1769,8 @@
         contractorName: "Cassandre Arkema",
         contractTitle: "Monthly Content Engine Agreement",
         contractId: "monthly-content-engine-climate-emergency-bc-2026",
-        totalFee: "$1,100 USD",
-        upfrontPayment: "$1650 USD"
+        totalFee: "$1,650 USD",
+        upfrontPayment: "$225 USD"
       };
 
       const toggleButton = document.getElementById("toggleSidebarButton");
@@ -1825,8 +1825,13 @@
           this.canvas.addEventListener("pointerleave", this.pointerUp);
           this.canvas.addEventListener("pointercancel", this.pointerUp);
 
-          this.resizeObserver = new ResizeObserver(() => this.resize());
-          this.resizeObserver.observe(this.canvas.parentElement);
+          if (window.ResizeObserver) {
+            this.resizeObserver = new ResizeObserver(() => this.resize());
+            this.resizeObserver.observe(this.canvas.parentElement);
+          } else {
+            window.addEventListener("resize", () => this.resize());
+          }
+          
           this.resize();
         }
 
@@ -2410,14 +2415,23 @@
       document.getElementById("mobilePrintButton")?.addEventListener("click", () => { setPrintState(); printHandler(); });
 
       window.addEventListener("contract-signature-drawn", () => {
-        const dataUrl = currentSignature();
+        const dataUrl =
+          visiblePad?.exportDataUrl?.() ||
+          modalPad?.exportDataUrl?.();
+      
         if (!dataUrl) return;
+      
         syncPads(dataUrl);
-        localStorage.setItem(SIGNATURE_STORAGE_KEY, dataUrl);
+      
+        try {
+          localStorage.setItem(SIGNATURE_STORAGE_KEY, dataUrl);
+        } catch (error) {
+          console.error("Unable to save signature:", error);
+        }
+      
         saveFormState();
         updateSignatureStatus("Signature auto-saved.", "saved");
       });
-
       // Initialize signature state based on whether a signature exists
       setSignatureState(currentSignature() ? "saved" : "pending");
       // Initialize save state from localStorage if present (use FORM_STORAGE_KEY)

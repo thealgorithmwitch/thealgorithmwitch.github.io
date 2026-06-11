@@ -1,13 +1,13 @@
 # Source Coverage Audit
 
-Generated: 2026-06-10T23:10:38.701Z
+Generated: 2026-06-11T01:41:24.990Z
 
 ## Summary
 
 - Total sources: 185
 - Total prospects: 92
-- Total public organizations: 58
-- Total pending organizations: 60
+- Total public organizations: 61
+- Total pending organizations: 57
 
 ## Active Source Coverage
 
@@ -18,7 +18,7 @@ Generated: 2026-06-10T23:10:38.701Z
 | Active Minds | active-minds |  | low_confidence_experimental | live | 0 | 0 | 0 |
 | ADP Employer ca44b751 | adp-ca44b751 | adp | low_confidence_experimental | stale | 0 | 0 | 0 |
 | ADP Employer cde26da5 | adp-cde26da5 | adp | low_confidence_experimental | stale | 0 | 0 | 0 |
-| Advanced Energy United | advanced-energy-united | rippling | tracked_manual_org | live | 0 | 2 | 10 |
+| Advanced Energy United | advanced-energy-united | rippling | tracked_manual_org | live | 0 | 3 | 9 |
 | AES Corporation | aes | workday | low_confidence_experimental | sync_disabled | 0 | 0 | 0 |
 | AllTrails | alltrails | lever | trusted_nonprofit_pending_review | stale | 0 | 1 | 0 |
 | Amazon Watch | amazon-watch |  | manual_review_community | sync_error | 3 | 0 | 0 |
@@ -68,24 +68,24 @@ Generated: 2026-06-10T23:10:38.701Z
 
 | organization | public_jobs |
 | --- | --- |
-| Renew Home | 8 |
+| Renew Home | 10 |
+| Powerlines | 8 |
+| SEEL | 7 |
 | HA Sustainable Infrastructure Capital | 6 |
 | More Perfect Union Action | 6 |
-| Powerlines | 6 |
-| SEEL | 6 |
 | Dylan Green | 5 |
 | Octopus Energy | 5 |
 | Oxfam America | 5 |
+| Protect Democracy | 5 |
+| Greentown Labs | 4 |
 | NextEra Energy | 4 |
-| Protect Democracy | 4 |
+| Advanced Energy United | 3 |
 | Arevon Energy | 3 |
 | CALSTART | 3 |
 | CleanCapital | 3 |
 | Good Power | 3 |
 | Greenpeace | 3 |
-| Greentown Labs | 3 |
 | The Nature Conservancy | 3 |
-| Advanced Energy United | 2 |
 | Ascent | 2 |
 | ChargerHelp! | 2 |
 
@@ -98,21 +98,21 @@ Generated: 2026-06-10T23:10:38.701Z
 | GoodLeap | 25 |
 | NextEra Energy | 23 |
 | Get Vocal PBC | 16 |
-| SEEL | 12 |
-| Advanced Energy United | 10 |
+| SEEL | 11 |
 | Conservation International | 10 |
+| Advanced Energy United | 9 |
 | GBL HR | 9 |
 | Grove Collaborative | 8 |
-| Protect Democracy | 7 |
+| Protect Democracy | 6 |
 | CALSTART | 5 |
 | Carbon Direct | 4 |
-| Renew Home | 4 |
 | American Bird Conservancy | 3 |
 | Arevon Energy | 3 |
 | Fervo Energy | 3 |
-| Greentown Labs | 3 |
 | Middle Seat | 3 |
 | More Perfect Union Action | 3 |
+| Quantis | 3 |
+| Resource Innovations | 3 |
 
 ## Missing Preferred Orgs
 
@@ -182,6 +182,7 @@ Generated: 2026-06-10T23:10:38.701Z
 
 | organization | public_jobs | recommended_action |
 | --- | --- | --- |
+| Aristotle | 1 | ready_for_manual_review |
 | Avōq | 1 | add_to_sources_json |
 | ConnectDER | 1 | add_to_sources_json |
 | Conservation Voters of Pennsylvania | 1 | ready_for_manual_review |
@@ -190,6 +191,7 @@ Generated: 2026-06-10T23:10:38.701Z
 | Energy Infrastructure Partners LLC | 2 | add_to_sources_json |
 | Fervo Energy | 2 | ready_for_manual_review |
 | Grassroots Carbon | 1 | add_to_sources_json |
+| Middlebury College | 1 | ready_for_manual_review |
 | Mitti Labs | 1 | add_to_sources_json |
 | PLUS Communications | 1 | add_to_sources_json |
 | Proterra | 1 | ready_for_manual_review |

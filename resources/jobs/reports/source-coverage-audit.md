@@ -1,13 +1,13 @@
 # Source Coverage Audit
 
-Generated: 2026-06-17T17:24:50.728Z
+Generated: 2026-06-17T19:36:04.828Z
 
 ## Summary
 
 - Total sources: 185
 - Total prospects: 92
 - Total public organizations: 61
-- Total pending organizations: 64
+- Total pending organizations: 66
 
 ## Active Source Coverage
 
@@ -45,10 +45,10 @@ Generated: 2026-06-17T17:24:50.728Z
 | Carbon180 | carbon180 |  | low_confidence_experimental | live | 0 | 0 | 0 |
 | CEEZER | ceezer | ashby | low_confidence_experimental | sync_error | 5 | 0 | 0 |
 | Ceres | ceres |  | low_confidence_experimental | stale | 0 | 0 | 0 |
-| ChargerHelp! | chargerhelp | recruitee | trusted_nonprofit_pending_review | live | 0 | 2 | 0 |
+| ChargerHelp! | chargerhelp | recruitee | trusted_nonprofit_pending_review | live | 0 | 2 | 1 |
 | Citizen's Climate Lobby | citizens-climate-lobby |  | manual_review_community | sync_error | 3 | 0 | 0 |
 | Clean Air Task Force | clean-air-task-force |  | low_confidence_experimental | live | 0 | 0 | 0 |
-| Clean Energy Trust | clean-energy-trust | bamboohr | trusted_nonprofit_pending_review | stale | 0 | 0 | 0 |
+| Clean Energy Trust | clean-energy-trust | bamboohr | trusted_nonprofit_pending_review | stale | 0 | 0 | 1 |
 | Clean Slate Initiative | clean-slate-initiative |  | low_confidence_experimental | sync_error | 3 | 0 | 0 |
 | CleanCapital | clean-capital |  | trusted_nonprofit_pending_review | live | 0 | 3 | 0 |
 | CleanChoice Energy | cleanchoice-energy |  | low_confidence_experimental | sync_error | 3 | 0 | 0 |
@@ -93,26 +93,26 @@ Generated: 2026-06-17T17:24:50.728Z
 
 | organization | pending_jobs |
 | --- | --- |
-| Quince | 118 |
+| Quince | 121 |
 | Octopus Energy | 28 |
 | GoodLeap | 25 |
 | NextEra Energy | 23 |
-| Get Vocal PBC | 16 |
+| Get Vocal PBC | 15 |
 | SEEL | 11 |
 | Conservation International | 10 |
 | Advanced Energy United | 9 |
 | GBL HR | 9 |
 | Grove Collaborative | 8 |
-| Protect Democracy | 6 |
 | CALSTART | 5 |
+| Protect Democracy | 5 |
 | Carbon Direct | 4 |
+| More Perfect Union Action | 4 |
 | American Bird Conservancy | 3 |
 | Arevon Energy | 3 |
 | Fervo Energy | 3 |
+| Greentown Labs | 3 |
 | Middle Seat | 3 |
-| More Perfect Union Action | 3 |
 | Quantis | 3 |
-| Resource Innovations | 3 |
 
 ## Missing Preferred Orgs
 
@@ -166,7 +166,7 @@ Generated: 2026-06-17T17:24:50.728Z
 | RE-volv | re-volv | 3 | sync_error | 2026-05-25T03:15:53.497Z | investigate_fetch_failures |
 | Shadow Light Studios | shadow-light-studios | 6 | sync_error | 2026-05-24T21:27:45.639Z | investigate_fetch_failures |
 | The Climate Group | the-climate-group | 3 | sync_error | 2026-05-25T03:15:53.497Z | investigate_fetch_failures |
-| The Climate Reality Project | climate-reality-project | 3 | fetch_failed |  | investigate_fetch_failures |
+| The Climate Reality Project | climate-reality-project | 4 | fetch_failed |  | investigate_fetch_failures |
 | The RealReal | the-realreal | 5 | sync_error | 2026-05-24T21:27:45.643Z | investigate_fetch_failures |
 | thredUP | thredup | 12 | sync_error | 2026-05-24T21:27:45.644Z | investigate_fetch_failures |
 | Transformations Community | transformations-community | 6 | sync_error | 2026-05-24T21:27:45.645Z | investigate_fetch_failures |

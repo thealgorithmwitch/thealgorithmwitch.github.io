@@ -1,13 +1,13 @@
 # Source Coverage Audit
 
-Generated: 2026-06-18T10:57:54.957Z
+Generated: 2026-06-18T11:49:43.726Z
 
 ## Summary
 
 - Total sources: 185
 - Total prospects: 92
-- Total public organizations: 61
-- Total pending organizations: 66
+- Total public organizations: 68
+- Total pending organizations: 58
 
 ## Active Source Coverage
 
@@ -39,16 +39,16 @@ Generated: 2026-06-18T10:57:54.957Z
 | Brightline Defense | brightline-defense |  | manual_review_community |  | 0 | 0 | 0 |
 | Bullard Center for Environmental and Climate Justice | bullard-center |  | manual_review_community | live | 0 | 1 | 0 |
 | California Environmental Justice Alliance | california-environmental-justice-alliance |  | manual_review_community |  | 0 | 0 | 0 |
-| CALSTART | calstart | lever | trusted_nonprofit_pending_review | live | 0 | 3 | 5 |
+| CALSTART | calstart | lever | trusted_nonprofit_pending_review | live | 0 | 4 | 4 |
 | Canadian Solar | canadian-solar | workday | low_confidence_experimental | sync_disabled | 0 | 0 | 0 |
-| Carbon Direct | carbon-direct | greenhouse | trusted_nonprofit_pending_review | live | 0 | 1 | 4 |
+| Carbon Direct | carbon-direct | greenhouse | trusted_nonprofit_pending_review | live | 0 | 2 | 3 |
 | Carbon180 | carbon180 |  | low_confidence_experimental | live | 0 | 0 | 0 |
 | CEEZER | ceezer | ashby | low_confidence_experimental | sync_error | 5 | 0 | 0 |
 | Ceres | ceres |  | low_confidence_experimental | stale | 0 | 0 | 0 |
-| ChargerHelp! | chargerhelp | recruitee | trusted_nonprofit_pending_review | live | 0 | 2 | 1 |
+| ChargerHelp! | chargerhelp | recruitee | trusted_nonprofit_pending_review | live | 0 | 3 | 0 |
 | Citizen's Climate Lobby | citizens-climate-lobby |  | manual_review_community | sync_error | 3 | 0 | 0 |
 | Clean Air Task Force | clean-air-task-force |  | low_confidence_experimental | live | 0 | 0 | 0 |
-| Clean Energy Trust | clean-energy-trust | bamboohr | trusted_nonprofit_pending_review | stale | 0 | 0 | 1 |
+| Clean Energy Trust | clean-energy-trust | bamboohr | trusted_nonprofit_pending_review | stale | 0 | 1 | 0 |
 | Clean Slate Initiative | clean-slate-initiative |  | low_confidence_experimental | sync_error | 3 | 0 | 0 |
 | CleanCapital | clean-capital |  | trusted_nonprofit_pending_review | live | 0 | 3 | 0 |
 | CleanChoice Energy | cleanchoice-energy |  | low_confidence_experimental | sync_error | 3 | 0 | 0 |
@@ -69,25 +69,25 @@ Generated: 2026-06-18T10:57:54.957Z
 | organization | public_jobs |
 | --- | --- |
 | Renew Home | 10 |
+| More Perfect Union Action | 8 |
 | Powerlines | 8 |
 | SEEL | 7 |
 | HA Sustainable Infrastructure Capital | 6 |
-| More Perfect Union Action | 6 |
 | Dylan Green | 5 |
 | Octopus Energy | 5 |
 | Oxfam America | 5 |
 | Protect Democracy | 5 |
+| CALSTART | 4 |
 | Greentown Labs | 4 |
+| Grove Collaborative | 4 |
 | NextEra Energy | 4 |
 | Advanced Energy United | 3 |
 | Arevon Energy | 3 |
-| CALSTART | 3 |
+| ChargerHelp! | 3 |
 | CleanCapital | 3 |
+| Energy Infrastructure Partners LLC | 3 |
 | Good Power | 3 |
 | Greenpeace | 3 |
-| The Nature Conservancy | 3 |
-| Ascent | 2 |
-| ChargerHelp! | 2 |
 
 ## Pending Review Coverage
 
@@ -102,17 +102,17 @@ Generated: 2026-06-18T10:57:54.957Z
 | Conservation International | 10 |
 | Advanced Energy United | 9 |
 | GBL HR | 9 |
-| Grove Collaborative | 8 |
-| CALSTART | 5 |
+| Grove Collaborative | 6 |
 | Protect Democracy | 5 |
-| Carbon Direct | 4 |
-| More Perfect Union Action | 4 |
+| CALSTART | 4 |
 | American Bird Conservancy | 3 |
 | Arevon Energy | 3 |
+| Carbon Direct | 3 |
 | Fervo Energy | 3 |
 | Greentown Labs | 3 |
 | Middle Seat | 3 |
 | Quantis | 3 |
+| Resource Innovations | 3 |
 
 ## Missing Preferred Orgs
 
@@ -182,17 +182,23 @@ Generated: 2026-06-18T10:57:54.957Z
 
 | organization | public_jobs | recommended_action |
 | --- | --- | --- |
+| Action Against Hunger | 1 | ready_for_manual_review |
 | Aristotle | 1 | ready_for_manual_review |
 | Avōq | 1 | add_to_sources_json |
+| Centre for Information Resilience | 1 | ready_for_manual_review |
 | ConnectDER | 1 | add_to_sources_json |
 | Conservation Voters of Pennsylvania | 1 | ready_for_manual_review |
 | Convergent Energy and Power | 1 | add_to_sources_json |
 | Education Reform Now Advocacy | 2 | add_to_sources_json |
-| Energy Infrastructure Partners LLC | 2 | add_to_sources_json |
+| Energy Infrastructure Partners LLC | 3 | add_to_sources_json |
+| Energy Trust of Oregon | 2 | ready_for_manual_review |
+| Evolv Technologies Inc | 1 | ready_for_manual_review |
 | Fervo Energy | 2 | ready_for_manual_review |
 | Grassroots Carbon | 1 | add_to_sources_json |
+| Innocence Project | 1 | ready_for_manual_review |
 | Middlebury College | 1 | ready_for_manual_review |
 | Mitti Labs | 1 | add_to_sources_json |
+| Momentum (BuildMomentum.io) | 1 | ready_for_manual_review |
 | PLUS Communications | 1 | add_to_sources_json |
 | Proterra | 1 | ready_for_manual_review |
 | Resource Innovations | 2 | add_to_sources_json |

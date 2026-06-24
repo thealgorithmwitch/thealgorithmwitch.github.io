@@ -1,13 +1,13 @@
 # Source Coverage Audit
 
-Generated: 2026-06-24T15:09:21.730Z
+Generated: 2026-06-24T17:19:04.340Z
 
 ## Summary
 
 - Total sources: 185
 - Total prospects: 92
 - Total public organizations: 68
-- Total pending organizations: 58
+- Total pending organizations: 64
 
 ## Active Source Coverage
 
@@ -20,9 +20,9 @@ Generated: 2026-06-24T15:09:21.730Z
 | ADP Employer cde26da5 | adp-cde26da5 | adp | low_confidence_experimental | stale | 0 | 0 | 0 |
 | Advanced Energy United | advanced-energy-united | rippling | tracked_manual_org | live | 0 | 3 | 9 |
 | AES Corporation | aes | workday | low_confidence_experimental | sync_disabled | 0 | 0 | 0 |
-| AllTrails | alltrails | lever | trusted_nonprofit_pending_review | stale | 0 | 1 | 0 |
+| AllTrails | alltrails | lever | trusted_nonprofit_pending_review | stale | 0 | 1 | 1 |
 | Amazon Watch | amazon-watch |  | manual_review_community | sync_error | 3 | 0 | 0 |
-| American Bird Conservancy | american-bird-conservancy | paylocity | trusted_nonprofit_pending_review | pending_updated | 0 | 0 | 3 |
+| American Bird Conservancy | american-bird-conservancy | paylocity | trusted_nonprofit_pending_review | pending_updated | 0 | 0 | 6 |
 | American Council on Renewable Energy | acore |  | manual_review_community | stale | 0 | 0 | 0 |
 | Antora Energy | antora |  | low_confidence_experimental | live | 0 | 0 | 0 |
 | Appalachian Voices | appalachian-voices |  | manual_review_community | live | 0 | 0 | 0 |
@@ -93,26 +93,26 @@ Generated: 2026-06-24T15:09:21.730Z
 
 | organization | pending_jobs |
 | --- | --- |
-| Quince | 121 |
+| Quince | 122 |
+| GoodLeap | 32 |
 | Octopus Energy | 28 |
-| GoodLeap | 25 |
 | NextEra Energy | 23 |
-| Get Vocal PBC | 15 |
-| SEEL | 11 |
+| Get Vocal PBC | 17 |
+| SEEL | 13 |
 | Conservation International | 10 |
 | Advanced Energy United | 9 |
 | GBL HR | 9 |
-| Grove Collaborative | 6 |
+| American Bird Conservancy | 6 |
+| Grove Collaborative | 5 |
 | Protect Democracy | 5 |
 | CALSTART | 4 |
-| American Bird Conservancy | 3 |
+| Sierra Club | 4 |
 | Arevon Energy | 3 |
+| Aristotle | 3 |
 | Carbon Direct | 3 |
 | Fervo Energy | 3 |
-| Greentown Labs | 3 |
 | Middle Seat | 3 |
 | Quantis | 3 |
-| Resource Innovations | 3 |
 
 ## Missing Preferred Orgs
 
@@ -166,7 +166,7 @@ Generated: 2026-06-24T15:09:21.730Z
 | RE-volv | re-volv | 3 | sync_error | 2026-05-25T03:15:53.497Z | investigate_fetch_failures |
 | Shadow Light Studios | shadow-light-studios | 6 | sync_error | 2026-05-24T21:27:45.639Z | investigate_fetch_failures |
 | The Climate Group | the-climate-group | 3 | sync_error | 2026-05-25T03:15:53.497Z | investigate_fetch_failures |
-| The Climate Reality Project | climate-reality-project | 4 | fetch_failed |  | investigate_fetch_failures |
+| The Climate Reality Project | climate-reality-project | 5 | fetch_failed |  | investigate_fetch_failures |
 | The RealReal | the-realreal | 5 | sync_error | 2026-05-24T21:27:45.643Z | investigate_fetch_failures |
 | thredUP | thredup | 12 | sync_error | 2026-05-24T21:27:45.644Z | investigate_fetch_failures |
 | Transformations Community | transformations-community | 6 | sync_error | 2026-05-24T21:27:45.645Z | investigate_fetch_failures |

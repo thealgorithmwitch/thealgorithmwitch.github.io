@@ -1,12 +1,12 @@
 # Source Coverage Audit
 
-Generated: 2026-06-25T06:08:35.359Z
+Generated: 2026-06-25T07:00:58.639Z
 
 ## Summary
 
 - Total sources: 185
 - Total prospects: 92
-- Total public organizations: 68
+- Total public organizations: 69
 - Total pending organizations: 64
 
 ## Active Source Coverage
@@ -22,7 +22,7 @@ Generated: 2026-06-25T06:08:35.359Z
 | AES Corporation | aes | workday | low_confidence_experimental | sync_disabled | 0 | 0 | 0 |
 | AllTrails | alltrails | lever | trusted_nonprofit_pending_review | stale | 0 | 1 | 1 |
 | Amazon Watch | amazon-watch |  | manual_review_community | sync_error | 3 | 0 | 0 |
-| American Bird Conservancy | american-bird-conservancy | paylocity | trusted_nonprofit_pending_review | pending_updated | 0 | 0 | 6 |
+| American Bird Conservancy | american-bird-conservancy | paylocity | trusted_nonprofit_pending_review | pending_updated | 0 | 1 | 5 |
 | American Council on Renewable Energy | acore |  | manual_review_community | stale | 0 | 0 | 0 |
 | Antora Energy | antora |  | low_confidence_experimental | live | 0 | 0 | 0 |
 | Appalachian Voices | appalachian-voices |  | manual_review_community | live | 0 | 0 | 0 |
@@ -39,7 +39,7 @@ Generated: 2026-06-25T06:08:35.359Z
 | Brightline Defense | brightline-defense |  | manual_review_community |  | 0 | 0 | 0 |
 | Bullard Center for Environmental and Climate Justice | bullard-center |  | manual_review_community | live | 0 | 1 | 0 |
 | California Environmental Justice Alliance | california-environmental-justice-alliance |  | manual_review_community |  | 0 | 0 | 0 |
-| CALSTART | calstart | lever | trusted_nonprofit_pending_review | live | 0 | 4 | 4 |
+| CALSTART | calstart | lever | trusted_nonprofit_pending_review | live | 0 | 5 | 3 |
 | Canadian Solar | canadian-solar | workday | low_confidence_experimental | sync_disabled | 0 | 0 | 0 |
 | Carbon Direct | carbon-direct | greenhouse | trusted_nonprofit_pending_review | live | 0 | 2 | 3 |
 | Carbon180 | carbon180 |  | low_confidence_experimental | live | 0 | 0 | 0 |
@@ -73,11 +73,11 @@ Generated: 2026-06-25T06:08:35.359Z
 | Powerlines | 8 |
 | SEEL | 7 |
 | HA Sustainable Infrastructure Capital | 6 |
+| CALSTART | 5 |
 | Dylan Green | 5 |
 | Octopus Energy | 5 |
 | Oxfam America | 5 |
 | Protect Democracy | 5 |
-| CALSTART | 4 |
 | Greentown Labs | 4 |
 | Grove Collaborative | 4 |
 | NextEra Energy | 4 |
@@ -102,17 +102,17 @@ Generated: 2026-06-25T06:08:35.359Z
 | Conservation International | 10 |
 | Advanced Energy United | 9 |
 | GBL HR | 9 |
-| American Bird Conservancy | 6 |
+| American Bird Conservancy | 5 |
 | Grove Collaborative | 5 |
 | Protect Democracy | 5 |
-| CALSTART | 4 |
 | Sierra Club | 4 |
 | Arevon Energy | 3 |
-| Aristotle | 3 |
+| CALSTART | 3 |
 | Carbon Direct | 3 |
 | Fervo Energy | 3 |
 | Middle Seat | 3 |
 | Quantis | 3 |
+| Resource Innovations | 3 |
 
 ## Missing Preferred Orgs
 
@@ -183,7 +183,7 @@ Generated: 2026-06-25T06:08:35.359Z
 | organization | public_jobs | recommended_action |
 | --- | --- | --- |
 | Action Against Hunger | 1 | ready_for_manual_review |
-| Aristotle | 1 | ready_for_manual_review |
+| Aristotle | 2 | ready_for_manual_review |
 | Avōq | 1 | add_to_sources_json |
 | Centre for Information Resilience | 1 | ready_for_manual_review |
 | ConnectDER | 1 | add_to_sources_json |

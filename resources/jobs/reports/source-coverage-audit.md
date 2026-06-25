@@ -1,12 +1,12 @@
 # Source Coverage Audit
 
-Generated: 2026-06-25T07:00:58.639Z
+Generated: 2026-06-25T07:12:51.021Z
 
 ## Summary
 
 - Total sources: 185
 - Total prospects: 92
-- Total public organizations: 69
+- Total public organizations: 61
 - Total pending organizations: 64
 
 ## Active Source Coverage
@@ -22,7 +22,7 @@ Generated: 2026-06-25T07:00:58.639Z
 | AES Corporation | aes | workday | low_confidence_experimental | sync_disabled | 0 | 0 | 0 |
 | AllTrails | alltrails | lever | trusted_nonprofit_pending_review | stale | 0 | 1 | 1 |
 | Amazon Watch | amazon-watch |  | manual_review_community | sync_error | 3 | 0 | 0 |
-| American Bird Conservancy | american-bird-conservancy | paylocity | trusted_nonprofit_pending_review | pending_updated | 0 | 1 | 5 |
+| American Bird Conservancy | american-bird-conservancy | paylocity | trusted_nonprofit_pending_review | pending_updated | 0 | 0 | 5 |
 | American Council on Renewable Energy | acore |  | manual_review_community | stale | 0 | 0 | 0 |
 | Antora Energy | antora |  | low_confidence_experimental | live | 0 | 0 | 0 |
 | Appalachian Voices | appalachian-voices |  | manual_review_community | live | 0 | 0 | 0 |
@@ -58,7 +58,7 @@ Generated: 2026-06-25T07:00:58.639Z
 | Climate Justice Alliance | climate-justice-alliance |  | manual_review_community | live | 0 | 0 | 0 |
 | Climate Mayors | climate-mayors |  | low_confidence_experimental | sync_error | 3 | 0 | 0 |
 | ClimateWorks Foundation | climateworks-foundation |  | trusted_nonprofit_pending_review |  | 0 | 0 | 0 |
-| Conservation International | conservation-international | taleo | manual_review_community | live | 0 | 1 | 10 |
+| Conservation International | conservation-international | taleo | manual_review_community | live | 0 | 0 | 10 |
 | Conservation Law Foundation | conservation-law-foundation |  | manual_review_community |  | 0 | 0 | 0 |
 | Creator Accountability Network | creator-accountability-network | bamboohr | trusted_nonprofit_pending_review | live | 0 | 0 | 1 |
 | Creo Syndicate | creo-syndicate |  | low_confidence_experimental | stale | 0 | 0 | 0 |
@@ -69,17 +69,16 @@ Generated: 2026-06-25T07:00:58.639Z
 | organization | public_jobs |
 | --- | --- |
 | Renew Home | 10 |
-| More Perfect Union Action | 8 |
-| Powerlines | 8 |
-| SEEL | 7 |
+| Powerlines | 7 |
 | HA Sustainable Infrastructure Capital | 6 |
+| More Perfect Union Action | 6 |
 | CALSTART | 5 |
 | Dylan Green | 5 |
 | Octopus Energy | 5 |
 | Oxfam America | 5 |
 | Protect Democracy | 5 |
+| SEEL | 5 |
 | Greentown Labs | 4 |
-| Grove Collaborative | 4 |
 | NextEra Energy | 4 |
 | Advanced Energy United | 3 |
 | Arevon Energy | 3 |
@@ -88,6 +87,7 @@ Generated: 2026-06-25T07:00:58.639Z
 | Energy Infrastructure Partners LLC | 3 |
 | Good Power | 3 |
 | Greenpeace | 3 |
+| Grove Collaborative | 3 |
 
 ## Pending Review Coverage
 
@@ -185,7 +185,6 @@ Generated: 2026-06-25T07:00:58.639Z
 | Action Against Hunger | 1 | ready_for_manual_review |
 | Aristotle | 2 | ready_for_manual_review |
 | Avōq | 1 | add_to_sources_json |
-| Centre for Information Resilience | 1 | ready_for_manual_review |
 | ConnectDER | 1 | add_to_sources_json |
 | Conservation Voters of Pennsylvania | 1 | ready_for_manual_review |
 | Convergent Energy and Power | 1 | add_to_sources_json |
@@ -195,11 +194,8 @@ Generated: 2026-06-25T07:00:58.639Z
 | Evolv Technologies Inc | 1 | ready_for_manual_review |
 | Fervo Energy | 2 | ready_for_manual_review |
 | Grassroots Carbon | 1 | add_to_sources_json |
-| Innocence Project | 1 | ready_for_manual_review |
-| Middlebury College | 1 | ready_for_manual_review |
 | Mitti Labs | 1 | add_to_sources_json |
 | Momentum (BuildMomentum.io) | 1 | ready_for_manual_review |
-| PLUS Communications | 1 | add_to_sources_json |
 | Proterra | 1 | ready_for_manual_review |
 | Resource Innovations | 2 | add_to_sources_json |
 | Rystad Energy | 1 | add_to_sources_json |
@@ -210,6 +206,7 @@ Generated: 2026-06-25T07:00:58.639Z
 
 | organization | title | source_url |
 | --- | --- | --- |
+| PLUS Communications | Digital Director | https://jobs.workable.com/view/7mXsGiweVFByL5UehwA27z/hybrid-digital-director-in-arlington-at-plus-communications |
 | Quince | Senior Creative Strategist | https://job-boards.greenhouse.io/quince/jobs/5167665008 |
 | Woolpert | Engineer in Training, Site Civil Energy Practice | https://job-boards.greenhouse.io/woolpert/jobs/4087773009 |
 | Environmental Defense Fund | Analyst, Total Rewards | https://www.edf.org/jobs/analyst-total-rewards |
@@ -221,6 +218,7 @@ Generated: 2026-06-25T07:00:58.639Z
 | Louisiana Bucket Brigade | Volunteer Coordinator | https://labucketbrigade.org/ |
 | Renew Home | HubSpot Consultant (3 Month Contract | https://apply.workable.com/renewhome/j/8F00486888/ |
 | American Bird Conservancy | Production Specialist | https://recruiting.paylocity.com/Recruiting/Jobs/Details/4045149 |
+| Hip Hop Caucus | Think % Campaigns Manager | https://hiphopcaucus.org/careers/ |
 | The Good Food Institute | Vice President of Operations | https://job-boards.greenhouse.io/thegoodfoodinstitute80/jobs/8516386002 |
 | World Resources Institute | Project Intern | https://www.wri.org/careers/jobs |
 | The Nature Conservancy | Montana Director of Development | https://careers.tnc.org/us/en/search-results |
@@ -239,6 +237,7 @@ _None_
 | Alliance to Save Energy | https://www.ase.org/careers | add_to_sources_json |
 | Arbor Day Foundation | https://www.arborday.org/careers | add_to_sources_json |
 | Avōq | https://jobs.workable.com/view/kpYa2WZ8M2TWGCiFtFJS1o/hybrid-communications-fellow---reputation-management-in-new-york-at-av%C5%8Dq | add_to_sources_json |
+| Centre for Information Resilience |  | candidate_for_new_pull |
 | Climate Reality Project | https://www.climaterealityproject.org/careers | add_to_sources_json |
 | ConnectDER | https://jobs.elementalimpact.com/jobs | add_to_sources_json |
 | Convergent Energy and Power | https://jobs.workable.com/view/sS1h4NbvgxbJZrFqFfSEDA/remote-director%2C-marketing-operations-in-united-states-at-convergent-energy-and-power | add_to_sources_json |
@@ -247,6 +246,8 @@ _None_
 | Energy Infrastructure Partners LLC | https://jobs.workable.com/view/71KVJnn2zzEaqB5AeEvfUa/hybrid-senior-outreach-representative-in-los-angeles-at-energy-infrastructure-partners-llc | add_to_sources_json |
 | Grassroots Carbon | https://jobs.workable.com/view/66JEqQTu5Aaik8B4Y67gVh/director%2C-brand-reach-%26-communications-in-san-antonio-at-grassroots-carbon | add_to_sources_json |
 | HIVED |  | candidate_for_new_pull |
+| Innocence Project |  | candidate_for_new_pull |
+| Middlebury College |  | candidate_for_new_pull |
 | Mitti Labs | https://jobs.workable.com/view/uWSQQPVWb4Lm2PkXjVyRqg/remote-program-manager%2C-operations---tamil-nadu-in-tamil-nadu-at-mitti-labs | add_to_sources_json |
 | PLUS Communications | https://jobs.workable.com/view/7mXsGiweVFByL5UehwA27z/hybrid-digital-director-in-arlington-at-plus-communications | add_to_sources_json |
 | Resource Innovations | https://jobs.elementalimpact.com/jobs | add_to_sources_json |

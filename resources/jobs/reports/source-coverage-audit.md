@@ -1,13 +1,13 @@
 # Source Coverage Audit
 
-Generated: 2026-07-01T15:50:06.657Z
+Generated: 2026-07-01T17:57:26.641Z
 
 ## Summary
 
 - Total sources: 185
 - Total prospects: 92
-- Total public organizations: 61
-- Total pending organizations: 68
+- Total public organizations: 70
+- Total pending organizations: 61
 
 ## Active Source Coverage
 
@@ -20,15 +20,15 @@ Generated: 2026-07-01T15:50:06.657Z
 | ADP Employer cde26da5 | adp-cde26da5 | adp | low_confidence_experimental | stale | 0 | 0 | 0 |
 | Advanced Energy United | advanced-energy-united | rippling | tracked_manual_org | live | 0 | 3 | 9 |
 | AES Corporation | aes | workday | low_confidence_experimental | sync_disabled | 0 | 0 | 0 |
-| AllTrails | alltrails | lever | trusted_nonprofit_pending_review | stale | 0 | 1 | 1 |
+| AllTrails | alltrails | lever | trusted_nonprofit_pending_review | stale | 0 | 1 | 0 |
 | Amazon Watch | amazon-watch |  | manual_review_community | sync_error | 3 | 0 | 0 |
-| American Bird Conservancy | american-bird-conservancy | paylocity | trusted_nonprofit_pending_review | pending_updated | 0 | 0 | 5 |
+| American Bird Conservancy | american-bird-conservancy | paylocity | trusted_nonprofit_pending_review | pending_updated | 0 | 0 | 6 |
 | American Council on Renewable Energy | acore |  | manual_review_community | stale | 0 | 0 | 0 |
 | Antora Energy | antora |  | low_confidence_experimental | live | 0 | 0 | 0 |
 | Appalachian Voices | appalachian-voices |  | manual_review_community | live | 0 | 0 | 0 |
 | Arevon Energy | arevon |  | low_confidence_experimental | live | 0 | 3 | 3 |
 | Array Technologies | array-technologies | workday | low_confidence_experimental | sync_disabled | 0 | 0 | 0 |
-| Ascent | ascent | paylocity | trusted_nonprofit_pending_review | live | 0 | 2 | 2 |
+| Ascent | ascent | paylocity | trusted_nonprofit_pending_review | live | 0 | 2 | 3 |
 | Asian Pacific Environmental Network | apen4ej |  | manual_review_community | stale | 0 | 0 | 0 |
 | Aspen Institute | aspen-institute |  | low_confidence_experimental | sync_error | 3 | 0 | 0 |
 | Black Girl Environmentalist | black-girl-environmentalist |  | manual_review_community | stale | 0 | 0 | 0 |
@@ -39,7 +39,7 @@ Generated: 2026-07-01T15:50:06.657Z
 | Brightline Defense | brightline-defense |  | manual_review_community |  | 0 | 0 | 0 |
 | Bullard Center for Environmental and Climate Justice | bullard-center |  | manual_review_community | live | 0 | 1 | 0 |
 | California Environmental Justice Alliance | california-environmental-justice-alliance |  | manual_review_community |  | 0 | 0 | 0 |
-| CALSTART | calstart | lever | trusted_nonprofit_pending_review | live | 0 | 5 | 3 |
+| CALSTART | calstart | lever | trusted_nonprofit_pending_review | live | 0 | 5 | 2 |
 | Canadian Solar | canadian-solar | workday | low_confidence_experimental | sync_disabled | 0 | 0 | 0 |
 | Carbon Direct | carbon-direct | greenhouse | trusted_nonprofit_pending_review | live | 0 | 2 | 3 |
 | Carbon180 | carbon180 |  | low_confidence_experimental | live | 0 | 0 | 0 |
@@ -48,7 +48,7 @@ Generated: 2026-07-01T15:50:06.657Z
 | ChargerHelp! | chargerhelp | recruitee | trusted_nonprofit_pending_review | live | 0 | 3 | 0 |
 | Citizen's Climate Lobby | citizens-climate-lobby |  | manual_review_community | sync_error | 3 | 0 | 0 |
 | Clean Air Task Force | clean-air-task-force |  | low_confidence_experimental | live | 0 | 0 | 0 |
-| Clean Energy Trust | clean-energy-trust | bamboohr | trusted_nonprofit_pending_review | stale | 0 | 1 | 0 |
+| Clean Energy Trust | clean-energy-trust | bamboohr | trusted_nonprofit_pending_review | stale | 0 | 2 | 0 |
 | Clean Slate Initiative | clean-slate-initiative |  | low_confidence_experimental | sync_error | 3 | 0 | 0 |
 | CleanCapital | clean-capital |  | trusted_nonprofit_pending_review | live | 0 | 3 | 0 |
 | CleanChoice Energy | cleanchoice-energy |  | low_confidence_experimental | sync_error | 3 | 0 | 0 |
@@ -78,13 +78,13 @@ Generated: 2026-07-01T15:50:06.657Z
 | Oxfam America | 5 |
 | Protect Democracy | 5 |
 | SEEL | 5 |
+| Energy Infrastructure Partners LLC | 4 |
 | Greentown Labs | 4 |
 | NextEra Energy | 4 |
 | Advanced Energy United | 3 |
 | Arevon Energy | 3 |
 | ChargerHelp! | 3 |
 | CleanCapital | 3 |
-| Energy Infrastructure Partners LLC | 3 |
 | Good Power | 3 |
 | Greenpeace | 3 |
 | Grove Collaborative | 3 |
@@ -93,23 +93,23 @@ Generated: 2026-07-01T15:50:06.657Z
 
 | organization | pending_jobs |
 | --- | --- |
-| Quince | 122 |
-| GoodLeap | 32 |
+| Quince | 116 |
+| GoodLeap | 28 |
 | Octopus Energy | 28 |
 | NextEra Energy | 23 |
-| Get Vocal PBC | 17 |
-| SEEL | 13 |
+| Get Vocal PBC | 18 |
+| SEEL | 16 |
 | Conservation International | 10 |
+| GBL HR | 10 |
 | Advanced Energy United | 9 |
-| GBL HR | 9 |
-| American Bird Conservancy | 5 |
-| Grove Collaborative | 5 |
+| American Bird Conservancy | 6 |
+| Grove Collaborative | 6 |
 | Protect Democracy | 5 |
+| More Perfect Union Action | 4 |
 | Sierra Club | 4 |
 | Arevon Energy | 3 |
-| CALSTART | 3 |
+| Ascent | 3 |
 | Carbon Direct | 3 |
-| Climate Action | 3 |
 | Fervo Energy | 3 |
 | Middle Seat | 3 |
 | Quantis | 3 |
@@ -166,7 +166,7 @@ Generated: 2026-07-01T15:50:06.657Z
 | RE-volv | re-volv | 3 | sync_error | 2026-05-25T03:15:53.497Z | investigate_fetch_failures |
 | Shadow Light Studios | shadow-light-studios | 6 | sync_error | 2026-05-24T21:27:45.639Z | investigate_fetch_failures |
 | The Climate Group | the-climate-group | 3 | sync_error | 2026-05-25T03:15:53.497Z | investigate_fetch_failures |
-| The Climate Reality Project | climate-reality-project | 5 | fetch_failed |  | investigate_fetch_failures |
+| The Climate Reality Project | climate-reality-project | 6 | fetch_failed |  | investigate_fetch_failures |
 | The RealReal | the-realreal | 5 | sync_error | 2026-05-24T21:27:45.643Z | investigate_fetch_failures |
 | thredUP | thredup | 12 | sync_error | 2026-05-24T21:27:45.644Z | investigate_fetch_failures |
 | Transformations Community | transformations-community | 6 | sync_error | 2026-05-24T21:27:45.645Z | investigate_fetch_failures |
@@ -185,21 +185,29 @@ Generated: 2026-07-01T15:50:06.657Z
 | Action Against Hunger | 1 | ready_for_manual_review |
 | Aristotle | 2 | ready_for_manual_review |
 | Avōq | 1 | add_to_sources_json |
+| Centre for Information Resilience | 1 | ready_for_manual_review |
+| Climate Action | 1 | ready_for_manual_review |
 | ConnectDER | 1 | add_to_sources_json |
 | Conservation Voters of Pennsylvania | 1 | ready_for_manual_review |
 | Convergent Energy and Power | 1 | add_to_sources_json |
 | Education Reform Now Advocacy | 2 | add_to_sources_json |
-| Energy Infrastructure Partners LLC | 3 | add_to_sources_json |
+| Energy Infrastructure Partners LLC | 4 | add_to_sources_json |
 | Energy Trust of Oregon | 2 | ready_for_manual_review |
 | Evolv Technologies Inc | 1 | ready_for_manual_review |
 | Fervo Energy | 2 | ready_for_manual_review |
 | Grassroots Carbon | 1 | add_to_sources_json |
+| InfluenceMap | 1 | ready_for_manual_review |
+| Innocence Project | 1 | ready_for_manual_review |
 | Mitti Labs | 1 | add_to_sources_json |
 | Momentum (BuildMomentum.io) | 1 | ready_for_manual_review |
 | Proterra | 1 | ready_for_manual_review |
+| Rational | 1 | ready_for_manual_review |
 | Resource Innovations | 2 | add_to_sources_json |
 | Rystad Energy | 1 | add_to_sources_json |
 | SSC HR Solutions | 1 | add_to_sources_json |
+| TaskForce | 1 | ready_for_manual_review |
+| The Herald Group | 1 | ready_for_manual_review |
+| Veloz | 1 | ready_for_manual_review |
 | Weave Grid | 1 | ready_for_manual_review |
 
 ## Restore Candidates From jobs2.json

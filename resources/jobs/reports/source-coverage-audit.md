@@ -1,13 +1,13 @@
 # Source Coverage Audit
 
-Generated: 2026-07-01T13:12:43.720Z
+Generated: 2026-07-01T15:50:06.657Z
 
 ## Summary
 
 - Total sources: 185
 - Total prospects: 92
 - Total public organizations: 61
-- Total pending organizations: 64
+- Total pending organizations: 68
 
 ## Active Source Coverage
 
@@ -109,10 +109,10 @@ Generated: 2026-07-01T13:12:43.720Z
 | Arevon Energy | 3 |
 | CALSTART | 3 |
 | Carbon Direct | 3 |
+| Climate Action | 3 |
 | Fervo Energy | 3 |
 | Middle Seat | 3 |
 | Quantis | 3 |
-| Resource Innovations | 3 |
 
 ## Missing Preferred Orgs
 
@@ -237,7 +237,6 @@ _None_
 | Alliance to Save Energy | https://www.ase.org/careers | add_to_sources_json |
 | Arbor Day Foundation | https://www.arborday.org/careers | add_to_sources_json |
 | Avōq | https://jobs.workable.com/view/kpYa2WZ8M2TWGCiFtFJS1o/hybrid-communications-fellow---reputation-management-in-new-york-at-av%C5%8Dq | add_to_sources_json |
-| Centre for Information Resilience |  | candidate_for_new_pull |
 | Climate Reality Project | https://www.climaterealityproject.org/careers | add_to_sources_json |
 | ConnectDER | https://jobs.elementalimpact.com/jobs | add_to_sources_json |
 | Convergent Energy and Power | https://jobs.workable.com/view/sS1h4NbvgxbJZrFqFfSEDA/remote-director%2C-marketing-operations-in-united-states-at-convergent-energy-and-power | add_to_sources_json |
@@ -246,7 +245,6 @@ _None_
 | Energy Infrastructure Partners LLC | https://jobs.workable.com/view/71KVJnn2zzEaqB5AeEvfUa/hybrid-senior-outreach-representative-in-los-angeles-at-energy-infrastructure-partners-llc | add_to_sources_json |
 | Grassroots Carbon | https://jobs.workable.com/view/66JEqQTu5Aaik8B4Y67gVh/director%2C-brand-reach-%26-communications-in-san-antonio-at-grassroots-carbon | add_to_sources_json |
 | HIVED |  | candidate_for_new_pull |
-| Innocence Project |  | candidate_for_new_pull |
 | Middlebury College |  | candidate_for_new_pull |
 | Mitti Labs | https://jobs.workable.com/view/uWSQQPVWb4Lm2PkXjVyRqg/remote-program-manager%2C-operations---tamil-nadu-in-tamil-nadu-at-mitti-labs | add_to_sources_json |
 | PLUS Communications | https://jobs.workable.com/view/7mXsGiweVFByL5UehwA27z/hybrid-digital-director-in-arlington-at-plus-communications | add_to_sources_json |

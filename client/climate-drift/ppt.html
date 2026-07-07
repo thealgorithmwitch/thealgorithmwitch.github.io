@@ -1,1 +1,2409 @@
 
+<html lang="en" vid="0"><head vid="1">
+    <meta charset="UTF-8" vid="2">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" vid="3">
+    <title vid="4">The Internet Can't Amplify What It Can't Understand | Algorithm Witch</title>
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com" vid="6">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="" vid="7">
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@400;700;900&amp;family=Inter:wght@300;400;500;600&amp;family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&amp;display=swap" rel="stylesheet" vid="8">
+    <script src="https://unpkg.com/@phosphor-icons/web" vid="9"></script>
+    <style vid="10">
+        :root {
+            --color-bg: #030014;
+            --color-purple: #a855f7;
+            --color-gold: #fde047;
+            --color-cyan: #06b6d4;
+            --color-amber: #f59e0b;
+        }
+
+        body {
+            background-color: var(--color-bg);
+            color: #e2e8f0;
+            font-family: 'Inter', sans-serif;
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            width: 100vw;
+            height: 100vh;
+        }
+
+        .font-magical { font-family: 'Cinzel Decorative', cursive; }
+        .font-serif-heading { font-family: 'Playfair Display', serif; }
+
+        
+        .stars {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            pointer-events: none; z-index: 0;
+        }
+        .star {
+            position: absolute;
+            background: white;
+            border-radius: 50%;
+            opacity: 0;
+            animation: twinkle var(--duration) ease-in-out infinite;
+            animation-delay: var(--delay);
+        }
+        @keyframes twinkle {
+            0% { opacity: 0; transform: scale(0.5); }
+            50% { opacity: var(--opacity); transform: scale(1.2); box-shadow: 0 0 4px rgba(255, 255, 255, 0.8); }
+            100% { opacity: 0; transform: scale(0.5); }
+        }
+
+        
+        .ambient-glow {
+            position: fixed;
+            border-radius: 50%;
+            filter: blur(120px);
+            opacity: 0.35;
+            pointer-events: none;
+            z-index: 0;
+            transition: all 1.2s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        
+        .glass-card {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+        }
+
+        
+        .slide {
+            position: absolute;
+            inset: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            transform: translateY(30px) scale(0.98);
+            transition: all 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+            pointer-events: none;
+            z-index: 0;
+            padding: 4rem;
+        }
+        .slide.active {
+            opacity: 1;
+            transform: translateY(0) scale(1);
+            pointer-events: auto;
+            z-index: 10;
+        }
+
+        
+        .nav-btn {
+            position: fixed;
+            top: 50%;
+            transform: translateY(-50%);
+            z-index: 50;
+            width: 56px;
+            height: 56px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: rgba(255, 255, 255, 0.4);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            backdrop-filter: blur(8px);
+            transition: all 0.3s ease;
+        }
+        .nav-btn:hover {
+            background: rgba(255, 255, 255, 0.12);
+            color: white;
+            border-color: rgba(168, 85, 247, 0.5);
+            box-shadow: 0 0 20px rgba(168, 85, 247, 0.3);
+        }
+        .nav-prev { left: 2rem; }
+        .nav-next { right: 2rem; }
+
+        .controls {
+            position: fixed;
+            bottom: 2rem;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 50;
+            display: flex;
+            align-items: center;
+            gap: 2rem;
+            padding: 0.75rem 2rem;
+            border-radius: 9999px;
+            background: rgba(0, 0, 0, 0.6);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(12px);
+        }
+
+        .dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.2);
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        .dot.active {
+            background: var(--color-purple);
+            transform: scale(1.5);
+            box-shadow: 0 0 10px var(--color-purple);
+        }
+
+        .text-gradient-gold {
+            background: linear-gradient(to right, #fef9c3, #fbbf24, #fef9c3);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-size: 200% auto;
+            animation: shine 8s linear infinite;
+        }
+        @keyframes shine { to { background-position: 200% center; } }
+
+        
+        .float { animation: float 6s ease-in-out infinite; }
+        @keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-15px); } }
+
+        .pulse-glow { animation: pulse-glow 3s ease-in-out infinite; }
+        @keyframes pulse-glow { 0%, 100% { opacity: 0.5; transform: scale(1); } 50% { opacity: 1; transform: scale(1.1); } }
+
+        
+        .mountain {
+            width: 0;
+            height: 0;
+            border-left: 300px solid transparent;
+            border-right: 300px solid transparent;
+            border-bottom: 400px solid rgba(168, 85, 247, 0.1);
+            position: relative;
+        }
+
+        
+        .connector {
+            background: linear-gradient(to right, transparent, rgba(6, 182, 212, 0.5), transparent);
+            height: 1px;
+            flex-grow: 1;
+        }
+    </style>
+
+  <style type="text/css">
+*, ::before, ::after {
+  --tw-border-spacing-x: 0;
+  --tw-border-spacing-y: 0;
+  --tw-translate-x: 0;
+  --tw-translate-y: 0;
+  --tw-rotate: 0;
+  --tw-skew-x: 0;
+  --tw-skew-y: 0;
+  --tw-scale-x: 1;
+  --tw-scale-y: 1;
+  --tw-pan-x:  ;
+  --tw-pan-y:  ;
+  --tw-pinch-zoom:  ;
+  --tw-scroll-snap-strictness: proximity;
+  --tw-gradient-from-position:  ;
+  --tw-gradient-via-position:  ;
+  --tw-gradient-to-position:  ;
+  --tw-ordinal:  ;
+  --tw-slashed-zero:  ;
+  --tw-numeric-figure:  ;
+  --tw-numeric-spacing:  ;
+  --tw-numeric-fraction:  ;
+  --tw-ring-inset:  ;
+  --tw-ring-offset-width: 0px;
+  --tw-ring-offset-color: #fff;
+  --tw-ring-color: rgb(59 130 246 / 0.5);
+  --tw-ring-offset-shadow: 0 0 #0000;
+  --tw-ring-shadow: 0 0 #0000;
+  --tw-shadow: 0 0 #0000;
+  --tw-shadow-colored: 0 0 #0000;
+  --tw-blur:  ;
+  --tw-brightness:  ;
+  --tw-contrast:  ;
+  --tw-grayscale:  ;
+  --tw-hue-rotate:  ;
+  --tw-invert:  ;
+  --tw-saturate:  ;
+  --tw-sepia:  ;
+  --tw-drop-shadow:  ;
+  --tw-backdrop-blur:  ;
+  --tw-backdrop-brightness:  ;
+  --tw-backdrop-contrast:  ;
+  --tw-backdrop-grayscale:  ;
+  --tw-backdrop-hue-rotate:  ;
+  --tw-backdrop-invert:  ;
+  --tw-backdrop-opacity:  ;
+  --tw-backdrop-saturate:  ;
+  --tw-backdrop-sepia:  ;
+  --tw-contain-size:  ;
+  --tw-contain-layout:  ;
+  --tw-contain-paint:  ;
+  --tw-contain-style:  ;
+}
+
+::backdrop {
+  --tw-border-spacing-x: 0;
+  --tw-border-spacing-y: 0;
+  --tw-translate-x: 0;
+  --tw-translate-y: 0;
+  --tw-rotate: 0;
+  --tw-skew-x: 0;
+  --tw-skew-y: 0;
+  --tw-scale-x: 1;
+  --tw-scale-y: 1;
+  --tw-pan-x:  ;
+  --tw-pan-y:  ;
+  --tw-pinch-zoom:  ;
+  --tw-scroll-snap-strictness: proximity;
+  --tw-gradient-from-position:  ;
+  --tw-gradient-via-position:  ;
+  --tw-gradient-to-position:  ;
+  --tw-ordinal:  ;
+  --tw-slashed-zero:  ;
+  --tw-numeric-figure:  ;
+  --tw-numeric-spacing:  ;
+  --tw-numeric-fraction:  ;
+  --tw-ring-inset:  ;
+  --tw-ring-offset-width: 0px;
+  --tw-ring-offset-color: #fff;
+  --tw-ring-color: rgb(59 130 246 / 0.5);
+  --tw-ring-offset-shadow: 0 0 #0000;
+  --tw-ring-shadow: 0 0 #0000;
+  --tw-shadow: 0 0 #0000;
+  --tw-shadow-colored: 0 0 #0000;
+  --tw-blur:  ;
+  --tw-brightness:  ;
+  --tw-contrast:  ;
+  --tw-grayscale:  ;
+  --tw-hue-rotate:  ;
+  --tw-invert:  ;
+  --tw-saturate:  ;
+  --tw-sepia:  ;
+  --tw-drop-shadow:  ;
+  --tw-backdrop-blur:  ;
+  --tw-backdrop-brightness:  ;
+  --tw-backdrop-contrast:  ;
+  --tw-backdrop-grayscale:  ;
+  --tw-backdrop-hue-rotate:  ;
+  --tw-backdrop-invert:  ;
+  --tw-backdrop-opacity:  ;
+  --tw-backdrop-saturate:  ;
+  --tw-backdrop-sepia:  ;
+  --tw-contain-size:  ;
+  --tw-contain-layout:  ;
+  --tw-contain-paint:  ;
+  --tw-contain-style:  ;
+}/*
+! tailwindcss v3.4.17 | MIT License | https://tailwindcss.com
+*//*
+1. Prevent padding and border from affecting element width. (https://github.com/mozdevs/cssremedy/issues/4)
+2. Allow adding a border to an element by just adding a border-width. (https://github.com/tailwindcss/tailwindcss/pull/116)
+*/
+
+*,
+::before,
+::after {
+  box-sizing: border-box; /* 1 */
+  border-width: 0; /* 2 */
+  border-style: solid; /* 2 */
+  border-color: #e5e7eb; /* 2 */
+}
+
+::before,
+::after {
+  --tw-content: '';
+}
+
+/*
+1. Use a consistent sensible line-height in all browsers.
+2. Prevent adjustments of font size after orientation changes in iOS.
+3. Use a more readable tab size.
+4. Use the user's configured `sans` font-family by default.
+5. Use the user's configured `sans` font-feature-settings by default.
+6. Use the user's configured `sans` font-variation-settings by default.
+7. Disable tap highlights on iOS
+*/
+
+html,
+:host {
+  line-height: 1.5; /* 1 */
+  -webkit-text-size-adjust: 100%; /* 2 */
+  -moz-tab-size: 4; /* 3 */
+  tab-size: 4; /* 3 */
+  font-family: ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji"; /* 4 */
+  font-feature-settings: normal; /* 5 */
+  font-variation-settings: normal; /* 6 */
+  -webkit-tap-highlight-color: transparent; /* 7 */
+}
+
+/*
+1. Remove the margin in all browsers.
+2. Inherit line-height from `html` so users can set them as a class directly on the `html` element.
+*/
+
+body {
+  margin: 0; /* 1 */
+  line-height: inherit; /* 2 */
+}
+
+/*
+1. Add the correct height in Firefox.
+2. Correct the inheritance of border color in Firefox. (https://bugzilla.mozilla.org/show_bug.cgi?id=190655)
+3. Ensure horizontal rules are visible by default.
+*/
+
+hr {
+  height: 0; /* 1 */
+  color: inherit; /* 2 */
+  border-top-width: 1px; /* 3 */
+}
+
+/*
+Add the correct text decoration in Chrome, Edge, and Safari.
+*/
+
+abbr:where([title]) {
+  text-decoration: underline dotted;
+}
+
+/*
+Remove the default font size and weight for headings.
+*/
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  font-size: inherit;
+  font-weight: inherit;
+}
+
+/*
+Reset links to optimize for opt-in styling instead of opt-out.
+*/
+
+a {
+  color: inherit;
+  text-decoration: inherit;
+}
+
+/*
+Add the correct font weight in Edge and Safari.
+*/
+
+b,
+strong {
+  font-weight: bolder;
+}
+
+/*
+1. Use the user's configured `mono` font-family by default.
+2. Use the user's configured `mono` font-feature-settings by default.
+3. Use the user's configured `mono` font-variation-settings by default.
+4. Correct the odd `em` font sizing in all browsers.
+*/
+
+code,
+kbd,
+samp,
+pre {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; /* 1 */
+  font-feature-settings: normal; /* 2 */
+  font-variation-settings: normal; /* 3 */
+  font-size: 1em; /* 4 */
+}
+
+/*
+Add the correct font size in all browsers.
+*/
+
+small {
+  font-size: 80%;
+}
+
+/*
+Prevent `sub` and `sup` elements from affecting the line height in all browsers.
+*/
+
+sub,
+sup {
+  font-size: 75%;
+  line-height: 0;
+  position: relative;
+  vertical-align: baseline;
+}
+
+sub {
+  bottom: -0.25em;
+}
+
+sup {
+  top: -0.5em;
+}
+
+/*
+1. Remove text indentation from table contents in Chrome and Safari. (https://bugs.chromium.org/p/chromium/issues/detail?id=999088, https://bugs.webkit.org/show_bug.cgi?id=201297)
+2. Correct table border color inheritance in all Chrome and Safari. (https://bugs.chromium.org/p/chromium/issues/detail?id=935729, https://bugs.webkit.org/show_bug.cgi?id=195016)
+3. Remove gaps between table borders by default.
+*/
+
+table {
+  text-indent: 0; /* 1 */
+  border-color: inherit; /* 2 */
+  border-collapse: collapse; /* 3 */
+}
+
+/*
+1. Change the font styles in all browsers.
+2. Remove the margin in Firefox and Safari.
+3. Remove default padding in all browsers.
+*/
+
+button,
+input,
+optgroup,
+select,
+textarea {
+  font-family: inherit; /* 1 */
+  font-feature-settings: inherit; /* 1 */
+  font-variation-settings: inherit; /* 1 */
+  font-size: 100%; /* 1 */
+  font-weight: inherit; /* 1 */
+  line-height: inherit; /* 1 */
+  letter-spacing: inherit; /* 1 */
+  color: inherit; /* 1 */
+  margin: 0; /* 2 */
+  padding: 0; /* 3 */
+}
+
+/*
+Remove the inheritance of text transform in Edge and Firefox.
+*/
+
+button,
+select {
+  text-transform: none;
+}
+
+/*
+1. Correct the inability to style clickable types in iOS and Safari.
+2. Remove default button styles.
+*/
+
+button,
+input:where([type='button']),
+input:where([type='reset']),
+input:where([type='submit']) {
+  -webkit-appearance: button; /* 1 */
+  background-color: transparent; /* 2 */
+  background-image: none; /* 2 */
+}
+
+/*
+Use the modern Firefox focus style for all focusable elements.
+*/
+
+:-moz-focusring {
+  outline: auto;
+}
+
+/*
+Remove the additional `:invalid` styles in Firefox. (https://github.com/mozilla/gecko-dev/blob/2f9eacd9d3d995c937b4251a5557d95d494c9be1/layout/style/res/forms.css#L728-L737)
+*/
+
+:-moz-ui-invalid {
+  box-shadow: none;
+}
+
+/*
+Add the correct vertical alignment in Chrome and Firefox.
+*/
+
+progress {
+  vertical-align: baseline;
+}
+
+/*
+Correct the cursor style of increment and decrement buttons in Safari.
+*/
+
+::-webkit-inner-spin-button,
+::-webkit-outer-spin-button {
+  height: auto;
+}
+
+/*
+1. Correct the odd appearance in Chrome and Safari.
+2. Correct the outline style in Safari.
+*/
+
+[type='search'] {
+  -webkit-appearance: textfield; /* 1 */
+  outline-offset: -2px; /* 2 */
+}
+
+/*
+Remove the inner padding in Chrome and Safari on macOS.
+*/
+
+::-webkit-search-decoration {
+  -webkit-appearance: none;
+}
+
+/*
+1. Correct the inability to style clickable types in iOS and Safari.
+2. Change font properties to `inherit` in Safari.
+*/
+
+::-webkit-file-upload-button {
+  -webkit-appearance: button; /* 1 */
+  font: inherit; /* 2 */
+}
+
+/*
+Add the correct display in Chrome and Safari.
+*/
+
+summary {
+  display: list-item;
+}
+
+/*
+Removes the default spacing and border for appropriate elements.
+*/
+
+blockquote,
+dl,
+dd,
+h1,
+h2,
+h3,
+h4,
+h5,
+h6,
+hr,
+figure,
+p,
+pre {
+  margin: 0;
+}
+
+fieldset {
+  margin: 0;
+  padding: 0;
+}
+
+legend {
+  padding: 0;
+}
+
+ol,
+ul,
+menu {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+/*
+Reset default styling for dialogs.
+*/
+dialog {
+  padding: 0;
+}
+
+/*
+Prevent resizing textareas horizontally by default.
+*/
+
+textarea {
+  resize: vertical;
+}
+
+/*
+1. Reset the default placeholder opacity in Firefox. (https://github.com/tailwindlabs/tailwindcss/issues/3300)
+2. Set the default placeholder color to the user's configured gray 400 color.
+*/
+
+input::placeholder,
+textarea::placeholder {
+  opacity: 1; /* 1 */
+  color: #9ca3af; /* 2 */
+}
+
+/*
+Set the default cursor for buttons.
+*/
+
+button,
+[role="button"] {
+  cursor: pointer;
+}
+
+/*
+Make sure disabled buttons don't get the pointer cursor.
+*/
+:disabled {
+  cursor: default;
+}
+
+/*
+1. Make replaced elements `display: block` by default. (https://github.com/mozdevs/cssremedy/issues/14)
+2. Add `vertical-align: middle` to align replaced elements more sensibly by default. (https://github.com/jensimmons/cssremedy/issues/14#issuecomment-634934210)
+   This can trigger a poorly considered lint error in some tools but is included by design.
+*/
+
+img,
+svg,
+video,
+canvas,
+audio,
+iframe,
+embed,
+object {
+  display: block; /* 1 */
+  vertical-align: middle; /* 2 */
+}
+
+/*
+Constrain images and videos to the parent width and preserve their intrinsic aspect ratio. (https://github.com/mozdevs/cssremedy/issues/14)
+*/
+
+img,
+video {
+  max-width: 100%;
+  height: auto;
+}
+
+/* Make elements with the HTML hidden attribute stay hidden by default */
+[hidden]:where(:not([hidden="until-found"])) {
+  display: none;
+}
+.pointer-events-none {
+  pointer-events: none;
+}
+.fixed {
+  position: fixed;
+}
+.absolute {
+  position: absolute;
+}
+.relative {
+  position: relative;
+}
+.inset-0 {
+  inset: 0px;
+}
+.-right-1 {
+  right: -0.25rem;
+}
+.-top-1 {
+  top: -0.25rem;
+}
+.bottom-0 {
+  bottom: 0px;
+}
+.bottom-1\/2 {
+  bottom: 50%;
+}
+.bottom-10 {
+  bottom: 2.5rem;
+}
+.bottom-20 {
+  bottom: 5rem;
+}
+.bottom-40 {
+  bottom: 10rem;
+}
+.bottom-\[-10\%\] {
+  bottom: -10%;
+}
+.left-0 {
+  left: 0px;
+}
+.left-1\/2 {
+  left: 50%;
+}
+.left-1\/4 {
+  left: 25%;
+}
+.left-12 {
+  left: 3rem;
+}
+.left-\[-10\%\] {
+  left: -10%;
+}
+.left-\[-40px\] {
+  left: -40px;
+}
+.right-0 {
+  right: 0px;
+}
+.right-1\/4 {
+  right: 25%;
+}
+.right-\[-10\%\] {
+  right: -10%;
+}
+.right-\[-20px\] {
+  right: -20px;
+}
+.top-0 {
+  top: 0px;
+}
+.top-1\/2 {
+  top: 50%;
+}
+.top-1\/3 {
+  top: 33.333333%;
+}
+.top-1\/4 {
+  top: 25%;
+}
+.top-10 {
+  top: 2.5rem;
+}
+.top-2\/3 {
+  top: 66.666667%;
+}
+.top-8 {
+  top: 2rem;
+}
+.top-\[-20\%\] {
+  top: -20%;
+}
+.z-0 {
+  z-index: 0;
+}
+.z-10 {
+  z-index: 10;
+}
+.z-50 {
+  z-index: 50;
+}
+.mx-auto {
+  margin-left: auto;
+  margin-right: auto;
+}
+.mb-10 {
+  margin-bottom: 2.5rem;
+}
+.mb-12 {
+  margin-bottom: 3rem;
+}
+.mb-16 {
+  margin-bottom: 4rem;
+}
+.mb-2 {
+  margin-bottom: 0.5rem;
+}
+.mb-20 {
+  margin-bottom: 5rem;
+}
+.mb-24 {
+  margin-bottom: 6rem;
+}
+.mb-4 {
+  margin-bottom: 1rem;
+}
+.mb-6 {
+  margin-bottom: 1.5rem;
+}
+.mb-8 {
+  margin-bottom: 2rem;
+}
+.mt-12 {
+  margin-top: 3rem;
+}
+.mt-20 {
+  margin-top: 5rem;
+}
+.mt-24 {
+  margin-top: 6rem;
+}
+.mt-8 {
+  margin-top: 2rem;
+}
+.block {
+  display: block;
+}
+.inline-block {
+  display: inline-block;
+}
+.flex {
+  display: flex;
+}
+.grid {
+  display: grid;
+}
+.hidden {
+  display: none;
+}
+.h-1 {
+  height: 0.25rem;
+}
+.h-12 {
+  height: 3rem;
+}
+.h-16 {
+  height: 4rem;
+}
+.h-20 {
+  height: 5rem;
+}
+.h-24 {
+  height: 6rem;
+}
+.h-3 {
+  height: 0.75rem;
+}
+.h-32 {
+  height: 8rem;
+}
+.h-4 {
+  height: 1rem;
+}
+.h-48 {
+  height: 12rem;
+}
+.h-56 {
+  height: 14rem;
+}
+.h-6 {
+  height: 1.5rem;
+}
+.h-64 {
+  height: 16rem;
+}
+.h-\[300px\] {
+  height: 300px;
+}
+.h-\[500px\] {
+  height: 500px;
+}
+.h-\[600px\] {
+  height: 600px;
+}
+.h-\[800px\] {
+  height: 800px;
+}
+.h-full {
+  height: 100%;
+}
+.h-px {
+  height: 1px;
+}
+.w-1 {
+  width: 0.25rem;
+}
+.w-12 {
+  width: 3rem;
+}
+.w-16 {
+  width: 4rem;
+}
+.w-20 {
+  width: 5rem;
+}
+.w-24 {
+  width: 6rem;
+}
+.w-3 {
+  width: 0.75rem;
+}
+.w-32 {
+  width: 8rem;
+}
+.w-4 {
+  width: 1rem;
+}
+.w-56 {
+  width: 14rem;
+}
+.w-6 {
+  width: 1.5rem;
+}
+.w-64 {
+  width: 16rem;
+}
+.w-\[600px\] {
+  width: 600px;
+}
+.w-\[800px\] {
+  width: 800px;
+}
+.w-full {
+  width: 100%;
+}
+.w-px {
+  width: 1px;
+}
+.max-w-3xl {
+  max-width: 48rem;
+}
+.max-w-4xl {
+  max-width: 56rem;
+}
+.max-w-5xl {
+  max-width: 64rem;
+}
+.max-w-6xl {
+  max-width: 72rem;
+}
+.flex-1 {
+  flex: 1 1 0%;
+}
+.flex-grow {
+  flex-grow: 1;
+}
+.-translate-x-1\/2 {
+  --tw-translate-x: -50%;
+  transform: translate(var(--tw-translate-x), var(--tw-translate-y)) rotate(var(--tw-rotate)) skewX(var(--tw-skew-x)) skewY(var(--tw-skew-y)) scaleX(var(--tw-scale-x)) scaleY(var(--tw-scale-y));
+}
+.translate-y-4 {
+  --tw-translate-y: 1rem;
+  transform: translate(var(--tw-translate-x), var(--tw-translate-y)) rotate(var(--tw-rotate)) skewX(var(--tw-skew-x)) skewY(var(--tw-skew-y)) scaleX(var(--tw-scale-x)) scaleY(var(--tw-scale-y));
+}
+.-rotate-2 {
+  --tw-rotate: -2deg;
+  transform: translate(var(--tw-translate-x), var(--tw-translate-y)) rotate(var(--tw-rotate)) skewX(var(--tw-skew-x)) skewY(var(--tw-skew-y)) scaleX(var(--tw-scale-x)) scaleY(var(--tw-scale-y));
+}
+.-rotate-\[20deg\] {
+  --tw-rotate: -20deg;
+  transform: translate(var(--tw-translate-x), var(--tw-translate-y)) rotate(var(--tw-rotate)) skewX(var(--tw-skew-x)) skewY(var(--tw-skew-y)) scaleX(var(--tw-scale-x)) scaleY(var(--tw-scale-y));
+}
+.rotate-3 {
+  --tw-rotate: 3deg;
+  transform: translate(var(--tw-translate-x), var(--tw-translate-y)) rotate(var(--tw-rotate)) skewX(var(--tw-skew-x)) skewY(var(--tw-skew-y)) scaleX(var(--tw-scale-x)) scaleY(var(--tw-scale-y));
+}
+.rotate-\[-10deg\] {
+  --tw-rotate: -10deg;
+  transform: translate(var(--tw-translate-x), var(--tw-translate-y)) rotate(var(--tw-rotate)) skewX(var(--tw-skew-x)) skewY(var(--tw-skew-y)) scaleX(var(--tw-scale-x)) scaleY(var(--tw-scale-y));
+}
+.rotate-\[12deg\] {
+  --tw-rotate: 12deg;
+  transform: translate(var(--tw-translate-x), var(--tw-translate-y)) rotate(var(--tw-rotate)) skewX(var(--tw-skew-x)) skewY(var(--tw-skew-y)) scaleX(var(--tw-scale-x)) scaleY(var(--tw-scale-y));
+}
+.rotate-\[30deg\] {
+  --tw-rotate: 30deg;
+  transform: translate(var(--tw-translate-x), var(--tw-translate-y)) rotate(var(--tw-rotate)) skewX(var(--tw-skew-x)) skewY(var(--tw-skew-y)) scaleX(var(--tw-scale-x)) scaleY(var(--tw-scale-y));
+}
+.rotate-\[5deg\] {
+  --tw-rotate: 5deg;
+  transform: translate(var(--tw-translate-x), var(--tw-translate-y)) rotate(var(--tw-rotate)) skewX(var(--tw-skew-x)) skewY(var(--tw-skew-y)) scaleX(var(--tw-scale-x)) scaleY(var(--tw-scale-y));
+}
+.transform {
+  transform: translate(var(--tw-translate-x), var(--tw-translate-y)) rotate(var(--tw-rotate)) skewX(var(--tw-skew-x)) skewY(var(--tw-skew-y)) scaleX(var(--tw-scale-x)) scaleY(var(--tw-scale-y));
+}
+@keyframes pulse {
+
+  50% {
+    opacity: .5;
+  }
+}
+.animate-pulse {
+  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+.grid-cols-2 {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+.grid-cols-3 {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+.grid-cols-4 {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+.grid-cols-6 {
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+}
+.flex-col {
+  flex-direction: column;
+}
+.flex-wrap {
+  flex-wrap: wrap;
+}
+.items-end {
+  align-items: flex-end;
+}
+.items-center {
+  align-items: center;
+}
+.justify-center {
+  justify-content: center;
+}
+.justify-between {
+  justify-content: space-between;
+}
+.gap-1 {
+  gap: 0.25rem;
+}
+.gap-12 {
+  gap: 3rem;
+}
+.gap-16 {
+  gap: 4rem;
+}
+.gap-2 {
+  gap: 0.5rem;
+}
+.gap-20 {
+  gap: 5rem;
+}
+.gap-3 {
+  gap: 0.75rem;
+}
+.gap-4 {
+  gap: 1rem;
+}
+.gap-6 {
+  gap: 1.5rem;
+}
+.gap-8 {
+  gap: 2rem;
+}
+.gap-px {
+  gap: 1px;
+}
+.space-y-12 > :not([hidden]) ~ :not([hidden]) {
+  --tw-space-y-reverse: 0;
+  margin-top: calc(3rem * calc(1 - var(--tw-space-y-reverse)));
+  margin-bottom: calc(3rem * var(--tw-space-y-reverse));
+}
+.space-y-16 > :not([hidden]) ~ :not([hidden]) {
+  --tw-space-y-reverse: 0;
+  margin-top: calc(4rem * calc(1 - var(--tw-space-y-reverse)));
+  margin-bottom: calc(4rem * var(--tw-space-y-reverse));
+}
+.space-y-4 > :not([hidden]) ~ :not([hidden]) {
+  --tw-space-y-reverse: 0;
+  margin-top: calc(1rem * calc(1 - var(--tw-space-y-reverse)));
+  margin-bottom: calc(1rem * var(--tw-space-y-reverse));
+}
+.space-y-6 > :not([hidden]) ~ :not([hidden]) {
+  --tw-space-y-reverse: 0;
+  margin-top: calc(1.5rem * calc(1 - var(--tw-space-y-reverse)));
+  margin-bottom: calc(1.5rem * var(--tw-space-y-reverse));
+}
+.space-y-8 > :not([hidden]) ~ :not([hidden]) {
+  --tw-space-y-reverse: 0;
+  margin-top: calc(2rem * calc(1 - var(--tw-space-y-reverse)));
+  margin-bottom: calc(2rem * var(--tw-space-y-reverse));
+}
+.self-center {
+  align-self: center;
+}
+.overflow-visible {
+  overflow: visible;
+}
+.rounded {
+  border-radius: 0.25rem;
+}
+.rounded-2xl {
+  border-radius: 1rem;
+}
+.rounded-3xl {
+  border-radius: 1.5rem;
+}
+.rounded-\[2rem\] {
+  border-radius: 2rem;
+}
+.rounded-\[3rem\] {
+  border-radius: 3rem;
+}
+.rounded-full {
+  border-radius: 9999px;
+}
+.rounded-l-2xl {
+  border-top-left-radius: 1rem;
+  border-bottom-left-radius: 1rem;
+}
+.rounded-r-2xl {
+  border-top-right-radius: 1rem;
+  border-bottom-right-radius: 1rem;
+}
+.border {
+  border-width: 1px;
+}
+.border-l {
+  border-left-width: 1px;
+}
+.border-l-4 {
+  border-left-width: 4px;
+}
+.border-t {
+  border-top-width: 1px;
+}
+.border-amber-500\/20 {
+  border-color: rgb(245 158 11 / 0.2);
+}
+.border-amber-500\/30 {
+  border-color: rgb(245 158 11 / 0.3);
+}
+.border-amber-500\/40 {
+  border-color: rgb(245 158 11 / 0.4);
+}
+.border-amber-500\/50 {
+  border-color: rgb(245 158 11 / 0.5);
+}
+.border-cyan-500\/20 {
+  border-color: rgb(6 182 212 / 0.2);
+}
+.border-cyan-500\/30 {
+  border-color: rgb(6 182 212 / 0.3);
+}
+.border-cyan-500\/40 {
+  border-color: rgb(6 182 212 / 0.4);
+}
+.border-emerald-500\/20 {
+  border-color: rgb(16 185 129 / 0.2);
+}
+.border-emerald-500\/30 {
+  border-color: rgb(16 185 129 / 0.3);
+}
+.border-indigo-500\/30 {
+  border-color: rgb(99 102 241 / 0.3);
+}
+.border-purple-500\/20 {
+  border-color: rgb(168 85 247 / 0.2);
+}
+.border-purple-500\/30 {
+  border-color: rgb(168 85 247 / 0.3);
+}
+.border-purple-500\/40 {
+  border-color: rgb(168 85 247 / 0.4);
+}
+.border-purple-500\/50 {
+  border-color: rgb(168 85 247 / 0.5);
+}
+.border-rose-500\/30 {
+  border-color: rgb(244 63 94 / 0.3);
+}
+.border-white\/10 {
+  border-color: rgb(255 255 255 / 0.1);
+}
+.border-white\/20 {
+  border-color: rgb(255 255 255 / 0.2);
+}
+.border-l-cyan-500 {
+  --tw-border-opacity: 1;
+  border-left-color: rgb(6 182 212 / var(--tw-border-opacity, 1));
+}
+.border-l-purple-500 {
+  --tw-border-opacity: 1;
+  border-left-color: rgb(168 85 247 / var(--tw-border-opacity, 1));
+}
+.bg-\[\#030014\] {
+  --tw-bg-opacity: 1;
+  background-color: rgb(3 0 20 / var(--tw-bg-opacity, 1));
+}
+.bg-amber-400 {
+  --tw-bg-opacity: 1;
+  background-color: rgb(251 191 36 / var(--tw-bg-opacity, 1));
+}
+.bg-amber-500\/20 {
+  background-color: rgb(245 158 11 / 0.2);
+}
+.bg-amber-500\/5 {
+  background-color: rgb(245 158 11 / 0.05);
+}
+.bg-cyan-400 {
+  --tw-bg-opacity: 1;
+  background-color: rgb(34 211 238 / var(--tw-bg-opacity, 1));
+}
+.bg-cyan-400\/20 {
+  background-color: rgb(34 211 238 / 0.2);
+}
+.bg-cyan-400\/30 {
+  background-color: rgb(34 211 238 / 0.3);
+}
+.bg-cyan-500 {
+  --tw-bg-opacity: 1;
+  background-color: rgb(6 182 212 / var(--tw-bg-opacity, 1));
+}
+.bg-cyan-500\/20 {
+  background-color: rgb(6 182 212 / 0.2);
+}
+.bg-cyan-500\/5 {
+  background-color: rgb(6 182 212 / 0.05);
+}
+.bg-indigo-900\/30 {
+  background-color: rgb(49 46 129 / 0.3);
+}
+.bg-purple-400 {
+  --tw-bg-opacity: 1;
+  background-color: rgb(192 132 252 / var(--tw-bg-opacity, 1));
+}
+.bg-purple-400\/30 {
+  background-color: rgb(192 132 252 / 0.3);
+}
+.bg-purple-500\/20 {
+  background-color: rgb(168 85 247 / 0.2);
+}
+.bg-purple-500\/5 {
+  background-color: rgb(168 85 247 / 0.05);
+}
+.bg-purple-900\/40 {
+  background-color: rgb(88 28 135 / 0.4);
+}
+.bg-rose-500 {
+  --tw-bg-opacity: 1;
+  background-color: rgb(244 63 94 / var(--tw-bg-opacity, 1));
+}
+.bg-rose-500\/20 {
+  background-color: rgb(244 63 94 / 0.2);
+}
+.bg-white {
+  --tw-bg-opacity: 1;
+  background-color: rgb(255 255 255 / var(--tw-bg-opacity, 1));
+}
+.bg-white\/10 {
+  background-color: rgb(255 255 255 / 0.1);
+}
+.bg-white\/20 {
+  background-color: rgb(255 255 255 / 0.2);
+}
+.bg-white\/40 {
+  background-color: rgb(255 255 255 / 0.4);
+}
+.bg-white\/50 {
+  background-color: rgb(255 255 255 / 0.5);
+}
+.bg-gradient-to-b {
+  background-image: linear-gradient(to bottom, var(--tw-gradient-stops));
+}
+.bg-gradient-to-r {
+  background-image: linear-gradient(to right, var(--tw-gradient-stops));
+}
+.from-transparent {
+  --tw-gradient-from: transparent var(--tw-gradient-from-position);
+  --tw-gradient-to: rgb(0 0 0 / 0) var(--tw-gradient-to-position);
+  --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to);
+}
+.via-cyan-500 {
+  --tw-gradient-to: rgb(6 182 212 / 0)  var(--tw-gradient-to-position);
+  --tw-gradient-stops: var(--tw-gradient-from), #06b6d4 var(--tw-gradient-via-position), var(--tw-gradient-to);
+}
+.via-cyan-500\/20 {
+  --tw-gradient-to: rgb(6 182 212 / 0)  var(--tw-gradient-to-position);
+  --tw-gradient-stops: var(--tw-gradient-from), rgb(6 182 212 / 0.2) var(--tw-gradient-via-position), var(--tw-gradient-to);
+}
+.via-purple-500 {
+  --tw-gradient-to: rgb(168 85 247 / 0)  var(--tw-gradient-to-position);
+  --tw-gradient-stops: var(--tw-gradient-from), #a855f7 var(--tw-gradient-via-position), var(--tw-gradient-to);
+}
+.to-transparent {
+  --tw-gradient-to: transparent var(--tw-gradient-to-position);
+}
+.p-10 {
+  padding: 2.5rem;
+}
+.p-12 {
+  padding: 3rem;
+}
+.p-24 {
+  padding: 6rem;
+}
+.p-6 {
+  padding: 1.5rem;
+}
+.p-8 {
+  padding: 2rem;
+}
+.px-12 {
+  padding-left: 3rem;
+  padding-right: 3rem;
+}
+.px-3 {
+  padding-left: 0.75rem;
+  padding-right: 0.75rem;
+}
+.px-4 {
+  padding-left: 1rem;
+  padding-right: 1rem;
+}
+.px-6 {
+  padding-left: 1.5rem;
+  padding-right: 1.5rem;
+}
+.px-8 {
+  padding-left: 2rem;
+  padding-right: 2rem;
+}
+.py-1 {
+  padding-top: 0.25rem;
+  padding-bottom: 0.25rem;
+}
+.py-10 {
+  padding-top: 2.5rem;
+  padding-bottom: 2.5rem;
+}
+.py-2 {
+  padding-top: 0.5rem;
+  padding-bottom: 0.5rem;
+}
+.py-3 {
+  padding-top: 0.75rem;
+  padding-bottom: 0.75rem;
+}
+.py-4 {
+  padding-top: 1rem;
+  padding-bottom: 1rem;
+}
+.pt-8 {
+  padding-top: 2rem;
+}
+.text-left {
+  text-align: left;
+}
+.text-center {
+  text-align: center;
+}
+.text-right {
+  text-align: right;
+}
+.text-2xl {
+  font-size: 1.5rem;
+  line-height: 2rem;
+}
+.text-3xl {
+  font-size: 1.875rem;
+  line-height: 2.25rem;
+}
+.text-4xl {
+  font-size: 2.25rem;
+  line-height: 2.5rem;
+}
+.text-5xl {
+  font-size: 3rem;
+  line-height: 1;
+}
+.text-6xl {
+  font-size: 3.75rem;
+  line-height: 1;
+}
+.text-7xl {
+  font-size: 4.5rem;
+  line-height: 1;
+}
+.text-\[10px\] {
+  font-size: 10px;
+}
+.text-lg {
+  font-size: 1.125rem;
+  line-height: 1.75rem;
+}
+.text-sm {
+  font-size: 0.875rem;
+  line-height: 1.25rem;
+}
+.text-xl {
+  font-size: 1.25rem;
+  line-height: 1.75rem;
+}
+.text-xs {
+  font-size: 0.75rem;
+  line-height: 1rem;
+}
+.font-bold {
+  font-weight: 700;
+}
+.uppercase {
+  text-transform: uppercase;
+}
+.italic {
+  font-style: italic;
+}
+.leading-relaxed {
+  line-height: 1.625;
+}
+.leading-tight {
+  line-height: 1.25;
+}
+.tracking-\[0\.2em\] {
+  letter-spacing: 0.2em;
+}
+.tracking-\[0\.3em\] {
+  letter-spacing: 0.3em;
+}
+.tracking-\[0\.4em\] {
+  letter-spacing: 0.4em;
+}
+.tracking-\[0\.5em\] {
+  letter-spacing: 0.5em;
+}
+.tracking-widest {
+  letter-spacing: 0.1em;
+}
+.text-amber-200 {
+  --tw-text-opacity: 1;
+  color: rgb(253 230 138 / var(--tw-text-opacity, 1));
+}
+.text-amber-300 {
+  --tw-text-opacity: 1;
+  color: rgb(252 211 77 / var(--tw-text-opacity, 1));
+}
+.text-amber-400 {
+  --tw-text-opacity: 1;
+  color: rgb(251 191 36 / var(--tw-text-opacity, 1));
+}
+.text-cyan-200 {
+  --tw-text-opacity: 1;
+  color: rgb(165 243 252 / var(--tw-text-opacity, 1));
+}
+.text-cyan-300 {
+  --tw-text-opacity: 1;
+  color: rgb(103 232 249 / var(--tw-text-opacity, 1));
+}
+.text-cyan-300\/80 {
+  color: rgb(103 232 249 / 0.8);
+}
+.text-cyan-400 {
+  --tw-text-opacity: 1;
+  color: rgb(34 211 238 / var(--tw-text-opacity, 1));
+}
+.text-emerald-200 {
+  --tw-text-opacity: 1;
+  color: rgb(167 243 208 / var(--tw-text-opacity, 1));
+}
+.text-emerald-300 {
+  --tw-text-opacity: 1;
+  color: rgb(110 231 183 / var(--tw-text-opacity, 1));
+}
+.text-emerald-400 {
+  --tw-text-opacity: 1;
+  color: rgb(52 211 153 / var(--tw-text-opacity, 1));
+}
+.text-gray-400 {
+  --tw-text-opacity: 1;
+  color: rgb(156 163 175 / var(--tw-text-opacity, 1));
+}
+.text-indigo-200 {
+  --tw-text-opacity: 1;
+  color: rgb(199 210 254 / var(--tw-text-opacity, 1));
+}
+.text-indigo-400 {
+  --tw-text-opacity: 1;
+  color: rgb(129 140 248 / var(--tw-text-opacity, 1));
+}
+.text-purple-100 {
+  --tw-text-opacity: 1;
+  color: rgb(243 232 255 / var(--tw-text-opacity, 1));
+}
+.text-purple-200 {
+  --tw-text-opacity: 1;
+  color: rgb(233 213 255 / var(--tw-text-opacity, 1));
+}
+.text-purple-200\/70 {
+  color: rgb(233 213 255 / 0.7);
+}
+.text-purple-300 {
+  --tw-text-opacity: 1;
+  color: rgb(216 180 254 / var(--tw-text-opacity, 1));
+}
+.text-purple-400 {
+  --tw-text-opacity: 1;
+  color: rgb(192 132 252 / var(--tw-text-opacity, 1));
+}
+.text-rose-200 {
+  --tw-text-opacity: 1;
+  color: rgb(254 205 211 / var(--tw-text-opacity, 1));
+}
+.text-rose-300\/60 {
+  color: rgb(253 164 175 / 0.6);
+}
+.text-rose-400 {
+  --tw-text-opacity: 1;
+  color: rgb(251 113 133 / var(--tw-text-opacity, 1));
+}
+.text-rose-500 {
+  --tw-text-opacity: 1;
+  color: rgb(244 63 94 / var(--tw-text-opacity, 1));
+}
+.text-white {
+  --tw-text-opacity: 1;
+  color: rgb(255 255 255 / var(--tw-text-opacity, 1));
+}
+.text-white\/20 {
+  color: rgb(255 255 255 / 0.2);
+}
+.text-white\/30 {
+  color: rgb(255 255 255 / 0.3);
+}
+.text-white\/40 {
+  color: rgb(255 255 255 / 0.4);
+}
+.text-white\/50 {
+  color: rgb(255 255 255 / 0.5);
+}
+.text-white\/60 {
+  color: rgb(255 255 255 / 0.6);
+}
+.text-white\/70 {
+  color: rgb(255 255 255 / 0.7);
+}
+.text-white\/80 {
+  color: rgb(255 255 255 / 0.8);
+}
+.text-yellow-300 {
+  --tw-text-opacity: 1;
+  color: rgb(253 224 71 / var(--tw-text-opacity, 1));
+}
+.antialiased {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+.opacity-0 {
+  opacity: 0;
+}
+.opacity-10 {
+  opacity: 0.1;
+}
+.opacity-20 {
+  opacity: 0.2;
+}
+.opacity-30 {
+  opacity: 0.3;
+}
+.opacity-40 {
+  opacity: 0.4;
+}
+.opacity-60 {
+  opacity: 0.6;
+}
+.opacity-80 {
+  opacity: 0.8;
+}
+.mix-blend-screen {
+  mix-blend-mode: screen;
+}
+.shadow-\[0_0_20px_rgba\(6\2c 182\2c 212\2c 0\.2\)\] {
+  --tw-shadow: 0 0 20px rgba(6,182,212,0.2);
+  --tw-shadow-colored: 0 0 20px var(--tw-shadow-color);
+  box-shadow: var(--tw-ring-offset-shadow, 0 0 #0000), var(--tw-ring-shadow, 0 0 #0000), var(--tw-shadow);
+}
+.shadow-\[0_0_30px_rgba\(168\2c 85\2c 247\2c 0\.3\)\] {
+  --tw-shadow: 0 0 30px rgba(168,85,247,0.3);
+  --tw-shadow-colored: 0 0 30px var(--tw-shadow-color);
+  box-shadow: var(--tw-ring-offset-shadow, 0 0 #0000), var(--tw-ring-shadow, 0 0 #0000), var(--tw-shadow);
+}
+.shadow-\[0_0_30px_rgba\(245\2c 158\2c 11\2c 0\.3\)\] {
+  --tw-shadow: 0 0 30px rgba(245,158,11,0.3);
+  --tw-shadow-colored: 0 0 30px var(--tw-shadow-color);
+  box-shadow: var(--tw-ring-offset-shadow, 0 0 #0000), var(--tw-ring-shadow, 0 0 #0000), var(--tw-shadow);
+}
+.shadow-\[0_0_30px_rgba\(6\2c 182\2c 212\2c 0\.3\)\] {
+  --tw-shadow: 0 0 30px rgba(6,182,212,0.3);
+  --tw-shadow-colored: 0 0 30px var(--tw-shadow-color);
+  box-shadow: var(--tw-ring-offset-shadow, 0 0 #0000), var(--tw-ring-shadow, 0 0 #0000), var(--tw-shadow);
+}
+.shadow-\[0_0_40px_-10px_rgba\(245\2c 158\2c 11\2c 0\.3\)\] {
+  --tw-shadow: 0 0 40px -10px rgba(245,158,11,0.3);
+  --tw-shadow-colored: 0 0 40px -10px var(--tw-shadow-color);
+  box-shadow: var(--tw-ring-offset-shadow, 0 0 #0000), var(--tw-ring-shadow, 0 0 #0000), var(--tw-shadow);
+}
+.shadow-\[0_20px_80px_-20px_rgba\(168\2c 85\2c 247\2c 0\.4\)\] {
+  --tw-shadow: 0 20px 80px -20px rgba(168,85,247,0.4);
+  --tw-shadow-colored: 0 20px 80px -20px var(--tw-shadow-color);
+  box-shadow: var(--tw-ring-offset-shadow, 0 0 #0000), var(--tw-ring-shadow, 0 0 #0000), var(--tw-shadow);
+}
+.shadow-xl {
+  --tw-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
+  --tw-shadow-colored: 0 20px 25px -5px var(--tw-shadow-color), 0 8px 10px -6px var(--tw-shadow-color);
+  box-shadow: var(--tw-ring-offset-shadow, 0 0 #0000), var(--tw-ring-shadow, 0 0 #0000), var(--tw-shadow);
+}
+.blur {
+  --tw-blur: blur(8px);
+  filter: var(--tw-blur) var(--tw-brightness) var(--tw-contrast) var(--tw-grayscale) var(--tw-hue-rotate) var(--tw-invert) var(--tw-saturate) var(--tw-sepia) var(--tw-drop-shadow);
+}
+.blur-2xl {
+  --tw-blur: blur(40px);
+  filter: var(--tw-blur) var(--tw-brightness) var(--tw-contrast) var(--tw-grayscale) var(--tw-hue-rotate) var(--tw-invert) var(--tw-saturate) var(--tw-sepia) var(--tw-drop-shadow);
+}
+.blur-3xl {
+  --tw-blur: blur(64px);
+  filter: var(--tw-blur) var(--tw-brightness) var(--tw-contrast) var(--tw-grayscale) var(--tw-hue-rotate) var(--tw-invert) var(--tw-saturate) var(--tw-sepia) var(--tw-drop-shadow);
+}
+.blur-\[1px\] {
+  --tw-blur: blur(1px);
+  filter: var(--tw-blur) var(--tw-brightness) var(--tw-contrast) var(--tw-grayscale) var(--tw-hue-rotate) var(--tw-invert) var(--tw-saturate) var(--tw-sepia) var(--tw-drop-shadow);
+}
+.blur-sm {
+  --tw-blur: blur(4px);
+  filter: var(--tw-blur) var(--tw-brightness) var(--tw-contrast) var(--tw-grayscale) var(--tw-hue-rotate) var(--tw-invert) var(--tw-saturate) var(--tw-sepia) var(--tw-drop-shadow);
+}
+.blur-xl {
+  --tw-blur: blur(24px);
+  filter: var(--tw-blur) var(--tw-brightness) var(--tw-contrast) var(--tw-grayscale) var(--tw-hue-rotate) var(--tw-invert) var(--tw-saturate) var(--tw-sepia) var(--tw-drop-shadow);
+}
+.drop-shadow-2xl {
+  --tw-drop-shadow: drop-shadow(0 25px 25px rgb(0 0 0 / 0.15));
+  filter: var(--tw-blur) var(--tw-brightness) var(--tw-contrast) var(--tw-grayscale) var(--tw-hue-rotate) var(--tw-invert) var(--tw-saturate) var(--tw-sepia) var(--tw-drop-shadow);
+}
+.drop-shadow-\[0_0_20px_rgba\(255\2c 255\2c 255\2c 0\.3\)\] {
+  --tw-drop-shadow: drop-shadow(0 0 20px rgba(255,255,255,0.3));
+  filter: var(--tw-blur) var(--tw-brightness) var(--tw-contrast) var(--tw-grayscale) var(--tw-hue-rotate) var(--tw-invert) var(--tw-saturate) var(--tw-sepia) var(--tw-drop-shadow);
+}
+.grayscale {
+  --tw-grayscale: grayscale(100%);
+  filter: var(--tw-blur) var(--tw-brightness) var(--tw-contrast) var(--tw-grayscale) var(--tw-hue-rotate) var(--tw-invert) var(--tw-saturate) var(--tw-sepia) var(--tw-drop-shadow);
+}
+.filter {
+  filter: var(--tw-blur) var(--tw-brightness) var(--tw-contrast) var(--tw-grayscale) var(--tw-hue-rotate) var(--tw-invert) var(--tw-saturate) var(--tw-sepia) var(--tw-drop-shadow);
+}
+.backdrop-filter {
+  -webkit-backdrop-filter: var(--tw-backdrop-blur) var(--tw-backdrop-brightness) var(--tw-backdrop-contrast) var(--tw-backdrop-grayscale) var(--tw-backdrop-hue-rotate) var(--tw-backdrop-invert) var(--tw-backdrop-opacity) var(--tw-backdrop-saturate) var(--tw-backdrop-sepia);
+  backdrop-filter: var(--tw-backdrop-blur) var(--tw-backdrop-brightness) var(--tw-backdrop-contrast) var(--tw-backdrop-grayscale) var(--tw-backdrop-hue-rotate) var(--tw-backdrop-invert) var(--tw-backdrop-opacity) var(--tw-backdrop-saturate) var(--tw-backdrop-sepia);
+}
+.transition {
+  transition-property: color, background-color, border-color, text-decoration-color, fill, stroke, opacity, box-shadow, transform, filter, backdrop-filter;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  transition-duration: 150ms;
+}
+.transition-all {
+  transition-property: all;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  transition-duration: 150ms;
+}
+.ease-in-out {
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+}
+.group:hover .group-hover\:bg-amber-400\/20 {
+  background-color: rgb(251 191 36 / 0.2);
+}
+.group:hover .group-hover\:bg-cyan-400\/20 {
+  background-color: rgb(34 211 238 / 0.2);
+}
+.group:hover .group-hover\:bg-emerald-400\/20 {
+  background-color: rgb(52 211 153 / 0.2);
+}
+.group:hover .group-hover\:bg-indigo-400\/20 {
+  background-color: rgb(129 140 248 / 0.2);
+}
+.group:hover .group-hover\:bg-purple-400\/20 {
+  background-color: rgb(192 132 252 / 0.2);
+}
+.group:hover .group-hover\:bg-rose-400\/20 {
+  background-color: rgb(251 113 133 / 0.2);
+}
+@media (min-width: 768px) {
+
+  .md\:text-5xl {
+    font-size: 3rem;
+    line-height: 1;
+  }
+
+  .md\:text-6xl {
+    font-size: 3.75rem;
+    line-height: 1;
+  }
+
+  .md\:text-7xl {
+    font-size: 4.5rem;
+    line-height: 1;
+  }
+
+  .md\:text-8xl {
+    font-size: 6rem;
+    line-height: 1;
+  }
+}* {
+      -ms-overflow-style: none !important;
+      scrollbar-width: none !important;
+    }
+
+    *::-webkit-scrollbar {
+      display: none !important;
+      width: 0 !important;
+      height: 0 !important;
+    }
+  </style></head>
+<body class="antialiased" vid="11">
+
+    <div id="star-container" class="stars" vid="12"></div>
+    <div id="ambient-1" class="ambient-glow w-[800px] h-[800px] top-[-20%] left-[-10%] bg-purple-900/40 mix-blend-screen" vid="13"></div>
+    <div id="ambient-2" class="ambient-glow w-[600px] h-[600px] bottom-[-10%] right-[-10%] bg-indigo-900/30 mix-blend-screen" vid="14"></div>
+
+    
+    <button id="btn-prev" class="nav-btn nav-prev" vid="15"><i class="ph-bold ph-caret-left" vid="16"></i></button>
+    <button id="btn-next" class="nav-btn nav-next" vid="17"><i class="ph-bold ph-caret-right" vid="18"></i></button>
+
+    <div class="controls" vid="19">
+        <div id="dots-container" class="flex gap-3" vid="20"></div>
+        <div class="w-px h-4 bg-white/20" vid="21"></div>
+        <div id="slide-counter" class="text-[10px] font-bold tracking-[0.2em] text-white/50" vid="22">1 / 19</div>
+    </div>
+
+    <div class="fixed top-8 left-12 z-50 flex items-center gap-4" vid="23">
+        <div class="relative" vid="24">
+            <i class="ph-fill ph-crystal-ball text-purple-400 text-3xl" vid="25"></i>
+            <i class="ph-fill ph-sparkle text-yellow-300 text-xs absolute -top-1 -right-1 animate-pulse" vid="26"></i>
+        </div>
+        <span class="font-magical text-lg tracking-widest text-white/80" vid="27">ALGORITHM WITCH</span>
+    </div>
+
+    <main id="slides-container" class="relative w-full h-full" vid="28">
+
+        
+        <section class="slide active" data-ambient="bg-purple-900/40,bg-indigo-900/30" vid="29">
+            <div class="max-w-5xl text-center" vid="30">
+                <div class="mb-12 relative flex justify-center" vid="31">
+                    <div class="absolute inset-0 blur-3xl bg-purple-500/20 rounded-full" vid="32"></div>
+                    <svg width="200" height="200" viewBox="0 0 200 200" class="relative" vid="33">
+                        <circle cx="100" cy="100" r="4" fill="#a855f7" class="animate-pulse" vid="34">
+                            <animate attributeName="cx" values="100;100" dur="4s" repeatCount="indefinite" vid="35"></animate>
+                        </circle>
+                        
+                        <circle cx="20" cy="50" r="2" fill="white" opacity="0.4" vid="36"><animate attributeName="cx" values="20;100" dur="3s" fill="freeze" vid="37"></animate></circle>
+                        <circle cx="180" cy="150" r="2" fill="white" opacity="0.4" vid="38"><animate attributeName="cx" values="180;100" dur="3s" fill="freeze" vid="39"></animate></circle>
+                        <circle cx="50" cy="180" r="2" fill="white" opacity="0.4" vid="40"><animate attributeName="cy" values="180;100" dur="3s" fill="freeze" vid="41"></animate></circle>
+                        <circle cx="150" cy="20" r="2" fill="white" opacity="0.4" vid="42"><animate attributeName="cy" values="20;100" dur="3s" fill="freeze" vid="43"></animate></circle>
+                        <circle cx="30" cy="30" r="2" fill="#fde047" opacity="0.6" vid="44"><animate attributeName="cx" values="30;100" dur="3.5s" fill="freeze" vid="45"></animate><animate attributeName="cy" values="30;100" dur="3.5s" fill="freeze" vid="46"></animate></circle>
+                    </svg>
+                </div>
+                <h1 class="font-magical text-6xl md:text-8xl leading-tight drop-shadow-2xl text-white" vid="47">
+                    The Internet Can't <br vid="48"> <span class="text-gradient-gold" vid="49">Amplify</span> What It Can't Understand
+                </h1>
+            </div>
+        </section>
+
+        
+        <section class="slide" data-ambient="bg-indigo-900/40,bg-purple-900/20" vid="50">
+            <div class="w-full max-w-6xl" vid="51">
+                <h2 class="font-serif-heading text-4xl md:text-5xl text-center mb-20 italic text-purple-100" vid="52">
+                    "If someone looked at your last 20 posts, what would they think you do?"
+                </h2>
+                <div class="grid grid-cols-3 gap-8" vid="53">
+                    <div class="glass-card p-12 rounded-[2rem] text-center opacity-60" vid="54">
+                        <div class="font-magical text-2xl text-white" vid="55">I know exactly.</div>
+                    </div>
+                    <div class="glass-card p-12 rounded-[2rem] text-center opacity-80 border-cyan-500/20" vid="56">
+                        <div class="font-magical text-2xl text-white" vid="57">Kind of.</div>
+                    </div>
+                    <div class="glass-card p-12 rounded-[2rem] text-center border-amber-500/50 bg-amber-500/5 shadow-[0_0_40px_-10px_rgba(245,158,11,0.3)]" vid="58">
+                        <div class="font-magical text-3xl text-amber-300" vid="59">Honestly… <br vid="60">no idea.</div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        
+        <section class="slide" data-ambient="bg-cyan-900/20,bg-purple-900/30" vid="61">
+            <div class="max-w-4xl text-center" vid="62">
+                <h2 class="font-magical text-5xl md:text-7xl text-white mb-16" vid="63">Recognition Comes Before Reach</h2>
+                <div class="flex justify-center mb-16" vid="64">
+                    <svg width="400" height="100" viewBox="0 0 400 100" class="overflow-visible" vid="65">
+                        <path d="M0 50 Q 50 0, 100 50 T 200 50 T 300 50 T 400 50" fill="none" stroke="#06b6d4" stroke-width="2" class="pulse-glow" vid="66">
+                            <animate attributeName="stroke-dasharray" from="0,1000" to="1000,0" dur="4s" repeatCount="indefinite" vid="67"></animate>
+                        </path>
+                    </svg>
+                </div>
+                <p class="font-serif-heading text-2xl text-purple-200/70 italic" vid="68">
+                    People don’t become known because of one post. <br vid="69">
+                    They become known through repeated signals.
+                </p>
+            </div>
+        </section>
+
+        
+        <section class="slide" data-ambient="bg-purple-900/30,bg-black" vid="70">
+            <div class="w-full max-w-6xl" vid="71">
+                <div class="flex items-center justify-between gap-8 mb-20" vid="72">
+                    <div class="flex flex-col items-center gap-4" vid="73">
+                        <div class="w-24 h-24 rounded-2xl glass-card flex items-center justify-center text-purple-400 border-purple-500/30" vid="74">
+                            <i class="ph-duotone ph-article text-4xl" vid="75"></i>
+                        </div>
+                        <span class="font-magical text-sm tracking-widest" vid="76">POST</span>
+                    </div>
+                    <div class="connector" vid="77"></div>
+                    <div class="flex flex-col items-center gap-4" vid="78">
+                        <div class="w-24 h-24 rounded-2xl glass-card flex items-center justify-center text-cyan-400 border-cyan-500/30" vid="79">
+                            <i class="ph-duotone ph-waves text-4xl" vid="80"></i>
+                        </div>
+                        <span class="font-magical text-sm tracking-widest" vid="81">PATTERN</span>
+                    </div>
+                    <div class="connector" vid="82"></div>
+                    <div class="flex flex-col items-center gap-4" vid="83">
+                        <div class="w-24 h-24 rounded-2xl glass-card flex items-center justify-center text-amber-400 border-amber-500/30" vid="84">
+                            <i class="ph-duotone ph-eye text-4xl" vid="85"></i>
+                        </div>
+                        <span class="font-magical text-sm tracking-widest text-center" vid="86">RECOGNITION</span>
+                    </div>
+                    <div class="connector" vid="87"></div>
+                    <div class="flex flex-col items-center gap-4" vid="88">
+                        <div class="w-24 h-24 rounded-2xl glass-card flex items-center justify-center text-emerald-400 border-emerald-500/30" vid="89">
+                            <i class="ph-duotone ph-broadcast text-4xl" vid="90"></i>
+                        </div>
+                        <span class="font-magical text-sm tracking-widest" vid="91">DISTRIBUTION</span>
+                    </div>
+                </div>
+                <div class="text-right" vid="92">
+                    <p class="font-serif-heading text-3xl text-white italic" vid="93">"Every post teaches people—and platforms—what you know."</p>
+                </div>
+            </div>
+        </section>
+
+        
+        <section class="slide" data-ambient="bg-indigo-900/20,bg-cyan-900/10" vid="94">
+            <div class="max-w-4xl" vid="95">
+                <h2 class="font-magical text-4xl text-white mb-16 text-center tracking-[0.2em]" vid="96">Platforms Learn Through Patterns</h2>
+                <div class="grid grid-cols-2 gap-6 mb-12" vid="97">
+                    <div class="glass-card p-10 rounded-3xl border-t border-cyan-500/30" vid="98">
+                        <h3 class="font-magical text-2xl text-cyan-300 mb-2" vid="99">Topics</h3>
+                        <p class="text-sm text-white/50" vid="100">What you talk about.</p>
+                    </div>
+                    <div class="glass-card p-10 rounded-3xl border-t border-purple-500/30" vid="101">
+                        <h3 class="font-magical text-2xl text-purple-300 mb-2" vid="102">Language</h3>
+                        <p class="text-sm text-white/50" vid="103">How you say it.</p>
+                    </div>
+                    <div class="glass-card p-10 rounded-3xl border-t border-amber-500/30" vid="104">
+                        <h3 class="font-magical text-2xl text-amber-300 mb-2" vid="105">Expertise</h3>
+                        <p class="text-sm text-white/50" vid="106">The value you add.</p>
+                    </div>
+                    <div class="glass-card p-10 rounded-3xl border-t border-emerald-500/30" vid="107">
+                        <h3 class="font-magical text-2xl text-emerald-300 mb-2" vid="108">Consistency</h3>
+                        <p class="text-sm text-white/50" vid="109">The rhythm you keep.</p>
+                    </div>
+                </div>
+                <p class="text-center font-serif-heading text-xl text-white/40 italic" vid="110">"The clearer the pattern, the easier your work is to understand."</p>
+            </div>
+        </section>
+
+        
+        <section class="slide" data-ambient="bg-purple-900/40,bg-indigo-900/30" vid="111">
+            <div class="w-full max-w-6xl grid grid-cols-2 gap-20 items-center" vid="112">
+                <div class="relative" vid="113">
+                    <div class="absolute inset-0 flex items-center justify-center opacity-10 blur-xl" vid="114">
+                        <div class="w-64 h-64 bg-rose-500 rounded-full" vid="115"></div>
+                    </div>
+                    <div class="text-center space-y-4" vid="116">
+                        <h3 class="font-magical text-2xl text-rose-300/60 mb-8 uppercase tracking-widest" vid="117">Instead of asking:</h3>
+                        <div class="flex flex-wrap gap-2 justify-center opacity-40 blur-[1px]" vid="118">
+                            <span class="px-3 py-1 border border-white/20 rounded-full text-xs" vid="119">AI</span>
+                            <span class="px-3 py-1 border border-white/20 rounded-full text-xs" vid="120">Gardening</span>
+                            <span class="px-3 py-1 border border-white/20 rounded-full text-xs" vid="121">Politics</span>
+                            <span class="px-3 py-1 border border-white/20 rounded-full text-xs" vid="122">Music</span>
+                            <span class="px-3 py-1 border border-white/20 rounded-full text-xs" vid="123">Travel</span>
+                        </div>
+                        <p class="font-serif-heading text-3xl text-white italic mt-8" vid="124">"What should I post?"</p>
+                    </div>
+                </div>
+                <div class="relative" vid="125">
+                    <div class="absolute inset-0 flex items-center justify-center opacity-20 blur-2xl" vid="126">
+                        <div class="w-64 h-64 bg-cyan-500 rounded-full" vid="127"></div>
+                    </div>
+                    <div class="text-center" vid="128">
+                        <h3 class="font-magical text-2xl text-cyan-300 mb-8 uppercase tracking-widest" vid="129">Ask:</h3>
+                        <div class="space-y-6" vid="130">
+                            <div class="px-8 py-4 glass-card rounded-2xl border-cyan-500/40 text-white font-magical shadow-[0_0_20px_rgba(6,182,212,0.2)]" vid="131">Climate Policy</div>
+                            <div class="px-8 py-4 glass-card rounded-2xl border-purple-500/40 text-white font-magical" vid="132">Community Organizing</div>
+                            <div class="px-8 py-4 glass-card rounded-2xl border-amber-500/40 text-white font-magical" vid="133">Digital Participation</div>
+                        </div>
+                        <p class="font-serif-heading text-3xl text-white italic mt-12" vid="134">"What do I want to reinforce?"</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        
+        <section class="slide" data-ambient="bg-black,bg-purple-900/20" vid="135">
+            <div class="max-w-5xl text-center" vid="136">
+                <h2 class="font-magical text-4xl text-white mb-16 tracking-widest" vid="137">The Exercise: Three Sticky Notes</h2>
+                <div class="flex gap-8 justify-center mb-16" vid="138">
+                    <div class="w-56 h-56 bg-purple-500/20 border border-purple-500/40 rounded shadow-xl flex flex-col p-6 text-left" vid="139">
+                        <div class="h-4 w-12 bg-white/10 mb-4 rounded" vid="140"></div>
+                        <p class="text-xs text-white/50 mb-2" vid="141">I want people to remember me for...</p>
+                        <div class="h-1 w-full bg-white/20 mb-2" vid="142"></div>
+                        <div class="h-1 w-full bg-white/20 mb-2" vid="143"></div>
+                    </div>
+                    <div class="w-56 h-56 bg-cyan-500/20 border border-cyan-500/40 rounded shadow-xl flex flex-col p-6 text-left rotate-3 translate-y-4" vid="144">
+                        <div class="h-4 w-12 bg-white/10 mb-4 rounded" vid="145"></div>
+                        <p class="text-xs text-white/50 mb-2" vid="146">I want people to remember me for...</p>
+                        <div class="h-1 w-full bg-white/20 mb-2" vid="147"></div>
+                        <div class="h-1 w-full bg-white/20 mb-2" vid="148"></div>
+                    </div>
+                    <div class="w-56 h-56 bg-amber-500/20 border border-amber-500/40 rounded shadow-xl flex flex-col p-6 text-left -rotate-2" vid="149">
+                        <div class="h-4 w-12 bg-white/10 mb-4 rounded" vid="150"></div>
+                        <p class="text-xs text-white/50 mb-2" vid="151">I want people to remember me for...</p>
+                        <div class="h-1 w-full bg-white/20 mb-2" vid="152"></div>
+                        <div class="h-1 w-full bg-white/20 mb-2" vid="153"></div>
+                    </div>
+                </div>
+                <div class="grid grid-cols-3 gap-8 text-[10px] uppercase tracking-widest text-white/40 font-bold" vid="154">
+                    <div vid="155">1. One idea per note</div>
+                    <div vid="156">2. Group similar ideas</div>
+                    <div vid="157">3. Circle the long-term themes</div>
+                </div>
+            </div>
+        </section>
+
+        
+        <section class="slide" data-ambient="bg-rose-900/30,bg-black" vid="158">
+            <div class="w-full max-w-5xl" vid="159">
+                <h2 class="font-magical text-4xl text-white mb-20 text-center" vid="160">The Cost of Being Scattered</h2>
+                <div class="flex items-center gap-1" vid="161">
+                    <div class="flex-1 glass-card p-6 rounded-l-2xl border-rose-500/30 text-center" vid="162">
+                        <span class="text-[10px] text-white/30 block mb-2" vid="163">MON</span>
+                        <div class="text-white font-magical" vid="164">AI</div>
+                    </div>
+                    <div class="w-px h-12 bg-rose-500/20 self-center" vid="165"></div>
+                    <div class="flex-1 glass-card p-6 border-rose-500/30 text-center" vid="166">
+                        <span class="text-[10px] text-white/30 block mb-2" vid="167">TUE</span>
+                        <div class="text-white font-magical" vid="168">Gardening</div>
+                    </div>
+                    <div class="w-px h-12 bg-rose-500/20 self-center" vid="169"></div>
+                    <div class="flex-1 glass-card p-6 border-rose-500/30 text-center" vid="170">
+                        <span class="text-[10px] text-white/30 block mb-2" vid="171">WED</span>
+                        <div class="text-white font-magical" vid="172">Climate</div>
+                    </div>
+                    <div class="w-px h-12 bg-rose-500/20 self-center" vid="173"></div>
+                    <div class="flex-1 glass-card p-6 border-rose-500/30 text-center" vid="174">
+                        <span class="text-[10px] text-white/30 block mb-2" vid="175">THU</span>
+                        <div class="text-white font-magical" vid="176">Productivity</div>
+                    </div>
+                    <div class="w-px h-12 bg-rose-500/20 self-center" vid="177"></div>
+                    <div class="flex-1 glass-card p-6 rounded-r-2xl border-rose-500/30 text-center" vid="178">
+                        <span class="text-[10px] text-white/30 block mb-2" vid="179">FRI</span>
+                        <div class="text-white font-magical" vid="180">Politics</div>
+                    </div>
+                </div>
+                <div class="mt-20 text-center" vid="181">
+                    <i class="ph-bold ph-warning-octagon text-rose-500 text-5xl mb-6 float" vid="182"></i>
+                    <h3 class="font-serif-heading text-4xl text-white italic" vid="183">"What pattern is the internet learning?"</h3>
+                </div>
+            </div>
+        </section>
+
+        
+        <section class="slide" data-ambient="bg-indigo-900/40,bg-cyan-900/20" vid="184">
+            <div class="w-full max-w-6xl flex items-center gap-16" vid="185">
+                <div class="flex-1 relative flex justify-center items-end h-[500px]" vid="186">
+                    <div class="mountain" vid="187"></div>
+                    
+                    <div class="absolute bottom-20 left-1/4 w-1 h-32 bg-cyan-400/30 rotate-[30deg]" vid="188"></div>
+                    <div class="absolute bottom-10 right-1/4 w-1 h-48 bg-purple-400/30 -rotate-[20deg]" vid="189"></div>
+                    <div class="absolute bottom-40 left-1/2 w-1 h-24 bg-white/20" vid="190"></div>
+
+                    <div class="absolute top-1/4 left-0 glass-card px-4 py-2 rounded-full text-[10px] font-bold tracking-widest text-cyan-300" vid="191">RESEARCH</div>
+                    <div class="absolute top-1/2 left-[-40px] glass-card px-4 py-2 rounded-full text-[10px] font-bold tracking-widest text-white/60" vid="192">STORY</div>
+                    <div class="absolute top-1/3 right-0 glass-card px-4 py-2 rounded-full text-[10px] font-bold tracking-widest text-purple-300" vid="193">OPINION</div>
+                    <div class="absolute top-2/3 right-[-20px] glass-card px-4 py-2 rounded-full text-[10px] font-bold tracking-widest text-white/60" vid="194">CASE STUDY</div>
+                    <div class="absolute bottom-1/2 left-1/2 -translate-x-1/2 glass-card px-4 py-2 rounded-full text-[10px] font-bold tracking-widest text-amber-300" vid="195">NEWS</div>
+                </div>
+                <div class="flex-1 space-y-8" vid="196">
+                    <h2 class="font-magical text-5xl text-white" vid="197">Consistency Isn't Repetition</h2>
+                    <p class="font-serif-heading text-3xl text-purple-200/70 italic" vid="198">"Different content. Same expertise."</p>
+                    <div class="pt-8" vid="199">
+                        <div class="text-[10px] uppercase tracking-[0.4em] text-white/30 font-bold mb-2" vid="200">CORE THESIS</div>
+                        <div class="font-magical text-4xl text-gradient-gold" vid="201">One Mountain, <br vid="202">Many Trails.</div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        
+        <section class="slide" data-ambient="bg-black,bg-indigo-900/30" vid="203">
+            <div class="w-full max-w-6xl grid grid-cols-2 gap-px bg-white/10" vid="204">
+                <div class="bg-[#030014] p-24 text-center opacity-40 grayscale" vid="205">
+                    <i class="ph-duotone ph-broadcast text-7xl text-gray-400 mb-10" vid="206"></i>
+                    <h3 class="font-magical text-2xl text-white/60 mb-4 uppercase tracking-widest" vid="207">Old Goal</h3>
+                    <div class="font-serif-heading text-4xl italic text-white/80" vid="208">Reach Everyone</div>
+                </div>
+                <div class="bg-[#030014] p-24 text-center border-l border-white/10" vid="209">
+                    <i class="ph-duotone ph-lighthouse text-7xl text-cyan-400 mb-10 pulse-glow" vid="210"></i>
+                    <h3 class="font-magical text-2xl text-cyan-300 mb-4 uppercase tracking-widest" vid="211">New Goal</h3>
+                    <div class="font-serif-heading text-4xl italic text-white" vid="212">Help the <span class="text-gradient-gold" vid="213">Right Community</span> <br vid="214">Find You</div>
+                </div>
+            </div>
+        </section>
+
+        
+        <section class="slide" data-ambient="bg-cyan-900/30,bg-black" vid="215">
+            <div class="max-w-5xl text-center" vid="216">
+                <h2 class="font-magical text-4xl md:text-5xl text-white mb-20 leading-relaxed" vid="217">
+                    You don’t need <span class="opacity-30" vid="218">everyone</span>. <br vid="219">
+                    You need your <span class="text-cyan-400" vid="220">community</span> to recognize you.
+                </h2>
+                <div class="relative h-[300px] flex items-center justify-center" vid="221">
+                    <div class="absolute w-[600px] h-px bg-gradient-to-r from-transparent via-cyan-500/20 to-transparent" vid="222"></div>
+                    <div class="flex flex-wrap justify-center gap-4 max-w-3xl" vid="223">
+                        <div class="glass-card px-6 py-3 rounded-full text-xs font-bold text-cyan-200 border-cyan-500/30" vid="224">Climate Policy</div>
+                        <div class="glass-card px-6 py-3 rounded-full text-xs font-bold text-purple-200 border-purple-500/30" vid="225">Environmental Justice</div>
+                        <div class="glass-card px-6 py-3 rounded-full text-xs font-bold text-amber-200 border-amber-500/30" vid="226">Adaptation</div>
+                        <div class="glass-card px-6 py-3 rounded-full text-xs font-bold text-emerald-200 border-emerald-500/30" vid="227">Public Health</div>
+                        <div class="glass-card px-6 py-3 rounded-full text-xs font-bold text-indigo-200 border-indigo-500/30" vid="228">Clean Energy</div>
+                        <div class="glass-card px-6 py-3 rounded-full text-xs font-bold text-rose-200 border-rose-500/30" vid="229">Urban Planning</div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        
+        <section class="slide" data-ambient="bg-amber-900/20,bg-purple-900/20" vid="230">
+            <div class="max-w-6xl text-center" vid="231">
+                <h2 class="font-serif-heading text-4xl md:text-5xl text-white mb-24 italic" vid="232">
+                    "You don’t need to become an influencer. <br vid="233">
+                    <span class="text-amber-400" vid="234">Become recognizable</span> for what you know."
+                </h2>
+                <div class="grid grid-cols-6 gap-6" vid="235">
+                    <div class="flex flex-col items-center gap-4 group" vid="236">
+                        <div class="w-20 h-20 rounded-full glass-card flex items-center justify-center text-amber-400 group-hover:bg-amber-400/20 transition-all" vid="237">
+                            <i class="ph-duotone ph-microscope text-3xl" vid="238"></i>
+                        </div>
+                        <span class="text-[10px] font-bold tracking-widest text-white/40" vid="239">RESEARCHERS</span>
+                    </div>
+                    <div class="flex flex-col items-center gap-4 group" vid="240">
+                        <div class="w-20 h-20 rounded-full glass-card flex items-center justify-center text-cyan-400 group-hover:bg-cyan-400/20 transition-all" vid="241">
+                            <i class="ph-duotone ph-briefcase text-3xl" vid="242"></i>
+                        </div>
+                        <span class="text-[10px] font-bold tracking-widest text-white/40" vid="243">PRACTITIONERS</span>
+                    </div>
+                    <div class="flex flex-col items-center gap-4 group" vid="244">
+                        <div class="w-20 h-20 rounded-full glass-card flex items-center justify-center text-purple-400 group-hover:bg-purple-400/20 transition-all" vid="245">
+                            <i class="ph-duotone ph-megaphone text-3xl" vid="246"></i>
+                        </div>
+                        <span class="text-[10px] font-bold tracking-widest text-white/40" vid="247">ORGANIZERS</span>
+                    </div>
+                    <div class="flex flex-col items-center gap-4 group" vid="248">
+                        <div class="w-20 h-20 rounded-full glass-card flex items-center justify-center text-emerald-400 group-hover:bg-emerald-400/20 transition-all" vid="249">
+                            <i class="ph-duotone ph-atom text-3xl" vid="250"></i>
+                        </div>
+                        <span class="text-[10px] font-bold tracking-widest text-white/40" vid="251">SCIENTISTS</span>
+                    </div>
+                    <div class="flex flex-col items-center gap-4 group" vid="252">
+                        <div class="w-20 h-20 rounded-full glass-card flex items-center justify-center text-rose-400 group-hover:bg-rose-400/20 transition-all" vid="253">
+                            <i class="ph-duotone ph-graduation-cap text-3xl" vid="254"></i>
+                        </div>
+                        <span class="text-[10px] font-bold tracking-widest text-white/40" vid="255">EDUCATORS</span>
+                    </div>
+                    <div class="flex flex-col items-center gap-4 group" vid="256">
+                        <div class="w-20 h-20 rounded-full glass-card flex items-center justify-center text-indigo-400 group-hover:bg-indigo-400/20 transition-all" vid="257">
+                            <i class="ph-duotone ph-chart-pie text-3xl" vid="258"></i>
+                        </div>
+                        <span class="text-[10px] font-bold tracking-widest text-white/40" vid="259">ANALYSTS</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        
+        <section class="slide" data-ambient="bg-rose-900/20,bg-purple-900/40" vid="260">
+            <div class="max-w-5xl text-center" vid="261">
+                <div class="relative h-[300px] mb-12" vid="262">
+                    <div class="absolute top-0 left-1/4 glass-card p-6 rounded-3xl border-white/10 italic text-white/40 text-sm rotate-[-10deg]" vid="263">"What if I'm wrong?"</div>
+                    <div class="absolute top-10 right-1/4 glass-card p-8 rounded-3xl border-white/10 italic text-white/40 text-lg rotate-[5deg]" vid="264">"What if people disagree?"</div>
+                    <div class="absolute bottom-0 left-1/2 -translate-x-1/2 glass-card p-6 rounded-3xl border-white/10 italic text-white/40 text-sm rotate-[12deg]" vid="265">"What if nobody cares?"</div>
+                </div>
+                <div class="px-12 py-10 glass-card rounded-[3rem] border-purple-500/50 shadow-[0_20px_80px_-20px_rgba(168,85,247,0.4)]" vid="266">
+                    <h2 class="font-magical text-4xl text-white leading-relaxed" vid="267">
+                        "Your lived experience and expertise are part of <br vid="268">
+                        what <span class="text-cyan-400" vid="269">communities are looking for</span>."
+                    </h2>
+                </div>
+            </div>
+        </section>
+
+        
+        <section class="slide" data-ambient="bg-black,bg-rose-900/40" vid="270">
+            <div class="max-w-4xl text-center space-y-12" vid="271">
+                <h2 class="font-magical text-3xl text-white/40 uppercase tracking-[0.4em]" vid="272">If you don't participate...</h2>
+                <div class="space-y-6" vid="273">
+                    <div class="text-4xl md:text-5xl font-serif-heading text-white opacity-60" vid="274">Someone else tells the story.</div>
+                    <div class="text-5xl md:text-6xl font-serif-heading text-white opacity-80" vid="275">Someone else frames the issue.</div>
+                    <div class="text-6xl md:text-7xl font-serif-heading text-white drop-shadow-[0_0_20px_rgba(255,255,255,0.3)]" vid="276">Someone else becomes the expert.</div>
+                </div>
+            </div>
+        </section>
+
+        
+        <section class="slide" data-ambient="bg-purple-900/50,bg-black" vid="277">
+            <div class="flex flex-col items-center gap-16 relative" vid="278">
+                <div class="absolute w-px h-full bg-gradient-to-b from-transparent via-purple-500 to-transparent opacity-30" vid="279"></div>
+                
+                <div class="flex flex-col items-center gap-4 relative z-10" vid="280">
+                    <div class="flex gap-2" vid="281">
+                        <div class="w-3 h-3 rounded-full bg-white animate-pulse" vid="282"></div>
+                        <div class="w-3 h-3 rounded-full bg-white/40" vid="283"></div>
+                        <div class="w-3 h-3 rounded-full bg-white/40" vid="284"></div>
+                        <div class="w-3 h-3 rounded-full bg-white/40" vid="285"></div>
+                    </div>
+                    <span class="font-magical text-2xl tracking-[0.3em] text-white" vid="286">POSTS</span>
+                </div>
+
+                <div class="h-12 w-px bg-cyan-400 relative" vid="287">
+                    <div class="absolute top-0 left-1/2 -translate-x-1/2 w-4 h-4 bg-cyan-400/20 rounded-full blur-sm" vid="288"></div>
+                </div>
+
+                <div class="flex flex-col items-center gap-4 relative z-10" vid="289">
+                    <div class="w-20 h-20 rounded-full glass-card flex items-center justify-center border-cyan-500/40 shadow-[0_0_30px_rgba(6,182,212,0.3)]" vid="290">
+                        <i class="ph-duotone ph-eye text-4xl text-cyan-300" vid="291"></i>
+                    </div>
+                    <span class="font-magical text-4xl tracking-[0.2em] text-cyan-300" vid="292">RECOGNITION</span>
+                </div>
+
+                <div class="h-12 w-px bg-purple-400" vid="293"></div>
+
+                <div class="flex flex-col items-center gap-4 relative z-10" vid="294">
+                    <div class="w-20 h-20 rounded-full glass-card flex items-center justify-center border-purple-500/40 shadow-[0_0_30px_rgba(168,85,247,0.3)]" vid="295">
+                        <i class="ph-duotone ph-shield-check text-4xl text-purple-300" vid="296"></i>
+                    </div>
+                    <span class="font-magical text-4xl tracking-[0.2em] text-purple-300" vid="297">TRUST</span>
+                </div>
+
+                <div class="h-12 w-px bg-amber-400" vid="298"></div>
+
+                <div class="flex flex-col items-center gap-4 relative z-10" vid="299">
+                    <div class="w-20 h-20 rounded-full glass-card flex items-center justify-center border-amber-500/40 shadow-[0_0_30px_rgba(245,158,11,0.3)]" vid="300">
+                        <i class="ph-duotone ph-users-three text-4xl text-amber-300" vid="301"></i>
+                    </div>
+                    <span class="font-magical text-4xl tracking-[0.2em] text-amber-300" vid="302">PARTICIPATION</span>
+                </div>
+            </div>
+        </section>
+
+        
+        <section class="slide" data-ambient="bg-indigo-900/20,bg-cyan-900/30" vid="303">
+            <div class="w-full max-w-6xl" vid="304">
+                <div class="grid grid-cols-4 gap-4 mb-20" vid="305">
+                    <div class="glass-card p-8 rounded-3xl border-cyan-500/20 text-center" vid="306">
+                        <div class="text-[10px] text-cyan-400 mb-2 font-bold tracking-widest uppercase" vid="307">THEY RECOGNIZE</div>
+                        <div class="font-magical text-xl text-white" vid="308">Your Language</div>
+                    </div>
+                    <div class="glass-card p-8 rounded-3xl border-purple-500/20 text-center" vid="309">
+                        <div class="text-[10px] text-purple-400 mb-2 font-bold tracking-widest uppercase" vid="310">THEY RECOGNIZE</div>
+                        <div class="font-magical text-xl text-white" vid="311">Your Values</div>
+                    </div>
+                    <div class="glass-card p-8 rounded-3xl border-amber-500/20 text-center" vid="312">
+                        <div class="text-[10px] text-amber-400 mb-2 font-bold tracking-widest uppercase" vid="313">THEY RECOGNIZE</div>
+                        <div class="font-magical text-xl text-white" vid="314">Your Expertise</div>
+                    </div>
+                    <div class="glass-card p-8 rounded-3xl border-emerald-500/20 text-center" vid="315">
+                        <div class="text-[10px] text-emerald-400 mb-2 font-bold tracking-widest uppercase" vid="316">THEY RECOGNIZE</div>
+                        <div class="font-magical text-xl text-white" vid="317">Your Perspective</div>
+                    </div>
+                </div>
+                <div class="flex items-center justify-center gap-8" vid="318">
+                    <div class="font-magical text-3xl text-cyan-300" vid="319">Recognition</div>
+                    <i class="ph-bold ph-arrow-right text-white/20" vid="320"></i>
+                    <div class="font-magical text-3xl text-purple-300" vid="321">Trust</div>
+                    <i class="ph-bold ph-arrow-right text-white/20" vid="322"></i>
+                    <div class="font-magical text-3xl text-amber-300" vid="323">Participation</div>
+                </div>
+            </div>
+        </section>
+
+        
+        <section class="slide" data-ambient="bg-purple-900/40,bg-black" vid="324">
+            <div class="max-w-4xl text-center space-y-16" vid="325">
+                <div class="opacity-30 relative inline-block" vid="326">
+                    <div class="absolute top-1/2 left-0 w-full h-px bg-white/50 -rotate-2" vid="327"></div>
+                    <h3 class="font-serif-heading text-3xl text-white italic" vid="328">"What should I post tomorrow?"</h3>
+                </div>
+                <div vid="329">
+                    <h2 class="font-magical text-5xl md:text-7xl text-white mb-8" vid="330">"What story have I been telling for the last six months?"</h2>
+                    <div class="h-px w-32 bg-gradient-to-r from-transparent via-cyan-500 to-transparent mx-auto mb-8" vid="331"></div>
+                    <p class="font-serif-heading text-2xl text-cyan-300/80 italic" vid="332">One body of work. Many entry points.</p>
+                </div>
+            </div>
+        </section>
+
+        
+        <section class="slide" data-ambient="bg-black,bg-indigo-900/30" vid="333">
+            <div class="w-full max-w-5xl" vid="334">
+                <div class="flex items-center gap-6 mb-16" vid="335">
+                    <div class="w-16 h-16 rounded-2xl glass-card flex items-center justify-center text-purple-400" vid="336">
+                        <i class="ph-duotone ph-clipboard-text text-3xl" vid="337"></i>
+                    </div>
+                    <h2 class="font-magical text-4xl text-white" vid="338">Workshop: Review Your Public Voice</h2>
+                </div>
+                <div class="grid grid-cols-2 gap-12" vid="339">
+                    <div class="glass-panel p-10 rounded-3xl border-l-4 border-l-purple-500 bg-purple-500/5" vid="340">
+                        <h3 class="font-magical text-xl text-white mb-6 tracking-widest uppercase" vid="341">Share</h3>
+                        <ul class="space-y-4" vid="342">
+                            <li class="flex items-center gap-4 text-purple-100" vid="343">
+                                <div class="w-6 h-6 rounded-full border border-purple-500/50 flex items-center justify-center text-[10px] font-bold" vid="344">1</div>
+                                Your three themes
+                            </li>
+                            <li class="flex items-center gap-4 text-purple-100" vid="345">
+                                <div class="w-6 h-6 rounded-full border border-purple-500/50 flex items-center justify-center text-[10px] font-bold" vid="346">2</div>
+                                One recent post
+                            </li>
+                        </ul>
+                    </div>
+                    <div class="glass-panel p-10 rounded-3xl border-l-4 border-l-cyan-500 bg-cyan-500/5" vid="347">
+                        <h3 class="font-magical text-xl text-white mb-6 tracking-widest uppercase" vid="348">Discuss</h3>
+                        <ul class="space-y-4 text-sm text-white/70" vid="349">
+                            <li vid="350">• What themes do you notice?</li>
+                            <li vid="351">• What signal is this sending?</li>
+                            <li vid="352">• What would you assume this person is known for?</li>
+                            <li vid="353">• What could strengthen that pattern?</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        
+        <section class="slide" data-ambient="bg-purple-900/40,bg-indigo-900/30" vid="354">
+            <div class="max-w-5xl text-center" vid="355">
+                <h2 class="font-magical text-6xl md:text-8xl text-white mb-16 leading-tight" vid="356">
+                    Build a Reputation. <br vid="357"> <span class="text-gradient-gold" vid="358">Not Just a Feed.</span>
+                </h2>
+                <div class="grid grid-cols-3 gap-8 mt-12" vid="359">
+                    <div class="glass-card p-8 rounded-3xl border-t border-cyan-500/20" vid="360">
+                        <p class="text-sm text-cyan-200" vid="361">Recognition builds <strong class="text-white" vid="362">trust</strong>.</p>
+                    </div>
+                    <div class="glass-card p-8 rounded-3xl border-t border-purple-500/20" vid="363">
+                        <p class="text-sm text-purple-200" vid="364">Trust builds <strong class="text-white" vid="365">community</strong>.</p>
+                    </div>
+                    <div class="glass-card p-8 rounded-3xl border-t border-amber-500/20" vid="366">
+                        <p class="text-sm text-amber-200" vid="367">Community creates <strong class="text-white" vid="368">participation</strong>.</p>
+                    </div>
+                </div>
+                <div class="mt-24 opacity-30 flex items-center justify-center gap-6" vid="369">
+                    <i class="ph-fill ph-sparkle" vid="370"></i>
+                    <span class="font-magical tracking-[0.5em] text-xs uppercase" vid="371">TRUTH IN AMPLIFICATION</span>
+                    <i class="ph-fill ph-sparkle" vid="372"></i>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <script vid="373">
+        document.addEventListener('DOMContentLoaded', () => {
+            
+            const starContainer = document.getElementById('star-container');
+            const starCount = 150;
+            for (let i = 0; i < starCount; i++) {
+                const star = document.createElement('div');
+                star.classList.add('star');
+                star.style.left = `${Math.random() * 100}%`;
+                star.style.top = `${Math.random() * 100}%`;
+                const size = Math.random() < 0.1 ? 3 : (Math.random() < 0.4 ? 2 : 1);
+                star.style.width = `${size}px`;
+                star.style.height = `${size}px`;
+                star.style.setProperty('--duration', `${2 + Math.random() * 4}s`);
+                star.style.setProperty('--delay', `${Math.random() * 5}s`);
+                star.style.setProperty('--opacity', 0.2 + Math.random() * 0.6);
+                starContainer.appendChild(star);
+            }
+
+            
+            const slides = document.querySelectorAll('.slide');
+            const totalSlides = slides.length;
+            let currentSlide = 0;
+            let isAnimating = false;
+            
+            const btnPrev = document.getElementById('btn-prev');
+            const btnNext = document.getElementById('btn-next');
+            const counterEl = document.getElementById('slide-counter');
+            const dotsContainer = document.getElementById('dots-container');
+            const ambient1 = document.getElementById('ambient-1');
+            const ambient2 = document.getElementById('ambient-2');
+
+            
+            for (let i = 0; i < totalSlides; i++) {
+                const dot = document.createElement('div');
+                dot.classList.add('dot');
+                if(i === 0) dot.classList.add('active');
+                dot.addEventListener('click', () => goToSlide(i));
+                dotsContainer.appendChild(dot);
+            }
+            const dots = document.querySelectorAll('.dot');
+            
+            function updateAmbientGlow() {
+                const currentThemeData = slides[currentSlide].getAttribute('data-ambient');
+                if(currentThemeData) {
+                    const classes = currentThemeData.split(',');
+                    ambient1.className = `ambient-glow w-[800px] h-[800px] top-[-20%] left-[-10%] mix-blend-screen ${classes[0]}`;
+                    ambient2.className = `ambient-glow w-[600px] h-[600px] bottom-[-10%] right-[-10%] mix-blend-screen ${classes[1] || classes[0]}`;
+                }
+            }
+
+            function updateSlides(newIndex, direction) {
+                if (isAnimating || newIndex === currentSlide) return;
+                isAnimating = true;
+
+                const currentEl = slides[currentSlide];
+                const nextEl = slides[newIndex];
+
+                nextEl.classList.remove('opacity-0', 'pointer-events-none', 'z-0', 'active');
+                
+                if (direction === 'next') {
+                    nextEl.style.transform = 'translateY(40px) scale(0.98)';
+                    currentEl.style.transform = 'translateY(-40px) scale(0.98)';
+                } else {
+                    nextEl.style.transform = 'translateY(-40px) scale(0.98)';
+                    currentEl.style.transform = 'translateY(40px) scale(0.98)';
+                }
+
+                void nextEl.offsetWidth; 
+
+                currentEl.classList.remove('active');
+                currentEl.classList.add('opacity-0', 'pointer-events-none', 'z-0');
+                
+                nextEl.style.transform = ''; 
+                nextEl.classList.add('active');
+
+                dots[currentSlide].classList.remove('active');
+                dots[newIndex].classList.add('active');
+                currentSlide = newIndex;
+                counterEl.innerText = `${currentSlide + 1} / ${totalSlides}`;
+                
+                updateAmbientGlow();
+
+                setTimeout(() => {
+                    currentEl.style.transform = ''; 
+                    isAnimating = false;
+                }, 800);
+            }
+
+            function nextSlide() {
+                if (currentSlide < totalSlides - 1) updateSlides(currentSlide + 1, 'next');
+            }
+
+            function prevSlide() {
+                if (currentSlide > 0) updateSlides(currentSlide - 1, 'prev');
+            }
+
+            function goToSlide(index) {
+                if(index > currentSlide) {
+                    updateSlides(index, 'next');
+                } else if (index < currentSlide) {
+                    updateSlides(index, 'prev');
+                }
+            }
+
+            btnNext.addEventListener('click', nextSlide);
+            btnPrev.addEventListener('click', prevSlide);
+
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'ArrowRight' || e.key === 'ArrowDown' || e.key === ' ') {
+                    e.preventDefault();
+                    nextSlide();
+                } else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
+                    e.preventDefault();
+                    prevSlide();
+                }
+            });
+
+            
+            let wheelTimeout;
+            document.addEventListener('wheel', (e) => {
+                if (isAnimating) return;
+                if (Math.abs(e.deltaY) < 40) return; 
+                
+                clearTimeout(wheelTimeout);
+                wheelTimeout = setTimeout(() => {
+                    if (e.deltaY > 0) {
+                        nextSlide();
+                    } else {
+                        prevSlide();
+                    }
+                }, 100);
+            }, { passive: false });
+
+            updateAmbientGlow();
+        });
+    </script>
+
+</body></html>

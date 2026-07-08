@@ -1,13 +1,13 @@
 # Source Coverage Audit
 
-Generated: 2026-07-08T13:16:37.603Z
+Generated: 2026-07-08T15:42:02.711Z
 
 ## Summary
 
 - Total sources: 185
 - Total prospects: 92
 - Total public organizations: 70
-- Total pending organizations: 61
+- Total pending organizations: 64
 
 ## Active Source Coverage
 
@@ -106,13 +106,13 @@ Generated: 2026-07-08T13:16:37.603Z
 | Grove Collaborative | 6 |
 | Protect Democracy | 5 |
 | More Perfect Union Action | 4 |
+| Resource Innovations | 4 |
 | Sierra Club | 4 |
 | Arevon Energy | 3 |
 | Ascent | 3 |
 | Carbon Direct | 3 |
 | Fervo Energy | 3 |
 | Middle Seat | 3 |
-| Quantis | 3 |
 
 ## Missing Preferred Orgs
 

@@ -1,13 +1,13 @@
 # Source Coverage Audit
 
-Generated: 2026-07-08T15:42:02.711Z
+Generated: 2026-07-08T17:11:35.151Z
 
 ## Summary
 
 - Total sources: 185
 - Total prospects: 92
 - Total public organizations: 70
-- Total pending organizations: 64
+- Total pending organizations: 62
 
 ## Active Source Coverage
 
@@ -52,7 +52,7 @@ Generated: 2026-07-08T15:42:02.711Z
 | Clean Slate Initiative | clean-slate-initiative |  | low_confidence_experimental | sync_error | 3 | 0 | 0 |
 | CleanCapital | clean-capital |  | trusted_nonprofit_pending_review | live | 0 | 3 | 0 |
 | CleanChoice Energy | cleanchoice-energy |  | low_confidence_experimental | sync_error | 3 | 0 | 0 |
-| Climate Action Campaign | climate-action-campaign | trakstar | tracked_manual_org | pending_updated | 0 | 0 | 1 |
+| Climate Action Campaign | climate-action-campaign | trakstar | tracked_manual_org | no_pending_changes | 0 | 0 | 0 |
 | Climate Cabinet | climate-cabinet | greenhouse | trusted_nonprofit_pending_review | live | 0 | 1 | 0 |
 | Climate Central | climate-central |  | low_confidence_experimental | live | 0 | 1 | 0 |
 | Climate Justice Alliance | climate-justice-alliance |  | manual_review_community | live | 0 | 0 | 0 |
@@ -93,26 +93,26 @@ Generated: 2026-07-08T15:42:02.711Z
 
 | organization | pending_jobs |
 | --- | --- |
-| Quince | 116 |
-| GoodLeap | 28 |
+| Quince | 123 |
 | Octopus Energy | 28 |
+| GoodLeap | 24 |
 | NextEra Energy | 23 |
 | Get Vocal PBC | 18 |
-| SEEL | 16 |
+| SEEL | 17 |
 | Conservation International | 10 |
 | GBL HR | 10 |
 | Advanced Energy United | 9 |
+| Grove Collaborative | 9 |
 | American Bird Conservancy | 6 |
-| Grove Collaborative | 6 |
+| Oxfam America | 6 |
 | Protect Democracy | 5 |
+| Sierra Club | 5 |
 | More Perfect Union Action | 4 |
 | Resource Innovations | 4 |
-| Sierra Club | 4 |
 | Arevon Energy | 3 |
 | Ascent | 3 |
 | Carbon Direct | 3 |
 | Fervo Energy | 3 |
-| Middle Seat | 3 |
 
 ## Missing Preferred Orgs
 
@@ -166,7 +166,7 @@ Generated: 2026-07-08T15:42:02.711Z
 | RE-volv | re-volv | 3 | sync_error | 2026-05-25T03:15:53.497Z | investigate_fetch_failures |
 | Shadow Light Studios | shadow-light-studios | 6 | sync_error | 2026-05-24T21:27:45.639Z | investigate_fetch_failures |
 | The Climate Group | the-climate-group | 3 | sync_error | 2026-05-25T03:15:53.497Z | investigate_fetch_failures |
-| The Climate Reality Project | climate-reality-project | 6 | fetch_failed |  | investigate_fetch_failures |
+| The Climate Reality Project | climate-reality-project | 7 | fetch_failed |  | investigate_fetch_failures |
 | The RealReal | the-realreal | 5 | sync_error | 2026-05-24T21:27:45.643Z | investigate_fetch_failures |
 | thredUP | thredup | 12 | sync_error | 2026-05-24T21:27:45.644Z | investigate_fetch_failures |
 | Transformations Community | transformations-community | 6 | sync_error | 2026-05-24T21:27:45.645Z | investigate_fetch_failures |

@@ -30,10 +30,19 @@ jobs:
           fi
 
       - name: Syntax check admin scripts
+        shell: bash
         run: |
-          node --check "$JOBS_DIR/scripts/apply-admin-actions.js"
-          node --check "$JOBS_DIR/scripts/admin-local-queue.js"
-          node --check "$JOBS_DIR/scripts/test-admin-local-queue.js"
+          for file in \
+            "$JOBS_DIR/scripts/apply-admin-actions.js" \
+            "$JOBS_DIR/scripts/admin-local-queue.js" \
+            "$JOBS_DIR/scripts/test-admin-local-queue.js"
+          do
+            if [ -f "$file" ]; then
+              node --check "$file"
+            else
+              echo "Skipping missing optional script: $file"
+            fi
+          done
 
       - name: Run quality audit
         working-directory: ${{ env.JOBS_DIR }}

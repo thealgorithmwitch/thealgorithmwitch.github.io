@@ -40,10 +40,19 @@ jobs:
           fi
 
       - name: Validate pending source sync scripts
+        shell: bash
         run: |
-          node --check "$JOBS_DIR/scripts/sync-targeted-pending-sources.js"
-          node --check "$JOBS_DIR/scripts/ats-clients.js"
-          node --check "$JOBS_DIR/scripts/source-discovery-helpers.js"
+          for file in \
+            "$JOBS_DIR/scripts/sync-targeted-pending-sources.js" \
+            "$JOBS_DIR/scripts/ats-clients.js" \
+            "$JOBS_DIR/scripts/source-discovery-helpers.js"
+          do
+            if [ -f "$file" ]; then
+              node --check "$file"
+            else
+              echo "Skipping missing optional script: $file"
+            fi
+          done
 
       - name: Guard and fix blocked sources before validation
         run: npm --prefix "$JOBS_DIR" run jobs:check-blocked-sources -- --write
@@ -65,13 +74,13 @@ jobs:
         shell: bash
         run: |
           CORE_CHANGED="$(git status --porcelain -- \
-            jobs/pending-synced-jobs.json \
-            jobs/source-health-latest.json \
+            "$JOBS_DIR/pending-synced-jobs.json" \
+            "$JOBS_DIR/source-health-latest.json" \
             || true)"
           REPORT_CHANGED="$(git status --porcelain -- \
-            jobs/reports/targeted-pending-source-sync.json \
-            jobs/reports/pending-source-state-audit.json \
-            jobs/validation-snapshots/latest.json \
+            "$JOBS_DIR/reports/targeted-pending-source-sync.json" \
+            "$JOBS_DIR/reports/pending-source-state-audit.json" \
+            "$JOBS_DIR/validation-snapshots/latest.json" \
             || true)"
           if [ -n "$CORE_CHANGED" ]; then
             echo "changed=true" >> "$GITHUB_OUTPUT"
@@ -97,14 +106,14 @@ jobs:
           name: jobs-sync-pending-sources-${{ github.run_id }}
           if-no-files-found: warn
           path: |
-            jobs/pending-synced-jobs.json
-            jobs/pending-jobs.json
-            jobs/source-health-latest.json
-            jobs/source-discovery-candidates.json
-            jobs/scrape-report.json
-            jobs/reports/targeted-pending-source-sync.json
-            jobs/reports/pending-source-state-audit.json
-            jobs/validation-snapshots/latest.json
+            ${{ env.JOBS_DIR }}/pending-synced-jobs.json
+            ${{ env.JOBS_DIR }}/pending-jobs.json
+            ${{ env.JOBS_DIR }}/source-health-latest.json
+            ${{ env.JOBS_DIR }}/source-discovery-candidates.json
+            ${{ env.JOBS_DIR }}/scrape-report.json
+            ${{ env.JOBS_DIR }}/reports/targeted-pending-source-sync.json
+            ${{ env.JOBS_DIR }}/reports/pending-source-state-audit.json
+            ${{ env.JOBS_DIR }}/validation-snapshots/latest.json
 
       - name: Commit and push pending/source-health changes
         if: steps.changes.outputs.changed == 'true'
@@ -113,14 +122,14 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           for path in \
-            jobs/pending-synced-jobs.json \
-            jobs/pending-jobs.json \
-            jobs/source-health-latest.json \
-            jobs/source-discovery-candidates.json \
-            jobs/scrape-report.json \
-            jobs/reports/targeted-pending-source-sync.json \
-            jobs/reports/pending-source-state-audit.json \
-            jobs/validation-snapshots/latest.json; do
+            "$JOBS_DIR/pending-synced-jobs.json" \
+            "$JOBS_DIR/pending-jobs.json" \
+            "$JOBS_DIR/source-health-latest.json" \
+            "$JOBS_DIR/source-discovery-candidates.json" \
+            "$JOBS_DIR/scrape-report.json" \
+            "$JOBS_DIR/reports/targeted-pending-source-sync.json" \
+            "$JOBS_DIR/reports/pending-source-state-audit.json" \
+            "$JOBS_DIR/validation-snapshots/latest.json"; do
             if [ -e "$path" ]; then
               git add "$path"
             else

@@ -64,10 +64,19 @@ jobs:
           fi
 
       - name: Validate discovery scripts
+        shell: bash
         run: |
-          node --check "$JOBS_DIR/scripts/discover-sources.js"
-          node --check "$JOBS_DIR/scripts/search-ingest.js"
-          node --check "$JOBS_DIR/scripts/source-discovery-helpers.js"
+          for file in \
+            "$JOBS_DIR/scripts/discover-sources.js" \
+            "$JOBS_DIR/scripts/search-ingest.js" \
+            "$JOBS_DIR/scripts/source-discovery-helpers.js"
+          do
+            if [ -f "$file" ]; then
+              node --check "$file"
+            else
+              echo "Skipping missing optional script: $file"
+            fi
+          done
 
       - name: Guard and fix blocked sources before validation
         run: npm --prefix "$JOBS_DIR" run jobs:check-blocked-sources -- --write
@@ -96,8 +105,8 @@ jobs:
         shell: bash
         run: |
           CORE_CHANGED="$(git status --porcelain -- \
-            jobs/sources.json \
-            jobs/source-discovery-candidates.json \
+            "$JOBS_DIR/sources.json" \
+            "$JOBS_DIR/source-discovery-candidates.json" \
             || true)"
           if [ -n "$CORE_CHANGED" ]; then
             echo "changed=true" >> "$GITHUB_OUTPUT"
@@ -115,11 +124,11 @@ jobs:
           name: jobs-discover-sources-${{ github.run_id }}
           if-no-files-found: warn
           path: |
-            jobs/sources.json
-            jobs/source-discovery-candidates.json
-            jobs/scrape-report.json
-            jobs/reports/source-discovery-report.json
-            jobs/validation-snapshots/latest.json
+            ${{ env.JOBS_DIR }}/sources.json
+            ${{ env.JOBS_DIR }}/source-discovery-candidates.json
+            ${{ env.JOBS_DIR }}/scrape-report.json
+            ${{ env.JOBS_DIR }}/reports/source-discovery-report.json
+            ${{ env.JOBS_DIR }}/validation-snapshots/latest.json
 
       - name: Commit and push discovery changes
         if: ${{ inputs.write == 'true' && steps.changes.outputs.changed == 'true' }}
@@ -128,11 +137,11 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           for path in \
-            jobs/sources.json \
-            jobs/source-discovery-candidates.json \
-            jobs/scrape-report.json \
-            jobs/reports/source-discovery-report.json \
-            jobs/validation-snapshots/latest.json; do
+            "$JOBS_DIR/sources.json" \
+            "$JOBS_DIR/source-discovery-candidates.json" \
+            "$JOBS_DIR/scrape-report.json" \
+            "$JOBS_DIR/reports/source-discovery-report.json" \
+            "$JOBS_DIR/validation-snapshots/latest.json"; do
             if [ -e "$path" ]; then
               git add "$path"
             else

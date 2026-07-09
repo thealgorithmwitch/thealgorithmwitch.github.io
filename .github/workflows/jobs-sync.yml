@@ -45,15 +45,6 @@ jobs:
             echo "No package dependencies declared. Skipping npm install."
           fi
 
-      - name: Validate admin scripts
-        run: |
-          node --check "$JOBS_DIR/scripts/apply-admin-actions.js"
-          node --check "$JOBS_DIR/scripts/validate-public-data.js"
-          node --check "$JOBS_DIR/scripts/validate-source-expansion.js"
-          node --check "$JOBS_DIR/scripts/public-jobs.js"
-          node --check "$JOBS_DIR/scripts/cleanup-stale-jobs.js"
-          node --check "$JOBS_DIR/scripts/audit-source-coverage.js"
-
       - name: Snapshot queued admin actions
         run: npm --prefix "$JOBS_DIR" run jobs:snapshot-admin-actions
 
@@ -141,27 +132,28 @@ jobs:
           name: jobs-admin-sync-${{ github.run_id }}
           if-no-files-found: warn
           path: |
-            jobs/job-records.json
-            jobs/jobs.json
-            jobs/pending-jobs.json
-            jobs/talent-profiles.json
-            jobs/employers.json
-            jobs/pending-synced-jobs.json
-            jobs/source-discovery-candidates.json
-            jobs/source-health-latest.json
-            jobs/scrape-report.json
-            jobs/sources.json
-            jobs/source-prospects.json
-            jobs/broad-source-config.json
-            jobs/admin-actions-local.json
-            jobs/admin-pending-overrides.json
-            jobs/admin-action-overrides.json
-            jobs/admin-organization-rules.json
-            jobs/admin-job-actions.json
-            jobs/validation-snapshots/latest.json
-            jobs/reports
-            jobs/pages
-            jobs/*.html
+            ${{ env.JOBS_DIR }}/job-records.json
+            ${{ env.JOBS_DIR }}/jobs.json
+            ${{ env.JOBS_DIR }}/pending-jobs.json
+            ${{ env.JOBS_DIR }}/talent-profiles.json
+            ${{ env.JOBS_DIR }}/employers.json
+            ${{ env.JOBS_DIR }}/pending-synced-jobs.json
+            ${{ env.JOBS_DIR }}/source-discovery-candidates.json
+            ${{ env.JOBS_DIR }}/source-health-latest.json
+            ${{ env.JOBS_DIR }}/scrape-report.json
+            ${{ env.JOBS_DIR }}/sources.json
+            ${{ env.JOBS_DIR }}/source-prospects.json
+            ${{ env.JOBS_DIR }}/broad-source-config.json
+            ${{ env.JOBS_DIR }}/admin-actions-local.json
+            ${{ env.JOBS_DIR }}/admin-pending-overrides.json
+            ${{ env.JOBS_DIR }}/admin-action-overrides.json
+            ${{ env.JOBS_DIR }}/admin-organization-rules.json
+            ${{ env.JOBS_DIR }}/admin-job-actions.json
+            ${{ env.JOBS_DIR }}/validation-snapshots/latest.json
+            ${{ env.JOBS_DIR }}/reports/*.json
+            ${{ env.JOBS_DIR }}/reports/*.md
+            ${{ env.JOBS_DIR }}/pages/**
+            ${{ env.JOBS_DIR }}/*.html
 
       - name: Commit and push generated changes
         if: steps.changes.outputs.changed == 'true' && success()

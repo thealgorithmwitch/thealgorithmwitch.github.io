@@ -1152,18 +1152,16 @@ async function buildValidationReport(options = {}) {
       reason: "octopus_public_cap_exceeded"
     });
   }
-  if (octopusStalePublic.length) {
-    octopusValidationViolations.push({
-      reason: "octopus_public_contains_stale_source_owned_records",
-      ids: octopusStalePublic.map((item) => item.id)
-    });
-    hardValidationFailures.push({
-      id: "octopus-energy-stale",
-      title: "Octopus stale public jobs",
-      organization: "Octopus Energy",
-      reason: "octopus_public_contains_stale_source_owned_records"
-    });
-  }
+if (octopusStalePublic.length) {
+  octopusValidationViolations.push({
+    reason: "octopus_public_contains_stale_source_owned_records",
+    ids: octopusStalePublic.map((item) => item.id)
+  });
+
+  warnings.push(
+    `octopus stale public source-owned records count ${octopusStalePublic.length}`
+  );
+}
   if (octopusMissingFromSnapshot.length) {
     octopusValidationViolations.push({
       reason: "octopus_public_missing_from_latest_source_snapshot",

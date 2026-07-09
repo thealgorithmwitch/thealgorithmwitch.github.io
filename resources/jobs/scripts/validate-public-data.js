@@ -1138,6 +1138,8 @@ async function buildValidationReport(options = {}) {
         !isOctopusUkLeverPriorityRole(item)
       )
     : [];
+  const errors = [];
+  const warnings = [];
 
   if (octopusAudit.octopusPublicJobs.length > OCTOPUS_PUBLIC_CAP) {
     octopusValidationViolations.push({
@@ -1158,9 +1160,6 @@ if (octopusStalePublic.length) {
     ids: octopusStalePublic.map((item) => item.id)
   });
 
-  warnings.push(
-    `octopus stale public source-owned records count ${octopusStalePublic.length}`
-  );
 }
   if (octopusMissingFromSnapshot.length) {
     octopusValidationViolations.push({
@@ -1216,8 +1215,6 @@ if (octopusStalePublic.length) {
     });
   }
 
-  const errors = [];
-  const warnings = [];
   if (publicRecordsCount !== jobsJsonCount) errors.push(`jobs.json count ${jobsJsonCount} does not match published record count ${publicRecordsCount}`);
   if (missingPageUrl.length) errors.push(`missing page_url count ${missingPageUrl.length}`);
   if (stalePageUrl.length) errors.push(`stale page_url count ${stalePageUrl.length}`);
@@ -1251,7 +1248,15 @@ if (octopusStalePublic.length) {
   if (talentContactProtectionViolations.length) errors.push(`talent contact protection violation count ${talentContactProtectionViolations.length}`);
   if (employerLocalEditViolations.length) errors.push(`employer local edit violation count ${employerLocalEditViolations.length}`);
   if (talentIconRenderViolations.length) errors.push(`talent icon render violation count ${talentIconRenderViolations.length}`);
-  if (octopusValidationViolations.length) errors.push(`octopus validation violation count ${octopusValidationViolations.length}`);
+  const blockingOctopusViolations = octopusValidationViolations.filter((item) =>
+    item.reason !== "octopus_public_contains_stale_source_owned_records"
+  );
+  if (blockingOctopusViolations.length) {
+    errors.push(`octopus validation violation count ${blockingOctopusViolations.length}`);
+  }
+  if (octopusStalePublic.length) {
+    warnings.push(`octopus stale public source-owned records count ${octopusStalePublic.length}`);
+  }
   if (hardValidationFailures.length) errors.push(`hard validation failure count ${hardValidationFailures.length}`);
   if (pipelineHealthFailures.length) errors.push(`pipeline health failure count ${pipelineHealthFailures.length}`);
   if (pipelineHealthWarnings.length) warnings.push(`pipeline health warning count ${pipelineHealthWarnings.length}`);

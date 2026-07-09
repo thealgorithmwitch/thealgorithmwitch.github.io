@@ -1,13 +1,13 @@
 # Source Coverage Audit
 
-Generated: 2026-07-09T10:32:24.034Z
+Generated: 2026-07-09T17:36:31.431Z
 
 ## Summary
 
 - Total sources: 185
 - Total prospects: 92
-- Total public organizations: 70
-- Total pending organizations: 62
+- Total public organizations: 57
+- Total pending organizations: 61
 
 ## Active Source Coverage
 
@@ -20,13 +20,13 @@ Generated: 2026-07-09T10:32:24.034Z
 | ADP Employer cde26da5 | adp-cde26da5 | adp | low_confidence_experimental | stale | 0 | 0 | 0 |
 | Advanced Energy United | advanced-energy-united | rippling | tracked_manual_org | live | 0 | 3 | 9 |
 | AES Corporation | aes | workday | low_confidence_experimental | sync_disabled | 0 | 0 | 0 |
-| AllTrails | alltrails | lever | trusted_nonprofit_pending_review | stale | 0 | 1 | 0 |
+| AllTrails | alltrails | lever | trusted_nonprofit_pending_review | stale | 0 | 0 | 0 |
 | Amazon Watch | amazon-watch |  | manual_review_community | sync_error | 3 | 0 | 0 |
 | American Bird Conservancy | american-bird-conservancy | paylocity | trusted_nonprofit_pending_review | pending_updated | 0 | 0 | 6 |
 | American Council on Renewable Energy | acore |  | manual_review_community | stale | 0 | 0 | 0 |
 | Antora Energy | antora |  | low_confidence_experimental | live | 0 | 0 | 0 |
 | Appalachian Voices | appalachian-voices |  | manual_review_community | live | 0 | 0 | 0 |
-| Arevon Energy | arevon |  | low_confidence_experimental | live | 0 | 3 | 3 |
+| Arevon Energy | arevon |  | low_confidence_experimental | live | 0 | 2 | 3 |
 | Array Technologies | array-technologies | workday | low_confidence_experimental | sync_disabled | 0 | 0 | 0 |
 | Ascent | ascent | paylocity | trusted_nonprofit_pending_review | live | 0 | 2 | 3 |
 | Asian Pacific Environmental Network | apen4ej |  | manual_review_community | stale | 0 | 0 | 0 |
@@ -39,9 +39,9 @@ Generated: 2026-07-09T10:32:24.034Z
 | Brightline Defense | brightline-defense |  | manual_review_community |  | 0 | 0 | 0 |
 | Bullard Center for Environmental and Climate Justice | bullard-center |  | manual_review_community | live | 0 | 1 | 0 |
 | California Environmental Justice Alliance | california-environmental-justice-alliance |  | manual_review_community |  | 0 | 0 | 0 |
-| CALSTART | calstart | lever | trusted_nonprofit_pending_review | live | 0 | 5 | 2 |
+| CALSTART | calstart | lever | trusted_nonprofit_pending_review | live | 0 | 4 | 2 |
 | Canadian Solar | canadian-solar | workday | low_confidence_experimental | sync_disabled | 0 | 0 | 0 |
-| Carbon Direct | carbon-direct | greenhouse | trusted_nonprofit_pending_review | live | 0 | 2 | 3 |
+| Carbon Direct | carbon-direct | greenhouse | trusted_nonprofit_pending_review | live | 0 | 0 | 3 |
 | Carbon180 | carbon180 |  | low_confidence_experimental | live | 0 | 0 | 0 |
 | CEEZER | ceezer | ashby | low_confidence_experimental | sync_error | 5 | 0 | 0 |
 | Ceres | ceres |  | low_confidence_experimental | stale | 0 | 0 | 0 |
@@ -50,11 +50,11 @@ Generated: 2026-07-09T10:32:24.034Z
 | Clean Air Task Force | clean-air-task-force |  | low_confidence_experimental | live | 0 | 0 | 0 |
 | Clean Energy Trust | clean-energy-trust | bamboohr | trusted_nonprofit_pending_review | stale | 0 | 2 | 0 |
 | Clean Slate Initiative | clean-slate-initiative |  | low_confidence_experimental | sync_error | 3 | 0 | 0 |
-| CleanCapital | clean-capital |  | trusted_nonprofit_pending_review | live | 0 | 3 | 0 |
+| CleanCapital | clean-capital |  | trusted_nonprofit_pending_review | live | 0 | 1 | 0 |
 | CleanChoice Energy | cleanchoice-energy |  | low_confidence_experimental | sync_error | 3 | 0 | 0 |
 | Climate Action Campaign | climate-action-campaign | trakstar | tracked_manual_org | no_pending_changes | 0 | 0 | 0 |
-| Climate Cabinet | climate-cabinet | greenhouse | trusted_nonprofit_pending_review | live | 0 | 1 | 0 |
-| Climate Central | climate-central |  | low_confidence_experimental | live | 0 | 1 | 0 |
+| Climate Cabinet | climate-cabinet | greenhouse | trusted_nonprofit_pending_review | live | 0 | 0 | 0 |
+| Climate Central | climate-central |  | low_confidence_experimental | live | 0 | 0 | 0 |
 | Climate Justice Alliance | climate-justice-alliance |  | manual_review_community | live | 0 | 0 | 0 |
 | Climate Mayors | climate-mayors |  | low_confidence_experimental | sync_error | 3 | 0 | 0 |
 | ClimateWorks Foundation | climateworks-foundation |  | trusted_nonprofit_pending_review |  | 0 | 0 | 0 |
@@ -70,35 +70,35 @@ Generated: 2026-07-09T10:32:24.034Z
 | --- | --- |
 | Renew Home | 10 |
 | Powerlines | 7 |
-| HA Sustainable Infrastructure Capital | 6 |
-| More Perfect Union Action | 6 |
-| CALSTART | 5 |
 | Dylan Green | 5 |
-| Octopus Energy | 5 |
+| HA Sustainable Infrastructure Capital | 5 |
 | Oxfam America | 5 |
 | Protect Democracy | 5 |
 | SEEL | 5 |
-| Energy Infrastructure Partners LLC | 4 |
+| CALSTART | 4 |
 | Greentown Labs | 4 |
+| More Perfect Union Action | 4 |
 | NextEra Energy | 4 |
 | Advanced Energy United | 3 |
-| Arevon Energy | 3 |
 | ChargerHelp! | 3 |
-| CleanCapital | 3 |
-| Good Power | 3 |
-| Greenpeace | 3 |
-| Grove Collaborative | 3 |
+| Energy Infrastructure Partners LLC | 3 |
+| The Nature Conservancy | 3 |
+| Arevon Energy | 2 |
+| Ascent | 2 |
+| Clean Energy Trust | 2 |
+| EDP | 2 |
+| Education Reform Now Advocacy | 2 |
 
 ## Pending Review Coverage
 
 | organization | pending_jobs |
 | --- | --- |
-| Quince | 123 |
+| Quince | 124 |
 | Octopus Energy | 28 |
-| GoodLeap | 24 |
+| GoodLeap | 25 |
 | NextEra Energy | 23 |
-| Get Vocal PBC | 18 |
 | SEEL | 17 |
+| Get Vocal PBC | 16 |
 | Conservation International | 10 |
 | GBL HR | 10 |
 | Advanced Energy United | 9 |
@@ -156,6 +156,7 @@ Generated: 2026-07-09T10:32:24.034Z
 | Galvanize Climate Solutions | galvanize-climate | 3 | sync_error | 2026-05-25T03:15:53.496Z | investigate_fetch_failures |
 | GoodCitizen | goodcitizen | 3 | sync_error | 2026-05-25T03:15:53.496Z | investigate_fetch_failures |
 | Gravity Climate | gravity-climate | 5 | sync_error | 2026-05-24T21:27:45.623Z | investigate_fetch_failures |
+| Greentown Labs | greentown-labs | 3 | fetch_failed |  | investigate_fetch_failures |
 | Indigenous Environmental Network | indigenous-environmental-network | 3 | sync_error | 2026-05-25T03:15:53.497Z | investigate_fetch_failures |
 | Just Solutions Collective | just-solutions-collective | 3 | sync_error | 2026-05-25T03:15:53.496Z | investigate_fetch_failures |
 | Lightfield | lightfield | 5 | sync_error | 2026-05-24T21:27:45.625Z | investigate_fetch_failures |
@@ -166,7 +167,7 @@ Generated: 2026-07-09T10:32:24.034Z
 | RE-volv | re-volv | 3 | sync_error | 2026-05-25T03:15:53.497Z | investigate_fetch_failures |
 | Shadow Light Studios | shadow-light-studios | 6 | sync_error | 2026-05-24T21:27:45.639Z | investigate_fetch_failures |
 | The Climate Group | the-climate-group | 3 | sync_error | 2026-05-25T03:15:53.497Z | investigate_fetch_failures |
-| The Climate Reality Project | climate-reality-project | 7 | fetch_failed |  | investigate_fetch_failures |
+| The Climate Reality Project | climate-reality-project | 9 | fetch_failed |  | investigate_fetch_failures |
 | The RealReal | the-realreal | 5 | sync_error | 2026-05-24T21:27:45.643Z | investigate_fetch_failures |
 | thredUP | thredup | 12 | sync_error | 2026-05-24T21:27:45.644Z | investigate_fetch_failures |
 | Transformations Community | transformations-community | 6 | sync_error | 2026-05-24T21:27:45.645Z | investigate_fetch_failures |
@@ -183,28 +184,21 @@ Generated: 2026-07-09T10:32:24.034Z
 | organization | public_jobs | recommended_action |
 | --- | --- | --- |
 | Action Against Hunger | 1 | ready_for_manual_review |
-| Aristotle | 2 | ready_for_manual_review |
-| Avōq | 1 | add_to_sources_json |
+| Aristotle | 1 | ready_for_manual_review |
 | Centre for Information Resilience | 1 | ready_for_manual_review |
 | Climate Action | 1 | ready_for_manual_review |
-| ConnectDER | 1 | add_to_sources_json |
-| Conservation Voters of Pennsylvania | 1 | ready_for_manual_review |
-| Convergent Energy and Power | 1 | add_to_sources_json |
 | Education Reform Now Advocacy | 2 | add_to_sources_json |
-| Energy Infrastructure Partners LLC | 4 | add_to_sources_json |
-| Energy Trust of Oregon | 2 | ready_for_manual_review |
+| Energy Infrastructure Partners LLC | 3 | add_to_sources_json |
+| Energy Trust of Oregon | 1 | ready_for_manual_review |
 | Evolv Technologies Inc | 1 | ready_for_manual_review |
 | Fervo Energy | 2 | ready_for_manual_review |
 | Grassroots Carbon | 1 | add_to_sources_json |
 | InfluenceMap | 1 | ready_for_manual_review |
 | Innocence Project | 1 | ready_for_manual_review |
 | Mitti Labs | 1 | add_to_sources_json |
-| Momentum (BuildMomentum.io) | 1 | ready_for_manual_review |
 | Proterra | 1 | ready_for_manual_review |
 | Rational | 1 | ready_for_manual_review |
 | Resource Innovations | 2 | add_to_sources_json |
-| Rystad Energy | 1 | add_to_sources_json |
-| SSC HR Solutions | 1 | add_to_sources_json |
 | TaskForce | 1 | ready_for_manual_review |
 | The Herald Group | 1 | ready_for_manual_review |
 | Veloz | 1 | ready_for_manual_review |
@@ -214,11 +208,27 @@ Generated: 2026-07-09T10:32:24.034Z
 
 | organization | title | source_url |
 | --- | --- | --- |
+| Rystad Energy | Business Development Manager, Clean Energy | https://jobs.workable.com/view/9NTBEjXYhRRLc17cDvdDEX/hybrid-business-development-manager%2C-clean-energy-in-houston-at-rystad-energy |
+| Convergent Energy and Power | Director, Marketing Operations | https://jobs.workable.com/view/sS1h4NbvgxbJZrFqFfSEDA/remote-director%2C-marketing-operations-in-united-states-at-convergent-energy-and-power |
 | PLUS Communications | Digital Director | https://jobs.workable.com/view/7mXsGiweVFByL5UehwA27z/hybrid-digital-director-in-arlington-at-plus-communications |
+| Energy Infrastructure Partners LLC | Senior Program Manager | https://jobs.workable.com/view/3SW1CuKN7h7KKAesypTgrD/hybrid-senior-program-manager-in-los-angeles-at-energy-infrastructure-partners-llc |
+| Avōq | Communications Fellow - Reputation Management | https://jobs.workable.com/view/kpYa2WZ8M2TWGCiFtFJS1o/hybrid-communications-fellow---reputation-management-in-new-york-at-av%C5%8Dq |
+| SSC HR Solutions | Sustainability Manager | https://jobs.workable.com/view/pH3oMwvUPZjCoXP2DEevSz/sustainability-manager-in-cairo-at-ssc-hr-solutions |
+| More Perfect Union Action | Vertical Video Editor | https://more-perfect-union-action.rippling-ats.com/job/1021994/vertical-video-editor |
+| Climate Cabinet | Michigan State Lead - Lobbyist and Strategist | https://job-boards.greenhouse.io/climatecabinet/jobs/5132797007 |
+| Grove Collaborative | Associate Manager, Marketplace & Channel Operations | https://job-boards.greenhouse.io/grovecollaborative/jobs/5212558008 |
 | Quince | Senior Creative Strategist | https://job-boards.greenhouse.io/quince/jobs/5167665008 |
 | Woolpert | Engineer in Training, Site Civil Energy Practice | https://job-boards.greenhouse.io/woolpert/jobs/4087773009 |
+| Sunrun | ERP Business Systems Administrator | https://careers.sunrun.com/job/california/erp-business-systems-administrator/21632/94571057184 |
+| Sunrun | Sales Experience Program Manager | https://careers.sunrun.com/job/lehi/sales-experience-program-manager/21632/94749467216 |
 | Environmental Defense Fund | Analyst, Total Rewards | https://www.edf.org/jobs/analyst-total-rewards |
+| ConnectDER | Real-Time Firmware Engineer | https://jobs.elementalimpact.com/jobs |
+| Sierra Club | Chapter Director | https://jobs.lever.co/sierraclub/2d14a974-35b0-4fe1-82d5-96018da5d4cd |
+| Octopus Energy | Partnerships Manager | https://jobs.lever.co/octoenergy/9d3dbeed-8fcd-4d92-9658-fae45f0be720 |
+| More Perfect Union Action | Campus Video Editor Fellow | https://more-perfect-union-action.rippling-ats.com/job/1021946/campus-video-editor-fellow |
 | Mission 44 | Senior Manager Policy and Campaigns | https://jobs.workable.com/view/7irAitgA6D2XAM6a6beCda/hybrid-senior-manager-policy-and-campaigns-in-london-at-mission-44 |
+| Octopus Energy | Performance Marketing Lead | https://jobs.lever.co/octoenergy/b5557512-04f8-4bb4-95dd-074da4e4c2de |
+| Greenpeace | Senior Director, Climate and Rights (12-month position) | https://job-boards.greenhouse.io/greenpeace/jobs/8348929002 |
 | American Bird Conservancy | Writer/Editor | https://recruiting.paylocity.com/Recruiting/Jobs/Details/4042466 |
 | Arevon Energy | BESS Field Technician | https://arevonenergy.com/careers/#open-positions |
 | Earthjustice | Enterprise Systems Product Manager | https://earthjustice.org/jobs |
@@ -227,10 +237,12 @@ Generated: 2026-07-09T10:32:24.034Z
 | Renew Home | HubSpot Consultant (3 Month Contract | https://apply.workable.com/renewhome/j/8F00486888/ |
 | American Bird Conservancy | Production Specialist | https://recruiting.paylocity.com/Recruiting/Jobs/Details/4045149 |
 | Hip Hop Caucus | Think % Campaigns Manager | https://hiphopcaucus.org/careers/ |
+| CALSTART | Project Manager I, Mobility Grants (CMO) | https://jobs.lever.co/calstart/3dea3d9a-6c4d-49c5-9c52-28d54e7afe90 |
 | The Good Food Institute | Vice President of Operations | https://job-boards.greenhouse.io/thegoodfoodinstitute80/jobs/8516386002 |
 | World Resources Institute | Project Intern | https://www.wri.org/careers/jobs |
 | The Nature Conservancy | Montana Director of Development | https://careers.tnc.org/us/en/search-results |
 | NextEra Energy | Senior IT Business Systems Analyst | https://jobs.nexteraenergy.com/search/?searchby=location&createNewAlert=false&q=corporate+jobs&optionsFacetsDD_customfield1=&optionsFacetsDD_customfield2=&optionsFacetsDD_customfield3=&locationsearch=&geolocation= |
+| CleanCapital | Assistant Project Manager Construction | https://cleancapital.com/careers/ |
 | CleanCapital | Associate Development Acquisitions | https://cleancapital.com/careers/ |
 
 ## Duplicate Cleanup
@@ -247,6 +259,7 @@ _None_
 | Avōq | https://jobs.workable.com/view/kpYa2WZ8M2TWGCiFtFJS1o/hybrid-communications-fellow---reputation-management-in-new-york-at-av%C5%8Dq | add_to_sources_json |
 | Climate Reality Project | https://www.climaterealityproject.org/careers | add_to_sources_json |
 | ConnectDER | https://jobs.elementalimpact.com/jobs | add_to_sources_json |
+| Conservation Voters of Pennsylvania |  | candidate_for_new_pull |
 | Convergent Energy and Power | https://jobs.workable.com/view/sS1h4NbvgxbJZrFqFfSEDA/remote-director%2C-marketing-operations-in-united-states-at-convergent-energy-and-power | add_to_sources_json |
 | Education Reform Now Advocacy | https://jobs.workable.com/view/ttoHVPpzzztUWErqjEExef/remote-senior-director-of-partnerships-%26-advocacy-in-united-states-at-education-reform-now-advocacy | add_to_sources_json |
 | Emerald Cities Collaborative | https://emeraldcities.org/careers | add_to_sources_json |

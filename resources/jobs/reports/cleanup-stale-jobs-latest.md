@@ -1,22 +1,23 @@
 # Cleanup Stale Jobs
 
-Generated: 2026-07-09T12:42:03.600Z
+Generated: 2026-07-09T17:34:09.239Z
 Mode: write
 
 Previous public jobs count: 128
-Projected public jobs count after cleanup: 128
-Archived stale/dead/duplicate jobs: 0
-Dead links found: 0
+Projected public jobs count after cleanup: 127
+Archived stale/dead/duplicate jobs: 1
+Dead links found: 1
 Duplicate public jobs archived: 0
-Pages cleaned: 0
+Pages cleaned: 33
 Skipped risky changes: 14
 
 ## Archived Jobs
+- AllTrails-11b7a0d8-7b8f-456c-a9ff-d15e0d59613b: AllTrails | IT Manager | http_404
 
 ## Risky Changes Skipped
 - Advanced Energy United-9acd478b-6a23-4316-92c1-8c23b4409964: redirected_to_board_needs_review
-- Greenpeace-8549415002: code_feed_page
 - Grove Collaborative-5212550008: code_feed_page
+- Greenpeace-8549415002: code_feed_page
 - Greenpeace-8331887002: code_feed_page
 - Advanced Energy United-0e36c8d4-4947-4c9b-acbb-a8cb3bf748c2: redirected_to_board_needs_review
 - Greentown Labs-1ba976db-8028-4bca-a9e4-f87e908bfee8: redirected_to_board_needs_review

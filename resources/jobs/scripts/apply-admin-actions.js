@@ -420,6 +420,9 @@ function parseQueuedActions(actions) {
       updated_at: String(item.updated_at || ""),
       source: String(item.source || ""),
       payload: (() => {
+        if (item.payload && typeof item.payload === "object" && !Array.isArray(item.payload)) {
+          return item.payload;
+        }
         try {
           return JSON.parse(item.payload_json || "{}");
         } catch (_error) {

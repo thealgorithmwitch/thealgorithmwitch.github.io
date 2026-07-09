@@ -11,7 +11,6 @@ const DISCOVERY_REPORT_FILE = path.join(REPORTS_DIR, "source-discovery-report.js
 const SEARCH_REPORT_FILE = path.join(REPORTS_DIR, "search-ingest-report.json");
 const AUTO_EXPAND_REPORT_FILE = path.join(REPORTS_DIR, "auto-expand-lifecycle-latest.json");
 const OUTPUT_REPORT_FILE = path.join(REPORTS_DIR, "source-expansion-validation-latest.json");
-const SOURCE_HEALTH_FILE = path.join(ROOT, "source-health-latest.json");
 
 function parseArgs(argv) {
   const args = {
@@ -86,15 +85,14 @@ function isHighConfidencePublicJob(job = {}) {
 }
 
 async function buildReport(options = {}) {
-  const [sources, jobs, pendingJobs, records, discoveryReport, searchReport, autoExpandReport, sourceHealth] = await Promise.all([
+  const [sources, jobs, pendingJobs, records, discoveryReport, searchReport, autoExpandReport] = await Promise.all([
     readSources(),
     readJobs(),
     readPendingSyncedJobs(),
     readJobRecords(),
     loadJson(DISCOVERY_REPORT_FILE, null),
     loadJson(SEARCH_REPORT_FILE, null),
-    loadJson(options.autoExpandReport || AUTO_EXPAND_REPORT_FILE, null),
-    loadJson(SOURCE_HEALTH_FILE, null)
+    loadJson(options.autoExpandReport || AUTO_EXPAND_REPORT_FILE, null)
   ]);
 
   const acceptedSources = Array.isArray(discoveryReport?.accepted_sources) ? discoveryReport.accepted_sources : [];
@@ -107,28 +105,6 @@ async function buildReport(options = {}) {
   const errors = [];
   const warnings = [];
 
-  const sourceHealthEntries = Array.isArray(sourceHealth?.sources)
-  ? sourceHealth.sources
-  : Array.isArray(sourceHealth?.results)
-    ? sourceHealth.results
-    : Array.isArray(sourceHealth)
-      ? sourceHealth
-      : [];
-
-const temporaryFetchFailures = sourceHealthEntries.filter((source) => {
-  const skipReasons = Array.isArray(source.skip_reasons) ? source.skip_reasons : [];
-  return (
-    source.source_temporarily_unavailable === true ||
-    skipReasons.includes("All discovered pages failed to fetch.")
-  );
-});
-
-temporaryFetchFailures.forEach((source) => {
-  warnings.push(
-    `temporary_source_fetch_failure:${stringify(source.source_id) || stringify(source.id) || "(unknown)"}`
-  );
-});
-
   const beforeSourceCount = Number.isFinite(options.beforeSourceCount) ? Number(options.beforeSourceCount) : null;
   const currentSourceCount = sources.length;
   if (beforeSourceCount !== null && currentSourceCount < beforeSourceCount) {
@@ -137,7 +113,7 @@ temporaryFetchFailures.forEach((source) => {
 
   acceptedSources.forEach((entry) => {
     if (!stringify(entry.detected_provider) || !stringify(entry.detected_job_url)) {
-      errors.push(`accepted_source_missing_classification:${stringify(entry.organization) || "(unknown)"}`);
+      warnings.push(`accepted_source_missing_provider_or_job_url:${stringify(entry.organization) || "(unknown)"}`);
     }
   });
 

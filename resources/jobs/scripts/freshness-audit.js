@@ -919,7 +919,10 @@ async function main() {
       await syncPublicJobsFromRecords(nextRecords, {
         label: "jobs:freshness-audit",
         allowWorseOverwrite: false,
-        scopeIds: stalePublicJobs.map((job) => job.id)
+        scopeIds: stalePublicJobs.map((job) => job.id),
+        explainedRemovedIds: changedJobs
+          .filter((entry) => entry.action === "archived" || entry.action === "demoted_to_pending")
+          .map((entry) => entry.id)
       });
     } catch (error) {
       if (/Refusing to overwrite jobs\.json/i.test(String(error.message || ""))) {
@@ -961,6 +964,8 @@ module.exports = {
   writeRiskyChangesReport,
   classifyPageTypeFromUrl,
   classifyPageTypeFromTitle,
+  detectRedirectToBoard,
   detectPageMode,
+  fetchLivePage,
   main
 };

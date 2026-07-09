@@ -1,5 +1,6 @@
+const path = require("path");
 const { stringifySafe } = require("./job-normalizer");
-const { JOBS_FILE, readJobs, serializeForWrite, writeJson } = require("./job-utils");
+const { JOBS_FILE, readJobs, readJson, serializeForWrite, writeJson } = require("./job-utils");
 const { canonicalizeJobShape } = require("./canonical-job-shape");
 const { readJobRecords } = require("./public-records");
 const { buildJobPagePathMap, cleanVisibleText } = require("./job-page-paths");
@@ -14,6 +15,9 @@ const {
   isJunkDescription,
   isSuspiciousPayDowngrade
 } = require("./public-data-guard");
+
+const ROOT = path.resolve(__dirname, "..");
+const CLEANUP_REPORT_FILE = path.join(ROOT, "reports", "cleanup-stale-jobs-latest.json");
 
 const PAY_FIELDS = [
   "salary",
@@ -143,6 +147,52 @@ function enrichPublicJob(job) {
   };
 }
 
+function normalizeIdSet(values) {
+  return new Set(
+    (Array.isArray(values) ? values : [])
+      .map((value) => String(value || "").trim())
+      .filter(Boolean)
+  );
+}
+
+async function resolveExplainedDropAllowance(existingJobs = [], nextJobs = [], options = {}) {
+  const existingIds = normalizeIdSet((Array.isArray(existingJobs) ? existingJobs : []).map((job) => job && job.id));
+  const nextIds = normalizeIdSet((Array.isArray(nextJobs) ? nextJobs : []).map((job) => job && job.id));
+  const removedIds = Array.from(existingIds).filter((id) => !nextIds.has(id));
+  const explicitExplainedIds = normalizeIdSet(options.explainedRemovedIds || []);
+
+  let reportExplainedIds = new Set();
+  let cleanupReport = null;
+  try {
+    cleanupReport = await readJson(CLEANUP_REPORT_FILE, null);
+  } catch (_error) {
+    cleanupReport = null;
+  }
+
+  if (
+    cleanupReport &&
+    cleanupReport.mode === "write" &&
+    Number(cleanupReport.before_public_count || 0) === (Array.isArray(existingJobs) ? existingJobs.length : 0)
+  ) {
+    reportExplainedIds = normalizeIdSet(
+      cleanupReport.explained_removed_public_job_ids
+      || cleanupReport.removed_public_job_ids
+      || []
+    );
+  }
+
+  const explainedIds = new Set([...explicitExplainedIds, ...reportExplainedIds]);
+  const unexplainedRemovedIds = removedIds.filter((id) => !explainedIds.has(id));
+
+  return {
+    allowed: removedIds.length > 0 && unexplainedRemovedIds.length === 0,
+    removedIds,
+    explainedIds: Array.from(explainedIds),
+    unexplainedRemovedIds,
+    cleanupReport
+  };
+}
+
 function attachPublicJobPageUrls(jobs) {
   const list = Array.isArray(jobs) ? jobs : [];
   const { map: pagePathMap } = buildJobPagePathMap(list);
@@ -231,8 +281,14 @@ async function syncPublicJobsFromRecords(records, options = {}) {
   if (shouldWrite && !dryRun) {
     const expectedCount = computedPublicJobsCount;
     if (expectedCount < Math.max(existingJobsJsonCount * 0.8, 1)) {
-      throw new Error(
-        `Refusing to overwrite jobs.json: expected ${expectedCount} jobs vs ${existingJobsJsonCount} existing (drop >20%)`
+      const explainedDrop = await resolveExplainedDropAllowance(existingJobs, safePublicJobs, options);
+      if (!explainedDrop.allowed) {
+        throw new Error(
+          `Refusing to overwrite jobs.json: expected ${expectedCount} jobs vs ${existingJobsJsonCount} existing (drop >20%)`
+        );
+      }
+      logger.log(
+        `[${label}] jobs_json_sync_allowed_explained_drop=true removed_count=${explainedDrop.removedIds.length} unexplained_removed_count=${explainedDrop.unexplainedRemovedIds.length}`
       );
     }
     await writeJson(JOBS_FILE, attachRedirectPaths(existingJobs, safePublicJobs));
@@ -296,5 +352,6 @@ module.exports = {
   attachPublicJobPageUrls,
   buildPublicJobsFromRecords,
   countPublishedJobRecords,
+  resolveExplainedDropAllowance,
   syncPublicJobsFromRecords
 };

@@ -583,7 +583,10 @@
             <button id="bulk-hide-org" class="btn-danger" type="button">Hide Organization</button>
             <button id="bulk-reject-org" class="btn-danger" type="button">Reject All From Organization</button>
             <button id="export-local-actions" class="btn-secondary" type="button">Export Local Actions</button>
+            <button id="clear-local-actions" class="btn-danger" type="button">Clear Local Admin Queue</button>
           </div>
+          <div id="local-admin-queue-warning" class="message error" style="display:none; margin: 10px 0 0;"></div>
+          <div id="local-admin-queue-diagnostics" style="display:none; margin: 10px 0 0; color: var(--ink-secondary); font-size: 0.92rem;"></div>
           <div id="panel-jobs" class="grid"></div>
           <div class="actions">
             <button id="load-more-jobs" class="btn-secondary" type="button">Load More</button>
@@ -670,6 +673,7 @@
     </main>
   </div>
 
+  <script src="./scripts/admin-local-queue.js"></script>
   <script src="./scripts/jobs-backend-config.js"></script>
   <script>
     const JOBS_BACKEND_URL = window.JOBS_BACKEND_CONFIG?.backendUrl || "";
@@ -681,9 +685,12 @@
     const LOCAL_PUBLIC_JOBS_URL = "./jobs.json";
     const LOCAL_TALENT_URL = "./talent-profiles.json";
     const LOCAL_EMPLOYERS_URL = "./employers.json";
+    const LOCAL_ADMIN_ACTIONS_URL = "./admin-job-actions.json";
     const LOCAL_JOB_REVIEW_KEY = "jobs_local_admin_review_v1";
     const LOCAL_JOB_ACTION_QUEUE_KEY = "jobs_local_admin_action_queue_v1";
     const LOCAL_JOB_ACTION_EXPORT_FILENAME = "admin-actions-local.json";
+    const LOCAL_QUEUE_WARNING_TEXT = "Local admin queue is full. Please sync or clear local queued actions.";
+    const localQueueManager = window.AdminLocalQueue;
 
     const TAB_CONFIG = {
       jobs: {
@@ -779,6 +786,16 @@
         selectedIds: [],
         actionsById: {}
       },
+      localAdminActionSnapshot: [],
+      localAdminActionSnapshotLoaded: false,
+      localFallbackDisabled: false,
+      localQueueWarning: "",
+      localQueueDiagnostics: {
+        queueCount: 0,
+        serializedBytes: 0,
+        prunedCount: 0,
+        lastWrite: "n/a"
+      },
       forceLocalMode: false,
       adminDebug: {
         backendUrlPresent: false,
@@ -833,6 +850,9 @@
     };
     const loadMoreJobsButton = document.getElementById("load-more-jobs");
     const exportLocalActionsButton = document.getElementById("export-local-actions");
+    const clearLocalActionsButton = document.getElementById("clear-local-actions");
+    const localAdminQueueWarning = document.getElementById("local-admin-queue-warning");
+    const localAdminQueueDiagnostics = document.getElementById("local-admin-queue-diagnostics");
 
     function setAdminDebug(next = {}) {
       state.adminDebug = {
@@ -872,7 +892,13 @@
     }
 
     function setLocalReviewState() {
-      window.localStorage.setItem(LOCAL_JOB_REVIEW_KEY, JSON.stringify(state.localJobReview));
+      try {
+        window.localStorage.setItem(LOCAL_JOB_REVIEW_KEY, JSON.stringify(state.localJobReview));
+      } catch (error) {
+        console.warn("[admin-review] failed to persist local review state", {
+          reason: error.message || "localStorage write failed"
+        });
+      }
       const selectedCount = Array.isArray(state.localJobReview.selectedIds) ? state.localJobReview.selectedIds.length : 0;
       const bulkPublishButton = document.getElementById("bulk-publish");
       if (bulkPublishButton) {
@@ -881,39 +907,153 @@
       }
     }
 
-    function getLocalActionQueue() {
+    function formatBytes(bytes) {
+      const numeric = Number(bytes || 0);
+      if (numeric >= 1024 * 1024) return `${(numeric / (1024 * 1024)).toFixed(2)} MB`;
+      if (numeric >= 1024) return `${(numeric / 1024).toFixed(1)} KB`;
+      return `${numeric} B`;
+    }
+
+    function setLocalQueueWarning(message) {
+      state.localQueueWarning = String(message || "").trim();
+      localAdminQueueWarning.textContent = state.localQueueWarning;
+      localAdminQueueWarning.style.display = state.localQueueWarning ? "block" : "none";
+    }
+
+    function setLocalQueueDiagnostics(nextDiagnostics = {}) {
+      state.localQueueDiagnostics = {
+        ...state.localQueueDiagnostics,
+        ...nextDiagnostics
+      };
+      const details = [
+        `Queue: ${state.localQueueDiagnostics.queueCount || 0}`,
+        `Size: ${formatBytes(state.localQueueDiagnostics.serializedBytes || 0)}`,
+        `Pruned: ${state.localQueueDiagnostics.prunedCount || 0}`,
+        `Last write: ${state.localQueueDiagnostics.lastWrite || "n/a"}`
+      ];
+      localAdminQueueDiagnostics.textContent = details.join(" • ");
+      localAdminQueueDiagnostics.style.display = "block";
+      console.info("[admin-review] local queue diagnostics", state.localQueueDiagnostics);
+    }
+
+    function buildLocalQueueReferenceData() {
+      return {
+        committedActions: Array.isArray(state.localAdminActionSnapshot) ? state.localAdminActionSnapshot : [],
+        records: Array.isArray(state.activeJobRecords) ? state.activeJobRecords : []
+      };
+    }
+
+    async function loadLocalAdminActionSnapshot(forceReload) {
+      if (state.localAdminActionSnapshotLoaded && !forceReload) return;
       try {
-        const parsed = JSON.parse(window.localStorage.getItem(LOCAL_JOB_ACTION_QUEUE_KEY) || "{}");
-        return Array.isArray(parsed.actions) ? parsed.actions : [];
-      } catch (_error) {
-        return [];
+        const payload = await fetchJsonSnapshot(LOCAL_ADMIN_ACTIONS_URL);
+        state.localAdminActionSnapshot = Array.isArray(payload?.actions) ? payload.actions : [];
+      } catch (error) {
+        console.warn("[admin-review] failed to load committed admin actions snapshot", {
+          reason: error.message || "snapshot unavailable"
+        });
+        state.localAdminActionSnapshot = [];
+      } finally {
+        state.localAdminActionSnapshotLoaded = true;
       }
     }
 
-    function setLocalActionQueue(actions) {
-      window.localStorage.setItem(LOCAL_JOB_ACTION_QUEUE_KEY, JSON.stringify({
-        generated_at: new Date().toISOString(),
-        actions
-      }));
+    async function ensureLocalQueueReferenceData(forceReload) {
+      await Promise.all([
+        loadLocalAdminActionSnapshot(forceReload),
+        loadLocalActiveJobRecords(forceReload)
+      ]);
     }
 
-    function buildLocalQueuedAction(payload, status) {
-      const now = new Date().toISOString();
-      return {
-        id: `${payload.operation || "action"}-${Math.random().toString(36).slice(2, 10)}`,
-        status: status || "queued",
-        created_at: now,
-        updated_at: now,
-        actor: String(payload.actor || "Admin Review Console"),
-        operation: String(payload.operation || ""),
-        payload_json: JSON.stringify(payload)
-      };
+    function persistLocalActionQueue(actions) {
+      if (!localQueueManager) {
+        return {
+          ok: false,
+          actions: Array.isArray(actions) ? actions : [],
+          warning: LOCAL_QUEUE_WARNING_TEXT,
+          diagnostics: {
+            queueCount: 0,
+            serializedBytes: 0,
+            prunedCount: 0,
+            lastWrite: "failure"
+          }
+        };
+      }
+      const result = localQueueManager.persistQueue(window.localStorage, LOCAL_JOB_ACTION_QUEUE_KEY, actions, {
+        referenceData: buildLocalQueueReferenceData(),
+        onDiagnostics: setLocalQueueDiagnostics
+      });
+      if (result.warning) {
+        setLocalQueueWarning(LOCAL_QUEUE_WARNING_TEXT);
+      } else if (!state.localFallbackDisabled) {
+        setLocalQueueWarning("");
+      }
+      if (!result.ok) {
+        state.localFallbackDisabled = true;
+        setLocalQueueWarning(LOCAL_QUEUE_WARNING_TEXT);
+      }
+      return result;
+    }
+
+    function getLocalActionQueue() {
+      if (!localQueueManager) {
+        state.localFallbackDisabled = true;
+        setLocalQueueWarning(LOCAL_QUEUE_WARNING_TEXT);
+        setLocalQueueDiagnostics({
+          queueCount: 0,
+          serializedBytes: 0,
+          prunedCount: 0,
+          lastWrite: "failure"
+        });
+        return [];
+      }
+      const result = localQueueManager.loadQueue(window.localStorage, LOCAL_JOB_ACTION_QUEUE_KEY, {
+        referenceData: buildLocalQueueReferenceData(),
+        onDiagnostics: setLocalQueueDiagnostics
+      });
+      if (result.warning) {
+        setLocalQueueWarning(LOCAL_QUEUE_WARNING_TEXT);
+      } else if (!state.localFallbackDisabled) {
+        setLocalQueueWarning("");
+      }
+      return Array.isArray(result.actions) ? result.actions : [];
     }
 
     function enqueueLocalAction(payload, status) {
       const actions = getLocalActionQueue();
-      actions.push(buildLocalQueuedAction(payload, status));
-      setLocalActionQueue(actions);
+      const entry = localQueueManager
+        ? localQueueManager.buildQueueEntry(payload, status, new Date().toISOString())
+        : null;
+      const nextActions = entry ? actions.concat(entry) : actions;
+      const result = persistLocalActionQueue(nextActions);
+      console.info("[admin-review] local queue write", {
+        action: payload?.operation || "",
+        queueCount: result?.diagnostics?.queueCount || 0,
+        serializedBytes: result?.diagnostics?.serializedBytes || 0,
+        prunedCount: result?.diagnostics?.prunedCount || 0,
+        lastWrite: result?.diagnostics?.lastWrite || "failure",
+        ok: Boolean(result?.ok)
+      });
+      return result;
+    }
+
+    function clearLocalActionQueue() {
+      if (!localQueueManager) {
+        state.localFallbackDisabled = false;
+        setLocalQueueWarning("");
+        setLocalQueueDiagnostics({
+          queueCount: 0,
+          serializedBytes: 0,
+          prunedCount: 0,
+          lastWrite: "success"
+        });
+        return;
+      }
+      localQueueManager.clearQueue(window.localStorage, LOCAL_JOB_ACTION_QUEUE_KEY, {
+        onDiagnostics: setLocalQueueDiagnostics
+      });
+      state.localFallbackDisabled = false;
+      setLocalQueueWarning("");
     }
 
     function dedupeIds(ids) {
@@ -1792,7 +1932,13 @@
     }
 
     function setStoredToken(token) {
-      window.localStorage.setItem(TOKEN_STORAGE_KEY, token);
+      try {
+        window.localStorage.setItem(TOKEN_STORAGE_KEY, token);
+      } catch (error) {
+        console.warn("[admin-review] failed to persist admin token", {
+          reason: error.message || "localStorage write failed"
+        });
+      }
     }
 
     function clearStoredToken() {
@@ -2217,6 +2363,7 @@
       ) {
         throw new Error("publish_selected requires at least one selected job.");
       }
+      await ensureLocalQueueReferenceData(false);
       if (canUseBackendAdmin()) {
         try {
           const queued = await requestAdmin("queueLocalJobAction", payload);
@@ -2236,8 +2383,11 @@
             recordId: payload.recordId || payload.id || "",
             changedFields: payload.changed_fields || []
           });
-          enqueueLocalAction(payload, "mirrored");
-          return { mode: "backend" };
+          const mirrorResult = enqueueLocalAction(payload, "mirrored");
+          return {
+            mode: "backend",
+            warning: mirrorResult.ok ? "" : LOCAL_QUEUE_WARNING_TEXT
+          };
         } catch (error) {
           if (error.code === "AUTH_EXPIRED") {
             console.warn("[admin-review] backend queue blocked by expired auth", {
@@ -2260,7 +2410,14 @@
             jobsCount: Array.isArray(payload.jobs) ? payload.jobs.length : 0,
             reason: error.message || "request failure"
           });
-          enqueueLocalAction(payload, "queued");
+          if (state.localFallbackDisabled) {
+            setLocalQueueWarning(LOCAL_QUEUE_WARNING_TEXT);
+            throw new Error(LOCAL_QUEUE_WARNING_TEXT);
+          }
+          const localResult = enqueueLocalAction(payload, "queued");
+          if (!localResult.ok) {
+            throw new Error(LOCAL_QUEUE_WARNING_TEXT);
+          }
           downloadLocalActionsFile(false);
           return { mode: "local", warning: error.message || "Backend request failed. Saved locally instead." };
         }
@@ -2272,7 +2429,14 @@
         jobsCount: Array.isArray(payload.jobs) ? payload.jobs.length : 0,
         reason: isBackendConfigured() ? "missing token" : "backend not configured"
       });
-      enqueueLocalAction(payload, "queued");
+      if (state.localFallbackDisabled) {
+        setLocalQueueWarning(LOCAL_QUEUE_WARNING_TEXT);
+        throw new Error(LOCAL_QUEUE_WARNING_TEXT);
+      }
+      const localResult = enqueueLocalAction(payload, "queued");
+      if (!localResult.ok) {
+        throw new Error(LOCAL_QUEUE_WARNING_TEXT);
+      }
       downloadLocalActionsFile(false);
       return { mode: "local", warning: isBackendConfigured() ? "Missing admin token." : "Backend is not configured." };
     }
@@ -3062,6 +3226,10 @@
     document.getElementById("bulk-hide-org").addEventListener("click", () => applyLocalBulkAction("hide_organization"));
     document.getElementById("bulk-reject-org").addEventListener("click", () => applyLocalBulkAction("reject_all_from_organization"));
     exportLocalActionsButton.addEventListener("click", exportLocalActionsFile);
+    clearLocalActionsButton.addEventListener("click", () => {
+      clearLocalActionQueue();
+      setStatus("Cleared only the local admin action queue.", false);
+    });
 
     document.addEventListener("click", (event) => {
       const saveButton = event.target.closest("[data-save-local-edit]");
@@ -3172,6 +3340,8 @@
   async function initializeAdminReview() {
     try {
       state.localJobReview = getLocalReviewState();
+      await ensureLocalQueueReferenceData(false);
+      getLocalActionQueue();
       loadTriageSummary();
 
       if (!isBackendConfigured()) {

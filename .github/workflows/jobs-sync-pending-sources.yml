@@ -17,7 +17,7 @@ jobs:
     runs-on: ubuntu-latest
 
     env:
-      JOBS_DIR: resources/jobs
+      JOBS_DIR: jobs
 
     steps:
       - name: Checkout repository
@@ -28,14 +28,14 @@ jobs:
         with:
           node-version: "24"
           cache: npm
-          cache-dependency-path: resources/jobs/package-lock.json
+          cache-dependency-path: ${{ env.JOBS_DIR }}/package-lock.json
 
       - name: Install dependencies if needed
         shell: bash
         run: |
           if [ -f "$JOBS_DIR/package-lock.json" ] || [ -f "$JOBS_DIR/npm-shrinkwrap.json" ]; then
             npm --prefix "$JOBS_DIR" ci
-          elif node -e "const p=require('./resources/jobs/package.json'); const hasDeps=Object.keys(p.dependencies||{}).length > 0 || Object.keys(p.devDependencies||{}).length > 0; process.exit(hasDeps ? 0 : 1)"; then
+          elif node -e "const p=require('./${JOBS_DIR}/package.json'); const hasDeps=Object.keys(p.dependencies||{}).length > 0 || Object.keys(p.devDependencies||{}).length > 0; process.exit(hasDeps ? 0 : 1)"; then
             npm --prefix "$JOBS_DIR" install
           else
             echo "No package dependencies declared. Skipping npm install."
@@ -67,13 +67,13 @@ jobs:
         shell: bash
         run: |
           CORE_CHANGED="$(git status --porcelain -- \
-            resources/jobs/pending-synced-jobs.json \
-            resources/jobs/source-health-latest.json \
+            jobs/pending-synced-jobs.json \
+            jobs/source-health-latest.json \
             || true)"
           REPORT_CHANGED="$(git status --porcelain -- \
-            resources/jobs/reports/targeted-pending-source-sync.json \
-            resources/jobs/reports/pending-source-state-audit.json \
-            resources/jobs/validation-snapshots/latest.json \
+            jobs/reports/targeted-pending-source-sync.json \
+            jobs/reports/pending-source-state-audit.json \
+            jobs/validation-snapshots/latest.json \
             || true)"
           if [ -n "$CORE_CHANGED" ]; then
             echo "changed=true" >> "$GITHUB_OUTPUT"
@@ -99,14 +99,14 @@ jobs:
           name: jobs-sync-pending-sources-${{ github.run_id }}
           if-no-files-found: warn
           path: |
-            resources/jobs/pending-synced-jobs.json
-            resources/jobs/pending-jobs.json
-            resources/jobs/source-health-latest.json
-            resources/jobs/source-discovery-candidates.json
-            resources/jobs/scrape-report.json
-            resources/jobs/reports/targeted-pending-source-sync.json
-            resources/jobs/reports/pending-source-state-audit.json
-            resources/jobs/validation-snapshots/latest.json
+            jobs/pending-synced-jobs.json
+            jobs/pending-jobs.json
+            jobs/source-health-latest.json
+            jobs/source-discovery-candidates.json
+            jobs/scrape-report.json
+            jobs/reports/targeted-pending-source-sync.json
+            jobs/reports/pending-source-state-audit.json
+            jobs/validation-snapshots/latest.json
 
       - name: Commit and push pending/source-health changes
         if: steps.changes.outputs.changed == 'true'
@@ -115,14 +115,14 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           for path in \
-            resources/jobs/pending-synced-jobs.json \
-            resources/jobs/pending-jobs.json \
-            resources/jobs/source-health-latest.json \
-            resources/jobs/source-discovery-candidates.json \
-            resources/jobs/scrape-report.json \
-            resources/jobs/reports/targeted-pending-source-sync.json \
-            resources/jobs/reports/pending-source-state-audit.json \
-            resources/jobs/validation-snapshots/latest.json; do
+            jobs/pending-synced-jobs.json \
+            jobs/pending-jobs.json \
+            jobs/source-health-latest.json \
+            jobs/source-discovery-candidates.json \
+            jobs/scrape-report.json \
+            jobs/reports/targeted-pending-source-sync.json \
+            jobs/reports/pending-source-state-audit.json \
+            jobs/validation-snapshots/latest.json; do
             if [ -e "$path" ]; then
               git add "$path"
             else

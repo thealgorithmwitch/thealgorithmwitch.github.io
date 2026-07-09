@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
     inputs:
       discover_write:
-        description: "Append eligible discovered ATS sources to resources/jobs/sources.json?"
+        description: "Append eligible discovered ATS sources to jobs/sources.json?"
         required: true
         default: "false"
         type: choice
@@ -22,12 +22,12 @@ on:
       candidates_file:
         description: "Path to the discovery candidate file (.json or .txt)."
         required: true
-        default: "resources/jobs/source-discovery-candidates.json"
+        default: "jobs/source-discovery-candidates.json"
         type: string
       search_sources_file:
         description: "Path to the search source config JSON."
         required: true
-        default: "resources/jobs/search-sources.json"
+        default: "jobs/search-sources.json"
         type: string
   schedule:
     - cron: "15 13 * * 3"
@@ -44,9 +44,9 @@ jobs:
     runs-on: ubuntu-latest
 
     env:
-      JOBS_DIR: resources/jobs
-      CANDIDATES_FILE: ${{ github.event.inputs.candidates_file || 'resources/jobs/source-discovery-candidates.json' }}
-      SEARCH_SOURCES_FILE: ${{ github.event.inputs.search_sources_file || 'resources/jobs/search-sources.json' }}
+      JOBS_DIR: jobs
+      CANDIDATES_FILE: ${{ github.event.inputs.candidates_file || 'jobs/source-discovery-candidates.json' }}
+      SEARCH_SOURCES_FILE: ${{ github.event.inputs.search_sources_file || 'jobs/search-sources.json' }}
       GOOGLE_CUSTOM_SEARCH_API_KEY: ${{ secrets.GOOGLE_CUSTOM_SEARCH_API_KEY }}
       GOOGLE_CUSTOM_SEARCH_ENGINE_ID: ${{ secrets.GOOGLE_CUSTOM_SEARCH_ENGINE_ID }}
       SERPAPI_API_KEY: ${{ secrets.SERPAPI_API_KEY }}
@@ -62,14 +62,14 @@ jobs:
         with:
           node-version: "24"
           cache: npm
-          cache-dependency-path: resources/jobs/package-lock.json
+          cache-dependency-path: ${{ env.JOBS_DIR }}/package-lock.json
 
       - name: Install dependencies if needed
         shell: bash
         run: |
           if [ -f "$JOBS_DIR/package-lock.json" ] || [ -f "$JOBS_DIR/npm-shrinkwrap.json" ]; then
             npm --prefix "$JOBS_DIR" ci
-          elif node -e "const p=require('./resources/jobs/package.json'); const hasDeps=Object.keys(p.dependencies||{}).length > 0 || Object.keys(p.devDependencies||{}).length > 0; process.exit(hasDeps ? 0 : 1)"; then
+          elif node -e "const p=require('./${JOBS_DIR}/package.json'); const hasDeps=Object.keys(p.dependencies||{}).length > 0 || Object.keys(p.devDependencies||{}).length > 0; process.exit(hasDeps ? 0 : 1)"; then
             npm --prefix "$JOBS_DIR" install
           else
             echo "No package dependencies declared. Skipping npm install."
@@ -117,14 +117,14 @@ jobs:
         id: changes
         shell: bash
         run: |
-          SOURCES_CHANGED="$(git status --porcelain -- resources/jobs/sources.json || true)"
-          CANDIDATES_CHANGED="$(git status --porcelain -- resources/jobs/source-discovery-candidates.json || true)"
-          PENDING_CHANGED="$(git status --porcelain -- resources/jobs/pending-synced-jobs.json || true)"
-          SOURCE_HEALTH_CHANGED="$(git status --porcelain -- resources/jobs/source-health-latest.json || true)"
+          SOURCES_CHANGED="$(git status --porcelain -- jobs/sources.json || true)"
+          CANDIDATES_CHANGED="$(git status --porcelain -- jobs/source-discovery-candidates.json || true)"
+          PENDING_CHANGED="$(git status --porcelain -- jobs/pending-synced-jobs.json || true)"
+          SOURCE_HEALTH_CHANGED="$(git status --porcelain -- jobs/source-health-latest.json || true)"
           REPORTS_CHANGED="$(git status --porcelain -- \
-            resources/jobs/reports/source-discovery-report.json \
-            resources/jobs/reports/search-ingest-report.json \
-            resources/jobs/validation-snapshots/latest.json \
+            jobs/reports/source-discovery-report.json \
+            jobs/reports/search-ingest-report.json \
+            jobs/validation-snapshots/latest.json \
             || true)"
           ERROR_SIGNAL="$(node - <<'NODE'
           const fs = require('fs');
@@ -135,8 +135,8 @@ jobs:
               return null;
             }
           }
-          const searchReport = readJson('resources/jobs/reports/search-ingest-report.json');
-          const discoveryReport = readJson('resources/jobs/reports/source-discovery-report.json');
+          const searchReport = readJson('jobs/reports/search-ingest-report.json');
+          const discoveryReport = readJson('jobs/reports/source-discovery-report.json');
           const searchError = Number(searchReport?.summary?.meaningful_error_count || 0) > 0;
           const discoveryError = Array.isArray(discoveryReport?.query_reports)
             && discoveryReport.query_reports.some((entry) => ['missing_env_vars', 'fetch_failed'].includes(String(entry?.status || '')));
@@ -175,15 +175,15 @@ jobs:
           name: jobs-discovery-search-${{ github.run_id }}
           if-no-files-found: warn
           path: |
-            resources/jobs/sources.json
-            resources/jobs/source-discovery-candidates.json
-            resources/jobs/pending-jobs.json
-            resources/jobs/pending-synced-jobs.json
-            resources/jobs/source-health-latest.json
-            resources/jobs/scrape-report.json
-            resources/jobs/reports/source-discovery-report.json
-            resources/jobs/reports/search-ingest-report.json
-            resources/jobs/validation-snapshots/latest.json
+            jobs/sources.json
+            jobs/source-discovery-candidates.json
+            jobs/pending-jobs.json
+            jobs/pending-synced-jobs.json
+            jobs/source-health-latest.json
+            jobs/scrape-report.json
+            jobs/reports/source-discovery-report.json
+            jobs/reports/search-ingest-report.json
+            jobs/validation-snapshots/latest.json
 
       - name: Commit and push discovery/search changes
         if: steps.changes.outputs.core_changed == 'true' || steps.changes.outputs.should_commit_reports == 'true'
@@ -191,23 +191,23 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          if [ "${{ steps.changes.outputs.sources_changed }}" = "true" ] && [ -e resources/jobs/sources.json ]; then
-            git add resources/jobs/sources.json
+          if [ "${{ steps.changes.outputs.sources_changed }}" = "true" ] && [ -e jobs/sources.json ]; then
+            git add jobs/sources.json
           fi
-          if [ "${{ steps.changes.outputs.candidates_changed }}" = "true" ] && [ -e resources/jobs/source-discovery-candidates.json ]; then
-            git add resources/jobs/source-discovery-candidates.json
+          if [ "${{ steps.changes.outputs.candidates_changed }}" = "true" ] && [ -e jobs/source-discovery-candidates.json ]; then
+            git add jobs/source-discovery-candidates.json
           fi
-          if [ "${{ steps.changes.outputs.pending_changed }}" = "true" ] && [ -e resources/jobs/pending-synced-jobs.json ]; then
-            git add resources/jobs/pending-synced-jobs.json
+          if [ "${{ steps.changes.outputs.pending_changed }}" = "true" ] && [ -e jobs/pending-synced-jobs.json ]; then
+            git add jobs/pending-synced-jobs.json
           fi
           if [ "${{ steps.changes.outputs.should_commit_reports }}" = "true" ]; then
             for path in \
-              resources/jobs/pending-jobs.json \
-              resources/jobs/source-health-latest.json \
-              resources/jobs/scrape-report.json \
-              resources/jobs/reports/source-discovery-report.json \
-              resources/jobs/reports/search-ingest-report.json \
-              resources/jobs/validation-snapshots/latest.json; do
+              jobs/pending-jobs.json \
+              jobs/source-health-latest.json \
+              jobs/scrape-report.json \
+              jobs/reports/source-discovery-report.json \
+              jobs/reports/search-ingest-report.json \
+              jobs/validation-snapshots/latest.json; do
               if [ -e "$path" ]; then
                 git add "$path"
               else

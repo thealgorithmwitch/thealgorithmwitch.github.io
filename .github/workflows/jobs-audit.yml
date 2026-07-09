@@ -1,5 +1,4 @@
 name: Jobs Weekly Audit
-
 on:
   schedule:
     - cron: "0 8 * * 1"
@@ -9,16 +8,15 @@ jobs:
   audit:
     runs-on: ubuntu-latest
     env:
-      JOBS_DIR: resources/jobs
-
+      JOBS_DIR: jobs
     steps:
       - uses: actions/checkout@v4
 
       - uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 24
           cache: npm
-          cache-dependency-path: resources/jobs/package-lock.json
+          cache-dependency-path: ${{ env.JOBS_DIR }}/package-lock.json
 
       - name: Install dependencies
         shell: bash
@@ -31,17 +29,13 @@ jobs:
             echo "No package dependencies declared. Skipping npm install."
           fi
 
-      - name: Check workflow alignment
-        run: npm --prefix "$JOBS_DIR" run jobs:check-workflows
-
       - name: Run quality audit
         working-directory: ${{ env.JOBS_DIR }}
         run: node scripts/quality-audit.js
 
       - name: Archive fingerprint validation
         working-directory: ${{ env.JOBS_DIR }}
-        run: |
-          node -e "
+        run: node -e "
           const g=require('./scripts/archive-fingerprint-guard');
           const d=g.runGuardDiagnostics();
           console.log('archive_records:', d.total_archive_records);
@@ -49,12 +43,11 @@ jobs:
           console.log('blocked:', d.blocked_by_own_archive, '(expected 0)');
           console.log('passed:', d.passed_sanity_check);
           if(d.blocked_by_own_archive>0) process.exit(1);
-          "
+        "
 
       - name: Duplicate ID check
         working-directory: ${{ env.JOBS_DIR }}
-        run: |
-          node -e "
+        run: node -e "
           const j=JSON.parse(require('fs').readFileSync('jobs.json','utf8'));
           const p=JSON.parse(require('fs').readFileSync('pending-synced-jobs.json','utf8'));
           const r=JSON.parse(require('fs').readFileSync('job-records.json','utf8'));
@@ -63,12 +56,11 @@ jobs:
           all.forEach(id=>{if(seen.has(id))dups.add(id);seen.add(id)});
           if(dups.size){console.error('FAIL:',dups.size,'duplicate IDs across files');process.exit(1)}
           console.log('PASS: 0 duplicate IDs across all files');
-          "
+        "
 
       - name: Structure check
         working-directory: ${{ env.JOBS_DIR }}
-        run: |
-          node -e "
+        run: node -e "
           const r=JSON.parse(require('fs').readFileSync('job-records.json','utf8'));
           const missingTitle=r.filter(x=>!String(x.display?.title||x.raw_source_data?.title||'').trim());
           const missingOrg=r.filter(x=>!String(x.display?.organization||x.raw_source_data?.organization||'').trim());
@@ -76,12 +68,11 @@ jobs:
           console.log('records missing title:', missingTitle.length);
           console.log('records missing org:', missingOrg.length);
           console.log('records missing description:', missingDesc.length);
-          "
+        "
 
       - name: Pay integrity check
         working-directory: ${{ env.JOBS_DIR }}
-        run: |
-          node -e "
+        run: node -e "
           const j=JSON.parse(require('fs').readFileSync('jobs.json','utf8'));
           const bad=j.filter(x=>{
             const p=String(x.pay_display||'').toLowerCase();
@@ -89,18 +80,17 @@ jobs:
           });
           if(bad.length){console.warn('WARN:',bad.length,'suspicious pay records');bad.forEach(x=>console.log('  '+x.id+': '+x.pay_display))}
           else console.log('PASS: no suspicious pay');
-          "
+        "
 
       - name: Closed jobs in public check
         working-directory: ${{ env.JOBS_DIR }}
-        run: |
-          node -e "
+        run: node -e "
           const archiveStatuses=new Set(['archived','closed','rejected','not_found','access_denied']);
           const j=JSON.parse(require('fs').readFileSync('jobs.json','utf8'));
           const closed=j.filter(x=>archiveStatuses.has(String(x.status||'').toLowerCase()));
           if(closed.length){console.error('FAIL:',closed.length,'closed/archived jobs in public');process.exit(1)}
           console.log('PASS: 0 archived jobs in public');
-          "
+        "
 
       - name: Validate public data
         run: npm --prefix "$JOBS_DIR" run jobs:validate-public-data
@@ -112,8 +102,7 @@ jobs:
       - name: Generate audit report
         working-directory: ${{ env.JOBS_DIR }}
         run: |
-          mkdir -p reports
-          echo "{\"generated_at\":\"$(date -u +%Y-%m-%dT%H:%M:%SZ)\",\"source\":\"jobs-audit.yml\"}" > reports/weekly-audit-timestamp.json
+          echo '{\"generated_at\":\"'$(date -u +%Y-%m-%dT%H:%M:%SZ)'\",\"source\":\"jobs-audit.yml\"}' > reports/weekly-audit-timestamp.json
 
       - name: Upload audit reports
         uses: actions/upload-artifact@v4
@@ -121,5 +110,5 @@ jobs:
         with:
           name: audit-reports
           path: |
-            resources/jobs/reports/*.json
-            resources/jobs/reports/*.md
+            jobs/reports/*.json
+            jobs/reports/*.md

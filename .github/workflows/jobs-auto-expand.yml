@@ -47,7 +47,7 @@ jobs:
     runs-on: ubuntu-latest
 
     env:
-      JOBS_DIR: resources/jobs
+      JOBS_DIR: jobs
       GOOGLE_CUSTOM_SEARCH_API_KEY: ${{ secrets.GOOGLE_CUSTOM_SEARCH_API_KEY }}
       GOOGLE_CUSTOM_SEARCH_ENGINE_ID: ${{ secrets.GOOGLE_CUSTOM_SEARCH_ENGINE_ID }}
       SERPAPI_API_KEY: ${{ secrets.SERPAPI_API_KEY }}
@@ -63,14 +63,14 @@ jobs:
         with:
           node-version: "24"
           cache: npm
-          cache-dependency-path: resources/jobs/package-lock.json
+          cache-dependency-path: ${{ env.JOBS_DIR }}/package-lock.json
 
       - name: Install dependencies if needed
         shell: bash
         run: |
           if [ -f "$JOBS_DIR/package-lock.json" ] || [ -f "$JOBS_DIR/npm-shrinkwrap.json" ]; then
             npm --prefix "$JOBS_DIR" ci
-          elif node -e "const p=require('./resources/jobs/package.json'); const hasDeps=Object.keys(p.dependencies||{}).length > 0 || Object.keys(p.devDependencies||{}).length > 0; process.exit(hasDeps ? 0 : 1)"; then
+          elif node -e "const p=require('./${JOBS_DIR}/package.json'); const hasDeps=Object.keys(p.dependencies||{}).length > 0 || Object.keys(p.devDependencies||{}).length > 0; process.exit(hasDeps ? 0 : 1)"; then
             npm --prefix "$JOBS_DIR" install
           else
             echo "No package dependencies declared. Skipping npm install."
@@ -127,24 +127,24 @@ jobs:
         shell: bash
         run: |
           CHANGED="$(git status --porcelain -- \
-            resources/jobs/sources.json \
-            resources/jobs/search-sources.json \
-            resources/jobs/source-discovery-candidates.json \
-            resources/jobs/pending-jobs.json \
-            resources/jobs/pending-synced-jobs.json \
-            resources/jobs/jobs.json \
-            resources/jobs/job-records.json \
-            resources/jobs/source-health-latest.json \
-            resources/jobs/scrape-report.json \
-            resources/jobs/pages \
-            resources/jobs/*.html \
-            resources/jobs/reports/source-discovery-report.json \
-            resources/jobs/reports/search-ingest-report.json \
-            resources/jobs/reports/targeted-pending-source-sync.json \
-            resources/jobs/reports/source-expansion-validation-latest.json \
-            resources/jobs/reports/public-promotion-latest.json \
-            resources/jobs/reports/auto-expand-lifecycle-latest.json \
-            resources/jobs/validation-snapshots/latest.json \
+            jobs/sources.json \
+            jobs/search-sources.json \
+            jobs/source-discovery-candidates.json \
+            jobs/pending-jobs.json \
+            jobs/pending-synced-jobs.json \
+            jobs/jobs.json \
+            jobs/job-records.json \
+            jobs/source-health-latest.json \
+            jobs/scrape-report.json \
+            jobs/pages \
+            jobs/*.html \
+            jobs/reports/source-discovery-report.json \
+            jobs/reports/search-ingest-report.json \
+            jobs/reports/targeted-pending-source-sync.json \
+            jobs/reports/source-expansion-validation-latest.json \
+            jobs/reports/public-promotion-latest.json \
+            jobs/reports/auto-expand-lifecycle-latest.json \
+            jobs/validation-snapshots/latest.json \
             || true)"
           if [ -n "$CHANGED" ]; then
             echo "changed=true" >> "$GITHUB_OUTPUT"
@@ -162,24 +162,24 @@ jobs:
           name: jobs-auto-expand-${{ github.run_id }}
           if-no-files-found: warn
           path: |
-            resources/jobs/sources.json
-            resources/jobs/search-sources.json
-            resources/jobs/source-discovery-candidates.json
-            resources/jobs/pending-jobs.json
-            resources/jobs/pending-synced-jobs.json
-            resources/jobs/jobs.json
-            resources/jobs/job-records.json
-            resources/jobs/source-health-latest.json
-            resources/jobs/scrape-report.json
-            resources/jobs/pages
-            resources/jobs/*.html
-            resources/jobs/reports/source-discovery-report.json
-            resources/jobs/reports/search-ingest-report.json
-            resources/jobs/reports/targeted-pending-source-sync.json
-            resources/jobs/reports/source-expansion-validation-latest.json
-            resources/jobs/reports/public-promotion-latest.json
-            resources/jobs/reports/auto-expand-lifecycle-latest.json
-            resources/jobs/validation-snapshots/latest.json
+            jobs/sources.json
+            jobs/search-sources.json
+            jobs/source-discovery-candidates.json
+            jobs/pending-jobs.json
+            jobs/pending-synced-jobs.json
+            jobs/jobs.json
+            jobs/job-records.json
+            jobs/source-health-latest.json
+            jobs/scrape-report.json
+            jobs/pages
+            jobs/*.html
+            jobs/reports/source-discovery-report.json
+            jobs/reports/search-ingest-report.json
+            jobs/reports/targeted-pending-source-sync.json
+            jobs/reports/source-expansion-validation-latest.json
+            jobs/reports/public-promotion-latest.json
+            jobs/reports/auto-expand-lifecycle-latest.json
+            jobs/validation-snapshots/latest.json
 
       - name: Commit and push auto-expand changes
         if: ${{ github.event_name == 'schedule' || inputs.dry_run != 'true' }}
@@ -192,24 +192,24 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           for path in \
-            resources/jobs/sources.json \
-            resources/jobs/search-sources.json \
-            resources/jobs/source-discovery-candidates.json \
-            resources/jobs/pending-jobs.json \
-            resources/jobs/pending-synced-jobs.json \
-            resources/jobs/jobs.json \
-            resources/jobs/job-records.json \
-            resources/jobs/source-health-latest.json \
-            resources/jobs/scrape-report.json \
-            resources/jobs/pages \
-            resources/jobs/*.html \
-            resources/jobs/reports/source-discovery-report.json \
-            resources/jobs/reports/search-ingest-report.json \
-            resources/jobs/reports/targeted-pending-source-sync.json \
-            resources/jobs/reports/source-expansion-validation-latest.json \
-            resources/jobs/reports/public-promotion-latest.json \
-            resources/jobs/reports/auto-expand-lifecycle-latest.json \
-            resources/jobs/validation-snapshots/latest.json; do
+            jobs/sources.json \
+            jobs/search-sources.json \
+            jobs/source-discovery-candidates.json \
+            jobs/pending-jobs.json \
+            jobs/pending-synced-jobs.json \
+            jobs/jobs.json \
+            jobs/job-records.json \
+            jobs/source-health-latest.json \
+            jobs/scrape-report.json \
+            jobs/pages \
+            jobs/*.html \
+            jobs/reports/source-discovery-report.json \
+            jobs/reports/search-ingest-report.json \
+            jobs/reports/targeted-pending-source-sync.json \
+            jobs/reports/source-expansion-validation-latest.json \
+            jobs/reports/public-promotion-latest.json \
+            jobs/reports/auto-expand-lifecycle-latest.json \
+            jobs/validation-snapshots/latest.json; do
             if [ -e "$path" ]; then
               git add "$path"
             else

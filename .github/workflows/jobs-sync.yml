@@ -6,8 +6,8 @@ on:
     - cron: "*/15 * * * *"
   push:
     paths:
-      - "resources/jobs/admin-job-actions.json"
-      - "resources/jobs/admin-actions-local.json"
+      - "jobs/admin-job-actions.json"
+      - "jobs/admin-actions-local.json"
 
 permissions:
   contents: write
@@ -21,7 +21,7 @@ jobs:
     runs-on: ubuntu-latest
 
     env:
-      JOBS_DIR: resources/jobs
+      JOBS_DIR: jobs
       JOBS_BACKEND_URL: ${{ secrets.JOBS_BACKEND_URL }}
       JOBS_ADMIN_TOKEN: ${{ secrets.JOBS_ADMIN_TOKEN }}
 
@@ -143,27 +143,27 @@ jobs:
           name: jobs-admin-sync-${{ github.run_id }}
           if-no-files-found: warn
           path: |
-            resources/jobs/job-records.json
-            resources/jobs/jobs.json
-            resources/jobs/pending-jobs.json
-            resources/jobs/talent-profiles.json
-            resources/jobs/employers.json
-            resources/jobs/pending-synced-jobs.json
-            resources/jobs/source-discovery-candidates.json
-            resources/jobs/source-health-latest.json
-            resources/jobs/scrape-report.json
-            resources/jobs/sources.json
-            resources/jobs/source-prospects.json
-            resources/jobs/broad-source-config.json
-            resources/jobs/admin-actions-local.json
-            resources/jobs/admin-pending-overrides.json
-            resources/jobs/admin-action-overrides.json
-            resources/jobs/admin-organization-rules.json
-            resources/jobs/admin-job-actions.json
-            resources/jobs/validation-snapshots/latest.json
-            resources/jobs/reports
-            resources/jobs/pages
-            resources/jobs/*.html
+            jobs/job-records.json
+            jobs/jobs.json
+            jobs/pending-jobs.json
+            jobs/talent-profiles.json
+            jobs/employers.json
+            jobs/pending-synced-jobs.json
+            jobs/source-discovery-candidates.json
+            jobs/source-health-latest.json
+            jobs/scrape-report.json
+            jobs/sources.json
+            jobs/source-prospects.json
+            jobs/broad-source-config.json
+            jobs/admin-actions-local.json
+            jobs/admin-pending-overrides.json
+            jobs/admin-action-overrides.json
+            jobs/admin-organization-rules.json
+            jobs/admin-job-actions.json
+            jobs/validation-snapshots/latest.json
+            jobs/reports
+            jobs/pages
+            jobs/*.html
 
       - name: Commit and push generated changes
         if: steps.changes.outputs.changed == 'true' && success()

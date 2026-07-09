@@ -24,7 +24,7 @@ jobs:
     runs-on: ubuntu-latest
 
     env:
-      JOBS_DIR: resources/jobs
+      JOBS_DIR: jobs
 
     steps:
       - name: Checkout repository
@@ -35,14 +35,14 @@ jobs:
         with:
           node-version: "24"
           cache: npm
-          cache-dependency-path: resources/jobs/package-lock.json
+          cache-dependency-path: ${{ env.JOBS_DIR }}/package-lock.json
 
       - name: Install dependencies if needed
         shell: bash
         run: |
           if [ -f "$JOBS_DIR/package-lock.json" ] || [ -f "$JOBS_DIR/npm-shrinkwrap.json" ]; then
             npm --prefix "$JOBS_DIR" ci
-          elif node -e "const p=require('./resources/jobs/package.json'); const hasDeps=Object.keys(p.dependencies||{}).length > 0 || Object.keys(p.devDependencies||{}).length > 0; process.exit(hasDeps ? 0 : 1)"; then
+          elif node -e "const p=require('./${JOBS_DIR}/package.json'); const hasDeps=Object.keys(p.dependencies||{}).length > 0 || Object.keys(p.devDependencies||{}).length > 0; process.exit(hasDeps ? 0 : 1)"; then
             npm --prefix "$JOBS_DIR" install
           else
             echo "No package dependencies declared. Skipping npm install."
@@ -70,12 +70,12 @@ jobs:
         shell: bash
         run: |
           CHANGED="$(git status --porcelain -- \
-            resources/jobs/job-records.json \
-            resources/jobs/jobs.json \
-            resources/jobs/pending-jobs.json \
-            resources/jobs/pending-synced-jobs.json \
-            resources/jobs/pages \
-            resources/jobs/*.html \
+            jobs/job-records.json \
+            jobs/jobs.json \
+            jobs/pending-jobs.json \
+            jobs/pending-synced-jobs.json \
+            jobs/pages \
+            jobs/*.html \
             || true)"
           if [ -n "$CHANGED" ]; then
             echo "changed=true" >> "$GITHUB_OUTPUT"
@@ -117,13 +117,13 @@ jobs:
           name: jobs-manual-parser-migration-${{ github.run_id }}
           if-no-files-found: warn
           path: |
-            resources/jobs/job-records.json
-            resources/jobs/jobs.json
-            resources/jobs/pending-jobs.json
-            resources/jobs/pending-synced-jobs.json
-            resources/jobs/pages
-            resources/jobs/*.html
-            resources/jobs/validation-snapshots/latest.json
+            jobs/job-records.json
+            jobs/jobs.json
+            jobs/pending-jobs.json
+            jobs/pending-synced-jobs.json
+            jobs/pages
+            jobs/*.html
+            jobs/validation-snapshots/latest.json
 
       - name: Commit and push migration changes
         if: ${{ inputs.write == 'true' && steps.changes.outputs.changed == 'true' }}
@@ -132,13 +132,13 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           for path in \
-            resources/jobs/job-records.json \
-            resources/jobs/jobs.json \
-            resources/jobs/pending-jobs.json \
-            resources/jobs/pending-synced-jobs.json \
-            resources/jobs/pages \
-            resources/jobs/*.html \
-            resources/jobs/validation-snapshots/latest.json; do
+            jobs/job-records.json \
+            jobs/jobs.json \
+            jobs/pending-jobs.json \
+            jobs/pending-synced-jobs.json \
+            jobs/pages \
+            jobs/*.html \
+            jobs/validation-snapshots/latest.json; do
             if [ -e "$path" ]; then
               git add "$path"
             else

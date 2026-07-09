@@ -1,12 +1,12 @@
 # Source Coverage Audit
 
-Generated: 2026-07-09T20:22:03.883Z
+Generated: 2026-07-09T22:00:22.671Z
 
 ## Summary
 
 - Total sources: 185
 - Total prospects: 92
-- Total public organizations: 57
+- Total public organizations: 56
 - Total pending organizations: 61
 
 ## Active Source Coverage
@@ -26,7 +26,7 @@ Generated: 2026-07-09T20:22:03.883Z
 | American Council on Renewable Energy | acore |  | manual_review_community | stale | 0 | 0 | 0 |
 | Antora Energy | antora |  | low_confidence_experimental | live | 0 | 0 | 0 |
 | Appalachian Voices | appalachian-voices |  | manual_review_community | live | 0 | 0 | 0 |
-| Arevon Energy | arevon |  | low_confidence_experimental | live | 0 | 2 | 3 |
+| Arevon Energy | arevon |  | low_confidence_experimental | live | 0 | 0 | 3 |
 | Array Technologies | array-technologies | workday | low_confidence_experimental | sync_disabled | 0 | 0 | 0 |
 | Ascent | ascent | paylocity | trusted_nonprofit_pending_review | live | 0 | 2 | 3 |
 | Asian Pacific Environmental Network | apen4ej |  | manual_review_community | stale | 0 | 0 | 0 |
@@ -83,11 +83,11 @@ Generated: 2026-07-09T20:22:03.883Z
 | ChargerHelp! | 3 |
 | Energy Infrastructure Partners LLC | 3 |
 | The Nature Conservancy | 3 |
-| Arevon Energy | 2 |
 | Ascent | 2 |
 | Clean Energy Trust | 2 |
 | EDP | 2 |
 | Education Reform Now Advocacy | 2 |
+| Energy & Policy Institute | 2 |
 
 ## Pending Review Coverage
 
@@ -221,6 +221,7 @@ Generated: 2026-07-09T20:22:03.883Z
 | Woolpert | Engineer in Training, Site Civil Energy Practice | https://job-boards.greenhouse.io/woolpert/jobs/4087773009 |
 | Sunrun | ERP Business Systems Administrator | https://careers.sunrun.com/job/california/erp-business-systems-administrator/21632/94571057184 |
 | Sunrun | Sales Experience Program Manager | https://careers.sunrun.com/job/lehi/sales-experience-program-manager/21632/94749467216 |
+| Arevon Energy | Solar Field Technician | https://arevonenergy.com/careers/#open-positions |
 | Environmental Defense Fund | Analyst, Total Rewards | https://www.edf.org/jobs/analyst-total-rewards |
 | ConnectDER | Real-Time Firmware Engineer | https://jobs.elementalimpact.com/jobs |
 | Sierra Club | Chapter Director | https://jobs.lever.co/sierraclub/2d14a974-35b0-4fe1-82d5-96018da5d4cd |
@@ -229,6 +230,7 @@ Generated: 2026-07-09T20:22:03.883Z
 | Mission 44 | Senior Manager Policy and Campaigns | https://jobs.workable.com/view/7irAitgA6D2XAM6a6beCda/hybrid-senior-manager-policy-and-campaigns-in-london-at-mission-44 |
 | Octopus Energy | Performance Marketing Lead | https://jobs.lever.co/octoenergy/b5557512-04f8-4bb4-95dd-074da4e4c2de |
 | Greenpeace | Senior Director, Climate and Rights (12-month position) | https://job-boards.greenhouse.io/greenpeace/jobs/8348929002 |
+| Arevon Energy | Scada Operations Supervisor | https://arevonenergy.com/careers/#open-positions |
 | American Bird Conservancy | Writer/Editor | https://recruiting.paylocity.com/Recruiting/Jobs/Details/4042466 |
 | Arevon Energy | BESS Field Technician | https://arevonenergy.com/careers/#open-positions |
 | Earthjustice | Enterprise Systems Product Manager | https://earthjustice.org/jobs |

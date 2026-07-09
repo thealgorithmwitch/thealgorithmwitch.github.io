@@ -34,7 +34,7 @@ jobs:
         with:
           node-version: "24"
           cache: npm
-          cache-dependency-path: ${{ env.JOBS_DIR }}/package.json
+          cache-dependency-path: ${{ env.JOBS_DIR }}/package-lock.json
 
       - name: Install dependencies if needed
         shell: bash
@@ -53,6 +53,7 @@ jobs:
           node --check "$JOBS_DIR/scripts/validate-public-data.js"
           node --check "$JOBS_DIR/scripts/validate-source-expansion.js"
           node --check "$JOBS_DIR/scripts/public-jobs.js"
+          node --check "$JOBS_DIR/scripts/cleanup-stale-jobs.js"
           node --check "$JOBS_DIR/scripts/audit-source-coverage.js"
 
       - name: Snapshot queued admin actions
@@ -70,8 +71,17 @@ jobs:
       - name: Fetch approved featured employers
         run: npm --prefix "$JOBS_DIR" run jobs:fetch-approved-employers
 
+      - name: Cleanup stale public jobs
+        run: npm --prefix "$JOBS_DIR" run jobs:cleanup-stale
+
+      - name: Refresh public jobs
+        run: npm --prefix "$JOBS_DIR" run jobs:refresh-public
+
       - name: Build job pages
         run: npm --prefix "$JOBS_DIR" run jobs:build-pages
+
+      - name: Run freshness audit
+        run: npm --prefix "$JOBS_DIR" run jobs:freshness-audit
 
       - name: Route repairable public validation issues
         run: npm --prefix "$JOBS_DIR" run jobs:validate-public-data:route
@@ -97,10 +107,13 @@ jobs:
           CHANGED="$(git status --porcelain -- \
             "$JOBS_DIR/job-records.json" \
             "$JOBS_DIR/jobs.json" \
+            "$JOBS_DIR/pending-jobs.json" \
             "$JOBS_DIR/talent-profiles.json" \
             "$JOBS_DIR/employers.json" \
             "$JOBS_DIR/pending-synced-jobs.json" \
+            "$JOBS_DIR/source-discovery-candidates.json" \
             "$JOBS_DIR/source-health-latest.json" \
+            "$JOBS_DIR/scrape-report.json" \
             "$JOBS_DIR/sources.json" \
             "$JOBS_DIR/source-prospects.json" \
             "$JOBS_DIR/broad-source-config.json" \
@@ -112,6 +125,7 @@ jobs:
             "$JOBS_DIR/validation-snapshots/latest.json" \
             "$JOBS_DIR/reports" \
             "$JOBS_DIR/pages" \
+            "$JOBS_DIR"/*.html \
             || true)"
           if [ -n "$CHANGED" ]; then
             echo "changed=true" >> "$GITHUB_OUTPUT"
@@ -131,10 +145,13 @@ jobs:
           path: |
             resources/jobs/job-records.json
             resources/jobs/jobs.json
+            resources/jobs/pending-jobs.json
             resources/jobs/talent-profiles.json
             resources/jobs/employers.json
             resources/jobs/pending-synced-jobs.json
+            resources/jobs/source-discovery-candidates.json
             resources/jobs/source-health-latest.json
+            resources/jobs/scrape-report.json
             resources/jobs/sources.json
             resources/jobs/source-prospects.json
             resources/jobs/broad-source-config.json
@@ -146,6 +163,7 @@ jobs:
             resources/jobs/validation-snapshots/latest.json
             resources/jobs/reports
             resources/jobs/pages
+            resources/jobs/*.html
 
       - name: Commit and push generated changes
         if: steps.changes.outputs.changed == 'true' && success()
@@ -156,10 +174,13 @@ jobs:
           for path in \
             "$JOBS_DIR/job-records.json" \
             "$JOBS_DIR/jobs.json" \
+            "$JOBS_DIR/pending-jobs.json" \
             "$JOBS_DIR/talent-profiles.json" \
             "$JOBS_DIR/employers.json" \
             "$JOBS_DIR/pending-synced-jobs.json" \
+            "$JOBS_DIR/source-discovery-candidates.json" \
             "$JOBS_DIR/source-health-latest.json" \
+            "$JOBS_DIR/scrape-report.json" \
             "$JOBS_DIR/sources.json" \
             "$JOBS_DIR/source-prospects.json" \
             "$JOBS_DIR/broad-source-config.json" \
@@ -170,7 +191,8 @@ jobs:
             "$JOBS_DIR/admin-job-actions.json" \
             "$JOBS_DIR/validation-snapshots/latest.json" \
             "$JOBS_DIR/reports" \
-            "$JOBS_DIR/pages"; do
+            "$JOBS_DIR/pages" \
+            "$JOBS_DIR"/*.html; do
             if [ -e "$path" ]; then
               git add "$path"
             else

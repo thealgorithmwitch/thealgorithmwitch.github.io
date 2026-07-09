@@ -2,6 +2,11 @@ name: Jobs Freshness Audit
 
 on:
   workflow_dispatch:
+    inputs:
+      write:
+        description: Apply changes and run the full refresh/build path?
+        required: false
+        default: "false"
   schedule:
     - cron: "30 12 */3 * *"
 
@@ -28,7 +33,7 @@ jobs:
         with:
           node-version: "24"
           cache: npm
-          cache-dependency-path: ${{ env.JOBS_DIR }}/package.json
+          cache-dependency-path: ${{ env.JOBS_DIR }}/package-lock.json
 
       - name: Install dependencies if needed
         shell: bash
@@ -44,20 +49,26 @@ jobs:
       - name: Validate freshness audit scripts
         run: |
           node --check "$JOBS_DIR/scripts/freshness-audit.js"
+          node --check "$JOBS_DIR/scripts/cleanup-stale-jobs.js"
           node --check "$JOBS_DIR/scripts/job-normalizer.js"
           node --check "$JOBS_DIR/scripts/public-records.js"
           node --check "$JOBS_DIR/scripts/public-jobs.js"
           node --check "$JOBS_DIR/scripts/validate-public-data.js"
           node --check "$JOBS_DIR/scripts/audit-source-coverage.js"
 
+      - name: Run full refresh and write freshness audit
+        if: ${{ github.event_name == 'schedule' || github.event.inputs.write == 'true' }}
+        run: |
+          npm --prefix "$JOBS_DIR" run jobs:discover-sources
+          npm --prefix "$JOBS_DIR" run jobs:sync-pending-sources
+          npm --prefix "$JOBS_DIR" run jobs:cleanup-stale
+          npm --prefix "$JOBS_DIR" run jobs:refresh-public
+          npm --prefix "$JOBS_DIR" run jobs:build-pages
+          npm --prefix "$JOBS_DIR" run jobs:freshness-audit-write
+
       - name: Run freshness audit dry run
-        run: npm --prefix "$JOBS_DIR" run jobs:freshness-audit -- --dry-run
-
-      - name: Run freshness audit write
-        run: npm --prefix "$JOBS_DIR" run jobs:freshness-audit -- --write
-
-      - name: Build job pages
-        run: npm --prefix "$JOBS_DIR" run jobs:build-pages
+        if: ${{ github.event_name != 'schedule' && github.event.inputs.write != 'true' }}
+        run: npm --prefix "$JOBS_DIR" run jobs:freshness-audit
 
       - name: Guard and fix blocked sources before validation
         run: npm --prefix "$JOBS_DIR" run jobs:check-blocked-sources -- --write
@@ -75,11 +86,15 @@ jobs:
           CHANGED="$(git status --porcelain -- \
             "$JOBS_DIR/job-records.json" \
             "$JOBS_DIR/jobs.json" \
+            "$JOBS_DIR/pending-jobs.json" \
             "$JOBS_DIR/pending-synced-jobs.json" \
+            "$JOBS_DIR/source-discovery-candidates.json" \
             "$JOBS_DIR/source-health-latest.json" \
+            "$JOBS_DIR/scrape-report.json" \
             "$JOBS_DIR/validation-snapshots/latest.json" \
             "$JOBS_DIR/reports" \
             "$JOBS_DIR/pages" \
+            "$JOBS_DIR"/*.html \
             || true)"
           if [ -n "$CHANGED" ]; then
             echo "changed=true" >> "$GITHUB_OUTPUT"
@@ -99,11 +114,15 @@ jobs:
           path: |
             resources/jobs/job-records.json
             resources/jobs/jobs.json
+            resources/jobs/pending-jobs.json
             resources/jobs/pending-synced-jobs.json
+            resources/jobs/source-discovery-candidates.json
             resources/jobs/source-health-latest.json
+            resources/jobs/scrape-report.json
             resources/jobs/validation-snapshots/latest.json
             resources/jobs/reports
             resources/jobs/pages
+            resources/jobs/*.html
 
       - name: Commit and push freshness audit changes
         if: steps.changes.outputs.changed == 'true'
@@ -114,11 +133,15 @@ jobs:
           for path in \
             "$JOBS_DIR/job-records.json" \
             "$JOBS_DIR/jobs.json" \
+            "$JOBS_DIR/pending-jobs.json" \
             "$JOBS_DIR/pending-synced-jobs.json" \
+            "$JOBS_DIR/source-discovery-candidates.json" \
             "$JOBS_DIR/source-health-latest.json" \
+            "$JOBS_DIR/scrape-report.json" \
             "$JOBS_DIR/validation-snapshots/latest.json" \
             "$JOBS_DIR/reports" \
-            "$JOBS_DIR/pages"; do
+            "$JOBS_DIR/pages" \
+            "$JOBS_DIR"/*.html; do
             if [ -e "$path" ]; then
               git add "$path"
             else

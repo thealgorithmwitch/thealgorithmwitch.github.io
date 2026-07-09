@@ -62,7 +62,7 @@ jobs:
         with:
           node-version: "24"
           cache: npm
-          cache-dependency-path: resources/jobs/package.json
+          cache-dependency-path: resources/jobs/package-lock.json
 
       - name: Install dependencies if needed
         shell: bash
@@ -177,8 +177,10 @@ jobs:
           path: |
             resources/jobs/sources.json
             resources/jobs/source-discovery-candidates.json
+            resources/jobs/pending-jobs.json
             resources/jobs/pending-synced-jobs.json
             resources/jobs/source-health-latest.json
+            resources/jobs/scrape-report.json
             resources/jobs/reports/source-discovery-report.json
             resources/jobs/reports/search-ingest-report.json
             resources/jobs/validation-snapshots/latest.json
@@ -200,7 +202,9 @@ jobs:
           fi
           if [ "${{ steps.changes.outputs.should_commit_reports }}" = "true" ]; then
             for path in \
+              resources/jobs/pending-jobs.json \
               resources/jobs/source-health-latest.json \
+              resources/jobs/scrape-report.json \
               resources/jobs/reports/source-discovery-report.json \
               resources/jobs/reports/search-ingest-report.json \
               resources/jobs/validation-snapshots/latest.json; do

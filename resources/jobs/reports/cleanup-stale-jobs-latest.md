@@ -1,6 +1,6 @@
 # Cleanup Stale Jobs
 
-Generated: 2026-07-11T01:00:12.798Z
+Generated: 2026-07-11T04:20:18.894Z
 Mode: write
 
 Previous public jobs count: 124
@@ -9,14 +9,12 @@ Archived stale/dead/duplicate jobs: 0
 Dead links found: 0
 Duplicate public jobs archived: 0
 Pages cleaned: 0
-Skipped risky changes: 15
+Skipped risky changes: 13
 
 ## Archived Jobs
 
 ## Risky Changes Skipped
 - Advanced Energy United-9acd478b-6a23-4316-92c1-8c23b4409964: redirected_to_board_needs_review
-- edp-eaf930fcd047: network_error (fetch failed)
-- edp-a8fcd20c0c03: network_error (fetch failed)
 - Greenpeace-8549415002: code_feed_page
 - Grove Collaborative-5212550008: code_feed_page
 - Greenpeace-8331887002: code_feed_page

@@ -1,17 +1,18 @@
 # Cleanup Stale Jobs
 
-Generated: 2026-07-13T16:34:08.627Z
+Generated: 2026-07-13T18:21:28.287Z
 Mode: write
 
 Previous public jobs count: 124
-Projected public jobs count after cleanup: 124
-Archived stale/dead/duplicate jobs: 0
-Dead links found: 0
+Projected public jobs count after cleanup: 123
+Archived stale/dead/duplicate jobs: 1
+Dead links found: 1
 Duplicate public jobs archived: 0
-Pages cleaned: 0
+Pages cleaned: 1
 Skipped risky changes: 13
 
 ## Archived Jobs
+- Sierra Club-a6bd0fa6-4f01-4729-bd38-cce46582673d: Sierra Club | Development & Marketing Director | http_404
 
 ## Risky Changes Skipped
 - Advanced Energy United-9acd478b-6a23-4316-92c1-8c23b4409964: redirected_to_board_needs_review

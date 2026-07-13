@@ -1,12 +1,12 @@
 # Source Coverage Audit
 
-Generated: 2026-07-13T16:36:28.578Z
+Generated: 2026-07-13T18:24:19.053Z
 
 ## Summary
 
 - Total sources: 185
 - Total prospects: 92
-- Total public organizations: 56
+- Total public organizations: 55
 - Total pending organizations: 61
 
 ## Active Source Coverage

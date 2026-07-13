@@ -1,12 +1,12 @@
 # Source Coverage Audit
 
-Generated: 2026-07-13T21:09:01.875Z
+Generated: 2026-07-13T22:12:06.299Z
 
 ## Summary
 
 - Total sources: 185
 - Total prospects: 92
-- Total public organizations: 55
+- Total public organizations: 54
 - Total pending organizations: 61
 
 ## Active Source Coverage
@@ -194,7 +194,6 @@ Generated: 2026-07-13T21:09:01.875Z
 | Fervo Energy | 2 | ready_for_manual_review |
 | Grassroots Carbon | 1 | add_to_sources_json |
 | InfluenceMap | 1 | ready_for_manual_review |
-| Innocence Project | 1 | ready_for_manual_review |
 | Mitti Labs | 1 | add_to_sources_json |
 | Proterra | 1 | ready_for_manual_review |
 | Rational | 1 | ready_for_manual_review |
@@ -268,6 +267,7 @@ _None_
 | Energy Infrastructure Partners LLC | https://jobs.workable.com/view/71KVJnn2zzEaqB5AeEvfUa/hybrid-senior-outreach-representative-in-los-angeles-at-energy-infrastructure-partners-llc | add_to_sources_json |
 | Grassroots Carbon | https://jobs.workable.com/view/66JEqQTu5Aaik8B4Y67gVh/director%2C-brand-reach-%26-communications-in-san-antonio-at-grassroots-carbon | add_to_sources_json |
 | HIVED |  | candidate_for_new_pull |
+| Innocence Project |  | candidate_for_new_pull |
 | Middlebury College |  | candidate_for_new_pull |
 | Mitti Labs | https://jobs.workable.com/view/uWSQQPVWb4Lm2PkXjVyRqg/remote-program-manager%2C-operations---tamil-nadu-in-tamil-nadu-at-mitti-labs | add_to_sources_json |
 | PLUS Communications | https://jobs.workable.com/view/7mXsGiweVFByL5UehwA27z/hybrid-digital-director-in-arlington-at-plus-communications | add_to_sources_json |

@@ -1,1 +1,1301 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
+  <title>Solar Celebration Toolkit | RE-volv</title>
+
+  <meta property="og:title" content="Solar Celebration Toolkit | RE-volv">
+  <meta property="og:description" content="Plan, promote, and celebrate your nonprofit's transition to clean solar energy with RE-volv.">
+  <meta property="og:type" content="website">
+  <meta name="twitter:card" content="summary_large_image">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap"
+    rel="stylesheet"
+  >
+  <script src="https://unpkg.com/@phosphor-icons/web"></script>
+
+  <style>
+    :root {
+      --navy: #1D2D7D;
+      --navy-dark: #111A4D;
+      --orange: #F28C28;
+      --orange-soft: #FFF2E4;
+      --teal: #00BFA5;
+      --teal-soft: #E9FBF8;
+      --ink: #172033;
+      --muted: #64748B;
+      --surface: #FFFFFF;
+      --bg: #F8FAFC;
+      --line: #E2E8F0;
+      --shadow-sm: 0 10px 24px rgba(15, 23, 42, 0.08);
+      --shadow-md: 0 18px 44px rgba(15, 23, 42, 0.12);
+      --radius-md: 18px;
+      --radius-lg: 24px;
+      --radius-xl: 32px;
+      --max: 1180px;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html {
+      scroll-behavior: smooth;
+      background: var(--bg);
+    }
+
+    body {
+      margin: 0;
+      min-width: 0;
+      overflow-x: hidden;
+      font-family: "Inter", sans-serif;
+      color: var(--ink);
+      background: var(--bg);
+      line-height: 1.6;
+    }
+
+    img {
+      max-width: 100%;
+      display: block;
+    }
+
+    a {
+      color: inherit;
+      text-decoration: none;
+    }
+
+    button,
+    input,
+    textarea {
+      font: inherit;
+    }
+
+    button {
+      cursor: pointer;
+    }
+
+    :focus-visible {
+      outline: 3px solid var(--orange);
+      outline-offset: 3px;
+    }
+
+    section[id] {
+      scroll-margin-top: 92px;
+    }
+
+    .page-wrap {
+      width: 100%;
+    }
+
+    .max-shell {
+      width: min(var(--max), calc(100% - 2rem));
+      margin: 0 auto;
+    }
+
+    .eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.55rem;
+      padding: 0.5rem 0.85rem;
+      border-radius: 999px;
+      background: rgba(255,255,255,0.12);
+      border: 1px solid rgba(255,255,255,0.2);
+      color: #fff;
+      font-size: 0.76rem;
+      font-weight: 800;
+      letter-spacing: 0.09em;
+      text-transform: uppercase;
+    }
+
+    .hero {
+      position: relative;
+      overflow: hidden;
+      padding: 6.5rem 0 5.5rem;
+      color: #fff;
+      background:
+        radial-gradient(circle at 85% 15%, rgba(242,140,40,0.32), transparent 28%),
+        radial-gradient(circle at 12% 90%, rgba(0,191,165,0.18), transparent 32%),
+        linear-gradient(135deg, var(--navy-dark), var(--navy));
+    }
+
+    .hero::before,
+    .hero::after {
+      content: "";
+      position: absolute;
+      border: 1px solid rgba(255,255,255,0.09);
+      border-radius: 999px;
+      pointer-events: none;
+    }
+
+    .hero::before {
+      width: 620px;
+      height: 620px;
+      top: -280px;
+      right: -160px;
+    }
+
+    .hero::after {
+      width: 420px;
+      height: 420px;
+      bottom: -230px;
+      left: -100px;
+    }
+
+    .hero-grid {
+      position: relative;
+      z-index: 2;
+      display: grid;
+      grid-template-columns: minmax(0, 1.1fr) minmax(320px, 0.9fr);
+      gap: 3rem;
+      align-items: center;
+    }
+
+    .hero-logo {
+      width: min(300px, 72vw);
+      margin-bottom: 2rem;
+    }
+
+    .hero h1 {
+      margin: 0;
+      max-width: 780px;
+      font-size: clamp(3rem, 7vw, 6.3rem);
+      line-height: 0.95;
+      letter-spacing: -0.055em;
+      font-weight: 900;
+    }
+
+    .hero p {
+      max-width: 700px;
+      margin: 1.5rem 0 0;
+      font-size: clamp(1rem, 2vw, 1.2rem);
+      color: rgba(255,255,255,0.86);
+    }
+
+    .hero-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.9rem;
+      margin-top: 2rem;
+    }
+
+    .button {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.55rem;
+      min-height: 48px;
+      padding: 0.85rem 1.15rem;
+      border: 0;
+      border-radius: 999px;
+      font-size: 0.82rem;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      transition: transform 0.18s ease, box-shadow 0.18s ease;
+    }
+
+    .button:hover {
+      transform: translateY(-2px);
+    }
+
+    .button-orange {
+      background: var(--orange);
+      color: #fff;
+      box-shadow: 0 10px 24px rgba(242,140,40,0.28);
+    }
+
+    .button-light {
+      background: #fff;
+      color: var(--navy);
+    }
+
+    .button-outline {
+      border: 1px solid rgba(255,255,255,0.25);
+      color: #fff;
+      background: rgba(255,255,255,0.06);
+    }
+
+    .hero-card {
+      position: relative;
+      background: rgba(255,255,255,0.10);
+      border: 1px solid rgba(255,255,255,0.16);
+      border-radius: var(--radius-xl);
+      padding: 2rem;
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      box-shadow: var(--shadow-md);
+    }
+
+    .hero-placeholder {
+      min-height: 360px;
+      display: grid;
+      place-items: center;
+      padding: 2rem;
+      border: 2px dashed rgba(255,255,255,0.32);
+      border-radius: 26px;
+      text-align: center;
+      color: rgba(255,255,255,0.78);
+    }
+
+    .hero-placeholder i {
+      font-size: 5rem;
+      color: var(--orange);
+    }
+
+    .hero-placeholder strong {
+      display: block;
+      margin-top: 1rem;
+      color: #fff;
+      font-size: 1rem;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+    }
+
+    .sticky-nav {
+      position: sticky;
+      top: 0;
+      z-index: 50;
+      background: rgba(255,255,255,0.96);
+      border-bottom: 1px solid var(--line);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      overflow-x: auto;
+    }
+
+    .sticky-nav-inner {
+      width: max-content;
+      min-width: 100%;
+      display: flex;
+      gap: 0.35rem;
+      padding: 0.7rem 0;
+    }
+
+    .sticky-link {
+      display: inline-flex;
+      align-items: center;
+      padding: 0.6rem 0.8rem;
+      border-radius: 999px;
+      color: var(--navy);
+      font-size: 0.76rem;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .sticky-link:hover {
+      background: var(--orange-soft);
+      color: var(--orange);
+    }
+
+    .section {
+      padding: 5.5rem 0;
+    }
+
+    .section.alt {
+      background: #fff;
+    }
+
+    .section.soft-orange {
+      background: var(--orange-soft);
+    }
+
+    .section.soft-teal {
+      background: var(--teal-soft);
+    }
+
+    .section-heading {
+      max-width: 820px;
+      margin-bottom: 2.3rem;
+    }
+
+    .section-kicker {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      margin-bottom: 0.85rem;
+      color: var(--orange);
+      font-size: 0.76rem;
+      font-weight: 900;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+    }
+
+    .section-title {
+      margin: 0;
+      color: var(--navy);
+      font-size: clamp(2.2rem, 5vw, 4.5rem);
+      line-height: 1;
+      letter-spacing: -0.045em;
+      font-weight: 900;
+    }
+
+    .section-copy {
+      margin: 1rem 0 0;
+      max-width: 760px;
+      color: var(--muted);
+      font-size: 1.02rem;
+    }
+
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow-sm);
+    }
+
+    .card.pad {
+      padding: 1.5rem;
+    }
+
+    .card.pad-lg {
+      padding: 2rem;
+    }
+
+    .welcome-grid,
+    .overview-grid,
+    .resource-grid,
+    .template-grid,
+    .safety-grid {
+      display: grid;
+      gap: 1.25rem;
+    }
+
+    .welcome-grid {
+      grid-template-columns: minmax(0, 1.25fr) minmax(320px, 0.75fr);
+    }
+
+    .overview-grid {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+
+    .resource-grid,
+    .template-grid,
+    .safety-grid {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+
+    .welcome-card {
+      border-top: 6px solid var(--orange);
+    }
+
+    .contact-card {
+      color: #fff;
+      background: var(--navy);
+      border-color: transparent;
+    }
+
+    .contact-card a {
+      color: #fff;
+      text-decoration: underline;
+      text-underline-offset: 3px;
+    }
+
+    .coordination-list {
+      display: grid;
+      gap: 1rem;
+      margin-top: 1.4rem;
+    }
+
+    .coordination-item {
+      display: grid;
+      grid-template-columns: 46px minmax(0, 1fr);
+      gap: 0.9rem;
+      align-items: start;
+      padding: 1rem;
+      border-radius: 18px;
+      background: #fff;
+      border: 1px solid var(--line);
+    }
+
+    .coordination-icon,
+    .icon-tile {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 46px;
+      height: 46px;
+      border-radius: 14px;
+      background: var(--orange-soft);
+      color: var(--orange);
+      font-size: 1.35rem;
+    }
+
+    .card h3,
+    .card h4 {
+      color: var(--navy);
+    }
+
+    .contact-card h3,
+    .contact-card p {
+      color: #fff;
+    }
+
+    .metric-card {
+      position: relative;
+      overflow: hidden;
+      min-height: 210px;
+      padding: 1.5rem;
+    }
+
+    .metric-card::after {
+      content: "";
+      position: absolute;
+      width: 120px;
+      height: 120px;
+      right: -45px;
+      bottom: -45px;
+      border-radius: 999px;
+      background: var(--orange-soft);
+    }
+
+    .metric-card i {
+      font-size: 2rem;
+      color: var(--orange);
+    }
+
+    .resource-card {
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+      min-height: 100%;
+    }
+
+    .resource-placeholder {
+      min-height: 170px;
+      display: grid;
+      place-items: center;
+      text-align: center;
+      padding: 1rem;
+      border-radius: 18px;
+      border: 2px dashed #CBD5E1;
+      background: #F8FAFC;
+      color: var(--muted);
+    }
+
+    .resource-placeholder i {
+      display: block;
+      margin-bottom: 0.5rem;
+      color: var(--orange);
+      font-size: 3rem;
+    }
+
+    .resource-meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.45rem;
+    }
+
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+      padding: 0.4rem 0.7rem;
+      border-radius: 999px;
+      background: var(--orange-soft);
+      color: var(--orange);
+      font-size: 0.68rem;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .pill.navy {
+      background: #EEF2FF;
+      color: var(--navy);
+    }
+
+    .pill.teal {
+      background: var(--teal-soft);
+      color: #008C79;
+    }
+
+    .coming-soon {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 44px;
+      margin-top: auto;
+      padding: 0.75rem 1rem;
+      border-radius: 999px;
+      background: #EEF2F7;
+      color: #94A3B8;
+      font-size: 0.76rem;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .toc-card {
+      padding: 2rem;
+      background: #fff;
+    }
+
+    .toc-list {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 1rem;
+      margin: 1.5rem 0 0;
+      padding: 0;
+      list-style: none;
+    }
+
+    .toc-list li {
+      border-top: 1px solid var(--line);
+      padding-top: 0.8rem;
+    }
+
+    .toc-list strong {
+      color: var(--navy);
+    }
+
+    .checklist-card {
+      padding: 1.5rem;
+    }
+
+    .checklist {
+      display: grid;
+      gap: 0.7rem;
+      margin-top: 1rem;
+    }
+
+    .check-item {
+      display: flex;
+      gap: 0.75rem;
+      align-items: flex-start;
+      padding: 0.85rem 0.9rem;
+      border-radius: 14px;
+      background: #fff;
+      border: 1px solid var(--line);
+    }
+
+    .check-item input {
+      margin-top: 0.25rem;
+      accent-color: var(--orange);
+    }
+
+    .social-list {
+      display: grid;
+      gap: 0.8rem;
+      margin-top: 1rem;
+    }
+
+    .social-link {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+      padding: 0.95rem 1rem;
+      border-radius: 16px;
+      border: 1px solid var(--line);
+      background: #fff;
+      color: var(--navy);
+      font-weight: 800;
+    }
+
+    .social-link span {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.65rem;
+    }
+
+    .footer {
+      padding: 3rem 0 2rem;
+      background: var(--navy-dark);
+      color: #fff;
+    }
+
+    .footer-card {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 2rem;
+      align-items: center;
+      padding: 2rem;
+      border-radius: 26px;
+      background: var(--navy);
+      box-shadow: var(--shadow-md);
+    }
+
+    .footer-card h2 {
+      margin: 0;
+      font-size: clamp(1.6rem, 3vw, 2.5rem);
+      line-height: 1.15;
+    }
+
+    .footer-card p {
+      margin: 0.7rem 0 0;
+      color: rgba(255,255,255,0.78);
+    }
+
+    .footer-meta {
+      margin-top: 1.5rem;
+      color: rgba(255,255,255,0.6);
+      font-size: 0.82rem;
+      text-align: center;
+    }
+
+    @media (max-width: 980px) {
+      .hero-grid,
+      .welcome-grid,
+      .overview-grid,
+      .resource-grid,
+      .template-grid,
+      .safety-grid,
+      .footer-card {
+        grid-template-columns: 1fr;
+      }
+
+      .hero {
+        padding-top: 4.5rem;
+      }
+
+      .hero-card {
+        max-width: 620px;
+      }
+
+      .toc-list {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    @media (max-width: 640px) {
+      .max-shell {
+        width: min(100% - 1.25rem, var(--max));
+      }
+
+      .section {
+        padding: 4rem 0;
+      }
+
+      .hero {
+        padding: 3.5rem 0 4rem;
+      }
+
+      .hero-placeholder {
+        min-height: 260px;
+      }
+
+      .hero-actions .button {
+        width: 100%;
+      }
+
+      .card.pad-lg,
+      .toc-card {
+        padding: 1.35rem;
+      }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      html {
+        scroll-behavior: auto;
+      }
+
+      * {
+        transition: none !important;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="page-wrap">
+
+    <section class="hero" id="top">
+      <div class="max-shell hero-grid">
+        <div>
+          <img
+            class="hero-logo"
+            src="https://re-volv-media.s3.amazonaws.com/static/images/home-img/REVOLV_logo_light.png"
+            alt="RE-volv"
+            loading="eager"
+            decoding="async"
+          >
+
+          <span class="eyebrow">
+            <i class="ph-fill ph-sun"></i>
+            Solar Celebration Resources
+          </span>
+
+          <div style="height:1.25rem;"></div>
+
+          <h1>Solar Celebration Toolkit</h1>
+
+          <p>
+            Everything you need to plan, promote, and celebrate your nonprofit’s transition to clean energy.
+          </p>
+
+          <div class="hero-actions">
+            <a class="button button-orange" href="#welcome">
+              <i class="ph-bold ph-arrow-down"></i>
+              Get Started
+            </a>
+
+            <a class="button button-light" href="#planning">
+              <i class="ph-bold ph-calendar-check"></i>
+              Event Planning
+            </a>
+
+            <a class="button button-outline" href="#resources">
+              <i class="ph-bold ph-folder-open"></i>
+              Resources
+            </a>
+          </div>
+        </div>
+
+        <div class="hero-card">
+          <div class="hero-placeholder">
+            <div>
+              <i class="ph-duotone ph-image-square"></i>
+              <strong>Celebration Image Placeholder</strong>
+              <span>Event photography or project image will be added later.</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <nav class="sticky-nav" aria-label="Toolkit navigation">
+      <div class="max-shell sticky-nav-inner">
+        <a class="sticky-link" href="#welcome">Welcome</a>
+        <a class="sticky-link" href="#overview">Overview</a>
+        <a class="sticky-link" href="#planning">Event Planning</a>
+        <a class="sticky-link" href="#promotion">Promotion</a>
+        <a class="sticky-link" href="#event-day">Event Day</a>
+        <a class="sticky-link" href="#resources">Resources</a>
+        <a class="sticky-link" href="#safety">Safety</a>
+      </div>
+    </nav>
+
+    <section id="welcome" class="section alt">
+      <div class="max-shell">
+        <div class="section-heading">
+          <div class="section-kicker">
+            <i class="ph-fill ph-hand-waving"></i>
+            Welcome
+          </div>
+          <h2 class="section-title">Celebrate the moment your energy savings begin.</h2>
+        </div>
+
+        <div class="welcome-grid">
+          <div class="card pad-lg welcome-card">
+            <p>
+              We are thrilled to help you celebrate the completion of your solar installation and the start of your energy savings.
+              This toolkit contains resources to help you prepare for and promote your solar celebration.
+            </p>
+
+            <p>
+              All of these tools are completely optional and meant to function as a guide. Please select the resources that best fit
+              your organization and staff capacity.
+            </p>
+
+            <div class="coordination-list">
+              <div class="coordination-item">
+                <div class="coordination-icon">
+                  <i class="ph-bold ph-newspaper"></i>
+                </div>
+                <div>
+                  <strong>Press Release Review</strong>
+                  <p>
+                    Please share a draft of your press release with our team at least 72 hours before distribution. We are happy to
+                    provide a quote from RE-volv leadership and ensure all solar data and terminology are accurately represented.
+                  </p>
+                </div>
+              </div>
+
+              <div class="coordination-item">
+                <div class="coordination-icon">
+                  <i class="ph-bold ph-share-network"></i>
+                </div>
+                <div>
+                  <strong>Social Media Collaboration</strong>
+                  <p>
+                    When posting about your project or event, please tag RE-volv in your captions and photos. This allows us to share
+                    your content with our national audience and increase your project’s visibility.
+                  </p>
+                </div>
+              </div>
+
+              <div class="coordination-item">
+                <div class="coordination-icon">
+                  <i class="ph-bold ph-camera"></i>
+                </div>
+                <div>
+                  <strong>Post-Event Photos &amp; Video</strong>
+                  <p>
+                    Following your celebration, please send us high-resolution photos and any video clips of the installation or
+                    ribbon-cutting ceremony so we can amplify your clean-energy story.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <aside class="card pad-lg contact-card">
+            <div class="icon-tile" style="background:var(--orange); color:#fff;">
+              <i class="ph-bold ph-envelope-simple"></i>
+            </div>
+
+            <h3 style="font-size:1.5rem; margin:1.1rem 0 0.5rem;">RE-volv Coordination &amp; Media Support</h3>
+
+            <p>
+              To help maximize your event’s reach, please integrate RE-volv into your workflow at each key stage.
+            </p>
+
+            <p>
+              Questions? Contact RE-volv’s Communications and Impact Marketing Manager,
+              Tierney Sheehan, at
+              <a href="mailto:tierney@re-volv.org">tierney@re-volv.org</a>.
+            </p>
+          </aside>
+        </div>
+      </div>
+    </section>
+
+    <section class="section soft-orange">
+      <div class="max-shell">
+        <div class="toc-card card">
+          <div class="section-kicker">
+            <i class="ph-fill ph-list-numbers"></i>
+            Toolkit Table of Contents
+          </div>
+
+          <ul class="toc-list">
+            <li><strong>1. Ribbon Cutting Overview</strong><br>What it is and why it matters.</li>
+            <li><strong>2. Event Planning</strong><br>Briefs, RSVP setup, outreach, and checklists.</li>
+            <li><strong>3. Event Promotion</strong><br>Flyers, social graphics, media outreach, and messaging.</li>
+            <li><strong>4. Event Day Reminders</strong><br>Content capture and day-of coordination.</li>
+            <li><strong>5. Safety Resources</strong><br>Safety, de-escalation, rights, accessibility, and weather planning.</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <section id="overview" class="section alt">
+      <div class="max-shell">
+        <div class="section-heading">
+          <div class="section-kicker">
+            <i class="ph-fill ph-scissors"></i>
+            Ribbon Cutting Overview
+          </div>
+          <h2 class="section-title">A visible milestone for clean energy and community impact.</h2>
+          <p class="section-copy">
+            A ribbon cutting is a public celebration of your transition to clean solar energy. It marks the moment your organization
+            begins generating its own power, reducing its carbon footprint, and reinvesting energy savings back into the community.
+          </p>
+        </div>
+
+        <div class="overview-grid">
+          <article class="card metric-card">
+            <i class="ph-duotone ph-megaphone"></i>
+            <h3>Broaden Your Mission’s Reach</h3>
+            <p>
+              Introduce new members, local officials, media outlets, civic leaders, and community partners to your mission and
+              long-term goals.
+            </p>
+          </article>
+
+          <article class="card metric-card">
+            <i class="ph-duotone ph-sun-horizon"></i>
+            <h3>Ripple Solar Through Your Community</h3>
+            <p>
+              One visible nonprofit solar project can become proof of what is possible and inspire broader adoption throughout the community.
+            </p>
+          </article>
+
+          <article class="card metric-card">
+            <i class="ph-duotone ph-users-three"></i>
+            <h3>Advocate for Clean Energy</h3>
+            <p>
+              Use your trusted voice to explain the environmental and economic benefits of solar and show how energy savings strengthen your mission.
+            </p>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <section id="planning" class="section soft-teal">
+      <div class="max-shell">
+        <div class="section-heading">
+          <div class="section-kicker">
+            <i class="ph-fill ph-calendar-check"></i>
+            Event Planning
+          </div>
+          <h2 class="section-title">Build your event one step at a time.</h2>
+          <p class="section-copy">
+            These editable and downloadable resources will help your team organize the event, invite the right audiences, and prepare for a smooth celebration.
+          </p>
+        </div>
+
+        <div class="template-grid">
+          <article class="card pad resource-card">
+            <div class="resource-placeholder">
+              <div>
+                <i class="ph-duotone ph-file-text"></i>
+                Event brief preview
+              </div>
+            </div>
+            <div class="resource-meta"><span class="pill navy">Template</span></div>
+            <h3>Event Brief Template</h3>
+            <p>Define the event goal, audience, program, speakers, logistics, and communications plan.</p>
+            <span class="coming-soon">Link Coming Soon</span>
+          </article>
+
+          <article class="card pad resource-card">
+            <div class="resource-placeholder">
+              <div>
+                <i class="ph-duotone ph-ticket"></i>
+                RSVP guide preview
+              </div>
+            </div>
+            <div class="resource-meta"><span class="pill teal">Guide</span></div>
+            <h3>Setting Up an RSVP Link</h3>
+            <p>Create a clear registration page and collect the information your team needs.</p>
+            <span class="coming-soon">Link Coming Soon</span>
+          </article>
+
+          <article class="card pad resource-card">
+            <div class="resource-placeholder">
+              <div>
+                <i class="ph-duotone ph-check-square-offset"></i>
+                Checklist preview
+              </div>
+            </div>
+            <div class="resource-meta"><span class="pill">Checklist</span></div>
+            <h3>Event Planning Checklist</h3>
+            <p>Track planning milestones, owners, deadlines, vendors, signage, speakers, and follow-up.</p>
+            <span class="coming-soon">Link Coming Soon</span>
+          </article>
+
+          <article class="card pad resource-card">
+            <div class="resource-placeholder">
+              <div>
+                <i class="ph-duotone ph-bank"></i>
+                Outreach letter preview
+              </div>
+            </div>
+            <div class="resource-meta"><span class="pill navy">Outreach</span></div>
+            <h3>Elected Official Outreach Template</h3>
+            <p>Invite local representatives and public officials to attend, speak, or recognize the project.</p>
+            <span class="coming-soon">Link Coming Soon</span>
+          </article>
+
+          <article class="card pad resource-card">
+            <div class="resource-placeholder">
+              <div>
+                <i class="ph-duotone ph-handshake"></i>
+                Partner invitation preview
+              </div>
+            </div>
+            <div class="resource-meta"><span class="pill teal">Outreach</span></div>
+            <h3>Local Organization Outreach</h3>
+            <p>Invite neighborhood organizations, civic groups, congregations, schools, and community leaders.</p>
+            <span class="coming-soon">Link Coming Soon</span>
+          </article>
+
+          <article class="card pad resource-card">
+            <div class="resource-placeholder">
+              <div>
+                <i class="ph-duotone ph-storefront"></i>
+                Booth invitation preview
+              </div>
+            </div>
+            <div class="resource-meta"><span class="pill">Outreach</span></div>
+            <h3>Educational Booth Outreach</h3>
+            <p>Invite partners to host educational tables, demonstrations, or community resource stations.</p>
+            <span class="coming-soon">Link Coming Soon</span>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <section id="promotion" class="section alt">
+      <div class="max-shell">
+        <div class="section-heading">
+          <div class="section-kicker">
+            <i class="ph-fill ph-megaphone-simple"></i>
+            Event Promotion
+          </div>
+          <h2 class="section-title">Turn your celebration into a story people can share.</h2>
+          <p class="section-copy">
+            Storytelling is critical to amplify your impact. These templates help engage local media, invite community leaders,
+            and mobilize supporters online.
+          </p>
+        </div>
+
+        <div class="resource-grid">
+          <article class="card pad resource-card">
+            <div class="resource-placeholder"><div><i class="ph-duotone ph-flyer"></i>Flyer template image</div></div>
+            <h3>Flyer Template</h3>
+            <p>Customizable event flyer for print and digital distribution.</p>
+            <span class="coming-soon">Canva Link Coming Soon</span>
+          </article>
+
+          <article class="card pad resource-card">
+            <div class="resource-placeholder"><div><i class="ph-duotone ph-linkedin-logo"></i>Facebook &amp; LinkedIn graphic</div></div>
+            <h3>Facebook &amp; LinkedIn Template</h3>
+            <p>Landscape event graphic with address and no-address versions.</p>
+            <span class="coming-soon">Canva Link Coming Soon</span>
+          </article>
+
+          <article class="card pad resource-card">
+            <div class="resource-placeholder"><div><i class="ph-duotone ph-instagram-logo"></i>Instagram graphic</div></div>
+            <h3>Instagram Template</h3>
+            <p>Square and portrait social graphics with address and no-address versions.</p>
+            <span class="coming-soon">Canva Link Coming Soon</span>
+          </article>
+
+          <article class="card pad resource-card">
+            <div class="resource-placeholder"><div><i class="ph-duotone ph-qr-code"></i>QR code guide image</div></div>
+            <h3>How to Download a QR Code</h3>
+            <p>Step-by-step guidance for adding RSVP or project links to your event materials.</p>
+            <span class="coming-soon">Guide Link Coming Soon</span>
+          </article>
+
+          <article class="card pad resource-card">
+            <div class="resource-placeholder"><div><i class="ph-duotone ph-newspaper-clipping"></i>Press release preview</div></div>
+            <h3>Media Outreach Kit</h3>
+            <p>Press release, media advisory, reporter pitch, and event-day media guidance.</p>
+            <span class="coming-soon">Files Coming Soon</span>
+          </article>
+
+          <article class="card pad resource-card">
+            <div class="resource-placeholder"><div><i class="ph-duotone ph-video-camera"></i>Canva tutorial image</div></div>
+            <h3>How to Use Canva</h3>
+            <p>A beginner-friendly guide for editing event templates and downloading finished graphics.</p>
+            <span class="coming-soon">Tutorial Link Coming Soon</span>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <section class="section soft-orange">
+      <div class="max-shell">
+        <div class="welcome-grid">
+          <div class="card pad-lg">
+            <div class="section-kicker">
+              <i class="ph-fill ph-chat-circle-text"></i>
+              RE-volv Brand &amp; Messaging
+            </div>
+
+            <h2 class="section-title" style="font-size:clamp(2rem,4vw,3.4rem);">Tag RE-volv so we can amplify your story.</h2>
+
+            <p>
+              Please tag RE-volv at the bottom of your social media posts so we can comment, celebrate your organization,
+              and share your content with our national audience.
+            </p>
+
+            <div class="social-list">
+              <a class="social-link" href="https://www.linkedin.com/company/re-volv/" target="_blank" rel="noopener noreferrer">
+                <span><i class="ph-fill ph-linkedin-logo"></i> LinkedIn: @RE-volv</span>
+                <i class="ph-bold ph-arrow-square-out"></i>
+              </a>
+
+              <a class="social-link" href="https://www.instagram.com/re.volv/" target="_blank" rel="noopener noreferrer">
+                <span><i class="ph-fill ph-instagram-logo"></i> Instagram: @re.volv</span>
+                <i class="ph-bold ph-arrow-square-out"></i>
+              </a>
+
+              <a class="social-link" href="https://www.facebook.com/solarseedfund/" target="_blank" rel="noopener noreferrer">
+                <span><i class="ph-fill ph-facebook-logo"></i> Facebook: @RE-volv</span>
+                <i class="ph-bold ph-arrow-square-out"></i>
+              </a>
+            </div>
+          </div>
+
+          <div class="card pad-lg">
+            <div class="resource-placeholder" style="min-height:100%;">
+              <div>
+                <i class="ph-duotone ph-image-square"></i>
+                <strong style="display:block; color:var(--navy); margin-bottom:0.35rem;">Brand Asset Placeholder</strong>
+                RE-volv logos, messaging, photography, and brand files will be added here later.
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="event-day" class="section alt">
+      <div class="max-shell">
+        <div class="section-heading">
+          <div class="section-kicker">
+            <i class="ph-fill ph-camera"></i>
+            Event Day Reminders
+          </div>
+          <h2 class="section-title">Capture the people, place, and momentum behind the project.</h2>
+        </div>
+
+        <div class="welcome-grid">
+          <div class="card checklist-card">
+            <h3>Content Capture Guide</h3>
+            <div class="checklist">
+              <label class="check-item"><input type="checkbox"> <span>Building exterior and solar array</span></label>
+              <label class="check-item"><input type="checkbox"> <span>Ribbon-cutting moment</span></label>
+              <label class="check-item"><input type="checkbox"> <span>Group photo with partners and community members</span></label>
+              <label class="check-item"><input type="checkbox"> <span>Speakers at the podium</span></label>
+              <label class="check-item"><input type="checkbox"> <span>Close-up shots of solar panels and signage</span></label>
+              <label class="check-item"><input type="checkbox"> <span>Candid interactions and community conversations</span></label>
+              <label class="check-item"><input type="checkbox"> <span>Short interviews or testimonials</span></label>
+              <label class="check-item"><input type="checkbox"> <span>RE-volv branding visible in at least one image</span></label>
+            </div>
+          </div>
+
+          <div class="card checklist-card">
+            <h3>Day-Of Event Checklist</h3>
+            <div class="checklist">
+              <label class="check-item"><input type="checkbox"> <span>Confirm event lead and backup contact</span></label>
+              <label class="check-item"><input type="checkbox"> <span>Set up signage, check-in, and seating</span></label>
+              <label class="check-item"><input type="checkbox"> <span>Prepare ribbon and ceremonial scissors</span></label>
+              <label class="check-item"><input type="checkbox"> <span>Review speaker order and timing</span></label>
+              <label class="check-item"><input type="checkbox"> <span>Confirm photographer or content lead</span></label>
+              <label class="check-item"><input type="checkbox"> <span>Check accessibility, water, and weather needs</span></label>
+              <label class="check-item"><input type="checkbox"> <span>Thank attendees, volunteers, and project partners</span></label>
+              <label class="check-item"><input type="checkbox"> <span>Send photos and video to RE-volv after the event</span></label>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="resources" class="section soft-teal">
+      <div class="max-shell">
+        <div class="section-heading">
+          <div class="section-kicker">
+            <i class="ph-fill ph-folder-open"></i>
+            RE-volv Resources to Circulate
+          </div>
+          <h2 class="section-title">Downloadable and printable resources for neighbors and partners.</h2>
+        </div>
+
+        <div class="resource-grid">
+          <article class="card pad resource-card">
+            <div class="resource-placeholder"><div><i class="ph-duotone ph-file-pdf"></i>General one-pager preview</div></div>
+            <h3>General One-Pager</h3>
+            <p>An introduction to RE-volv’s model, mission, and nonprofit solar impact.</p>
+            <span class="coming-soon">Link Coming Soon</span>
+          </article>
+
+          <article class="card pad resource-card">
+            <div class="resource-placeholder"><div><i class="ph-duotone ph-church"></i>House of Worship one-pager</div></div>
+            <h3>House of Worship One-Pager</h3>
+            <p>A sector-specific resource for congregations and faith communities.</p>
+            <span class="coming-soon">Link Coming Soon</span>
+          </article>
+
+          <article class="card pad resource-card">
+            <div class="resource-placeholder"><div><i class="ph-duotone ph-student"></i>Charter school flyer</div></div>
+            <h3>Charter School One-Pager</h3>
+            <p>A resource for schools interested in clean energy savings and educational impact.</p>
+            <span class="coming-soon">Link Coming Soon</span>
+          </article>
+
+          <article class="card pad resource-card">
+            <div class="resource-placeholder"><div><i class="ph-duotone ph-image"></i>Logo package preview</div></div>
+            <h3>High-Quality Logos</h3>
+            <p>Primary, horizontal, stacked, dark, and light RE-volv logo files.</p>
+            <span class="coming-soon">Files Coming Soon</span>
+          </article>
+
+          <article class="card pad resource-card">
+            <div class="resource-placeholder"><div><i class="ph-duotone ph-quotes"></i>Key messages preview</div></div>
+            <h3>RE-volv Key Messages</h3>
+            <p>Mission language, talking points, boilerplate, and approved solar terminology.</p>
+            <span class="coming-soon">Document Coming Soon</span>
+          </article>
+
+          <article class="card pad resource-card">
+            <div class="resource-placeholder"><div><i class="ph-duotone ph-camera-rotate"></i>Photo upload area</div></div>
+            <h3>Post-Event Media Upload</h3>
+            <p>A future upload link for high-resolution photography and video clips.</p>
+            <span class="coming-soon">Upload Link Coming Soon</span>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <section id="safety" class="section alt">
+      <div class="max-shell">
+        <div class="section-heading">
+          <div class="section-kicker">
+            <i class="ph-fill ph-shield-check"></i>
+            Safety Resources
+          </div>
+          <h2 class="section-title">Plan for a welcoming, accessible, and safe celebration.</h2>
+        </div>
+
+        <div class="safety-grid">
+          <article class="card pad resource-card">
+            <div class="resource-placeholder"><div><i class="ph-duotone ph-shield-check"></i>Safety checklist</div></div>
+            <h3>Event Safety Checklist</h3>
+            <p>Prepare for venue, crowd, traffic, equipment, emergency, and weather considerations.</p>
+            <span class="coming-soon">File Coming Soon</span>
+          </article>
+
+          <article class="card pad resource-card">
+            <div class="resource-placeholder"><div><i class="ph-duotone ph-peace"></i>De-escalation guide</div></div>
+            <h3>De-Escalation Guide</h3>
+            <p>Practical steps for responding calmly and safely to conflict or disruption.</p>
+            <span class="coming-soon">File Coming Soon</span>
+          </article>
+
+          <article class="card pad resource-card">
+            <div class="resource-placeholder"><div><i class="ph-duotone ph-scales"></i>Know your rights guide</div></div>
+            <h3>Know Your Rights</h3>
+            <p>General information for staff, volunteers, and event participants.</p>
+            <span class="coming-soon">File Coming Soon</span>
+          </article>
+
+          <article class="card pad resource-card">
+            <div class="resource-placeholder"><div><i class="ph-duotone ph-wheelchair"></i>Accessibility guide</div></div>
+            <h3>Accessibility Planning</h3>
+            <p>Review seating, pathways, sound, interpretation, restrooms, and participation needs.</p>
+            <span class="coming-soon">File Coming Soon</span>
+          </article>
+
+          <article class="card pad resource-card">
+            <div class="resource-placeholder"><div><i class="ph-duotone ph-cloud-sun"></i>Weather plan</div></div>
+            <h3>Weather Planning</h3>
+            <p>Prepare heat, rain, severe weather, shade, hydration, and backup-location plans.</p>
+            <span class="coming-soon">File Coming Soon</span>
+          </article>
+
+          <article class="card pad resource-card">
+            <div class="resource-placeholder"><div><i class="ph-duotone ph-first-aid-kit"></i>Emergency contacts</div></div>
+            <h3>Emergency Contacts</h3>
+            <p>Create a quick-reference list for venue staff, project leads, first aid, and local services.</p>
+            <span class="coming-soon">Template Coming Soon</span>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <footer class="footer">
+      <div class="max-shell">
+        <div class="footer-card">
+          <div>
+            <h2>
+              When one nonprofit goes solar, the project becomes a visible proof point that can inspire broader community adoption.
+            </h2>
+            <p>
+              Thank you for helping your community see what clean energy can make possible.
+            </p>
+          </div>
+
+          <a class="button button-orange" href="mailto:tierney@re-volv.org">
+            <i class="ph-bold ph-envelope-simple"></i>
+            Contact RE-volv
+          </a>
+        </div>
+
+        <div class="footer-meta">
+          RE-volv Solar Celebration Toolkit
+        </div>
+      </div>
+    </footer>
+  </div>
+</body>
+</html>

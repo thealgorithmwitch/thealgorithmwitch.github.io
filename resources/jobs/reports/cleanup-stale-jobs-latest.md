@@ -1,6 +1,6 @@
 # Cleanup Stale Jobs
 
-Generated: 2026-07-15T12:20:47.744Z
+Generated: 2026-07-15T14:20:06.590Z
 Mode: write
 
 Previous public jobs count: 121
@@ -18,10 +18,10 @@ Skipped risky changes: 13
 - Greenpeace-8549415002: code_feed_page
 - Grove Collaborative-5212550008: code_feed_page
 - Greenpeace-8331887002: code_feed_page
-- Greentown Labs-1ba976db-8028-4bca-a9e4-f87e908bfee8: redirected_to_board_needs_review
 - Advanced Energy United-0e36c8d4-4947-4c9b-acbb-a8cb3bf748c2: redirected_to_board_needs_review
-- Energy & Policy Institute-research-fellow: non_job_page:careers_landing_page
+- Greentown Labs-1ba976db-8028-4bca-a9e4-f87e908bfee8: redirected_to_board_needs_review
 - Energy & Policy Institute-research-manager: non_job_page:careers_landing_page
+- Energy & Policy Institute-research-fellow: non_job_page:careers_landing_page
 - Quince-5098016008: code_feed_page
 - Quince-5178743008: code_feed_page
 - Greentown Labs-73df9c05-51b7-4fd9-92c0-019486267387: redirected_to_board_needs_review

@@ -1598,8 +1598,6 @@
   </div>
 
   <script>
-    window.CONTRACT_WEB_APP_URL = "https://script.google.com/a/macros/girlplusenvironment.org/s/AKfycbwDKAufErFqDFb8UiTCFgt7iU0V45lGvAKzfux79pkzfTd-wPw2oUL4Ib1E3D5rJl-KfA/exec";
-
     (() => {
       const FORM_STORAGE_KEY = "gpe_climate_creator_contract_2026";
       const SIGNATURE_STORAGE_KEY = `${FORM_STORAGE_KEY}_signature`;
@@ -1786,47 +1784,110 @@
         $("topSendDot").dataset.state=state==="success"?"sent":state==="error"?"error":"pending";
       };
 
-      const sendViaFetch=async(payload)=>{
-        const endpoint=window.CONTRACT_WEB_APP_URL;
-        if(!endpoint||endpoint.includes("PASTE_YOUR")) throw new Error("Add the deployed Apps Script web app URL to CONTRACT_WEB_APP_URL.");
-        const response=await fetch(endpoint,{method:"POST",headers:{"Content-Type":"text/plain;charset=utf-8"},body:JSON.stringify(payload)});
-        const text=await response.text(); let result;
-        try{result=JSON.parse(text);}catch(_){throw new Error("Apps Script returned a non-JSON response. Confirm the current web-app deployment URL and access settings.");}
-        if(!response.ok||!result.ok) throw new Error(result.error||"Unable to send signed agreement.");
-        return result;
-      };
-
-      const sendAgreement=async()=>{
-        const errors=validate();
-        if(errors.length){setSendStatus(errors.join(" "),"error");if(!currentSignature())openModal();return;}
-        const buttons=[$("sendContractButton"),$("mobileSendButton")].filter(Boolean);
-        buttons.forEach(b=>b.disabled=true);setSendStatus("Sending signed agreement...");
-        const payload={
-          action:"sendSignedContract",
-          creatorName:value("creatorLegalName"),
-          creatorEmail:value("creatorEmail"),
-          creatorBusinessName:value("creatorBusinessName"),
-          creatorInstagram:value("creatorInstagram"),
-          creatorTikTok:value("creatorTikTok"),
-          organizationEmail:CONTRACT_META.organizationEmail,
-          ccEmail:CONTRACT_META.ccEmail,
-          contractTitle:CONTRACT_META.contractTitle,
-          contractId:CONTRACT_META.contractId,
-          effectiveDate:formatDate(value("effectiveDate")),
-          signatureDate:formatDate(value("creatorSignatureDate")),
-          contractHtml:buildContractHtml(),
-          signatureDataUrl:currentSignature()
+      const sendAgreement = async () => {
+        const errors = validate();
+      
+        if (errors.length) {
+          setSendStatus(errors.join(" "), "error");
+      
+          if (!currentSignature()) {
+            openModal();
+          }
+      
+          return;
+        }
+      
+        if (
+          !window.google ||
+          !google.script ||
+          !google.script.run
+        ) {
+          setSendStatus(
+            "This agreement must be opened through the Girl Plus Environment contract portal.",
+            "error"
+          );
+          return;
+        }
+      
+        const buttons = [
+          $("sendContractButton"),
+          $("mobileSendButton")
+        ].filter(Boolean);
+      
+        buttons.forEach((button) => {
+          button.disabled = true;
+        });
+      
+        setSendStatus("Sending signed agreement...");
+      
+        const payload = {
+          action: "sendSignedContract",
+      
+          creatorName: value("creatorLegalName"),
+          creatorEmail: value("creatorEmail"),
+          creatorPhone: value("creatorPhone"),
+          creatorAddress: value("creatorAddress"),
+          creatorBusinessName: value("creatorBusinessName"),
+          creatorInstagram: value("creatorInstagram"),
+          creatorTikTok: value("creatorTikTok"),
+      
+          platformSelection: value("platformSelection"),
+          otherPlatform: value("otherPlatform"),
+      
+          organizationEmail: CONTRACT_META.organizationEmail,
+          ccEmail: CONTRACT_META.ccEmail,
+      
+          contractTitle: CONTRACT_META.contractTitle,
+          contractId: CONTRACT_META.contractId,
+      
+          effectiveDate: formatDate(value("effectiveDate")),
+          signatureDate: formatDate(value("creatorSignatureDate")),
+      
+          contractHtml: buildContractHtml(),
+          signatureDataUrl: currentSignature()
         };
-        try{
-          const result=window.google?.script?.run
-            ? await new Promise((resolve,reject)=>google.script.run.withSuccessHandler(resolve).withFailureHandler(reject).sendSignedContractFromPage(payload))
-            : await sendViaFetch(payload);
-          if(!result?.ok) throw new Error(result?.error||"Unable to send signed agreement.");
-          setSendStatus("Signed agreement sent. Girl Plus Environment will follow up separately to coordinate payment onboarding.","success");
-        }catch(err){setSendStatus(err?.message||"Unable to send signed agreement.","error");}
-        finally{buttons.forEach(b=>b.disabled=false);}
+      
+        try {
+          const result = await new Promise((resolve, reject) => {
+            google.script.run
+              .withSuccessHandler(resolve)
+              .withFailureHandler((error) => {
+                reject(
+                  new Error(
+                    error?.message ||
+                    "Apps Script could not process the signed agreement."
+                  )
+                );
+              })
+              .sendSignedContractFromPage(payload);
+          });
+      
+          if (!result?.ok) {
+            throw new Error(
+              result?.error ||
+              "Unable to send the signed agreement."
+            );
+          }
+      
+          setSendStatus(
+            result.message ||
+            "Signed agreement sent. Girl Plus Environment will follow up separately to coordinate payment onboarding.",
+            "success"
+          );
+        } catch (error) {
+          console.error("Agreement submission failed:", error);
+      
+          setSendStatus(
+            error?.message ||
+            "Unable to send the signed agreement.",
+            "error"
+          );
+        } finally {
+          buttons.forEach((button) => {
+            button.disabled = false;
+          });
+        }
       };
-
       [$("sendContractButton"),$("mobileSendButton")].forEach(btn=>btn?.addEventListener("click",sendAgreement));
       [$("printButton"),$("mobilePrintButton")].forEach(btn=>btn?.addEventListener("click",()=>window.print()));
     })();

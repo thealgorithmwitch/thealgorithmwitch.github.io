@@ -1,13 +1,13 @@
 # Source Coverage Audit
 
-Generated: 2026-07-16T13:16:46.796Z
+Generated: 2026-07-16T13:28:59.016Z
 
 ## Summary
 
 - Total sources: 197
 - Total prospects: 92
-- Total public organizations: 52
-- Total pending organizations: 65
+- Total public organizations: 57
+- Total pending organizations: 62
 
 ## Active Source Coverage
 
@@ -28,7 +28,7 @@ Generated: 2026-07-16T13:16:46.796Z
 | Appalachian Voices | appalachian-voices |  | manual_review_community | live | 0 | 0 | 0 |
 | Arevon Energy | arevon |  | low_confidence_experimental | live | 0 | 0 | 3 |
 | Array Technologies | array-technologies | workday | low_confidence_experimental | sync_disabled | 0 | 0 | 0 |
-| Ascent | ascent | paylocity | trusted_nonprofit_pending_review | live | 0 | 2 | 3 |
+| Ascent | ascent | paylocity | trusted_nonprofit_pending_review | live | 0 | 3 | 2 |
 | Asian Pacific Environmental Network | apen4ej |  | manual_review_community | stale | 0 | 0 | 0 |
 | Aspen Institute | aspen-institute |  | low_confidence_experimental | sync_error | 3 | 0 | 0 |
 | Black Girl Environmentalist | black-girl-environmentalist |  | manual_review_community | stale | 0 | 0 | 0 |
@@ -39,16 +39,16 @@ Generated: 2026-07-16T13:16:46.796Z
 | Brightline Defense | brightline-defense |  | manual_review_community |  | 0 | 0 | 0 |
 | Bullard Center for Environmental and Climate Justice | bullard-center |  | manual_review_community | live | 0 | 1 | 0 |
 | California Environmental Justice Alliance | california-environmental-justice-alliance |  | manual_review_community |  | 0 | 0 | 0 |
-| CALSTART | calstart | lever | trusted_nonprofit_pending_review | live | 0 | 3 | 3 |
+| CALSTART | calstart | lever | trusted_nonprofit_pending_review | live | 0 | 4 | 2 |
 | Canadian Solar | canadian-solar | workday | low_confidence_experimental | sync_disabled | 0 | 0 | 0 |
-| Carbon Direct | carbon-direct | greenhouse | trusted_nonprofit_pending_review | live | 0 | 0 | 5 |
+| Carbon Direct | carbon-direct | greenhouse | trusted_nonprofit_pending_review | live | 0 | 2 | 3 |
 | Carbon180 | carbon180 |  | low_confidence_experimental | live | 0 | 0 | 0 |
 | CEEZER | ceezer | ashby | low_confidence_experimental | sync_error | 5 | 0 | 0 |
 | Ceres | ceres |  | low_confidence_experimental | stale | 0 | 0 | 0 |
 | ChargerHelp! | chargerhelp | recruitee | trusted_nonprofit_pending_review | live | 0 | 3 | 0 |
 | Citizen's Climate Lobby | citizens-climate-lobby |  | manual_review_community | sync_error | 3 | 0 | 0 |
 | Clean Air Task Force | clean-air-task-force |  | low_confidence_experimental | live | 0 | 0 | 0 |
-| Clean Energy Trust | clean-energy-trust | bamboohr | trusted_nonprofit_pending_review | stale | 0 | 2 | 1 |
+| Clean Energy Trust | clean-energy-trust | bamboohr | trusted_nonprofit_pending_review | stale | 0 | 3 | 0 |
 | Clean Slate Initiative | clean-slate-initiative |  | low_confidence_experimental | sync_error | 3 | 0 | 0 |
 | CleanCapital | clean-capital |  | trusted_nonprofit_pending_review | live | 0 | 1 | 0 |
 | CleanChoice Energy | cleanchoice-energy |  | low_confidence_experimental | sync_error | 3 | 0 | 0 |
@@ -72,22 +72,22 @@ Generated: 2026-07-16T13:16:46.796Z
 | Powerlines | 7 |
 | Dylan Green | 5 |
 | HA Sustainable Infrastructure Capital | 5 |
+| More Perfect Union Action | 5 |
 | Oxfam America | 5 |
 | Protect Democracy | 5 |
 | SEEL | 5 |
-| More Perfect Union Action | 4 |
+| CALSTART | 4 |
 | NextEra Energy | 4 |
-| CALSTART | 3 |
+| Resource Innovations | 4 |
+| Ascent | 3 |
 | ChargerHelp! | 3 |
+| Clean Energy Trust | 3 |
 | Energy Infrastructure Partners LLC | 3 |
-| Resource Innovations | 3 |
 | The Nature Conservancy | 3 |
-| Ascent | 2 |
-| Clean Energy Trust | 2 |
+| Carbon Direct | 2 |
 | EDP | 2 |
 | Education Reform Now Advocacy | 2 |
 | Energy & Policy Institute | 2 |
-| Fervo Energy | 2 |
 
 ## Pending Review Coverage
 
@@ -101,18 +101,18 @@ Generated: 2026-07-16T13:16:46.796Z
 | Get Vocal PBC | 14 |
 | Conservation International | 10 |
 | GBL HR | 10 |
-| Grove Collaborative | 8 |
 | American Bird Conservancy | 7 |
+| Grove Collaborative | 7 |
 | Oxfam America | 7 |
-| Carbon Direct | 5 |
 | Protect Democracy | 5 |
-| Resource Innovations | 5 |
 | Advanced Energy United | 4 |
-| More Perfect Union Action | 4 |
+| Resource Innovations | 4 |
 | Sierra Club | 4 |
 | Arevon Energy | 3 |
-| Ascent | 3 |
-| CALSTART | 3 |
+| Carbon Direct | 3 |
+| Fervo Energy | 3 |
+| Middle Seat | 3 |
+| More Perfect Union Action | 3 |
 
 ## Missing Preferred Orgs
 
@@ -185,6 +185,8 @@ Generated: 2026-07-16T13:16:46.796Z
 | --- | --- | --- |
 | Action Against Hunger | 1 | ready_for_manual_review |
 | Aristotle | 1 | ready_for_manual_review |
+| Avōq | 1 | add_to_sources_json |
+| BME Strategies | 1 | ready_for_manual_review |
 | Centre for Information Resilience | 1 | ready_for_manual_review |
 | Climate Action | 1 | ready_for_manual_review |
 | Education Reform Now Advocacy | 2 | add_to_sources_json |
@@ -197,7 +199,8 @@ Generated: 2026-07-16T13:16:46.796Z
 | Mitti Labs | 1 | add_to_sources_json |
 | Proterra | 1 | ready_for_manual_review |
 | Rational | 1 | ready_for_manual_review |
-| Resource Innovations | 3 | add_to_sources_json |
+| Resource Innovations | 4 | add_to_sources_json |
+| Responsibly | 1 | ready_for_manual_review |
 | TaskForce | 1 | ready_for_manual_review |
 | The Herald Group | 1 | ready_for_manual_review |
 | Veloz | 1 | ready_for_manual_review |

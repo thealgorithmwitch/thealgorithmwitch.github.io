@@ -1,1 +1,1835 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Climate Creator Cohort Partnership Agreement | Girl Plus Environment</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+  <script src="https://unpkg.com/@phosphor-icons/web"></script>
 
+  <style>
+    :root {
+      --pink: #fbd3d3;
+      --magenta: #d53f8c;
+      --cyan: #22d3ee;
+      --cyan-soft: #cffafe;
+      --yellow: #facc15;
+      --yellow-soft: #fef08a;
+      --orange: #fb923c;
+      --purple: #c4b5fd;
+      --green: #4ade80;
+      --black: #000000;
+      --white: #ffffff;
+      --ink-soft: #27272a;
+      --danger: #dc2626;
+      --sidebar-expanded: 322px;
+      --sidebar-collapsed: 58px;
+      --shadow: 7px 7px 0 #000;
+      --shadow-small: 4px 4px 0 #000;
+    }
+
+    * {
+      box-sizing: border-box;
+      scrollbar-width: none;
+    }
+
+    *::-webkit-scrollbar {
+      display: none;
+    }
+
+    [hidden] {
+      display: none !important;
+    }
+
+    html {
+      scroll-behavior: smooth;
+      background: var(--pink);
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      overflow-x: hidden;
+      background:
+        radial-gradient(circle at 92% 7%, rgba(250, 204, 21, .72) 0 62px, transparent 63px),
+        radial-gradient(circle at 8% 24%, rgba(34, 211, 238, .42) 0 78px, transparent 79px),
+        linear-gradient(rgba(0,0,0,.035) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0,0,0,.035) 1px, transparent 1px),
+        var(--pink);
+      background-size: auto, auto, 38px 38px, 38px 38px, auto;
+      color: var(--black);
+      font-family: "Space Mono", monospace;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    button,
+    input,
+    textarea,
+    select {
+      font: inherit;
+      color: inherit;
+    }
+
+    a {
+      color: inherit;
+      text-decoration: none;
+    }
+
+    strong {
+      font-weight: 700;
+    }
+
+    .font-magical,
+    .font-serif-heading {
+      font-family: "Archivo Black", sans-serif;
+    }
+
+    .font-mono-code {
+      font-family: "Space Mono", monospace;
+    }
+
+    .grimoire-grid {
+      background-color: transparent;
+    }
+
+    .stars {
+      position: fixed;
+      inset: 0;
+      z-index: 0;
+      pointer-events: none;
+      opacity: .18;
+      mix-blend-mode: multiply;
+    }
+
+    .stars > div {
+      background: #000 !important;
+      border-radius: 0 !important;
+    }
+
+    .sidebar {
+      position: fixed;
+      inset: 0 auto 0 0;
+      z-index: 50;
+      width: var(--sidebar-expanded);
+      display: flex;
+      flex-direction: column;
+      padding: 1.5rem 0;
+      overflow: visible;
+      background: var(--black);
+      color: var(--white);
+      border-right: 4px solid var(--black);
+      box-shadow: 8px 0 0 var(--cyan);
+      transition: width .24s ease;
+    }
+
+    .sidebar.collapsed {
+      width: var(--sidebar-collapsed);
+    }
+
+    .sidebar-inner {
+      height: 100%;
+      overflow-y: auto;
+      overflow-x: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .sidebar .toggle-btn {
+      position: absolute;
+      right: -25px;
+      top: 88px;
+      z-index: 999;
+      width: 46px;
+      height: 46px;
+      display: grid;
+      place-items: center;
+      padding: 0;
+      border: 3px solid var(--black);
+      border-radius: 999px;
+      background: var(--yellow);
+      color: var(--black);
+      box-shadow: var(--shadow-small);
+      cursor: pointer;
+    }
+
+    .sidebar .toggle-btn:hover {
+      transform: translate(-2px, -2px);
+      box-shadow: 6px 6px 0 var(--black);
+    }
+
+    .brand-row {
+      display: flex;
+      align-items: center;
+      gap: .9rem;
+      min-height: 4rem;
+      padding: 0 1.2rem;
+      margin: .25rem 0 1.5rem;
+    }
+
+    .brand-sigil {
+      width: 3rem;
+      height: 3rem;
+      flex: 0 0 3rem;
+      display: grid;
+      place-items: center;
+      overflow: hidden;
+      border: 3px solid var(--white);
+      border-radius: 14px;
+      background: var(--magenta);
+      box-shadow: 4px 4px 0 var(--cyan);
+    }
+
+    .brand-sigil i {
+      color: var(--white);
+      font-size: 1.55rem;
+    }
+
+    .brand-row h1 {
+      font-family: "Archivo Black", sans-serif !important;
+      letter-spacing: -.02em !important;
+      line-height: 1.05;
+    }
+
+    .brand-row p {
+      color: var(--yellow) !important;
+      letter-spacing: .08em !important;
+    }
+
+    .sidebar-signature-button {
+      width: calc(100% - 2rem);
+      min-height: 3.5rem;
+      margin: 0 1rem 1.25rem;
+      padding: .75rem 1rem;
+      display: grid;
+      grid-template-columns: 1fr auto;
+      grid-template-rows: auto auto;
+      column-gap: .7rem;
+      align-items: center;
+      text-align: left;
+      color: var(--black);
+      background: var(--yellow);
+      border: 3px solid var(--white);
+      border-radius: 999px;
+      box-shadow: 5px 5px 0 var(--magenta);
+    }
+
+    .sidebar-signature-label {
+      grid-column: 1;
+      grid-row: 1;
+      font-family: "Archivo Black", sans-serif;
+      font-size: .68rem;
+      text-transform: uppercase;
+    }
+
+    .sidebar-signature-status {
+      grid-column: 1;
+      grid-row: 2;
+      font-size: .55rem;
+      font-weight: 700;
+      text-transform: uppercase;
+    }
+
+    .sidebar-signature-button .status-dot {
+      grid-column: 2;
+      grid-row: 1 / 3;
+    }
+
+    .status-dot,
+    .button-status-dot {
+      width: .72rem;
+      height: .72rem;
+      border: 2px solid var(--black);
+      border-radius: 999px;
+      background: var(--orange);
+      box-shadow: none;
+    }
+
+    [data-state="saved"],
+    [data-state="sent"],
+    [data-state="ready"] {
+      background: var(--green) !important;
+    }
+
+    [data-state="error"] {
+      background: #fb7185 !important;
+    }
+
+    .nav-group {
+      flex: 1;
+      overflow-y: auto;
+      padding-bottom: 1rem;
+    }
+
+    .nav-item {
+      min-height: 3rem;
+      display: flex;
+      align-items: center;
+      gap: 1.1rem;
+      padding: .7rem 1.25rem;
+      color: var(--white);
+      border-left: 6px solid transparent;
+      font-size: .67rem;
+      font-weight: 700;
+      line-height: 1.25;
+      text-transform: uppercase;
+      transition: all .18s ease;
+    }
+
+    .nav-item:nth-child(4n+1):hover { background: var(--cyan); color: var(--black); }
+    .nav-item:nth-child(4n+2):hover { background: var(--magenta); color: var(--white); }
+    .nav-item:nth-child(4n+3):hover { background: var(--yellow); color: var(--black); }
+    .nav-item:nth-child(4n):hover { background: var(--orange); color: var(--black); }
+
+    .nav-item:hover,
+    .nav-item:focus-visible {
+      border-left-color: var(--white);
+      outline: 0;
+    }
+
+    .sidebar.collapsed .brand-row {
+      width: var(--sidebar-collapsed);
+      display: grid;
+      place-items: center;
+      padding: 0;
+      margin: .25rem 0 1rem;
+    }
+
+    .sidebar.collapsed .brand-sigil {
+      width: 2.2rem;
+      height: 2.2rem;
+      flex-basis: 2.2rem;
+      border-width: 2px;
+      box-shadow: 3px 3px 0 var(--cyan);
+    }
+
+    .sidebar.collapsed .nav-text,
+    .sidebar.collapsed .sidebar-signature-label,
+    .sidebar.collapsed .sidebar-signature-status {
+      display: none !important;
+    }
+
+    .sidebar.collapsed .nav-item {
+      justify-content: center;
+      padding: .75rem 0;
+      border-left-width: 0;
+    }
+
+    .sidebar.collapsed .nav-item i {
+      font-size: 1.2rem;
+    }
+
+    .sidebar.collapsed .sidebar-signature-button {
+      width: 2.45rem;
+      height: 2.45rem;
+      min-height: 2.45rem;
+      display: grid;
+      place-items: center;
+      padding: 0;
+      margin: 0 auto 1rem;
+      box-shadow: 3px 3px 0 var(--magenta);
+    }
+
+    .main-content {
+      min-height: 100vh;
+      position: relative;
+      z-index: 10;
+      transition: padding-left .24s ease;
+    }
+
+    body:not(.sidebar-collapsed) .main-content {
+      padding-left: clamp(88px, 14vw, 205px);
+    }
+
+    body.sidebar-collapsed .main-content {
+      padding-left: 62px;
+    }
+
+    .page-wrap {
+      width: min(1000px, calc(100% - 3rem));
+      margin: 0 auto;
+      padding: 4.5rem 0 6rem;
+    }
+
+    .mobile-bar {
+      display: none;
+      position: sticky;
+      top: 0;
+      z-index: 30;
+      padding: .9rem;
+      background: var(--black);
+      color: var(--white);
+      border-bottom: 4px solid var(--cyan);
+    }
+
+    .mobile-bar-inner {
+      max-width: 920px;
+      margin: 0 auto;
+      display: flex;
+      flex-direction: column;
+      gap: .75rem;
+    }
+
+    .mobile-actions,
+    .signature-controls,
+    .action-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: .75rem;
+    }
+
+    header {
+      position: relative;
+      margin-bottom: 3.2rem;
+      padding: 3rem 2.6rem;
+      overflow: hidden;
+      background: var(--white);
+      border: 4px solid var(--black);
+      border-radius: 38px;
+      box-shadow: 11px 11px 0 var(--black);
+    }
+
+    header::before {
+      content: "PAID CREATOR PARTNERSHIP • CLIMATE JUSTICE • GPE • ";
+      position: absolute;
+      left: -1rem;
+      right: -1rem;
+      bottom: 0;
+      padding: .55rem;
+      overflow: hidden;
+      white-space: nowrap;
+      color: var(--white);
+      background: var(--black);
+      font-family: "Archivo Black", sans-serif;
+      font-size: .8rem;
+      letter-spacing: .08em;
+      text-align: center;
+    }
+
+    header::after {
+      content: "⚡";
+      position: absolute;
+      top: -18px;
+      right: 28px;
+      width: 78px;
+      height: 78px;
+      display: grid;
+      place-items: center;
+      transform: rotate(10deg);
+      border: 4px solid var(--black);
+      border-radius: 999px;
+      background: var(--yellow);
+      box-shadow: 6px 6px 0 var(--black);
+      font-size: 2.2rem;
+    }
+
+    .eyebrow {
+      display: inline-block;
+      margin-bottom: 1.25rem;
+      padding: .6rem 1rem;
+      color: var(--white);
+      background: var(--magenta);
+      border: 3px solid var(--black);
+      border-radius: 999px;
+      box-shadow: 4px 4px 0 var(--black);
+      font-family: "Archivo Black", sans-serif;
+      font-size: .72rem;
+      letter-spacing: .04em;
+      text-transform: uppercase;
+    }
+
+    .header-title {
+      max-width: 820px;
+      margin: 0 0 1.35rem;
+      color: var(--black);
+      font-family: "Archivo Black", sans-serif;
+      font-size: clamp(2.8rem, 7vw, 5.2rem);
+      line-height: .93;
+      letter-spacing: -.055em;
+      text-transform: uppercase;
+      -webkit-text-stroke: 1px var(--black);
+    }
+
+    .header-title .accent {
+      display: inline-block;
+      margin-top: .2rem;
+      padding: .06em .14em .13em;
+      color: var(--black);
+      background: var(--cyan);
+      border: 3px solid var(--black);
+      transform: rotate(-1deg);
+      font-style: normal;
+      box-shadow: 5px 5px 0 var(--black);
+    }
+
+    .header-rule {
+      width: 145px;
+      height: 13px;
+      background: var(--yellow);
+      border: 3px solid var(--black);
+      transform: rotate(1deg);
+    }
+
+    .brand-marquee {
+      width: 100%;
+      margin: -1rem 0 4rem;
+      overflow: hidden;
+      color: var(--white);
+      background: var(--black);
+      border-top: 4px solid var(--black);
+      border-bottom: 4px solid var(--black);
+    }
+
+    .brand-marquee-track {
+      display: flex;
+      width: max-content;
+      min-width: 200%;
+      padding: .65rem 0;
+      white-space: nowrap;
+      animation: contractMarquee 25s linear infinite;
+      font-family: "Archivo Black", sans-serif;
+      font-size: 1rem;
+      text-transform: uppercase;
+    }
+
+    .brand-marquee-track span {
+      padding-right: 2.5rem;
+    }
+
+    @keyframes contractMarquee {
+      from { transform: translateX(0); }
+      to { transform: translateX(-50%); }
+    }
+
+    .section-shell {
+      display: grid;
+      grid-template-columns: 66px minmax(0, 1fr);
+      gap: 1.4rem;
+      margin-top: 3rem;
+      break-inside: avoid;
+    }
+
+    .section-num {
+      width: 66px;
+      height: 66px;
+      display: grid;
+      place-items: center;
+      padding: 0;
+      color: var(--black);
+      background: var(--yellow);
+      border: 4px solid var(--black);
+      border-radius: 999px;
+      box-shadow: 5px 5px 0 var(--black);
+      font-family: "Archivo Black", sans-serif;
+      font-size: 1rem;
+      writing-mode: initial;
+    }
+
+    .section-shell:nth-of-type(4n+1) .section-num { background: var(--cyan); }
+    .section-shell:nth-of-type(4n+2) .section-num { background: var(--magenta); color: var(--white); }
+    .section-shell:nth-of-type(4n+3) .section-num { background: var(--yellow); }
+    .section-shell:nth-of-type(4n) .section-num { background: var(--orange); }
+
+    .section-content {
+      min-width: 0;
+    }
+
+    .section-title {
+      display: inline-block;
+      max-width: 100%;
+      margin: 0 0 1.25rem;
+      padding: .75rem 1rem;
+      color: var(--white);
+      background: var(--black);
+      border: 3px solid var(--black);
+      box-shadow: 5px 5px 0 var(--cyan);
+      font-family: "Archivo Black", sans-serif;
+      font-size: clamp(1.05rem, 2.4vw, 1.45rem);
+      line-height: 1.05;
+      letter-spacing: -.015em;
+      text-transform: uppercase;
+    }
+
+    .rune-card {
+      padding: 2rem;
+      color: var(--black);
+      background: var(--white);
+      border: 4px solid var(--black);
+      border-radius: 30px;
+      box-shadow: var(--shadow);
+    }
+
+    .hero-grid,
+    .card-grid,
+    .signature-grid,
+    .field-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 1.5rem;
+    }
+
+    .hero-grid .rune-card:nth-child(1) {
+      background: var(--cyan-soft);
+    }
+
+    .hero-grid .rune-card:nth-child(2) {
+      background: var(--purple);
+    }
+
+    .meta-kicker {
+      display: inline-block;
+      margin-bottom: .85rem;
+      padding: .35rem .65rem;
+      background: var(--yellow);
+      border: 2px solid var(--black);
+      font-family: "Archivo Black", sans-serif;
+      font-size: .65rem;
+      text-transform: uppercase;
+    }
+
+    .meta-title {
+      margin: 0 0 .6rem;
+      font-family: "Archivo Black", sans-serif;
+      font-size: clamp(1.5rem, 3vw, 2.05rem);
+      line-height: 1;
+      text-transform: uppercase;
+    }
+
+    .meta-subtitle {
+      margin: 0 0 .8rem;
+      color: var(--magenta);
+      font-weight: 700;
+      text-transform: uppercase;
+    }
+
+    .section-copy,
+    .section-copy li {
+      color: var(--black);
+      font-size: .95rem;
+      line-height: 1.72;
+    }
+
+    .section-copy p {
+      margin: 0 0 1rem;
+    }
+
+    .section-copy ul {
+      margin: .5rem 0 0;
+      padding-left: 1.35rem;
+      list-style: square;
+    }
+
+    .section-copy li + li {
+      margin-top: .55rem;
+    }
+
+    .detail-pairs {
+      display: grid;
+      gap: .65rem;
+    }
+
+    .detail-row {
+      display: flex;
+      justify-content: space-between;
+      gap: 1rem;
+      padding: .8rem 0;
+      border-bottom: 3px solid var(--black);
+      font-weight: 700;
+      text-transform: uppercase;
+    }
+
+    .detail-row span:last-child {
+      text-align: right;
+      color: var(--magenta);
+    }
+
+    .field-grid {
+      gap: 1rem;
+      margin-top: 1.5rem;
+    }
+
+    .field {
+      display: grid;
+      gap: .55rem;
+    }
+
+    .field.full {
+      grid-column: 1 / -1;
+    }
+
+    .field label {
+      font-family: "Archivo Black", sans-serif;
+      font-size: .68rem;
+      line-height: 1.15;
+      text-transform: uppercase;
+    }
+
+    .field input,
+    .field textarea,
+    .field select {
+      width: 100%;
+      min-height: 3rem;
+      padding: .75rem .9rem;
+      color: var(--black);
+      background: var(--white);
+      border: 3px solid var(--black);
+      border-radius: 12px;
+      outline: 0;
+      box-shadow: 3px 3px 0 var(--black);
+    }
+
+    .field textarea {
+      min-height: 6rem;
+      resize: vertical;
+    }
+
+    .field input:focus,
+    .field textarea:focus,
+    .field select:focus {
+      background: var(--yellow-soft);
+      box-shadow: 5px 5px 0 var(--magenta);
+      transform: translate(-1px, -1px);
+    }
+
+    .petition-link {
+      color: #00677d;
+      font-weight: 700;
+      text-decoration: underline;
+      text-decoration-thickness: 3px;
+      text-underline-offset: 4px;
+      overflow-wrap: anywhere;
+    }
+
+    .signature-area {
+      position: relative;
+      min-height: 12rem;
+      overflow: hidden;
+      background:
+        linear-gradient(rgba(0,0,0,.035) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0,0,0,.035) 1px, transparent 1px),
+        var(--white);
+      background-size: 22px 22px;
+      border: 4px dashed var(--black);
+      border-radius: 22px;
+    }
+
+    .signature-canvas,
+    .signature-image {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      display: block;
+    }
+
+    .signature-canvas {
+      z-index: 2;
+      cursor: crosshair;
+      touch-action: none;
+    }
+
+    .signature-image {
+      z-index: 1;
+      object-fit: contain;
+      padding: .6rem;
+      pointer-events: none;
+      opacity: 0;
+      visibility: hidden;
+    }
+
+    .signature-image[src] {
+      opacity: 1;
+      visibility: visible;
+    }
+
+    .organization-seal {
+      min-height: 12rem;
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-end;
+      padding: 1.5rem;
+      color: var(--black);
+      background: var(--yellow);
+      border: 4px solid var(--black);
+      border-radius: 22px;
+      box-shadow: 5px 5px 0 var(--magenta);
+    }
+
+    .organization-script {
+      margin: 0;
+      font-family: "Archivo Black", sans-serif;
+      font-size: 1.75rem;
+      line-height: 1;
+      text-transform: uppercase;
+    }
+
+    .organization-role {
+      margin-top: .8rem;
+      font-size: .7rem;
+      font-weight: 700;
+      text-transform: uppercase;
+    }
+
+    .button {
+      min-height: 3.25rem;
+      padding: .8rem 1.2rem;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: .5rem;
+      color: var(--black);
+      background: var(--yellow);
+      border: 3px solid var(--black);
+      border-radius: 999px;
+      box-shadow: 4px 4px 0 var(--black);
+      font-family: "Archivo Black", sans-serif;
+      font-size: .72rem;
+      line-height: 1.1;
+      letter-spacing: 0;
+      text-transform: uppercase;
+      cursor: pointer;
+      transition: all .15s ease;
+    }
+
+    .button:hover,
+    .button:focus-visible {
+      transform: translate(-3px, -3px);
+      box-shadow: 7px 7px 0 var(--black);
+      outline: 0;
+    }
+
+    .button.subtle {
+      background: var(--cyan);
+      color: var(--black);
+    }
+
+    .button.danger {
+      background: #fb7185;
+      color: var(--black);
+    }
+
+    .button.primary {
+      color: var(--white);
+      background: var(--magenta);
+    }
+
+    .status-action {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      grid-template-rows: auto auto;
+      column-gap: .55rem;
+      text-align: left;
+    }
+
+    .button-label {
+      grid-column: 1;
+      grid-row: 1;
+    }
+
+    .button-status-text {
+      grid-column: 1;
+      grid-row: 2;
+      font-family: "Space Mono", monospace;
+      font-size: .5rem;
+      font-weight: 700;
+      text-transform: uppercase;
+    }
+
+    .button-status-dot {
+      grid-column: 2;
+      grid-row: 1 / 3;
+      align-self: center;
+    }
+
+    .signature-status,
+    .send-status {
+      min-height: 1.5em;
+      margin-top: 1rem;
+      font-weight: 700;
+    }
+
+    [data-ui-state="success"] {
+      color: #166534;
+    }
+
+    [data-ui-state="error"] {
+      color: var(--danger);
+    }
+
+    .send-panel {
+      margin-top: 2rem;
+      padding: 2rem;
+      color: var(--black);
+      background: var(--cyan-soft);
+      border: 4px solid var(--black);
+      border-radius: 30px;
+      box-shadow: var(--shadow);
+    }
+
+    .send-panel h3 {
+      margin: 0 0 .75rem;
+      font-family: "Archivo Black", sans-serif;
+      font-size: 1.25rem;
+      text-transform: uppercase;
+    }
+
+    .send-panel p {
+      margin: 0;
+      line-height: 1.65;
+    }
+
+    .dispatch-actions {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: .85rem;
+      margin-top: 1.25rem;
+    }
+
+    .modal {
+      position: fixed;
+      inset: 0;
+      z-index: 80;
+      display: grid;
+      place-items: center;
+      padding: 1.5rem;
+      background: rgba(0,0,0,.78);
+    }
+
+    .modal-panel {
+      width: min(860px, 100%);
+      max-height: calc(100vh - 3rem);
+      overflow: auto;
+      padding: 2rem;
+      color: var(--black);
+      background: var(--pink);
+      border: 4px solid var(--black);
+      border-radius: 30px;
+      box-shadow: 12px 12px 0 var(--cyan);
+    }
+
+    .modal-title {
+      margin: 0 0 .75rem;
+      font-family: "Archivo Black", sans-serif;
+      font-size: 1.55rem;
+      line-height: 1;
+      text-transform: uppercase;
+    }
+
+    .modal-copy {
+      margin: 0 0 1.5rem;
+      line-height: 1.65;
+    }
+
+    .modal .signature-area {
+      min-height: 20rem;
+    }
+
+    .screen-only {
+      display: block;
+    }
+
+    @media (max-width: 960px) {
+      .sidebar {
+        display: none;
+      }
+
+      .mobile-bar {
+        display: block;
+      }
+
+      .main-content,
+      body:not(.sidebar-collapsed) .main-content,
+      body.sidebar-collapsed .main-content {
+        padding-left: 0;
+      }
+
+      .page-wrap {
+        width: min(100%, calc(100% - 1.4rem));
+        padding-top: 1.4rem;
+      }
+    }
+
+    @media (max-width: 720px) {
+      body {
+        background-size: auto, auto, 30px 30px, 30px 30px, auto;
+      }
+
+      .hero-grid,
+      .card-grid,
+      .signature-grid,
+      .field-grid,
+      .dispatch-actions {
+        grid-template-columns: 1fr;
+      }
+
+      .mobile-actions {
+        display: grid;
+        grid-template-columns: 1fr;
+        width: 100%;
+      }
+
+      .mobile-actions .button {
+        width: 100%;
+      }
+
+      header {
+        padding: 2rem 1.2rem 3.5rem;
+        border-radius: 24px;
+        box-shadow: 7px 7px 0 var(--black);
+      }
+
+      header::after {
+        width: 58px;
+        height: 58px;
+        right: 12px;
+        font-size: 1.6rem;
+      }
+
+      .header-title {
+        font-size: clamp(2rem, 12vw, 3.2rem);
+        -webkit-text-stroke: .5px var(--black);
+        overflow-wrap: anywhere;
+      }
+
+      .section-shell {
+        grid-template-columns: 1fr;
+        gap: .85rem;
+        margin-top: 2.4rem;
+      }
+
+      .section-num {
+        width: 55px;
+        height: 55px;
+      }
+
+      .section-title {
+        display: block;
+        font-size: 1rem;
+        overflow-wrap: anywhere;
+      }
+
+      .rune-card,
+      .send-panel {
+        padding: 1.25rem;
+        border-radius: 22px;
+        box-shadow: 5px 5px 0 var(--black);
+      }
+
+      .field.full {
+        grid-column: auto;
+      }
+
+      .button {
+        width: 100%;
+      }
+
+      .modal-panel {
+        padding: 1.2rem;
+        border-radius: 22px;
+      }
+    }
+
+    @media print {
+      @page {
+        size: Letter;
+        margin: .48in;
+      }
+
+      html,
+      body {
+        margin: 0 !important;
+        padding: 0 !important;
+        background: #fff !important;
+        color: #000 !important;
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+      }
+
+      .stars,
+      .sidebar,
+      .mobile-bar,
+      .screen-only,
+      .modal,
+      .signature-canvas,
+      button,
+      nav,
+      .send-panel,
+      .signature-status,
+      .send-status,
+      .ph,
+      .ph-fill {
+        display: none !important;
+      }
+
+      .main-content,
+      body:not(.sidebar-collapsed) .main-content,
+      body.sidebar-collapsed .main-content {
+        margin: 0 !important;
+        padding: 0 !important;
+      }
+
+      .page-wrap {
+        width: 100% !important;
+        max-width: none !important;
+        margin: 0 !important;
+        padding: 0 !important;
+      }
+
+      header {
+        margin: 0 0 .22in !important;
+        padding: .22in !important;
+        border: 2px solid #000 !important;
+        border-radius: .12in !important;
+        box-shadow: none !important;
+        break-inside: avoid;
+      }
+
+      header::before,
+      header::after,
+      .brand-marquee {
+        display: none !important;
+      }
+
+      .eyebrow {
+        margin: 0 0 .07in !important;
+        padding: .035in .065in !important;
+        border: 1px solid #000 !important;
+        box-shadow: none !important;
+        font-size: 6.5pt !important;
+      }
+
+      .header-title {
+        margin: 0 0 .07in !important;
+        font-size: 20pt !important;
+        line-height: 1 !important;
+        -webkit-text-stroke: 0 !important;
+      }
+
+      .header-title .accent {
+        border: 1px solid #000 !important;
+        box-shadow: none !important;
+      }
+
+      .section-shell {
+        display: block !important;
+        margin: 0 0 .16in !important;
+        break-inside: auto !important;
+      }
+
+      .section-num {
+        display: none !important;
+      }
+
+      .section-title {
+        margin: 0 0 .06in !important;
+        padding: .045in .07in !important;
+        border: 1px solid #000 !important;
+        box-shadow: none !important;
+        font-size: 9pt !important;
+      }
+
+      .rune-card,
+      .organization-seal {
+        padding: .105in !important;
+        border: 1px solid #000 !important;
+        border-radius: .08in !important;
+        box-shadow: none !important;
+        break-inside: avoid !important;
+      }
+
+      .hero-grid,
+      .signature-grid,
+      .field-grid {
+        grid-template-columns: 1fr 1fr !important;
+        gap: .1in !important;
+      }
+
+      .section-copy,
+      .section-copy li,
+      .detail-row {
+        font-size: 7.7pt !important;
+        line-height: 1.35 !important;
+      }
+
+      .meta-kicker,
+      .field label,
+      .meta-subtitle,
+      .organization-role {
+        font-size: 6pt !important;
+      }
+
+      .meta-title {
+        font-size: 11pt !important;
+      }
+
+      .field input,
+      .field textarea,
+      .field select {
+        min-height: .19in !important;
+        padding: .025in .035in !important;
+        border: 1px solid #777 !important;
+        border-radius: .04in !important;
+        box-shadow: none !important;
+        font-size: 7.5pt !important;
+      }
+
+      .signature-area {
+        min-height: .7in !important;
+        border: 1px solid #777 !important;
+        border-radius: .05in !important;
+      }
+
+      .signature-image {
+        position: static !important;
+        display: block !important;
+        visibility: visible !important;
+        opacity: 1 !important;
+        height: .58in !important;
+        object-fit: contain !important;
+      }
+
+      a[href]::after {
+        content: "" !important;
+      }
+    }
+  </style>
+
+</head>
+<body class="grimoire-grid">
+  <div class="stars" id="starField" aria-hidden="true"></div>
+
+  <aside id="sidebar" class="sidebar">
+    <button class="toggle-btn screen-only" id="toggleSidebarButton" type="button" aria-label="Toggle agreement navigation"><i id="toggleIcon" class="ph ph-caret-left"></i></button>
+    <div class="sidebar-inner">
+      <div class="brand-row">
+        <div class="brand-sigil"><i class="ph-fill ph-sparkle"></i></div>
+        <div class="nav-text">
+          <h1 class="font-magical" style="margin:0;font-size:.84rem;letter-spacing:.13em;color:#fff;">GIRL PLUS ENVIRONMENT</h1>
+          <p class="font-mono-code" style="margin:.2rem 0 0;font-size:.48rem;color:var(--accent);text-transform:uppercase;">Climate Creator Cohort</p>
+        </div>
+      </div>
+
+      <button class="button sidebar-signature-button screen-only" type="button" id="sidebarSignatureButton">
+        <span class="sidebar-signature-label">Creator Signature</span>
+        <span class="sidebar-signature-status" id="sidebarSignatureText">Pending</span>
+        <span class="status-dot" id="sidebarSignatureDot" data-state="pending"></span>
+      </button>
+
+      <nav class="nav-group" aria-label="Agreement navigation">
+        <a href="#parties" class="nav-item"><i class="ph ph-users-three"></i><span class="nav-text font-mono-code">01. Parties</span></a>
+        <a href="#purpose" class="nav-item"><i class="ph ph-heart"></i><span class="nav-text font-mono-code">02. Purpose</span></a>
+        <a href="#services" class="nav-item"><i class="ph ph-video-camera"></i><span class="nav-text font-mono-code">03. Services</span></a>
+        <a href="#promotion" class="nav-item"><i class="ph ph-share-network"></i><span class="nav-text font-mono-code">04. Promotion</span></a>
+        <a href="#cta" class="nav-item"><i class="ph ph-megaphone"></i><span class="nav-text font-mono-code">05. Calls to Action</span></a>
+        <a href="#compliance" class="nav-item"><i class="ph ph-seal-check"></i><span class="nav-text font-mono-code">06. Compliance</span></a>
+        <a href="#approval" class="nav-item"><i class="ph ph-check-circle"></i><span class="nav-text font-mono-code">07. Approval</span></a>
+        <a href="#analytics" class="nav-item"><i class="ph ph-chart-line-up"></i><span class="nav-text font-mono-code">08. Analytics</span></a>
+        <a href="#compensation" class="nav-item"><i class="ph ph-currency-dollar"></i><span class="nav-text font-mono-code">09. Compensation</span></a>
+        <a href="#rights" class="nav-item"><i class="ph ph-copyright"></i><span class="nav-text font-mono-code">10. Rights</span></a>
+        <a href="#retention" class="nav-item"><i class="ph ph-clock"></i><span class="nav-text font-mono-code">11. Retention</span></a>
+        <a href="#warranties" class="nav-item"><i class="ph ph-shield-check"></i><span class="nav-text font-mono-code">12. Warranties</span></a>
+        <a href="#conduct" class="nav-item"><i class="ph ph-hand-heart"></i><span class="nav-text font-mono-code">13. Conduct</span></a>
+        <a href="#confidentiality" class="nav-item"><i class="ph ph-lock-key"></i><span class="nav-text font-mono-code">14. Confidentiality</span></a>
+        <a href="#termination" class="nav-item"><i class="ph ph-x-circle"></i><span class="nav-text font-mono-code">15. Termination</span></a>
+        <a href="#legal" class="nav-item"><i class="ph ph-scales"></i><span class="nav-text font-mono-code">16. Legal Terms</span></a>
+        <a href="#schedule" class="nav-item"><i class="ph ph-calendar-check"></i><span class="nav-text font-mono-code">17. Schedule A</span></a>
+        <a href="#signatures" class="nav-item"><i class="ph ph-signature"></i><span class="nav-text font-mono-code">18. Signatures</span></a>
+      </nav>
+    </div>
+  </aside>
+
+  <div class="mobile-bar screen-only">
+    <div class="mobile-bar-inner">
+      <div class="font-magical">Climate Creator Cohort Agreement</div>
+      <div class="mobile-actions">
+        <button class="button status-action" type="button" id="mobileOpenModal">
+          <span class="button-label">Sign Agreement</span><span class="button-status-text" id="topSignatureText">Pending</span><span class="button-status-dot" id="topSignatureDot" data-state="pending"></span>
+        </button>
+        <button class="button status-action" type="button" id="mobilePrintButton">
+          <span class="button-label">Print / Export PDF</span><span class="button-status-text">Ready</span><span class="button-status-dot" data-state="ready"></span>
+        </button>
+        <button class="button primary status-action" type="button" id="mobileSendButton">
+          <span class="button-label">Send Signed Agreement</span><span class="button-status-text" id="topSendText">Not Sent</span><span class="button-status-dot" id="topSendDot" data-state="pending"></span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <main class="main-content">
+    <div class="page-wrap">
+      <header>
+        <div class="eyebrow">Girl Plus Environment</div>
+        <h1 class="header-title">Climate Creator Cohort<br><span class="accent">Partnership Agreement</span></h1>
+        <div class="header-rule"></div>
+      </header>
+
+      <div class="brand-marquee screen-only" aria-hidden="true">
+        <div class="brand-marquee-track">
+          <span>FOR THE GIRLIES • CLIMATE CREATOR COHORT • PAID PARTNERSHIP • EXTREME HEAT • ENERGY JUSTICE • TAKE ACTION • </span>
+          <span>FOR THE GIRLIES • CLIMATE CREATOR COHORT • PAID PARTNERSHIP • EXTREME HEAT • ENERGY JUSTICE • TAKE ACTION • </span>
+        </div>
+      </div>
+
+      <section class="section-shell" id="parties">
+        <div class="section-num">01</div>
+        <div class="section-content">
+          <h2 class="section-title">Parties and Effective Date</h2>
+          <div class="hero-grid">
+            <div class="rune-card">
+              <span class="meta-kicker">Organization</span>
+              <h3 class="meta-title">Girl Plus Environment</h3>
+              <p class="meta-subtitle">Climate Creator Cohort</p>
+              <p class="section-copy">A nonprofit organization advancing environmental justice through advocacy, education, storytelling, and community engagement.</p>
+            </div>
+            <div class="rune-card" style="border-left:4px solid rgba(246,200,95,.55);">
+              <span class="meta-kicker">Creator</span>
+              <h3 class="meta-title" id="creatorCardName">Creator Name</h3>
+              <p class="meta-subtitle" id="creatorCardHandle">@creator</p>
+              <p class="section-copy">An independent digital creator participating in the three-month Climate Creator Cohort.</p>
+            </div>
+          </div>
+
+          <div class="rune-card" style="margin-top:2rem;">
+            <p class="section-copy">This Climate Creator Cohort Partnership Agreement (“Agreement”) is entered into by and between <strong>Girl Plus Environment</strong> (“GPE”) and the creator identified below (“Creator”). GPE and Creator may each be referred to as a “Party” and together as the “Parties.”</p>
+            <div class="field-grid">
+              <div class="field"><label for="creatorLegalName">Creator Legal Name</label><input id="creatorLegalName" name="creatorLegalName" type="text" placeholder="Legal name"></div>
+              <div class="field"><label for="creatorBusinessName">Business Name, if applicable</label><input id="creatorBusinessName" name="creatorBusinessName" type="text" placeholder="Business or LLC"></div>
+              <div class="field"><label for="creatorEmail">Creator Email</label><input id="creatorEmail" name="creatorEmail" type="email" placeholder="creator@example.com"></div>
+              <div class="field"><label for="creatorPhone">Creator Phone</label><input id="creatorPhone" name="creatorPhone" type="tel" placeholder="Phone number"></div>
+              <div class="field"><label for="creatorInstagram">Instagram Handle</label><input id="creatorInstagram" name="creatorInstagram" type="text" placeholder="@handle"></div>
+              <div class="field"><label for="creatorTikTok">TikTok Handle</label><input id="creatorTikTok" name="creatorTikTok" type="text" placeholder="@handle"></div>
+              <div class="field full"><label for="creatorAddress">Creator Mailing Address</label><input id="creatorAddress" name="creatorAddress" type="text" placeholder="Street, city, state, ZIP/postal code, country"></div>
+              <div class="field"><label for="effectiveDate">Effective Date</label><input id="effectiveDate" name="effectiveDate" type="date"></div>
+              <div class="field"><label for="gpeEmail">GPE Contact Email</label><input id="gpeEmail" name="gpeEmail" type="email" value="cassandre@girlplusenvironment.org" readonly></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="section-shell" id="purpose">
+        <div class="section-num">02</div><div class="section-content">
+          <h2 class="section-title">Purpose and Term</h2>
+          <div class="rune-card section-copy">
+            <p>GPE’s Climate Creator Cohort is a three-month paid creator partnership that connects trusted digital creators with climate advocacy campaigns designed to make issues such as extreme heat, rising energy bills, clean energy, and community resilience accessible, culturally relevant, and actionable.</p>
+            <p>The Agreement begins on the Effective Date and continues until all required deliverables have been completed, all amounts due have been paid, and all surviving obligations have been satisfied, unless terminated earlier under this Agreement.</p>
+            <p>Creator is not required to present as a climate expert. GPE will provide campaign information and approved resources, while Creator will translate those materials through Creator’s own voice, storytelling style, and relationship with their audience.</p>
+          </div>
+        </div>
+      </section>
+
+      <section class="section-shell" id="services">
+        <div class="section-num">03</div><div class="section-content">
+          <h2 class="section-title">Services and Deliverables</h2>
+          <div class="rune-card section-copy">
+            <p>Creator will create, submit for review, and publish <strong>three (3) original short-form vertical videos</strong>, consisting of one (1) video per month. Each video should generally be between thirty (30) and ninety (90) seconds unless GPE approves another length in writing.</p>
+            <p>Creator is responsible for creative development, filming, narration, editing, captioning, and publication. Each deliverable must:</p>
+            <ul>
+              <li>be original content created for the campaign;</li>
+              <li>align with the applicable monthly campaign brief;</li>
+              <li>include the assigned call to action and petition access method;</li>
+              <li>comply with FTC disclosure requirements and platform rules;</li>
+              <li>use captions and readable on-screen text whenever platform functionality permits;</li>
+              <li>feature Creator rather than an AI-generated replacement unless GPE approves otherwise in writing.</li>
+            </ul>
+            <div class="field-grid">
+              <div class="field"><label for="platformSelection">Required Publishing Platform</label>
+                <select id="platformSelection" name="platformSelection">
+                  <option value="">Select platform</option>
+                  <option>Instagram</option>
+                  <option>TikTok</option>
+                  <option>Instagram and TikTok</option>
+                  <option>Other approved platform</option>
+                </select>
+              </div>
+              <div class="field"><label for="otherPlatform">Other Approved Platform</label><input id="otherPlatform" name="otherPlatform" type="text" placeholder="Optional"></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="section-shell" id="promotion">
+        <div class="section-num">04</div><div class="section-content">
+          <h2 class="section-title">Promotion and Platform Requirements</h2>
+          <div class="rune-card section-copy">
+            <p><strong>Instagram Collaboration.</strong> For each Instagram Reel published under this Agreement, Creator will invite <strong>@girlplusenvironment</strong> as an Instagram Collaboration Partner before publication so the Reel may appear on both Creator’s and GPE’s feeds. Creator will keep the collaboration active and will not remove GPE as a collaborator without prior written approval.</p>
+            <p>Creator will tag @girlplusenvironment in the caption and, where reasonably appropriate, within the content. When publishing on TikTok or another approved platform, Creator will tag GPE wherever platform functionality permits and follow campaign-specific hashtag or attribution guidance.</p>
+            <p>If a technical issue prevents use of the Instagram Collaboration feature, Creator will notify GPE promptly and follow an alternative written tagging or reposting plan approved by GPE.</p>
+          </div>
+        </div>
+      </section>
+
+      <section class="section-shell" id="cta">
+        <div class="section-num">05</div><div class="section-content">
+          <h2 class="section-title">Required Calls to Action and Petition Access</h2>
+          <div class="rune-card section-copy">
+            <p>Each deliverable must include a clear invitation for viewers to participate in the advocacy action assigned in the applicable monthly brief. Creator will make the designated link accessible for at least <strong>seven (7) consecutive calendar days</strong> after publication through either:</p>
+            <ul>
+              <li>the designated petition link in Creator’s social media bio;</li>
+              <li>an approved direct-message automation that sends the link to viewers; or</li>
+              <li>another method approved by GPE in writing.</li>
+            </ul>
+            <p><strong>Extreme Weather Petition</strong><br><a class="petition-link" href="https://actionnetwork.org/letters/extreme-weather-puts-our-communities-at-risk-its-time-for-bold-climate-action-2?source=Girl%20Plus%20Environment" target="_blank" rel="noopener">https://actionnetwork.org/letters/extreme-weather-puts-our-communities-at-risk-its-time-for-bold-climate-action-2?source=Girl%20Plus%20Environment</a></p>
+            <p><strong>High Energy Bills Petition</strong><br><a class="petition-link" href="https://actionnetwork.org/letters/tell-congress-we-need-relief-from-high-energy-bills-partner/?source=GPE" target="_blank" rel="noopener">https://actionnetwork.org/letters/tell-congress-we-need-relief-from-high-energy-bills-partner/?source=GPE</a></p>
+            <p>GPE may assign another petition, event registration, survey, resource, or advocacy action with reasonable written notice.</p>
+          </div>
+        </div>
+      </section>
+
+      <section class="section-shell" id="compliance">
+        <div class="section-num">06</div><div class="section-content">
+          <h2 class="section-title">FTC Disclosure, Accuracy, and Legal Compliance</h2>
+          <div class="rune-card section-copy">
+            <p>Creator will clearly disclose the paid relationship with GPE in each sponsored deliverable. Acceptable disclosures include “Paid partnership with Girl Plus Environment,” <strong>#ad</strong>, <strong>#sponsored</strong>, or another disclosure approved by GPE. The disclosure must be clear and conspicuous and should appear in the content or caption; the Instagram Collaboration feature alone does not replace the disclosure obligation.</p>
+            <p>Creator will comply with applicable laws, platform rules, advertising standards, and endorsement requirements. Creator will not knowingly make false or misleading statements about GPE, a campaign, a petition, climate impacts, public policy, or another factual matter.</p>
+            <p>GPE will provide campaign facts and educational materials. Creator may express authentic opinions and personal experiences but will not materially alter supplied factual information in a way that changes its meaning.</p>
+          </div>
+        </div>
+      </section>
+
+      <section class="section-shell" id="approval">
+        <div class="section-num">07</div><div class="section-content">
+          <h2 class="section-title">Creative Process, Review, and Revisions</h2>
+          <div class="rune-card section-copy">
+            <p>GPE values Creator’s authentic voice and does not require scripted content. Except for factual accuracy, required campaign elements, legal disclosures, accessibility, and brand identification, Creator retains discretion over format, tone, storytelling, humor, trends, editing, wardrobe, and visual style.</p>
+            <p>Creator will submit each draft before publication using a private link, watermarked export, shared drive, or another agreed method. GPE will provide approval, consolidated revisions, or questions within three (3) business days. If GPE does not respond within that period, the draft will be considered approved unless the Parties agree otherwise in writing.</p>
+            <p>One (1) round of reasonable revisions is included for each deliverable. Revision requests will be limited to factual corrections, missing required elements, accessibility, FTC compliance, the required petition or call to action, and material branding inaccuracies. Major changes caused by a new campaign direction after approval require mutual written agreement.</p>
+          </div>
+        </div>
+      </section>
+
+      <section class="section-shell" id="analytics">
+        <div class="section-num">08</div><div class="section-content">
+          <h2 class="section-title">Performance Reporting</h2>
+          <div class="rune-card section-copy">
+            <p>Within fourteen (14) calendar days after each deliverable is published, Creator will provide reasonably available performance analytics, including views, reach, impressions, likes, comments, shares, saves, profile visits, link clicks, and DM automation activity when applicable.</p>
+            <p>Analytics may be submitted as screenshots, platform exports, or another mutually agreed format. A platform’s failure to provide a particular metric does not constitute breach.</p>
+          </div>
+        </div>
+      </section>
+
+      <section class="section-shell" id="compensation">
+        <div class="section-num">09</div><div class="section-content">
+          <h2 class="section-title">Compensation and Payment Coordination</h2>
+          <div class="rune-card">
+            <div class="hero-grid" style="align-items:center;">
+              <div>
+                <div class="font-serif-heading" style="font-size:3.4rem;color:var(--gold);">$700</div>
+                <div class="font-mono-code" style="font-size:.62rem;letter-spacing:.18em;text-transform:uppercase;color:var(--text-faint);">Maximum Agreement Compensation</div>
+              </div>
+              <div class="detail-pairs">
+                <div class="detail-row"><span>Signing Bonus</span><span>$100 USD</span></div>
+                <div class="detail-row"><span>Video One</span><span>$200 USD</span></div>
+                <div class="detail-row"><span>Video Two</span><span>$200 USD</span></div>
+                <div class="detail-row"><span>Video Three</span><span>$200 USD</span></div>
+              </div>
+            </div>
+            <div class="section-copy" style="margin-top:1.5rem;">
+              <p>GPE will compensate Creator a $100 signing bonus and $200 for each completed and approved monthly deliverable, for maximum compensation of $700 USD.</p>
+              <p><strong>No payment is collected through this signing page.</strong> After the Agreement is signed, GPE will follow up separately to coordinate payment onboarding, required tax documentation, invoicing if applicable, and direct-deposit information through GPE’s approved payment process.</p>
+              <p>Creator will provide a completed IRS Form W-9 or other applicable tax documentation and accurate direct-deposit information before payment can be processed. Sensitive banking information must not be entered into this Agreement or emailed through the contract form.</p>
+              <p>Unless the Parties agree otherwise in writing, payments will be processed according to the payment terms confirmed during onboarding. GPE is not responsible for delays caused by incomplete, inaccurate, or late payment documentation.</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="section-shell" id="rights">
+        <div class="section-num">10</div><div class="section-content">
+          <h2 class="section-title">Ownership, License, and Usage Rights</h2>
+          <div class="rune-card section-copy">
+            <p>Creator retains copyright ownership of Creator’s original deliverables. Creator grants GPE a perpetual, worldwide, non-exclusive, royalty-free license to repost and display approved deliverables organically across GPE-owned social media, websites, newsletters, presentations, reports, grant materials, educational resources, and organizational archives.</p>
+            <p>GPE may resize, crop, caption, subtitle, add accessibility features, and add reasonable organizational branding, but will not materially change Creator’s message without written approval. GPE will provide Creator attribution whenever reasonably practical.</p>
+            <p>This Agreement does <strong>not</strong> include paid advertising, boosting, whitelisting, dark posting, account access, or use of Creator’s likeness in paid media. Those rights require a separate written agreement.</p>
+            <p>Neither Party may use the other Party’s content, voice, likeness, image, or proprietary materials to train an artificial-intelligence model without prior written consent.</p>
+          </div>
+        </div>
+      </section>
+
+      <section class="section-shell" id="retention">
+        <div class="section-num">11</div><div class="section-content">
+          <h2 class="section-title">Content Retention</h2>
+          <div class="rune-card section-copy">
+            <p>Creator will keep each sponsored deliverable publicly available for at least twelve (12) months after publication and will not delete, archive, make private, or materially edit the deliverable without GPE’s prior written approval.</p>
+            <p>GPE will reasonably consider exceptions involving platform removal, legal requirements, safety, harassment, threats, account compromise, or another legitimate circumstance.</p>
+          </div>
+        </div>
+      </section>
+
+      <section class="section-shell" id="warranties">
+        <div class="section-num">12</div><div class="section-content">
+          <h2 class="section-title">Creator Representations and Warranties</h2>
+          <div class="rune-card section-copy">
+            <p>Creator represents and warrants that Creator has authority to enter this Agreement; deliverables will be original or properly licensed; Creator has permission to use included music, images, graphics, footage, locations, and third-party likenesses; and deliverables will not knowingly infringe intellectual-property, privacy, publicity, or other rights.</p>
+            <p>Creator will not knowingly include defamatory, fraudulent, discriminatory, unlawful, or materially misleading content. Artificial-intelligence-generated presenters, cloned voices, avatars, or synthetic likenesses may not replace Creator unless GPE approves their use in writing.</p>
+          </div>
+        </div>
+      </section>
+
+      <section class="section-shell" id="conduct">
+        <div class="section-num">13</div><div class="section-content">
+          <h2 class="section-title">Community Standards and Brand Safety</h2>
+          <div class="rune-card section-copy">
+            <p>Both Parties will communicate respectfully and participate in good faith. Either Party may terminate this Agreement if the other engages in unlawful conduct or public conduct reasonably likely to cause material reputational harm, including hate speech, discrimination, threats, violence, fraud, or conduct materially inconsistent with GPE’s mission.</p>
+            <p>Termination under this section does not eliminate compensation already earned for completed and approved work, except where payment may lawfully be withheld due to fraud, infringement, or material breach.</p>
+          </div>
+        </div>
+      </section>
+
+      <section class="section-shell" id="confidentiality">
+        <div class="section-num">14</div><div class="section-content">
+          <h2 class="section-title">Confidentiality</h2>
+          <div class="rune-card section-copy">
+            <p>Creator may receive non-public campaign plans, embargoed announcements, strategy, internal communications, partner information, or unreleased materials. Creator will use confidential information only to perform under this Agreement and will not disclose it without GPE’s written authorization, except as required by law.</p>
+            <p>Confidentiality does not apply to information that was already lawfully known, becomes public through no breach, is received lawfully from a third party, or is independently developed without use of confidential information. These obligations survive termination.</p>
+          </div>
+        </div>
+      </section>
+
+      <section class="section-shell" id="termination">
+        <div class="section-num">15</div><div class="section-content">
+          <h2 class="section-title">Late Deliverables, Cancellation, Termination, and Force Majeure</h2>
+          <div class="rune-card section-copy">
+            <p><strong>Late Deliverables.</strong> Creator will notify GPE promptly of an anticipated delay. A deliverable more than five (5) business days late without prior communication or approval may be cancelled, may result in delayed payment, or may constitute material breach.</p>
+            <p><strong>Cancellation by GPE.</strong> If GPE cancels before production begins, no fee is owed for that deliverable. If GPE cancels after Creator has substantially completed production but before approval, GPE will pay fifty percent (50%) of that deliverable’s fee. If GPE cancels after approving the deliverable, the full deliverable fee is owed.</p>
+            <p><strong>Cancellation by Creator.</strong> Creator may withdraw by written notice. Creator retains compensation earned for completed and approved work, while future unpaid deliverables are cancelled.</p>
+            <p><strong>Termination for Cause.</strong> Either Party may terminate immediately for material breach, unlawful conduct, knowing misrepresentation, infringement, or inability to perform. The breaching Party should be given a reasonable opportunity to cure when the breach can be cured.</p>
+            <p><strong>Force Majeure.</strong> Neither Party is liable for delay caused by events beyond reasonable control, including serious illness, family emergency, severe weather, natural disaster, internet or platform outage, government action, war, civil emergency, or comparable event. The affected Party will provide prompt notice and the Parties will work in good faith to revise deadlines.</p>
+          </div>
+        </div>
+      </section>
+
+      <section class="section-shell" id="legal">
+        <div class="section-num">16</div><div class="section-content">
+          <h2 class="section-title">Independent Contractor, Indemnification, and General Terms</h2>
+          <div class="rune-card section-copy">
+            <p><strong>Independent Contractor.</strong> Creator is an independent contractor and not an employee, partner, agent, or joint venturer of GPE. Creator controls the manner and means of production and is responsible for Creator’s taxes, insurance, equipment, assistants, and business expenses.</p>
+            <p><strong>Indemnification.</strong> Creator will indemnify and hold GPE and its directors, officers, employees, and representatives harmless from third-party claims arising from Creator’s breach, infringement, unauthorized materials, negligence, or unlawful conduct. GPE will indemnify Creator from third-party claims arising solely from campaign materials or factual information supplied directly by GPE and used by Creator without material modification.</p>
+            <p><strong>Governing Law.</strong> This Agreement is governed by Illinois law, without regard to conflict-of-law rules. The Parties will attempt in good faith to resolve disputes informally before formal proceedings. Any legal action will be brought in a court of competent jurisdiction in Cook County, Illinois, unless applicable law requires otherwise.</p>
+            <p><strong>Entire Agreement.</strong> This Agreement and its schedules constitute the complete agreement concerning the partnership and supersede prior discussions. Amendments must be in writing and agreed to by both Parties. If a provision is unenforceable, the remaining provisions remain effective. A waiver on one occasion is not a continuing waiver.</p>
+            <p><strong>Electronic Signatures.</strong> Electronic signatures, electronic records, and counterparts have the same force and effect as originals. The Parties consent to receiving the completed Agreement by email.</p>
+          </div>
+        </div>
+      </section>
+
+      <section class="section-shell" id="schedule">
+        <div class="section-num">17</div><div class="section-content">
+          <h2 class="section-title">Schedule A — Deliverables</h2>
+          <div class="rune-card">
+            <div class="detail-pairs">
+              <div class="detail-row"><span>Video One</span><span>July 30, 2026</span></div>
+              <div class="detail-row"><span>Video Two</span><span>August 30, 2026</span></div>
+              <div class="detail-row"><span>Video Three</span><span>September 30, 2026</span></div>
+            </div>
+            <div class="section-copy" style="margin-top:1.4rem;">
+              <p>Each deliverable must meet the requirements in this Agreement and the applicable monthly campaign brief, including the assigned call to action, FTC disclosure, accessibility measures, platform tagging, Instagram Collaboration invitation when applicable, and petition access for at least seven consecutive days.</p>
+              <p>Campaign themes may include Hot Girls Hate Extreme Weather, Savings SZN, Main Character Energy, Power to the People, energy affordability, clean energy, community resilience, environmental justice, and other campaigns assigned by GPE.</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="section-shell" id="signatures">
+        <div class="section-num">18</div>
+        <div class="section-content">
+          <h2 class="section-title">Signatures</h2>
+          <div class="signature-grid">
+            <div class="rune-card">
+              <span class="meta-kicker">Creator Signature</span>
+              <div class="signature-area">
+                <img id="visibleSignatureImage" class="signature-image" alt="Creator signature preview">
+                <canvas id="visibleSignatureCanvas" class="signature-canvas" aria-label="Creator signature canvas"></canvas>
+              </div>
+              <div class="signature-controls screen-only">
+                <button class="button subtle" type="button" id="openModalButton">Open Signature Box</button>
+                <button class="button subtle" type="button" id="saveSignatureButton">Save Signature</button>
+                <button class="button danger" type="button" id="clearSignatureButton">Clear</button>
+              </div>
+              <div class="signature-status" id="signatureStatus" data-ui-state="idle">Draw directly here or open the larger signature box.</div>
+              <div class="field-grid">
+                <div class="field"><label for="creatorPrintedName">Printed Name</label><input id="creatorPrintedName" name="creatorPrintedName" type="text" placeholder="Creator printed name"></div>
+                <div class="field"><label for="creatorTitle">Title / Business</label><input id="creatorTitle" name="creatorTitle" type="text" placeholder="Optional"></div>
+                <div class="field"><label for="creatorSignatureDate">Date</label><input id="creatorSignatureDate" name="creatorSignatureDate" type="date"></div>
+              </div>
+            </div>
+
+            <div class="rune-card">
+              <span class="meta-kicker">Girl Plus Environment</span>
+              <div class="organization-seal">
+                <p class="organization-script">Cassandre Arkema</p>
+                <div class="organization-role">Communications Manager · Girl Plus Environment</div>
+              </div>
+              <div class="field-grid">
+                <div class="field"><label for="gpeSignerName">GPE Representative</label><input id="gpeSignerName" name="gpeSignerName" type="text" value="Cassandre Arkema" readonly></div>
+                <div class="field"><label for="gpeSignerTitle">Title</label><input id="gpeSignerTitle" name="gpeSignerTitle" type="text" value="Communications Manager" readonly></div>
+                <div class="field"><label for="gpeSignatureDate">Date</label><input id="gpeSignatureDate" name="gpeSignatureDate" type="date" value="2026-07-16" readonly></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="send-panel screen-only">
+            <h3>Agreement Dispatch</h3>
+            <p>After signing, send the completed agreement to the Creator and Girl Plus Environment. GPE will follow up separately to coordinate payment onboarding and direct deposit. No payment is collected on this page.</p>
+            <div class="dispatch-actions">
+              <button class="button primary" type="button" id="sendContractButton">Send Signed Agreement</button>
+              <button class="button" type="button" id="printButton">Print / Export PDF</button>
+            </div>
+            <div class="send-status" id="sendStatus" data-ui-state="idle"></div>
+          </div>
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <div class="modal screen-only" id="signatureModal" hidden>
+    <div class="modal-panel">
+      <h2 class="modal-title">Expanded Creator Signature Box</h2>
+      <p class="modal-copy">Use a mouse, finger, or stylus. Save the signature to place it into the agreement.</p>
+      <div class="signature-area">
+        <img id="modalSignatureImage" class="signature-image" alt="Expanded creator signature preview">
+        <canvas id="modalSignatureCanvas" class="signature-canvas" aria-label="Expanded creator signature canvas"></canvas>
+      </div>
+      <div class="action-row">
+        <button class="button subtle" type="button" id="modalSaveButton">Save Signature</button>
+        <button class="button danger" type="button" id="modalClearButton">Clear</button>
+        <button class="button subtle" type="button" id="modalCloseButton">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    window.CONTRACT_WEB_APP_URL = "PASTE_YOUR_DEPLOYED_APPS_SCRIPT_WEB_APP_URL_HERE";
+
+    (() => {
+      const FORM_STORAGE_KEY = "gpe_climate_creator_contract_2026";
+      const SIGNATURE_STORAGE_KEY = `${FORM_STORAGE_KEY}_signature`;
+      const CONTRACT_META = {
+        contractTitle: "Climate Creator Cohort Partnership Agreement",
+        contractId: "gpe-climate-creator-cohort-2026",
+        organizationName: "Girl Plus Environment",
+        organizationEmail: "cassandre@girlplusenvironment.org",
+        ccEmail: "hello@girlplusenvironment.org"
+      };
+
+      const $ = (id) => document.getElementById(id);
+      const field = (name) => document.querySelector(`[name="${name}"]`);
+      const value = (name) => (field(name)?.value || "").trim();
+      const escapeHtml = (input) => String(input || "")
+        .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;").replace(/'/g, "&#39;");
+      const formatDate = (input) => {
+        if (!input) return "";
+        const date = new Date(`${input}T00:00:00`);
+        return Number.isNaN(date.getTime()) ? input : date.toLocaleDateString(undefined, { year: "numeric", month: "long", day: "numeric" });
+      };
+
+      // Decorative background
+      const starField = $("starField");
+      if (starField) {
+        for (let i = 0; i < 120; i++) {
+          const star = document.createElement("div");
+          star.style.cssText = `position:absolute;left:${Math.random()*100}%;top:${Math.random()*100}%;width:${Math.random()*2}px;height:${Math.random()*2}px;background:white;border-radius:50%;opacity:${Math.random()};animation:pulse ${Math.random()*3+2}s infinite ease-in-out`;
+          starField.appendChild(star);
+        }
+      }
+
+      // Sidebar
+      $("toggleSidebarButton")?.addEventListener("click", () => {
+        const sidebar = $("sidebar");
+        const collapsed = sidebar.classList.toggle("collapsed");
+        document.body.classList.toggle("sidebar-collapsed", collapsed);
+        $("toggleIcon").className = collapsed ? "ph ph-caret-right" : "ph ph-caret-left";
+      });
+
+      class SignaturePad {
+        constructor(canvas, image) {
+          this.canvas = canvas; this.image = image; this.ctx = canvas.getContext("2d");
+          this.drawing = false; this.last = null; this.savedDataUrl = "";
+          ["pointerdown","pointermove","pointerup","pointerleave","pointercancel"].forEach(type => canvas.addEventListener(type, this[type].bind(this)));
+          new ResizeObserver(() => this.resize()).observe(canvas.parentElement);
+          this.resize();
+        }
+        resize() {
+          const data = this.exportDataUrl() || this.savedDataUrl;
+          const rect = this.canvas.getBoundingClientRect();
+          const ratio = Math.max(devicePixelRatio || 1, 1);
+          this.canvas.width = Math.max(1, Math.round(rect.width * ratio));
+          this.canvas.height = Math.max(1, Math.round(rect.height * ratio));
+          this.ctx.setTransform(ratio,0,0,ratio,0,0);
+          this.ctx.lineWidth = 2.2; this.ctx.lineCap = "round"; this.ctx.lineJoin = "round"; this.ctx.strokeStyle = "#42b978";
+          if (data) this.load(data, false);
+        }
+        point(e) { const r = this.canvas.getBoundingClientRect(); return {x:e.clientX-r.left,y:e.clientY-r.top}; }
+        pointerdown(e) { e.preventDefault(); this.image.removeAttribute("src"); this.image.style.display="none"; this.drawing=true; this.last=this.point(e); this.ctx.beginPath(); this.ctx.moveTo(this.last.x,this.last.y); }
+        pointermove(e) { if(!this.drawing) return; e.preventDefault(); const p=this.point(e); this.ctx.quadraticCurveTo(this.last.x,this.last.y,(this.last.x+p.x)/2,(this.last.y+p.y)/2); this.ctx.stroke(); this.last=p; }
+        pointerup(e) { if(!this.drawing) return; e.preventDefault(); this.drawing=false; const p=this.point(e); this.ctx.lineTo(p.x,p.y); this.ctx.stroke(); this.ctx.closePath(); this.last=null; window.dispatchEvent(new Event("signature-drawn")); }
+        pointerleave(e) { this.pointerup(e); }
+        pointercancel(e) { this.pointerup(e); }
+        isBlank() { const d=this.ctx.getImageData(0,0,this.canvas.width,this.canvas.height).data; for(let i=3;i<d.length;i+=4) if(d[i]!==0) return false; return true; }
+        exportDataUrl() { return this.isBlank() ? "" : this.canvas.toDataURL("image/png"); }
+        clear() { this.ctx.clearRect(0,0,this.canvas.width,this.canvas.height); this.savedDataUrl=""; this.image.removeAttribute("src"); this.image.style.display="none"; }
+        show(data) { this.savedDataUrl=data||""; if(data){this.image.src=data;this.image.style.display="block";} else this.clear(); }
+        load(data, showImage=true) {
+          if(!data) return this.clear();
+          const img=new Image();
+          img.onload=()=>{this.ctx.clearRect(0,0,this.canvas.width,this.canvas.height);this.ctx.drawImage(img,0,0,this.canvas.clientWidth,this.canvas.clientHeight);this.savedDataUrl=data;if(showImage)this.show(data);};
+          img.src=data;
+        }
+      }
+
+      const visiblePad = new SignaturePad($("visibleSignatureCanvas"), $("visibleSignatureImage"));
+      const modalPad = new SignaturePad($("modalSignatureCanvas"), $("modalSignatureImage"));
+
+      const currentSignature = () => {
+        try { return localStorage.getItem(SIGNATURE_STORAGE_KEY) || visiblePad.exportDataUrl() || modalPad.exportDataUrl() || ""; }
+        catch (_) { return visiblePad.exportDataUrl() || modalPad.exportDataUrl() || ""; }
+      };
+
+      const setSignatureState = (saved) => {
+        $("topSignatureText").textContent = saved ? "Saved" : "Pending";
+        $("sidebarSignatureText").textContent = saved ? "Saved" : "Pending";
+        $("topSignatureDot").dataset.state = saved ? "saved" : "pending";
+        $("sidebarSignatureDot").dataset.state = saved ? "saved" : "pending";
+      };
+
+      const syncSignature = (data) => {
+        visiblePad.clear(); modalPad.clear();
+        if (data) { visiblePad.show(data); modalPad.load(data, false); }
+        setSignatureState(Boolean(data));
+      };
+
+      const saveSignature = (pad) => {
+        const data = pad.exportDataUrl() || pad.savedDataUrl;
+        if (!data) { $("signatureStatus").textContent="Please draw a signature before saving."; $("signatureStatus").dataset.uiState="error"; return false; }
+        localStorage.setItem(SIGNATURE_STORAGE_KEY, data);
+        syncSignature(data);
+        $("signatureStatus").textContent="Signature saved."; $("signatureStatus").dataset.uiState="success";
+        return true;
+      };
+
+      try { const saved=localStorage.getItem(SIGNATURE_STORAGE_KEY); if(saved) syncSignature(saved); else setSignatureState(false); } catch (_) {}
+
+      const modal = $("signatureModal");
+      const openModal = () => { const data=currentSignature(); syncSignature(data); modal.hidden=false; };
+      const closeModal = () => modal.hidden=true;
+      [$("openModalButton"),$("mobileOpenModal"),$("sidebarSignatureButton")].forEach(btn => btn?.addEventListener("click", openModal));
+      $("modalCloseButton")?.addEventListener("click", closeModal);
+      $("saveSignatureButton")?.addEventListener("click", () => saveSignature(visiblePad));
+      $("modalSaveButton")?.addEventListener("click", () => { if(saveSignature(modalPad)) closeModal(); });
+      [$("clearSignatureButton"),$("modalClearButton")].forEach(btn => btn?.addEventListener("click", () => {
+        visiblePad.clear(); modalPad.clear(); localStorage.removeItem(SIGNATURE_STORAGE_KEY); setSignatureState(false);
+        $("signatureStatus").textContent="Signature cleared."; $("signatureStatus").dataset.uiState="idle";
+      }));
+      modal?.addEventListener("click", e => { if(e.target===modal) closeModal(); });
+      window.addEventListener("signature-drawn", () => {
+        const data = visiblePad.exportDataUrl() || modalPad.exportDataUrl();
+        if (!data) return;
+        localStorage.setItem(SIGNATURE_STORAGE_KEY, data); syncSignature(data);
+        $("signatureStatus").textContent="Signature auto-saved."; $("signatureStatus").dataset.uiState="success";
+      });
+
+      // Form state and dynamic creator card
+      const saveForm = () => {
+        const data = {};
+        document.querySelectorAll("input[name],textarea[name],select[name]").forEach(el => data[el.name]=el.value);
+        localStorage.setItem(FORM_STORAGE_KEY, JSON.stringify(data));
+      };
+      try {
+        const raw=localStorage.getItem(FORM_STORAGE_KEY);
+        if(raw){const data=JSON.parse(raw);Object.entries(data).forEach(([name,val])=>{const el=field(name);if(el&&!el.readOnly)el.value=val;});}
+      } catch (_) {}
+      const refreshCard=()=>{$("creatorCardName").textContent=value("creatorLegalName")||"Creator Name";$("creatorCardHandle").textContent=value("creatorInstagram")||value("creatorTikTok")||"@creator";};
+      document.querySelectorAll("input[name],textarea[name],select[name]").forEach(el => el.addEventListener("input",()=>{saveForm();refreshCard();}));
+      refreshCard();
+
+      const buildContractHtml = () => {
+        const clone=document.querySelector(".page-wrap").cloneNode(true);
+        const sig=currentSignature();
+        clone.querySelectorAll(".screen-only,.signature-status,.send-status,.send-panel,.signature-canvas,.ph,.ph-fill").forEach(n=>n.remove());
+        clone.querySelectorAll("input,textarea,select").forEach(el=>{
+          const replacement=document.createElement("div");
+          replacement.className="pdf-field-value";
+          const raw=el.value||el.placeholder||"";
+          replacement.textContent=el.type==="date"?formatDate(raw):raw;
+          el.replaceWith(replacement);
+        });
+        clone.querySelectorAll(".signature-image").forEach(img=>{if(sig){img.src=sig;img.style.cssText="display:block;opacity:1;visibility:visible;";}else img.remove();});
+        return `<!doctype html><html><head><meta charset="utf-8"><title>${escapeHtml(CONTRACT_META.contractTitle)}</title>
+        <style>
+          @page{size:Letter;margin:.55in}*{box-sizing:border-box}body{font-family:Arial,sans-serif;color:#111;margin:0}.page-wrap{width:100%;max-width:none;margin:0;padding:0}
+          header{margin-bottom:.25in}.eyebrow{font-size:7pt;text-transform:uppercase;color:#246c43;border:1px solid #8ccca7;padding:4px 7px;display:inline-block}
+          .header-title{font-family:Georgia,serif;font-size:21pt;line-height:1.1;margin:9px 0}.header-title .accent{color:#7b5310;font-style:italic}.header-rule{width:80px;border-top:1px solid #42b978}
+          .section-shell{display:block;margin:0 0 .17in}.section-num{display:none}.section-title{font-family:Georgia,serif;font-size:10pt;text-transform:uppercase;letter-spacing:.04em;border-bottom:1px solid #95c4a6;padding-bottom:4px;margin:0 0 7px}
+          .rune-card,.organization-seal{border:1px solid #b7cdbf;border-radius:7px;padding:11px;break-inside:avoid}.hero-grid,.signature-grid,.field-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+          .section-copy,.section-copy li,.detail-row{font-size:8pt;line-height:1.4}.meta-kicker,.meta-subtitle,.field label{font-size:6.5pt;text-transform:uppercase}.meta-title{font-family:Georgia,serif;font-size:12pt;font-style:italic}
+          .detail-row{display:flex;justify-content:space-between;border-bottom:1px solid #ddd;padding:4px 0}.pdf-field-value{font-size:8pt;border-bottom:1px solid #999;min-height:18px;padding:4px 0;white-space:pre-wrap}
+          .field.full{grid-column:1/-1}.signature-area{min-height:75px;border:1px solid #999;border-radius:7px}.signature-image{display:block;width:100%;height:65px;object-fit:contain}.organization-script{font-family:Georgia,serif;font-size:15pt;font-style:italic}.organization-role{font-size:7pt;text-transform:uppercase}
+          a{color:#111;text-decoration:none}.screen-only,.signature-status,.send-status,.send-panel,.signature-canvas,.ph,.ph-fill,button{display:none!important}
+        </style></head><body>${clone.outerHTML}</body></html>`;
+      };
+
+      const validate = () => {
+        const errors=[];
+        if(!value("creatorLegalName")) errors.push("Creator legal name is required.");
+        if(!value("creatorEmail")) errors.push("Creator email is required.");
+        if(!value("effectiveDate")) errors.push("Effective date is required.");
+        if(!value("platformSelection")) errors.push("Publishing platform is required.");
+        if(!value("creatorPrintedName")) errors.push("Printed signature name is required.");
+        if(!value("creatorSignatureDate")) errors.push("Signature date is required.");
+        if(!currentSignature()) errors.push("Creator signature is required.");
+        return errors;
+      };
+
+      const setSendStatus=(message,state="idle")=>{
+        $("sendStatus").textContent=message;$("sendStatus").dataset.uiState=state;
+        $("topSendText").textContent=state==="success"?"Sent":state==="error"?"Error":message?"Sending":"Not Sent";
+        $("topSendDot").dataset.state=state==="success"?"sent":state==="error"?"error":"pending";
+      };
+
+      const sendViaFetch=async(payload)=>{
+        const endpoint=window.CONTRACT_WEB_APP_URL;
+        if(!endpoint||endpoint.includes("PASTE_YOUR")) throw new Error("Add the deployed Apps Script web app URL to CONTRACT_WEB_APP_URL.");
+        const response=await fetch(endpoint,{method:"POST",headers:{"Content-Type":"text/plain;charset=utf-8"},body:JSON.stringify(payload)});
+        const text=await response.text(); let result;
+        try{result=JSON.parse(text);}catch(_){throw new Error("Apps Script returned a non-JSON response. Confirm the current web-app deployment URL and access settings.");}
+        if(!response.ok||!result.ok) throw new Error(result.error||"Unable to send signed agreement.");
+        return result;
+      };
+
+      const sendAgreement=async()=>{
+        const errors=validate();
+        if(errors.length){setSendStatus(errors.join(" "),"error");if(!currentSignature())openModal();return;}
+        const buttons=[$("sendContractButton"),$("mobileSendButton")].filter(Boolean);
+        buttons.forEach(b=>b.disabled=true);setSendStatus("Sending signed agreement...");
+        const payload={
+          action:"sendSignedContract",
+          creatorName:value("creatorLegalName"),
+          creatorEmail:value("creatorEmail"),
+          creatorBusinessName:value("creatorBusinessName"),
+          creatorInstagram:value("creatorInstagram"),
+          creatorTikTok:value("creatorTikTok"),
+          organizationEmail:CONTRACT_META.organizationEmail,
+          ccEmail:CONTRACT_META.ccEmail,
+          contractTitle:CONTRACT_META.contractTitle,
+          contractId:CONTRACT_META.contractId,
+          effectiveDate:formatDate(value("effectiveDate")),
+          signatureDate:formatDate(value("creatorSignatureDate")),
+          contractHtml:buildContractHtml(),
+          signatureDataUrl:currentSignature()
+        };
+        try{
+          const result=window.google?.script?.run
+            ? await new Promise((resolve,reject)=>google.script.run.withSuccessHandler(resolve).withFailureHandler(reject).sendSignedContractFromPage(payload))
+            : await sendViaFetch(payload);
+          if(!result?.ok) throw new Error(result?.error||"Unable to send signed agreement.");
+          setSendStatus("Signed agreement sent. Girl Plus Environment will follow up separately to coordinate payment onboarding.","success");
+        }catch(err){setSendStatus(err?.message||"Unable to send signed agreement.","error");}
+        finally{buttons.forEach(b=>b.disabled=false);}
+      };
+
+      [$("sendContractButton"),$("mobileSendButton")].forEach(btn=>btn?.addEventListener("click",sendAgreement));
+      [$("printButton"),$("mobilePrintButton")].forEach(btn=>btn?.addEventListener("click",()=>window.print()));
+    })();
+  </script>
+</body>
+</html>

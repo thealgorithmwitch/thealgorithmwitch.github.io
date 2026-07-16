@@ -1,6 +1,6 @@
 # Source Coverage Audit
 
-Generated: 2026-07-16T12:55:10.786Z
+Generated: 2026-07-16T13:16:46.796Z
 
 ## Summary
 
@@ -80,6 +80,7 @@ Generated: 2026-07-16T12:55:10.786Z
 | CALSTART | 3 |
 | ChargerHelp! | 3 |
 | Energy Infrastructure Partners LLC | 3 |
+| Resource Innovations | 3 |
 | The Nature Conservancy | 3 |
 | Ascent | 2 |
 | Clean Energy Trust | 2 |
@@ -87,7 +88,6 @@ Generated: 2026-07-16T12:55:10.786Z
 | Education Reform Now Advocacy | 2 |
 | Energy & Policy Institute | 2 |
 | Fervo Energy | 2 |
-| Get Vocal PBC | 2 |
 
 ## Pending Review Coverage
 
@@ -104,9 +104,9 @@ Generated: 2026-07-16T12:55:10.786Z
 | Grove Collaborative | 8 |
 | American Bird Conservancy | 7 |
 | Oxfam America | 7 |
-| Resource Innovations | 6 |
 | Carbon Direct | 5 |
 | Protect Democracy | 5 |
+| Resource Innovations | 5 |
 | Advanced Energy United | 4 |
 | More Perfect Union Action | 4 |
 | Sierra Club | 4 |
@@ -197,7 +197,7 @@ Generated: 2026-07-16T12:55:10.786Z
 | Mitti Labs | 1 | add_to_sources_json |
 | Proterra | 1 | ready_for_manual_review |
 | Rational | 1 | ready_for_manual_review |
-| Resource Innovations | 2 | add_to_sources_json |
+| Resource Innovations | 3 | add_to_sources_json |
 | TaskForce | 1 | ready_for_manual_review |
 | The Herald Group | 1 | ready_for_manual_review |
 | Veloz | 1 | ready_for_manual_review |

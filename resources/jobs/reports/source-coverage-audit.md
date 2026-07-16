@@ -1,12 +1,12 @@
 # Source Coverage Audit
 
-Generated: 2026-07-16T06:45:07.491Z
+Generated: 2026-07-16T09:07:09.672Z
 
 ## Summary
 
 - Total sources: 197
 - Total prospects: 92
-- Total public organizations: 54
+- Total public organizations: 52
 - Total pending organizations: 65
 
 ## Active Source Coverage
@@ -18,7 +18,7 @@ Generated: 2026-07-16T06:45:07.491Z
 | Active Minds | active-minds |  | low_confidence_experimental | live | 0 | 0 | 0 |
 | ADP Employer ca44b751 | adp-ca44b751 | adp | low_confidence_experimental | stale | 0 | 0 | 0 |
 | ADP Employer cde26da5 | adp-cde26da5 | adp | low_confidence_experimental | stale | 0 | 0 | 0 |
-| Advanced Energy United | advanced-energy-united | rippling | tracked_manual_org | live | 0 | 3 | 4 |
+| Advanced Energy United | advanced-energy-united | rippling | tracked_manual_org | live | 0 | 0 | 4 |
 | AES Corporation | aes | workday | low_confidence_experimental | sync_disabled | 0 | 0 | 0 |
 | AllTrails | alltrails | lever | trusted_nonprofit_pending_review | stale | 0 | 0 | 0 |
 | Amazon Watch | amazon-watch |  | manual_review_community | sync_error | 3 | 0 | 0 |
@@ -75,10 +75,8 @@ Generated: 2026-07-16T06:45:07.491Z
 | Oxfam America | 5 |
 | Protect Democracy | 5 |
 | SEEL | 5 |
-| Greentown Labs | 4 |
 | More Perfect Union Action | 4 |
 | NextEra Energy | 4 |
-| Advanced Energy United | 3 |
 | CALSTART | 3 |
 | ChargerHelp! | 3 |
 | Energy Infrastructure Partners LLC | 3 |
@@ -88,6 +86,8 @@ Generated: 2026-07-16T06:45:07.491Z
 | EDP | 2 |
 | Education Reform Now Advocacy | 2 |
 | Energy & Policy Institute | 2 |
+| Fervo Energy | 2 |
+| Get Vocal PBC | 2 |
 
 ## Pending Review Coverage
 
@@ -242,6 +242,7 @@ Generated: 2026-07-16T06:45:07.491Z
 | The Good Food Institute | Vice President of Operations | https://job-boards.greenhouse.io/thegoodfoodinstitute80/jobs/8516386002 |
 | World Resources Institute | Project Intern | https://www.wri.org/careers/jobs |
 | The Nature Conservancy | Montana Director of Development | https://careers.tnc.org/us/en/search-results |
+| Advanced Energy United | Policy Associate - DMEE | https://ats.rippling.com/advanced-energy-united-career-opportunities/jobs/9acd478b-6a23-4316-92c1-8c23b4409964 |
 | NextEra Energy | Senior IT Business Systems Analyst | https://jobs.nexteraenergy.com/search/?searchby=location&createNewAlert=false&q=corporate+jobs&optionsFacetsDD_customfield1=&optionsFacetsDD_customfield2=&optionsFacetsDD_customfield3=&locationsearch=&geolocation= |
 | CleanCapital | Assistant Project Manager Construction | https://cleancapital.com/careers/ |
 | CleanCapital | Associate Development Acquisitions | https://cleancapital.com/careers/ |

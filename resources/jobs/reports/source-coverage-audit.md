@@ -1,13 +1,13 @@
 # Source Coverage Audit
 
-Generated: 2026-07-17T14:06:00.891Z
+Generated: 2026-07-17T15:42:42.957Z
 
 ## Summary
 
 - Total sources: 197
 - Total prospects: 92
 - Total public organizations: 57
-- Total pending organizations: 62
+- Total pending organizations: 66
 
 ## Active Source Coverage
 
@@ -93,19 +93,19 @@ Generated: 2026-07-17T14:06:00.891Z
 
 | organization | pending_jobs |
 | --- | --- |
-| Quince | 139 |
+| Quince | 137 |
 | Octopus Energy | 28 |
 | NextEra Energy | 23 |
 | GoodLeap | 20 |
-| SEEL | 19 |
-| Get Vocal PBC | 14 |
+| SEEL | 20 |
+| Get Vocal PBC | 15 |
 | Conservation International | 10 |
 | GBL HR | 10 |
 | American Bird Conservancy | 7 |
 | Grove Collaborative | 7 |
-| Oxfam America | 7 |
-| Protect Democracy | 5 |
+| Protect Democracy | 6 |
 | Advanced Energy United | 4 |
+| Oxfam America | 4 |
 | Resource Innovations | 4 |
 | Sierra Club | 4 |
 | Arevon Energy | 3 |
@@ -167,7 +167,7 @@ Generated: 2026-07-17T14:06:00.891Z
 | RE-volv | re-volv | 3 | sync_error | 2026-05-25T03:15:53.497Z | investigate_fetch_failures |
 | Shadow Light Studios | shadow-light-studios | 6 | sync_error | 2026-05-24T21:27:45.639Z | investigate_fetch_failures |
 | The Climate Group | the-climate-group | 3 | sync_error | 2026-05-25T03:15:53.497Z | investigate_fetch_failures |
-| The Climate Reality Project | climate-reality-project | 11 | fetch_failed |  | investigate_fetch_failures |
+| The Climate Reality Project | climate-reality-project | 12 | fetch_failed |  | investigate_fetch_failures |
 | The RealReal | the-realreal | 5 | sync_error | 2026-05-24T21:27:45.643Z | investigate_fetch_failures |
 | thredUP | thredup | 12 | sync_error | 2026-05-24T21:27:45.644Z | investigate_fetch_failures |
 | Transformations Community | transformations-community | 6 | sync_error | 2026-05-24T21:27:45.645Z | investigate_fetch_failures |

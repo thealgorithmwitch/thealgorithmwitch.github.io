@@ -1816,30 +1816,79 @@
         $("topSendDot").dataset.state=state==="success"?"sent":state==="error"?"error":"pending";
       };
 
-      const sendAgreement = async () => {
-        const errors = validate();
-      
-        if (errors.length) {
-          setSendStatus(errors.join(" "), "error");
-      
-          if (!currentSignature()) {
-            openModal();
-          }
-      
-          return;
-        }
-      
-        if (
-          !window.google ||
-          !google.script ||
-          !google.script.run
-        ) {
-          setSendStatus(
-            "This agreement must be opened through the Girl Plus Environment contract portal.",
-            "error"
-          );
-          return;
-        }
+const sendAgreement = async () => {
+  const errors = validate();
+
+  if (errors.length) {
+    setSendStatus(errors.join(" "), "error");
+
+    if (!currentSignature()) {
+      openModal();
+    }
+
+    return;
+  }
+
+  const buttons = [
+    $("sendContractButton"),
+    $("mobileSendButton")
+  ].filter(Boolean);
+
+  buttons.forEach((button) => {
+    button.disabled = true;
+  });
+
+  setSendStatus("Sending signed agreement...");
+
+  const payload = {
+    action: "sendSignedContract",
+
+    creatorName: value("creatorLegalName"),
+    creatorEmail: value("creatorEmail"),
+    creatorPhone: value("creatorPhone"),
+    creatorAddress: value("creatorAddress"),
+    creatorBusinessName: value("creatorBusinessName"),
+    creatorInstagram: value("creatorInstagram"),
+    creatorTikTok: value("creatorTikTok"),
+
+    platformSelection: value("platformSelection"),
+    otherPlatform: value("otherPlatform"),
+
+    organizationEmail: CONTRACT_META.organizationEmail,
+    ccEmail: CONTRACT_META.ccEmail,
+
+    contractTitle: CONTRACT_META.contractTitle,
+    contractId: CONTRACT_META.contractId,
+
+    effectiveDate: formatDate(value("effectiveDate")),
+    signatureDate: formatDate(value("creatorSignatureDate")),
+
+    contractHtml: buildContractHtml(),
+    signatureDataUrl: currentSignature()
+  };
+
+  try {
+    const result = await sendViaFetch(payload);
+
+    setSendStatus(
+      result.message ||
+      "Signed agreement sent. Girl Plus Environment will follow up separately to coordinate payment onboarding.",
+      "success"
+    );
+  } catch (error) {
+    console.error("Agreement submission failed:", error);
+
+    setSendStatus(
+      error?.message ||
+      "Unable to send the signed agreement.",
+      "error"
+    );
+  } finally {
+    buttons.forEach((button) => {
+      button.disabled = false;
+    });
+  }
+};
       
         const buttons = [
           $("sendContractButton"),

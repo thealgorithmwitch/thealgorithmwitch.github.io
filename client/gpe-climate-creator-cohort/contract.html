@@ -1816,6 +1816,47 @@
         $("topSendDot").dataset.state=state==="success"?"sent":state==="error"?"error":"pending";
       };
 
+
+const sendViaFetch = async (payload) => {
+  const endpoint = window.CONTRACT_WEB_APP_URL;
+
+  if (!endpoint) {
+    throw new Error("The contract submission endpoint is not configured.");
+  }
+
+  const response = await fetch(endpoint, {
+    method: "POST",
+    headers: {
+      "Content-Type": "text/plain;charset=utf-8"
+    },
+    body: JSON.stringify(payload),
+    redirect: "follow"
+  });
+
+  const text = await response.text();
+
+  let result;
+
+  try {
+    result = JSON.parse(text);
+  } catch (error) {
+    console.error("Unexpected Apps Script response:", text);
+
+    throw new Error(
+      "The contract server returned an unexpected response. Confirm that the latest Apps Script deployment is active."
+    );
+  }
+
+  if (!result?.ok) {
+    throw new Error(
+      result?.error ||
+      "Unable to send the signed agreement."
+    );
+  }
+
+  return result;
+};
+      
 const sendAgreement = async () => {
   const errors = validate();
 

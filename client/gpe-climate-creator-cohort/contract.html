@@ -1817,44 +1817,100 @@
       };
 
 
-const sendViaFetch = async (payload) => {
+const sendViaFetch = (payload) => {
   const endpoint = window.CONTRACT_WEB_APP_URL;
 
   if (!endpoint) {
-    throw new Error("The contract submission endpoint is not configured.");
+    return Promise.reject(
+      new Error("The contract submission endpoint is not configured.")
+    );
   }
 
-  const response = await fetch(endpoint, {
-    method: "POST",
-    headers: {
-      "Content-Type": "text/plain;charset=utf-8"
-    },
-    body: JSON.stringify(payload),
-    redirect: "follow"
+  return new Promise((resolve, reject) => {
+    const requestId =
+      typeof crypto !== "undefined" && crypto.randomUUID
+        ? crypto.randomUUID()
+        : `contract-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+
+    const iframeName = `contract-submit-${requestId.replace(/[^a-zA-Z0-9_-]/g, "")}`;
+
+    const iframe = document.createElement("iframe");
+    iframe.name = iframeName;
+    iframe.title = "Contract submission response";
+    iframe.hidden = true;
+
+    const form = document.createElement("form");
+    form.method = "POST";
+    form.action = endpoint;
+    form.target = iframeName;
+    form.hidden = true;
+
+    const payloadInput = document.createElement("input");
+    payloadInput.type = "hidden";
+    payloadInput.name = "payload";
+    payloadInput.value = JSON.stringify({
+      ...payload,
+      requestId
+    });
+
+    form.appendChild(payloadInput);
+    document.body.appendChild(iframe);
+    document.body.appendChild(form);
+
+    let completed = false;
+
+    const cleanup = () => {
+      window.removeEventListener("message", handleMessage);
+      iframe.remove();
+      form.remove();
+    };
+
+    const timeout = window.setTimeout(() => {
+      if (completed) return;
+
+      completed = true;
+      cleanup();
+
+      reject(
+        new Error(
+          "The contract server did not respond. Please try again or contact Girl Plus Environment."
+        )
+      );
+    }, 90000);
+
+    const handleMessage = (event) => {
+      const message = event.data;
+
+      if (
+        !message ||
+        message.type !== "gpe-contract-submission-result" ||
+        message.requestId !== requestId
+      ) {
+        return;
+      }
+
+      completed = true;
+      window.clearTimeout(timeout);
+      cleanup();
+
+      const result = message.result;
+
+      if (!result?.ok) {
+        reject(
+          new Error(
+            result?.error ||
+              "Unable to send the signed agreement."
+          )
+        );
+        return;
+      }
+
+      resolve(result);
+    };
+
+    window.addEventListener("message", handleMessage);
+    form.submit();
   });
-
-  const text = await response.text();
-
-  let result;
-
-  try {
-    result = JSON.parse(text);
-  } catch (error) {
-    console.error("Unexpected Apps Script response:", text);
-
-    throw new Error(
-      "The contract server returned an unexpected response. Confirm that the latest Apps Script deployment is active."
-    );
-  }
-
-  if (!result?.ok) {
-    throw new Error(
-      result?.error ||
-      "Unable to send the signed agreement."
-    );
-  }
-
-  return result;
 };
       
 const sendAgreement = async () => {

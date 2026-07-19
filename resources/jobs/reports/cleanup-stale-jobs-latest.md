@@ -1,6 +1,6 @@
 # Cleanup Stale Jobs
 
-Generated: 2026-07-19T11:58:26.931Z
+Generated: 2026-07-19T13:42:42.318Z
 Mode: write
 
 Previous public jobs count: 128
@@ -9,16 +9,14 @@ Archived stale/dead/duplicate jobs: 0
 Dead links found: 0
 Duplicate public jobs archived: 0
 Pages cleaned: 0
-Skipped risky changes: 14
+Skipped risky changes: 12
 
 ## Archived Jobs
 
 ## Risky Changes Skipped
-- edp-a8fcd20c0c03: network_error (fetch failed)
-- edp-eaf930fcd047: network_error (fetch failed)
+- Greenpeace-8549415002: code_feed_page
 - Grove Collaborative-5212550008: code_feed_page
 - Greenpeace-8331887002: code_feed_page
-- Greenpeace-8549415002: code_feed_page
 - Energy & Policy Institute-research-fellow: non_job_page:careers_landing_page
 - Energy & Policy Institute-research-manager: non_job_page:careers_landing_page
 - Quince-5178743008: code_feed_page

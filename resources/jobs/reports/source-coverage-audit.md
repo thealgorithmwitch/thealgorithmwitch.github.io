@@ -1,6 +1,6 @@
 # Source Coverage Audit
 
-Generated: 2026-07-20T18:27:32.497Z
+Generated: 2026-07-20T20:09:30.749Z
 
 ## Summary
 
@@ -45,7 +45,7 @@ Generated: 2026-07-20T18:27:32.497Z
 | Carbon180 | carbon180 |  | low_confidence_experimental | live | 0 | 0 | 0 |
 | CEEZER | ceezer | ashby | low_confidence_experimental | sync_error | 5 | 0 | 0 |
 | Ceres | ceres |  | low_confidence_experimental | stale | 0 | 0 | 0 |
-| ChargerHelp! | chargerhelp | recruitee | trusted_nonprofit_pending_review | live | 0 | 3 | 0 |
+| ChargerHelp! | chargerhelp | recruitee | trusted_nonprofit_pending_review | live | 0 | 2 | 0 |
 | Citizen's Climate Lobby | citizens-climate-lobby |  | manual_review_community | sync_error | 3 | 0 | 0 |
 | Clean Air Task Force | clean-air-task-force |  | low_confidence_experimental | live | 0 | 0 | 0 |
 | Clean Energy Trust | clean-energy-trust | bamboohr | trusted_nonprofit_pending_review | stale | 0 | 3 | 0 |
@@ -80,11 +80,11 @@ Generated: 2026-07-20T18:27:32.497Z
 | NextEra Energy | 4 |
 | Resource Innovations | 4 |
 | Ascent | 3 |
-| ChargerHelp! | 3 |
 | Clean Energy Trust | 3 |
 | Energy Infrastructure Partners LLC | 3 |
 | The Nature Conservancy | 3 |
 | Carbon Direct | 2 |
+| ChargerHelp! | 2 |
 | EDP | 2 |
 | Education Reform Now Advocacy | 2 |
 | Energy & Policy Institute | 2 |

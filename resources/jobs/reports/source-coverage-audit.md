@@ -1,6 +1,6 @@
 # Source Coverage Audit
 
-Generated: 2026-07-22T14:03:50.109Z
+Generated: 2026-07-22T15:54:01.929Z
 
 ## Summary
 
@@ -219,6 +219,7 @@ Generated: 2026-07-22T14:03:50.109Z
 | More Perfect Union Action | Vertical Video Editor | https://more-perfect-union-action.rippling-ats.com/job/1021994/vertical-video-editor |
 | Climate Cabinet | Michigan State Lead - Lobbyist and Strategist | https://job-boards.greenhouse.io/climatecabinet/jobs/5132797007 |
 | Grove Collaborative | Associate Manager, Marketplace & Channel Operations | https://job-boards.greenhouse.io/grovecollaborative/jobs/5212558008 |
+| Grove Collaborative | Senior Manager, Marketplace & Retail Channels | https://job-boards.greenhouse.io/grovecollaborative/jobs/5212550008 |
 | Quince | Senior Creative Strategist | https://job-boards.greenhouse.io/quince/jobs/5167665008 |
 | Woolpert | Engineer in Training, Site Civil Energy Practice | https://job-boards.greenhouse.io/woolpert/jobs/4087773009 |
 | Sunrun | ERP Business Systems Administrator | https://careers.sunrun.com/job/california/erp-business-systems-administrator/21632/94571057184 |

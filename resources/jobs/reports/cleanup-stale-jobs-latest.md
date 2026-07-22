@@ -1,6 +1,6 @@
 # Cleanup Stale Jobs
 
-Generated: 2026-07-22T22:33:45.325Z
+Generated: 2026-07-22T23:41:47.319Z
 Mode: write
 
 Previous public jobs count: 126
@@ -17,8 +17,8 @@ Skipped risky changes: 11
 - Greenpeace-8331887002: code_feed_page
 - Greenpeace-8549415002: code_feed_page
 - Quince-5098016008: code_feed_page
-- Energy & Policy Institute-research-manager: non_job_page:careers_landing_page
 - Energy & Policy Institute-research-fellow: non_job_page:careers_landing_page
+- Energy & Policy Institute-research-manager: non_job_page:careers_landing_page
 - Quince-5178743008: code_feed_page
 - wide-search-workable-global-advocacy-campaigns-ffcaa0c85f81: non_job_page:search_page
 - Results for America-5174333007: code_feed_page

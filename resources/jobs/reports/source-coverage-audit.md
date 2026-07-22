@@ -1,6 +1,6 @@
 # Source Coverage Audit
 
-Generated: 2026-07-22T15:54:01.929Z
+Generated: 2026-07-22T17:23:33.221Z
 
 ## Summary
 
@@ -93,17 +93,17 @@ Generated: 2026-07-22T15:54:01.929Z
 
 | organization | pending_jobs |
 | --- | --- |
-| Quince | 136 |
+| Quince | 140 |
 | Octopus Energy | 28 |
 | NextEra Energy | 23 |
-| GoodLeap | 20 |
+| GoodLeap | 22 |
 | SEEL | 20 |
-| Get Vocal PBC | 15 |
+| Get Vocal PBC | 14 |
 | Conservation International | 10 |
 | GBL HR | 10 |
+| Grove Collaborative | 9 |
 | American Bird Conservancy | 8 |
-| Grove Collaborative | 7 |
-| Protect Democracy | 7 |
+| Protect Democracy | 8 |
 | Advanced Energy United | 5 |
 | Oxfam America | 4 |
 | Quantis | 4 |
@@ -167,7 +167,7 @@ Generated: 2026-07-22T15:54:01.929Z
 | RE-volv | re-volv | 3 | sync_error | 2026-05-25T03:15:53.497Z | investigate_fetch_failures |
 | Shadow Light Studios | shadow-light-studios | 6 | sync_error | 2026-05-24T21:27:45.639Z | investigate_fetch_failures |
 | The Climate Group | the-climate-group | 3 | sync_error | 2026-05-25T03:15:53.497Z | investigate_fetch_failures |
-| The Climate Reality Project | climate-reality-project | 13 | fetch_failed |  | investigate_fetch_failures |
+| The Climate Reality Project | climate-reality-project | 14 | fetch_failed |  | investigate_fetch_failures |
 | The RealReal | the-realreal | 5 | sync_error | 2026-05-24T21:27:45.643Z | investigate_fetch_failures |
 | thredUP | thredup | 12 | sync_error | 2026-05-24T21:27:45.644Z | investigate_fetch_failures |
 | Transformations Community | transformations-community | 6 | sync_error | 2026-05-24T21:27:45.645Z | investigate_fetch_failures |

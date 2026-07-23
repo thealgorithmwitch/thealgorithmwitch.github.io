@@ -1,12 +1,12 @@
 # Source Coverage Audit
 
-Generated: 2026-07-23T07:21:25.929Z
+Generated: 2026-07-23T10:00:55.839Z
 
 ## Summary
 
 - Total sources: 197
 - Total prospects: 92
-- Total public organizations: 57
+- Total public organizations: 56
 - Total pending organizations: 72
 
 ## Active Source Coverage
@@ -187,7 +187,6 @@ Generated: 2026-07-23T07:21:25.929Z
 | Aristotle | 1 | ready_for_manual_review |
 | Avōq | 1 | add_to_sources_json |
 | BME Strategies | 1 | ready_for_manual_review |
-| Centre for Information Resilience | 1 | ready_for_manual_review |
 | Climate Action | 1 | ready_for_manual_review |
 | Education Reform Now Advocacy | 2 | add_to_sources_json |
 | Energy Infrastructure Partners LLC | 3 | add_to_sources_json |
@@ -263,6 +262,7 @@ _None_
 | Alliance to Save Energy | https://www.ase.org/careers | add_to_sources_json |
 | Arbor Day Foundation | https://www.arborday.org/careers | add_to_sources_json |
 | Avōq | https://jobs.workable.com/view/kpYa2WZ8M2TWGCiFtFJS1o/hybrid-communications-fellow---reputation-management-in-new-york-at-av%C5%8Dq | add_to_sources_json |
+| Centre for Information Resilience |  | candidate_for_new_pull |
 | Climate Reality Project | https://www.climaterealityproject.org/careers | add_to_sources_json |
 | ConnectDER | https://jobs.elementalimpact.com/jobs | add_to_sources_json |
 | Conservation Voters of Pennsylvania |  | candidate_for_new_pull |

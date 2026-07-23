@@ -1,6 +1,6 @@
 # Source Coverage Audit
 
-Generated: 2026-07-23T14:03:09.370Z
+Generated: 2026-07-23T16:03:00.182Z
 
 ## Summary
 
@@ -74,11 +74,11 @@ Generated: 2026-07-23T14:03:09.370Z
 | Ascent | 5 |
 | Dylan Green | 5 |
 | HA Sustainable Infrastructure Capital | 5 |
-| More Perfect Union Action | 5 |
 | Oxfam America | 5 |
 | SEEL | 5 |
 | CALSTART | 4 |
 | Clean Energy Trust | 4 |
+| More Perfect Union Action | 4 |
 | NextEra Energy | 4 |
 | Resource Innovations | 4 |
 | Aristotle | 3 |

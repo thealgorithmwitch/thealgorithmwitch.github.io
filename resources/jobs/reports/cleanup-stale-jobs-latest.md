@@ -1,17 +1,18 @@
 # Cleanup Stale Jobs
 
-Generated: 2026-07-23T14:00:02.138Z
+Generated: 2026-07-23T15:59:27.135Z
 Mode: write
 
 Previous public jobs count: 140
-Projected public jobs count after cleanup: 140
-Archived stale/dead/duplicate jobs: 0
-Dead links found: 0
+Projected public jobs count after cleanup: 139
+Archived stale/dead/duplicate jobs: 1
+Dead links found: 1
 Duplicate public jobs archived: 0
-Pages cleaned: 0
+Pages cleaned: 1
 Skipped risky changes: 11
 
 ## Archived Jobs
+- More Perfect Union Action-https://more-perfect-union-action.rippling-ats.com/job/1012606/video-production-fellow: More Perfect Union Action | Video Production Fellow | http_404
 
 ## Risky Changes Skipped
 - Greenpeace-8331887002: code_feed_page
@@ -21,7 +22,7 @@ Skipped risky changes: 11
 - Energy & Policy Institute-research-fellow: non_job_page:careers_landing_page
 - Quince-5178743008: code_feed_page
 - wide-search-workable-global-advocacy-campaigns-ffcaa0c85f81: non_job_page:search_page
-- Results for America-5174333007: network_error (This operation was aborted)
+- Results for America-5174333007: code_feed_page
 - Carbon Direct-5183934007: code_feed_page
 - Carbon Direct-5185014007: code_feed_page
 - Grove Collaborative-5301136008: code_feed_page

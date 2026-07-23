@@ -1,11 +1,10 @@
 # Public Validation Routing Report
-Generated at: 2026-07-23T11:56:53.137Z
+Generated at: 2026-07-23T14:00:59.634Z
 
 ## Summary
-Records routed to pending: 1
+Records routed to pending: 0
 Hard validation failures remaining: 0
-Records remaining public: 139
+Records remaining public: 140
 Exit decision: passed
 
 ## Routed Records
-- `GBL HR-207`: invalid_job_type

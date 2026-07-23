@@ -1,13 +1,13 @@
 # Source Coverage Audit
 
-Generated: 2026-07-23T10:00:55.839Z
+Generated: 2026-07-23T11:58:42.018Z
 
 ## Summary
 
 - Total sources: 197
 - Total prospects: 92
-- Total public organizations: 56
-- Total pending organizations: 72
+- Total public organizations: 62
+- Total pending organizations: 66
 
 ## Active Source Coverage
 
@@ -18,7 +18,7 @@ Generated: 2026-07-23T10:00:55.839Z
 | Active Minds | active-minds |  | low_confidence_experimental | live | 0 | 0 | 0 |
 | ADP Employer ca44b751 | adp-ca44b751 | adp | low_confidence_experimental | stale | 0 | 0 | 0 |
 | ADP Employer cde26da5 | adp-cde26da5 | adp | low_confidence_experimental | stale | 0 | 0 | 0 |
-| Advanced Energy United | advanced-energy-united | rippling | tracked_manual_org | live | 0 | 0 | 5 |
+| Advanced Energy United | advanced-energy-united | rippling | tracked_manual_org | live | 0 | 2 | 3 |
 | AES Corporation | aes | workday | low_confidence_experimental | sync_disabled | 0 | 0 | 0 |
 | AllTrails | alltrails | lever | trusted_nonprofit_pending_review | stale | 0 | 0 | 2 |
 | Amazon Watch | amazon-watch |  | manual_review_community | sync_error | 3 | 0 | 0 |
@@ -28,7 +28,7 @@ Generated: 2026-07-23T10:00:55.839Z
 | Appalachian Voices | appalachian-voices |  | manual_review_community | live | 0 | 0 | 0 |
 | Arevon Energy | arevon |  | low_confidence_experimental | live | 0 | 0 | 3 |
 | Array Technologies | array-technologies | workday | low_confidence_experimental | sync_disabled | 0 | 0 | 0 |
-| Ascent | ascent | paylocity | trusted_nonprofit_pending_review | live | 0 | 3 | 2 |
+| Ascent | ascent | paylocity | trusted_nonprofit_pending_review | live | 0 | 5 | 0 |
 | Asian Pacific Environmental Network | apen4ej |  | manual_review_community | stale | 0 | 0 | 0 |
 | Aspen Institute | aspen-institute |  | low_confidence_experimental | sync_error | 3 | 0 | 0 |
 | Black Girl Environmentalist | black-girl-environmentalist |  | manual_review_community | stale | 0 | 0 | 0 |
@@ -48,11 +48,11 @@ Generated: 2026-07-23T10:00:55.839Z
 | ChargerHelp! | chargerhelp | recruitee | trusted_nonprofit_pending_review | live | 0 | 2 | 0 |
 | Citizen's Climate Lobby | citizens-climate-lobby |  | manual_review_community | sync_error | 3 | 0 | 0 |
 | Clean Air Task Force | clean-air-task-force |  | low_confidence_experimental | live | 0 | 0 | 0 |
-| Clean Energy Trust | clean-energy-trust | bamboohr | trusted_nonprofit_pending_review | stale | 0 | 3 | 1 |
+| Clean Energy Trust | clean-energy-trust | bamboohr | trusted_nonprofit_pending_review | stale | 0 | 4 | 0 |
 | Clean Slate Initiative | clean-slate-initiative |  | low_confidence_experimental | sync_error | 3 | 0 | 0 |
 | CleanCapital | clean-capital |  | trusted_nonprofit_pending_review | live | 0 | 1 | 0 |
 | CleanChoice Energy | cleanchoice-energy |  | low_confidence_experimental | sync_error | 3 | 0 | 0 |
-| Climate Action Campaign | climate-action-campaign | trakstar | tracked_manual_org | pending_updated | 0 | 0 | 1 |
+| Climate Action Campaign | climate-action-campaign | trakstar | tracked_manual_org | pending_updated | 0 | 1 | 0 |
 | Climate Cabinet | climate-cabinet | greenhouse | trusted_nonprofit_pending_review | live | 0 | 0 | 0 |
 | Climate Central | climate-central |  | low_confidence_experimental | live | 0 | 0 | 0 |
 | Climate Justice Alliance | climate-justice-alliance |  | manual_review_community | live | 0 | 0 | 0 |
@@ -70,24 +70,24 @@ Generated: 2026-07-23T10:00:55.839Z
 | --- | --- |
 | Renew Home | 10 |
 | Powerlines | 7 |
+| Protect Democracy | 7 |
+| Ascent | 5 |
 | Dylan Green | 5 |
 | HA Sustainable Infrastructure Capital | 5 |
 | More Perfect Union Action | 5 |
 | Oxfam America | 5 |
-| Protect Democracy | 5 |
 | SEEL | 5 |
 | CALSTART | 4 |
+| Clean Energy Trust | 4 |
 | NextEra Energy | 4 |
 | Resource Innovations | 4 |
-| Ascent | 3 |
-| Clean Energy Trust | 3 |
+| Aristotle | 3 |
 | Energy Infrastructure Partners LLC | 3 |
 | The Nature Conservancy | 3 |
+| Advanced Energy United | 2 |
 | Carbon Direct | 2 |
 | ChargerHelp! | 2 |
-| EDP | 2 |
-| Education Reform Now Advocacy | 2 |
-| Energy & Policy Institute | 2 |
+| Climate Action | 2 |
 
 ## Pending Review Coverage
 
@@ -96,23 +96,23 @@ Generated: 2026-07-23T10:00:55.839Z
 | Quince | 140 |
 | Octopus Energy | 28 |
 | NextEra Energy | 23 |
-| GoodLeap | 22 |
+| GoodLeap | 21 |
 | SEEL | 20 |
 | Get Vocal PBC | 14 |
 | Conservation International | 10 |
-| GBL HR | 10 |
+| GBL HR | 9 |
 | Grove Collaborative | 9 |
 | American Bird Conservancy | 8 |
-| Protect Democracy | 8 |
-| Advanced Energy United | 5 |
+| Protect Democracy | 6 |
 | Oxfam America | 4 |
-| Quantis | 4 |
 | Resource Innovations | 4 |
 | WaterAid | 4 |
+| Advanced Energy United | 3 |
 | Arevon Energy | 3 |
 | Carbon Direct | 3 |
 | Fervo Energy | 3 |
 | Middle Seat | 3 |
+| More Perfect Union Action | 3 |
 
 ## Missing Preferred Orgs
 
@@ -184,10 +184,10 @@ Generated: 2026-07-23T10:00:55.839Z
 | organization | public_jobs | recommended_action |
 | --- | --- | --- |
 | Action Against Hunger | 1 | ready_for_manual_review |
-| Aristotle | 1 | ready_for_manual_review |
+| Aristotle | 3 | ready_for_manual_review |
 | Avōq | 1 | add_to_sources_json |
 | BME Strategies | 1 | ready_for_manual_review |
-| Climate Action | 1 | ready_for_manual_review |
+| Climate Action | 2 | ready_for_manual_review |
 | Education Reform Now Advocacy | 2 | add_to_sources_json |
 | Energy Infrastructure Partners LLC | 3 | add_to_sources_json |
 | Energy Trust of Oregon | 1 | ready_for_manual_review |
@@ -196,10 +196,13 @@ Generated: 2026-07-23T10:00:55.839Z
 | Grassroots Carbon | 1 | add_to_sources_json |
 | InfluenceMap | 1 | ready_for_manual_review |
 | Mitti Labs | 1 | add_to_sources_json |
+| Murmuration | 1 | ready_for_manual_review |
 | Proterra | 1 | ready_for_manual_review |
+| Quantis | 1 | ready_for_manual_review |
 | Rational | 1 | ready_for_manual_review |
 | Resource Innovations | 4 | add_to_sources_json |
 | Responsibly | 1 | ready_for_manual_review |
+| Supercritical | 1 | ready_for_manual_review |
 | TaskForce | 1 | ready_for_manual_review |
 | The Herald Group | 1 | ready_for_manual_review |
 | Veloz | 1 | ready_for_manual_review |

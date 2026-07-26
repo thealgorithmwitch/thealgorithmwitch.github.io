@@ -1,6 +1,6 @@
 # Cleanup Stale Jobs
 
-Generated: 2026-07-26T11:19:10.790Z
+Generated: 2026-07-26T12:37:51.846Z
 Mode: write
 
 Previous public jobs count: 138
@@ -9,11 +9,13 @@ Archived stale/dead/duplicate jobs: 0
 Dead links found: 0
 Duplicate public jobs archived: 0
 Pages cleaned: 0
-Skipped risky changes: 11
+Skipped risky changes: 13
 
 ## Archived Jobs
 
 ## Risky Changes Skipped
+- edp-eaf930fcd047: network_error (fetch failed)
+- edp-a8fcd20c0c03: network_error (fetch failed)
 - Greenpeace-8549415002: code_feed_page
 - Greenpeace-8331887002: code_feed_page
 - Quince-5098016008: code_feed_page

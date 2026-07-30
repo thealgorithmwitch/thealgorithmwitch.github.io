@@ -1,23 +1,23 @@
 # Cleanup Stale Jobs
 
-Generated: 2026-07-30T01:02:52.272Z
+Generated: 2026-07-30T04:20:33.598Z
 Mode: write
 
-Previous public jobs count: 137
+Previous public jobs count: 135
 Projected public jobs count after cleanup: 135
-Archived stale/dead/duplicate jobs: 2
-Dead links found: 2
+Archived stale/dead/duplicate jobs: 0
+Dead links found: 0
 Duplicate public jobs archived: 0
-Pages cleaned: 2
-Skipped risky changes: 9
+Pages cleaned: 0
+Skipped risky changes: 11
 
 ## Archived Jobs
-- Greenpeace-8549415002: Greenpeace | Oceans Campaign - Beyond Seafood Project Lead (12-month position) | greenhouse_expired_redirect_to_board
-- Greenpeace-8331887002: Greenpeace | Assistant General Counsel | greenhouse_expired_redirect_to_board
 
 ## Risky Changes Skipped
-- Energy & Policy Institute-research-manager: non_job_page:careers_landing_page
+- edp-a8fcd20c0c03: network_error (fetch failed)
+- edp-eaf930fcd047: network_error (fetch failed)
 - Energy & Policy Institute-research-fellow: non_job_page:careers_landing_page
+- Energy & Policy Institute-research-manager: non_job_page:careers_landing_page
 - Quince-5098016008: code_feed_page
 - Quince-5178743008: code_feed_page
 - wide-search-workable-global-advocacy-campaigns-ffcaa0c85f81: non_job_page:search_page

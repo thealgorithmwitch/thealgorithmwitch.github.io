@@ -1,12 +1,12 @@
 # Source Coverage Audit
 
-Generated: 2026-07-29T23:45:08.198Z
+Generated: 2026-07-30T01:06:06.629Z
 
 ## Summary
 
 - Total sources: 197
 - Total prospects: 92
-- Total public organizations: 62
+- Total public organizations: 61
 - Total pending organizations: 77
 
 ## Active Source Coverage
@@ -222,6 +222,7 @@ Generated: 2026-07-29T23:45:08.198Z
 | More Perfect Union Action | Vertical Video Editor | https://more-perfect-union-action.rippling-ats.com/job/1021994/vertical-video-editor |
 | Climate Cabinet | Michigan State Lead - Lobbyist and Strategist | https://job-boards.greenhouse.io/climatecabinet/jobs/5132797007 |
 | Grove Collaborative | Associate Manager, Marketplace & Channel Operations | https://job-boards.greenhouse.io/grovecollaborative/jobs/5212558008 |
+| Greenpeace | Oceans Campaign - Beyond Seafood Project Lead (12-month position) | https://job-boards.greenhouse.io/greenpeace/jobs/8549415002 |
 | Grove Collaborative | Senior Manager, Marketplace & Retail Channels | https://job-boards.greenhouse.io/grovecollaborative/jobs/5212550008 |
 | Quince | Senior Creative Strategist | https://job-boards.greenhouse.io/quince/jobs/5167665008 |
 | Woolpert | Engineer in Training, Site Civil Energy Practice | https://job-boards.greenhouse.io/woolpert/jobs/4087773009 |
@@ -236,6 +237,7 @@ Generated: 2026-07-29T23:45:08.198Z
 | Mission 44 | Senior Manager Policy and Campaigns | https://jobs.workable.com/view/7irAitgA6D2XAM6a6beCda/hybrid-senior-manager-policy-and-campaigns-in-london-at-mission-44 |
 | Octopus Energy | Performance Marketing Lead | https://jobs.lever.co/octoenergy/b5557512-04f8-4bb4-95dd-074da4e4c2de |
 | Greenpeace | Senior Director, Climate and Rights (12-month position) | https://job-boards.greenhouse.io/greenpeace/jobs/8348929002 |
+| Greenpeace | Assistant General Counsel | https://job-boards.greenhouse.io/greenpeace/jobs/8331887002 |
 | Arevon Energy | Scada Operations Supervisor | https://arevonenergy.com/careers/#open-positions |
 | American Bird Conservancy | Writer/Editor | https://recruiting.paylocity.com/Recruiting/Jobs/Details/4042466 |
 | Arevon Energy | BESS Field Technician | https://arevonenergy.com/careers/#open-positions |

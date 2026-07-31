@@ -1,13 +1,13 @@
 # Source Coverage Audit
 
-Generated: 2026-07-31T11:50:51.454Z
+Generated: 2026-07-31T16:17:58.786Z
 
 ## Summary
 
 - Total sources: 197
 - Total prospects: 92
 - Total public organizations: 61
-- Total pending organizations: 77
+- Total pending organizations: 82
 
 ## Active Source Coverage
 
@@ -22,13 +22,13 @@ Generated: 2026-07-31T11:50:51.454Z
 | AES Corporation | aes | workday | low_confidence_experimental | sync_disabled | 0 | 0 | 0 |
 | AllTrails | alltrails | lever | trusted_nonprofit_pending_review | stale | 0 | 0 | 1 |
 | Amazon Watch | amazon-watch |  | manual_review_community | sync_error | 3 | 0 | 0 |
-| American Bird Conservancy | american-bird-conservancy | paylocity | trusted_nonprofit_pending_review | pending_updated | 0 | 0 | 9 |
+| American Bird Conservancy | american-bird-conservancy | paylocity | trusted_nonprofit_pending_review | pending_updated | 0 | 0 | 10 |
 | American Council on Renewable Energy | acore |  | manual_review_community | stale | 0 | 0 | 0 |
 | Antora Energy | antora |  | low_confidence_experimental | live | 0 | 0 | 0 |
 | Appalachian Voices | appalachian-voices |  | manual_review_community | live | 0 | 0 | 0 |
 | Arevon Energy | arevon |  | low_confidence_experimental | live | 0 | 0 | 3 |
 | Array Technologies | array-technologies | workday | low_confidence_experimental | sync_disabled | 0 | 0 | 0 |
-| Ascent | ascent | paylocity | trusted_nonprofit_pending_review | live | 0 | 5 | 0 |
+| Ascent | ascent | paylocity | trusted_nonprofit_pending_review | live | 0 | 5 | 1 |
 | Asian Pacific Environmental Network | apen4ej |  | manual_review_community | stale | 0 | 0 | 0 |
 | Aspen Institute | aspen-institute |  | low_confidence_experimental | sync_error | 3 | 0 | 0 |
 | Black Girl Environmentalist | black-girl-environmentalist |  | manual_review_community | stale | 0 | 0 | 0 |
@@ -39,7 +39,7 @@ Generated: 2026-07-31T11:50:51.454Z
 | Brightline Defense | brightline-defense |  | manual_review_community |  | 0 | 0 | 0 |
 | Bullard Center for Environmental and Climate Justice | bullard-center |  | manual_review_community | live | 0 | 1 | 0 |
 | California Environmental Justice Alliance | california-environmental-justice-alliance |  | manual_review_community |  | 0 | 0 | 0 |
-| CALSTART | calstart | lever | trusted_nonprofit_pending_review | live | 0 | 4 | 1 |
+| CALSTART | calstart | lever | trusted_nonprofit_pending_review | live | 0 | 4 | 7 |
 | Canadian Solar | canadian-solar | workday | low_confidence_experimental | sync_disabled | 0 | 0 | 0 |
 | Carbon Direct | carbon-direct | greenhouse | trusted_nonprofit_pending_review | live | 0 | 2 | 3 |
 | Carbon180 | carbon180 |  | low_confidence_experimental | live | 0 | 0 | 0 |
@@ -93,17 +93,18 @@ Generated: 2026-07-31T11:50:51.454Z
 
 | organization | pending_jobs |
 | --- | --- |
-| Quince | 141 |
+| Quince | 146 |
 | Octopus Energy | 28 |
 | NextEra Energy | 23 |
-| SEEL | 21 |
+| SEEL | 22 |
 | GoodLeap | 19 |
-| Get Vocal PBC | 14 |
-| GBL HR | 11 |
+| GBL HR | 12 |
+| Get Vocal PBC | 12 |
 | Grove Collaborative | 11 |
+| American Bird Conservancy | 10 |
 | Conservation International | 10 |
-| American Bird Conservancy | 9 |
-| New Energy Nexus | 5 |
+| New Energy Nexus | 9 |
+| CALSTART | 7 |
 | Protect Democracy | 5 |
 | Resource Innovations | 5 |
 | WaterAid | 4 |
@@ -112,7 +113,6 @@ Generated: 2026-07-31T11:50:51.454Z
 | Carbon Direct | 3 |
 | Fervo Energy | 3 |
 | Middle Seat | 3 |
-| More Perfect Union Action | 3 |
 
 ## Missing Preferred Orgs
 
@@ -167,7 +167,7 @@ Generated: 2026-07-31T11:50:51.454Z
 | RE-volv | re-volv | 3 | sync_error | 2026-05-25T03:15:53.497Z | investigate_fetch_failures |
 | Shadow Light Studios | shadow-light-studios | 6 | sync_error | 2026-05-24T21:27:45.639Z | investigate_fetch_failures |
 | The Climate Group | the-climate-group | 3 | sync_error | 2026-05-25T03:15:53.497Z | investigate_fetch_failures |
-| The Climate Reality Project | climate-reality-project | 17 | fetch_failed |  | investigate_fetch_failures |
+| The Climate Reality Project | climate-reality-project | 18 | fetch_failed |  | investigate_fetch_failures |
 | The RealReal | the-realreal | 5 | sync_error | 2026-05-24T21:27:45.643Z | investigate_fetch_failures |
 | thredUP | thredup | 12 | sync_error | 2026-05-24T21:27:45.644Z | investigate_fetch_failures |
 | Transformations Community | transformations-community | 6 | sync_error | 2026-05-24T21:27:45.645Z | investigate_fetch_failures |

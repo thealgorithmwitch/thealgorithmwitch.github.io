@@ -1,6 +1,6 @@
 # Source Coverage Audit
 
-Generated: 2026-08-03T18:07:58.782Z
+Generated: 2026-08-03T20:02:46.291Z
 
 ## Summary
 
@@ -70,7 +70,7 @@ Generated: 2026-08-03T18:07:58.782Z
 | --- | --- |
 | Renew Home | 10 |
 | Powerlines | 7 |
-| Protect Democracy | 7 |
+| Protect Democracy | 6 |
 | Ascent | 5 |
 | Dylan Green | 5 |
 | HA Sustainable Infrastructure Capital | 5 |

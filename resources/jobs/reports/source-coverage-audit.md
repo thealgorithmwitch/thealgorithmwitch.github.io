@@ -1,12 +1,12 @@
 # Source Coverage Audit
 
-Generated: 2026-08-03T03:57:37.638Z
+Generated: 2026-08-03T13:45:21.601Z
 
 ## Summary
 
 - Total sources: 197
 - Total prospects: 92
-- Total public organizations: 61
+- Total public organizations: 60
 - Total pending organizations: 82
 
 ## Active Source Coverage
@@ -194,7 +194,6 @@ Generated: 2026-08-03T03:57:37.638Z
 | Evolv Technologies Inc | 1 | ready_for_manual_review |
 | Fervo Energy | 2 | ready_for_manual_review |
 | Grassroots Carbon | 1 | add_to_sources_json |
-| InfluenceMap | 1 | ready_for_manual_review |
 | Mitti Labs | 1 | add_to_sources_json |
 | Murmuration | 1 | ready_for_manual_review |
 | Proterra | 1 | ready_for_manual_review |

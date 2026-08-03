@@ -1,6 +1,6 @@
 # Cleanup Stale Jobs
 
-Generated: 2026-08-03T00:06:18.576Z
+Generated: 2026-08-03T03:55:02.075Z
 Mode: write
 
 Previous public jobs count: 135
@@ -20,6 +20,6 @@ Skipped risky changes: 9
 - Quince-5178743008: code_feed_page
 - wide-search-workable-global-advocacy-campaigns-ffcaa0c85f81: non_job_page:search_page
 - Results for America-5174333007: code_feed_page
-- Carbon Direct-5183934007: code_feed_page
 - Carbon Direct-5185014007: code_feed_page
+- Carbon Direct-5183934007: code_feed_page
 - Grove Collaborative-5301136008: code_feed_page

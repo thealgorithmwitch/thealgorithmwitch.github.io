@@ -1,13 +1,13 @@
 # Source Coverage Audit
 
-Generated: 2026-08-04T12:22:10.927Z
+Generated: 2026-08-04T18:55:46.939Z
 
 ## Summary
 
 - Total sources: 197
 - Total prospects: 92
-- Total public organizations: 60
-- Total pending organizations: 82
+- Total public organizations: 58
+- Total pending organizations: 83
 
 ## Active Source Coverage
 
@@ -20,7 +20,7 @@ Generated: 2026-08-04T12:22:10.927Z
 | ADP Employer cde26da5 | adp-cde26da5 | adp | low_confidence_experimental | stale | 0 | 0 | 0 |
 | Advanced Energy United | advanced-energy-united | rippling | tracked_manual_org | live | 0 | 2 | 3 |
 | AES Corporation | aes | workday | low_confidence_experimental | sync_disabled | 0 | 0 | 0 |
-| AllTrails | alltrails | lever | trusted_nonprofit_pending_review | stale | 0 | 0 | 1 |
+| AllTrails | alltrails | lever | trusted_nonprofit_pending_review | stale | 0 | 0 | 0 |
 | Amazon Watch | amazon-watch |  | manual_review_community | sync_error | 3 | 0 | 0 |
 | American Bird Conservancy | american-bird-conservancy | paylocity | trusted_nonprofit_pending_review | pending_updated | 0 | 0 | 10 |
 | American Council on Renewable Energy | acore |  | manual_review_community | stale | 0 | 0 | 0 |
@@ -39,7 +39,7 @@ Generated: 2026-08-04T12:22:10.927Z
 | Brightline Defense | brightline-defense |  | manual_review_community |  | 0 | 0 | 0 |
 | Bullard Center for Environmental and Climate Justice | bullard-center |  | manual_review_community | live | 0 | 1 | 0 |
 | California Environmental Justice Alliance | california-environmental-justice-alliance |  | manual_review_community |  | 0 | 0 | 0 |
-| CALSTART | calstart | lever | trusted_nonprofit_pending_review | live | 0 | 4 | 7 |
+| CALSTART | calstart | lever | trusted_nonprofit_pending_review | live | 0 | 4 | 9 |
 | Canadian Solar | canadian-solar | workday | low_confidence_experimental | sync_disabled | 0 | 0 | 0 |
 | Carbon Direct | carbon-direct | greenhouse | trusted_nonprofit_pending_review | live | 0 | 2 | 3 |
 | Carbon180 | carbon180 |  | low_confidence_experimental | live | 0 | 0 | 0 |
@@ -82,12 +82,12 @@ Generated: 2026-08-04T12:22:10.927Z
 | Resource Innovations | 4 |
 | Aristotle | 3 |
 | Energy Infrastructure Partners LLC | 3 |
-| More Perfect Union Action | 3 |
 | The Nature Conservancy | 3 |
 | Advanced Energy United | 2 |
 | Carbon Direct | 2 |
 | ChargerHelp! | 2 |
 | Climate Action | 2 |
+| EDP | 2 |
 
 ## Pending Review Coverage
 
@@ -97,15 +97,14 @@ Generated: 2026-08-04T12:22:10.927Z
 | Octopus Energy | 28 |
 | NextEra Energy | 23 |
 | SEEL | 22 |
-| GoodLeap | 19 |
+| GoodLeap | 18 |
 | GBL HR | 12 |
 | Get Vocal PBC | 12 |
 | Grove Collaborative | 11 |
 | American Bird Conservancy | 10 |
 | Conservation International | 10 |
-| New Energy Nexus | 9 |
-| CALSTART | 7 |
-| Protect Democracy | 5 |
+| New Energy Nexus | 10 |
+| CALSTART | 9 |
 | Resource Innovations | 5 |
 | WaterAid | 4 |
 | Advanced Energy United | 3 |
@@ -113,6 +112,7 @@ Generated: 2026-08-04T12:22:10.927Z
 | Carbon Direct | 3 |
 | Fervo Energy | 3 |
 | Middle Seat | 3 |
+| More Perfect Union Action | 3 |
 
 ## Missing Preferred Orgs
 
@@ -167,7 +167,7 @@ Generated: 2026-08-04T12:22:10.927Z
 | RE-volv | re-volv | 3 | sync_error | 2026-05-25T03:15:53.497Z | investigate_fetch_failures |
 | Shadow Light Studios | shadow-light-studios | 6 | sync_error | 2026-05-24T21:27:45.639Z | investigate_fetch_failures |
 | The Climate Group | the-climate-group | 3 | sync_error | 2026-05-25T03:15:53.497Z | investigate_fetch_failures |
-| The Climate Reality Project | climate-reality-project | 18 | fetch_failed |  | investigate_fetch_failures |
+| The Climate Reality Project | climate-reality-project | 19 | fetch_failed |  | investigate_fetch_failures |
 | The RealReal | the-realreal | 5 | sync_error | 2026-05-24T21:27:45.643Z | investigate_fetch_failures |
 | thredUP | thredup | 12 | sync_error | 2026-05-24T21:27:45.644Z | investigate_fetch_failures |
 | Transformations Community | transformations-community | 6 | sync_error | 2026-05-24T21:27:45.645Z | investigate_fetch_failures |
@@ -183,7 +183,6 @@ Generated: 2026-08-04T12:22:10.927Z
 
 | organization | public_jobs | recommended_action |
 | --- | --- | --- |
-| Action Against Hunger | 1 | ready_for_manual_review |
 | Aristotle | 3 | ready_for_manual_review |
 | Avōq | 1 | add_to_sources_json |
 | BME Strategies | 1 | ready_for_manual_review |
@@ -218,6 +217,7 @@ Generated: 2026-08-04T12:22:10.927Z
 | Avōq | Communications Fellow - Reputation Management | https://jobs.workable.com/view/kpYa2WZ8M2TWGCiFtFJS1o/hybrid-communications-fellow---reputation-management-in-new-york-at-av%C5%8Dq |
 | SSC HR Solutions | Sustainability Manager | https://jobs.workable.com/view/pH3oMwvUPZjCoXP2DEevSz/sustainability-manager-in-cairo-at-ssc-hr-solutions |
 | More Perfect Union Action | Social Media Producer | https://more-perfect-union-action.rippling-ats.com/job/1021915/social-media-producer |
+| More Perfect Union Action | Media Producer | https://more-perfect-union-action.rippling-ats.com/job/1025052/media-producer |
 | More Perfect Union Action | Vertical Video Editor | https://more-perfect-union-action.rippling-ats.com/job/1021994/vertical-video-editor |
 | Climate Cabinet | Michigan State Lead - Lobbyist and Strategist | https://job-boards.greenhouse.io/climatecabinet/jobs/5132797007 |
 | Grove Collaborative | Associate Manager, Marketplace & Channel Operations | https://job-boards.greenhouse.io/grovecollaborative/jobs/5212558008 |
@@ -233,6 +233,7 @@ Generated: 2026-08-04T12:22:10.927Z
 | Sierra Club | Chapter Director | https://jobs.lever.co/sierraclub/2d14a974-35b0-4fe1-82d5-96018da5d4cd |
 | Octopus Energy | Partnerships Manager | https://jobs.lever.co/octoenergy/9d3dbeed-8fcd-4d92-9658-fae45f0be720 |
 | More Perfect Union Action | Campus Video Editor Fellow | https://more-perfect-union-action.rippling-ats.com/job/1021946/campus-video-editor-fellow |
+| More Perfect Union Action | Vertical Video Producer | https://more-perfect-union-action.rippling-ats.com/job/1009756/vertical-video-producer |
 | Mission 44 | Senior Manager Policy and Campaigns | https://jobs.workable.com/view/7irAitgA6D2XAM6a6beCda/hybrid-senior-manager-policy-and-campaigns-in-london-at-mission-44 |
 | Octopus Energy | Performance Marketing Lead | https://jobs.lever.co/octoenergy/b5557512-04f8-4bb4-95dd-074da4e4c2de |
 | Greenpeace | Senior Director, Climate and Rights (12-month position) | https://job-boards.greenhouse.io/greenpeace/jobs/8348929002 |
@@ -264,6 +265,7 @@ _None_
 | organization | careers_url | recommendation |
 | --- | --- | --- |
 | 1% for the Planet | https://www.onepercentfortheplanet.org/careers | add_to_sources_json |
+| Action Against Hunger |  | candidate_for_new_pull |
 | Alliance to Save Energy | https://www.ase.org/careers | add_to_sources_json |
 | Arbor Day Foundation | https://www.arborday.org/careers | add_to_sources_json |
 | Avōq | https://jobs.workable.com/view/kpYa2WZ8M2TWGCiFtFJS1o/hybrid-communications-fellow---reputation-management-in-new-york-at-av%C5%8Dq | add_to_sources_json |

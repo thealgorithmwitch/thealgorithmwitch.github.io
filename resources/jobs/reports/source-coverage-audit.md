@@ -1,12 +1,12 @@
 # Source Coverage Audit
 
-Generated: 2026-08-05T00:18:26.538Z
+Generated: 2026-08-05T11:31:39.178Z
 
 ## Summary
 
 - Total sources: 197
 - Total prospects: 92
-- Total public organizations: 58
+- Total public organizations: 57
 - Total pending organizations: 83
 
 ## Active Source Coverage
@@ -231,6 +231,7 @@ Generated: 2026-08-05T00:18:26.538Z
 | Environmental Defense Fund | Analyst, Total Rewards | https://www.edf.org/jobs/analyst-total-rewards |
 | ConnectDER | Real-Time Firmware Engineer | https://jobs.elementalimpact.com/jobs |
 | Sierra Club | Chapter Director | https://jobs.lever.co/sierraclub/2d14a974-35b0-4fe1-82d5-96018da5d4cd |
+| Octopus Energy | Commercial Operations & Risk Manager | https://jobs.lever.co/octoenergy/cada77b3-f25c-4d1d-bf88-5c0d16631a7d |
 | Octopus Energy | Partnerships Manager | https://jobs.lever.co/octoenergy/9d3dbeed-8fcd-4d92-9658-fae45f0be720 |
 | More Perfect Union Action | Campus Video Editor Fellow | https://more-perfect-union-action.rippling-ats.com/job/1021946/campus-video-editor-fellow |
 | More Perfect Union Action | Vertical Video Producer | https://more-perfect-union-action.rippling-ats.com/job/1009756/vertical-video-producer |

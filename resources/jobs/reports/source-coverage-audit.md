@@ -1,6 +1,6 @@
 # Source Coverage Audit
 
-Generated: 2026-08-05T15:33:45.149Z
+Generated: 2026-08-05T17:13:30.853Z
 
 ## Summary
 
@@ -39,7 +39,7 @@ Generated: 2026-08-05T15:33:45.149Z
 | Brightline Defense | brightline-defense |  | manual_review_community |  | 0 | 0 | 0 |
 | Bullard Center for Environmental and Climate Justice | bullard-center |  | manual_review_community | live | 0 | 1 | 0 |
 | California Environmental Justice Alliance | california-environmental-justice-alliance |  | manual_review_community |  | 0 | 0 | 0 |
-| CALSTART | calstart | lever | trusted_nonprofit_pending_review | live | 0 | 4 | 9 |
+| CALSTART | calstart | lever | trusted_nonprofit_pending_review | live | 0 | 4 | 10 |
 | Canadian Solar | canadian-solar | workday | low_confidence_experimental | sync_disabled | 0 | 0 | 0 |
 | Carbon Direct | carbon-direct | greenhouse | trusted_nonprofit_pending_review | live | 0 | 2 | 3 |
 | Carbon180 | carbon180 |  | low_confidence_experimental | live | 0 | 0 | 0 |
@@ -93,7 +93,7 @@ Generated: 2026-08-05T15:33:45.149Z
 
 | organization | pending_jobs |
 | --- | --- |
-| Quince | 146 |
+| Quince | 144 |
 | Octopus Energy | 28 |
 | NextEra Energy | 23 |
 | SEEL | 22 |
@@ -102,9 +102,9 @@ Generated: 2026-08-05T15:33:45.149Z
 | Get Vocal PBC | 12 |
 | Grove Collaborative | 11 |
 | American Bird Conservancy | 10 |
+| CALSTART | 10 |
 | Conservation International | 10 |
 | New Energy Nexus | 10 |
-| CALSTART | 9 |
 | Resource Innovations | 5 |
 | WaterAid | 4 |
 | Advanced Energy United | 3 |
@@ -167,7 +167,7 @@ Generated: 2026-08-05T15:33:45.149Z
 | RE-volv | re-volv | 3 | sync_error | 2026-05-25T03:15:53.497Z | investigate_fetch_failures |
 | Shadow Light Studios | shadow-light-studios | 6 | sync_error | 2026-05-24T21:27:45.639Z | investigate_fetch_failures |
 | The Climate Group | the-climate-group | 3 | sync_error | 2026-05-25T03:15:53.497Z | investigate_fetch_failures |
-| The Climate Reality Project | climate-reality-project | 19 | fetch_failed |  | investigate_fetch_failures |
+| The Climate Reality Project | climate-reality-project | 20 | fetch_failed |  | investigate_fetch_failures |
 | The RealReal | the-realreal | 5 | sync_error | 2026-05-24T21:27:45.643Z | investigate_fetch_failures |
 | thredUP | thredup | 12 | sync_error | 2026-05-24T21:27:45.644Z | investigate_fetch_failures |
 | Transformations Community | transformations-community | 6 | sync_error | 2026-05-24T21:27:45.645Z | investigate_fetch_failures |

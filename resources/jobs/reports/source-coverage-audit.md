@@ -1,6 +1,6 @@
 # Source Coverage Audit
 
-Generated: 2026-08-07T12:11:23.443Z
+Generated: 2026-08-07T13:42:57.158Z
 
 ## Summary
 
@@ -87,7 +87,7 @@ Generated: 2026-08-07T12:11:23.443Z
 | Carbon Direct | 2 |
 | Climate Action | 2 |
 | EDP | 2 |
-| Education Reform Now Advocacy | 2 |
+| Energy & Policy Institute | 2 |
 
 ## Pending Review Coverage
 
@@ -187,7 +187,7 @@ Generated: 2026-08-07T12:11:23.443Z
 | Avōq | 1 | add_to_sources_json |
 | BME Strategies | 1 | ready_for_manual_review |
 | Climate Action | 2 | ready_for_manual_review |
-| Education Reform Now Advocacy | 2 | add_to_sources_json |
+| Education Reform Now Advocacy | 1 | add_to_sources_json |
 | Energy Infrastructure Partners LLC | 3 | add_to_sources_json |
 | Energy Trust of Oregon | 1 | ready_for_manual_review |
 | Evolv Technologies Inc | 1 | ready_for_manual_review |
@@ -215,6 +215,7 @@ Generated: 2026-08-07T12:11:23.443Z
 | PLUS Communications | Digital Director | https://jobs.workable.com/view/7mXsGiweVFByL5UehwA27z/hybrid-digital-director-in-arlington-at-plus-communications |
 | Energy Infrastructure Partners LLC | Senior Program Manager | https://jobs.workable.com/view/3SW1CuKN7h7KKAesypTgrD/hybrid-senior-program-manager-in-los-angeles-at-energy-infrastructure-partners-llc |
 | Avōq | Communications Fellow - Reputation Management | https://jobs.workable.com/view/kpYa2WZ8M2TWGCiFtFJS1o/hybrid-communications-fellow---reputation-management-in-new-york-at-av%C5%8Dq |
+| Education Reform Now Advocacy | Communications & External Affairs Manager | https://jobs.workable.com/view/kpXSxBsMjgjpFkDYGA1m4V/remote-communications-%26-external-affairs-manager-in-united-states-at-education-reform-now-advocacy |
 | SSC HR Solutions | Sustainability Manager | https://jobs.workable.com/view/pH3oMwvUPZjCoXP2DEevSz/sustainability-manager-in-cairo-at-ssc-hr-solutions |
 | More Perfect Union Action | Social Media Producer | https://more-perfect-union-action.rippling-ats.com/job/1021915/social-media-producer |
 | More Perfect Union Action | Media Producer | https://more-perfect-union-action.rippling-ats.com/job/1025052/media-producer |

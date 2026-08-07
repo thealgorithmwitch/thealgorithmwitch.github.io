@@ -1,18 +1,17 @@
 # Cleanup Stale Jobs
 
-Generated: 2026-08-07T17:34:13.769Z
+Generated: 2026-08-07T18:30:15.766Z
 Mode: write
 
-Previous public jobs count: 123
+Previous public jobs count: 122
 Projected public jobs count after cleanup: 122
-Archived stale/dead/duplicate jobs: 1
-Dead links found: 1
+Archived stale/dead/duplicate jobs: 0
+Dead links found: 0
 Duplicate public jobs archived: 0
-Pages cleaned: 1
+Pages cleaned: 0
 Skipped risky changes: 7
 
 ## Archived Jobs
-- earthjustice-8590bb7482c4: Earthjustice | Senior Director, Workplace Experience | http_404
 
 ## Risky Changes Skipped
 - Energy & Policy Institute-research-manager: non_job_page:careers_landing_page
@@ -20,5 +19,5 @@ Skipped risky changes: 7
 - wide-search-workable-global-advocacy-campaigns-ffcaa0c85f81: non_job_page:search_page
 - Results for America-5174333007: code_feed_page
 - Carbon Direct-5183934007: code_feed_page
-- Grove Collaborative-5301136008: code_feed_page
 - Carbon Direct-5185014007: code_feed_page
+- Grove Collaborative-5301136008: code_feed_page

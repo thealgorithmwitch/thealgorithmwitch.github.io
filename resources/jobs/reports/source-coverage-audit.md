@@ -1,12 +1,12 @@
 # Source Coverage Audit
 
-Generated: 2026-08-07T16:38:46.756Z
+Generated: 2026-08-07T17:36:47.275Z
 
 ## Summary
 
 - Total sources: 197
 - Total prospects: 92
-- Total public organizations: 57
+- Total public organizations: 56
 - Total pending organizations: 83
 
 ## Active Source Coverage
@@ -245,6 +245,7 @@ Generated: 2026-08-07T16:38:46.756Z
 | American Bird Conservancy | Writer/Editor | https://recruiting.paylocity.com/Recruiting/Jobs/Details/4042466 |
 | Arevon Energy | BESS Field Technician | https://arevonenergy.com/careers/#open-positions |
 | Earthjustice | Enterprise Systems Product Manager | https://earthjustice.org/jobs |
+| Earthjustice | Senior Director, Workplace Experience | https://earthjustice.org/jobs |
 | Earthjustice | Director of Digital Fundraising & Advocacy | https://earthjustice.org/jobs |
 | Louisiana Bucket Brigade | Volunteer Coordinator | https://labucketbrigade.org/ |
 | Renew Home | HubSpot Consultant (3 Month Contract | https://apply.workable.com/renewhome/j/8F00486888/ |

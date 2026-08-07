@@ -1,6 +1,6 @@
 # Source Coverage Audit
 
-Generated: 2026-08-06T13:25:10.908Z
+Generated: 2026-08-07T00:44:03.107Z
 
 ## Summary
 
@@ -45,7 +45,7 @@ Generated: 2026-08-06T13:25:10.908Z
 | Carbon180 | carbon180 |  | low_confidence_experimental | live | 0 | 0 | 0 |
 | CEEZER | ceezer | ashby | low_confidence_experimental | sync_error | 5 | 0 | 0 |
 | Ceres | ceres |  | low_confidence_experimental | stale | 0 | 0 | 0 |
-| ChargerHelp! | chargerhelp | recruitee | trusted_nonprofit_pending_review | live | 0 | 2 | 0 |
+| ChargerHelp! | chargerhelp | recruitee | trusted_nonprofit_pending_review | live | 0 | 1 | 0 |
 | Citizen's Climate Lobby | citizens-climate-lobby |  | manual_review_community | sync_error | 3 | 0 | 0 |
 | Clean Air Task Force | clean-air-task-force |  | low_confidence_experimental | live | 0 | 0 | 0 |
 | Clean Energy Trust | clean-energy-trust | bamboohr | trusted_nonprofit_pending_review | stale | 0 | 4 | 0 |
@@ -73,11 +73,11 @@ Generated: 2026-08-06T13:25:10.908Z
 | Protect Democracy | 6 |
 | Ascent | 5 |
 | Dylan Green | 5 |
-| HA Sustainable Infrastructure Capital | 5 |
 | Oxfam America | 5 |
 | SEEL | 5 |
 | CALSTART | 4 |
 | Clean Energy Trust | 4 |
+| HA Sustainable Infrastructure Capital | 4 |
 | NextEra Energy | 4 |
 | Resource Innovations | 4 |
 | Aristotle | 3 |
@@ -85,9 +85,9 @@ Generated: 2026-08-06T13:25:10.908Z
 | The Nature Conservancy | 3 |
 | Advanced Energy United | 2 |
 | Carbon Direct | 2 |
-| ChargerHelp! | 2 |
 | Climate Action | 2 |
 | EDP | 2 |
+| Education Reform Now Advocacy | 2 |
 
 ## Pending Review Coverage
 
@@ -233,6 +233,7 @@ Generated: 2026-08-06T13:25:10.908Z
 | Sierra Club | Chapter Director | https://jobs.lever.co/sierraclub/2d14a974-35b0-4fe1-82d5-96018da5d4cd |
 | Octopus Energy | Commercial Operations & Risk Manager | https://jobs.lever.co/octoenergy/cada77b3-f25c-4d1d-bf88-5c0d16631a7d |
 | Octopus Energy | Partnerships Manager | https://jobs.lever.co/octoenergy/9d3dbeed-8fcd-4d92-9658-fae45f0be720 |
+| ChargerHelp! | Reliability Coordinator | https://chargerhelp.recruitee.com/o/reliability-coordinator |
 | More Perfect Union Action | Campus Video Editor Fellow | https://more-perfect-union-action.rippling-ats.com/job/1021946/campus-video-editor-fellow |
 | More Perfect Union Action | Vertical Video Producer | https://more-perfect-union-action.rippling-ats.com/job/1009756/vertical-video-producer |
 | Mission 44 | Senior Manager Policy and Campaigns | https://jobs.workable.com/view/7irAitgA6D2XAM6a6beCda/hybrid-senior-manager-policy-and-campaigns-in-london-at-mission-44 |

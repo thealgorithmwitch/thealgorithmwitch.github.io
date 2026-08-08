@@ -1,6 +1,6 @@
 # Source Coverage Audit
 
-Generated: 2026-08-08T00:03:11.483Z
+Generated: 2026-08-08T02:12:34.759Z
 
 ## Summary
 
@@ -70,10 +70,10 @@ Generated: 2026-08-08T00:03:11.483Z
 | --- | --- |
 | Renew Home | 10 |
 | Powerlines | 7 |
-| Protect Democracy | 6 |
 | Ascent | 5 |
 | Dylan Green | 5 |
 | Oxfam America | 5 |
+| Protect Democracy | 5 |
 | SEEL | 5 |
 | CALSTART | 4 |
 | Clean Energy Trust | 4 |

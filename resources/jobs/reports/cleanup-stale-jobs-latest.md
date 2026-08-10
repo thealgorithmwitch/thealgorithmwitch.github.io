@@ -1,17 +1,18 @@
 # Cleanup Stale Jobs
 
-Generated: 2026-08-10T16:35:04.428Z
+Generated: 2026-08-10T17:37:05.755Z
 Mode: write
 
 Previous public jobs count: 121
-Projected public jobs count after cleanup: 121
-Archived stale/dead/duplicate jobs: 0
-Dead links found: 0
+Projected public jobs count after cleanup: 120
+Archived stale/dead/duplicate jobs: 1
+Dead links found: 1
 Duplicate public jobs archived: 0
-Pages cleaned: 0
+Pages cleaned: 1
 Skipped risky changes: 7
 
 ## Archived Jobs
+- HA Sustainable Infrastructure Capital-516beaea-73c1-48d7-9596-161cf6633dac: HA Sustainable Infrastructure Capital | Director/ Senior Director | http_404
 
 ## Risky Changes Skipped
 - Energy & Policy Institute-research-fellow: non_job_page:careers_landing_page

@@ -1,6 +1,6 @@
 # Source Coverage Audit
 
-Generated: 2026-08-10T16:38:06.466Z
+Generated: 2026-08-10T17:41:40.947Z
 
 ## Summary
 
@@ -77,11 +77,11 @@ Generated: 2026-08-10T16:38:06.466Z
 | SEEL | 5 |
 | CALSTART | 4 |
 | Clean Energy Trust | 4 |
-| HA Sustainable Infrastructure Capital | 4 |
 | NextEra Energy | 4 |
 | Resource Innovations | 4 |
 | Aristotle | 3 |
 | Energy Infrastructure Partners LLC | 3 |
+| HA Sustainable Infrastructure Capital | 3 |
 | The Nature Conservancy | 3 |
 | Advanced Energy United | 2 |
 | Carbon Direct | 2 |
@@ -244,6 +244,7 @@ Generated: 2026-08-10T16:38:06.466Z
 | Arevon Energy | Scada Operations Supervisor | https://arevonenergy.com/careers/#open-positions |
 | American Bird Conservancy | Writer/Editor | https://recruiting.paylocity.com/Recruiting/Jobs/Details/4042466 |
 | Arevon Energy | BESS Field Technician | https://arevonenergy.com/careers/#open-positions |
+| HA Sustainable Infrastructure Capital | Director/ Senior Director | https://jobs.lever.co/hasi/516beaea-73c1-48d7-9596-161cf6633dac |
 | Earthjustice | Enterprise Systems Product Manager | https://earthjustice.org/jobs |
 | Earthjustice | Senior Director, Workplace Experience | https://earthjustice.org/jobs |
 | Earthjustice | Director of Digital Fundraising & Advocacy | https://earthjustice.org/jobs |

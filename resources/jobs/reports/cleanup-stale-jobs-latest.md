@@ -1,18 +1,17 @@
 # Cleanup Stale Jobs
 
-Generated: 2026-08-11T17:41:23.648Z
+Generated: 2026-08-11T18:37:11.558Z
 Mode: write
 
-Previous public jobs count: 120
+Previous public jobs count: 119
 Projected public jobs count after cleanup: 119
-Archived stale/dead/duplicate jobs: 1
-Dead links found: 1
+Archived stale/dead/duplicate jobs: 0
+Dead links found: 0
 Duplicate public jobs archived: 0
-Pages cleaned: 1
+Pages cleaned: 0
 Skipped risky changes: 7
 
 ## Archived Jobs
-- clean-capital-0546503d5def: CleanCapital | Technical Asset Manager | http_410
 
 ## Risky Changes Skipped
 - Energy & Policy Institute-research-fellow: non_job_page:careers_landing_page

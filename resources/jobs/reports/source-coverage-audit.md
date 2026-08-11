@@ -1,13 +1,13 @@
 # Source Coverage Audit
 
-Generated: 2026-08-11T14:36:07.305Z
+Generated: 2026-08-11T15:42:55.576Z
 
 ## Summary
 
 - Total sources: 197
 - Total prospects: 92
 - Total public organizations: 56
-- Total pending organizations: 83
+- Total pending organizations: 88
 
 ## Active Source Coverage
 
@@ -20,7 +20,7 @@ Generated: 2026-08-11T14:36:07.305Z
 | ADP Employer cde26da5 | adp-cde26da5 | adp | low_confidence_experimental | stale | 0 | 0 | 0 |
 | Advanced Energy United | advanced-energy-united | rippling | tracked_manual_org | live | 0 | 2 | 3 |
 | AES Corporation | aes | workday | low_confidence_experimental | sync_disabled | 0 | 0 | 0 |
-| AllTrails | alltrails | lever | trusted_nonprofit_pending_review | stale | 0 | 0 | 0 |
+| AllTrails | alltrails | lever | trusted_nonprofit_pending_review | stale | 0 | 0 | 1 |
 | Amazon Watch | amazon-watch |  | manual_review_community | sync_error | 3 | 0 | 0 |
 | American Bird Conservancy | american-bird-conservancy | paylocity | trusted_nonprofit_pending_review | pending_updated | 0 | 0 | 10 |
 | American Council on Renewable Energy | acore |  | manual_review_community | stale | 0 | 0 | 0 |
@@ -45,7 +45,7 @@ Generated: 2026-08-11T14:36:07.305Z
 | Carbon180 | carbon180 |  | low_confidence_experimental | live | 0 | 0 | 0 |
 | CEEZER | ceezer | ashby | low_confidence_experimental | sync_error | 5 | 0 | 0 |
 | Ceres | ceres |  | low_confidence_experimental | stale | 0 | 0 | 0 |
-| ChargerHelp! | chargerhelp | recruitee | trusted_nonprofit_pending_review | live | 0 | 1 | 0 |
+| ChargerHelp! | chargerhelp | recruitee | trusted_nonprofit_pending_review | live | 0 | 1 | 1 |
 | Citizen's Climate Lobby | citizens-climate-lobby |  | manual_review_community | sync_error | 3 | 0 | 0 |
 | Clean Air Task Force | clean-air-task-force |  | low_confidence_experimental | live | 0 | 0 | 0 |
 | Clean Energy Trust | clean-energy-trust | bamboohr | trusted_nonprofit_pending_review | stale | 0 | 4 | 0 |
@@ -93,26 +93,26 @@ Generated: 2026-08-11T14:36:07.305Z
 
 | organization | pending_jobs |
 | --- | --- |
-| Quince | 144 |
+| Quince | 139 |
 | Octopus Energy | 28 |
 | NextEra Energy | 23 |
 | SEEL | 22 |
 | GoodLeap | 18 |
 | GBL HR | 12 |
-| Get Vocal PBC | 12 |
-| Grove Collaborative | 11 |
+| New Energy Nexus | 11 |
 | American Bird Conservancy | 10 |
 | CALSTART | 10 |
 | Conservation International | 10 |
-| New Energy Nexus | 10 |
+| Get Vocal PBC | 8 |
+| Grove Collaborative | 7 |
 | Resource Innovations | 5 |
+| Renew Home | 4 |
 | WaterAid | 4 |
 | Advanced Energy United | 3 |
 | Arevon Energy | 3 |
 | Carbon Direct | 3 |
 | Fervo Energy | 3 |
 | Middle Seat | 3 |
-| More Perfect Union Action | 3 |
 
 ## Missing Preferred Orgs
 
@@ -167,7 +167,7 @@ Generated: 2026-08-11T14:36:07.305Z
 | RE-volv | re-volv | 3 | sync_error | 2026-05-25T03:15:53.497Z | investigate_fetch_failures |
 | Shadow Light Studios | shadow-light-studios | 6 | sync_error | 2026-05-24T21:27:45.639Z | investigate_fetch_failures |
 | The Climate Group | the-climate-group | 3 | sync_error | 2026-05-25T03:15:53.497Z | investigate_fetch_failures |
-| The Climate Reality Project | climate-reality-project | 20 | fetch_failed |  | investigate_fetch_failures |
+| The Climate Reality Project | climate-reality-project | 21 | fetch_failed |  | investigate_fetch_failures |
 | The RealReal | the-realreal | 5 | sync_error | 2026-05-24T21:27:45.643Z | investigate_fetch_failures |
 | thredUP | thredup | 12 | sync_error | 2026-05-24T21:27:45.644Z | investigate_fetch_failures |
 | Transformations Community | transformations-community | 6 | sync_error | 2026-05-24T21:27:45.645Z | investigate_fetch_failures |

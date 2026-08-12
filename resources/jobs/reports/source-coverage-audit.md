@@ -1,6 +1,6 @@
 # Source Coverage Audit
 
-Generated: 2026-08-12T14:42:44.229Z
+Generated: 2026-08-12T15:43:17.479Z
 
 ## Summary
 
@@ -81,13 +81,13 @@ Generated: 2026-08-12T14:42:44.229Z
 | Resource Innovations | 4 |
 | Aristotle | 3 |
 | Energy Infrastructure Partners LLC | 3 |
-| HA Sustainable Infrastructure Capital | 3 |
 | The Nature Conservancy | 3 |
 | Advanced Energy United | 2 |
 | Carbon Direct | 2 |
 | Climate Action | 2 |
 | EDP | 2 |
 | Energy & Policy Institute | 2 |
+| Fervo Energy | 2 |
 
 ## Pending Review Coverage
 
@@ -235,6 +235,7 @@ Generated: 2026-08-12T14:42:44.229Z
 | Octopus Energy | Commercial Operations & Risk Manager | https://jobs.lever.co/octoenergy/cada77b3-f25c-4d1d-bf88-5c0d16631a7d |
 | Octopus Energy | Partnerships Manager | https://jobs.lever.co/octoenergy/9d3dbeed-8fcd-4d92-9658-fae45f0be720 |
 | ChargerHelp! | Reliability Coordinator | https://chargerhelp.recruitee.com/o/reliability-coordinator |
+| HA Sustainable Infrastructure Capital | Senior Analyst / Associate - Risk Management (Financial Modeling) | https://jobs.lever.co/hasi/967bc002-f846-4f16-a7eb-230cd0de39a3 |
 | More Perfect Union Action | Campus Video Editor Fellow | https://more-perfect-union-action.rippling-ats.com/job/1021946/campus-video-editor-fellow |
 | More Perfect Union Action | Vertical Video Producer | https://more-perfect-union-action.rippling-ats.com/job/1009756/vertical-video-producer |
 | Mission 44 | Senior Manager Policy and Campaigns | https://jobs.workable.com/view/7irAitgA6D2XAM6a6beCda/hybrid-senior-manager-policy-and-campaigns-in-london-at-mission-44 |
@@ -259,7 +260,6 @@ Generated: 2026-08-12T14:42:44.229Z
 | Advanced Energy United | Policy Associate - DMEE | https://ats.rippling.com/advanced-energy-united-career-opportunities/jobs/9acd478b-6a23-4316-92c1-8c23b4409964 |
 | NextEra Energy | Senior IT Business Systems Analyst | https://jobs.nexteraenergy.com/search/?searchby=location&createNewAlert=false&q=corporate+jobs&optionsFacetsDD_customfield1=&optionsFacetsDD_customfield2=&optionsFacetsDD_customfield3=&locationsearch=&geolocation= |
 | CleanCapital | Assistant Project Manager Construction | https://cleancapital.com/careers/ |
-| CleanCapital | Associate Development Acquisitions | https://cleancapital.com/careers/ |
 
 ## Duplicate Cleanup
 

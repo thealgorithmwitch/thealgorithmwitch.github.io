@@ -1,18 +1,17 @@
 # Cleanup Stale Jobs
 
-Generated: 2026-08-12T15:39:21.900Z
+Generated: 2026-08-12T16:37:28.222Z
 Mode: write
 
-Previous public jobs count: 119
+Previous public jobs count: 118
 Projected public jobs count after cleanup: 118
-Archived stale/dead/duplicate jobs: 1
-Dead links found: 1
+Archived stale/dead/duplicate jobs: 0
+Dead links found: 0
 Duplicate public jobs archived: 0
-Pages cleaned: 1
+Pages cleaned: 0
 Skipped risky changes: 7
 
 ## Archived Jobs
-- HA Sustainable Infrastructure Capital-967bc002-f846-4f16-a7eb-230cd0de39a3: HA Sustainable Infrastructure Capital | Senior Analyst / Associate - Risk Management (Financial Modeling) | http_404
 
 ## Risky Changes Skipped
 - Energy & Policy Institute-research-manager: non_job_page:careers_landing_page

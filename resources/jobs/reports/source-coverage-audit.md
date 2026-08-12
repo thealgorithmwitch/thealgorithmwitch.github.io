@@ -1,6 +1,6 @@
 # Source Coverage Audit
 
-Generated: 2026-08-12T15:43:17.479Z
+Generated: 2026-08-12T16:41:12.522Z
 
 ## Summary
 
@@ -97,14 +97,14 @@ Generated: 2026-08-12T15:43:17.479Z
 | Octopus Energy | 28 |
 | NextEra Energy | 23 |
 | SEEL | 22 |
-| GoodLeap | 18 |
+| GoodLeap | 16 |
 | GBL HR | 12 |
 | New Energy Nexus | 11 |
 | American Bird Conservancy | 10 |
 | CALSTART | 10 |
 | Conservation International | 10 |
 | Get Vocal PBC | 8 |
-| Grove Collaborative | 7 |
+| Grove Collaborative | 6 |
 | Resource Innovations | 5 |
 | Renew Home | 4 |
 | WaterAid | 4 |
@@ -161,13 +161,14 @@ Generated: 2026-08-12T15:43:17.479Z
 | Just Solutions Collective | just-solutions-collective | 3 | sync_error | 2026-05-25T03:15:53.496Z | investigate_fetch_failures |
 | Lightfield | lightfield | 5 | sync_error | 2026-05-24T21:27:45.625Z | investigate_fetch_failures |
 | MIRI | miri | 5 | sync_error | 2026-05-24T21:27:45.626Z | investigate_fetch_failures |
+| More Perfect Union Action | more-perfect-union-action | 3 | live | 2026-05-25T03:15:53.496Z | investigate_fetch_failures |
 | Oxfam America | oxfam-america | 7 | sync_error | 2026-05-24T21:27:45.627Z | investigate_fetch_failures |
 | Paired Recruiting | paired-recruiting | 6 | sync_error | 2026-05-24T21:27:45.628Z | investigate_fetch_failures |
 | Qcells | qcells | 3 | sync_error | 2026-05-25T03:15:53.497Z | investigate_fetch_failures |
 | RE-volv | re-volv | 3 | sync_error | 2026-05-25T03:15:53.497Z | investigate_fetch_failures |
 | Shadow Light Studios | shadow-light-studios | 6 | sync_error | 2026-05-24T21:27:45.639Z | investigate_fetch_failures |
 | The Climate Group | the-climate-group | 3 | sync_error | 2026-05-25T03:15:53.497Z | investigate_fetch_failures |
-| The Climate Reality Project | climate-reality-project | 21 | fetch_failed |  | investigate_fetch_failures |
+| The Climate Reality Project | climate-reality-project | 22 | fetch_failed |  | investigate_fetch_failures |
 | The RealReal | the-realreal | 5 | sync_error | 2026-05-24T21:27:45.643Z | investigate_fetch_failures |
 | thredUP | thredup | 12 | sync_error | 2026-05-24T21:27:45.644Z | investigate_fetch_failures |
 | Transformations Community | transformations-community | 6 | sync_error | 2026-05-24T21:27:45.645Z | investigate_fetch_failures |

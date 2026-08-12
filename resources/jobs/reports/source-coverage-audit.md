@@ -1,12 +1,12 @@
 # Source Coverage Audit
 
-Generated: 2026-08-12T17:45:46.684Z
+Generated: 2026-08-12T18:41:59.299Z
 
 ## Summary
 
 - Total sources: 197
 - Total prospects: 92
-- Total public organizations: 55
+- Total public organizations: 53
 - Total pending organizations: 88
 
 ## Active Source Coverage
@@ -204,7 +204,6 @@ Generated: 2026-08-12T17:45:46.684Z
 | Supercritical | 1 | ready_for_manual_review |
 | TaskForce | 1 | ready_for_manual_review |
 | The Herald Group | 1 | ready_for_manual_review |
-| Veloz | 1 | ready_for_manual_review |
 | Weave Grid | 1 | ready_for_manual_review |
 
 ## Restore Candidates From jobs2.json
@@ -232,6 +231,7 @@ Generated: 2026-08-12T17:45:46.684Z
 | Arevon Energy | Solar Field Technician | https://arevonenergy.com/careers/#open-positions |
 | Environmental Defense Fund | Analyst, Total Rewards | https://www.edf.org/jobs/analyst-total-rewards |
 | ConnectDER | Real-Time Firmware Engineer | https://jobs.elementalimpact.com/jobs |
+| HA Sustainable Infrastructure Capital | Associate/ Senior Associate – Transaction Management | https://jobs.lever.co/hasi/9f5b532d-0ac0-4667-8bb5-8a4e3a627e1c |
 | Sierra Club | Chapter Director | https://jobs.lever.co/sierraclub/2d14a974-35b0-4fe1-82d5-96018da5d4cd |
 | Octopus Energy | Commercial Operations & Risk Manager | https://jobs.lever.co/octoenergy/cada77b3-f25c-4d1d-bf88-5c0d16631a7d |
 | Octopus Energy | Partnerships Manager | https://jobs.lever.co/octoenergy/9d3dbeed-8fcd-4d92-9658-fae45f0be720 |
@@ -239,6 +239,7 @@ Generated: 2026-08-12T17:45:46.684Z
 | HA Sustainable Infrastructure Capital | Senior Analyst / Associate - Risk Management (Financial Modeling) | https://jobs.lever.co/hasi/967bc002-f846-4f16-a7eb-230cd0de39a3 |
 | More Perfect Union Action | Campus Video Editor Fellow | https://more-perfect-union-action.rippling-ats.com/job/1021946/campus-video-editor-fellow |
 | More Perfect Union Action | Vertical Video Producer | https://more-perfect-union-action.rippling-ats.com/job/1009756/vertical-video-producer |
+| HA Sustainable Infrastructure Capital | Analyst/Associate | https://jobs.lever.co/hasi/cebea224-4dfa-44f6-841b-8402188e9b8f |
 | Mission 44 | Senior Manager Policy and Campaigns | https://jobs.workable.com/view/7irAitgA6D2XAM6a6beCda/hybrid-senior-manager-policy-and-campaigns-in-london-at-mission-44 |
 | Octopus Energy | Performance Marketing Lead | https://jobs.lever.co/octoenergy/b5557512-04f8-4bb4-95dd-074da4e4c2de |
 | Greenpeace | Senior Director, Climate and Rights (12-month position) | https://job-boards.greenhouse.io/greenpeace/jobs/8348929002 |
@@ -259,8 +260,6 @@ Generated: 2026-08-12T17:45:46.684Z
 | World Resources Institute | Project Intern | https://www.wri.org/careers/jobs |
 | The Nature Conservancy | Montana Director of Development | https://careers.tnc.org/us/en/search-results |
 | Advanced Energy United | Policy Associate - DMEE | https://ats.rippling.com/advanced-energy-united-career-opportunities/jobs/9acd478b-6a23-4316-92c1-8c23b4409964 |
-| NextEra Energy | Senior IT Business Systems Analyst | https://jobs.nexteraenergy.com/search/?searchby=location&createNewAlert=false&q=corporate+jobs&optionsFacetsDD_customfield1=&optionsFacetsDD_customfield2=&optionsFacetsDD_customfield3=&locationsearch=&geolocation= |
-| CleanCapital | Assistant Project Manager Construction | https://cleancapital.com/careers/ |
 
 ## Duplicate Cleanup
 
@@ -293,4 +292,5 @@ _None_
 | Rocky Mountain Institute (RMI) | https://rmi.org/careers | add_to_sources_json |
 | Rystad Energy | https://jobs.workable.com/view/9NTBEjXYhRRLc17cDvdDEX/hybrid-business-development-manager%2C-clean-energy-in-houston-at-rystad-energy | add_to_sources_json |
 | SSC HR Solutions | https://jobs.workable.com/view/pH3oMwvUPZjCoXP2DEevSz/sustainability-manager-in-cairo-at-ssc-hr-solutions | add_to_sources_json |
+| Veloz |  | candidate_for_new_pull |
 | VIA |  | candidate_for_new_pull |

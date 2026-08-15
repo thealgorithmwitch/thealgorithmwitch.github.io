@@ -1,6 +1,6 @@
 # Source Coverage Audit
 
-Generated: 2026-08-15T22:49:38.939Z
+Generated: 2026-08-15T23:22:05.799Z
 
 ## Summary
 
@@ -73,11 +73,11 @@ Generated: 2026-08-15T22:49:38.939Z
 | Ascent | 5 |
 | Dylan Green | 5 |
 | Oxfam America | 5 |
-| Protect Democracy | 5 |
 | SEEL | 5 |
 | CALSTART | 4 |
 | Clean Energy Trust | 4 |
 | NextEra Energy | 4 |
+| Protect Democracy | 4 |
 | Resource Innovations | 4 |
 | Aristotle | 3 |
 | Energy Infrastructure Partners LLC | 3 |
@@ -251,6 +251,7 @@ Generated: 2026-08-15T22:49:38.939Z
 | Earthjustice | Enterprise Systems Product Manager | https://earthjustice.org/jobs |
 | Earthjustice | Senior Director, Workplace Experience | https://earthjustice.org/jobs |
 | Earthjustice | Director of Digital Fundraising & Advocacy | https://earthjustice.org/jobs |
+| Protect Democracy | Chief Administrative Officer | https://protectdemocracy.recruitee.com/o/chief-admin-officer |
 | Louisiana Bucket Brigade | Volunteer Coordinator | https://labucketbrigade.org/ |
 | Renew Home | HubSpot Consultant (3 Month Contract | https://apply.workable.com/renewhome/j/8F00486888/ |
 | American Bird Conservancy | Production Specialist | https://recruiting.paylocity.com/Recruiting/Jobs/Details/4045149 |
@@ -259,7 +260,6 @@ Generated: 2026-08-15T22:49:38.939Z
 | The Good Food Institute | Vice President of Operations | https://job-boards.greenhouse.io/thegoodfoodinstitute80/jobs/8516386002 |
 | World Resources Institute | Project Intern | https://www.wri.org/careers/jobs |
 | The Nature Conservancy | Montana Director of Development | https://careers.tnc.org/us/en/search-results |
-| Advanced Energy United | Policy Associate - DMEE | https://ats.rippling.com/advanced-energy-united-career-opportunities/jobs/9acd478b-6a23-4316-92c1-8c23b4409964 |
 
 ## Duplicate Cleanup
 

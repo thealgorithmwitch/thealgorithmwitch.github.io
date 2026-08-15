@@ -1,17 +1,18 @@
 # Cleanup Stale Jobs
 
-Generated: 2026-08-15T22:47:44.767Z
+Generated: 2026-08-15T23:19:50.548Z
 Mode: write
 
 Previous public jobs count: 115
-Projected public jobs count after cleanup: 115
-Archived stale/dead/duplicate jobs: 0
-Dead links found: 0
+Projected public jobs count after cleanup: 114
+Archived stale/dead/duplicate jobs: 1
+Dead links found: 1
 Duplicate public jobs archived: 0
-Pages cleaned: 0
+Pages cleaned: 1
 Skipped risky changes: 7
 
 ## Archived Jobs
+- Protect Democracy-2331917: Protect Democracy | Chief Administrative Officer | http_404
 
 ## Risky Changes Skipped
 - Energy & Policy Institute-research-manager: non_job_page:careers_landing_page

@@ -1,6 +1,6 @@
 # Source Coverage Audit
 
-Generated: 2026-08-16T22:00:49.907Z
+Generated: 2026-08-16T22:32:21.074Z
 
 ## Summary
 
@@ -39,7 +39,7 @@ Generated: 2026-08-16T22:00:49.907Z
 | Brightline Defense | brightline-defense |  | manual_review_community |  | 0 | 0 | 0 |
 | Bullard Center for Environmental and Climate Justice | bullard-center |  | manual_review_community | live | 0 | 1 | 0 |
 | California Environmental Justice Alliance | california-environmental-justice-alliance |  | manual_review_community |  | 0 | 0 | 0 |
-| CALSTART | calstart | lever | trusted_nonprofit_pending_review | live | 0 | 4 | 10 |
+| CALSTART | calstart | lever | trusted_nonprofit_pending_review | live | 0 | 3 | 10 |
 | Canadian Solar | canadian-solar | workday | low_confidence_experimental | sync_disabled | 0 | 0 | 0 |
 | Carbon Direct | carbon-direct | greenhouse | trusted_nonprofit_pending_review | live | 0 | 2 | 3 |
 | Carbon180 | carbon180 |  | low_confidence_experimental | live | 0 | 0 | 0 |
@@ -74,12 +74,12 @@ Generated: 2026-08-16T22:00:49.907Z
 | Dylan Green | 5 |
 | Oxfam America | 5 |
 | SEEL | 5 |
-| CALSTART | 4 |
 | Clean Energy Trust | 4 |
 | NextEra Energy | 4 |
 | Protect Democracy | 4 |
 | Resource Innovations | 4 |
 | Aristotle | 3 |
+| CALSTART | 3 |
 | Energy Infrastructure Partners LLC | 3 |
 | The Nature Conservancy | 3 |
 | Advanced Energy United | 2 |

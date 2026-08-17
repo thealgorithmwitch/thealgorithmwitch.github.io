@@ -1,17 +1,18 @@
 # Cleanup Stale Jobs
 
-Generated: 2026-08-17T01:49:09.136Z
+Generated: 2026-08-17T02:59:31.253Z
 Mode: write
 
 Previous public jobs count: 113
-Projected public jobs count after cleanup: 113
-Archived stale/dead/duplicate jobs: 0
-Dead links found: 0
+Projected public jobs count after cleanup: 112
+Archived stale/dead/duplicate jobs: 1
+Dead links found: 1
 Duplicate public jobs archived: 0
-Pages cleaned: 0
+Pages cleaned: 1
 Skipped risky changes: 7
 
 ## Archived Jobs
+- tnc-6f8f3462f7e9: The Nature Conservancy | WY Director of External Affairs | http_410
 
 ## Risky Changes Skipped
 - Energy & Policy Institute-research-manager: non_job_page:careers_landing_page

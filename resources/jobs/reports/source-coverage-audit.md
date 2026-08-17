@@ -1,6 +1,6 @@
 # Source Coverage Audit
 
-Generated: 2026-08-17T01:51:06.417Z
+Generated: 2026-08-17T03:01:58.512Z
 
 ## Summary
 
@@ -81,13 +81,13 @@ Generated: 2026-08-17T01:51:06.417Z
 | Aristotle | 3 |
 | CALSTART | 3 |
 | Energy Infrastructure Partners LLC | 3 |
-| The Nature Conservancy | 3 |
 | Advanced Energy United | 2 |
 | Carbon Direct | 2 |
 | Climate Action | 2 |
 | EDP | 2 |
 | Energy & Policy Institute | 2 |
 | Fervo Energy | 2 |
+| Get Vocal PBC | 2 |
 
 ## Pending Review Coverage
 
@@ -231,6 +231,7 @@ Generated: 2026-08-17T01:51:06.417Z
 | Arevon Energy | Solar Field Technician | https://arevonenergy.com/careers/#open-positions |
 | Environmental Defense Fund | Analyst, Total Rewards | https://www.edf.org/jobs/analyst-total-rewards |
 | ConnectDER | Real-Time Firmware Engineer | https://jobs.elementalimpact.com/jobs |
+| The Nature Conservancy | WY Director of External Affairs | https://careers.tnc.org/us/en/search-results |
 | HA Sustainable Infrastructure Capital | Associate/ Senior Associate – Transaction Management | https://jobs.lever.co/hasi/9f5b532d-0ac0-4667-8bb5-8a4e3a627e1c |
 | Sierra Club | Chapter Director | https://jobs.lever.co/sierraclub/2d14a974-35b0-4fe1-82d5-96018da5d4cd |
 | Octopus Energy | Commercial Operations & Risk Manager | https://jobs.lever.co/octoenergy/cada77b3-f25c-4d1d-bf88-5c0d16631a7d |
@@ -259,7 +260,6 @@ Generated: 2026-08-17T01:51:06.417Z
 | CALSTART | Project Manager I, Mobility Grants (CMO) | https://jobs.lever.co/calstart/3dea3d9a-6c4d-49c5-9c52-28d54e7afe90 |
 | The Good Food Institute | Vice President of Operations | https://job-boards.greenhouse.io/thegoodfoodinstitute80/jobs/8516386002 |
 | World Resources Institute | Project Intern | https://www.wri.org/careers/jobs |
-| The Nature Conservancy | Montana Director of Development | https://careers.tnc.org/us/en/search-results |
 
 ## Duplicate Cleanup
 

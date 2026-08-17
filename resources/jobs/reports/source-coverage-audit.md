@@ -1,6 +1,6 @@
 # Source Coverage Audit
 
-Generated: 2026-08-17T08:09:37.347Z
+Generated: 2026-08-17T09:03:35.815Z
 
 ## Summary
 
@@ -83,11 +83,11 @@ Generated: 2026-08-17T08:09:37.347Z
 | Energy Infrastructure Partners LLC | 3 |
 | Advanced Energy United | 2 |
 | Carbon Direct | 2 |
-| Climate Action | 2 |
 | EDP | 2 |
 | Energy & Policy Institute | 2 |
 | Fervo Energy | 2 |
 | Get Vocal PBC | 2 |
+| Greenlight America | 2 |
 
 ## Pending Review Coverage
 
@@ -187,7 +187,7 @@ Generated: 2026-08-17T08:09:37.347Z
 | Aristotle | 3 | ready_for_manual_review |
 | Avōq | 1 | add_to_sources_json |
 | BME Strategies | 1 | ready_for_manual_review |
-| Climate Action | 2 | ready_for_manual_review |
+| Climate Action | 1 | ready_for_manual_review |
 | Education Reform Now Advocacy | 1 | add_to_sources_json |
 | Energy Infrastructure Partners LLC | 3 | add_to_sources_json |
 | Energy Trust of Oregon | 1 | ready_for_manual_review |

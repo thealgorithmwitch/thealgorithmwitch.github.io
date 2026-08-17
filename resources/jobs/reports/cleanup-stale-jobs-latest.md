@@ -1,6 +1,6 @@
 # Cleanup Stale Jobs
 
-Generated: 2026-08-17T15:24:31.216Z
+Generated: 2026-08-17T16:27:14.806Z
 Mode: write
 
 Previous public jobs count: 111
@@ -9,15 +9,16 @@ Archived stale/dead/duplicate jobs: 0
 Dead links found: 0
 Duplicate public jobs archived: 0
 Pages cleaned: 0
-Skipped risky changes: 7
+Skipped risky changes: 8
 
 ## Archived Jobs
 
 ## Risky Changes Skipped
-- Energy & Policy Institute-research-manager: non_job_page:careers_landing_page
+- Get Vocal PBC-88e87ff0-344f-423c-ad72-5dea9760ce0e: network_error (This operation was aborted)
 - Energy & Policy Institute-research-fellow: non_job_page:careers_landing_page
+- Energy & Policy Institute-research-manager: non_job_page:careers_landing_page
 - wide-search-workable-global-advocacy-campaigns-ffcaa0c85f81: non_job_page:search_page
 - Results for America-5174333007: code_feed_page
-- Carbon Direct-5183934007: code_feed_page
 - Carbon Direct-5185014007: code_feed_page
+- Carbon Direct-5183934007: code_feed_page
 - Grove Collaborative-5301136008: code_feed_page

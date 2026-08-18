@@ -1,6 +1,6 @@
 # Cleanup Stale Jobs
 
-Generated: 2026-08-18T07:37:35.011Z
+Generated: 2026-08-18T08:14:52.088Z
 Mode: write
 
 Previous public jobs count: 111
@@ -9,13 +9,11 @@ Archived stale/dead/duplicate jobs: 0
 Dead links found: 0
 Duplicate public jobs archived: 0
 Pages cleaned: 0
-Skipped risky changes: 10
+Skipped risky changes: 8
 
 ## Archived Jobs
 
 ## Risky Changes Skipped
-- edp-eaf930fcd047: network_error (fetch failed)
-- edp-a8fcd20c0c03: network_error (fetch failed)
 - Energy & Policy Institute-research-fellow: non_job_page:careers_landing_page
 - Energy & Policy Institute-research-manager: non_job_page:careers_landing_page
 - wide-search-workable-global-advocacy-campaigns-ffcaa0c85f81: non_job_page:search_page

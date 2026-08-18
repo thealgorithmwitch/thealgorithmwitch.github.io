@@ -1,18 +1,17 @@
 # Cleanup Stale Jobs
 
-Generated: 2026-08-18T19:52:07.186Z
+Generated: 2026-08-18T20:23:37.280Z
 Mode: write
 
-Previous public jobs count: 111
+Previous public jobs count: 110
 Projected public jobs count after cleanup: 110
-Archived stale/dead/duplicate jobs: 1
-Dead links found: 1
+Archived stale/dead/duplicate jobs: 0
+Dead links found: 0
 Duplicate public jobs archived: 0
-Pages cleaned: 1
+Pages cleaned: 0
 Skipped risky changes: 9
 
 ## Archived Jobs
-- CALSTART-ab697e6b-ea01-441e-98e0-cd4d89eecb74: CALSTART | Senior Manager, Communications | http_404
 
 ## Risky Changes Skipped
 - Energy & Policy Institute-research-fellow: non_job_page:careers_landing_page

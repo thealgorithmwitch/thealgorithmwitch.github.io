@@ -1,6 +1,6 @@
 # Source Coverage Audit
 
-Generated: 2026-08-18T20:27:28.087Z
+Generated: 2026-08-18T20:54:01.068Z
 
 ## Summary
 
@@ -39,7 +39,7 @@ Generated: 2026-08-18T20:27:28.087Z
 | Brightline Defense | brightline-defense |  | manual_review_community |  | 0 | 0 | 0 |
 | Bullard Center for Environmental and Climate Justice | bullard-center |  | manual_review_community | live | 0 | 1 | 0 |
 | California Environmental Justice Alliance | california-environmental-justice-alliance |  | manual_review_community |  | 0 | 0 | 0 |
-| CALSTART | calstart | lever | trusted_nonprofit_pending_review | live | 0 | 2 | 10 |
+| CALSTART | calstart | lever | trusted_nonprofit_pending_review | live | 0 | 1 | 10 |
 | Canadian Solar | canadian-solar | workday | low_confidence_experimental | sync_disabled | 0 | 0 | 0 |
 | Carbon Direct | carbon-direct | greenhouse | trusted_nonprofit_pending_review | live | 0 | 2 | 3 |
 | Carbon180 | carbon180 |  | low_confidence_experimental | live | 0 | 0 | 0 |
@@ -81,13 +81,13 @@ Generated: 2026-08-18T20:27:28.087Z
 | Aristotle | 3 |
 | Energy Infrastructure Partners LLC | 3 |
 | Advanced Energy United | 2 |
-| CALSTART | 2 |
 | Carbon Direct | 2 |
 | EDP | 2 |
 | Energy & Policy Institute | 2 |
 | Fervo Energy | 2 |
 | Get Vocal PBC | 2 |
 | Greenlight America | 2 |
+| Greentown Labs | 2 |
 
 ## Pending Review Coverage
 

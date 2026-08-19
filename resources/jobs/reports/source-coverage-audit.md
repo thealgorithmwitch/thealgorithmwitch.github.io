@@ -1,6 +1,6 @@
 # Source Coverage Audit
 
-Generated: 2026-08-19T12:48:26.556Z
+Generated: 2026-08-19T13:46:25.645Z
 
 ## Summary
 
@@ -76,10 +76,10 @@ Generated: 2026-08-19T12:48:26.556Z
 | SEEL | 5 |
 | Clean Energy Trust | 4 |
 | NextEra Energy | 4 |
-| Protect Democracy | 4 |
 | Resource Innovations | 4 |
 | Aristotle | 3 |
 | Energy Infrastructure Partners LLC | 3 |
+| Protect Democracy | 3 |
 | Advanced Energy United | 2 |
 | Carbon Direct | 2 |
 | EDP | 2 |
@@ -240,6 +240,7 @@ Generated: 2026-08-19T12:48:26.556Z
 | HA Sustainable Infrastructure Capital | Senior Analyst / Associate - Risk Management (Financial Modeling) | https://jobs.lever.co/hasi/967bc002-f846-4f16-a7eb-230cd0de39a3 |
 | More Perfect Union Action | Campus Video Editor Fellow | https://more-perfect-union-action.rippling-ats.com/job/1021946/campus-video-editor-fellow |
 | More Perfect Union Action | Vertical Video Producer | https://more-perfect-union-action.rippling-ats.com/job/1009756/vertical-video-producer |
+| Protect Democracy | Tech Policy Strategist (AI for Democracy Action Lab) | https://protectdemocracy.recruitee.com/o/tech-policy-strategist-ai-for-democracy-action-lab |
 | HA Sustainable Infrastructure Capital | Analyst/Associate | https://jobs.lever.co/hasi/cebea224-4dfa-44f6-841b-8402188e9b8f |
 | Mission 44 | Senior Manager Policy and Campaigns | https://jobs.workable.com/view/7irAitgA6D2XAM6a6beCda/hybrid-senior-manager-policy-and-campaigns-in-london-at-mission-44 |
 | Octopus Energy | Performance Marketing Lead | https://jobs.lever.co/octoenergy/b5557512-04f8-4bb4-95dd-074da4e4c2de |
@@ -259,7 +260,6 @@ Generated: 2026-08-19T12:48:26.556Z
 | Hip Hop Caucus | Think % Campaigns Manager | https://hiphopcaucus.org/careers/ |
 | CALSTART | Project Manager I, Mobility Grants (CMO) | https://jobs.lever.co/calstart/3dea3d9a-6c4d-49c5-9c52-28d54e7afe90 |
 | The Good Food Institute | Vice President of Operations | https://job-boards.greenhouse.io/thegoodfoodinstitute80/jobs/8516386002 |
-| World Resources Institute | Project Intern | https://www.wri.org/careers/jobs |
 
 ## Duplicate Cleanup
 

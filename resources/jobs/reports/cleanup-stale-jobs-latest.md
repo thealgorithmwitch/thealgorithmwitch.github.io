@@ -1,17 +1,18 @@
 # Cleanup Stale Jobs
 
-Generated: 2026-08-20T20:29:00.334Z
+Generated: 2026-08-20T20:58:53.767Z
 Mode: write
 
 Previous public jobs count: 107
-Projected public jobs count after cleanup: 107
-Archived stale/dead/duplicate jobs: 0
-Dead links found: 0
+Projected public jobs count after cleanup: 106
+Archived stale/dead/duplicate jobs: 1
+Dead links found: 1
 Duplicate public jobs archived: 0
-Pages cleaned: 0
+Pages cleaned: 1
 Skipped risky changes: 9
 
 ## Archived Jobs
+- wide-search-workable-global-clean-energy-889f2e948c94: Energy Trust of Oregon | Project Manager - Evaluation | http_410
 
 ## Risky Changes Skipped
 - Energy & Policy Institute-research-manager: non_job_page:careers_landing_page

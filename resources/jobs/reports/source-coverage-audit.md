@@ -1,12 +1,12 @@
 # Source Coverage Audit
 
-Generated: 2026-08-20T20:31:28.590Z
+Generated: 2026-08-20T21:02:24.513Z
 
 ## Summary
 
 - Total sources: 197
 - Total prospects: 92
-- Total public organizations: 52
+- Total public organizations: 51
 - Total pending organizations: 91
 
 ## Active Source Coverage
@@ -189,7 +189,6 @@ Generated: 2026-08-20T20:31:28.590Z
 | Climate Action | 1 | ready_for_manual_review |
 | Education Reform Now Advocacy | 1 | add_to_sources_json |
 | Energy Infrastructure Partners LLC | 3 | add_to_sources_json |
-| Energy Trust of Oregon | 1 | ready_for_manual_review |
 | Evolv Technologies Inc | 1 | ready_for_manual_review |
 | Fervo Energy | 2 | ready_for_manual_review |
 | Grassroots Carbon | 1 | add_to_sources_json |
@@ -281,6 +280,7 @@ _None_
 | Education Reform Now Advocacy | https://jobs.workable.com/view/ttoHVPpzzztUWErqjEExef/remote-senior-director-of-partnerships-%26-advocacy-in-united-states-at-education-reform-now-advocacy | add_to_sources_json |
 | Emerald Cities Collaborative | https://emeraldcities.org/careers | add_to_sources_json |
 | Energy Infrastructure Partners LLC | https://jobs.workable.com/view/71KVJnn2zzEaqB5AeEvfUa/hybrid-senior-outreach-representative-in-los-angeles-at-energy-infrastructure-partners-llc | add_to_sources_json |
+| Energy Trust of Oregon |  | candidate_for_new_pull |
 | Grassroots Carbon | https://jobs.workable.com/view/66JEqQTu5Aaik8B4Y67gVh/director%2C-brand-reach-%26-communications-in-san-antonio-at-grassroots-carbon | add_to_sources_json |
 | HIVED |  | candidate_for_new_pull |
 | Innocence Project |  | candidate_for_new_pull |

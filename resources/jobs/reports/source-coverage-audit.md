@@ -1,12 +1,12 @@
 # Source Coverage Audit
 
-Generated: 2026-08-20T14:02:38.480Z
+Generated: 2026-08-20T14:47:58.866Z
 
 ## Summary
 
 - Total sources: 197
 - Total prospects: 92
-- Total public organizations: 53
+- Total public organizations: 52
 - Total pending organizations: 91
 
 ## Active Source Coverage
@@ -185,7 +185,6 @@ Generated: 2026-08-20T14:02:38.480Z
 | organization | public_jobs | recommended_action |
 | --- | --- | --- |
 | Aristotle | 3 | ready_for_manual_review |
-| Avōq | 1 | add_to_sources_json |
 | BME Strategies | 1 | ready_for_manual_review |
 | Climate Action | 1 | ready_for_manual_review |
 | Education Reform Now Advocacy | 1 | add_to_sources_json |

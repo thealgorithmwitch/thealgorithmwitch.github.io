@@ -1,13 +1,13 @@
 # Source Coverage Audit
 
-Generated: 2026-08-21T13:49:03.296Z
+Generated: 2026-08-21T15:08:22.644Z
 
 ## Summary
 
 - Total sources: 197
 - Total prospects: 92
 - Total public organizations: 51
-- Total pending organizations: 91
+- Total pending organizations: 98
 
 ## Active Source Coverage
 
@@ -18,7 +18,7 @@ Generated: 2026-08-21T13:49:03.296Z
 | Active Minds | active-minds |  | low_confidence_experimental | live | 0 | 0 | 0 |
 | ADP Employer ca44b751 | adp-ca44b751 | adp | low_confidence_experimental | stale | 0 | 0 | 0 |
 | ADP Employer cde26da5 | adp-cde26da5 | adp | low_confidence_experimental | stale | 0 | 0 | 0 |
-| Advanced Energy United | advanced-energy-united | rippling | tracked_manual_org | live | 0 | 2 | 2 |
+| Advanced Energy United | advanced-energy-united | rippling | tracked_manual_org | live | 0 | 2 | 5 |
 | AES Corporation | aes | workday | low_confidence_experimental | sync_disabled | 0 | 0 | 0 |
 | AllTrails | alltrails | lever | trusted_nonprofit_pending_review | stale | 0 | 0 | 1 |
 | Amazon Watch | amazon-watch |  | manual_review_community | sync_error | 3 | 0 | 0 |
@@ -93,7 +93,7 @@ Generated: 2026-08-21T13:49:03.296Z
 
 | organization | pending_jobs |
 | --- | --- |
-| Quince | 144 |
+| Quince | 148 |
 | Octopus Energy | 28 |
 | NextEra Energy | 23 |
 | SEEL | 23 |
@@ -104,15 +104,15 @@ Generated: 2026-08-21T13:49:03.296Z
 | Conservation International | 10 |
 | Grove Collaborative | 9 |
 | CALSTART | 8 |
+| Sierra Club | 7 |
+| Advanced Energy United | 5 |
 | Renew Home | 5 |
 | Resource Innovations | 5 |
-| Sierra Club | 5 |
 | Get Vocal PBC | 4 |
 | Protect Democracy | 4 |
+| SWTCH Energy Inc | 4 |
 | WaterAid | 4 |
 | Arevon Energy | 3 |
-| Carbon Direct | 3 |
-| Fervo Energy | 3 |
 
 ## Missing Preferred Orgs
 
@@ -161,14 +161,14 @@ Generated: 2026-08-21T13:49:03.296Z
 | Just Solutions Collective | just-solutions-collective | 3 | sync_error | 2026-05-25T03:15:53.496Z | investigate_fetch_failures |
 | Lightfield | lightfield | 5 | sync_error | 2026-05-24T21:27:45.625Z | investigate_fetch_failures |
 | MIRI | miri | 5 | sync_error | 2026-05-24T21:27:45.626Z | investigate_fetch_failures |
-| More Perfect Union Action | more-perfect-union-action | 5 | live | 2026-05-25T03:15:53.496Z | investigate_fetch_failures |
+| More Perfect Union Action | more-perfect-union-action | 6 | live | 2026-05-25T03:15:53.496Z | investigate_fetch_failures |
 | Oxfam America | oxfam-america | 7 | sync_error | 2026-05-24T21:27:45.627Z | investigate_fetch_failures |
 | Paired Recruiting | paired-recruiting | 6 | sync_error | 2026-05-24T21:27:45.628Z | investigate_fetch_failures |
 | Qcells | qcells | 3 | sync_error | 2026-05-25T03:15:53.497Z | investigate_fetch_failures |
 | RE-volv | re-volv | 3 | sync_error | 2026-05-25T03:15:53.497Z | investigate_fetch_failures |
 | Shadow Light Studios | shadow-light-studios | 6 | sync_error | 2026-05-24T21:27:45.639Z | investigate_fetch_failures |
 | The Climate Group | the-climate-group | 3 | sync_error | 2026-05-25T03:15:53.497Z | investigate_fetch_failures |
-| The Climate Reality Project | climate-reality-project | 24 | fetch_failed |  | investigate_fetch_failures |
+| The Climate Reality Project | climate-reality-project | 25 | fetch_failed |  | investigate_fetch_failures |
 | The RealReal | the-realreal | 5 | sync_error | 2026-05-24T21:27:45.643Z | investigate_fetch_failures |
 | thredUP | thredup | 12 | sync_error | 2026-05-24T21:27:45.644Z | investigate_fetch_failures |
 | Transformations Community | transformations-community | 6 | sync_error | 2026-05-24T21:27:45.645Z | investigate_fetch_failures |

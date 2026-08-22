@@ -1,6 +1,6 @@
 # Cleanup Stale Jobs
 
-Generated: 2026-08-22T07:18:55.600Z
+Generated: 2026-08-22T07:54:49.150Z
 Mode: write
 
 Previous public jobs count: 106
@@ -21,5 +21,5 @@ Skipped risky changes: 9
 - Carbon Direct-5183934007: code_feed_page
 - Carbon Direct-5185014007: code_feed_page
 - Grove Collaborative-5301136008: code_feed_page
-- Advanced Energy United-2d364aa9-9617-471f-a14a-06472de1a4c1: redirected_to_board_needs_review
 - Advanced Energy United-0ab792b4-1515-49fc-b9c8-27fa3757b1af: redirected_to_board_needs_review
+- Advanced Energy United-2d364aa9-9617-471f-a14a-06472de1a4c1: redirected_to_board_needs_review

@@ -1,6 +1,6 @@
 # Cleanup Stale Jobs
 
-Generated: 2026-08-24T07:20:35.167Z
+Generated: 2026-08-24T08:10:55.482Z
 Mode: write
 
 Previous public jobs count: 106
@@ -9,11 +9,12 @@ Archived stale/dead/duplicate jobs: 0
 Dead links found: 0
 Duplicate public jobs archived: 0
 Pages cleaned: 0
-Skipped risky changes: 9
+Skipped risky changes: 10
 
 ## Archived Jobs
 
 ## Risky Changes Skipped
+- CALSTART-93fc683d-f67b-4226-a522-e26459827795: network_error (This operation was aborted)
 - Energy & Policy Institute-research-manager: non_job_page:careers_landing_page
 - Energy & Policy Institute-research-fellow: non_job_page:careers_landing_page
 - wide-search-workable-global-advocacy-campaigns-ffcaa0c85f81: non_job_page:search_page

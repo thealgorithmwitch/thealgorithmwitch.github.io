@@ -1,6 +1,6 @@
 # Source Coverage Audit
 
-Generated: 2026-08-24T14:44:04.466Z
+Generated: 2026-08-24T15:27:47.988Z
 
 ## Summary
 
@@ -79,7 +79,6 @@ Generated: 2026-08-24T14:44:04.466Z
 | Resource Innovations | 4 |
 | Aristotle | 3 |
 | Energy Infrastructure Partners LLC | 3 |
-| Protect Democracy | 3 |
 | Advanced Energy United | 2 |
 | Carbon Direct | 2 |
 | EDP | 2 |
@@ -88,6 +87,7 @@ Generated: 2026-08-24T14:44:04.466Z
 | Get Vocal PBC | 2 |
 | Greenlight America | 2 |
 | Greentown Labs | 2 |
+| Protect Democracy | 2 |
 
 ## Pending Review Coverage
 

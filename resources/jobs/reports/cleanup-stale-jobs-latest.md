@@ -1,6 +1,6 @@
 # Cleanup Stale Jobs
 
-Generated: 2026-08-24T05:21:16.210Z
+Generated: 2026-08-24T06:03:16.424Z
 Mode: write
 
 Previous public jobs count: 106
@@ -9,13 +9,14 @@ Archived stale/dead/duplicate jobs: 0
 Dead links found: 0
 Duplicate public jobs archived: 0
 Pages cleaned: 0
-Skipped risky changes: 9
+Skipped risky changes: 10
 
 ## Archived Jobs
 
 ## Risky Changes Skipped
-- Energy & Policy Institute-research-fellow: non_job_page:careers_landing_page
+- Octopus Energy-cc10b161-91e0-4c88-b790-4ba715c72853: network_error (This operation was aborted)
 - Energy & Policy Institute-research-manager: non_job_page:careers_landing_page
+- Energy & Policy Institute-research-fellow: non_job_page:careers_landing_page
 - wide-search-workable-global-advocacy-campaigns-ffcaa0c85f81: non_job_page:search_page
 - Results for America-5174333007: code_feed_page
 - Carbon Direct-5183934007: code_feed_page

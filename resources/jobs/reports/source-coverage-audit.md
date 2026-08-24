@@ -1,12 +1,12 @@
 # Source Coverage Audit
 
-Generated: 2026-08-24T16:08:16.052Z
+Generated: 2026-08-24T16:59:12.569Z
 
 ## Summary
 
 - Total sources: 197
 - Total prospects: 92
-- Total public organizations: 51
+- Total public organizations: 50
 - Total pending organizations: 98
 
 ## Active Source Coverage
@@ -257,7 +257,7 @@ Generated: 2026-08-24T16:08:16.052Z
 | American Bird Conservancy | Production Specialist | https://recruiting.paylocity.com/Recruiting/Jobs/Details/4045149 |
 | Hip Hop Caucus | Think % Campaigns Manager | https://hiphopcaucus.org/careers/ |
 | CALSTART | Project Manager I, Mobility Grants (CMO) | https://jobs.lever.co/calstart/3dea3d9a-6c4d-49c5-9c52-28d54e7afe90 |
-| The Good Food Institute | Vice President of Operations | https://job-boards.greenhouse.io/thegoodfoodinstitute80/jobs/8516386002 |
+| Louisiana Bucket Brigade | Donor Engagement Manager | https://labucketbrigade.org/about-us/careers/ |
 
 ## Duplicate Cleanup
 

@@ -1,12 +1,12 @@
 # Source Coverage Audit
 
-Generated: 2026-08-25T13:35:27.819Z
+Generated: 2026-08-25T14:24:54.114Z
 
 ## Summary
 
 - Total sources: 197
 - Total prospects: 92
-- Total public organizations: 50
+- Total public organizations: 49
 - Total pending organizations: 98
 
 ## Active Source Coverage
@@ -196,7 +196,6 @@ Generated: 2026-08-25T13:35:27.819Z
 | Murmuration | 1 | ready_for_manual_review |
 | Proterra | 1 | ready_for_manual_review |
 | Quantis | 1 | ready_for_manual_review |
-| Rational | 1 | ready_for_manual_review |
 | Resource Innovations | 4 | add_to_sources_json |
 | Responsibly | 1 | ready_for_manual_review |
 | Supercritical | 1 | ready_for_manual_review |

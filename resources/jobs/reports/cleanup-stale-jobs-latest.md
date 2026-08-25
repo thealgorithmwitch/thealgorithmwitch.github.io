@@ -1,18 +1,17 @@
 # Cleanup Stale Jobs
 
-Generated: 2026-08-25T17:31:33.354Z
+Generated: 2026-08-25T18:04:09.718Z
 Mode: write
 
-Previous public jobs count: 102
+Previous public jobs count: 101
 Projected public jobs count after cleanup: 101
-Archived stale/dead/duplicate jobs: 1
-Dead links found: 1
+Archived stale/dead/duplicate jobs: 0
+Dead links found: 0
 Duplicate public jobs archived: 0
-Pages cleaned: 1
+Pages cleaned: 0
 Skipped risky changes: 9
 
 ## Archived Jobs
-- wide-search-workable-global-advocacy-campaigns-4bc768833dff: Murmuration | Senior Manager of Content and Communications Strategy | http_410
 
 ## Risky Changes Skipped
 - Energy & Policy Institute-research-manager: non_job_page:careers_landing_page

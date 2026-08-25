@@ -1,10 +1,10 @@
 # Cleanup Stale Jobs
 
-Generated: 2026-08-25T14:21:40.602Z
+Generated: 2026-08-25T15:21:19.837Z
 Mode: write
 
-Previous public jobs count: 104
-Projected public jobs count after cleanup: 103
+Previous public jobs count: 103
+Projected public jobs count after cleanup: 102
 Archived stale/dead/duplicate jobs: 1
 Dead links found: 1
 Duplicate public jobs archived: 0
@@ -12,7 +12,7 @@ Pages cleaned: 1
 Skipped risky changes: 9
 
 ## Archived Jobs
-- wide-search-workable-global-advocacy-campaigns-65d90b425fbb: Rational | Director of Digital Advertising (On Site - Washington, DC) | http_410
+- wide-search-workable-global-advocacy-campaigns-375f2999d398: BME Strategies | Managing Consultant, Strategic Communications | http_410
 
 ## Risky Changes Skipped
 - Energy & Policy Institute-research-manager: non_job_page:careers_landing_page

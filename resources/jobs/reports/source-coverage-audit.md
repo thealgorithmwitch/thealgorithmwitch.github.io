@@ -1,13 +1,13 @@
 # Source Coverage Audit
 
-Generated: 2026-08-25T14:24:54.114Z
+Generated: 2026-08-25T15:24:14.385Z
 
 ## Summary
 
 - Total sources: 197
 - Total prospects: 92
-- Total public organizations: 49
-- Total pending organizations: 98
+- Total public organizations: 48
+- Total pending organizations: 100
 
 ## Active Source Coverage
 
@@ -39,13 +39,13 @@ Generated: 2026-08-25T14:24:54.114Z
 | Brightline Defense | brightline-defense |  | manual_review_community |  | 0 | 0 | 0 |
 | Bullard Center for Environmental and Climate Justice | bullard-center |  | manual_review_community | live | 0 | 1 | 0 |
 | California Environmental Justice Alliance | california-environmental-justice-alliance |  | manual_review_community |  | 0 | 0 | 0 |
-| CALSTART | calstart | lever | trusted_nonprofit_pending_review | live | 0 | 1 | 8 |
+| CALSTART | calstart | lever | trusted_nonprofit_pending_review | live | 0 | 1 | 7 |
 | Canadian Solar | canadian-solar | workday | low_confidence_experimental | sync_disabled | 0 | 0 | 0 |
-| Carbon Direct | carbon-direct | greenhouse | trusted_nonprofit_pending_review | live | 0 | 2 | 3 |
+| Carbon Direct | carbon-direct | greenhouse | trusted_nonprofit_pending_review | live | 0 | 2 | 4 |
 | Carbon180 | carbon180 |  | low_confidence_experimental | live | 0 | 0 | 0 |
 | CEEZER | ceezer | ashby | low_confidence_experimental | sync_error | 5 | 0 | 0 |
 | Ceres | ceres |  | low_confidence_experimental | stale | 0 | 0 | 0 |
-| ChargerHelp! | chargerhelp | recruitee | trusted_nonprofit_pending_review | live | 0 | 1 | 1 |
+| ChargerHelp! | chargerhelp | recruitee | trusted_nonprofit_pending_review | live | 0 | 1 | 0 |
 | Citizen's Climate Lobby | citizens-climate-lobby |  | manual_review_community | sync_error | 3 | 0 | 0 |
 | Clean Air Task Force | clean-air-task-force |  | low_confidence_experimental | live | 0 | 0 | 0 |
 | Clean Energy Trust | clean-energy-trust | bamboohr | trusted_nonprofit_pending_review | stale | 0 | 4 | 0 |
@@ -93,7 +93,7 @@ Generated: 2026-08-25T14:24:54.114Z
 
 | organization | pending_jobs |
 | --- | --- |
-| Quince | 148 |
+| Quince | 146 |
 | Octopus Energy | 28 |
 | NextEra Energy | 23 |
 | SEEL | 23 |
@@ -102,17 +102,17 @@ Generated: 2026-08-25T14:24:54.114Z
 | American Bird Conservancy | 12 |
 | New Energy Nexus | 11 |
 | Conservation International | 10 |
-| Grove Collaborative | 9 |
-| CALSTART | 8 |
-| Sierra Club | 7 |
+| Grove Collaborative | 8 |
+| Sierra Club | 8 |
+| CALSTART | 7 |
+| SWTCH Energy Inc | 6 |
 | Advanced Energy United | 5 |
 | Renew Home | 5 |
 | Resource Innovations | 5 |
+| Carbon Direct | 4 |
 | Get Vocal PBC | 4 |
 | Protect Democracy | 4 |
-| SWTCH Energy Inc | 4 |
 | WaterAid | 4 |
-| Arevon Energy | 3 |
 
 ## Missing Preferred Orgs
 
@@ -161,14 +161,14 @@ Generated: 2026-08-25T14:24:54.114Z
 | Just Solutions Collective | just-solutions-collective | 3 | sync_error | 2026-05-25T03:15:53.496Z | investigate_fetch_failures |
 | Lightfield | lightfield | 5 | sync_error | 2026-05-24T21:27:45.625Z | investigate_fetch_failures |
 | MIRI | miri | 5 | sync_error | 2026-05-24T21:27:45.626Z | investigate_fetch_failures |
-| More Perfect Union Action | more-perfect-union-action | 6 | live | 2026-05-25T03:15:53.496Z | investigate_fetch_failures |
+| More Perfect Union Action | more-perfect-union-action | 7 | live | 2026-05-25T03:15:53.496Z | investigate_fetch_failures |
 | Oxfam America | oxfam-america | 7 | sync_error | 2026-05-24T21:27:45.627Z | investigate_fetch_failures |
 | Paired Recruiting | paired-recruiting | 6 | sync_error | 2026-05-24T21:27:45.628Z | investigate_fetch_failures |
 | Qcells | qcells | 3 | sync_error | 2026-05-25T03:15:53.497Z | investigate_fetch_failures |
 | RE-volv | re-volv | 3 | sync_error | 2026-05-25T03:15:53.497Z | investigate_fetch_failures |
 | Shadow Light Studios | shadow-light-studios | 6 | sync_error | 2026-05-24T21:27:45.639Z | investigate_fetch_failures |
 | The Climate Group | the-climate-group | 3 | sync_error | 2026-05-25T03:15:53.497Z | investigate_fetch_failures |
-| The Climate Reality Project | climate-reality-project | 25 | fetch_failed |  | investigate_fetch_failures |
+| The Climate Reality Project | climate-reality-project | 26 | fetch_failed |  | investigate_fetch_failures |
 | The RealReal | the-realreal | 5 | sync_error | 2026-05-24T21:27:45.643Z | investigate_fetch_failures |
 | thredUP | thredup | 12 | sync_error | 2026-05-24T21:27:45.644Z | investigate_fetch_failures |
 | Transformations Community | transformations-community | 6 | sync_error | 2026-05-24T21:27:45.645Z | investigate_fetch_failures |
@@ -185,7 +185,6 @@ Generated: 2026-08-25T14:24:54.114Z
 | organization | public_jobs | recommended_action |
 | --- | --- | --- |
 | Aristotle | 3 | ready_for_manual_review |
-| BME Strategies | 1 | ready_for_manual_review |
 | Climate Action | 1 | ready_for_manual_review |
 | Education Reform Now Advocacy | 1 | add_to_sources_json |
 | Energy Infrastructure Partners LLC | 3 | add_to_sources_json |
@@ -271,6 +270,7 @@ _None_
 | Alliance to Save Energy | https://www.ase.org/careers | add_to_sources_json |
 | Arbor Day Foundation | https://www.arborday.org/careers | add_to_sources_json |
 | Avōq | https://jobs.workable.com/view/kpYa2WZ8M2TWGCiFtFJS1o/hybrid-communications-fellow---reputation-management-in-new-york-at-av%C5%8Dq | add_to_sources_json |
+| BME Strategies |  | candidate_for_new_pull |
 | Centre for Information Resilience |  | candidate_for_new_pull |
 | Climate Reality Project | https://www.climaterealityproject.org/careers | add_to_sources_json |
 | ConnectDER | https://jobs.elementalimpact.com/jobs | add_to_sources_json |

@@ -1,12 +1,12 @@
 # Source Coverage Audit
 
-Generated: 2026-08-25T16:58:54.116Z
+Generated: 2026-08-25T17:34:20.870Z
 
 ## Summary
 
 - Total sources: 197
 - Total prospects: 92
-- Total public organizations: 48
+- Total public organizations: 47
 - Total pending organizations: 100
 
 ## Active Source Coverage
@@ -192,7 +192,6 @@ Generated: 2026-08-25T16:58:54.116Z
 | Fervo Energy | 2 | ready_for_manual_review |
 | Grassroots Carbon | 1 | add_to_sources_json |
 | Mitti Labs | 1 | add_to_sources_json |
-| Murmuration | 1 | ready_for_manual_review |
 | Proterra | 1 | ready_for_manual_review |
 | Quantis | 1 | ready_for_manual_review |
 | Resource Innovations | 4 | add_to_sources_json |

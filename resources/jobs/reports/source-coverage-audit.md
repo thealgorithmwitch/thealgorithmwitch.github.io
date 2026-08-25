@@ -1,6 +1,6 @@
 # Source Coverage Audit
 
-Generated: 2026-08-25T20:48:47.799Z
+Generated: 2026-08-25T21:30:41.466Z
 
 ## Summary
 
@@ -78,11 +78,11 @@ Generated: 2026-08-25T20:48:47.799Z
 | NextEra Energy | 4 |
 | Resource Innovations | 4 |
 | Aristotle | 3 |
-| Energy Infrastructure Partners LLC | 3 |
 | Advanced Energy United | 2 |
 | Carbon Direct | 2 |
 | EDP | 2 |
 | Energy & Policy Institute | 2 |
+| Energy Infrastructure Partners LLC | 2 |
 | Fervo Energy | 2 |
 | Get Vocal PBC | 2 |
 | Greenlight America | 2 |
@@ -187,7 +187,7 @@ Generated: 2026-08-25T20:48:47.799Z
 | Aristotle | 3 | ready_for_manual_review |
 | Climate Action | 1 | ready_for_manual_review |
 | Education Reform Now Advocacy | 1 | add_to_sources_json |
-| Energy Infrastructure Partners LLC | 3 | add_to_sources_json |
+| Energy Infrastructure Partners LLC | 2 | add_to_sources_json |
 | Evolv Technologies Inc | 1 | ready_for_manual_review |
 | Fervo Energy | 2 | ready_for_manual_review |
 | Grassroots Carbon | 1 | add_to_sources_json |

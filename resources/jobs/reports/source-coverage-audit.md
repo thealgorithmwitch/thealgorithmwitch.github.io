@@ -1,13 +1,13 @@
 # Source Coverage Audit
 
-Generated: 2026-08-26T14:30:44.755Z
+Generated: 2026-08-26T19:15:07.306Z
 
 ## Summary
 
 - Total sources: 197
 - Total prospects: 92
-- Total public organizations: 47
-- Total pending organizations: 100
+- Total public organizations: 46
+- Total pending organizations: 101
 
 ## Active Source Coverage
 
@@ -18,11 +18,11 @@ Generated: 2026-08-26T14:30:44.755Z
 | Active Minds | active-minds |  | low_confidence_experimental | live | 0 | 0 | 0 |
 | ADP Employer ca44b751 | adp-ca44b751 | adp | low_confidence_experimental | stale | 0 | 0 | 0 |
 | ADP Employer cde26da5 | adp-cde26da5 | adp | low_confidence_experimental | stale | 0 | 0 | 0 |
-| Advanced Energy United | advanced-energy-united | rippling | tracked_manual_org | live | 0 | 2 | 5 |
+| Advanced Energy United | advanced-energy-united | rippling | tracked_manual_org | live | 0 | 2 | 4 |
 | AES Corporation | aes | workday | low_confidence_experimental | sync_disabled | 0 | 0 | 0 |
 | AllTrails | alltrails | lever | trusted_nonprofit_pending_review | stale | 0 | 0 | 1 |
 | Amazon Watch | amazon-watch |  | manual_review_community | sync_error | 3 | 0 | 0 |
-| American Bird Conservancy | american-bird-conservancy | paylocity | trusted_nonprofit_pending_review | pending_updated | 0 | 0 | 12 |
+| American Bird Conservancy | american-bird-conservancy | paylocity | trusted_nonprofit_pending_review | pending_updated | 0 | 0 | 13 |
 | American Council on Renewable Energy | acore |  | manual_review_community | stale | 0 | 0 | 0 |
 | Antora Energy | antora |  | low_confidence_experimental | live | 0 | 0 | 0 |
 | Appalachian Voices | appalachian-voices |  | manual_review_community | live | 0 | 0 | 0 |
@@ -48,7 +48,7 @@ Generated: 2026-08-26T14:30:44.755Z
 | ChargerHelp! | chargerhelp | recruitee | trusted_nonprofit_pending_review | live | 0 | 1 | 0 |
 | Citizen's Climate Lobby | citizens-climate-lobby |  | manual_review_community | sync_error | 3 | 0 | 0 |
 | Clean Air Task Force | clean-air-task-force |  | low_confidence_experimental | live | 0 | 0 | 0 |
-| Clean Energy Trust | clean-energy-trust | bamboohr | trusted_nonprofit_pending_review | stale | 0 | 4 | 0 |
+| Clean Energy Trust | clean-energy-trust | bamboohr | trusted_nonprofit_pending_review | stale | 0 | 4 | 1 |
 | Clean Slate Initiative | clean-slate-initiative |  | low_confidence_experimental | sync_error | 3 | 0 | 0 |
 | CleanCapital | clean-capital |  | trusted_nonprofit_pending_review | live | 0 | 0 | 0 |
 | CleanChoice Energy | cleanchoice-energy |  | low_confidence_experimental | sync_error | 3 | 0 | 0 |
@@ -93,22 +93,22 @@ Generated: 2026-08-26T14:30:44.755Z
 
 | organization | pending_jobs |
 | --- | --- |
-| Quince | 146 |
+| Quince | 152 |
 | Octopus Energy | 28 |
 | NextEra Energy | 23 |
 | SEEL | 23 |
-| GoodLeap | 16 |
+| GoodLeap | 18 |
 | GBL HR | 14 |
-| American Bird Conservancy | 12 |
+| American Bird Conservancy | 13 |
 | New Energy Nexus | 11 |
 | Conservation International | 10 |
-| Grove Collaborative | 8 |
+| Grove Collaborative | 9 |
 | Sierra Club | 8 |
 | CALSTART | 7 |
 | SWTCH Energy Inc | 6 |
-| Advanced Energy United | 5 |
 | Renew Home | 5 |
 | Resource Innovations | 5 |
+| Advanced Energy United | 4 |
 | Carbon Direct | 4 |
 | Get Vocal PBC | 4 |
 | Protect Democracy | 4 |
@@ -161,14 +161,14 @@ Generated: 2026-08-26T14:30:44.755Z
 | Just Solutions Collective | just-solutions-collective | 3 | sync_error | 2026-05-25T03:15:53.496Z | investigate_fetch_failures |
 | Lightfield | lightfield | 5 | sync_error | 2026-05-24T21:27:45.625Z | investigate_fetch_failures |
 | MIRI | miri | 5 | sync_error | 2026-05-24T21:27:45.626Z | investigate_fetch_failures |
-| More Perfect Union Action | more-perfect-union-action | 7 | live | 2026-05-25T03:15:53.496Z | investigate_fetch_failures |
+| More Perfect Union Action | more-perfect-union-action | 8 | live | 2026-05-25T03:15:53.496Z | investigate_fetch_failures |
 | Oxfam America | oxfam-america | 7 | sync_error | 2026-05-24T21:27:45.627Z | investigate_fetch_failures |
 | Paired Recruiting | paired-recruiting | 6 | sync_error | 2026-05-24T21:27:45.628Z | investigate_fetch_failures |
 | Qcells | qcells | 3 | sync_error | 2026-05-25T03:15:53.497Z | investigate_fetch_failures |
 | RE-volv | re-volv | 3 | sync_error | 2026-05-25T03:15:53.497Z | investigate_fetch_failures |
 | Shadow Light Studios | shadow-light-studios | 6 | sync_error | 2026-05-24T21:27:45.639Z | investigate_fetch_failures |
 | The Climate Group | the-climate-group | 3 | sync_error | 2026-05-25T03:15:53.497Z | investigate_fetch_failures |
-| The Climate Reality Project | climate-reality-project | 26 | fetch_failed |  | investigate_fetch_failures |
+| The Climate Reality Project | climate-reality-project | 27 | fetch_failed |  | investigate_fetch_failures |
 | The RealReal | the-realreal | 5 | sync_error | 2026-05-24T21:27:45.643Z | investigate_fetch_failures |
 | thredUP | thredup | 12 | sync_error | 2026-05-24T21:27:45.644Z | investigate_fetch_failures |
 | Transformations Community | transformations-community | 6 | sync_error | 2026-05-24T21:27:45.645Z | investigate_fetch_failures |
@@ -223,6 +223,7 @@ Generated: 2026-08-26T14:30:44.755Z
 | Woolpert | Engineer in Training, Site Civil Energy Practice | https://job-boards.greenhouse.io/woolpert/jobs/4087773009 |
 | Sunrun | ERP Business Systems Administrator | https://careers.sunrun.com/job/california/erp-business-systems-administrator/21632/94571057184 |
 | Sunrun | Sales Experience Program Manager | https://careers.sunrun.com/job/lehi/sales-experience-program-manager/21632/94749467216 |
+| Good Power | Lifecycle Marketing Manager | https://goodpower.applytojob.com/apply |
 | Arevon Energy | Solar Field Technician | https://arevonenergy.com/careers/#open-positions |
 | Environmental Defense Fund | Analyst, Total Rewards | https://www.edf.org/jobs/analyst-total-rewards |
 | ConnectDER | Real-Time Firmware Engineer | https://jobs.elementalimpact.com/jobs |
@@ -254,7 +255,6 @@ Generated: 2026-08-26T14:30:44.755Z
 | American Bird Conservancy | Production Specialist | https://recruiting.paylocity.com/Recruiting/Jobs/Details/4045149 |
 | Hip Hop Caucus | Think % Campaigns Manager | https://hiphopcaucus.org/careers/ |
 | CALSTART | Project Manager I, Mobility Grants (CMO) | https://jobs.lever.co/calstart/3dea3d9a-6c4d-49c5-9c52-28d54e7afe90 |
-| Louisiana Bucket Brigade | Donor Engagement Manager | https://labucketbrigade.org/about-us/careers/ |
 
 ## Duplicate Cleanup
 

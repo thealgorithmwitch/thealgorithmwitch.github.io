@@ -1,6 +1,6 @@
 # Source Coverage Audit
 
-Generated: 2026-08-27T14:31:57.748Z
+Generated: 2026-08-27T23:57:21.841Z
 
 ## Summary
 
@@ -87,7 +87,7 @@ Generated: 2026-08-27T14:31:57.748Z
 | Get Vocal PBC | 2 |
 | Greenlight America | 2 |
 | Greentown Labs | 2 |
-| Protect Democracy | 2 |
+| The Nature Conservancy | 2 |
 
 ## Pending Review Coverage
 
@@ -234,6 +234,7 @@ Generated: 2026-08-27T14:31:57.748Z
 | Octopus Energy | Partnerships Manager | https://jobs.lever.co/octoenergy/9d3dbeed-8fcd-4d92-9658-fae45f0be720 |
 | ChargerHelp! | Reliability Coordinator | https://chargerhelp.recruitee.com/o/reliability-coordinator |
 | HA Sustainable Infrastructure Capital | Senior Analyst / Associate - Risk Management (Financial Modeling) | https://jobs.lever.co/hasi/967bc002-f846-4f16-a7eb-230cd0de39a3 |
+| Protect Democracy | Data Scientist | https://protectdemocracy.recruitee.com/o/data-scientist-voteshield |
 | More Perfect Union Action | Campus Video Editor Fellow | https://more-perfect-union-action.rippling-ats.com/job/1021946/campus-video-editor-fellow |
 | More Perfect Union Action | Vertical Video Producer | https://more-perfect-union-action.rippling-ats.com/job/1009756/vertical-video-producer |
 | Protect Democracy | Tech Policy Strategist (AI for Democracy Action Lab) | https://protectdemocracy.recruitee.com/o/tech-policy-strategist-ai-for-democracy-action-lab |
@@ -254,7 +255,6 @@ Generated: 2026-08-27T14:31:57.748Z
 | Renew Home | HubSpot Consultant (3 Month Contract | https://apply.workable.com/renewhome/j/8F00486888/ |
 | American Bird Conservancy | Production Specialist | https://recruiting.paylocity.com/Recruiting/Jobs/Details/4045149 |
 | Hip Hop Caucus | Think % Campaigns Manager | https://hiphopcaucus.org/careers/ |
-| CALSTART | Project Manager I, Mobility Grants (CMO) | https://jobs.lever.co/calstart/3dea3d9a-6c4d-49c5-9c52-28d54e7afe90 |
 
 ## Duplicate Cleanup
 

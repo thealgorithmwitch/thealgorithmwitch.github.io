@@ -1,13 +1,13 @@
 # Source Coverage Audit
 
-Generated: 2026-09-01T14:37:49.770Z
+Generated: 2026-09-01T18:01:56.240Z
 
 ## Summary
 
 - Total sources: 197
 - Total prospects: 92
 - Total public organizations: 46
-- Total pending organizations: 104
+- Total pending organizations: 106
 
 ## Active Source Coverage
 
@@ -20,7 +20,7 @@ Generated: 2026-09-01T14:37:49.770Z
 | ADP Employer cde26da5 | adp-cde26da5 | adp | low_confidence_experimental | stale | 0 | 0 | 0 |
 | Advanced Energy United | advanced-energy-united | rippling | tracked_manual_org | live | 0 | 2 | 4 |
 | AES Corporation | aes | workday | low_confidence_experimental | sync_disabled | 0 | 0 | 0 |
-| AllTrails | alltrails | lever | trusted_nonprofit_pending_review | stale | 0 | 0 | 1 |
+| AllTrails | alltrails | lever | trusted_nonprofit_pending_review | stale | 0 | 0 | 2 |
 | Amazon Watch | amazon-watch |  | manual_review_community | sync_error | 3 | 0 | 0 |
 | American Bird Conservancy | american-bird-conservancy | paylocity | trusted_nonprofit_pending_review | pending_updated | 0 | 0 | 13 |
 | American Council on Renewable Energy | acore |  | manual_review_community | stale | 0 | 0 | 0 |
@@ -76,8 +76,8 @@ Generated: 2026-09-01T14:37:49.770Z
 | SEEL | 5 |
 | Clean Energy Trust | 4 |
 | NextEra Energy | 4 |
-| Resource Innovations | 4 |
 | Aristotle | 3 |
+| Resource Innovations | 3 |
 | Advanced Energy United | 2 |
 | Carbon Direct | 2 |
 | EDP | 2 |
@@ -93,20 +93,20 @@ Generated: 2026-09-01T14:37:49.770Z
 
 | organization | pending_jobs |
 | --- | --- |
-| Quince | 145 |
+| Quince | 138 |
 | Octopus Energy | 28 |
 | SEEL | 24 |
 | NextEra Energy | 23 |
-| GoodLeap | 20 |
+| GoodLeap | 21 |
 | GBL HR | 14 |
 | American Bird Conservancy | 13 |
 | New Energy Nexus | 11 |
 | Conservation International | 10 |
 | Sierra Club | 9 |
 | CALSTART | 8 |
+| Grove Collaborative | 6 |
 | SWTCH Energy Inc | 6 |
 | Carbon Direct | 5 |
-| Grove Collaborative | 5 |
 | Renew Home | 5 |
 | Resource Innovations | 5 |
 | Advanced Energy United | 4 |
@@ -161,14 +161,14 @@ Generated: 2026-09-01T14:37:49.770Z
 | Just Solutions Collective | just-solutions-collective | 3 | sync_error | 2026-05-25T03:15:53.496Z | investigate_fetch_failures |
 | Lightfield | lightfield | 5 | sync_error | 2026-05-24T21:27:45.625Z | investigate_fetch_failures |
 | MIRI | miri | 5 | sync_error | 2026-05-24T21:27:45.626Z | investigate_fetch_failures |
-| More Perfect Union Action | more-perfect-union-action | 9 | live | 2026-05-25T03:15:53.496Z | investigate_fetch_failures |
+| More Perfect Union Action | more-perfect-union-action | 10 | live | 2026-05-25T03:15:53.496Z | investigate_fetch_failures |
 | Oxfam America | oxfam-america | 7 | sync_error | 2026-05-24T21:27:45.627Z | investigate_fetch_failures |
 | Paired Recruiting | paired-recruiting | 6 | sync_error | 2026-05-24T21:27:45.628Z | investigate_fetch_failures |
 | Qcells | qcells | 3 | sync_error | 2026-05-25T03:15:53.497Z | investigate_fetch_failures |
 | RE-volv | re-volv | 3 | sync_error | 2026-05-25T03:15:53.497Z | investigate_fetch_failures |
 | Shadow Light Studios | shadow-light-studios | 6 | sync_error | 2026-05-24T21:27:45.639Z | investigate_fetch_failures |
 | The Climate Group | the-climate-group | 3 | sync_error | 2026-05-25T03:15:53.497Z | investigate_fetch_failures |
-| The Climate Reality Project | climate-reality-project | 28 | fetch_failed |  | investigate_fetch_failures |
+| The Climate Reality Project | climate-reality-project | 29 | fetch_failed |  | investigate_fetch_failures |
 | The RealReal | the-realreal | 5 | sync_error | 2026-05-24T21:27:45.643Z | investigate_fetch_failures |
 | thredUP | thredup | 12 | sync_error | 2026-05-24T21:27:45.644Z | investigate_fetch_failures |
 | Transformations Community | transformations-community | 6 | sync_error | 2026-05-24T21:27:45.645Z | investigate_fetch_failures |
@@ -194,7 +194,7 @@ Generated: 2026-09-01T14:37:49.770Z
 | Mitti Labs | 1 | add_to_sources_json |
 | Proterra | 1 | ready_for_manual_review |
 | Quantis | 1 | ready_for_manual_review |
-| Resource Innovations | 4 | add_to_sources_json |
+| Resource Innovations | 3 | add_to_sources_json |
 | Responsibly | 1 | ready_for_manual_review |
 | Supercritical | 1 | ready_for_manual_review |
 | TaskForce | 1 | ready_for_manual_review |

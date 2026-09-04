@@ -1,6 +1,6 @@
 # Cleanup Stale Jobs
 
-Generated: 2026-09-03T23:26:07.702Z
+Generated: 2026-09-04T01:11:38.850Z
 Mode: write
 
 Previous public jobs count: 96
@@ -14,8 +14,8 @@ Skipped risky changes: 9
 ## Archived Jobs
 
 ## Risky Changes Skipped
-- Energy & Policy Institute-research-fellow: non_job_page:careers_landing_page
 - Energy & Policy Institute-research-manager: non_job_page:careers_landing_page
+- Energy & Policy Institute-research-fellow: non_job_page:careers_landing_page
 - wide-search-workable-global-advocacy-campaigns-ffcaa0c85f81: non_job_page:search_page
 - Carbon Direct-5183934007: code_feed_page
 - Results for America-5174333007: code_feed_page

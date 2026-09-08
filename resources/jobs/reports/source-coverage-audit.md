@@ -1,6 +1,6 @@
 # Source Coverage Audit
 
-Generated: 2026-09-08T18:03:44.559Z
+Generated: 2026-09-08T21:07:20.109Z
 
 ## Summary
 
@@ -41,7 +41,7 @@ Generated: 2026-09-08T18:03:44.559Z
 | California Environmental Justice Alliance | california-environmental-justice-alliance |  | manual_review_community |  | 0 | 0 | 0 |
 | CALSTART | calstart | lever | trusted_nonprofit_pending_review | live | 0 | 1 | 7 |
 | Canadian Solar | canadian-solar | workday | low_confidence_experimental | sync_disabled | 0 | 0 | 0 |
-| Carbon Direct | carbon-direct | greenhouse | trusted_nonprofit_pending_review | live | 0 | 2 | 4 |
+| Carbon Direct | carbon-direct | greenhouse | trusted_nonprofit_pending_review | live | 0 | 1 | 4 |
 | Carbon180 | carbon180 |  | low_confidence_experimental | live | 0 | 0 | 0 |
 | CEEZER | ceezer | ashby | low_confidence_experimental | sync_error | 5 | 0 | 0 |
 | Ceres | ceres |  | low_confidence_experimental | stale | 0 | 0 | 0 |
@@ -79,7 +79,6 @@ Generated: 2026-09-08T18:03:44.559Z
 | Aristotle | 3 |
 | Resource Innovations | 3 |
 | Advanced Energy United | 2 |
-| Carbon Direct | 2 |
 | EDP | 2 |
 | Energy & Policy Institute | 2 |
 | Fervo Energy | 2 |
@@ -88,6 +87,7 @@ Generated: 2026-09-08T18:03:44.559Z
 | Greentown Labs | 2 |
 | The Nature Conservancy | 2 |
 | Bullard Center for Environmental and Climate Justice | 1 |
+| CALSTART | 1 |
 
 ## Pending Review Coverage
 

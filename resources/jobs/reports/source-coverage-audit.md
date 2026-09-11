@@ -1,13 +1,13 @@
 # Source Coverage Audit
 
-Generated: 2026-09-11T11:44:53.914Z
+Generated: 2026-09-11T18:41:11.674Z
 
 ## Summary
 
 - Total sources: 197
 - Total prospects: 92
 - Total public organizations: 45
-- Total pending organizations: 113
+- Total pending organizations: 118
 
 ## Active Source Coverage
 
@@ -48,7 +48,7 @@ Generated: 2026-09-11T11:44:53.914Z
 | ChargerHelp! | chargerhelp | recruitee | trusted_nonprofit_pending_review | live | 0 | 1 | 0 |
 | Citizen's Climate Lobby | citizens-climate-lobby |  | manual_review_community | sync_error | 3 | 0 | 0 |
 | Clean Air Task Force | clean-air-task-force |  | low_confidence_experimental | live | 0 | 0 | 0 |
-| Clean Energy Trust | clean-energy-trust | bamboohr | trusted_nonprofit_pending_review | stale | 0 | 4 | 1 |
+| Clean Energy Trust | clean-energy-trust | bamboohr | trusted_nonprofit_pending_review | stale | 0 | 4 | 0 |
 | Clean Slate Initiative | clean-slate-initiative |  | low_confidence_experimental | sync_error | 3 | 0 | 0 |
 | CleanCapital | clean-capital |  | trusted_nonprofit_pending_review | live | 0 | 0 | 0 |
 | CleanChoice Energy | cleanchoice-energy |  | low_confidence_experimental | sync_error | 3 | 0 | 0 |
@@ -93,8 +93,8 @@ Generated: 2026-09-11T11:44:53.914Z
 
 | organization | pending_jobs |
 | --- | --- |
-| Quince | 131 |
-| GoodLeap | 29 |
+| Quince | 133 |
+| GoodLeap | 30 |
 | Octopus Energy | 28 |
 | SEEL | 24 |
 | NextEra Energy | 23 |
@@ -104,13 +104,13 @@ Generated: 2026-09-11T11:44:53.914Z
 | Conservation International | 10 |
 | CALSTART | 6 |
 | Grove Collaborative | 6 |
+| Resource Innovations | 6 |
+| Sierra Club | 6 |
 | SWTCH Energy Inc | 6 |
 | Renew Home | 5 |
-| Resource Innovations | 5 |
-| Sierra Club | 5 |
 | Advanced Energy United | 4 |
 | Get Vocal PBC | 4 |
-| Protect Democracy | 4 |
+| org | 4 |
 | WaterAid | 4 |
 | Arevon Energy | 3 |
 
@@ -161,14 +161,14 @@ Generated: 2026-09-11T11:44:53.914Z
 | Just Solutions Collective | just-solutions-collective | 3 | sync_error | 2026-05-25T03:15:53.496Z | investigate_fetch_failures |
 | Lightfield | lightfield | 5 | sync_error | 2026-05-24T21:27:45.625Z | investigate_fetch_failures |
 | MIRI | miri | 5 | sync_error | 2026-05-24T21:27:45.626Z | investigate_fetch_failures |
-| More Perfect Union Action | more-perfect-union-action | 14 | live | 2026-05-25T03:15:53.496Z | investigate_fetch_failures |
+| More Perfect Union Action | more-perfect-union-action | 15 | live | 2026-05-25T03:15:53.496Z | investigate_fetch_failures |
 | Oxfam America | oxfam-america | 7 | sync_error | 2026-05-24T21:27:45.627Z | investigate_fetch_failures |
 | Paired Recruiting | paired-recruiting | 6 | sync_error | 2026-05-24T21:27:45.628Z | investigate_fetch_failures |
 | Qcells | qcells | 3 | sync_error | 2026-05-25T03:15:53.497Z | investigate_fetch_failures |
 | RE-volv | re-volv | 3 | sync_error | 2026-05-25T03:15:53.497Z | investigate_fetch_failures |
 | Shadow Light Studios | shadow-light-studios | 6 | sync_error | 2026-05-24T21:27:45.639Z | investigate_fetch_failures |
 | The Climate Group | the-climate-group | 3 | sync_error | 2026-05-25T03:15:53.497Z | investigate_fetch_failures |
-| The Climate Reality Project | climate-reality-project | 33 | fetch_failed |  | investigate_fetch_failures |
+| The Climate Reality Project | climate-reality-project | 34 | fetch_failed |  | investigate_fetch_failures |
 | The RealReal | the-realreal | 5 | sync_error | 2026-05-24T21:27:45.643Z | investigate_fetch_failures |
 | thredUP | thredup | 12 | sync_error | 2026-05-24T21:27:45.644Z | investigate_fetch_failures |
 | Transformations Community | transformations-community | 6 | sync_error | 2026-05-24T21:27:45.645Z | investigate_fetch_failures |

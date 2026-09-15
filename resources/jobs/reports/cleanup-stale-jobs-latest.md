@@ -1,18 +1,17 @@
 # Cleanup Stale Jobs
 
-Generated: 2026-09-14T18:52:54.932Z
+Generated: 2026-09-15T00:48:03.892Z
 Mode: write
 
-Previous public jobs count: 93
+Previous public jobs count: 92
 Projected public jobs count after cleanup: 92
-Archived stale/dead/duplicate jobs: 1
-Dead links found: 1
+Archived stale/dead/duplicate jobs: 0
+Dead links found: 0
 Duplicate public jobs archived: 0
-Pages cleaned: 1
+Pages cleaned: 0
 Skipped risky changes: 7
 
 ## Archived Jobs
-- Results for America-5174333007: Results for America | Associate, Strategy & Growth, What Works Cities | greenhouse_expired_redirect_to_board
 
 ## Risky Changes Skipped
 - bullard-center-a5352b70efff: redirected_to_board_needs_review

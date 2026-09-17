@@ -1,6 +1,6 @@
 # Source Coverage Audit
 
-Generated: 2026-09-16T21:58:08.148Z
+Generated: 2026-09-17T00:11:56.085Z
 
 ## Summary
 
@@ -85,9 +85,9 @@ Generated: 2026-09-16T21:58:08.148Z
 | Get Vocal PBC | 2 |
 | Greenlight America | 2 |
 | Greentown Labs | 2 |
-| The Nature Conservancy | 2 |
 | Bullard Center for Environmental and Climate Justice | 1 |
 | Carbon Direct | 1 |
+| ChargerHelp! | 1 |
 
 ## Pending Review Coverage
 
@@ -226,6 +226,7 @@ Generated: 2026-09-16T21:58:08.148Z
 | Arevon Energy | Solar Field Technician | https://arevonenergy.com/careers/#open-positions |
 | Environmental Defense Fund | Analyst, Total Rewards | https://www.edf.org/jobs/analyst-total-rewards |
 | ConnectDER | Real-Time Firmware Engineer | https://jobs.elementalimpact.com/jobs |
+| The Nature Conservancy | Hospitality Specialist, Palmyra Atoll | https://careers.tnc.org/us/en/search-results |
 | The Nature Conservancy | WY Director of External Affairs | https://careers.tnc.org/us/en/search-results |
 | HA Sustainable Infrastructure Capital | Associate/ Senior Associate – Transaction Management | https://jobs.lever.co/hasi/9f5b532d-0ac0-4667-8bb5-8a4e3a627e1c |
 | Sierra Club | Chapter Director | https://jobs.lever.co/sierraclub/2d14a974-35b0-4fe1-82d5-96018da5d4cd |
@@ -253,7 +254,6 @@ Generated: 2026-09-16T21:58:08.148Z
 | Louisiana Bucket Brigade | Volunteer Coordinator | https://labucketbrigade.org/ |
 | Renew Home | HubSpot Consultant (3 Month Contract | https://apply.workable.com/renewhome/j/8F00486888/ |
 | American Bird Conservancy | Production Specialist | https://recruiting.paylocity.com/Recruiting/Jobs/Details/4045149 |
-| Hip Hop Caucus | Think % Campaigns Manager | https://hiphopcaucus.org/careers/ |
 
 ## Duplicate Cleanup
 

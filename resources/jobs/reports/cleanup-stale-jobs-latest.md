@@ -1,22 +1,23 @@
 # Cleanup Stale Jobs
 
-Generated: 2026-09-16T21:55:21.314Z
+Generated: 2026-09-17T00:09:18.607Z
 Mode: write
 
 Previous public jobs count: 90
-Projected public jobs count after cleanup: 90
-Archived stale/dead/duplicate jobs: 0
-Dead links found: 0
+Projected public jobs count after cleanup: 89
+Archived stale/dead/duplicate jobs: 1
+Dead links found: 1
 Duplicate public jobs archived: 0
-Pages cleaned: 0
+Pages cleaned: 1
 Skipped risky changes: 7
 
 ## Archived Jobs
+- tnc-d00634de07a7: The Nature Conservancy | Hospitality Specialist, Palmyra Atoll | http_410
 
 ## Risky Changes Skipped
 - bullard-center-a5352b70efff: redirected_to_board_needs_review
-- Energy & Policy Institute-research-fellow: non_job_page:careers_landing_page
 - Energy & Policy Institute-research-manager: non_job_page:careers_landing_page
+- Energy & Policy Institute-research-fellow: non_job_page:careers_landing_page
 - wide-search-workable-global-advocacy-campaigns-ffcaa0c85f81: non_job_page:search_page
 - Carbon Direct-5183934007: code_feed_page
 - Advanced Energy United-0ab792b4-1515-49fc-b9c8-27fa3757b1af: redirected_to_board_needs_review

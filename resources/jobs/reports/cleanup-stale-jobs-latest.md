@@ -1,24 +1,23 @@
 # Cleanup Stale Jobs
 
-Generated: 2026-09-22T14:14:30.380Z
+Generated: 2026-09-22T18:07:05.954Z
 Mode: write
 
-Previous public jobs count: 89
+Previous public jobs count: 88
 Projected public jobs count after cleanup: 88
-Archived stale/dead/duplicate jobs: 1
-Dead links found: 1
+Archived stale/dead/duplicate jobs: 0
+Dead links found: 0
 Duplicate public jobs archived: 0
-Pages cleaned: 1
+Pages cleaned: 0
 Skipped risky changes: 7
 
 ## Archived Jobs
-- Climate Action Campaign-http://climateactioncampaign.hire.trakstar.com/jobs/fk0zr8h: Climate Action Campaign | Data Coordinator | http_404
 
 ## Risky Changes Skipped
 - bullard-center-a5352b70efff: redirected_to_board_needs_review
-- Energy & Policy Institute-research-manager: non_job_page:careers_landing_page
 - Energy & Policy Institute-research-fellow: non_job_page:careers_landing_page
+- Energy & Policy Institute-research-manager: non_job_page:careers_landing_page
 - wide-search-workable-global-advocacy-campaigns-ffcaa0c85f81: non_job_page:search_page
 - Carbon Direct-5183934007: code_feed_page
-- Advanced Energy United-0ab792b4-1515-49fc-b9c8-27fa3757b1af: redirected_to_board_needs_review
 - Advanced Energy United-2d364aa9-9617-471f-a14a-06472de1a4c1: redirected_to_board_needs_review
+- Advanced Energy United-0ab792b4-1515-49fc-b9c8-27fa3757b1af: redirected_to_board_needs_review

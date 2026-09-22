@@ -1,12 +1,12 @@
 # Source Coverage Audit
 
-Generated: 2026-09-22T04:59:23.570Z
+Generated: 2026-09-22T14:17:34.821Z
 
 ## Summary
 
 - Total sources: 197
 - Total prospects: 92
-- Total public organizations: 41
+- Total public organizations: 40
 - Total pending organizations: 122
 
 ## Active Source Coverage
@@ -52,7 +52,7 @@ Generated: 2026-09-22T04:59:23.570Z
 | Clean Slate Initiative | clean-slate-initiative |  | low_confidence_experimental | sync_error | 3 | 0 | 0 |
 | CleanCapital | clean-capital |  | trusted_nonprofit_pending_review | live | 0 | 0 | 0 |
 | CleanChoice Energy | cleanchoice-energy |  | low_confidence_experimental | sync_error | 3 | 0 | 0 |
-| Climate Action Campaign | climate-action-campaign | trakstar | tracked_manual_org | pending_updated | 0 | 1 | 2 |
+| Climate Action Campaign | climate-action-campaign | trakstar | tracked_manual_org | pending_updated | 0 | 0 | 2 |
 | Climate Cabinet | climate-cabinet | greenhouse | trusted_nonprofit_pending_review | live | 0 | 0 | 0 |
 | Climate Central | climate-central |  | low_confidence_experimental | live | 0 | 0 | 0 |
 | Climate Justice Alliance | climate-justice-alliance |  | manual_review_community | live | 0 | 0 | 0 |

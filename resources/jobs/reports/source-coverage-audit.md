@@ -1,12 +1,12 @@
 # Source Coverage Audit
 
-Generated: 2026-09-24T06:37:41.710Z
+Generated: 2026-09-24T17:21:23.475Z
 
 ## Summary
 
 - Total sources: 197
 - Total prospects: 92
-- Total public organizations: 39
+- Total public organizations: 38
 - Total pending organizations: 123
 
 ## Active Source Coverage
@@ -188,7 +188,6 @@ Generated: 2026-09-24T06:37:41.710Z
 | Aristotle | 3 | ready_for_manual_review |
 | Climate Action | 1 | ready_for_manual_review |
 | Education Reform Now Advocacy | 1 | add_to_sources_json |
-| Energy Infrastructure Partners LLC | 1 | add_to_sources_json |
 | Fervo Energy | 2 | ready_for_manual_review |
 | Grassroots Carbon | 1 | add_to_sources_json |
 | Mitti Labs | 1 | add_to_sources_json |
@@ -206,6 +205,7 @@ Generated: 2026-09-24T06:37:41.710Z
 | --- | --- | --- |
 | Rystad Energy | Business Development Manager, Clean Energy | https://jobs.workable.com/view/9NTBEjXYhRRLc17cDvdDEX/hybrid-business-development-manager%2C-clean-energy-in-houston-at-rystad-energy |
 | Convergent Energy and Power | Director, Marketing Operations | https://jobs.workable.com/view/sS1h4NbvgxbJZrFqFfSEDA/remote-director%2C-marketing-operations-in-united-states-at-convergent-energy-and-power |
+| Energy Infrastructure Partners LLC | Senior Outreach Representative | https://jobs.workable.com/view/71KVJnn2zzEaqB5AeEvfUa/hybrid-senior-outreach-representative-in-los-angeles-at-energy-infrastructure-partners-llc |
 | PLUS Communications | Digital Director | https://jobs.workable.com/view/7mXsGiweVFByL5UehwA27z/hybrid-digital-director-in-arlington-at-plus-communications |
 | Energy Infrastructure Partners LLC | Senior Program Manager | https://jobs.workable.com/view/3SW1CuKN7h7KKAesypTgrD/hybrid-senior-program-manager-in-los-angeles-at-energy-infrastructure-partners-llc |
 | Avōq | Communications Fellow - Reputation Management | https://jobs.workable.com/view/kpYa2WZ8M2TWGCiFtFJS1o/hybrid-communications-fellow---reputation-management-in-new-york-at-av%C5%8Dq |
@@ -253,7 +253,6 @@ Generated: 2026-09-24T06:37:41.710Z
 | Protect Democracy | Chief Administrative Officer | https://protectdemocracy.recruitee.com/o/chief-admin-officer |
 | Louisiana Bucket Brigade | Volunteer Coordinator | https://labucketbrigade.org/ |
 | Renew Home | HubSpot Consultant (3 Month Contract | https://apply.workable.com/renewhome/j/8F00486888/ |
-| American Bird Conservancy | Production Specialist | https://recruiting.paylocity.com/Recruiting/Jobs/Details/4045149 |
 
 ## Duplicate Cleanup
 

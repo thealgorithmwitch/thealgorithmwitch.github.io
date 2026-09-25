@@ -1,12 +1,12 @@
 # Source Coverage Audit
 
-Generated: 2026-09-25T07:14:04.770Z
+Generated: 2026-09-25T17:51:46.828Z
 
 ## Summary
 
 - Total sources: 197
 - Total prospects: 92
-- Total public organizations: 38
+- Total public organizations: 37
 - Total pending organizations: 123
 
 ## Active Source Coverage
@@ -189,7 +189,6 @@ Generated: 2026-09-25T07:14:04.770Z
 | Climate Action | 1 | ready_for_manual_review |
 | Education Reform Now Advocacy | 1 | add_to_sources_json |
 | Fervo Energy | 2 | ready_for_manual_review |
-| Grassroots Carbon | 1 | add_to_sources_json |
 | Mitti Labs | 1 | add_to_sources_json |
 | Proterra | 1 | ready_for_manual_review |
 | Quantis | 1 | ready_for_manual_review |
@@ -207,6 +206,7 @@ Generated: 2026-09-25T07:14:04.770Z
 | Convergent Energy and Power | Director, Marketing Operations | https://jobs.workable.com/view/sS1h4NbvgxbJZrFqFfSEDA/remote-director%2C-marketing-operations-in-united-states-at-convergent-energy-and-power |
 | Energy Infrastructure Partners LLC | Senior Outreach Representative | https://jobs.workable.com/view/71KVJnn2zzEaqB5AeEvfUa/hybrid-senior-outreach-representative-in-los-angeles-at-energy-infrastructure-partners-llc |
 | PLUS Communications | Digital Director | https://jobs.workable.com/view/7mXsGiweVFByL5UehwA27z/hybrid-digital-director-in-arlington-at-plus-communications |
+| Grassroots Carbon | Director, Brand Reach & Communications | https://jobs.workable.com/view/66JEqQTu5Aaik8B4Y67gVh/director%2C-brand-reach-%26-communications-in-san-antonio-at-grassroots-carbon |
 | Energy Infrastructure Partners LLC | Senior Program Manager | https://jobs.workable.com/view/3SW1CuKN7h7KKAesypTgrD/hybrid-senior-program-manager-in-los-angeles-at-energy-infrastructure-partners-llc |
 | Avōq | Communications Fellow - Reputation Management | https://jobs.workable.com/view/kpYa2WZ8M2TWGCiFtFJS1o/hybrid-communications-fellow---reputation-management-in-new-york-at-av%C5%8Dq |
 | Education Reform Now Advocacy | Communications & External Affairs Manager | https://jobs.workable.com/view/kpXSxBsMjgjpFkDYGA1m4V/remote-communications-%26-external-affairs-manager-in-united-states-at-education-reform-now-advocacy |
@@ -252,7 +252,6 @@ Generated: 2026-09-25T07:14:04.770Z
 | Earthjustice | Director of Digital Fundraising & Advocacy | https://earthjustice.org/jobs |
 | Protect Democracy | Chief Administrative Officer | https://protectdemocracy.recruitee.com/o/chief-admin-officer |
 | Louisiana Bucket Brigade | Volunteer Coordinator | https://labucketbrigade.org/ |
-| Renew Home | HubSpot Consultant (3 Month Contract | https://apply.workable.com/renewhome/j/8F00486888/ |
 
 ## Duplicate Cleanup
 

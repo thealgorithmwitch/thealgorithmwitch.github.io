@@ -1,6 +1,6 @@
 # Cleanup Stale Jobs
 
-Generated: 2026-10-01T04:29:38.846Z
+Generated: 2026-10-01T11:08:24.781Z
 Mode: write
 
 Previous public jobs count: 85
@@ -19,5 +19,5 @@ Skipped risky changes: 7
 - Energy & Policy Institute-research-fellow: non_job_page:careers_landing_page
 - wide-search-workable-global-advocacy-campaigns-ffcaa0c85f81: non_job_page:search_page
 - Carbon Direct-5183934007: code_feed_page
-- Advanced Energy United-0ab792b4-1515-49fc-b9c8-27fa3757b1af: redirected_to_board_needs_review
 - Advanced Energy United-2d364aa9-9617-471f-a14a-06472de1a4c1: redirected_to_board_needs_review
+- Advanced Energy United-0ab792b4-1515-49fc-b9c8-27fa3757b1af: redirected_to_board_needs_review

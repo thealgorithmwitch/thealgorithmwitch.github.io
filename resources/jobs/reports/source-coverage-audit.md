@@ -1,12 +1,12 @@
 # Source Coverage Audit
 
-Generated: 2026-10-07T06:02:35.984Z
+Generated: 2026-10-07T19:23:45.602Z
 
 ## Summary
 
 - Total sources: 197
 - Total prospects: 92
-- Total public organizations: 36
+- Total public organizations: 35
 - Total pending organizations: 121
 
 ## Active Source Coverage
@@ -189,7 +189,6 @@ Generated: 2026-10-07T06:02:35.984Z
 | Climate Action | 1 | ready_for_manual_review |
 | Education Reform Now Advocacy | 1 | add_to_sources_json |
 | Fervo Energy | 2 | ready_for_manual_review |
-| Mitti Labs | 1 | add_to_sources_json |
 | Proterra | 1 | ready_for_manual_review |
 | Quantis | 1 | ready_for_manual_review |
 | Resource Innovations | 3 | add_to_sources_json |
@@ -210,6 +209,7 @@ Generated: 2026-10-07T06:02:35.984Z
 | Energy Infrastructure Partners LLC | Senior Program Manager | https://jobs.workable.com/view/3SW1CuKN7h7KKAesypTgrD/hybrid-senior-program-manager-in-los-angeles-at-energy-infrastructure-partners-llc |
 | Avōq | Communications Fellow - Reputation Management | https://jobs.workable.com/view/kpYa2WZ8M2TWGCiFtFJS1o/hybrid-communications-fellow---reputation-management-in-new-york-at-av%C5%8Dq |
 | Education Reform Now Advocacy | Communications & External Affairs Manager | https://jobs.workable.com/view/kpXSxBsMjgjpFkDYGA1m4V/remote-communications-%26-external-affairs-manager-in-united-states-at-education-reform-now-advocacy |
+| Mitti Labs | Program Manager, Operations - Tamil Nadu | https://jobs.workable.com/view/uWSQQPVWb4Lm2PkXjVyRqg/remote-program-manager%2C-operations---tamil-nadu-in-tamil-nadu-at-mitti-labs |
 | SSC HR Solutions | Sustainability Manager | https://jobs.workable.com/view/pH3oMwvUPZjCoXP2DEevSz/sustainability-manager-in-cairo-at-ssc-hr-solutions |
 | More Perfect Union Action | Social Media Producer | https://more-perfect-union-action.rippling-ats.com/job/1021915/social-media-producer |
 | More Perfect Union Action | Media Producer | https://more-perfect-union-action.rippling-ats.com/job/1025052/media-producer |
@@ -251,7 +251,6 @@ Generated: 2026-10-07T06:02:35.984Z
 | Earthjustice | Senior Director, Workplace Experience | https://earthjustice.org/jobs |
 | Earthjustice | Director of Digital Fundraising & Advocacy | https://earthjustice.org/jobs |
 | Protect Democracy | Chief Administrative Officer | https://protectdemocracy.recruitee.com/o/chief-admin-officer |
-| Louisiana Bucket Brigade | Volunteer Coordinator | https://labucketbrigade.org/ |
 
 ## Duplicate Cleanup
 

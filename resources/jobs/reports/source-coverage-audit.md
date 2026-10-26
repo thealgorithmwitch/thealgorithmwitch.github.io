@@ -1,12 +1,12 @@
 # Source Coverage Audit
 
-Generated: 2026-10-26T05:29:17.835Z
+Generated: 2026-10-26T11:27:51.542Z
 
 ## Summary
 
 - Total sources: 197
 - Total prospects: 92
-- Total public organizations: 35
+- Total public organizations: 34
 - Total pending organizations: 124
 
 ## Active Source Coverage
@@ -196,7 +196,6 @@ Generated: 2026-10-26T05:29:17.835Z
 | Responsibly | 1 | ready_for_manual_review |
 | Supercritical | 1 | ready_for_manual_review |
 | TaskForce | 1 | ready_for_manual_review |
-| Weave Grid | 1 | ready_for_manual_review |
 
 ## Restore Candidates From jobs2.json
 
@@ -290,3 +289,4 @@ _None_
 | The Herald Group |  | candidate_for_new_pull |
 | Veloz |  | candidate_for_new_pull |
 | VIA |  | candidate_for_new_pull |
+| Weave Grid |  | candidate_for_new_pull |

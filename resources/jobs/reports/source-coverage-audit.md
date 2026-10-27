@@ -1,12 +1,12 @@
 # Source Coverage Audit
 
-Generated: 2026-10-27T06:22:14.113Z
+Generated: 2026-10-27T12:37:12.324Z
 
 ## Summary
 
 - Total sources: 197
 - Total prospects: 92
-- Total public organizations: 34
+- Total public organizations: 33
 - Total pending organizations: 124
 
 ## Active Source Coverage
@@ -193,7 +193,6 @@ Generated: 2026-10-27T06:22:14.113Z
 | Proterra | 1 | ready_for_manual_review |
 | Quantis | 1 | ready_for_manual_review |
 | Resource Innovations | 3 | add_to_sources_json |
-| Responsibly | 1 | ready_for_manual_review |
 | Supercritical | 1 | ready_for_manual_review |
 | TaskForce | 1 | ready_for_manual_review |
 
@@ -283,6 +282,7 @@ _None_
 | Mitti Labs | https://jobs.workable.com/view/uWSQQPVWb4Lm2PkXjVyRqg/remote-program-manager%2C-operations---tamil-nadu-in-tamil-nadu-at-mitti-labs | add_to_sources_json |
 | PLUS Communications | https://jobs.workable.com/view/7mXsGiweVFByL5UehwA27z/hybrid-digital-director-in-arlington-at-plus-communications | add_to_sources_json |
 | Resource Innovations | https://jobs.elementalimpact.com/jobs | add_to_sources_json |
+| Responsibly |  | candidate_for_new_pull |
 | Rocky Mountain Institute (RMI) | https://rmi.org/careers | add_to_sources_json |
 | Rystad Energy | https://jobs.workable.com/view/9NTBEjXYhRRLc17cDvdDEX/hybrid-business-development-manager%2C-clean-energy-in-houston-at-rystad-energy | add_to_sources_json |
 | SSC HR Solutions | https://jobs.workable.com/view/pH3oMwvUPZjCoXP2DEevSz/sustainability-manager-in-cairo-at-ssc-hr-solutions | add_to_sources_json |

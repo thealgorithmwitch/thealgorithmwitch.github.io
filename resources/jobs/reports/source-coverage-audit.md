@@ -1,12 +1,12 @@
 # Source Coverage Audit
 
-Generated: 2026-10-29T11:10:58.992Z
+Generated: 2026-10-29T17:30:22.830Z
 
 ## Summary
 
 - Total sources: 197
 - Total prospects: 92
-- Total public organizations: 33
+- Total public organizations: 32
 - Total pending organizations: 124
 
 ## Active Source Coverage
@@ -188,7 +188,6 @@ Generated: 2026-10-29T11:10:58.992Z
 | --- | --- | --- |
 | Aristotle | 3 | ready_for_manual_review |
 | Climate Action | 1 | ready_for_manual_review |
-| Education Reform Now Advocacy | 1 | add_to_sources_json |
 | Fervo Energy | 2 | ready_for_manual_review |
 | Proterra | 1 | ready_for_manual_review |
 | Quantis | 1 | ready_for_manual_review |
@@ -201,6 +200,7 @@ Generated: 2026-10-29T11:10:58.992Z
 | organization | title | source_url |
 | --- | --- | --- |
 | Rystad Energy | Business Development Manager, Clean Energy | https://jobs.workable.com/view/9NTBEjXYhRRLc17cDvdDEX/hybrid-business-development-manager%2C-clean-energy-in-houston-at-rystad-energy |
+| Education Reform Now Advocacy | Senior Director of Partnerships & Advocacy | https://jobs.workable.com/view/ttoHVPpzzztUWErqjEExef/remote-senior-director-of-partnerships-%26-advocacy-in-united-states-at-education-reform-now-advocacy |
 | Convergent Energy and Power | Director, Marketing Operations | https://jobs.workable.com/view/sS1h4NbvgxbJZrFqFfSEDA/remote-director%2C-marketing-operations-in-united-states-at-convergent-energy-and-power |
 | Energy Infrastructure Partners LLC | Senior Outreach Representative | https://jobs.workable.com/view/71KVJnn2zzEaqB5AeEvfUa/hybrid-senior-outreach-representative-in-los-angeles-at-energy-infrastructure-partners-llc |
 | PLUS Communications | Digital Director | https://jobs.workable.com/view/7mXsGiweVFByL5UehwA27z/hybrid-digital-director-in-arlington-at-plus-communications |
@@ -249,7 +249,6 @@ Generated: 2026-10-29T11:10:58.992Z
 | Earthjustice | Enterprise Systems Product Manager | https://earthjustice.org/jobs |
 | Earthjustice | Senior Director, Workplace Experience | https://earthjustice.org/jobs |
 | Earthjustice | Director of Digital Fundraising & Advocacy | https://earthjustice.org/jobs |
-| Protect Democracy | Chief Administrative Officer | https://protectdemocracy.recruitee.com/o/chief-admin-officer |
 
 ## Duplicate Cleanup
 

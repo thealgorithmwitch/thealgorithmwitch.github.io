@@ -1,10 +1,10 @@
 # Public Validation Routing Report
-Generated at: 2026-11-02T09:59:27.035Z
+Generated at: 2026-11-02T20:13:34.316Z
 
 ## Summary
 Records routed to pending: 0
 Hard validation failures remaining: 0
-Records remaining public: 80
+Records remaining public: 79
 Exit decision: passed
 
 ## Routed Records

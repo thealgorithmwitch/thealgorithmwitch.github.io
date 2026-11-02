@@ -1,6 +1,6 @@
 # Source Coverage Audit
 
-Generated: 2026-11-02T10:02:23.289Z
+Generated: 2026-11-02T20:16:56.472Z
 
 ## Summary
 
@@ -76,9 +76,9 @@ Generated: 2026-11-02T10:02:23.289Z
 | SEEL | 5 |
 | Clean Energy Trust | 4 |
 | NextEra Energy | 4 |
-| Aristotle | 3 |
 | Resource Innovations | 3 |
 | Advanced Energy United | 2 |
+| Aristotle | 2 |
 | EDP | 2 |
 | Energy & Policy Institute | 2 |
 | Fervo Energy | 2 |
@@ -186,7 +186,7 @@ Generated: 2026-11-02T10:02:23.289Z
 
 | organization | public_jobs | recommended_action |
 | --- | --- | --- |
-| Aristotle | 3 | ready_for_manual_review |
+| Aristotle | 2 | ready_for_manual_review |
 | Climate Action | 1 | ready_for_manual_review |
 | Fervo Energy | 2 | ready_for_manual_review |
 | Proterra | 1 | ready_for_manual_review |

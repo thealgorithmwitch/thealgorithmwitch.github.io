@@ -1,12 +1,12 @@
 # Source Coverage Audit
 
-Generated: 2026-11-05T11:34:52.843Z
+Generated: 2026-11-05T19:03:50.692Z
 
 ## Summary
 
 - Total sources: 197
 - Total prospects: 92
-- Total public organizations: 32
+- Total public organizations: 31
 - Total pending organizations: 123
 
 ## Active Source Coverage
@@ -190,7 +190,6 @@ Generated: 2026-11-05T11:34:52.843Z
 | Climate Action | 1 | ready_for_manual_review |
 | Fervo Energy | 2 | ready_for_manual_review |
 | Proterra | 1 | ready_for_manual_review |
-| Quantis | 1 | ready_for_manual_review |
 | Resource Innovations | 3 | add_to_sources_json |
 | Supercritical | 1 | ready_for_manual_review |
 | TaskForce | 1 | ready_for_manual_review |

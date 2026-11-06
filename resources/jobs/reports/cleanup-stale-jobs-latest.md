@@ -1,17 +1,18 @@
 # Cleanup Stale Jobs
 
-Generated: 2026-11-06T14:48:26.844Z
+Generated: 2026-11-06T20:42:35.207Z
 Mode: write
 
 Previous public jobs count: 78
-Projected public jobs count after cleanup: 78
-Archived stale/dead/duplicate jobs: 0
-Dead links found: 0
+Projected public jobs count after cleanup: 77
+Archived stale/dead/duplicate jobs: 1
+Dead links found: 1
 Duplicate public jobs archived: 0
-Pages cleaned: 0
+Pages cleaned: 1
 Skipped risky changes: 8
 
 ## Archived Jobs
+- wide-search-workable-global-climate-comms-1e675acb0c53: Supercritical | Climate Scientist (Supply) | http_410
 
 ## Risky Changes Skipped
 - bullard-center-a5352b70efff: redirected_to_board_needs_review

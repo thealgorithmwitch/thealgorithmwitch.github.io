@@ -1,6 +1,6 @@
 # Source Coverage Audit
 
-Generated: 2026-11-12T22:38:27.218Z
+Generated: 2026-11-13T02:58:47.740Z
 
 ## Summary
 

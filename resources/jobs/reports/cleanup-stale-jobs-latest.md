@@ -1,6 +1,6 @@
 # Cleanup Stale Jobs
 
-Generated: 2026-11-16T07:03:30.975Z
+Generated: 2026-11-16T17:01:23.703Z
 Mode: write
 
 Previous public jobs count: 75
@@ -9,15 +9,16 @@ Archived stale/dead/duplicate jobs: 0
 Dead links found: 0
 Duplicate public jobs archived: 0
 Pages cleaned: 0
-Skipped risky changes: 9
+Skipped risky changes: 10
 
 ## Archived Jobs
 
 ## Risky Changes Skipped
 - bullard-center-a5352b70efff: redirected_to_board_needs_review
 - tnc-c3334938672c: code_feed_page
-- Energy & Policy Institute-research-fellow: non_job_page:careers_landing_page
 - Energy & Policy Institute-research-manager: non_job_page:careers_landing_page
+- Energy & Policy Institute-research-fellow: non_job_page:careers_landing_page
+- Oxfam America-744000125323000: network_error (fetch failed)
 - wide-search-workable-global-advocacy-campaigns-ffcaa0c85f81: non_job_page:search_page
 - Carbon Direct-5183934007: code_feed_page
 - Greentown Labs-231249c1-152b-431a-95d7-48924772c67d: redirected_to_board_needs_review

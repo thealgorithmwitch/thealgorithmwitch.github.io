@@ -1,6 +1,6 @@
 # Cleanup Stale Jobs
 
-Generated: 2026-11-19T21:51:42.466Z
+Generated: 2026-11-20T02:51:50.659Z
 Mode: write
 
 Previous public jobs count: 74
@@ -19,5 +19,5 @@ Skipped risky changes: 7
 - Energy & Policy Institute-research-manager: non_job_page:careers_landing_page
 - wide-search-workable-global-advocacy-campaigns-ffcaa0c85f81: non_job_page:search_page
 - Greentown Labs-231249c1-152b-431a-95d7-48924772c67d: redirected_to_board_needs_review
-- Advanced Energy United-2d364aa9-9617-471f-a14a-06472de1a4c1: redirected_to_board_needs_review
 - Advanced Energy United-0ab792b4-1515-49fc-b9c8-27fa3757b1af: redirected_to_board_needs_review
+- Advanced Energy United-2d364aa9-9617-471f-a14a-06472de1a4c1: redirected_to_board_needs_review

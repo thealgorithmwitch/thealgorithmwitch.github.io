@@ -1,6 +1,6 @@
 # Cleanup Stale Jobs
 
-Generated: 2026-11-21T08:01:27.204Z
+Generated: 2026-11-21T16:08:58.936Z
 Mode: write
 
 Previous public jobs count: 74
@@ -9,13 +9,16 @@ Archived stale/dead/duplicate jobs: 0
 Dead links found: 0
 Duplicate public jobs archived: 0
 Pages cleaned: 0
-Skipped risky changes: 8
+Skipped risky changes: 11
 
 ## Archived Jobs
 
 ## Risky Changes Skipped
 - bullard-center-a5352b70efff: redirected_to_board_needs_review
-- tnc-c3334938672c: code_feed_page
+- dylan-green-ea3286ce56e7: network_error (This operation was aborted)
+- dylan-green-5df4ecbc3224: network_error (This operation was aborted)
+- dylan-green-f4d8b6c58345: network_error (This operation was aborted)
+- dylan-green-38bef0e96b81: network_error (This operation was aborted)
 - Energy & Policy Institute-research-manager: non_job_page:careers_landing_page
 - Energy & Policy Institute-research-fellow: non_job_page:careers_landing_page
 - wide-search-workable-global-advocacy-campaigns-ffcaa0c85f81: non_job_page:search_page
